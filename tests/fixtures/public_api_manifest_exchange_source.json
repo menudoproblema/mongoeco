@@ -8896,7 +8896,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "'Projection | None'"
+                    "rendered": "'ProjectionInput | None'"
                   },
                   "default": "None",
                   "kind": "positional_or_keyword",
@@ -9057,7 +9057,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "'Projection | None'"
+                    "rendered": "'ProjectionInput | None'"
                   },
                   "default": "None",
                   "kind": "positional_or_keyword",
@@ -9148,7 +9148,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "'Projection | None'"
+                    "rendered": "'ProjectionInput | None'"
                   },
                   "default": "None",
                   "kind": "keyword_only",
@@ -9289,7 +9289,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "'Projection | None'"
+                    "rendered": "'ProjectionInput | None'"
                   },
                   "default": "None",
                   "kind": "keyword_only",
@@ -9470,7 +9470,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "'Projection | None'"
+                    "rendered": "'ProjectionInput | None'"
                   },
                   "default": "None",
                   "kind": "keyword_only",
@@ -9631,7 +9631,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "'Projection | None'"
+                    "rendered": "'ProjectionInput | None'"
                   },
                   "default": "None",
                   "kind": "positional_or_keyword",
@@ -9816,12 +9816,22 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "'list[Document]'"
+                    "rendered": "'Iterable[Document]'"
                   },
                   "default": null,
                   "kind": "positional_or_keyword",
                   "name": "documents",
                   "required": true
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "'bool'"
+                  },
+                  "default": "True",
+                  "kind": "keyword_only",
+                  "name": "ordered",
+                  "required": false
                 },
                 {
                   "annotation": {
@@ -9841,6 +9851,16 @@
                   "default": "None",
                   "kind": "keyword_only",
                   "name": "session",
+                  "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": true,
+                    "rendered": "'object | None'"
+                  },
+                  "default": "None",
+                  "kind": "keyword_only",
+                  "name": "comment",
                   "required": false
                 }
               ],
@@ -9892,6 +9912,16 @@
                   "default": "None",
                   "kind": "keyword_only",
                   "name": "session",
+                  "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": true,
+                    "rendered": "'object | None'"
+                  },
+                  "default": "None",
+                  "kind": "keyword_only",
+                  "name": "comment",
                   "required": false
                 },
                 {
@@ -15259,7 +15289,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "Projection | None"
+                    "rendered": "ProjectionInput | None"
                   },
                   "default": "None",
                   "kind": "positional_or_keyword",
@@ -15420,7 +15450,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "Projection | None"
+                    "rendered": "ProjectionInput | None"
                   },
                   "default": "None",
                   "kind": "positional_or_keyword",
@@ -15511,7 +15541,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "Projection | None"
+                    "rendered": "ProjectionInput | None"
                   },
                   "default": "None",
                   "kind": "keyword_only",
@@ -15652,7 +15682,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "Projection | None"
+                    "rendered": "ProjectionInput | None"
                   },
                   "default": "None",
                   "kind": "keyword_only",
@@ -15833,7 +15863,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "Projection | None"
+                    "rendered": "ProjectionInput | None"
                   },
                   "default": "None",
                   "kind": "keyword_only",
@@ -15994,7 +16024,7 @@
                 {
                   "annotation": {
                     "nullable": true,
-                    "rendered": "Projection | None"
+                    "rendered": "ProjectionInput | None"
                   },
                   "default": "None",
                   "kind": "positional_or_keyword",
@@ -16179,12 +16209,22 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "list[Document]"
+                    "rendered": "collections.abc.Iterable[Document]"
                   },
                   "default": null,
                   "kind": "positional_or_keyword",
                   "name": "documents",
                   "required": true
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "bool"
+                  },
+                  "default": "True",
+                  "kind": "keyword_only",
+                  "name": "ordered",
+                  "required": false
                 },
                 {
                   "annotation": {
@@ -16204,6 +16244,16 @@
                   "default": "None",
                   "kind": "keyword_only",
                   "name": "session",
+                  "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": true,
+                    "rendered": "object | None"
+                  },
+                  "default": "None",
+                  "kind": "keyword_only",
+                  "name": "comment",
                   "required": false
                 }
               ],
@@ -16255,6 +16305,16 @@
                   "default": "None",
                   "kind": "keyword_only",
                   "name": "session",
+                  "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": true,
+                    "rendered": "object | None"
+                  },
+                  "default": "None",
+                  "kind": "keyword_only",
+                  "name": "comment",
                   "required": false
                 }
               ],
@@ -37641,6 +37701,16 @@
                 "kind": "positional_or_keyword",
                 "name": "acknowledged",
                 "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "'bool'"
+                },
+                "default": "False",
+                "kind": "keyword_only",
+                "name": "did_upsert",
+                "required": false
               }
             ],
             "return": {
@@ -37687,11 +37757,23 @@
               "default": "True",
               "name": "acknowledged",
               "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "'bool'"
+              },
+              "default": "False",
+              "name": "did_upsert",
+              "required": false
             }
           ],
           "kind": "class",
           "members": {
             "acknowledged": {
+              "kind": "attribute"
+            },
+            "did_upsert": {
               "kind": "attribute"
             },
             "matched_count": {
@@ -37710,7 +37792,7 @@
       }
     }
   },
-  "packageVersion": "4.9.1",
+  "packageVersion": "4.10.0",
   "resources": [
     "py.typed",
     "compat/resources/deprecations-v1.json",

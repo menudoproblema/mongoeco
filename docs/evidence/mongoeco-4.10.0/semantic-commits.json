@@ -1,0 +1,18 @@
+[
+  {
+    "commit": "f3cbc366875a0558c07fe5b2bfc0fb4c63c22999",
+    "message": "fix(writes): preserve native batch errors and BSON identity semantics"
+  },
+  {
+    "commit": "0a101dfe71ff5da444cd9c53a3c7b372234d7eb3",
+    "message": "feat(pytest): add isolated PyMongo fixtures and safe proxy lifecycle"
+  },
+  {
+    "commit": "ce7a66b633414087d9fa7f4f935ba1d43a068d80",
+    "message": "ci: test immutable artifacts across Python and PyMongo matrices"
+  },
+  {
+    "commit": "8d422457b769e3773a4f3fe220c8543460a966bb",
+    "message": "docs: focus adoption guides and preserve native parity evidence"
+  }
+]

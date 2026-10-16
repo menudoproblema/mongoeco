@@ -1,0 +1,23 @@
+{
+  "code_and_guides": "git diff --cached --check -- . :(exclude)docs/evidence/** passed",
+  "immutable_raw_evidence": "Full check reports original whitespace only in the listed historical log/diff/source captures. Context-diff blank lines require their leading space; the original evidence bytes and hashes are intentionally preserved.",
+  "paths": [
+    "docs/evidence/command-unacknowledged-writes/before-raw-observer.txt",
+    "docs/evidence/command-unacknowledged-writes/runtime-diff.txt",
+    "docs/evidence/id-bson-conversion/legacy-roundtrip.log",
+    "docs/evidence/id-bson-conversion/legacy_roundtrip.py",
+    "docs/evidence/id-bson-conversion/runtime.diff",
+    "docs/evidence/id-bson-conversion/validate_ci.py",
+    "docs/evidence/null-regex-identities/runtime-diff.patch",
+    "docs/evidence/pytest-kit/backpressure-before.txt",
+    "docs/evidence/pytest-kit/done-callback-before.txt",
+    "docs/evidence/pytest-review/before-start-cancellation.txt",
+    "docs/evidence/pytest-review/before.txt",
+    "docs/evidence/query-numeric-identity/runtime.diff",
+    "docs/evidence/query-numeric-identity/test-cleanup.diff",
+    "docs/evidence/query-numeric-identity/validate_ci.py",
+    "docs/evidence/unacknowledged-writes/runtime-diff.txt",
+    "docs/evidence/write-command-preflight/runtime-diff.txt",
+    "docs/evidence/write-parity/misc-gates-final.log"
+  ]
+}

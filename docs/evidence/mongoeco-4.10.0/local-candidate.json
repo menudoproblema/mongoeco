@@ -1,0 +1,52 @@
+{
+  "version": "4.10.0",
+  "status": "local_candidate_prepared_hosted_gates_pending",
+  "candidate": {
+    "wheel_sha256": "b9ae3b5e2153dac4e289466e3220f286bf3b40e2d35428b39eb8b661ee31db2a",
+    "sdist_sha256": "ce9d614b613c4ce8cea4abd8a8d9df96d0928e6794ba8d88394a140385d15c78",
+    "runtime_files": 281,
+    "runtime_changes_since_validated_workset": [
+      "mongoeco/_version.py"
+    ],
+    "runtime_matches_checkout_three_installs_and_sdist": true,
+    "all_sdist_source_inputs_compared": 289,
+    "reproducible_distributions": true,
+    "wheel_sdist_metadata_equal": true
+  },
+  "runtime_delta_from_previous_validated_candidate": [
+    "mongoeco/_version.py"
+  ],
+  "previous_candidate": "../write-command-preflight/validation.json",
+  "previous_workset_sha256": "67783b7e58fad7c595d8ebc9eb98f5cc4a40df599b3387b41121df47fa80f199",
+  "fresh_checks": {
+    "regressions": 3375,
+    "subtests": 263,
+    "consumer_runs": [
+      "consumer-313-0.json",
+      "consumer-313-2.json",
+      "consumer-313-4.json",
+      "consumer-314-0.json",
+      "consumer-314-2.json",
+      "consumer-314-4.json",
+      "consumer-315-0.json",
+      "consumer-315-2.json",
+      "consumer-315-4.json"
+    ],
+    "consumer_case_executions": 684,
+    "source_assertions_unchanged": true,
+    "reproducible_builds": true,
+    "pypi_rendering_and_local_links": true,
+    "git_diff_check": true,
+    "contracts_python314": "contracts-314-result.json",
+    "historical_raw_whitespace_review": "historical-evidence-whitespace.json"
+  },
+  "full_suites": "The prior workset passed25801 tests per Python3.13/3.14/3.15; those artifacts retain their historical hashes. Required final complete suites and all hosted gates will run on the final4.10.0 CI artifact before tagging/publication.",
+  "review": {
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "all_prior_authorized_work_included": true,
+    "consumer_identifiers": 0
+  },
+  "publisher_preflight": "publisher-preflight.json",
+  "release_gate": "Publish only after the required final tag workflow succeeds; do not rebuild in the publish job."
+}

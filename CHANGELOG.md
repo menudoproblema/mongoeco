@@ -8,16 +8,74 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.10.0] - 2026-10-16
+
 ### Added
 
-- Add the explicit PyMongo 4.19 profile, exact installed-driver detection and
-  `srv_host_validator` on both clients. Delegate initial SRV discovery and
-  callback validation to the public PyMongo 4.19 API, including private suffixes
-  and fail-closed validation. Reject percent-encoded hostnames with `InvalidURI`.
-  Keep defaults MongoDB 7.0/PyMongo 4.9 and historical profiles.
-- Extend isolated driver probes and CI to PyMongo 4.19.0, with regression
-  coverage for DNS validation, BSON boundaries, bulk writes, getMore and sessions.
-  See [support and limits](docs/pymongo419.md).
+- Official opt-in pytest kit with an isolated wire URI and real PyMongo sync/async
+  clients, Memory/SQLite parametrization, explicit pytest-asyncio/AnyIO adapters,
+  dynamic ports and automatic cleanup after failures and cancellation. Report
+  versions, selected backends, dialect, profile and async adapter once per run,
+  including xdist, without opening resources. See the [pytest guide](docs/pytest.md).
+- Explicit PyMongo 4.19 profile, exact installed-driver detection and public
+  `srv_host_validator` support on both clients. Preserve fail-closed DNS validation
+  and reject percent-encoded hostnames with `InvalidURI`. Extend isolated SDK
+  probes through 4.19.0. See [support and limits](docs/pymongo419.md).
+- Official CPython 3.15 support alongside 3.13/3.14. Keep Python >=3.13 and support
+  Python 3.13 through October 2028. Share USearch >=2.26.4 and Shapely >=2.2 across
+  all three interpreters, with CI pins 2.26.4/2.2.0.
+- Field-name projections for collection reads/findAndModify, `comment` on
+  sync/async `insert_one` and `insert_many`, and `Iterable[Document]` inputs for
+  `insert_many`, including tuples and generators. Preserve comments in profiling,
+  active operations and sessions. See [API parity](docs/pymongo-api-conveniences.md).
+- Finite native write corpus, ordered/unordered histories, raw/wire replay,
+  error-operation payload observations and anonymous installed-wheel consumer
+  canaries. Compare MongoDB 7/8/9, sync/async and Memory/SQLite without claiming
+  universal compatibility. See [release scope](docs/release-4.10.0.md).
+
+### Fixed
+
+- Match `insert_many(ordered=...)` and bulk partial successes, original error
+  indices/counts and `writeErrors[].op`, including BSON, generated IDs and model
+  options. Reject invalid bulk models before executing a valid prefix. Publish
+  committed successes once with global outbox ordinals; retain atomic engine
+  preparation and single-write engine support.
+- Match classic insert/update/delete command replies, upsert counts and native
+  error families. Validate all required queries and malformed hint/collation/sort
+  entry shapes before any batch effect; retain per-item missing-index failures
+  and ordered/unordered partial effects. Reject update sort on MongoDB 7 with
+  40415 and preserve `$inc` operand code 14.
+- Validate write concern before effects and compute effective acknowledgement:
+  `w:0` omits write errors/upsert IDs and returns zero counters unless journal or
+  fsync synchronization requests an acknowledged reply. Preserve MongoDB 9's
+  valid `writeConcern:null` default and MongoDB 7/8's code 14 rejection. Honor
+  OP_MSG `moreToCome` without sending stray responses or losing connection reuse.
+- Preserve null-ID upserts, including `upserted: null`, bulk counters and change
+  publication; add `UpdateResult.did_upsert`. Enforce numeric BSON `_id` equality
+  across inserts, selection and upserts, including embedded IDs, without changing
+  SQLite's key format or schema. Retain native duplicate code 11000.
+- Allow equivalent numeric BSON `_id` type changes in replacements and pipelines,
+  including `$convert`, while retaining classic update error 66. Count type-only
+  changes and move physical keys/index references atomically. Preserve existing
+  SQLite files, snapshot order, rollback and publication.
+- Match replacement counts when `_id` is omitted, replacement-upsert field
+  selection, root regex/array ID rejection and codes 53/54/66. Preserve valid
+  nested regex IDs, partial effects and findAndModify code names; accept
+  `bypassDocumentValidation` on findAndModify helpers.
+- Close proxy connections and await handlers before engine disconnect; roll back
+  failed initialization/bind and retain listener ownership across cancelled
+  startup. Preserve borrowed clients and finish cleanup after concurrent
+  start/stop cancellation. Reject incompatible async test loop scopes before
+  allocating fixture resources.
+
+### Changed
+
+- Prioritize application testing in the README and documentation, with PyPI-first
+  installation, early examples, a mongomock migration guide, precise compatibility
+  limits and separate persistence/search entry points. Add project URLs and
+  absolute README links for PyPI rendering.
+- Require immutable artifact testing on Python 3.13/3.14/3.15, the pytest/PyMongo
+  matrix and MongoDB 7/8/9 differential gates before tagged publication.
 
 ## [4.9.1] - 2026-10-15
 

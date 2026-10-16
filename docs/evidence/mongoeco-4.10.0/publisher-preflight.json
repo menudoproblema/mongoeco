@@ -1,0 +1,33 @@
+{
+  "version_available": true,
+  "latest_public_version": "4.9.1",
+  "last_published_provenance": [
+    {
+      "file": "mongoeco-4.9.1-py3-none-any.whl",
+      "url": "https://pypi.org/integrity/mongoeco/4.9.1/mongoeco-4.9.1-py3-none-any.whl/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ]
+    },
+    {
+      "file": "mongoeco-4.9.1.tar.gz",
+      "url": "https://pypi.org/integrity/mongoeco/4.9.1/mongoeco-4.9.1.tar.gz/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ]
+    }
+  ],
+  "matches_configured_workflow_and_environment": true,
+  "pypi_authenticated_settings_inspected": false,
+  "limitation": "Firefox inspection was not authorized by the computer-use access control. Public attestations verify the previously successful publisher; the tagged publish job validates effective authorization."
+}
