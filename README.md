@@ -7,9 +7,10 @@ Test application queries and writes locally, using a fresh in-memory database
 or SQLite. Start with the direct Python API, or keep real PyMongo clients and
 point them at an isolated local server with the optional pytest kit.
 
-The pytest kit and compatibility improvements are introduced in **4.10.0**.
-See the [release notes](https://github.com/menudoproblema/mongoeco/blob/main/docs/release-4.10.0.md)
-for changes, migration and validation.
+**4.10.1** corrects command and write error details, validation timing and BSON
+preservation. See the [release notes](https://github.com/menudoproblema/mongoeco/blob/main/docs/release-4.10.1.md)
+for changes, compatibility limits and validation. The pytest kit is available
+since 4.10.0.
 
 ## Install and try it
 

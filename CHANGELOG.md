@@ -8,6 +8,36 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.10.1] - 2026-10-16
+
+### Fixed
+
+- Complete `findAndModify` failure documents with `errmsg`, `ok`, `code` and
+  `codeName`, including unique-key collisions. Preserve exception families,
+  rejected BSON keys, index patterns, schema diagnostics and classic/bulk error
+  envelopes across direct and wire clients.
+- Consolidate shared validation and error transport. Prepare projections before
+  mutations, reject malformed expressions and BSON commands in the native phase,
+  and retain the first command error, counters and allowed partial writes.
+  Validate empty/no-match programs, flags, command-level bindings and pipeline
+  array filters according to the selected MongoDB dialect.
+- Correct exercised arithmetic, null/missing and numeric-extreme semantics,
+  regex errors, projection/unset/replaceRoot diagnostics, logical array filters,
+  scalar-array push sorting and standalone `CLUSTER_TIME` errors. Close
+  synchronous cursors when preparation or consumption fails.
+- Preserve BSON Binary subtypes, JavaScript scopes and duplicate-key collation
+  diagnostics. Keep NaN through subsequent SQLite classic writes and reopening,
+  without changing the storage format or requiring a migration.
+- Expand the finite MongoDB 7/8/9 differential corpus and observer to cover error
+  codes and documents, counters, partial effects and connection reuse in
+  sync/async and Memory/SQLite. Preserve public API signatures and Engine SPI v2.
+  See [release scope, migration and evidence](docs/release-4.10.1.md).
+
+### Changed
+
+- Include the ICU license notice for the bundled collation diagnostic resource
+  and declare the combined `Apache-2.0 AND ICU` distribution license.
+
 ## [4.10.0] - 2026-10-16
 
 ### Added

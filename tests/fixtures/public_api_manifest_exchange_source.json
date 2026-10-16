@@ -37792,7 +37792,7 @@
       }
     }
   },
-  "packageVersion": "4.10.0",
+  "packageVersion": "4.10.1",
   "resources": [
     "py.typed",
     "compat/resources/deprecations-v1.json",

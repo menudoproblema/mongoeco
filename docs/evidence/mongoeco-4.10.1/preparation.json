@@ -1,0 +1,24 @@
+{
+  "version": "4.10.1",
+  "previous_release": "4.10.0",
+  "local_implementation_workset_sha256": "8a868e138af19784758f5d9735b43816687e824dd3a1a7616c80991a69c151a5",
+  "version_change": {
+    "from": "4.10.0",
+    "to": "4.10.1"
+  },
+  "public_manifest_delta": [
+    "packageVersion"
+  ],
+  "license_notice_delta": "Trailing whitespace removed; legal text unchanged",
+  "local_evidence": "docs/evidence/error-composition/validation.json",
+  "gates_required_before_tag": [
+    "main CI",
+    "native MongoDB Differential 7/8/9"
+  ],
+  "gates_required_before_publication": [
+    "tag CI including installed wheel matrix and native differential",
+    "Trusted Publishing"
+  ],
+  "transcript_whitespace": "Original pytest transcripts retained verbatim; diff whitespace checks exclude docs/evidence/find-modify-errors/*.txt only",
+  "consumer_identities": "No consumer names or links in the change"
+}

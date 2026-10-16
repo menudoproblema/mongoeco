@@ -1,0 +1,34 @@
+{
+  "version": "4.10.1",
+  "version_available": true,
+  "observed_latest": "4.10.0",
+  "previous_successful_publishers": [
+    {
+      "filename": "mongoeco-4.10.0-py3-none-any.whl",
+      "url": "https://pypi.org/integrity/mongoeco/4.10.0/mongoeco-4.10.0-py3-none-any.whl/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ]
+    },
+    {
+      "filename": "mongoeco-4.10.0.tar.gz",
+      "url": "https://pypi.org/integrity/mongoeco/4.10.0/mongoeco-4.10.0.tar.gz/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ]
+    }
+  ],
+  "matches_workflow_environment": true,
+  "authenticated_pypi_settings_inspected": false,
+  "limitation": "Public provenance identifies the previously successful publisher; the tagged job verifies current effective authorization."
+}
