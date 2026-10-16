@@ -19,6 +19,9 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import OperationFailure
 
 
+_MIXED_PROJECTION_CODE = 31254
+
+
 @pytest.fixture(params=["memory", "sqlite", "sqlite-file"])
 def engine(request, tmp_path):
     if request.param == "memory":
@@ -114,7 +117,7 @@ def test_sync_consumption_reuses_preparation_across_batches(engine, bounded):
 
 
 @pytest.mark.parametrize("skip", [0, 5])
-def test_invalid_projection_is_not_evaluated_without_a_projected_row(engine, skip):
+def test_invalid_projection_is_validated_without_a_projected_row(engine, skip):
     async def exercise():
         async with AsyncMongoClient(engine) as client:
             collection = client.test.records
@@ -122,8 +125,10 @@ def test_invalid_projection_is_not_evaluated_without_a_projected_row(engine, ski
                 await collection.insert_many(documents(3))
             with preparation_counts() as counts:
                 cursor = collection.find({}, {"nested": 1, "other": 0}, skip=skip)
-                assert await cursor.to_list() == []
-                assert counts[-1].call_count == 0
+                with pytest.raises(OperationFailure) as caught:
+                    await cursor.to_list()
+                assert caught.value.code == _MIXED_PROJECTION_CODE
+                assert counts[-1].call_count == 1
             await collection.insert_one({"_id": "visible", "nested": 1})
             with pytest.raises(OperationFailure):
                 await collection.find({}, {"nested": 1, "other": 0}).to_list()

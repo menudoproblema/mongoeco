@@ -15,6 +15,7 @@ from mongoeco.core.aggregation.numeric_expressions import (
     _parse_percentile_spec,
     _require_integral_numeric,
 )
+from mongoeco.core.bson_ordering import Code
 from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.paths import get_document_value
@@ -24,7 +25,9 @@ from mongoeco.types import Document, SortSpec, UndefinedType
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
-type MissingExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
+type MissingExpressionEvaluator = Callable[
+    [Document, object, dict[str, Any] | None], Any
+]
 
 
 _ACCUMULATOR_FLAGS_KEY = ("__mongoeco_internal__", "accumulator_flags")
@@ -647,14 +650,41 @@ def _apply_accumulators(
             state.values.extend(deepcopy(candidates))
 
 
-def _finalize_accumulators(bucket: _AccumulatorBucket | dict[str, Any]) -> Document:
+def _group_output_id(value, *, dialect):
+    if dialect.key == "7.0":
+        return deepcopy(value)
+    # MongoDB 8/9 materializes JavaScript without scope as a string in group IDs,
+    # while preserving a separate typed group identity and scoped code values.
+    if isinstance(value, Code) and value.scope is None:
+        return str(value)
+    if isinstance(value, dict):
+        return {
+            key: _group_output_id(item, dialect=dialect) for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_group_output_id(item, dialect=dialect) for item in value]
+    return deepcopy(value)
+
+
+def _finalize_accumulators(
+    bucket: _AccumulatorBucket | dict[str, Any], *, group_dialect=None
+) -> Document:
     document: Document = {}
-    include_bucket_id = isinstance(bucket, _AccumulatorBucket) and bucket.include_bucket_id
+    include_bucket_id = (
+        isinstance(bucket, _AccumulatorBucket) and bucket.include_bucket_id
+    )
     if include_bucket_id:
-        document["_id"] = deepcopy(bucket.bucket_id)
+        document["_id"] = (
+            deepcopy(bucket.bucket_id)
+            if group_dialect is None
+            else _group_output_id(bucket.bucket_id, dialect=group_dialect)
+        )
     values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
     for field, value in values.items():
-        if not isinstance(bucket, _AccumulatorBucket) and field == _ACCUMULATOR_FLAGS_KEY:
+        if (
+            not isinstance(bucket, _AccumulatorBucket)
+            and field == _ACCUMULATOR_FLAGS_KEY
+        ):
             continue
         if isinstance(value, _AverageAccumulator):
             if value.count == 0:
@@ -670,7 +700,9 @@ def _finalize_accumulators(bucket: _AccumulatorBucket | dict[str, Any]) -> Docum
                 document[field] = None
             elif value.population:
                 mean = value.total / value.count
-                variance = max((value.sum_of_squares / value.count) - (mean * mean), 0.0)
+                variance = max(
+                    (value.sum_of_squares / value.count) - (mean * mean), 0.0
+                )
                 document[field] = math.sqrt(variance)
             elif value.count < 2:
                 document[field] = None

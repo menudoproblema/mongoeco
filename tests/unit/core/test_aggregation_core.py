@@ -370,7 +370,9 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertTrue(math.isnan(evaluate_expression(document, {"$floor": [float("nan")]})))
         self.assertTrue(math.isnan(evaluate_expression(document, {"$ceil": [float("nan")]})))
         self.assertIsNone(evaluate_expression(document, {"$in": ["$bonus", "$missing"]}))
-        self.assertIsNone(evaluate_expression(document, {"$size": "$missing"}))
+        with self.assertRaises(OperationFailure) as error:
+            evaluate_expression(document, {"$size": "$missing"})
+        self.assertEqual(error.exception.code, 17124)
         self.assertIsNone(evaluate_expression(document, {"$arrayToObject": "$missing"}))
         self.assertEqual(evaluate_expression(document, {"literal": "$score"}), {"literal": 10})
         self.assertEqual(evaluate_expression(document, ["$score", "$bonus"]), [10, 2])

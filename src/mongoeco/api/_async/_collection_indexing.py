@@ -4,20 +4,23 @@ import time
 
 from typing import TYPE_CHECKING
 
+from mongoeco._types.indexes import default_index_name
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.error_documents import command_errors
 from mongoeco.core.expression_context import execution_now_scope
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.errors import OperationFailure
-from mongoeco.types import SearchIndexModel
-from mongoeco._types.indexes import default_index_name
 
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
     from mongoeco.session import ClientSession
     from mongoeco.types import Document, IndexInformation, IndexKeySpec
+
+
+_INDEX_NOT_FOUND_CODE = 27
 
 
 def _validate_wildcard_projection(collection, projection):
@@ -63,6 +66,7 @@ async def _index_collation_for_create(collection, keys, collation, session):
     return collation
 
 
+@command_errors
 async def create_index(
     collection: AsyncCollection,
     keys: object,
@@ -95,7 +99,9 @@ async def create_index(
         if partial_filter_expression is None
         else collection._normalize_filter(partial_filter_expression)
     )
-    expire_after_seconds = collection._normalize_expire_after_seconds(expire_after_seconds)
+    expire_after_seconds = collection._normalize_expire_after_seconds(
+        expire_after_seconds
+    )
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     collation = await _index_collation_for_create(
         collection, normalized_keys, collation, session
@@ -108,27 +114,28 @@ async def create_index(
         if name is not None and (not isinstance(name, str) or not name):
             message = "name must be a non-empty string"
             code, code_name = (
-                (14, "TypeMismatch") if not isinstance(name, str)
+                (14, "TypeMismatch")
+                if not isinstance(name, str)
                 else (67, "CannotCreateIndex")
             )
             raise OperationFailure(message, code=code, details={"codeName": code_name})
     requested_name = name or default_index_name(normalized_keys)
     with execution_now_scope(collection._resolve_now()):
         created_name = await collection._engine.create_index(
-        collection._db_name,
-        collection._collection_name,
-        normalized_keys,
-        unique=True if builtin_id else unique,
-        name="_id_" if builtin_id else name,
-        sparse=sparse,
-        hidden=hidden,
-        collation=collation,
-        partial_filter_expression=normalized_partial_filter,
-        expire_after_seconds=expire_after_seconds,
-        weights=weights,
-        default_language=default_language,
-        language_override=language_override,
-        max_time_ms=max_time_ms,
+            collection._db_name,
+            collection._collection_name,
+            normalized_keys,
+            unique=True if builtin_id else unique,
+            name="_id_" if builtin_id else name,
+            sparse=sparse,
+            hidden=hidden,
+            collation=collation,
+            partial_filter_expression=normalized_partial_filter,
+            expire_after_seconds=expire_after_seconds,
+            weights=weights,
+            default_language=default_language,
+            language_override=language_override,
+            max_time_ms=max_time_ms,
             context=session,
         )
     collection._record_operation_metadata(
@@ -140,6 +147,7 @@ async def create_index(
     return requested_name if builtin_id else created_name
 
 
+@command_errors
 async def create_indexes(
     collection: AsyncCollection,
     indexes: object,
@@ -168,9 +176,7 @@ async def create_indexes(
             normalized_partial_filter = (
                 None
                 if index.partial_filter_expression is None
-                else collection._normalize_filter(
-                    index.partial_filter_expression
-                )
+                else collection._normalize_filter(index.partial_filter_expression)
             )
             with execution_now_scope(execution_now):
                 collation = await _index_collation_for_create(
@@ -178,26 +184,28 @@ async def create_indexes(
                 )
                 builtin_id = index.keys == [("_id", 1)]
                 name = await collection._engine.create_index(
-                collection._db_name,
-                collection._collection_name,
-                index.keys,
-                unique=True if builtin_id else index.unique,
-                name="_id_" if builtin_id else index.name,
-                sparse=index.sparse,
-                hidden=index.hidden,
-                collation=collation,
-                partial_filter_expression=normalized_partial_filter,
-                expire_after_seconds=index.expire_after_seconds,
-                weights=index.weights,
-                default_language=index.default_language,
-                language_override=index.language_override,
-                min_value=index.min_value,
-                max_value=index.max_value,
-                bucket_size=index.bucket_size,
-                max_time_ms=None if deadline is None else max(
-                    1,
-                    int((deadline - time.monotonic()) * 1000),
-                ),
+                    collection._db_name,
+                    collection._collection_name,
+                    index.keys,
+                    unique=True if builtin_id else index.unique,
+                    name="_id_" if builtin_id else index.name,
+                    sparse=index.sparse,
+                    hidden=index.hidden,
+                    collation=collation,
+                    partial_filter_expression=normalized_partial_filter,
+                    expire_after_seconds=index.expire_after_seconds,
+                    weights=index.weights,
+                    default_language=index.default_language,
+                    language_override=index.language_override,
+                    min_value=index.min_value,
+                    max_value=index.max_value,
+                    bucket_size=index.bucket_size,
+                    max_time_ms=None
+                    if deadline is None
+                    else max(
+                        1,
+                        int((deadline - time.monotonic()) * 1000),
+                    ),
                     context=session,
                 )
         except Exception:
@@ -236,16 +244,14 @@ def list_indexes(
         comment=comment,
         session=session,
     )
+
     async def _load_indexes() -> list[Document]:
         documents = await collection._engine.list_indexes(
             collection._db_name,
             collection._collection_name,
             context=session,
         )
-        return [
-            _project_index_document(collection, document)
-            for document in documents
-        ]
+        return [_project_index_document(collection, document) for document in documents]
 
     return AsyncIndexCursor(_load_indexes)
 
@@ -273,6 +279,7 @@ async def index_information(
     }
 
 
+@command_errors
 async def drop_index(
     collection: AsyncCollection,
     index_or_name: str | object,
@@ -286,12 +293,19 @@ async def drop_index(
         target = index_or_name
     else:
         target = collection._normalize_index_keys(index_or_name)
-    await collection._engine.drop_index(
-        collection._db_name,
-        collection._collection_name,
-        target,
-        context=session,
-    )
+    try:
+        await collection._engine.drop_index(
+            collection._db_name,
+            collection._collection_name,
+            target,
+            context=session,
+        )
+    except OperationFailure as error:
+        if (
+            error.code != _INDEX_NOT_FOUND_CODE
+            or collection._mongodb_dialect.key != "9.0"
+        ):
+            raise
     collection._record_operation_metadata(
         operation="drop_index",
         comment=comment,
@@ -299,6 +313,7 @@ async def drop_index(
     )
 
 
+@command_errors
 async def drop_indexes(
     collection: AsyncCollection,
     *,
@@ -371,7 +386,11 @@ async def create_search_indexes(
     for model in models:
         try:
             enforce_deadline(deadline)
-            remaining = None if deadline is None else max(1, int((deadline - time.monotonic()) * 1000))
+            remaining = (
+                None
+                if deadline is None
+                else max(1, int((deadline - time.monotonic()) * 1000))
+            )
             name = await collection._engine.create_search_index(
                 collection._db_name,
                 collection._collection_name,

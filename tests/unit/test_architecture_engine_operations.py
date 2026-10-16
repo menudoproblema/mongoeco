@@ -4,6 +4,7 @@ import unittest
 from unittest import mock
 
 import mongoeco.api.operations as operations_module
+from mongoeco.errors import OperationFailure
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_commands import (
     AsyncDatabaseCommandService,
@@ -488,7 +489,9 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
         self.assertIsNone(operation.compiled_update_plan)
         self.assertIsNone(operation.compiled_upsert_plan)
-        self.assertEqual(operation.planning_issues, ())
+        self.assertEqual(len(operation.planning_issues), 1)
+        self.assertEqual(operation.planning_issues[0].scope, "update")
+        self.assertIn("object", operation.planning_issues[0].message)
 
     def test_relaxed_update_operation_collects_invalid_pipeline_container_issues(self):
         empty_pipeline = compile_update_operation(
@@ -502,15 +505,11 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             planning_mode=PlanningMode.RELAXED,
         )
 
-        self.assertIsNone(empty_pipeline.compiled_update_plan)
-        self.assertEqual(
-            empty_pipeline.planning_issues,
-            (
-                operations_module.PlanningIssue(
-                    scope="update", message="update pipeline must be a non-empty list"
-                ),
-            ),
-        )
+        self.assertIsNotNone(empty_pipeline.compiled_update_plan)
+        document = {"_id": 1}
+        self.assertFalse(empty_pipeline.compiled_update_plan.apply(document))
+        self.assertEqual(document, {"_id": 1})
+        self.assertEqual(empty_pipeline.planning_issues, ())
         self.assertIsNone(wrong_type.compiled_update_plan)
         self.assertEqual(
             wrong_type.planning_issues,
@@ -984,7 +983,7 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertEqual(selection.limit, 1)
 
     def test_update_operation_rejects_invalid_array_filters(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             compile_update_operation({"name": "Ada"}, array_filters=[1])
 
     def test_compiled_update_plan_is_executable_object(self):

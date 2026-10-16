@@ -102,7 +102,7 @@
         "status": "effective"
       },
       "let": {
-        "note": "Propagated into per-delete filters through $expr when supplied on individual specs.",
+        "note": "Command-level bindings are propagated into every delete filter through $expr.",
         "status": "effective"
       },
       "ordered": {
@@ -302,7 +302,7 @@
         "status": "effective"
       },
       "let": {
-        "note": "Propagated into per-update filters through $expr when supplied on individual specs.",
+        "note": "Command-level bindings are propagated into every update filter through $expr.",
         "status": "effective"
       },
       "ordered": {

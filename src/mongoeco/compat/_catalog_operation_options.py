@@ -220,7 +220,7 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
             {
                 "ordered": OperationOptionSupport(_EFFECTIVE, "Controls short-circuiting when one delete specification fails."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the write command."),
-                "let": OperationOptionSupport(_EFFECTIVE, "Propagated into per-delete filters through $expr when supplied on individual specs."),
+                "let": OperationOptionSupport(_EFFECTIVE, "Command-level bindings are propagated into every delete filter through $expr."),
             }
         ),
         "distinct": MappingProxyType(
@@ -314,7 +314,7 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
             {
                 "ordered": OperationOptionSupport(_EFFECTIVE, "Controls short-circuiting when one update specification fails."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the write command."),
-                "let": OperationOptionSupport(_EFFECTIVE, "Propagated into per-update filters through $expr when supplied on individual specs."),
+                "let": OperationOptionSupport(_EFFECTIVE, "Command-level bindings are propagated into every update filter through $expr."),
                 "bypassDocumentValidation": OperationOptionSupport(_EFFECTIVE, "Validated and propagated through replacement/update command routing."),
                 "arrayFilters": OperationOptionSupport(_EFFECTIVE, "Applied through per-update write execution for supported filtered positional paths."),
             }

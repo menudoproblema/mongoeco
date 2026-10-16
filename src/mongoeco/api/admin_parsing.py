@@ -1,6 +1,13 @@
 from dataclasses import dataclass
 from types import MappingProxyType
 
+from mongoeco.api._command_bson import (
+    command_boolean,
+    validate_command_array_filters,
+    validate_command_let,
+    validate_write_fields,
+)
+
 from mongoeco.api.argument_validation import (
     normalize_sort_spec as _normalize_sort_spec,
     validate_batch_size as _validate_batch_size,
@@ -8,6 +15,7 @@ from mongoeco.api.argument_validation import (
     validate_max_time_ms as _validate_max_time_ms,
     validate_sort_spec as _validate_sort_spec,
 )
+from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Filter, IndexModel
@@ -96,7 +104,9 @@ class FindAndModifyCommandOptions:
     update_spec: dict[str, object] | None
 
 
-def normalize_command_document(command: object, kwargs: dict[str, object]) -> dict[str, object]:
+def normalize_command_document(
+    command: object, kwargs: dict[str, object]
+) -> dict[str, object]:
     if isinstance(command, str):
         if not command:
             raise TypeError("command name must be a non-empty string")
@@ -146,7 +156,9 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
     return normalized
 
 
-def normalize_command_sort_document(sort: object | None) -> list[tuple[str, int]] | None:
+def normalize_command_sort_document(
+    sort: object | None,
+) -> list[tuple[str, int]] | None:
     if sort is None:
         return None
     if not isinstance(sort, dict):
@@ -197,7 +209,9 @@ def normalize_command_ordered(value: object | None) -> bool:
     return value
 
 
-def normalize_command_bool(value: object | None, field_name: str, *, default: bool = False) -> bool:
+def normalize_command_bool(
+    value: object | None, field_name: str, *, default: bool = False
+) -> bool:
     if value is None:
         return default
     if not isinstance(value, bool):
@@ -264,28 +278,45 @@ def normalize_validate_command_options(
 
 def normalize_find_and_modify_options(
     spec: dict[str, object],
+    *, dialect: str = "7.0",
 ) -> FindAndModifyCommandOptions:
-    remove = normalize_command_bool(spec.get("remove"), "remove")
-    return_new = normalize_command_bool(spec.get("new"), "new")
-    upsert = normalize_command_bool(spec.get("upsert"), "upsert")
+    validate_write_fields(spec, "findAndModify")
+    validate_command_array_filters(spec, dialect=dialect)
+    remove = command_boolean(spec.get("remove"), "remove", numeric=True)
+    return_new = command_boolean(spec.get("new"), "new", numeric=True)
+    upsert = command_boolean(spec.get("upsert"), "upsert", numeric=True)
     array_filters = spec.get("arrayFilters")
     if array_filters is not None:
-        if not isinstance(array_filters, list) or not all(is_filter(item) for item in array_filters):
-            raise TypeError("arrayFilters must be a list of dicts")
+        if not isinstance(array_filters, list) or not all(
+            is_filter(item) for item in array_filters
+        ):
+            message = "arrayFilters must be a list of documents"
+            raise server_error(
+                message,
+                code=14,
+                scope=ErrorScope.COMMAND,
+            )
     let = spec.get("let")
-    if let is not None and not isinstance(let, dict):
-        raise TypeError("let must be a dict")
+    validate_command_let(let)
     collation = spec.get("collation")
     if collation is not None and not isinstance(collation, dict):
-        raise TypeError("collation must be a document")
+        message = "collation must be a document"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND)
     bypass_document_validation = spec.get("bypassDocumentValidation", False)
-    if not isinstance(bypass_document_validation, bool):
-        raise TypeError("bypassDocumentValidation must be a bool")
+    bypass_document_validation = command_boolean(
+        bypass_document_validation, "bypassDocumentValidation", numeric=True
+    )
     update_spec = spec.get("update")
+    if remove and "update" in spec:
+        message = "Cannot specify both an update and remove=true"
+        raise server_error(message, code=9, scope=ErrorScope.COMMAND)
     if update_spec is not None and not isinstance(update_spec, (dict, list)):
-        raise TypeError("update must be a document or pipeline")
+        message = "update must be a document or pipeline"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND)
     return FindAndModifyCommandOptions(
-        collection_name=require_collection_name(spec.get("findAndModify"), "findAndModify"),
+        collection_name=require_collection_name(
+            spec.get("findAndModify"), "findAndModify"
+        ),
         query=normalize_filter_document(spec.get("query")),
         collation=collation,
         sort=normalize_command_sort_document(spec.get("sort")),

@@ -1,6 +1,8 @@
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.errors import OperationFailure
 
 from tests.unit.api._collection_test_support import *  # noqa: F403
+
 
 class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
     def test_seed_upsert_document_skips_top_level_operators_and_non_eq_filters(self):
@@ -181,7 +183,9 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
         self.assertEqual(normalized.collation, {"locale": "en"})
 
     def test_collection_require_helpers_reject_invalid_inputs(self):
-        self.assertEqual(AsyncCollection._require_documents(({"_id": "1"},)), [{"_id": "1"}])
+        self.assertEqual(
+            AsyncCollection._require_documents(({"_id": "1"},)), [{"_id": "1"}]
+        )
 
         with self.assertRaises(TypeError):
             AsyncCollection._require_documents({"_id": "1"})  # type: ignore[arg-type]
@@ -189,26 +193,32 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
             AsyncCollection._require_documents([])
         with self.assertRaises(ValueError):
             AsyncCollection._require_update([])
-        with self.assertRaises(TypeError):
-            AsyncCollection._require_update([1])  # type: ignore[list-item]
-        with self.assertRaises(ValueError):
-            AsyncCollection._require_update([{"$set": {}, "$unset": {}}])
-        with self.assertRaises(ValueError):
-            AsyncCollection._require_update([{"field": 1}])
+        # PyMongo validates the container; the server validates each stage.
+        self.assertEqual(AsyncCollection._require_update([1]), [1])
+        self.assertEqual(
+            AsyncCollection._require_update([{"$set": {}, "$unset": {}}]),
+            [{"$set": {}, "$unset": {}}],
+        )
+        self.assertEqual(
+            AsyncCollection._require_update([{"field": 1}]), [{"field": 1}]
+        )
         with self.assertRaises(TypeError):
             AsyncCollection._require_update(1)  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             AsyncCollection._require_update({})  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             AsyncCollection._require_update({"field": 1})  # type: ignore[arg-type]
-        with self.assertRaises(TypeError):
-            AsyncCollection._require_update({"$set": 1})  # type: ignore[arg-type]
+        self.assertEqual(
+            AsyncCollection._require_update({"$set": 1}),  # type: ignore[arg-type]
+            {"$set": 1},
+        )
         with self.assertRaises(ValueError):
             AsyncCollection._require_replacement({"$set": {"x": 1}})
         with self.assertRaises(TypeError):
             AsyncCollection._normalize_batch_size("bad")  # type: ignore[arg-type]
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure) as error:
             AsyncCollection._normalize_array_filters([1])  # type: ignore[list-item]
+        self.assertEqual(error.exception.code, 14)
         self.assertIsNone(AsyncCollection._normalize_collation(None))
         self.assertIsNone(AsyncCollection._normalize_array_filters(None))
         with self.assertRaises(TypeError):

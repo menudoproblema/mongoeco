@@ -17,6 +17,7 @@ from mongoeco.core.aggregation.extensions import get_registered_aggregation_stag
 from mongoeco.core.aggregation.preparation import PreparedPipeline, prepare_pipeline
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.core.operation_context import OperationContext
@@ -33,6 +34,7 @@ from mongoeco.core.search import (
     split_classic_text_filter,
     validate_search_stage_pipeline,
 )
+from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.update_paths import CompiledUpdateInstruction
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
@@ -84,7 +86,7 @@ class FindOperation:
         if self.context is context:
             return self
         if self.context is not None:
-            message = 'find operation is already bound to another context'
+            message = "find operation is already bound to another context"
             raise RuntimeError(message)
         if not _context_changes_compilation(
             context,
@@ -145,7 +147,7 @@ class UpdateOperation:
         if self.context is context:
             return self
         if self.context is not None:
-            message = 'update operation is already bound to another context'
+            message = "update operation is already bound to another context"
             raise RuntimeError(message)
         if not _context_changes_compilation(
             context,
@@ -200,7 +202,7 @@ class AggregateOperation:
         if self.context is context:
             return self
         if self.context is not None:
-            message = 'aggregate operation is already bound to another context'
+            message = "aggregate operation is already bound to another context"
             raise RuntimeError(message)
         if not _context_changes_compilation(
             context,
@@ -234,13 +236,10 @@ def _validate_bound_context(
     if context is None:
         return
     if dialect is not context.dialect:
-        message = 'bound operation dialect diverges from OperationContext'
+        message = "bound operation dialect diverges from OperationContext"
         raise ValueError(message)
-    if (
-        collation is not None
-        and normalize_collation(collation) != context.collation
-    ):
-        message = 'bound operation collation diverges from OperationContext'
+    if collation is not None and normalize_collation(collation) != context.collation:
+        message = "bound operation collation diverges from OperationContext"
         raise ValueError(message)
     if variables is None:
         return
@@ -254,7 +253,7 @@ def _validate_bound_context(
         )
     )
     if normalized_variables != context.expressions.bindings:
-        message = 'bound operation variables diverge from OperationContext'
+        message = "bound operation variables diverge from OperationContext"
         raise ValueError(message)
 
 
@@ -463,6 +462,7 @@ def compile_find_operation(
         plan=compile_filter(
             selector_filter,
             dialect=dialect,
+            variables=normalized_let or {},
             planning_mode=planning_mode,
         )
         if plan is None
@@ -482,7 +482,7 @@ def compile_find_operation(
         planning_issues=_collect_query_planning_issues(
             selector_filter,
             dialect=dialect,
-            variables=normalized_let,
+            variables=normalized_let or {},
             planning_mode=planning_mode,
         ),
         dialect=dialect,
@@ -528,6 +528,7 @@ def compile_update_operation(
         plan=compile_filter(
             normalized_filter,
             dialect=dialect,
+            variables=normalized_let or {},
             planning_mode=planning_mode,
         )
         if plan is None
@@ -577,11 +578,14 @@ def compile_aggregate_operation(
     if not isinstance(pipeline, list):
         raise TypeError("pipeline must be a list")
     normalized_pipeline = (
-        pipeline if isinstance(pipeline, PreparedPipeline)
+        pipeline
+        if isinstance(pipeline, PreparedPipeline)
         else DocumentCodec.to_internal(pipeline)
     )
     validate_search_stage_pipeline(normalized_pipeline)
-    if dialect.behavior_flag('validates_aggregation_syntax_early', default=False):
+    if planning_mode is PlanningMode.STRICT and dialect.behavior_flag(
+        "validates_aggregation_syntax_early", default=True
+    ):
         normalized_pipeline = prepare_pipeline(
             normalized_pipeline,
             dialect=dialect,
@@ -616,7 +620,9 @@ def _collect_query_planning_issues(
 ) -> tuple[PlanningIssue, ...]:
     if planning_mode is not PlanningMode.RELAXED:
         return ()
-    plan = compile_filter(filter_spec, dialect=dialect, variables=variables, planning_mode=planning_mode)
+    plan = compile_filter(
+        filter_spec, dialect=dialect, variables=variables, planning_mode=planning_mode
+    )
     issue = getattr(plan, "issue", None)
     if issue is None:
         return ()
@@ -638,24 +644,47 @@ def _collect_update_planning_issues(
     if isinstance(update_spec, list):
         for stage in update_spec:
             if not isinstance(stage, dict) or len(stage) != 1:
-                issues.append(PlanningIssue(scope="update", message="Each update pipeline stage must be a single-key document"))
+                issues.append(
+                    PlanningIssue(
+                        scope="update",
+                        message="Each update pipeline stage must be a single-key document",
+                    )
+                )
                 continue
             operator = next(iter(stage))
             if not isinstance(operator, str) or not operator.startswith("$"):
-                issues.append(PlanningIssue(scope="update", message="Update pipeline stage operator must start with '$'"))
+                issues.append(
+                    PlanningIssue(
+                        scope="update",
+                        message="Update pipeline stage operator must start with '$'",
+                    )
+                )
                 continue
             if operator not in UpdateEngine._UPDATE_PIPELINE_STAGE_OPERATORS:
-                issues.append(PlanningIssue(scope="update", message=f"Unsupported update pipeline stage: {operator}"))
+                issues.append(
+                    PlanningIssue(
+                        scope="update",
+                        message=f"Unsupported update pipeline stage: {operator}",
+                    )
+                )
         if issues:
             return tuple(issues)
         try:
             UpdateEngine.validate_update_pipeline(update_spec, dialect=dialect)
         except OperationFailure as exc:
-            issues.append(PlanningIssue(scope="update", message=str(exc)))
+            issues.append(PlanningIssue(scope="update", message=error_message(exc)))
         return tuple(issues)
     for operator in update_spec:
-        if isinstance(operator, str) and operator.startswith("$") and not dialect.supports_update_operator(operator):
-            issues.append(PlanningIssue(scope="update", message=f"Unsupported update operator: {operator}"))
+        if (
+            isinstance(operator, str)
+            and operator.startswith("$")
+            and not dialect.supports_update_operator(operator)
+        ):
+            issues.append(
+                PlanningIssue(
+                    scope="update", message=f"Unsupported update operator: {operator}"
+                )
+            )
     return tuple(issues)
 
 
@@ -749,7 +778,9 @@ def _build_update_plan_template_cache_key(
         let_fingerprint = (
             None
             if user_let is None
-            else json_dumps_compact(DocumentCodec.encode(dict(user_let)), sort_keys=True)
+            else json_dumps_compact(
+                DocumentCodec.encode(dict(user_let)), sort_keys=True
+            )
         )
     except (TypeError, ValueError, OperationFailure):
         return None
@@ -833,7 +864,7 @@ def _compile_update_plans(
     if shape_issue is not None:
         if planning_mode is PlanningMode.RELAXED:
             return None, None
-        raise OperationFailure(shape_issue)
+        raise OperationFailure(shape_issue, code=9)
     try:
         template_cache_entry = _build_update_plan_template_cache_key(
             update_spec,
@@ -892,14 +923,15 @@ def _compile_update_plans(
 
 def _validate_update_spec_shape(update_spec: Update) -> str | None:
     if isinstance(update_spec, list):
-        if not update_spec:
-            return "update pipeline must be a non-empty list"
         return None
     if not isinstance(update_spec, dict):
         return "update specification must be a document or pipeline"
     if not update_spec:
         return "update_spec must not be empty"
-    if not all(isinstance(operator, str) and operator.startswith("$") for operator in update_spec):
+    if not all(
+        isinstance(operator, str) and operator.startswith("$")
+        for operator in update_spec
+    ):
         return "update_spec must contain only update operators"
     invalid_operator = next(
         (
@@ -927,14 +959,31 @@ def _collect_aggregate_planning_issues(
     issues: list[PlanningIssue] = []
     for stage in pipeline:
         if not isinstance(stage, dict) or len(stage) != 1:
-            issues.append(PlanningIssue(scope="aggregate", message="Each pipeline stage must be a single-key document"))
+            issues.append(
+                PlanningIssue(
+                    scope="aggregate",
+                    message="Each pipeline stage must be a single-key document",
+                )
+            )
             continue
         operator = next(iter(stage))
         if not isinstance(operator, str) or not operator.startswith("$"):
-            issues.append(PlanningIssue(scope="aggregate", message="Pipeline stage operator must start with '$'"))
+            issues.append(
+                PlanningIssue(
+                    scope="aggregate",
+                    message="Pipeline stage operator must start with '$'",
+                )
+            )
             continue
-        if get_registered_aggregation_stage(operator) is None and not dialect.supports_aggregation_stage(operator):
-            issues.append(PlanningIssue(scope="aggregate", message=f"Unsupported aggregation stage: {operator}"))
+        if get_registered_aggregation_stage(
+            operator
+        ) is None and not dialect.supports_aggregation_stage(operator):
+            issues.append(
+                PlanningIssue(
+                    scope="aggregate",
+                    message=f"Unsupported aggregation stage: {operator}",
+                )
+            )
     return tuple(issues)
 
 
@@ -996,7 +1045,8 @@ def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | Non
     if not isinstance(array_filters, list):
         raise TypeError("array_filters must be a list of dicts")
     if not all(is_filter(item) for item in array_filters):
-        raise TypeError("array_filters must be a list of dicts")
+        message = "array_filters must contain documents"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND)
     normalized = DocumentCodec.to_internal(array_filters)
     if not isinstance(normalized, list):
         raise TypeError("array_filters must be a list of dicts")

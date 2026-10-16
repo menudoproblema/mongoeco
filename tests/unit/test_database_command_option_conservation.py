@@ -162,7 +162,7 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
     assert {row["source_revision"] for row in rows} == {
         (
             "sha256:"
-            "3e37485aabe4e0bdf7c57714d1263b6eb6b1d97e9f6ebf776b52cfb45261f3dd"
+            "b72d3f36f3ae7611fbcd0061a681d2cab99562f5a58f5f2026928f7e5676e89f"
         )
     }
     assert {

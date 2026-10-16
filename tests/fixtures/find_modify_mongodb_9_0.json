@@ -1,0 +1,7906 @@
+{
+  "target": "9.0",
+  "build_info": {
+    "version": "9.0.2",
+    "versionArray": [
+      9,
+      0,
+      2,
+      0
+    ],
+    "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+    "modules": [],
+    "allocator": "system",
+    "javascriptEngine": "mozjs-wasm",
+    "sysinfo": "deprecated",
+    "openssl": {
+      "running": "Apple Secure Transport"
+    },
+    "buildEnvironment": {
+      "distmod": "",
+      "distarch": "arm64",
+      "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+      "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+      "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+      "target_arch": "arm64",
+      "target_os": "macOS",
+      "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+    },
+    "bits": 64,
+    "debug": false,
+    "maxBsonObjectSize": 16777216,
+    "macOS": {
+      "osProductVersion": "15.6",
+      "osRelease": "24.6.0",
+      "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+    },
+    "storageEngines": [
+      "devnull",
+      "wiredTiger"
+    ],
+    "ok": 1.0
+  },
+  "fcv": {
+    "version": "9.0"
+  },
+  "sdk": "4.19.0",
+  "native_facades": [
+    "sync",
+    "async"
+  ],
+  "native_physical_connection_reuse": true,
+  "catalog_sha256": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+  "observer_sha256": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+  "legacy_fixture_sha256": "27bf2bfc3a0e1207928068b0d8993163ea7fd6e0dcb3213fe553ac4f17ffdfbd",
+  "observations": {
+    "find_one_and_update_secondary": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_compound": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "group",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ],
+                    [
+                      "key",
+                      {
+                        "$numberInt": "-1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "group",
+                      "group"
+                    ],
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "unique_group_key",
+              "key": "{ group: \"group\", key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_null": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      null
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: null }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_multikey": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_dotted": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "profile.key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "profile.key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "profile.key_1",
+              "key": "{ profile.key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_upsert": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_id_upsert": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "_id",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "_id",
+                      "a"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "_id_",
+              "key": "{ _id: \"a\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_integer": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "123"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 123 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_long": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberLong": "1099511627776"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 1099511627776 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_double": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberDouble": "1.5"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 1.5 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_document": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$document": [
+                          [
+                            "nested",
+                            [
+                              {
+                                "$numberInt": "1"
+                              },
+                              {
+                                "$numberInt": "2"
+                              }
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: { nested: [ 1, 2 ] } }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_boolean": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      true
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: true }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_escaped": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "a \"quoted\" value"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"a \"quoted\" value\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_objectid": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$oid": "000000000000000000000001"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: ObjectId('000000000000000000000001') }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_datetime": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$date": {
+                          "$numberLong": "1767225600000"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: new Date(1767225600000) }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_decimal": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 1.25 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_binary": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$binary": {
+                          "base64": "YWI=",
+                          "subType": "80"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: BinData(128, 6162) }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_regex": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$regularExpression": {
+                          "pattern": "ab",
+                          "options": "i"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: /ab/i }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_timestamp": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$timestamp": {
+                          "t": 2,
+                          "i": 3
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: Timestamp(2, 3) }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_secondary": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_compound": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "group",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ],
+                    [
+                      "key",
+                      {
+                        "$numberInt": "-1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "group",
+                      "group"
+                    ],
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "unique_group_key",
+              "key": "{ group: \"group\", key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "group",
+                "group"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_null": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      null
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: null }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                null
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_multikey": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_dotted": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "profile.key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "profile.key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "profile.key_1",
+              "key": "{ profile.key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "key",
+                      "old"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_upsert": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "taken"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"taken\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_id_upsert": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "_id",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "_id",
+                      "a"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "_id_",
+              "key": "{ _id: \"a\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "taken"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_integer": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "123"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 123 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberInt": "123"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_long": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberLong": "1099511627776"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 1099511627776 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberLong": "1099511627776"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_double": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberDouble": "1.5"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 1.5 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDouble": "1.5"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_document": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$document": [
+                          [
+                            "nested",
+                            [
+                              {
+                                "$numberInt": "1"
+                              },
+                              {
+                                "$numberInt": "2"
+                              }
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: { nested: [ 1, 2 ] } }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        {
+                          "$numberInt": "1"
+                        },
+                        {
+                          "$numberInt": "2"
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_boolean": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      true
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: true }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                true
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_escaped": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      "a \"quoted\" value"
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: \"a \"quoted\" value\" }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                "a \"quoted\" value"
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_objectid": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$oid": "000000000000000000000001"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: ObjectId('000000000000000000000001') }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$oid": "000000000000000000000001"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_datetime": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$date": {
+                          "$numberLong": "1767225600000"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: new Date(1767225600000) }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$date": {
+                    "$numberLong": "1767225600000"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_decimal": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: 1.25 }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$numberDecimal": "1.25"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_binary": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$binary": {
+                          "base64": "YWI=",
+                          "subType": "80"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: BinData(128, 6162) }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$binary": {
+                    "base64": "YWI=",
+                    "subType": "80"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_regex": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$regularExpression": {
+                          "pattern": "ab",
+                          "options": "i"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: /ab/i }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$regularExpression": {
+                    "pattern": "ab",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_timestamp": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "DuplicateKeyError",
+          "code": 11000,
+          "codeName": "DuplicateKey",
+          "labels": [],
+          "write_errors": [],
+          "command_details": {
+            "state": "document",
+            "fields": {
+              "ok": {
+                "present": true,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              },
+              "code": {
+                "present": true,
+                "value": {
+                  "$numberInt": "11000"
+                }
+              },
+              "codeName": {
+                "present": true,
+                "value": "DuplicateKey"
+              },
+              "keyPattern": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "keyValue": {
+                "present": true,
+                "value": {
+                  "$document": [
+                    [
+                      "key",
+                      {
+                        "$timestamp": {
+                          "t": 2,
+                          "i": 3
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              "hexEncoded": {
+                "present": false
+              },
+              "collation": {
+                "present": false
+              }
+            },
+            "errmsg": {
+              "present": true,
+              "type": "str",
+              "nonempty": true
+            },
+            "duplicate_message": {
+              "valid": true,
+              "namespace_matches": true,
+              "index": "key_1",
+              "key": "{ key: Timestamp(2, 3) }"
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "key",
+                {
+                  "$timestamp": {
+                    "t": 2,
+                    "i": 3
+                  }
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "key",
+                "old"
+              ]
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "find_modify_catalog_sha256": "532fe0dfe9ea405861a2a552422d1526c51e14b9507caf170be07747fef857ec"
+}

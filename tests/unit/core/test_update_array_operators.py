@@ -26,12 +26,15 @@ class UpdateArrayOperatorsTests(unittest.TestCase):
                 dialect=MONGODB_DIALECT_70,
             )
         )
-        with self.assertRaisesRegex(OperationFailure, "requires array elements to be documents"):
+        scalar_values = [1, 2]
+        self.assertTrue(
             apply_push_values(
-                [1, 2],
+                scalar_values,
                 [],
                 position=None,
                 slice_value=None,
                 sort_spec=[("score", 1)],
                 dialect=MONGODB_DIALECT_70,
             )
+        )
+        self.assertEqual(scalar_values, [1, 2])

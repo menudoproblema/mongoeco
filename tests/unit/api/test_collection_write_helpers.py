@@ -5,6 +5,7 @@ import mongoeco.api.operations as operations_module
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import ReplaceOne, UpdateOne
 
@@ -325,7 +326,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                     {'_id': '1', 'name': 'Ada', 'profile': {'city': 'Madrid'}}
                 )
                 with patch(
-                    'mongoeco.api._async.collection.apply_projection',
+                    'mongoeco.core.projections.apply_projection',
                     side_effect=AssertionError(
                         'projection should not be re-applied'
                     ),
@@ -508,7 +509,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             await engine.connect()
             try:
                 collection = AsyncCollection(
-                    engine, 'db', 'coll', pymongo_profile='4.11'
+                    engine, 'db', 'coll', mongodb_dialect="8.0", pymongo_profile='4.11'
                 )
                 result = await collection.update_one(
                     {'kind': 'missing'},
@@ -535,7 +536,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             await engine.connect()
             try:
                 collection = AsyncCollection(
-                    engine, 'db', 'coll', pymongo_profile='4.11'
+                    engine, 'db', 'coll', mongodb_dialect="8.0", pymongo_profile='4.11'
                 )
                 return await collection.update_one(
                     {'kind': 'missing'},
@@ -1079,19 +1080,20 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         with self.assertRaises(TypeError):
             asyncio.run(
                 self.collection.update_one(
-                    {}, {'$set': {'done': True}}, array_filters='bad'
+                    {}, {"$set": {"done": True}}, array_filters="bad"
                 )
             )  # type: ignore[arg-type]
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure) as error:
             asyncio.run(
                 self.collection.update_many(
-                    {}, {'$set': {'done': True}}, array_filters=[1]
+                    {}, {"$set": {"done": True}}, array_filters=[1]
                 )
             )  # type: ignore[list-item]
+        self.assertEqual(error.exception.code, 14)
         with self.assertRaises(TypeError):
             asyncio.run(
                 self.collection.find_one_and_update(
-                    {}, {'$set': {'done': True}}, array_filters='bad'
+                    {}, {"$set": {"done": True}}, array_filters="bad"
                 )
             )  # type: ignore[arg-type]
 
@@ -1127,11 +1129,11 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         collection = AsyncCollection(EngineStub(), 'db', 'coll')
 
         with patch(
-            'mongoeco.api._async.collection.QueryEngine.extract_values',
+            'mongoeco.api._async._collection_reads.QueryEngine.extract_values',
             return_value=[],
         ):
             with patch(
-                'mongoeco.api._async.collection.QueryEngine._get_field_value',
+                'mongoeco.api._async._collection_reads.QueryEngine._get_field_value',
                 return_value=(True, 'Madrid'),
             ):
                 result = asyncio.run(collection.distinct('profile.city'))
@@ -1147,11 +1149,11 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         collection = AsyncCollection(EngineStub(), 'db', 'coll')
 
         with patch(
-            'mongoeco.api._async.collection.QueryEngine.extract_values',
+            'mongoeco.api._async._collection_reads.QueryEngine.extract_values',
             return_value=[],
         ):
             with patch(
-                'mongoeco.api._async.collection.QueryEngine._get_field_value',
+                'mongoeco.api._async._collection_reads.QueryEngine._get_field_value',
                 return_value=(True, []),
             ):
                 result = asyncio.run(collection.distinct('profile.city'))

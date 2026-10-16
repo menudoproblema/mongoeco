@@ -572,17 +572,17 @@ class QueryEngineTests(unittest.TestCase):
         )
 
     def test_query_engine_rejects_invalid_boolean_operator_payloads(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match({'a': 1}, {'$and': {'a': 1}})
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match({'a': 1}, {'$or': {'a': 1}})
 
     def test_query_engine_rejects_invalid_in_payloads(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match({'a': 1}, {'a': {'$in': 1}})
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match({'a': 1}, {'a': {'$nin': 1}})
 
     def test_query_engine_mod_handles_large_integers_without_float_precision_loss(

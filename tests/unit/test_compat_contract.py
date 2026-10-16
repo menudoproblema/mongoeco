@@ -109,10 +109,14 @@ class DialectAndProfileContractTests(unittest.TestCase):
                     engine,
                     'db',
                     'coll',
-                    pymongo_profile=_ToggleSortProfile(enabled),
+                    mongodb_dialect="8.0", pymongo_profile=_ToggleSortProfile(enabled),
                 )
-                await collection.insert_one({'_id': '1', 'kind': 'view', 'rank': 2, 'done': False})
-                await collection.insert_one({'_id': '2', 'kind': 'view', 'rank': 1, 'done': False})
+                await collection.insert_one(
+                    {"_id": "1", "kind": "view", "rank": 2, "done": False}
+                )
+                await collection.insert_one(
+                    {"_id": "2", "kind": "view", "rank": 1, "done": False}
+                )
                 return await collection.update_one(
                     {'kind': 'view'},
                     {'$set': {'done': True}},
@@ -147,7 +151,7 @@ class DialectAndProfileContractTests(unittest.TestCase):
                     engine,
                     "db",
                     "coll",
-                    pymongo_profile=_ToggleSortProfile(enabled),
+                    mongodb_dialect="8.0", pymongo_profile=_ToggleSortProfile(enabled),
                 )
                 await collection.insert_one({"_id": "1", "kind": "view", "rank": 2})
                 await collection.insert_one({"_id": "2", "kind": "view", "rank": 1})

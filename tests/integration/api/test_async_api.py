@@ -43,6 +43,7 @@ from mongoeco.errors import (
     DuplicateKeyError,
     InvalidOperation,
     OperationFailure,
+    WriteError,
 )
 
 from tests.integration.api.admin_command_cases import (
@@ -3511,9 +3512,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         def _metadata_boom(*_args, **_kwargs):
                             raise RuntimeError("metadata boom")
 
-                        client._engine._record_operation_metadata = (
-                            _metadata_boom  # type: ignore[method-assign]
-                        )
+                        client._engine._record_operation_metadata = _metadata_boom  # type: ignore[method-assign]
 
                         result = await collection.bulk_write(
                             [InsertOne({"_id": "metadata"})],
@@ -3819,8 +3818,10 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
-                    await assert_async_find_supports_richer_top_level_json_schema_filter(
-                        client,
+                    await (
+                        assert_async_find_supports_richer_top_level_json_schema_filter(
+                            client,
+                        )
                     )
 
     async def test_bypass_document_validation_allows_invalid_writes(self):
@@ -4039,9 +4040,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
 
                     self.assertEqual(
-                        (
-                            await collection.delete_many({"name": "ALICE"})
-                        ).deleted_count,
+                        (await collection.delete_many({"name": "ALICE"})).deleted_count,
                         0,
                     )
                     self.assertEqual(
@@ -5062,10 +5061,12 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_database_command_supports_rename_collection_within_current_database(
         self,
     ):
-        await assert_database_command_supports_rename_collection_within_current_database(
-            self,
-            ENGINE_FACTORIES,
-            open_client,
+        await (
+            assert_database_command_supports_rename_collection_within_current_database(
+                self,
+                ENGINE_FACTORIES,
+                open_client,
+            )
         )
 
     async def test_database_command_supports_find_and_aggregate(self):
@@ -5308,6 +5309,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 engine = ENGINE_FACTORIES[engine_name]()
                 async with AsyncMongoClient(
                     engine,
+                    mongodb_dialect="8.0",
                     pymongo_profile="4.11",
                 ) as client:
                     collection = client.test.users
@@ -5950,6 +5952,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(engine=engine_name):
                 async with AsyncMongoClient(
                     ENGINE_FACTORIES[engine_name](),
+                    mongodb_dialect="8.0",
                     pymongo_profile="4.11",
                 ) as client:
                     collection = client.test.users
@@ -12150,8 +12153,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(TypeError):
                         await collection.update_one([], {})
 
-                    with self.assertRaises(TypeError):
+                    with self.assertRaises(OperationFailure) as caught:
                         await collection.update_one({}, [1])
+                    self.assertEqual(caught.exception.code, 14)
 
                     with self.assertRaises(TypeError):
                         await collection.delete_one([])
@@ -12174,8 +12178,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(ValueError):
                         await collection.update_one({}, [])
 
-                    with self.assertRaises(TypeError):
+                    with self.assertRaises(WriteError) as caught:
                         await collection.update_one({}, {"$set": []})
+                    self.assertEqual(caught.exception.code, 9)
+                    self.assertEqual(caught.exception.details["index"], 0)
+                    self.assertTrue(caught.exception.details["errmsg"])
 
     async def test_update_operations_support_aggregation_pipeline_updates(
         self,

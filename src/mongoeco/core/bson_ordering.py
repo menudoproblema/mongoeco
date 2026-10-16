@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import datetime
-from decimal import Decimal, localcontext
 import math
 import uuid
+
+from decimal import Decimal, localcontext
 from typing import Any
 
 from mongoeco.core.bson_scalars import (
@@ -11,6 +12,13 @@ from mongoeco.core.bson_scalars import (
     normalize_utc_bson_datetime,
     wrap_bson_numeric,
 )
+
+
+try:
+    from bson.code import Code
+except ImportError:  # pragma: no cover - optional BSON
+    Code = ()
+
 from mongoeco.types import (
     Binary,
     Regex,
@@ -52,6 +60,12 @@ def bson_engine_key(value: Any) -> Any:
         return ("int", value)
     if isinstance(value, float):
         return ("float", value)
+    if isinstance(value, Code):
+        return (
+            "code",
+            str(value),
+            None if value.scope is None else bson_equality_key(value.scope),
+        )
     if isinstance(value, str):
         return ("str", value)
     if isinstance(value, Binary):

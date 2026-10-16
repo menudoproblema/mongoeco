@@ -718,9 +718,9 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
             ),
         )
 
-    def test_require_projection_rejects_mixed_exclusion_with_id_inclusion(self):
-        with self.assertRaises(OperationFailure):
-            _require_projection({"_id": 1, "age": 0})
+    def test_require_projection_accepts_exclusion_with_id_inclusion(self):
+        spec = {"_id": 1, "age": 0}
+        self.assertEqual(_require_projection(spec), spec)
 
     def test_apply_unwind_keeps_null_include_array_index_for_scalar_values(self):
         result = apply_pipeline(

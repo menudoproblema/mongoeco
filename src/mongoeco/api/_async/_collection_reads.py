@@ -13,6 +13,7 @@ from mongoeco.api.public_api import (
     normalize_public_operation_arguments,
 )
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.error_documents import command_errors, error_message
 from mongoeco.core.filtering import QueryEngine
 
 
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 _FILTER_UNSET = object()
 
 
+@command_errors
 async def find_one(
     collection: AsyncCollection,
     filter_spec: Filter | object,
@@ -67,14 +69,16 @@ async def find_one(
     )
     expressions = collection._new_execution_context().with_bindings(operation.let)
     operation_context = collection._new_operation_context(
-        session=options.get('session'),
+        session=options.get("session"),
         collation=operation.collation,
         expressions=expressions,
     )
     operation = operation.bind(operation_context)
     document = None
     started_at = time.perf_counter_ns()
-    record_runtime_opcounter = getattr(collection._engine, "_record_runtime_opcounter", None)
+    record_runtime_opcounter = getattr(
+        collection._engine, "_record_runtime_opcounter", None
+    )
     if callable(record_runtime_opcounter):
         record_runtime_opcounter("query")
     try:
@@ -112,10 +116,13 @@ async def find_one(
     except Exception as exc:
         await collection._profile_operation(
             op="query",
-            command={"find": collection._collection_name, "filter": operation.filter_spec},
+            command={
+                "find": collection._collection_name,
+                "filter": operation.filter_spec,
+            },
             duration_ns=time.perf_counter_ns() - started_at,
             operation=operation,
-            errmsg=str(exc),
+            errmsg=error_message(exc),
         )
         raise
     await collection._profile_operation(
@@ -127,6 +134,7 @@ async def find_one(
     return collection._apply_codec_options_to_optional_document(document)
 
 
+@command_errors
 async def count_documents(
     collection: AsyncCollection,
     filter_spec: Filter | object,
@@ -172,7 +180,7 @@ async def count_documents(
         planning_mode=collection._planning_mode,
     )
     operation_context = collection._new_operation_context(
-        session=options.get('session'),
+        session=options.get("session"),
         collation=operation.collation,
         bindings=operation.let,
     )
@@ -186,7 +194,9 @@ async def count_documents(
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
     ):
-        count = await collection._engine_count_with_operation(operation, session=options.get("session"))
+        count = await collection._engine_count_with_operation(
+            operation, session=options.get("session")
+        )
     collection._record_operation_metadata(
         operation="count_documents",
         comment=operation.comment,
@@ -223,6 +233,7 @@ async def estimated_document_count(
     return count
 
 
+@command_errors
 async def distinct(
     collection: AsyncCollection,
     key: str,

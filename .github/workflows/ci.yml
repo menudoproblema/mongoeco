@@ -318,6 +318,7 @@ jobs:
       - name: Exercise clients, failure cleanup and parallel workers
         run: |
           python -m pytest tests/integration/pytest_kit \
+            tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection \
             tests/integration/wire/test_proxy_lifecycle.py \
             tests/integration/wire/test_unacknowledged.py \
             tests/integration/api/test_write_preflight_parity.py -q

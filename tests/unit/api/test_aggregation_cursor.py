@@ -541,8 +541,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         cursor = AsyncAggregationCursor(collection, [])
         self.assertIsNone(cursor._leading_search_stage())
 
-        cursor = AsyncAggregationCursor(collection, ["invalid"])  # type: ignore[list-item]
-        self.assertIsNone(cursor._leading_search_stage())
+        with self.assertRaisesRegex(OperationFailure, "single-key document"):
+            AsyncAggregationCursor(collection, ["invalid"])  # type: ignore[list-item]
 
         cursor = AsyncAggregationCursor(
             collection,

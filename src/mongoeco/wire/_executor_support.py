@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.api import AsyncMongoClient
+from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire._executor_validation import validate_wire_command_document
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.requests import WireRequestContext
-from mongoeco.wire.surface import WireSurface
+
+
+if TYPE_CHECKING:
+    from mongoeco.wire.surface import WireSurface
 
 
 WIRE_INTERNAL_KEYS = frozenset(
@@ -126,7 +130,7 @@ def build_error_document(exc: Exception) -> dict[str, Any]:
     if isinstance(exc, PyMongoError):
         document: dict[str, Any] = {
             "ok": 0.0,
-            "errmsg": str(exc),
+            "errmsg": error_message(exc),
         }
         code = getattr(exc, "code", None)
         if code is not None:
@@ -142,5 +146,5 @@ def build_error_document(exc: Exception) -> dict[str, Any]:
             document["errorLabels"] = list(error_labels)
         return document
     if isinstance(exc, MongoEcoError):
-        return {"ok": 0.0, "errmsg": str(exc)}
-    return {"ok": 0.0, "errmsg": str(exc)}
+        return {"ok": 0.0, "errmsg": error_message(exc)}
+    return {"ok": 0.0, "errmsg": error_message(exc)}

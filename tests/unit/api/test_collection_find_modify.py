@@ -1166,7 +1166,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
             await engine.connect()
             try:
                 collection = AsyncCollection(
-                    engine, "db", "coll", pymongo_profile="4.11"
+                    engine, "db", "coll", mongodb_dialect="8.0", pymongo_profile="4.11"
                 )
                 selected_document = {
                     "_id": "task-1",
@@ -1573,7 +1573,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
             await engine.connect()
             try:
                 collection = AsyncCollection(
-                    engine, "db", "coll", pymongo_profile="4.11"
+                    engine, "db", "coll", mongodb_dialect="8.0", pymongo_profile="4.11"
                 )
                 await collection.insert_many(
                     [

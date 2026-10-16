@@ -3,15 +3,26 @@ from __future__ import annotations
 import decimal
 import re
 import uuid
+
 from typing import Any
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UndefinedType
+from mongoeco.types import (
+    SON,
+    Binary,
+    DBRef,
+    Decimal128,
+    ObjectId,
+    Regex,
+    Timestamp,
+    UndefinedType,
+)
+
 
 try:  # pragma: no cover - optional dependency
     from bson import Decimal128 as BsonDecimal128Public
-    from bson.binary import Binary as BsonBinary, STANDARD
+    from bson.binary import STANDARD, Binary as BsonBinary
     from bson.code import Code as BsonCode
     from bson.dbref import DBRef as BsonDBRef
     from bson.int64 import Int64
@@ -118,7 +129,7 @@ def encode_wire_value(value: Any) -> Any:
         return BsonDecimal128Public(value)
     if isinstance(value, uuid.UUID):
         return BsonBinary.from_uuid(value, uuid_representation=STANDARD)
-    if isinstance(value, Binary):
+    if isinstance(value, (Binary, BsonBinary)):
         return BsonBinary(bytes(value), subtype=value.subtype)
     if isinstance(value, Regex):
         return BsonRegex(value.pattern, value.flags)

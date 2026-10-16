@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import base64
 import json
+
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field, is_dataclass
 from enum import Enum
 from typing import Any, NotRequired, TypedDict
+
 
 type Document = dict[str, Any]
 type Filter = dict[str, Any]
@@ -391,9 +393,11 @@ class WriteErrorEntry:
     errmsg: str
     code: int | None = None
     operation: Document | str | None = None
+    details: Document | None = None
 
     def to_document(self) -> dict[str, object]:
         document: dict[str, object] = {
+            **deepcopy(self.details or {}),
             "index": self.index,
             "errmsg": self.errmsg,
         }
@@ -428,6 +432,7 @@ class BulkWriteErrorDetails:
     def to_document(self) -> dict[str, object]:
         return {
             "writeErrors": [entry.to_document() for entry in self.write_errors],
+            "writeConcernErrors": [],
             "nInserted": self.inserted_count,
             "nMatched": self.matched_count,
             "nModified": self.modified_count,

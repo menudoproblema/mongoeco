@@ -1,44 +1,48 @@
 from __future__ import annotations
 
+import math
+
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
-from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.identity import id_contains_numeric_value
 from mongoeco.core.json_compat import json_dumps_compact
-from mongoeco.core.sql_translation import BaseSQLTranslator
+from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
+    BitwiseCondition,
+    DeferredQueryNode,
     ElemMatchCondition,
     EqualsCondition,
     ExistsCondition,
+    ExprCondition,
     GeoIntersectsCondition,
     GeoWithinCondition,
-    JsonSchemaCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
     InCondition,
+    JsonSchemaCondition,
     LessThanCondition,
     LessThanOrEqualCondition,
     MatchAll,
     ModCondition,
     NearCondition,
-    NotEqualsCondition,
     NotCondition,
+    NotEqualsCondition,
     NotInCondition,
     OrCondition,
     QueryNode,
     RegexCondition,
     SizeCondition,
     TypeCondition,
-    BitwiseCondition,
-    DeferredQueryNode,
-    ExprCondition,
     WhereCondition,
     is_concrete_query_node,
 )
+from mongoeco.core.sql_translation import BaseSQLTranslator
+
+
 if TYPE_CHECKING:
     from mongoeco.types import SortSpec, Update
 
@@ -206,7 +210,13 @@ def _is_codec_aware_value(value: object) -> bool:
 
 
 def _is_translatable_equality_value(value: object) -> bool:
-    return _is_supported_scalar(value) or _is_codec_aware_value(value)
+    encoded = DocumentCodec.encode(value)
+    if DocumentCodec._is_tagged_value(encoded):
+        payload = encoded[DocumentCodec._MARKER]
+        return payload[DocumentCodec._VALUE] is None or isinstance(
+            payload[DocumentCodec._VALUE], (str, int, float, bool)
+        )
+    return _is_supported_scalar(value)
 
 
 def _normalize_comparable_value(value: object) -> tuple[str, object]:
@@ -221,7 +231,7 @@ def _normalize_comparable_value(value: object) -> tuple[str, object]:
         )
     if isinstance(value, bool):
         return 'bool', int(value)
-    if isinstance(value, str):
+    if type(value) is str:
         return 'string', value
     if isinstance(value, (int, float)):
         return 'number', value
@@ -320,7 +330,7 @@ def _translate_array_contains_scalar(
             f" OR (json_each.type = 'object' "
             f"AND COALESCE(json_extract(json_each.value, {_quote_sql_string(each_type_path)}), '') = 'undefined')"
             if null_matches_undefined
-            else ''
+            else ""
         )
         return (
             f"(json_type(document, {path}) = 'array' "
@@ -335,7 +345,7 @@ def _translate_array_contains_scalar(
             f"WHERE json_each.type IN ('true', 'false') AND json_each.value = ?))",
             [int(value)],
         )
-    if isinstance(value, str):
+    if type(value) is str:
         return (
             f"(json_type(document, {path}) = 'array' "
             f'AND EXISTS (SELECT 1 FROM json_each(document, {path}) '
@@ -351,7 +361,7 @@ def _translate_array_contains_scalar(
         )
     return (
         f"(json_type(document, {path}) = 'array' "
-        f'AND EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.value = ?))',
+        f"AND EXISTS (SELECT 1 FROM json_each(document, {path}) WHERE json_each.value = ?))",
         [value],
     )
 
@@ -371,7 +381,7 @@ def _translate_json_each_scalar_match(
             f"WHERE json_each.type IN ('true', 'false') AND json_each.value = ?)",
             [int(value)],
         )
-    if isinstance(value, str):
+    if type(value) is str:
         return (
             f'EXISTS (SELECT 1 FROM json_each(document, {path_literal}) '
             f"WHERE json_each.type = 'text' AND json_each.value = ?)",
@@ -430,6 +440,9 @@ def _translate_scalar_equals(
     *,
     null_matches_undefined: bool = False,
 ) -> SqlFragment:
+    if not _is_translatable_equality_value(value):
+        message = "Complex BSON equality requires semantic fallback"
+        raise NotImplementedError(message)
     path = _path_literal(field)
     tagged = _translate_codec_aware_equals(field, value)
     if tagged is not None:
@@ -449,7 +462,7 @@ def _translate_scalar_equals(
             f"(json_type(document, {path}) IN ('true', 'false') AND json_extract(document, {path}) = ?)",
             [int(value)],
         )
-    if isinstance(value, str):
+    if type(value) is str:
         return (
             f"(json_type(document, {path}) = 'text' AND json_extract(document, {path}) = ?)",
             [value],
@@ -1069,6 +1082,9 @@ def translate_compiled_update_plan(
     *,
     current_document: dict[str, Any] | None = None,
 ) -> SqlFragment:
+    if _json_mutation_loses_nonfinite(current_document):
+        message = 'Non-finite values require Python JSON update fallback'
+        raise NotImplementedError(message)
     if any(
         segment.kind in {"positional", "all_positional", "filtered_positional"}
         for operator in plan.compiled_operators
@@ -1102,6 +1118,9 @@ def translate_compiled_update_plan(
         for instruction in set_instructions:
             path = instruction.path.raw
             value = instruction.value
+            if _json_mutation_loses_nonfinite(value):
+                message = 'Non-finite values require Python JSON update fallback'
+                raise NotImplementedError(message)
             if _path_has_numeric_segment(path):
                 raise NotImplementedError(
                     'Array index paths require Python update fallback'
@@ -1143,6 +1162,22 @@ def translate_compiled_update_plan(
         expression = f'json_remove({expression}, {", ".join(paths)})'
 
     return expression, params
+
+
+def _json_mutation_loses_nonfinite(value: object) -> bool:
+    # JSON1 accepts JSON5 NaN tokens but rewrites them as null, including values
+    # outside the modified path. Inspect codec output for BSON scalar containers
+    # (Code scopes, DBRefs, numeric wrappers) without maintaining another registry.
+    if isinstance(value, dict):
+        return any(_json_mutation_loses_nonfinite(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_json_mutation_loses_nonfinite(item) for item in value)
+    if isinstance(value, float):
+        return not math.isfinite(value)
+    if value is None or type(value) in (str, int, bool):
+        return False
+    encoded = DocumentCodec.encode(value)
+    return encoded is not value and _json_mutation_loses_nonfinite(encoded)
 
 
 def translate_query_plan(plan: QueryNode) -> SqlFragment:

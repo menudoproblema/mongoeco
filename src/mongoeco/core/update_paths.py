@@ -1,7 +1,10 @@
-from dataclasses import dataclass
 import re
-from typing import Callable, Literal
 
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Literal
+
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 
 
@@ -11,7 +14,9 @@ _MISSING = object()
 
 @dataclass(frozen=True, slots=True)
 class UpdatePathSegment:
-    kind: Literal["field", "index", "positional", "all_positional", "filtered_positional"]
+    kind: Literal[
+        "field", "index", "positional", "all_positional", "filtered_positional"
+    ]
     raw: str
     index: int | None = None
     identifier: str | None = None
@@ -45,7 +50,9 @@ def compile_update_path(path: str) -> CompiledUpdatePath:
 
     segments = path.split(".")
     if any(segment == "" for segment in segments):
-        raise OperationFailure("update field names must not contain empty path segments")
+        raise OperationFailure(
+            "update field names must not contain empty path segments"
+        )
 
     parsed: list[UpdatePathSegment] = []
     for segment in segments:
@@ -61,7 +68,11 @@ def compile_update_path(path: str) -> CompiledUpdatePath:
         if segment.startswith("$[") and segment.endswith("]"):
             identifier = segment[2:-1]
             if not _ARRAY_FILTER_IDENTIFIER_RE.match(identifier):
-                raise OperationFailure("array filter identifiers must begin with a lowercase letter and contain only alphanumerics")
+                message = "array filter identifiers must begin with a lowercase letter and contain only alphanumerics"
+                raise server_error(
+                    message,
+                    code=2,
+                )
             parsed.append(
                 UpdatePathSegment(
                     "filtered_positional",
@@ -83,12 +94,16 @@ def is_valid_array_filter_identifier(identifier: str) -> bool:
 
 
 def update_path_has_numeric_segment(path: str | CompiledUpdatePath) -> bool:
-    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    compiled = (
+        path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    )
     return any(segment.kind == "index" for segment in compiled.segments)
 
 
 def update_path_has_positional_segment(path: str | CompiledUpdatePath) -> bool:
-    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    compiled = (
+        path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    )
     return any(
         segment.kind in {"positional", "all_positional", "filtered_positional"}
         for segment in compiled.segments
@@ -115,12 +130,16 @@ def expand_positional_update_paths(
     filtered_matcher: Callable[[str, object], bool],
     legacy_matcher: Callable[[object], bool] | None = None,
 ) -> list[str]:
-    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    compiled = (
+        path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    )
     segments = compiled.segments
     if not update_path_has_positional_segment(compiled):
         return [compiled.raw]
     if sum(1 for segment in segments if segment.kind == "positional") > 1:
-        raise OperationFailure("Legacy positional '$' update paths support exactly one positional segment")
+        raise OperationFailure(
+            "Legacy positional '$' update paths support exactly one positional segment"
+        )
 
     expanded: list[str] = []
 
@@ -139,7 +158,9 @@ def expand_positional_update_paths(
 
         if segment.kind == "positional":
             if legacy_matcher is None:
-                raise OperationFailure("Legacy positional '$' update paths are not supported")
+                raise OperationFailure(
+                    "Legacy positional '$' update paths are not supported"
+                )
             if not isinstance(current, list):
                 raise OperationFailure(
                     "The positional operator did not find the match needed from the query",
@@ -180,7 +201,9 @@ def expand_positional_update_paths(
 
         if segment.kind == "filtered_positional":
             for item_index, item in enumerate(current):
-                if segment.identifier is None or not filtered_matcher(segment.identifier, item):
+                if segment.identifier is None or not filtered_matcher(
+                    segment.identifier, item
+                ):
                     continue
                 built.append(str(item_index))
                 _walk(item, index + 1, built)
@@ -200,7 +223,9 @@ def resolve_positional_update_paths(
     filtered_matcher: Callable[[str, object], bool],
     legacy_matcher: Callable[[object], bool] | None = None,
 ) -> list[ResolvedUpdatePath]:
-    compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    compiled = (
+        path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
+    )
     return [
         ResolvedUpdatePath(requested=compiled, concrete_path=concrete_path)
         for concrete_path in expand_positional_update_paths(

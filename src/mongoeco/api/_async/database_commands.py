@@ -8,18 +8,11 @@ import socket
 import sys
 import threading
 import time
-from contextlib import contextmanager
-from typing import TYPE_CHECKING, Generic, TypeVar
-from dataclasses import dataclass, replace
 
-from mongoeco.api.admin_parsing import (
-    FindAndModifyCommandOptions,
-    normalize_command_document,
-    normalize_find_and_modify_options,
-    normalize_command_scale,
-    normalize_validate_command_options,
-    require_collection_name,
-)
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING, Generic, TypeVar
+
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._database_command_contract import (
     admin_family_counts,
@@ -27,11 +20,21 @@ from mongoeco.api._async._database_command_contract import (
     list_commands_document_payload,
     wire_command_surface_count,
 )
-from mongoeco.core.collation import collation_backend_info
+from mongoeco.api.admin_parsing import (
+    FindAndModifyCommandOptions,
+    normalize_command_document,
+    normalize_command_scale,
+    normalize_find_and_modify_options,
+    normalize_validate_command_options,
+    require_collection_name,
+)
 from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.collation import collation_backend_info
+from mongoeco.core.error_documents import command_errors, error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import get_json_backend_name
 from mongoeco.driver.topology import sdam_capabilities_info
+
 # Public annotation introspection resolves these names at runtime.
 from mongoeco.engines.base import AsyncStorageEngine  # noqa: TC001
 from mongoeco.errors import ConnectionFailure, OperationFailure
@@ -39,9 +42,9 @@ from mongoeco.session import ClientSession  # noqa: TC001
 from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
     BuildInfoDocument,
+    CmdLineOptsDocument,
     CollectionStatsSnapshot,
     CollectionValidationSnapshot,
-    CmdLineOptsDocument,
     CommandCursorResult,
     ConnectionStatusDocument,
     CountCommandResult,
@@ -57,6 +60,7 @@ from mongoeco.types import (
     ServerStatusDocument,
     WhatsMyUriDocument,
 )
+
 
 if TYPE_CHECKING:
     from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
@@ -148,6 +152,7 @@ SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "validate",
     "whatsmyuri",
 )
+
 
 @dataclass(frozen=True, slots=True)
 class BuildInfoResult:
@@ -492,11 +497,11 @@ def _clone_write_concern_error(
     return cloned
 
 
-def build_info_document(mongodb_dialect: "MongoDialect") -> BuildInfoDocument:
+def build_info_document(mongodb_dialect: MongoDialect) -> BuildInfoDocument:
     return build_info_result(mongodb_dialect).to_document()
 
 
-def build_info_result(mongodb_dialect: "MongoDialect") -> BuildInfoResult:
+def build_info_result(mongodb_dialect: MongoDialect) -> BuildInfoResult:
     version_parts = [int(part) for part in mongodb_dialect.server_version.split(".")]
     while len(version_parts) < 2:
         version_parts.append(0)
@@ -508,7 +513,7 @@ def build_info_result(mongodb_dialect: "MongoDialect") -> BuildInfoResult:
 
 
 def hello_document(
-    mongodb_dialect: "MongoDialect",
+    mongodb_dialect: MongoDialect,
     *,
     legacy_name: bool = False,
 ) -> HelloDocument:
@@ -516,7 +521,7 @@ def hello_document(
 
 
 def hello_result(
-    mongodb_dialect: "MongoDialect",
+    mongodb_dialect: MongoDialect,
     *,
     legacy_name: bool = False,
 ) -> HelloResult:
@@ -536,7 +541,7 @@ def _storage_engine_name(engine: AsyncStorageEngine) -> str:
 
 
 def server_status_document(
-    mongodb_dialect: "MongoDialect",
+    mongodb_dialect: MongoDialect,
     *,
     engine: AsyncStorageEngine,
     change_stream_info: dict[str, object] | None = None,
@@ -549,7 +554,7 @@ def server_status_document(
 
 
 def server_status_result(
-    mongodb_dialect: "MongoDialect",
+    mongodb_dialect: MongoDialect,
     *,
     engine: AsyncStorageEngine,
     change_stream_info: dict[str, object] | None = None,
@@ -580,16 +585,19 @@ def server_status_result(
         else dict(change_stream_info)
     )
     runtime_info_fn = getattr(engine, "_runtime_diagnostics_info", None)
-    engine_runtime_info = (
-        dict(runtime_info_fn())
-        if callable(runtime_info_fn)
-        else {}
-    )
+    engine_runtime_info = dict(runtime_info_fn()) if callable(runtime_info_fn) else {}
     runtime_opcounters_fn = getattr(engine, "_runtime_opcounters_snapshot", None)
     runtime_opcounters = (
         runtime_opcounters_fn()
         if callable(runtime_opcounters_fn)
-        else {"insert": 0, "query": 0, "update": 0, "delete": 0, "getmore": 0, "command": 0}
+        else {
+            "insert": 0,
+            "query": 0,
+            "update": 0,
+            "delete": 0,
+            "getmore": 0,
+            "command": 0,
+        }
     )
     return ServerStatusResult(
         host=socket.gethostname(),
@@ -694,27 +702,49 @@ class _LegacyAdminRoutingAdapter:
     async def execute_find_and_modify(self, options, *, session=None):
         return await self._admin._execute_find_and_modify(options, session=session)
 
-    async def execute_find_command(self, collection_name: str, operation, *, session=None):
-        return await self._admin._execute_find_command(collection_name, operation, session=session)
+    async def execute_find_command(
+        self, collection_name: str, operation, *, session=None
+    ):
+        return await self._admin._execute_find_command(
+            collection_name, operation, session=session
+        )
 
-    async def execute_aggregate_command(self, collection_name: str, operation, *, session=None):
-        return await self._admin._execute_aggregate_command(collection_name, operation, session=session)
+    async def execute_aggregate_command(
+        self, collection_name: str, operation, *, session=None
+    ):
+        return await self._admin._execute_aggregate_command(
+            collection_name, operation, session=session
+        )
 
-    async def execute_count_command(self, collection_name: str, operation, *, session=None):
-        return await self._admin._execute_count_command(collection_name, operation, session=session)
+    async def execute_count_command(
+        self, collection_name: str, operation, *, session=None
+    ):
+        return await self._admin._execute_count_command(
+            collection_name, operation, session=session
+        )
 
-    async def execute_db_hash_command(self, collections: tuple[str, ...], *, comment=None, session=None):
+    async def execute_db_hash_command(
+        self, collections: tuple[str, ...], *, comment=None, session=None
+    ):
         return await self._admin._execute_db_hash_command(
             collections,
             comment=comment,
             session=session,
         )
 
-    async def execute_distinct_command(self, collection_name: str, key: str, operation, *, session=None):
-        return await self._admin._execute_distinct_command(collection_name, key, operation, session=session)
+    async def execute_distinct_command(
+        self, collection_name: str, key: str, operation, *, session=None
+    ):
+        return await self._admin._execute_distinct_command(
+            collection_name, key, operation, session=session
+        )
 
-    async def execute_list_indexes_command(self, collection_name: str, *, comment=None, session=None):
-        return await self._admin._execute_list_indexes_command(collection_name, comment=comment, session=session)
+    async def execute_list_indexes_command(
+        self, collection_name: str, *, comment=None, session=None
+    ):
+        return await self._admin._execute_list_indexes_command(
+            collection_name, comment=comment, session=session
+        )
 
     def __getattr__(self, name: str):
         return getattr(self._admin, name)
@@ -838,7 +868,7 @@ class AsyncDatabaseCommandService:
         "dropDatabase": Route("_command_drop_database", passes_spec=False),
     }
 
-    def __init__(self, admin: "AsyncDatabaseAdminService"):
+    def __init__(self, admin: AsyncDatabaseAdminService):
         self._admin = admin
 
     @property
@@ -846,7 +876,7 @@ class AsyncDatabaseCommandService:
         return self._admin._engine
 
     @property
-    def _mongodb_dialect(self) -> "MongoDialect":
+    def _mongodb_dialect(self) -> MongoDialect:
         return self._admin._mongodb_dialect
 
     @property
@@ -855,7 +885,7 @@ class AsyncDatabaseCommandService:
         if isinstance(state, _CommandFailPointState):
             return state
         state = _CommandFailPointState()
-        setattr(self._engine, "_command_failpoint_state", state)
+        self._engine._command_failpoint_state = state
         return state
 
     @staticmethod
@@ -943,7 +973,9 @@ class AsyncDatabaseCommandService:
         if not isinstance(labels_spec, list | tuple) or any(
             not isinstance(label, str) or not label for label in labels_spec
         ):
-            raise TypeError("configureFailPoint data.errorLabels must be a list of strings")
+            raise TypeError(
+                "configureFailPoint data.errorLabels must be a list of strings"
+            )
         error_labels = tuple(labels_spec)
         write_concern_error_spec = data_spec.get("writeConcernError")
         write_concern_error: dict[str, object] | None = None
@@ -953,9 +985,8 @@ class AsyncDatabaseCommandService:
                     "configureFailPoint data.writeConcernError must be a document"
                 )
             write_concern_error_code = write_concern_error_spec.get("code", 64)
-            if (
-                not isinstance(write_concern_error_code, int)
-                or isinstance(write_concern_error_code, bool)
+            if not isinstance(write_concern_error_code, int) or isinstance(
+                write_concern_error_code, bool
             ):
                 raise TypeError(
                     "configureFailPoint data.writeConcernError.code must be an integer"
@@ -1176,12 +1207,10 @@ class AsyncDatabaseCommandService:
                 namespaces,
                 close_connection,
                 block_time_ms,
-            ) = (
-                self._normalize_fail_command_data(
-                    spec.get("data"),
-                    required=mode != "off",
-                    db_name=self._admin._db_name,
-                )
+            ) = self._normalize_fail_command_data(
+                spec.get("data"),
+                required=mode != "off",
+                db_name=self._admin._db_name,
             )
             return self.ConfigureFailPointCommand(
                 db_name=self._admin._db_name,
@@ -1239,7 +1268,9 @@ class AsyncDatabaseCommandService:
                 db_name=self._admin._db_name,
                 command_name=command_name,
                 spec=spec,
-                options=normalize_find_and_modify_options(spec),
+                options=normalize_find_and_modify_options(
+                    spec, dialect=self._admin._mongodb_dialect.key
+                ),
             )
         if command_name == "find":
             collection_name, operation = self._compiler.compile_find_operation(
@@ -1254,7 +1285,9 @@ class AsyncDatabaseCommandService:
                 operation=operation,
             )
         if command_name == "aggregate":
-            collection_name, operation = self._compiler.compile_aggregate_operation(spec)
+            collection_name, operation = self._compiler.compile_aggregate_operation(
+                spec
+            )
             return self.AggregateCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
@@ -1330,9 +1363,7 @@ class AsyncDatabaseCommandService:
         if isinstance(command, self.StaticAdminCommand):
             return self._execute_static(command)  # type: ignore[return-value]
         if isinstance(command, self.ConnectionStatusCommand):
-            return connection_status_result(
-                show_privileges=command.show_privileges
-            )  # type: ignore[return-value]
+            return connection_status_result(show_privileges=command.show_privileges)  # type: ignore[return-value]
         if isinstance(command, self.CollectionStatsCommand):
             return await self._admin._collection_stats(
                 command.collection_name,
@@ -1365,7 +1396,9 @@ class AsyncDatabaseCommandService:
             return {
                 "ok": 1.0,
                 "numKilled": 1 if killed else 0,
-                "info": "operation cancelled" if killed else "operation not found or not killable",
+                "info": "operation cancelled"
+                if killed
+                else "operation not found or not killable",
             }  # type: ignore[return-value]
         if isinstance(command, self.ConfigureFailPointCommand):
             return self._failpoints.configure_fail_command(
@@ -1455,20 +1488,30 @@ class AsyncDatabaseCommandService:
 
     def _bind_execution_context(
         self,
-        command: "AsyncDatabaseCommandService.AdminCommand[CommandResultT]",
+        command: AsyncDatabaseCommandService.AdminCommand[CommandResultT],
         execution_context: ExpressionExecutionContext,
-    ) -> "AsyncDatabaseCommandService.AdminCommand[CommandResultT]":
+    ) -> AsyncDatabaseCommandService.AdminCommand[CommandResultT]:
         if isinstance(
             command,
-            (self.FindCommand, self.AggregateCommand, self.CountCommand, self.DistinctCommand),
+            (
+                self.FindCommand,
+                self.AggregateCommand,
+                self.CountCommand,
+                self.DistinctCommand,
+            ),
         ):
             operation = command.operation
             if operation is not None and hasattr(operation, "with_overrides"):
                 operation = operation.with_overrides(
-                    let=execution_context.with_bindings(getattr(operation, "let", None) or {})
+                    let=execution_context.with_bindings(
+                        getattr(operation, "let", None) or {}
+                    )
                 )
                 return replace(command, operation=operation)
-        if isinstance(command, self.FindAndModifyCommand) and command.options is not None:
+        if (
+            isinstance(command, self.FindAndModifyCommand)
+            and command.options is not None
+        ):
             return replace(
                 command,
                 options=replace(
@@ -1550,6 +1593,7 @@ class AsyncDatabaseCommandService:
             return result
         raise TypeError(f"Unsupported admin command result type: {type(result)!r}")
 
+    @command_errors
     async def execute_document(
         self,
         command: object | AsyncDatabaseCommandService.AdminCommand[object],
@@ -1614,17 +1658,25 @@ class AsyncDatabaseCommandService:
                         details=failure_details,
                         error_labels=fail_command.error_labels,
                     )
-            with track_active_operation(
-                self._engine,
-                command_name=parsed.command_name,
-                operation_type="admin",
-                namespace=f"{parsed.db_name}.$cmd",
-                session=session,
-                comment=parsed.spec.get("comment") if isinstance(parsed.spec, dict) else None,
-                max_time_ms=parsed.spec.get("maxTimeMS") if isinstance(parsed.spec, dict) else None,
-                killable=should_track,
-                metadata={"db": parsed.db_name},
-            ) if should_track else _null_operation_tracker() as _opid:
+            with (
+                track_active_operation(
+                    self._engine,
+                    command_name=parsed.command_name,
+                    operation_type="admin",
+                    namespace=f"{parsed.db_name}.$cmd",
+                    session=session,
+                    comment=parsed.spec.get("comment")
+                    if isinstance(parsed.spec, dict)
+                    else None,
+                    max_time_ms=parsed.spec.get("maxTimeMS")
+                    if isinstance(parsed.spec, dict)
+                    else None,
+                    killable=should_track,
+                    metadata={"db": parsed.db_name},
+                )
+                if should_track
+                else _null_operation_tracker() as _opid
+            ):
                 try:
                     result = await self.execute(
                         parsed,
@@ -1643,9 +1695,11 @@ class AsyncDatabaseCommandService:
                     parsed.db_name,
                     op="command",
                     command=dict(parsed.spec),
-                    duration_micros=max(1, (time.perf_counter_ns() - started_at) // 1000),
+                    duration_micros=max(
+                        1, (time.perf_counter_ns() - started_at) // 1000
+                    ),
                     ok=0.0,
-                    errmsg=str(exc),
+                    errmsg=error_message(exc),
                 )
             raise
         if parsed.command_name != "profile":

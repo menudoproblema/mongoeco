@@ -1,4 +1,5 @@
 import asyncio
+import sys
 import time
 
 from collections import deque
@@ -13,6 +14,7 @@ from mongoeco.api.argument_validation import (
     validate_max_time_ms as _validate_max_time_ms,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.operation_context import (
     OperationContext,
@@ -105,10 +107,23 @@ class _AsyncCursorIterator:
         return self
 
     async def _close_after_failure(self) -> None:
+        failure = sys.exception()
         try:
-            await asyncio.shield(self.close())
-        except BaseException:
-            pass
+            # Memory's synchronous runner can advance this coroutine inline.
+            # Use a task only when cancellation/loop ownership actually exists.
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                await self.close()
+            else:
+                await asyncio.shield(self.close())
+        except BaseException as cleanup_error:
+            if failure is None:
+                raise
+            failure.add_note(
+                f"cursor cleanup failed: {type(cleanup_error).__name__}: "
+                f"{cleanup_error}"
+            )
 
     async def __anext__(self) -> Document:
         if self._closed:
@@ -585,7 +600,7 @@ class AsyncCursor:
                     },
                     duration_ns=time.perf_counter_ns() - started_at,
                     operation=operation,
-                    errmsg=str(exc),
+                    errmsg=error_message(exc),
                 )
             raise
         profiler = getattr(self._collection, "_profile_operation", None)
@@ -650,7 +665,7 @@ class AsyncCursor:
                         },
                         duration_ns=time.perf_counter_ns() - started_at,
                         operation=operation,
-                        errmsg=str(exc),
+                        errmsg=error_message(exc),
                     )
                 raise
             else:

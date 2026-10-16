@@ -394,7 +394,7 @@ class NowExecutionContextIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 async with open_client(engine_name) as client:
                     collection = client.test.now
                     await collection.insert_one({'_id': 'a'})
-                    for variable in ('$$CLUSTER_TIME', '$$SEARCH_META', '$$USER_ROLES', '$$IDX'):
+                    for variable in ('$$SEARCH_META', '$$USER_ROLES', '$$IDX'):
                         with self.subTest(variable=variable):
                             with self.assertRaisesRegex(OperationFailure, 'Use of undefined variable') as raised:
                                 await collection.find({'$expr': {'$eq': [variable, None]}}).to_list()

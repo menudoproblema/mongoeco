@@ -1,24 +1,27 @@
 from __future__ import annotations
 
 import ast
-from dataclasses import dataclass
 import math
 import re
 import uuid
-from typing import Any, Callable, TypeIs
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import INT32_MAX, unwrap_bson_numeric
+from mongoeco.core.error_documents import error_message
 from mongoeco.core.geo import (
     parse_geo_box,
     parse_geo_geometry,
     parse_geo_point,
 )
 from mongoeco.core.query_operators import query_operator_keys
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
-    BsonBindings,
     BitwiseMaskOperand,
+    BsonBindings,
     BsonValue,
     Filter,
     PlanningIssue,
@@ -115,7 +118,7 @@ class ModCondition(QueryNode):
 class RegexCondition(QueryNode):
     field: str
     pattern: str
-    options: str = ''
+    options: str = ""
 
 
 @dataclass(frozen=True)
@@ -307,7 +310,7 @@ _WHERE_ALLOWED_AST_NODES = (
     ast.IsNot,
 )
 
-_WHERE_ALLOWED_NAMES = frozenset({'this', 'doc', 'True', 'False', 'None'})
+_WHERE_ALLOWED_NAMES = frozenset({"this", "doc", "True", "False", "None"})
 
 
 def _compile_where_condition(condition: object) -> WhereCondition:
@@ -316,19 +319,15 @@ def _compile_where_condition(condition: object) -> WhereCondition:
             predicate=condition,
         )
     if not isinstance(condition, str) or not condition.strip():
-        raise ValueError('$where must be a non-empty string or callable')
+        raise ValueError("$where must be a non-empty string or callable")
     expression = condition.strip()
-    parsed = ast.parse(expression, mode='eval')
+    parsed = ast.parse(expression, mode="eval")
     for node in ast.walk(parsed):
         if not isinstance(node, _WHERE_ALLOWED_AST_NODES):
-            raise ValueError(
-                '$where only supports a safe local expression subset'
-            )
+            raise ValueError("$where only supports a safe local expression subset")
         if isinstance(node, ast.Name) and node.id not in _WHERE_ALLOWED_NAMES:
-            raise ValueError(
-                '$where only supports names: this, doc, True, False, None'
-            )
-    compiled = compile(parsed, '<mongoeco-$where>', 'eval')
+            raise ValueError("$where only supports names: this, doc, True, False, None")
+    compiled = compile(parsed, "<mongoeco-$where>", "eval")
     return WhereCondition(
         expression=expression,
         compiled_expression=compiled,
@@ -336,78 +335,76 @@ def _compile_where_condition(condition: object) -> WhereCondition:
 
 
 def _regex_options_from_pattern(pattern: re.Pattern[str]) -> str:
-    options = ''
+    options = ""
     if pattern.flags & re.IGNORECASE:
-        options += 'i'
+        options += "i"
     if pattern.flags & re.MULTILINE:
-        options += 'm'
+        options += "m"
     if pattern.flags & re.DOTALL:
-        options += 's'
+        options += "s"
     if pattern.flags & re.VERBOSE:
-        options += 'x'
+        options += "x"
     return options
 
 
 def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
     if isinstance(type_spec, bool):
-        raise ValueError(
-            '$type no acepta booleanos como identificadores de tipo'
-        )
+        raise ValueError("$type no acepta booleanos como identificadores de tipo")
     if isinstance(type_spec, int):
         numeric_mapping = {
-            -1: ('minKey',),
-            1: ('double',),
-            2: ('string',),
-            3: ('object',),
-            4: ('array',),
-            5: ('binData',),
-            6: ('dbPointer',),
-            7: ('objectId',),
-            8: ('bool',),
-            9: ('date',),
-            10: ('null',),
-            11: ('regex',),
-            13: ('javascript',),
-            14: ('symbol',),
-            15: ('javascriptWithScope',),
-            16: ('int',),
-            17: ('timestamp',),
-            18: ('long',),
-            19: ('decimal',),
-            127: ('maxKey',),
+            -1: ("minKey",),
+            1: ("double",),
+            2: ("string",),
+            3: ("object",),
+            4: ("array",),
+            5: ("binData",),
+            6: ("dbPointer",),
+            7: ("objectId",),
+            8: ("bool",),
+            9: ("date",),
+            10: ("null",),
+            11: ("regex",),
+            13: ("javascript",),
+            14: ("symbol",),
+            15: ("javascriptWithScope",),
+            16: ("int",),
+            17: ("timestamp",),
+            18: ("long",),
+            19: ("decimal",),
+            127: ("maxKey",),
         }
         if type_spec not in numeric_mapping:
-            raise ValueError('$type usa un codigo BSON no soportado')
+            raise ValueError("$type usa un codigo BSON no soportado")
         return numeric_mapping[type_spec]
     if not isinstance(type_spec, str):
-        raise ValueError('$type necesita alias string o codigo entero BSON')
+        raise ValueError("$type necesita alias string o codigo entero BSON")
     alias_mapping = {
-        'double': ('double',),
-        'string': ('string',),
-        'object': ('object',),
-        'array': ('array',),
-        'bindata': ('binData',),
-        'objectid': ('objectId',),
-        'bool': ('bool',),
-        'date': ('date',),
-        'null': ('null',),
-        'regex': ('regex',),
-        'dbpointer': ('dbPointer',),
-        'javascript': ('javascript',),
-        'symbol': ('symbol',),
-        'javascriptwithscope': ('javascriptWithScope',),
-        'minkey': ('minKey',),
-        'maxkey': ('maxKey',),
-        'int': ('int',),
-        'timestamp': ('timestamp',),
-        'long': ('long',),
-        'decimal': ('decimal',),
-        'undefined': ('undefined',),
-        'number': ('double', 'int', 'long', 'decimal'),
+        "double": ("double",),
+        "string": ("string",),
+        "object": ("object",),
+        "array": ("array",),
+        "bindata": ("binData",),
+        "objectid": ("objectId",),
+        "bool": ("bool",),
+        "date": ("date",),
+        "null": ("null",),
+        "regex": ("regex",),
+        "dbpointer": ("dbPointer",),
+        "javascript": ("javascript",),
+        "symbol": ("symbol",),
+        "javascriptwithscope": ("javascriptWithScope",),
+        "minkey": ("minKey",),
+        "maxkey": ("maxKey",),
+        "int": ("int",),
+        "timestamp": ("timestamp",),
+        "long": ("long",),
+        "decimal": ("decimal",),
+        "undefined": ("undefined",),
+        "number": ("double", "int", "long", "decimal"),
     }
     normalized = type_spec.strip().casefold()
     if normalized not in alias_mapping:
-        raise ValueError('$type usa un alias BSON no soportado')
+        raise ValueError("$type usa un alias BSON no soportado")
     return alias_mapping[normalized]
 
 
@@ -424,17 +421,17 @@ def _coerce_bitwise_mask(operand: Any) -> int:
     int64_max = (1 << 63) - 1
     operand = unwrap_bson_numeric(operand)
     if isinstance(operand, bool):
-        raise ValueError('bitwise query operators do not accept boolean masks')
+        raise ValueError("bitwise query operators do not accept boolean masks")
     if isinstance(operand, int):
         if operand < 0 or operand > int64_max:
             raise ValueError(
-                'numeric bitmasks must be non-negative signed 64-bit integers'
+                "numeric bitmasks must be non-negative signed 64-bit integers"
             )
         return operand
     if isinstance(operand, bytes):
-        return int.from_bytes(operand, byteorder='little', signed=False)
+        return int.from_bytes(operand, byteorder="little", signed=False)
     if isinstance(operand, uuid.UUID):
-        return int.from_bytes(operand.bytes, byteorder='little', signed=False)
+        return int.from_bytes(operand.bytes, byteorder="little", signed=False)
     if isinstance(operand, list):
         mask = 0
         for position in operand:
@@ -444,31 +441,29 @@ def _coerce_bitwise_mask(operand: Any) -> int:
                 or position < 0
             ):
                 raise ValueError(
-                    'bit position lists must contain non-negative integers'
+                    "bit position lists must contain non-negative integers"
                 )
             if position > 63:
                 raise ValueError(
-                    'bit position lists must target signed 64-bit integers'
+                    "bit position lists must target signed 64-bit integers"
                 )
             mask |= 1 << position
         return mask
     raise ValueError(
-        'bitwise query operators require a numeric mask, BinData, or list of bit positions'
+        "bitwise query operators require a numeric mask, BinData, or list of bit positions"
     )
 
 
 def _validate_filter_field_name(field: object) -> None:
     if not isinstance(field, str):
-        raise OperationFailure('filter field names must be strings')
+        raise OperationFailure("filter field names must be strings")
     if not field:
-        raise OperationFailure('filter field names must not be empty')
-    if '\x00' in field:
+        raise OperationFailure("filter field names must not be empty")
+    if "\x00" in field:
+        raise OperationFailure("filter field names must not contain null bytes")
+    if any(segment == "" for segment in field.split(".")):
         raise OperationFailure(
-            'filter field names must not contain null bytes'
-        )
-    if any(segment == '' for segment in field.split('.')):
-        raise OperationFailure(
-            'filter field names must not contain empty path segments'
+            "filter field names must not contain empty path segments"
         )
 
 
@@ -494,7 +489,7 @@ def _compile_field_condition(
         )
 
     if not isinstance(condition, dict) or not any(
-        isinstance(key, str) and key.startswith('$') for key in condition
+        isinstance(key, str) and key.startswith("$") for key in condition
     ):
         return EqualsCondition(
             field,
@@ -505,15 +500,14 @@ def _compile_field_condition(
 
     clauses: list[QueryNode] = []
     regex_value: Any = None
-    regex_options = ''
+    regex_options = ""
     for operator, value in condition.items():
         if not dialect.supports_query_field_operator(operator):
-            raise OperationFailure(f'Unsupported query operator: {operator}')
-        if operator == '$eq':
+            message = f"Unsupported query operator: {operator}"
+            raise server_error(message, code=2)
+        if operator == "$eq":
             if isinstance(value, Regex):
-                clauses.append(
-                    RegexCondition(field, value.pattern, value.flags)
-                )
+                clauses.append(RegexCondition(field, value.pattern, value.flags))
             elif isinstance(value, re.Pattern):
                 clauses.append(
                     RegexCondition(
@@ -531,19 +525,20 @@ def _compile_field_condition(
                         and dialect.policy.null_query_matches_undefined(),
                     )
                 )
-        elif operator == '$ne':
+        elif operator == "$ne":
             clauses.append(NotEqualsCondition(field, value))
-        elif operator == '$gt':
+        elif operator == "$gt":
             clauses.append(GreaterThanCondition(field, value))
-        elif operator == '$gte':
+        elif operator == "$gte":
             clauses.append(GreaterThanOrEqualCondition(field, value))
-        elif operator == '$lt':
+        elif operator == "$lt":
             clauses.append(LessThanCondition(field, value))
-        elif operator == '$lte':
+        elif operator == "$lte":
             clauses.append(LessThanOrEqualCondition(field, value))
-        elif operator == '$in':
+        elif operator == "$in":
             if not isinstance(value, (list, tuple)):
-                raise ValueError('$in necesita una lista')
+                message = "$in necesita una lista"
+                raise server_error(message, code=2)
             clauses.append(
                 InCondition(
                     field,
@@ -552,9 +547,10 @@ def _compile_field_condition(
                     and dialect.policy.null_query_matches_undefined(),
                 )
             )
-        elif operator == '$nin':
+        elif operator == "$nin":
             if not isinstance(value, (list, tuple)):
-                raise ValueError('$nin necesita una lista')
+                message = "$nin necesita una lista"
+                raise server_error(message, code=2)
             clauses.append(
                 NotInCondition(
                     field,
@@ -563,22 +559,22 @@ def _compile_field_condition(
                     and dialect.policy.null_query_matches_undefined(),
                 )
             )
-        elif operator == '$all':
+        elif operator == "$all":
             if not isinstance(value, (list, tuple)):
-                raise ValueError('$all necesita una lista')
+                raise ValueError("$all necesita una lista")
             clauses.append(AllCondition(field, tuple(value)))
-        elif operator == '$size':
+        elif operator == "$size":
             if (
                 not isinstance(value, int)
                 or isinstance(value, bool)
                 or value < 0
                 or value > INT32_MAX
             ):
-                raise ValueError('$size necesita un entero no negativo')
+                raise ValueError("$size necesita un entero no negativo")
             clauses.append(SizeCondition(field, value))
-        elif operator == '$mod':
+        elif operator == "$mod":
             if not isinstance(value, (list, tuple)) or len(value) != 2:
-                raise ValueError('$mod necesita una lista de dos numeros')
+                raise ValueError("$mod necesita una lista de dos numeros")
             divisor, remainder = value
             if (
                 not isinstance(divisor, (int, float))
@@ -586,15 +582,11 @@ def _compile_field_condition(
                 or not math.isfinite(divisor)
                 or divisor == 0
             ):
-                raise ValueError(
-                    '$mod necesita un divisor numerico distinto de cero'
-                )
-            if not isinstance(remainder, (int, float)) or isinstance(
-                remainder, bool
-            ):
-                raise ValueError('$mod necesita un resto numerico')
+                raise ValueError("$mod necesita un divisor numerico distinto de cero")
+            if not isinstance(remainder, (int, float)) or isinstance(remainder, bool):
+                raise ValueError("$mod necesita un resto numerico")
             clauses.append(ModCondition(field, divisor, remainder))
-        elif operator == '$regex':
+        elif operator == "$regex":
             if isinstance(value, Regex):
                 regex_value = value.pattern
                 regex_options += value.flags
@@ -604,27 +596,25 @@ def _compile_field_condition(
             else:
                 if not isinstance(value, str):
                     raise ValueError(
-                        '$regex necesita un patron string o regex compilada'
+                        "$regex necesita un patron string o regex compilada"
                     )
                 regex_value = value
-        elif operator == '$options':
+        elif operator == "$options":
             if not isinstance(value, str):
-                raise ValueError('$options necesita un string')
+                raise ValueError("$options necesita un string")
             regex_options += value
-        elif operator == '$geoWithin':
+        elif operator == "$geoWithin":
             if not isinstance(value, dict):
-                raise ValueError(
-                    '$geoWithin requires a document specification'
-                )
-            if '$geometry' in value:
+                raise ValueError("$geoWithin requires a document specification")
+            if "$geometry" in value:
                 geometry_kind, geometry = parse_geo_geometry(
-                    value['$geometry'],
-                    label='$geoWithin.$geometry',
+                    value["$geometry"],
+                    label="$geoWithin.$geometry",
                     allow_legacy_point=False,
                 )
-                if geometry_kind not in {'polygon', 'multipolygon'}:
+                if geometry_kind not in {"polygon", "multipolygon"}:
                     raise OperationFailure(
-                        '$geoWithin.$geometry only supports Polygon or MultiPolygon in the local runtime'
+                        "$geoWithin.$geometry only supports Polygon or MultiPolygon in the local runtime"
                     )
                 clauses.append(
                     GeoWithinCondition(
@@ -633,26 +623,24 @@ def _compile_field_condition(
                         geometry,
                     )
                 )
-            elif '$box' in value:
+            elif "$box" in value:
                 clauses.append(
                     GeoWithinCondition(
                         field,
-                        'box',
-                        parse_geo_box(value['$box'], label='$geoWithin.$box'),
+                        "box",
+                        parse_geo_box(value["$box"], label="$geoWithin.$box"),
                     )
                 )
             else:
                 raise OperationFailure(
-                    '$geoWithin supports only $geometry Polygon or legacy $box in the local runtime'
+                    "$geoWithin supports only $geometry Polygon or legacy $box in the local runtime"
                 )
-        elif operator == '$geoIntersects':
-            if not isinstance(value, dict) or '$geometry' not in value:
-                raise ValueError(
-                    '$geoIntersects requires a $geometry document'
-                )
+        elif operator == "$geoIntersects":
+            if not isinstance(value, dict) or "$geometry" not in value:
+                raise ValueError("$geoIntersects requires a $geometry document")
             geometry_kind, geometry = parse_geo_geometry(
-                value['$geometry'],
-                label='$geoIntersects.$geometry',
+                value["$geometry"],
+                label="$geoIntersects.$geometry",
                 allow_legacy_point=False,
             )
             clauses.append(
@@ -662,24 +650,24 @@ def _compile_field_condition(
                     geometry,
                 )
             )
-        elif operator in {'$near', '$nearSphere'}:
+        elif operator in {"$near", "$nearSphere"}:
             min_distance: float | None = None
             max_distance: float | None = None
             if isinstance(value, dict):
-                if '$geometry' not in value:
+                if "$geometry" not in value:
                     raise ValueError(
-                        f'{operator} requires a $geometry point in the local runtime'
+                        f"{operator} requires a $geometry point in the local runtime"
                     )
                 point = parse_geo_point(
-                    value['$geometry'], label=f'{operator}.$geometry'
+                    value["$geometry"], label=f"{operator}.$geometry"
                 )
-                if '$minDistance' in value:
+                if "$minDistance" in value:
                     min_distance = _coerce_geo_distance(
-                        value['$minDistance'], label=f'{operator}.$minDistance'
+                        value["$minDistance"], label=f"{operator}.$minDistance"
                     )
-                if '$maxDistance' in value:
+                if "$maxDistance" in value:
                     max_distance = _coerce_geo_distance(
-                        value['$maxDistance'], label=f'{operator}.$maxDistance'
+                        value["$maxDistance"], label=f"{operator}.$maxDistance"
                     )
             else:
                 point = parse_geo_point(value, label=operator)
@@ -689,19 +677,18 @@ def _compile_field_condition(
                     point,
                     min_distance=min_distance,
                     max_distance=max_distance,
-                    spherical=operator == '$nearSphere',
+                    spherical=operator == "$nearSphere",
                 )
             )
-        elif operator == '$not':
+        elif operator == "$not":
             if (
                 not isinstance(value, dict)
                 or not value
                 or not all(
-                    isinstance(key, str) and key.startswith('$')
-                    for key in value
+                    isinstance(key, str) and key.startswith("$") for key in value
                 )
             ):
-                raise ValueError('$not necesita una expresion de operador')
+                raise ValueError("$not necesita una expresion de operador")
             clauses.append(
                 NotCondition(
                     _compile_field_condition(
@@ -712,16 +699,16 @@ def _compile_field_condition(
                     )
                 )
             )
-        elif operator == '$elemMatch':
+        elif operator == "$elemMatch":
             if not isinstance(value, dict):
-                raise ValueError('$elemMatch necesita una expresion de filtro')
+                raise ValueError("$elemMatch necesita una expresion de filtro")
             operator_keys = query_operator_keys(value)
             compiled_plan: QueryNode | None = None
             wrap_value = False
             try:
                 if operator_keys and len(operator_keys) == len(value):
                     compiled_plan = _compile_field_condition(
-                        'value',
+                        "value",
                         value,
                         dialect=dialect,
                         depth=depth + 1,
@@ -747,12 +734,12 @@ def _compile_field_condition(
                     wrap_value=wrap_value,
                 )
             )
-        elif operator == '$exists':
+        elif operator == "$exists":
             clauses.append(ExistsCondition(field, bool(value)))
-        elif operator == '$type':
+        elif operator == "$type":
             if isinstance(value, (list, tuple)):
                 if not value:
-                    raise ValueError('$type necesita al menos un tipo')
+                    raise ValueError("$type necesita al menos un tipo")
                 compiled_values = tuple(value)
                 clauses.append(
                     TypeCondition(
@@ -770,10 +757,10 @@ def _compile_field_condition(
                     )
                 )
         elif operator in {
-            '$bitsAllSet',
-            '$bitsAnySet',
-            '$bitsAllClear',
-            '$bitsAnyClear',
+            "$bitsAllSet",
+            "$bitsAnySet",
+            "$bitsAllClear",
+            "$bitsAnyClear",
         }:
             clauses.append(
                 BitwiseCondition(
@@ -781,10 +768,12 @@ def _compile_field_condition(
                 )
             )
         else:
-            raise OperationFailure(f'Unsupported query operator: {operator}')
+            message = f"Unsupported query operator: {operator}"
+            raise server_error(message, code=2)
 
     if regex_options and regex_value is None:
-        raise OperationFailure('$options requires $regex')
+        message = "$options requires $regex"
+        raise server_error(message, code=2)
     if regex_value is not None:
         clauses.append(RegexCondition(field, regex_value, regex_options))
 
@@ -812,7 +801,7 @@ def compile_filter(
     except (OperationFailure, ValueError, TypeError) as exc:
         if planning_mode is PlanningMode.RELAXED:
             return DeferredQueryNode(
-                PlanningIssue(scope='query', message=str(exc))
+                PlanningIssue(scope="query", message=error_message(exc))
             )
         raise
 
@@ -826,11 +815,12 @@ def _compile_filter_strict(
     depth: int = 0,
 ) -> QueryNode:
     if depth > 100:
-        raise OperationFailure('query filter exceeds maximum nesting depth')
+        raise OperationFailure("query filter exceeds maximum nesting depth")
     if filter_spec is None:
         return MatchAll()
     if not isinstance(filter_spec, dict):
-        raise ValueError('filter_spec must be a document')
+        message = "filter_spec must be a document"
+        raise server_error(message, code=2)
     if not filter_spec:
         return MatchAll()
 
@@ -838,41 +828,47 @@ def _compile_filter_strict(
     for key, value in filter_spec.items():
         if (
             isinstance(key, str)
-            and key.startswith('$')
+            and key.startswith("$")
             and not dialect.supports_query_top_level_operator(key)
         ):
-            raise OperationFailure(
-                f'Unsupported top-level query operator: {key}'
-            )
-        if key == '$comment':
+            message = f"Unsupported top-level query operator: {key}"
+            raise server_error(message, code=2)
+        if key == "$comment":
             continue
-        if key == '$expr':
-            clauses.append(
-                ExprCondition(value)
+        if key == "$expr":
+            from mongoeco.core.aggregation.preparation import (  # noqa: PLC0415 - expression/query preparation cycle
+                prepare_expression,
             )
+
+            prepare_expression(
+                value,
+                dialect=dialect,
+                variables=None if variables is None else set(variables),
+                fold_constants=True,
+                document_code=15983,
+            )
+            clauses.append(ExprCondition(value))
             continue
-        if key == '$where':
+        if key == "$where":
             clauses.append(_compile_where_condition(value))
             continue
-        if key == '$jsonSchema':
+        if key == "$jsonSchema":
             if not isinstance(value, dict):
-                raise OperationFailure(
-                    '$jsonSchema validator must be a document'
-                )
+                raise OperationFailure("$jsonSchema validator must be a document")
             from mongoeco.core.schema_validation import CompiledJsonSchema
 
             CompiledJsonSchema(value)
             clauses.append(
-                JsonSchemaCondition(
-                    value, compiled_schema=CompiledJsonSchema(value)
-                )
+                JsonSchemaCondition(value, compiled_schema=CompiledJsonSchema(value))
             )
             continue
-        if key == '$and':
+        if key == "$and":
             if not isinstance(value, list):
-                raise ValueError('$and necesita una lista de filtros')
+                message = "$and necesita una lista de filtros"
+                raise server_error(message, code=2)
             if not value:
-                raise ValueError('$and debe recibir una lista no vacia')
+                message = "$and debe recibir una lista no vacia"
+                raise server_error(message, code=2)
             clauses.append(
                 AndCondition(
                     tuple(
@@ -888,11 +884,13 @@ def _compile_filter_strict(
                 )
             )
             continue
-        if key == '$or':
+        if key == "$or":
             if not isinstance(value, list):
-                raise ValueError('$or necesita una lista de filtros')
+                message = "$or necesita una lista de filtros"
+                raise server_error(message, code=2)
             if not value:
-                raise ValueError('$or debe recibir una lista no vacia')
+                message = "$or debe recibir una lista no vacia"
+                raise server_error(message, code=2)
             clauses.append(
                 OrCondition(
                     tuple(
@@ -908,11 +906,13 @@ def _compile_filter_strict(
                 )
             )
             continue
-        if key == '$nor':
+        if key == "$nor":
             if not isinstance(value, list):
-                raise ValueError('$nor necesita una lista de filtros')
+                message = "$nor necesita una lista de filtros"
+                raise server_error(message, code=2)
             if not value:
-                raise ValueError('$nor debe recibir una lista no vacia')
+                message = "$nor debe recibir una lista no vacia"
+                raise server_error(message, code=2)
             clauses.append(
                 NotCondition(
                     OrCondition(
@@ -930,10 +930,9 @@ def _compile_filter_strict(
                 )
             )
             continue
-        if isinstance(key, str) and key.startswith('$'):
-            raise OperationFailure(
-                f'Unsupported top-level query operator: {key}'
-            )
+        if isinstance(key, str) and key.startswith("$"):
+            message = f"Unsupported top-level query operator: {key}"
+            raise server_error(message, code=2)
         _validate_filter_field_name(key)
         clauses.append(
             _compile_field_condition(key, value, dialect=dialect, depth=depth)
@@ -973,5 +972,9 @@ def _coerce_geo_distance(value: Any, *, label: str) -> float:
         or not math.isfinite(value)
         or value < 0
     ):
-        raise OperationFailure(f'{label} must be a non-negative finite number')
+        raise OperationFailure(f"{label} must be a non-negative finite number")
     return float(value)
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable

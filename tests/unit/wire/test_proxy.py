@@ -95,7 +95,7 @@ class WireProxyUnitTests(unittest.TestCase):
             _validate("createIndexes", {}, {"createIndexes": "events", "indexes": "bad"})
         with self.assertRaisesRegex(OperationFailure, "wire dropIndexes comment must be a string"):
             _validate("dropIndexes", {}, {"dropIndexes": "events", "index": "*", "comment": 1})
-        with self.assertRaisesRegex(OperationFailure, "wire findAndModify let must be a dict"):
+        with self.assertRaisesRegex(OperationFailure, "let must be a document"):
             _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "let": []})
         with self.assertRaisesRegex(OperationFailure, "wire listCollections comment must be a string"):
             _validate("listCollections", {}, {"listCollections": 1, "comment": 1})
@@ -1562,7 +1562,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire findAndModify let must be a dict"):
+        with self.assertRaisesRegex(OperationFailure, "let must be a document"):
             await proxy._executor.execute_command(
                 {"findAndModify": "events", "query": {}, "update": {"$set": {"a": 1}}, "let": 1, "$db": "alpha"},
                 connection=connection,
@@ -2227,7 +2227,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             ({"listIndexes": "events", "comment": 1, "$db": "alpha"}, "wire listIndexes comment must be a string"),
             ({"createIndexes": "events", "indexes": [{"key": {"title": 1}, "name": "x"}], "maxTimeMS": -1, "$db": "alpha"}, r"wire createIndexes max_time_ms must be >= 0"),
             ({"dropIndexes": "events", "index": "x", "comment": 1, "$db": "alpha"}, "wire dropIndexes comment must be a string"),
-            ({"findAndModify": "events", "query": {}, "let": [], "$db": "alpha"}, "wire findAndModify let must be a dict"),
+            ({"findAndModify": "events", "query": {}, "let": [], "$db": "alpha"}, "let must be a document"),
         ]
 
         for body, message in cases:

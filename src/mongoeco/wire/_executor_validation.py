@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from mongoeco.api._command_bson import validate_command_let
 from mongoeco.api.admin_parsing import (
     normalize_command_batch_size,
     normalize_command_hint,
@@ -390,9 +391,7 @@ def _validate_find_and_modify(_body: dict[str, Any], command_document: dict[str,
         normalize_command_max_time_ms(command_document.get("maxTimeMS"))
     except (TypeError, ValueError, OperationFailure) as exc:
         _raise_wire_shape_error("findAndModify", str(exc))
-    let = command_document.get("let")
-    if let is not None and not isinstance(let, dict):
-        raise OperationFailure("wire findAndModify let must be a dict")
+    validate_command_let(command_document.get("let"))
 
 
 def _make_collection_name_validator(command_name: str) -> _WireValidator:

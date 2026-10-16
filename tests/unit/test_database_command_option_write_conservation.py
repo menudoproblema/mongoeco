@@ -20,6 +20,8 @@ from mongoeco.wire import AsyncMongoEcoProxyServer
 ENGINE_TYPES = [MemoryEngine, SQLiteEngine]
 SURFACES = ["api", "wire"]
 VALIDATION_ERROR_CODE = 121
+TYPE_MISMATCH_CODE = 14
+UNKNOWN_FIELD_CODE = 40415
 
 Command = Callable[[dict[str, object]], Awaitable[dict[str, Any]]]
 
@@ -197,8 +199,28 @@ def test_bypass_document_validation_changes_schema_enforcement(
         target_id = 2 if command_name == "insert" else 1
         found = await execute({"find": "items", "filter": {"_id": target_id}})
         assert found["cursor"]["firstBatch"] == [{"_id": target_id}]
-        with pytest.raises((TypeError, ValueError, OperationFailure)):
-            await execute({**request, "bypassDocumentValidation": 1})
+        numeric_request = dict(request)
+        if command_name == "insert":
+            numeric_request["documents"] = [{"_id": 3}]
+            expected_numeric = {"_id": 3}
+        elif command_name == "update":
+            numeric_request["updates"] = [{"q": {"_id": 1}, "u": {"$set": {"name": 3}}}]
+            expected_numeric = {"_id": 1, "name": 3}
+        else:
+            numeric_request["update"] = {"$set": {"name": 3}}
+            expected_numeric = {"_id": 1, "name": 3}
+        numeric_result = await execute(
+            {**numeric_request, "bypassDocumentValidation": 1}
+        )
+        assert numeric_result["ok"] == 1.0
+        assert not numeric_result.get("writeErrors")
+        numeric_found = await execute(
+            {"find": "items", "filter": {"_id": expected_numeric["_id"]}}
+        )
+        assert numeric_found["cursor"]["firstBatch"] == [expected_numeric]
+        with pytest.raises(OperationFailure) as malformed:
+            await execute({**request, "bypassDocumentValidation": "yes"})
+        assert malformed.value.code == TYPE_MISMATCH_CODE
 
     asyncio.run(with_command(engine_type, surface, exercise))
 
@@ -545,7 +567,7 @@ def test_ordered_write_batch_rejects_wrong_type_before_mutation(
 @pytest.mark.parametrize("engine_type", ENGINE_TYPES)
 @pytest.mark.parametrize("surface", SURFACES)
 @pytest.mark.parametrize("command_name", ["update", "delete"])
-def test_command_let_controls_write_filter_and_spec_override(
+def test_command_let_controls_write_filter_and_rejects_spec_override(
     engine_type: type[MemoryEngine | SQLiteEngine],
     surface: str,
     command_name: str,
@@ -604,7 +626,22 @@ def test_command_let_controls_write_filter_and_spec_override(
                 "deletes": [{"q": query, "limit": 1, "let": {"target": "click"}}],
                 "let": {"target": "view"},
             }
-        await execute(override)
+        with pytest.raises(OperationFailure) as invalid_entry:
+            await execute(override)
+        assert invalid_entry.value.code == UNKNOWN_FIELD_CODE
+        rejected = await execute({"find": "items", "sort": {"_id": 1}})
+        assert rejected["cursor"]["firstBatch"] == documents
+        # Bindings can be changed for the next command, at the command level.
+        spec_name = "updates" if command_name == "update" else "deletes"
+        valid_override = {**override, "let": {"target": "click"}}
+        valid_override[spec_name] = [
+            {
+                key: value
+                for key, value in override[spec_name][0].items()
+                if key != "let"
+            }
+        ]
+        await execute(valid_override)
         after_override = await execute({"find": "items", "sort": {"_id": 1}})
         if command_name == "update":
             values = [row["selected"] for row in after_override["cursor"]["firstBatch"]]
@@ -615,12 +652,14 @@ def test_command_let_controls_write_filter_and_spec_override(
         else:
             assert after_override["cursor"]["firstBatch"] == []
 
-        with pytest.raises((TypeError, ValueError)):
+        with pytest.raises(OperationFailure) as invalid_command:
             await execute({**request, "let": "view"})
+        assert invalid_command.value.code == TYPE_MISMATCH_CODE
         malformed = dict(override)
         spec_name = "updates" if command_name == "update" else "deletes"
         malformed[spec_name] = [{**override[spec_name][0], "let": "click"}]
-        with pytest.raises(OperationFailure):
+        with pytest.raises(OperationFailure) as invalid_spec:
             await execute(malformed)
+        assert invalid_spec.value.code == UNKNOWN_FIELD_CODE
 
     asyncio.run(with_command(engine_type, surface, exercise))

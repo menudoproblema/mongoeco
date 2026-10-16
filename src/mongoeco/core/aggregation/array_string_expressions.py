@@ -17,9 +17,10 @@ from mongoeco.core.bson_scalars import INT32_MAX, INT32_MIN, unwrap_bson_numeric
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.server_errors import server_error
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Decimal128, Document, Regex, SortSpec, UndefinedType
+from mongoeco.types import Decimal128, Document, Regex, SortSpec
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
@@ -84,6 +85,9 @@ def array_variable_names(
 ) -> dict[str, str]:
     """Validate the array frame once, including expressions over no rows."""
     if not dialect.behavior_flag("supports_array_index_variables", default=False):
+        if isinstance(spec, dict) and "as" in spec and not isinstance(spec["as"], str):
+            message = f"{operator} as must name a user variable"
+            raise server_error(message, code=9)
         return {}
     required = {
         "$map": {"input", "in"},
@@ -246,10 +250,9 @@ def evaluate_array_string_expression(
             operator, [spec] if not isinstance(spec, list) else spec, 1, 1
         )
         value = evaluate_expression(document, args[0], variables)
-        if value is None:
-            return None
         if not isinstance(value, list):
-            raise OperationFailure("$size requires an array value")
+            message = "$size requires an array value"
+            raise server_error(message, code=17124)
         return len(value)
 
     if operator == "$arrayElemAt":
@@ -259,9 +262,11 @@ def evaluate_array_string_expression(
         if values is None or index is None:
             return None
         if not isinstance(values, list):
-            raise OperationFailure("$arrayElemAt requires an array as first argument")
+            message = "$arrayElemAt requires an array as first argument"
+            raise server_error(message, code=28689)
         if not isinstance(index, int) or isinstance(index, bool):
-            raise OperationFailure("$arrayElemAt requires an integer index")
+            message = "$arrayElemAt requires an integer index"
+            raise server_error(message, code=28690)
         if index < 0:
             index += len(values)
         if index < 0 or index >= len(values):
@@ -285,7 +290,8 @@ def evaluate_array_string_expression(
             if value is None:
                 return None
             if not isinstance(value, str):
-                raise OperationFailure("$concat requires string arguments")
+                message = "$concat requires string arguments"
+                raise server_error(message, code=16702)
             parts.append(value)
         return "".join(parts)
 
@@ -390,7 +396,8 @@ def evaluate_array_string_expression(
         if source is None or delimiter is None:
             return None
         if not isinstance(source, str) or not isinstance(delimiter, str):
-            raise OperationFailure("$split requires string arguments")
+            message = "$split requires string arguments"
+            raise server_error(message, code=40085)
         if delimiter == "":
             raise OperationFailure("$split delimiter must not be an empty string")
         return source.split(delimiter)
@@ -821,7 +828,17 @@ def evaluate_array_string_expression(
 
 def _require_array(operator: str, value: object) -> list[Any]:
     if not isinstance(value, list):
-        raise OperationFailure(f"{operator} requires array arguments")
+        message = f"{operator} requires array arguments"
+        raise server_error(
+            message,
+            code={
+                "$concatArrays": 28664,
+                "$map": 16883,
+                "$filter": 28651,
+                "$reduce": 40080,
+                "$in": 40081,
+            }.get(operator, 28689),
+        )
     return value
 
 
@@ -992,7 +1009,11 @@ def _compile_aggregation_regex(
             if option not in supported:
                 raise OperationFailure(f"Unsupported regex option: {option}")
             flags |= supported[option]
-    return re.compile(pattern, flags)
+    try:
+        return re.compile(pattern, flags)
+    except re.error as error:
+        message = f"Invalid Regex in {operator}: {error}"
+        raise server_error(message, code=51111) from error
 
 
 def _build_regex_match_result(match: re.Match[str]) -> dict[str, Any]:

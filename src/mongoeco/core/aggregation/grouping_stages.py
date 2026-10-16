@@ -758,7 +758,7 @@ class _IncrementalGroup:
             (
                 self._first_positions[group_key],
                 group_key,
-                _finalize_accumulators(bucket),
+                _finalize_accumulators(bucket, group_dialect=self._dialect),
             )
             for group_key, bucket in iter_with_deadline(
                 self._groups.items(),

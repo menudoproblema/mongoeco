@@ -1,4 +1,3 @@
-import re
 from collections.abc import Mapping
 from typing import Any, assert_never
 
@@ -6,7 +5,6 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_matching import FilteringMatchingMixin
 from mongoeco.core._filtering_specials import FilteringSpecialOperatorsMixin
 from mongoeco.core._filtering_support import (
-    compile_regex as _compile_regex,
     extract_values as _extract_values,
     get_field_value as _get_field_value,
     hashable_in_lookup_key as _hashable_in_lookup_key,
@@ -20,7 +18,6 @@ from mongoeco.core.geo import (
     parse_geo_geometry,
     planar_distance_to_geometry,
 )
-from mongoeco.errors import OperationFailure
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
@@ -53,6 +50,7 @@ from mongoeco.core.query_plan import (
     compile_filter,
     is_concrete_query_node,
 )
+from mongoeco.errors import OperationFailure
 
 
 HANDLED_QUERY_NODE_TYPES: tuple[type[QueryNode], ...] = (
@@ -172,7 +170,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
     ) -> bool:
         return QueryEngine.match_plan(
             document,
-            compile_filter(filter_spec, dialect=dialect),
+            compile_filter(filter_spec, dialect=dialect, variables=variables or {}),
             dialect=dialect,
             collation=collation,
             variables=variables,
@@ -197,7 +195,9 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                 raise OperationFailure(
                     f"query plan contains deferred validation issues: {issue.message}"
                 )
-            case EqualsCondition(field=field, value=value, null_matches_undefined=null_matches_undefined):
+            case EqualsCondition(
+                field=field, value=value, null_matches_undefined=null_matches_undefined
+            ):
                 return QueryEngine._evaluate_equals(
                     document,
                     field,
@@ -250,7 +250,11 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                     dialect=dialect,
                     collation=collation,
                 )
-            case InCondition(field=field, values=values, null_matches_undefined=null_matches_undefined):
+            case InCondition(
+                field=field,
+                values=values,
+                null_matches_undefined=null_matches_undefined,
+            ):
                 return QueryEngine._evaluate_in(
                     document,
                     field,
@@ -259,7 +263,11 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                     dialect=dialect,
                     collation=collation,
                 )
-            case NotInCondition(field=field, values=values, null_matches_undefined=null_matches_undefined):
+            case NotInCondition(
+                field=field,
+                values=values,
+                null_matches_undefined=null_matches_undefined,
+            ):
                 return QueryEngine._evaluate_not_in(
                     document,
                     field,
@@ -282,10 +290,18 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                 return QueryEngine._evaluate_mod(document, field, divisor, remainder)
             case RegexCondition(field=field, pattern=pattern, options=options):
                 return QueryEngine._evaluate_regex(document, field, pattern, options)
-            case GeoWithinCondition(field=field, geometry_kind=geometry_kind, geometry=geometry):
-                return QueryEngine._evaluate_geo_within(document, field, geometry_kind, geometry)
-            case GeoIntersectsCondition(field=field, geometry_kind=geometry_kind, geometry=geometry):
-                return QueryEngine._evaluate_geo_intersects(document, field, geometry_kind, geometry)
+            case GeoWithinCondition(
+                field=field, geometry_kind=geometry_kind, geometry=geometry
+            ):
+                return QueryEngine._evaluate_geo_within(
+                    document, field, geometry_kind, geometry
+                )
+            case GeoIntersectsCondition(
+                field=field, geometry_kind=geometry_kind, geometry=geometry
+            ):
+                return QueryEngine._evaluate_geo_intersects(
+                    document, field, geometry_kind, geometry
+                )
             case NearCondition(
                 field=field,
                 point=point,
@@ -330,13 +346,24 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
             case ExistsCondition(field=field, value=value):
                 return QueryEngine._evaluate_exists(document, field, value)
             case TypeCondition(field=field, values=values, aliases=aliases):
-                return QueryEngine._evaluate_type(document, field, values, aliases=aliases)
-            case BitwiseCondition(field=field, operator=operator, operand=operand, mask=mask):
-                return QueryEngine._evaluate_bitwise(document, field, operator, operand, mask=mask)
+                return QueryEngine._evaluate_type(
+                    document, field, values, aliases=aliases
+                )
+            case BitwiseCondition(
+                field=field, operator=operator, operand=operand, mask=mask
+            ):
+                return QueryEngine._evaluate_bitwise(
+                    document, field, operator, operand, mask=mask
+                )
             case ExprCondition(expression=expression):
-                from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
+                from mongoeco.core.aggregation import (
+                    _expression_truthy,
+                    evaluate_expression,
+                )
 
-                value = evaluate_expression(document, expression, variables, dialect=dialect)
+                value = evaluate_expression(
+                    document, expression, variables, dialect=dialect
+                )
                 return _expression_truthy(value, dialect=dialect)
             case WhereCondition(
                 expression=expression,
@@ -364,7 +391,11 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
             case JsonSchemaCondition(schema=schema, compiled_schema=compiled_schema):
                 from mongoeco.core.schema_validation import CompiledJsonSchema
 
-                validator = compiled_schema if compiled_schema is not None else CompiledJsonSchema(schema)
+                validator = (
+                    compiled_schema
+                    if compiled_schema is not None
+                    else CompiledJsonSchema(schema)
+                )
                 return validator.validate(document).valid
             case AndCondition(clauses=clauses):
                 return all(

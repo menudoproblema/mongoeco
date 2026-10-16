@@ -1595,7 +1595,7 @@ async def assert_database_command_rejects_invalid_command_shapes(
             await _maybe_await(
                 client.alpha.command({"count": "events", "limit": -1}),
             )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
+        with case.assertRaises(OperationFailure) as error:
             await _maybe_await(
                 client.alpha.command(
                     {
@@ -1606,6 +1606,7 @@ async def assert_database_command_rejects_invalid_command_shapes(
                     },
                 ),  # type: ignore[arg-type]
             )
+        case.assertEqual(error.exception.code, 14)
         with case.assertRaises(OperationFailure):
             await _maybe_await(client.alpha.command({"findAndModify": "events"}))
         with case.assertRaises(TypeError):

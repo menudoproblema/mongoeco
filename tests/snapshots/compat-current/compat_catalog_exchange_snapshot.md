@@ -554,7 +554,7 @@
 ### `delete`
 - `ordered`: `status`="effective", `note`="Controls short-circuiting when one delete specification fails."
 - `comment`: `status`="effective", `note`="Recorded in engine session metadata for the write command."
-- `let`: `status`="effective", `note`="Propagated into per-delete filters through $expr when supplied on individual specs."
+- `let`: `status`="effective", `note`="Command-level bindings are propagated into every delete filter through $expr."
 
 ### `distinct`
 - `query`: `status`="effective", `note`="Compiled into the same local selection path used to enumerate distinct values."
@@ -620,7 +620,7 @@
 ### `update`
 - `ordered`: `status`="effective", `note`="Controls short-circuiting when one update specification fails."
 - `comment`: `status`="effective", `note`="Recorded in engine session metadata for the write command."
-- `let`: `status`="effective", `note`="Propagated into per-update filters through $expr when supplied on individual specs."
+- `let`: `status`="effective", `note`="Command-level bindings are propagated into every update filter through $expr."
 - `bypassDocumentValidation`: `status`="effective", `note`="Validated and propagated through replacement/update command routing."
 - `arrayFilters`: `status`="effective", `note`="Applied through per-update write execution for supported filtered positional paths."
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import re
 
 from collections.abc import Mapping
 from copy import deepcopy
@@ -34,12 +35,15 @@ RESULT_FIELDS = (
     "upserted_ids",
 )
 BULK_COUNTS = ("nInserted", "nMatched", "nModified", "nRemoved", "nUpserted")
+DUPLICATE_KEY_CODE = 11000
 
 
 class BSONObservation:
     """Preserve BSON scalar types and embedded order; bind generated IDs bijectively."""
 
-    def __init__(self, explicit: Any):
+    def __init__(self, explicit: Any, *, namespace=None, error_contract=False):
+        self.namespace = namespace
+        self.error_contract = error_contract
         self.explicit = set()
         self.generated: dict[ObjectId, str] = {}
         self._collect(explicit)
@@ -79,6 +83,8 @@ class BSONObservation:
 
 
 def public_result(result, bson):
+    if isinstance(result, list):
+        return {"documents": bson.documents(result)}
     if isinstance(result, (bool, int, float)):
         return {"value": bson.value(result)}
     if result is None or isinstance(result, Mapping):
@@ -98,7 +104,7 @@ def public_result(result, bson):
     return output
 
 
-def public_error(error, bson):
+def public_error(error, bson, *, command_namespace=None):
     if getattr(error, "timeout", False):
         raise error
     family = next(
@@ -132,14 +138,124 @@ def public_error(error, bson):
             ]
         ),
     }
+    if command_namespace is not None:
+        observation["command_details"] = command_error_details(
+            error, bson, command_namespace
+        )
     if isinstance(error, errors.BulkWriteError):
+        observation["write_concern_errors"] = {
+            "present": "writeConcernErrors" in details,
+            "value": bson.value(details.get("writeConcernErrors")),
+        }
+        observation["write_error_messages"] = [
+            error_message_shape(entry) for entry in details.get("writeErrors", [])
+        ]
         observation["write_error_operations"] = error_operations(details, bson)
         observation["partial"] = {key: details.get(key, 0) for key in BULK_COUNTS}
         observation["partial"]["upserted"] = [
             [item["index"], bson.value(item["_id"])]
             for item in details.get("upserted", [])
         ]
+    if bson.error_contract:
+        observation["details"] = error_document_contract(
+            getattr(error, "details", None), bson
+        )
     return observation
+
+
+def error_message_shape(document):
+    message = document.get("errmsg")
+    return {
+        "present": "errmsg" in document,
+        "type": type(message).__name__,
+        "nonempty": isinstance(message, str) and bool(message),
+        "formatted_exception": isinstance(message, str) and ", full error:" in message,
+    }
+
+
+def error_document_contract(document, bson):
+    """Retain every field and BSON value, projecting diagnostic text separately."""
+    if not isinstance(document, Mapping):
+        return {"state": "none" if document is None else type(document).__name__}
+    fields = {}
+    for key, value in sorted(document.items()):
+        if key == "errmsg":
+            fields[key] = error_message_shape(document)
+        elif key in {"writeErrors", "writeConcernErrors"} and isinstance(value, list):
+            fields[key] = [error_document_contract(entry, bson) for entry in value]
+        else:
+            fields[key] = bson.value(value)
+    result = {"state": "document" if document else "empty", "fields": fields}
+    if document.get("code") == DUPLICATE_KEY_CODE:
+        result["duplicate_diagnostic"] = duplicate_diagnostic(document, bson.namespace)
+    return result
+
+
+def duplicate_diagnostic(document, namespace):
+    """Retain duplicate diagnostics while normalizing only the database namespace."""
+    message = document.get("errmsg")
+    match = re.fullmatch(
+        r"(.*?)E11000 duplicate key error collection: (.*?) index: (.*?) dup key: (.*)",
+        message if isinstance(message, str) else "",
+        re.DOTALL,
+    )
+    if match is None:
+        return {"valid": False}
+    return {
+        "valid": True,
+        "prefix": match[1],
+        "namespace_matches": match[2] == namespace,
+        "index": match[3],
+        "key": match[4],
+    }
+
+
+def command_error_details(error, bson, namespace):
+    """Observe the command envelope, including absent, empty and malformed details."""
+    details = getattr(error, "details", None)
+    if not isinstance(details, Mapping):
+        return {"state": "none" if details is None else type(details).__name__}
+    message = details.get("errmsg")
+    result = {
+        "state": "document" if details else "empty",
+        "fields": {
+            key: {"present": key in details, "value": bson.value(details[key])}
+            if key in details
+            else {"present": False}
+            for key in (
+                "ok",
+                "code",
+                "codeName",
+                "keyPattern",
+                "keyValue",
+                "hexEncoded",
+                "collation",
+            )
+        },
+        "errmsg": {
+            "present": "errmsg" in details,
+            "type": type(message).__name__,
+            "nonempty": isinstance(message, str) and bool(message),
+        },
+    }
+    if getattr(error, "code", None) == DUPLICATE_KEY_CODE:
+        match = re.fullmatch(
+            r"Plan executor error during findAndModify :: caused by :: "
+            r"E11000 duplicate key error collection: (.*?) index: (.*?) dup key: (.*)",
+            message if isinstance(message, str) else "",
+            re.DOTALL,
+        )
+        result["duplicate_message"] = (
+            {
+                "valid": True,
+                "namespace_matches": match[1] == namespace,
+                "index": match[2],
+                "key": match[3],
+            }
+            if match
+            else {"valid": False}
+        )
+    return result
 
 
 def error_operations(details, bson):
@@ -188,7 +304,15 @@ def _observation(request, result, error, bson, documents):
         "documents": bson.documents(documents),
     }
     output["error" if error else "result"] = (
-        public_error(error, bson) if error else public_result(result, bson)
+        public_error(
+            error,
+            bson,
+            command_namespace=bson.namespace
+            if request.method.startswith("find_one_and_")
+            else None,
+        )
+        if error
+        else public_result(result, bson)
     )
     caller = _caller(request, bson)
     if caller is not None:
@@ -196,10 +320,16 @@ def _observation(request, result, error, bson, documents):
     return output
 
 
-def observe_write_case(database, name, case: WriteCase, *, existing=False):
+def observe_write_case(
+    database, name, case: WriteCase, *, existing=False, error_contract=False
+):
     """Run a specimen via a synchronous public collection; transport failures escape."""
     case = deepcopy(case)
-    bson = BSONObservation([case.documents, [r.args for r in case.requests]])
+    bson = BSONObservation(
+        [case.documents, [r.args for r in case.requests]],
+        namespace=f"{database.name}.{name}",
+        error_contract=error_contract,
+    )
     collection = (
         database[name] if existing else database.create_collection(name, **case.options)
     )
@@ -212,9 +342,16 @@ def observe_write_case(database, name, case: WriteCase, *, existing=False):
     for request in case.requests:
         result = error = None
         try:
-            result = getattr(collection, request.method)(
-                *request.args, **request.kwargs
-            )
+            if request.method == "command":
+                command = deepcopy(request.args[0])
+                command[next(iter(command))] = name
+                result = raw_result(database.command(command), bson)
+            else:
+                result = getattr(collection, request.method)(
+                    *request.args, **request.kwargs
+                )
+                if request.method == "aggregate":
+                    result = list(result)
         except SEMANTIC_ERRORS as exc:
             error = exc
         _probe(case, request)
@@ -223,10 +360,16 @@ def observe_write_case(database, name, case: WriteCase, *, existing=False):
     return observations
 
 
-async def observe_async_write_case(database, name, case: WriteCase, *, existing=False):
+async def observe_async_write_case(
+    database, name, case: WriteCase, *, existing=False, error_contract=False
+):
     """Run the identical specimen via an asynchronous public collection."""
     case = deepcopy(case)
-    bson = BSONObservation([case.documents, [r.args for r in case.requests]])
+    bson = BSONObservation(
+        [case.documents, [r.args for r in case.requests]],
+        namespace=f"{database.name}.{name}",
+        error_contract=error_contract,
+    )
     collection = (
         database[name]
         if existing
@@ -241,9 +384,16 @@ async def observe_async_write_case(database, name, case: WriteCase, *, existing=
     for request in case.requests:
         result = error = None
         try:
-            result = await getattr(collection, request.method)(
-                *request.args, **request.kwargs
-            )
+            if request.method == "command":
+                command = deepcopy(request.args[0])
+                command[next(iter(command))] = name
+                result = raw_result(await database.command(command), bson)
+            else:
+                result = await getattr(collection, request.method)(
+                    *request.args, **request.kwargs
+                )
+                if request.method == "aggregate":
+                    result = await result.to_list()
         except SEMANTIC_ERRORS as exc:
             error = exc
         _probe(case, request)
@@ -335,9 +485,13 @@ def raw_result(result, bson):
     """Project stable command data, excluding explanatory text and server clocks."""
     output = {key: result[key] for key in ("ok", "n", "nModified") if key in result}
     if "writeErrors" in result:
+        if bson.error_contract:
+            output["write_error_documents"] = [
+                error_document_contract(entry, bson) for entry in result["writeErrors"]
+            ]
         output["write_error_operations"] = error_operations(result, bson)
         output["write_errors"] = [
-            [e["index"], e["code"]] for e in result["writeErrors"]
+            [e.get("index"), e.get("code")] for e in result["writeErrors"]
         ]
     if "value" in result:
         output["value"] = (
@@ -358,14 +512,20 @@ def observe_raw_write(database, name, case):
     for index in case.indexes:
         keys, options = _index(index, collection)
         collection.create_index(keys, **options)
-    bson = BSONObservation([case.documents, [r.args for r in case.requests]])
+    bson = BSONObservation(
+        [case.documents, [r.args for r in case.requests]],
+        namespace=f"{database.name}.{name}",
+    )
     try:
         response = {
             "status": "ok",
             "result": raw_result(database.command(raw_write_command(case, name)), bson),
         }
     except SEMANTIC_ERRORS as error:
-        response = {"status": "error", "error": public_error(error, bson)}
+        response = {
+            "status": "error",
+            "error": public_error(error, bson, command_namespace=bson.namespace),
+        }
     response["documents"] = bson.documents(list(collection.find({}).sort("_id", 1)))
     return response
 
@@ -378,7 +538,10 @@ async def observe_async_raw_write(database, name, case):
     for index in case.indexes:
         keys, options = _index(index, collection)
         await collection.create_index(keys, **options)
-    bson = BSONObservation([case.documents, [r.args for r in case.requests]])
+    bson = BSONObservation(
+        [case.documents, [r.args for r in case.requests]],
+        namespace=f"{database.name}.{name}",
+    )
     try:
         response = {
             "status": "ok",
@@ -387,7 +550,10 @@ async def observe_async_raw_write(database, name, case):
             ),
         }
     except SEMANTIC_ERRORS as error:
-        response = {"status": "error", "error": public_error(error, bson)}
+        response = {
+            "status": "error",
+            "error": public_error(error, bson, command_namespace=bson.namespace),
+        }
     response["documents"] = bson.documents(
         await collection.find({}).sort("_id", 1).to_list()
     )

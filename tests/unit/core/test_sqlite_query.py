@@ -551,20 +551,15 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
             _normalize_comparable_value(object())
 
         self.assertEqual(
-            _translate_array_contains_scalar('payload', object()),
+            _translate_array_contains_scalar("payload", object()),
             (
                 "(json_type(document, '$.payload') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.payload') WHERE json_each.value = ?))",
                 [mock.ANY],
             ),
         )
 
-        self.assertEqual(
-            _translate_scalar_equals('payload', object()),
-            (
-                "(COALESCE(json_extract(document, '$.payload.\"$mongoeco\".type'), '') = ? AND COALESCE(json_extract(document, '$.payload.\"$mongoeco\".value'), json_extract(document, '$.payload')) = ?)",
-                ['', mock.ANY],
-            ),
-        )
+        with self.assertRaisesRegex(NotImplementedError, "semantic fallback"):
+            _translate_scalar_equals('payload', object())
 
         with self.assertRaises(NotImplementedError):
             _translate_equals('payload', {'a': 1})

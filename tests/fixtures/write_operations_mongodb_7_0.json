@@ -50,8 +50,9 @@
     "sync",
     "async"
   ],
+  "native_physical_connection_reuse": true,
   "catalog_sha256": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
-  "observer_sha256": "be6f848fbe372e6a539ce235e404d2729c938556d5c9a59d8a4ddde9eaef1cd7",
+  "observer_sha256": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
   "legacy_fixture_sha256": "27bf2bfc3a0e1207928068b0d8993163ea7fd6e0dcb3213fe553ac4f17ffdfbd",
   "observations": {
     "sort_batch_preflight_True": [
@@ -117,6 +118,18 @@
               1,
               11000
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -319,6 +332,18 @@
               11000
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -428,6 +453,18 @@
               1,
               121
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -634,6 +671,18 @@
               121
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -745,6 +794,18 @@
               1,
               53
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -951,6 +1012,18 @@
               53
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -1062,6 +1135,18 @@
               1,
               121
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -1286,6 +1371,18 @@
               121
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -1398,6 +1495,18 @@
               11000
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -1503,6 +1612,18 @@
               11000
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -1603,6 +1724,18 @@
               1,
               2
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -1781,6 +1914,18 @@
               2
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -1888,6 +2033,18 @@
               1,
               2
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -2003,6 +2160,18 @@
               14
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 0,
@@ -2104,6 +2273,18 @@
               0,
               14
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -2218,6 +2399,18 @@
               14
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 3,
@@ -2306,6 +2499,18 @@
               0,
               66
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -2430,6 +2635,18 @@
               0,
               66
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -2566,6 +2783,18 @@
               1,
               11000
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -2780,6 +3009,18 @@
               11000
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -2901,6 +3142,18 @@
               1,
               121
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -3119,6 +3372,18 @@
               121
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -3242,6 +3507,18 @@
               1,
               53
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -3460,6 +3737,18 @@
               53
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -3599,6 +3888,24 @@
               3,
               53
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            },
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -3865,6 +4172,24 @@
               53
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            },
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -4005,6 +4330,18 @@
               11000
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -4124,6 +4461,18 @@
               11000
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -4240,6 +4589,18 @@
               1,
               2
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -4434,6 +4795,18 @@
               2
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 1,
@@ -4549,6 +4922,18 @@
               1,
               2
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -4672,6 +5057,18 @@
               14
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 0,
@@ -4781,6 +5178,18 @@
               0,
               14
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -4906,6 +5315,24 @@
               4,
               11000
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            },
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {
@@ -5073,6 +5500,18 @@
               66
             ]
           ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
+          ],
           "write_error_operations": [
             {
               "index": 0,
@@ -5204,6 +5643,18 @@
               0,
               66
             ]
+          ],
+          "write_concern_errors": {
+            "present": true,
+            "value": []
+          },
+          "write_error_messages": [
+            {
+              "present": true,
+              "type": "str",
+              "nonempty": true,
+              "formatted_exception": false
+            }
           ],
           "write_error_operations": [
             {

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Any, Protocol
+
+from typing import TYPE_CHECKING, Any, Protocol
 
 from mongoeco.core.json_compat import json_loads
-from mongoeco.core.query_plan import QueryNode
+from mongoeco.core.paths import get_document_value
 from mongoeco.engines._sqlite_fast_paths import (
     select_first_document_for_plan as _sqlite_select_first_document_for_plan,
     select_first_document_for_scalar_index as _sqlite_select_first_document_for_scalar_index,
@@ -15,7 +16,11 @@ from mongoeco.engines._sqlite_read_execution import (
     build_scalar_indexed_top_level_range_sql as _sqlite_build_scalar_indexed_top_level_range_sql,
 )
 from mongoeco.engines.semantic_core import compile_find_semantics
-from mongoeco.types import Document, EngineIndexRecord, IndexKeySpec
+
+
+if TYPE_CHECKING:
+    from mongoeco.core.query_plan import QueryNode
+    from mongoeco.types import Document, EngineIndexRecord, IndexKeySpec
 
 
 class _SQLiteReadFastPathEngine(Protocol):
@@ -160,33 +165,45 @@ def select_first_document_for_scalar_index(
     null_matches_undefined: bool = False,
 ) -> tuple[str, Document] | None:
     conn = engine._require_connection()
-    return _sqlite_select_first_document_for_scalar_index(
+    selected = _sqlite_select_first_document_for_scalar_index(
         db_name=db_name,
         coll_name=coll_name,
         field=field,
         value=value,
         null_matches_undefined=null_matches_undefined,
         field_is_top_level_array_in_collection=engine._field_is_top_level_array_in_collection,
-        find_scalar_index=lambda current_db_name, current_coll_name, current_field: _find_scalar_index(
-            engine,
-            current_db_name,
-            current_coll_name,
-            current_field,
+        find_scalar_index=lambda current_db_name, current_coll_name, current_field: (
+            _find_scalar_index(
+                engine,
+                current_db_name,
+                current_coll_name,
+                current_field,
+            )
         ),
-        lookup_collection_id=lambda current_db_name, current_coll_name: engine._lookup_collection_id(
-            conn,
-            current_db_name,
-            current_coll_name,
+        lookup_collection_id=lambda current_db_name, current_coll_name: (
+            engine._lookup_collection_id(
+                conn,
+                current_db_name,
+                current_coll_name,
+            )
         ),
-        multikey_signatures_for_query_value=lambda current_value, current_null_matches_undefined: engine._multikey_signatures_for_query_value(
-            current_value,
-            null_matches_undefined=current_null_matches_undefined,
+        multikey_signatures_for_query_value=lambda current_value, current_null_matches_undefined: (
+            engine._multikey_signatures_for_query_value(
+                current_value,
+                null_matches_undefined=current_null_matches_undefined,
+            )
         ),
         multikey_type_score=engine._multikey_type_score,
         quote_identifier=engine._quote_identifier,
         fetchone=lambda sql, params: conn.execute(sql, params).fetchone(),
         deserialize_document=engine._deserialize_document,
     )
+    if selected is not None and type(value) is str:
+        found, actual = get_document_value(selected[1], field)
+        if found and type(actual) is not str:
+            return None
+    return selected
+
 
 
 def select_first_document_for_scalar_range(

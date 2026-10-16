@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import decimal
 import math
+
 from collections.abc import Callable
 from copy import deepcopy
 from functools import cmp_to_key
@@ -25,6 +26,7 @@ from mongoeco.core.bson_scalars import (
     is_bson_numeric,
     unwrap_bson_numeric,
 )
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, UndefinedType
 
@@ -99,7 +101,9 @@ def evaluate_numeric_expression(
         if any(value is None for value in raw_values):
             return None
         if operator == "$add":
-            date_values = [value for value in raw_values if isinstance(value, datetime.datetime)]
+            date_values = [
+                value for value in raw_values if isinstance(value, datetime.datetime)
+            ]
             if date_values:
                 if len(date_values) != 1:
                     raise OperationFailure("$add only supports a single date argument")
@@ -107,12 +111,18 @@ def evaluate_numeric_expression(
                 for value in raw_values:
                     if isinstance(value, datetime.datetime):
                         continue
-                    result = _add_milliseconds(result, unwrap_bson_numeric(_require_numeric(operator, value)))
+                    result = _add_milliseconds(
+                        result, unwrap_bson_numeric(_require_numeric(operator, value))
+                    )
                 return result
         values = [_require_numeric(operator, value) for value in raw_values]
         result = values[0]
         for value in values[1:]:
-            result = bson_add(result, value) if operator == "$add" else bson_multiply(result, value)
+            result = (
+                bson_add(result, value)
+                if operator == "$add"
+                else bson_multiply(result, value)
+            )
         return result
 
     if operator in {"$subtract", "$divide", "$mod"}:
@@ -123,19 +133,24 @@ def evaluate_numeric_expression(
             return None
         if operator == "$subtract":
             return _subtract_values(left_raw, right_raw)
-        left = _require_numeric(operator, left_raw)
-        right = _require_numeric(operator, right_raw)
+        left = _require_numeric(operator, left_raw, position=0)
+        right = _require_numeric(operator, right_raw, position=1)
         if operator == "$divide":
             if unwrap_bson_numeric(right) == 0:
-                raise OperationFailure("$divide cannot divide by zero")
+                raise OperationFailure("can't $divide by zero", code=2)
             return bson_divide(left, right)
         if unwrap_bson_numeric(right) == 0:
-            raise OperationFailure("$mod cannot divide by zero")
+            raise OperationFailure("can't $mod by zero", code=16610)
         return bson_mod(left, right)
 
     if operator in {"$bitAnd", "$bitOr", "$bitXor"}:
         args = require_expression_args(operator, spec, 2, None)
-        values = [_require_integral_numeric(operator, evaluate_expression(document, item, variables)) for item in args]
+        values = [
+            _require_integral_numeric(
+                operator, evaluate_expression(document, item, variables)
+            )
+            for item in args
+        ]
         result = values[0]
         for value in values[1:]:
             if operator == "$bitAnd":
@@ -147,31 +162,50 @@ def evaluate_numeric_expression(
         return result
 
     if operator == "$bitNot":
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         raw_value = evaluate_expression(document, args[0], variables)
         value = _require_integral_numeric(operator, raw_value)
         return bson_rewrap_numeric(~int(unwrap_bson_numeric(value)), raw_value)
 
     if operator in {"$abs", "$exp", "$ln", "$log10", "$sqrt"}:
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         raw_value = evaluate_expression_with_missing(document, args[0], variables)
         if raw_value is missing_sentinel or raw_value is None:
             return None
         value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
         if operator == "$abs":
-            if isinstance(value, int) and not isinstance(value, bool) and value == INT64_MIN:
-                raise OperationFailure("$abs overflow")
+            if (
+                isinstance(value, int)
+                and not isinstance(value, bool)
+                and value == INT64_MIN
+            ):
+                message = "$abs overflow"
+                raise server_error(message, code=28680)
             return bson_rewrap_numeric(abs(value), raw_value)
         if math.isnan(value):
             return value
         if operator == "$exp":
-            return bson_rewrap_numeric(math.exp(value), raw_value)
+            try:
+                result = math.exp(value)
+            except OverflowError:
+                result = math.inf
+            return bson_rewrap_numeric(result, raw_value)
         if operator == "$sqrt":
             if value < 0:
-                raise OperationFailure("$sqrt cannot operate on negative numbers")
+                raise OperationFailure(
+                    "$sqrt cannot operate on negative numbers", code=28714
+                )
             return bson_rewrap_numeric(math.sqrt(value), raw_value)
         if value <= 0:
-            raise OperationFailure(f"{operator} requires a positive numeric argument")
+            message = f"{operator} requires a positive numeric argument"
+            raise server_error(
+                message,
+                code=28766 if operator == "$ln" else 28761,
+            )
         result = math.log(value) if operator == "$ln" else math.log10(value)
         return bson_rewrap_numeric(result, raw_value)
 
@@ -206,23 +240,50 @@ def evaluate_numeric_expression(
         args = require_expression_args(operator, spec, 2, 2)
         left_raw = evaluate_expression_with_missing(document, args[0], variables)
         right_raw = evaluate_expression_with_missing(document, args[1], variables)
-        if left_raw is missing_sentinel or right_raw is missing_sentinel or left_raw is None or right_raw is None:
+        if (
+            left_raw is missing_sentinel
+            or right_raw is missing_sentinel
+            or left_raw is None
+            or right_raw is None
+        ):
             return None
-        left = unwrap_bson_numeric(_require_numeric(operator, left_raw))
-        right = unwrap_bson_numeric(_require_numeric(operator, right_raw))
+        left = unwrap_bson_numeric(_require_numeric(operator, left_raw, position=0))
+        right = unwrap_bson_numeric(_require_numeric(operator, right_raw, position=1))
         if operator == "$pow":
-            result = math.pow(left, right)
-            if isinstance(left_raw, BsonDecimal128) or isinstance(right_raw, BsonDecimal128):
+            if left == 0 and right < 0:
+                message = "$pow cannot raise zero to a negative exponent"
+                raise server_error(message, code=28764)
+            try:
+                result = math.pow(left, right)
+            except ValueError:
+                result = math.nan
+            except OverflowError:
+                result = (
+                    -math.inf
+                    if left < 0 and float(right).is_integer() and int(right) % 2
+                    else math.inf
+                )
+            if isinstance(left_raw, BsonDecimal128) or isinstance(
+                right_raw, BsonDecimal128
+            ):
                 return bson_rewrap_numeric(result, left_raw, right_raw)
-            if isinstance(left_raw, (BsonDouble, BsonDecimal128)) or isinstance(right_raw, (BsonDouble, BsonDecimal128)):
+            if isinstance(left_raw, (BsonDouble, BsonDecimal128)) or isinstance(
+                right_raw, (BsonDouble, BsonDecimal128)
+            ):
                 return BsonDouble(float(result))
-            if isinstance(left_raw, (BsonInt32, BsonInt64)) or isinstance(right_raw, (BsonInt32, BsonInt64)):
+            if isinstance(left_raw, (BsonInt32, BsonInt64)) or isinstance(
+                right_raw, (BsonInt32, BsonInt64)
+            ):
                 return BsonDouble(float(result))
             return result
         if math.isnan(left) or math.isnan(right):
             return math.nan
         if left <= 0 or right <= 0 or right == 1:
-            raise OperationFailure("$log requires a positive argument and base where base != 1")
+            message = "$log requires a positive argument and base where base != 1"
+            raise server_error(
+                message,
+                code=28758 if left <= 0 else 28759,
+            )
         return math.log(left, right)
 
     if operator in {"$round", "$trunc"}:
@@ -231,15 +292,25 @@ def evaluate_numeric_expression(
         if raw_value is missing_sentinel or raw_value is None:
             return None
         value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
+        place_raw = (
+            evaluate_expression(document, args[1], variables) if len(args) == 2 else 0
+        )
+        if place_raw is None:
+            return None
+        place = _normalize_numeric_place(operator, place_raw)
         if math.isnan(value) or math.isinf(value):
             return value
-        place_raw = evaluate_expression(document, args[1], variables) if len(args) == 2 else 0
-        place = _normalize_numeric_place(operator, place_raw)
-        result = _round_numeric(value, place) if operator == "$round" else _trunc_numeric(value, place)
+        result = (
+            _round_numeric(value, place)
+            if operator == "$round"
+            else _trunc_numeric(value, place)
+        )
         return bson_rewrap_numeric(result, raw_value)
 
     if operator in {"$floor", "$ceil"}:
-        args = require_expression_args(operator, spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         raw_value = evaluate_expression(document, args[0], variables)
         if raw_value is None:
             return None
@@ -257,26 +328,46 @@ def evaluate_numeric_expression(
         args = require_expression_args(operator, spec, 2, 3)
         start = evaluate_expression(document, args[0], variables)
         end = evaluate_expression(document, args[1], variables)
-        step = evaluate_expression(document, args[2], variables) if len(args) == 3 else 1
-        if not all(isinstance(value, int) and not isinstance(value, bool) for value in (start, end, step)):
-            raise OperationFailure("$range requires integer arguments")
+        step = (
+            evaluate_expression(document, args[2], variables) if len(args) == 3 else 1
+        )
+        for position, value in enumerate((start, end, step)):
+            if not isinstance(value, int) or isinstance(value, bool):
+                message = "$range requires integer arguments"
+                raise server_error(
+                    message,
+                    code=(34443, 34445, 34447)[position],
+                )
         if step == 0:
-            raise OperationFailure("$range step cannot be zero")
+            message = "$range step cannot be zero"
+            raise server_error(message, code=34449)
         return list(range(start, end, step))
 
     raise OperationFailure(f"Unsupported numeric expression operator: {operator}")
 
 
-def _require_numeric(operator: str, value: object) -> object:
-    if isinstance(value, bool):
-        raise OperationFailure(f"{operator} requires numeric arguments")
-    if is_bson_numeric(value):
+def _require_numeric(operator: str, value: object, *, position=0) -> object:
+    if not isinstance(value, bool) and is_bson_numeric(value):
         return value
-    raise OperationFailure(f"{operator} requires numeric arguments")
+    codes = {
+        "$divide": 14,
+        "$add": 14,
+        "$multiply": 14,
+        "$subtract": 14,
+        "$mod": 16611,
+        "$round": 51081,
+        "$trunc": 51081,
+        "$pow": 28762 + position,
+        "$log": 28756 + position,
+    }
+    message = f"{operator} requires numeric arguments"
+    raise server_error(message, code=codes.get(operator, 28765))
 
 
 def _is_numeric(value: object) -> bool:
-    return is_bson_numeric(value) or (isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool))
+    return is_bson_numeric(value) or (
+        isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool)
+    )
 
 
 def _sum_accumulator_operand(value: Any) -> object | None:
@@ -297,8 +388,7 @@ def _numeric_accumulator_expression_values(
 ) -> list[object]:
     if isinstance(spec, list):
         resolved_values = [
-            evaluate_expression_with_missing(document, item, variables)
-            for item in spec
+            evaluate_expression_with_missing(document, item, variables) for item in spec
         ]
     else:
         resolved = evaluate_expression_with_missing(document, spec, variables)
@@ -336,7 +426,11 @@ def _stddev_expression_values(
     values: list[float] = []
     for item in args:
         resolved = evaluate_expression_with_missing(document, item, variables)
-        if resolved is missing_sentinel or resolved is None or isinstance(resolved, UndefinedType):
+        if (
+            resolved is missing_sentinel
+            or resolved is None
+            or isinstance(resolved, UndefinedType)
+        ):
             continue
         candidates = resolved if isinstance(resolved, list) else [resolved]
         for candidate in candidates:
@@ -360,22 +454,30 @@ def _compute_stddev(values: list[float], *, population: bool) -> float | None:
         mean = total / len(values)
         variance = max((sum_of_squares / len(values)) - (mean * mean), 0.0)
     else:
-        variance = max((sum_of_squares - ((total * total) / len(values))) / (len(values) - 1), 0.0)
+        variance = max(
+            (sum_of_squares - ((total * total) / len(values))) / (len(values) - 1), 0.0
+        )
     return math.sqrt(variance)
 
 
-def _normalize_percentile_probabilities(operator: str, probabilities_value: Any) -> list[float]:
+def _normalize_percentile_probabilities(
+    operator: str, probabilities_value: Any
+) -> list[float]:
     if not isinstance(probabilities_value, list):
         raise OperationFailure(f"{operator} p must evaluate to an array")
     if not probabilities_value:
         raise OperationFailure(f"{operator} p must not be an empty array")
     normalized: list[float] = []
     for item in probabilities_value:
-        if not isinstance(item, (int, float, decimal.Decimal)) or isinstance(item, bool):
+        if not isinstance(item, (int, float, decimal.Decimal)) or isinstance(
+            item, bool
+        ):
             raise OperationFailure(f"{operator} p values must be numeric")
         probability = float(item)
         if probability < 0.0 or probability > 1.0:
-            raise OperationFailure(f"{operator} p values must be in the range [0.0, 1.0]")
+            raise OperationFailure(
+                f"{operator} p values must be in the range [0.0, 1.0]"
+            )
         normalized.append(probability)
     return normalized
 
@@ -409,7 +511,9 @@ def _parse_percentile_spec(
     probabilities = (
         [0.5]
         if operator == "$median"
-        else _normalize_percentile_probabilities(operator, evaluate_expression(document, spec.get("p"), variables))
+        else _normalize_percentile_probabilities(
+            operator, evaluate_expression(document, spec.get("p"), variables)
+        )
     )
     return _extract_percentile_candidates(operator, input_value), probabilities
 
@@ -438,7 +542,7 @@ def _compute_percentiles(
     return results
 
 
-def _mongo_mod(left: int | float, right: int | float) -> int | float:
+def _mongo_mod(left: float, right: float) -> int | float:
     if not math.isfinite(left) or not math.isfinite(right):
         return math.nan
     quotient = int(left / right)
@@ -447,26 +551,30 @@ def _mongo_mod(left: int | float, right: int | float) -> int | float:
 
 def _normalize_numeric_place(operator: str, place: Any) -> int:
     if not isinstance(place, int) or isinstance(place, bool):
-        raise OperationFailure(f"{operator} place must be an integer")
+        message = f"{operator} place must be an integer"
+        raise server_error(message, code=16004)
     if place < -20 or place > 100:
-        raise OperationFailure(f"{operator} place must be between -20 and 100")
+        message = f"{operator} place must be between -20 and 100"
+        raise server_error(message, code=51083)
     return place
 
 
-def _round_numeric(value: int | float, place: int) -> int | float:
+def _round_numeric(value: float, place: int) -> int | float:
     unwrapped = unwrap_bson_numeric(value)
     if isinstance(unwrapped, int) and place >= 0:
         return unwrapped
     quantizer = decimal.Decimal(f"1e{-place}")
-    rounded = decimal.Decimal(str(unwrapped)).quantize(quantizer, rounding=decimal.ROUND_HALF_EVEN)
+    rounded = decimal.Decimal(str(unwrapped)).quantize(
+        quantizer, rounding=decimal.ROUND_HALF_EVEN
+    )
     return int(rounded) if place <= 0 else float(rounded)
 
 
-def _trunc_numeric(value: int | float, place: int) -> int | float:
+def _trunc_numeric(value: float, place: int) -> int | float:
     unwrapped = unwrap_bson_numeric(value)
     if isinstance(unwrapped, int) and place >= 0:
         return unwrapped
-    factor = 10 ** place if place >= 0 else 10 ** (-place)
+    factor = 10**place if place >= 0 else 10 ** (-place)
     if place >= 0:
         truncated = math.trunc(unwrapped * factor) / factor
         return int(truncated) if place == 0 else truncated
@@ -485,7 +593,9 @@ def _require_integral_numeric(operator: str, value: Any) -> int:
     raise OperationFailure(f"{operator} requires integral numeric arguments")
 
 
-def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
+def _add_milliseconds(
+    value: datetime.datetime, milliseconds: float
+) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
 
@@ -497,5 +607,9 @@ def _subtract_values(left: Any, right: Any) -> Any:
         if isinstance(right, (int, float)) and not isinstance(right, bool):
             return _add_milliseconds(left, -right)
     if isinstance(right, datetime.datetime):
-        raise OperationFailure("$subtract only supports number-number, date-date, or date-number")
-    return bson_subtract(_require_numeric("$subtract", left), _require_numeric("$subtract", right))
+        raise OperationFailure(
+            "$subtract only supports number-number, date-date, or date-number"
+        )
+    return bson_subtract(
+        _require_numeric("$subtract", left), _require_numeric("$subtract", right)
+    )

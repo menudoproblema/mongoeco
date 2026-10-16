@@ -43,17 +43,17 @@ from mongoeco.core.aggregation.scalar_expressions import (
     evaluate_scalar_expression,
 )
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
+from mongoeco.core.bson_ordering import Code, bson_engine_key, bson_equality_key
 from mongoeco.core.bson_scalars import (
     BsonInt64,
     bson_numeric_alias,
+    is_bson_numeric,
 )
 from mongoeco.core.collation import (
     CollationSpec,
     compare_with_collation,
     string_equality_key,
 )
-from mongoeco.core.bson_ordering import bson_equality_key
-from mongoeco.core.bson_scalars import is_bson_numeric
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import (
     delete_document_value,
@@ -69,6 +69,7 @@ from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
     VECTOR_SEARCH_SCORE_FIELD,
 )
+from mongoeco.core.server_errors import server_error
 from mongoeco.core.work_control import DeadlineCheckpoint
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
@@ -106,6 +107,8 @@ def _aggregation_key(value: Any) -> Any:
         return ("float", value)
     if numeric_alias == "decimal":
         return ("decimal", value)
+    if isinstance(value, Code):
+        return bson_engine_key(value)
     if isinstance(value, str):
         return ("str", value)
     if isinstance(value, (bytes, Binary)):
@@ -155,6 +158,8 @@ def aggregation_equality_key(value: Any, collation: CollationSpec | None = None)
     """Semantic group identity, independent of physical numeric representation."""
     if is_bson_numeric(value):
         return bson_equality_key(value)
+    if isinstance(value, Code):
+        return bson_engine_key(value)
     if isinstance(value, str):
         return ("str", string_equality_key(value, collation))
     if isinstance(value, dict):
@@ -418,14 +423,19 @@ def _require_expression_args(
     max_args: int | None = None,
 ) -> list[object]:
     if not isinstance(spec, list):
-        raise OperationFailure(f"{operator} requires a list expression")
+        message = f"{operator} requires a list expression"
+        raise server_error(message, code=16020)
     if len(spec) < min_args:
-        raise OperationFailure(
-            f"{operator} requires at least {min_args} arguments",
+        message = f"{operator} requires at least {min_args} arguments"
+        raise server_error(
+            message,
+            code=16020,
         )
     if max_args is not None and len(spec) > max_args:
-        raise OperationFailure(
-            f"{operator} accepts at most {max_args} arguments",
+        message = f"{operator} accepts at most {max_args} arguments"
+        raise server_error(
+            message,
+            code=16020,
         )
     return spec
 
@@ -459,7 +469,11 @@ def _compare_values(
 
 def _require_array(operator: str, value: object) -> list[Any]:
     if not isinstance(value, list):
-        raise OperationFailure(f"{operator} requires array arguments")
+        message = f"{operator} requires array arguments"
+        raise server_error(
+            message,
+            code=40081 if operator == "$in" else 28664,
+        )
     return value
 
 
@@ -501,14 +515,16 @@ def _parse_variable_reference(expression: str) -> tuple[str, str]:
         message = f"'{name}' starts with an invalid character for a variable name"
         raise OperationFailure(
             message,
-            code=9, details={"codeName": "FailedToParse"},
+            code=9,
+            details={"codeName": "FailedToParse"},
         )
     for character in name:
         if character.isascii() and not (character.isalnum() or character == "_"):
             message = f"'{name}' contains an invalid character for a variable name"
             raise OperationFailure(
                 message,
-                code=9, details={"codeName": "FailedToParse"},
+                code=9,
+                details={"codeName": "FailedToParse"},
             )
     return name, path
 
@@ -527,30 +543,36 @@ def _validate_variable_path(expression, path):
         code, message = 16411, "FieldPath field names may not contain null bytes"
     else:
         return
-    raise OperationFailure(message, code=code, details={"codeName": f"Location{code}"})
+    raise server_error(message, code=code)
 
 
 def _resolve_variable_expression(
     expression: str,
     variables: Mapping[str, Any],
-    *, dialect: MongoDialect = MONGODB_DIALECT_70,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Any:
     name, path = _parse_variable_reference(expression)
-    if name == "CLUSTER_TIME" and dialect.behavior_flag(
-        "rejects_cluster_time_expression", default=False
-    ):
+    if name == "CLUSTER_TIME":
         message = (
-            "Builtin variable '$$CLUSTER_TIME' is not available "
-            "on a standalone runtime"
+            "Builtin variable '$$CLUSTER_TIME' is not available on a standalone runtime"
         )
-        raise OperationFailure(
-            message, code=10071200, details={"codeName": "Location10071200"}
+        code = (
+            10071200
+            if dialect.behavior_flag("rejects_cluster_time_expression", default=False)
+            else 51144
         )
+        raise server_error(message, code=code, reason="cluster_time_unavailable")
     if name != "REMOVE" and name not in variables:
         raise OperationFailure(
             f"Use of undefined variable: {name}",
             code=17276,
-            details={"codeName": "Location17276"},
+            details={
+                "ok": 0.0,
+                "code": 17276,
+                "codeName": "Location17276",
+                "errmsg": f"Use of undefined variable: {name}",
+            },
         )
     _validate_variable_path(expression, path)
     if name == "REMOVE":
@@ -821,6 +843,12 @@ def evaluate_expression(
     if not isinstance(expression, dict):
         return expression
 
+    if len(expression) > 1 and any(
+        isinstance(key, str) and key.startswith("$") for key in expression
+    ):
+        message = "An expression specification must contain exactly one field"
+        raise server_error(message, code=40181)
+
     if len(expression) == 1:
         operator, spec = next(iter(expression.items()))
         if isinstance(operator, str) and operator.startswith("$"):
@@ -894,11 +922,12 @@ def evaluate_expression(
                     "$meta aggregation expression only supports "
                     "searchHighlights, textScore or vectorSearchScore",
                 )
-            if not dialect.supports_aggregation_expression_operator(operator):
-                raise OperationFailure(
+            if operator not in {"$literal", "$const"} and not dialect.supports_aggregation_expression_operator(operator):
+                raise server_error(
                     f"Unsupported aggregation expression: {operator}",
+                    code=168,
                 )
-            if operator == "$literal":
+            if operator in {"$literal", "$const"}:
                 return deepcopy(spec)
             if operator in SCALAR_EXPRESSION_OPERATORS:
                 return evaluate_scalar_expression(
@@ -1089,18 +1118,14 @@ def evaluate_expression(
                             dialect=dialect,
                         )
                     ),
-                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
-                        _evaluate_expression_with_missing(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
-                        )
+                    evaluate_expression_with_missing=lambda *args: (
+                        _evaluate_expression_with_missing(*args, dialect=dialect)
                     ),
                     missing_sentinel=_MISSING,
                 )
-            raise OperationFailure(
+            raise server_error(
                 f"Unsupported aggregation expression: {operator}",
+                code=168,
             )
 
     rendered: dict[str, Any] = {}

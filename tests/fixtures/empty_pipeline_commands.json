@@ -1,0 +1,71 @@
+{
+  "7.0": {
+    "mongodb": "7.0.43",
+    "update": {
+      "n": 1,
+      "nModified": 0,
+      "ok": 1.0
+    },
+    "findAndModify": {
+      "lastErrorObject": {
+        "n": 1,
+        "updatedExisting": true
+      },
+      "value": {
+        "_id": "a",
+        "n": 1
+      },
+      "ok": 1.0
+    },
+    "document": {
+      "_id": "a",
+      "n": 1
+    }
+  },
+  "8.0": {
+    "mongodb": "8.0.32",
+    "update": {
+      "n": 1,
+      "nModified": 0,
+      "ok": 1.0
+    },
+    "findAndModify": {
+      "lastErrorObject": {
+        "n": 1,
+        "updatedExisting": true
+      },
+      "value": {
+        "_id": "a",
+        "n": 1
+      },
+      "ok": 1.0
+    },
+    "document": {
+      "_id": "a",
+      "n": 1
+    }
+  },
+  "9.0": {
+    "mongodb": "9.0.2",
+    "update": {
+      "n": 1,
+      "nModified": 0,
+      "ok": 1.0
+    },
+    "findAndModify": {
+      "lastErrorObject": {
+        "n": 1,
+        "updatedExisting": true
+      },
+      "value": {
+        "_id": "a",
+        "n": 1
+      },
+      "ok": 1.0
+    },
+    "document": {
+      "_id": "a",
+      "n": 1
+    }
+  }
+}

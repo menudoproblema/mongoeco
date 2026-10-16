@@ -7,6 +7,7 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation.accumulators import (
     _AverageAccumulator,
+    _group_output_id,
     _sum_accumulator_operand,
     _validate_accumulator_expression,
     _validate_empty_group_fields,
@@ -115,6 +116,7 @@ class CompiledGroup:
             "truthy": dialect.policy.expression_truthy,
             "_aggregation_key": aggregation_equality_key,
             "deepcopy": deepcopy,
+            "_group_output_id": _group_output_id,
             "_AverageAccumulator": _AverageAccumulator,
             "_compiled_add": _compiled_add,
             "_compiled_multiply": _compiled_multiply,
@@ -331,14 +333,18 @@ class CompiledGroup:
 
     def _compile_finalization_only(self) -> list[str]:
         """Generate the group finalization logic."""
-        accumulator_fields = [field for field, _operator, _expression in self._compiled_accumulators]
+        accumulator_fields = [
+            field for field, _operator, _expression in self._compiled_accumulators
+        ]
         accumulator_count = len(accumulator_fields)
         lines = [
             "    results = []",
             "    for state in groups.values():",
-            f"        result = {{'_id': _deepcopy(state[{accumulator_count}])}}",
+            f"        result = {{'_id': _group_output_id(state[{accumulator_count}], dialect=dialect)}}",
         ]
-        for index, (field, operator, _expression) in enumerate(self._compiled_accumulators):
+        for index, (field, operator, _expression) in enumerate(
+            self._compiled_accumulators
+        ):
             if operator == "$avg":
                 lines.append(f"        avg_state = state[{index}]")
                 lines.append(

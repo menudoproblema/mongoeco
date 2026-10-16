@@ -32,6 +32,7 @@ from mongoeco.types import Document  # noqa: TC001
 class _RenderedIssue:
     def __init__(self, message: str):
         self._message = message
+        self.message = message
 
     def render(self) -> dict[str, object]:
         return {"description": self._message}
@@ -53,6 +54,7 @@ class _ValidationResult:
 class _ValidatorStub:
     def __init__(self, result, *, validation_action: str = "error"):
         self._result = result
+        self.raw_validator = None
         self.validation_action = validation_action
         self.calls = []
 
@@ -215,14 +217,13 @@ class SemanticCoreUnitTests(unittest.TestCase):
                     {"_id": "1"}, options={"validator": {}}
                 )
 
-        self.assertEqual(context.exception.details["failingDocumentId"], "1")
+        self.assertEqual(context.exception.details["errInfo"]["failingDocumentId"], "1")
         self.assertEqual(
-            context.exception.details["schemaRulesNotSatisfied"],
-            [{"description": "field is required"}],
+            context.exception.details["errInfo"]["details"]["schemaRulesNotSatisfied"],
+            [{"reason": "field is required"}],
         )
-        self.assertEqual(
-            context.exception.details["codeName"], "DocumentValidationFailure"
-        )
+        self.assertEqual(context.exception.code, 121)
+        self.assertEqual(context.exception.details["code"], 121)
 
     def test_compile_update_semantics_requires_compiled_plans(self):
         operation = compile_update_operation({"name": "Ada"})

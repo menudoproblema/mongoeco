@@ -2,11 +2,12 @@ import decimal
 import re
 import unittest
 import uuid
+
 from unittest.mock import patch
 
-from bson.code import Code as BsonCode
 from bson import Decimal128
-from bson.binary import Binary, STANDARD, UUID_SUBTYPE
+from bson.binary import STANDARD, UUID_SUBTYPE, Binary
+from bson.code import Code as BsonCode
 from bson.dbref import DBRef as BsonDBRef
 from bson.int64 import Int64
 from bson.max_key import MaxKey as BsonMaxKey
@@ -17,11 +18,32 @@ from bson.son import SON as BsonSON
 from bson.timestamp import Timestamp as BsonTimestamp
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
-from mongoeco.types import Binary as MongoecoBinary, DBRef, Decimal128 as MongoecoDecimal128, ObjectId, Regex as MongoecoRegex, SON, Timestamp, UNDEFINED
-from mongoeco.wire.bson_bridge import _regex_flags_to_string, decode_wire_value, encode_wire_value
+from mongoeco.types import (
+    SON,
+    UNDEFINED,
+    Binary as MongoecoBinary,
+    DBRef,
+    Decimal128 as MongoecoDecimal128,
+    ObjectId,
+    Regex as MongoecoRegex,
+    Timestamp,
+)
+from mongoeco.wire.bson_bridge import (
+    _regex_flags_to_string,
+    decode_wire_value,
+    encode_wire_value,
+)
 
 
 class WireBsonBridgeTests(unittest.TestCase):
+    def test_encode_public_binary_retains_subtype_in_nested_documents(self):
+        for subtype in (0, 2, 4, 128):
+            with self.subTest(subtype=subtype):
+                value = Binary(b"0123456789abcdef", subtype=subtype)
+                result = encode_wire_value({"keyValue": {"key": value}})
+                self.assertEqual(result["keyValue"]["key"], value)
+                self.assertEqual(result["keyValue"]["key"].subtype, subtype)
+
     def test_decode_wire_value_handles_special_bson_types(self):
         session_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
         decoded = decode_wire_value(

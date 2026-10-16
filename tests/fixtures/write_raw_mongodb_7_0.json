@@ -50,8 +50,9 @@
     "sync",
     "async"
   ],
+  "native_physical_connection_reuse": true,
   "catalog_sha256": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
-  "observer_sha256": "be6f848fbe372e6a539ce235e404d2729c938556d5c9a59d8a4ddde9eaef1cd7",
+  "observer_sha256": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
   "legacy_fixture_sha256": "27bf2bfc3a0e1207928068b0d8993163ea7fd6e0dcb3213fe553ac4f17ffdfbd",
   "observations": {
     "I01": {

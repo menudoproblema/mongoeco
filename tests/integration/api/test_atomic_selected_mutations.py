@@ -116,7 +116,7 @@ class AtomicSelectedMutationAsyncTests(unittest.IsolatedAsyncioTestCase):
             ) in _BARRIER_ENGINE_FACTORIES.items():
                 with self.subTest(engine=engine_name, selector=selector_mode):
                     async with AsyncMongoClient(
-                        engine_factory(), pymongo_profile='4.11'
+                        engine_factory(), mongodb_dialect='8.0', pymongo_profile='4.11'
                     ) as client:
                         collection = client.test.get_collection(
                             f'atomic_update_one_{selector_mode}'

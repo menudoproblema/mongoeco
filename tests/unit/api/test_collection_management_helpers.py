@@ -1,11 +1,13 @@
 import asyncio
 
-from tests.unit.api._collection_test_support import *  # noqa: F403
-from tests.unit.api._collection_test_support import InsertOutcome, _SpiV2EngineStub
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.compat import MongoDialect80
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
 from mongoeco.types import IndexModel
+
+from tests.unit.api._collection_test_support import *  # noqa: F403
+from tests.unit.api._collection_test_support import InsertOutcome, _SpiV2EngineStub
 
 
 class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
@@ -920,7 +922,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 MemoryEngine(),
                 "db",
                 "coll",
-                pymongo_profile="4.11",
+                mongodb_dialect="8.0", pymongo_profile="4.11",
             )
             await collection.insert_one(
                 {"_id": "first", "kind": "view", "rank": 2, "done": False}
@@ -953,7 +955,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 MemoryEngine(),
                 "db",
                 "coll",
-                pymongo_profile="4.11",
+                mongodb_dialect="8.0", pymongo_profile="4.11",
             )
             return await collection.update_one(
                 {"kind": "view"},
@@ -967,7 +969,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(result.modified_count, 0)
 
     def test_update_one_sort_uses_custom_dialect_for_document_selection(self):
-        class ReverseNumericDialect(MongoDialect70):
+        class ReverseNumericDialect(MongoDialect80):
             def compare_values(self, left, right):
                 if (
                     isinstance(left, (int, float))

@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.duplicate_keys import duplicate_key_error, write_error_message
+from mongoeco.core.error_documents import error_message, write_error_details
 from mongoeco.core.identity import (
     assert_valid_root_document_id,
     is_valid_root_document_id,
@@ -74,7 +76,8 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
             WriteErrorEntry(
                 index=index,
                 code=error.code,
-                errmsg=str(error),
+                errmsg=write_error_message(error),
+                details=write_error_details(error),
                 operation=public_documents[index],
             )
         )
@@ -154,7 +157,7 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
                             outcome, session=session
                         )
                     else:
-                        failed(index, DuplicateKeyError("Duplicate key"))
+                        failed(index, duplicate_key_error(outcome, "Duplicate key"))
                 if ordered and errors:
                     break
             return
@@ -168,7 +171,7 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
             raise RuntimeError(message)
         for position, outcome in enumerate(outcomes):
             if not outcome:
-                failed(offset + position, DuplicateKeyError("Duplicate key"))
+                failed(offset + position, duplicate_key_error(outcome, "Duplicate key"))
                 if not ordered and batch[position + 1 :]:
                     pending.append((batch[position + 1 :], offset + position + 1))
                 return
@@ -219,7 +222,7 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
             op="insert",
             command_factory=command,
             duration_ns=time.perf_counter_ns() - started,
-            errmsg=str(error),
+            errmsg=error_message(error),
         )
         raise
     await collection._profile_operation(

@@ -13,6 +13,7 @@ from mongoeco.error_catalog import (
     DENSIFY_FIELD_PREFIX_ERROR,
     DENSIFY_PARTITION_PREFIX_ERROR,
 )
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (  # noqa: TC001 - public runtime annotations
     Document, Filter, Projection, SortSpec,
@@ -132,29 +133,24 @@ def _require_projection_for_dialect(
 ) -> Projection:
     if not isinstance(spec, dict):
         raise OperationFailure("$project requires a document specification")
-    include_flags: list[int] = []
-    exclude_flags: list[int] = []
-    computed_fields_present = False
+    mode = None
     for key, value in spec.items():
         if not isinstance(key, str):
             raise OperationFailure("$project field names must be strings")
         flag = _projection_flag(value, dialect=dialect)
-        if flag is None:
-            if key != "_id":
-                computed_fields_present = True
-            continue
-        if key == "_id":
-            if flag == 1:
-                include_flags.append(flag)
-            continue
-        if flag == 1:
-            include_flags.append(flag)
-        else:
-            exclude_flags.append(flag)
-    if include_flags and exclude_flags:
-        raise OperationFailure("cannot mix inclusion and exclusion in $project")
-    if exclude_flags and computed_fields_present:
-        raise OperationFailure("cannot mix exclusion and computed fields in $project")
+        current = "computed" if flag is None else "include" if flag else "exclude"
+        if key != "_id" or flag is None:
+            if mode == "exclude" and current != "exclude":
+                message = (
+                    "cannot include fields or expressions in an exclusion $project"
+                )
+                raise server_error(
+                    message, code=31252 if current == "computed" else 31253
+                )
+            if mode == "include" and current == "exclude":
+                message = "cannot exclude fields in an inclusion $project"
+                raise server_error(message, code=31254)
+            mode = "exclude" if current == "exclude" else "include"
     return spec
 
 
@@ -206,10 +202,16 @@ def _require_unset_spec(spec: object) -> list[str]:
     elif isinstance(spec, list):
         fields = spec
     else:
-        raise OperationFailure("$unset requires a field path string or a list of field path strings")
+        raise server_error("$unset requires a field path string or a list of field path strings", code=31002)
 
-    if not fields or not all(isinstance(field, str) and field for field in fields):
-        raise OperationFailure("$unset requires non-empty field path strings")
+    if not fields:
+        raise server_error("$unset requires non-empty field path strings", code=31119)
+    if not all(isinstance(field, str) for field in fields):
+        message = "$unset requires field path strings"
+        raise server_error(message, code=31120)
+    if any(not field for field in fields):
+        message = "$unset requires non-empty field paths"
+        raise server_error(message, code=40352)
     return fields
 
 

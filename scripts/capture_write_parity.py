@@ -17,6 +17,8 @@ import pymongo
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from tests.differential.find_modify_cases import FIND_MODIFY_CASES
+from tests.differential.shared_error_cases import SHARED_ERROR_CASES
 from tests.differential.write_cases import WRITE_CASES
 from tests.differential.write_identity_cases import (
     IDENTITY_CASES,
@@ -24,6 +26,11 @@ from tests.differential.write_identity_cases import (
 )
 from tests.differential.write_operation_cases import WRITE_OPERATION_CASES
 from tests.differential.write_query_cases import RAW_QUERY_CASES
+from tests.support_collation_diagnostics import (
+    observe_async_collation_keys,
+    observe_collation_keys,
+)
+from tests.support_unacknowledged import PoolObservation
 from tests.support_write_histories import HISTORY_CASES, observe_history
 from tests.support_write_parity import (
     RAW_CASE_IDS,
@@ -39,6 +46,8 @@ IDENTITY_CASE_COUNT = 321
 RAW_IDENTITY_CASE_COUNT = 180
 RAW_QUERY_CASE_COUNT = 28
 OPERATION_CASE_COUNT = 42
+FIND_MODIFY_CASE_COUNT = 38
+SHARED_ERROR_CASE_COUNT = 173
 
 
 def require(condition, message):
@@ -47,15 +56,27 @@ def require(condition, message):
 
 
 async def capture_async(uri, name):
-    async with pymongo.AsyncMongoClient(uri, serverSelectionTimeoutMS=3000) as client:
+    pool = PoolObservation()
+    async with pymongo.AsyncMongoClient(
+        uri, maxPoolSize=1, event_listeners=[pool], serverSelectionTimeoutMS=3000
+    ) as client:
         db = client[name]
         try:
             result = []
-            for cases in (WRITE_CASES, IDENTITY_CASES, WRITE_OPERATION_CASES):
+            for cases in (
+                WRITE_CASES,
+                IDENTITY_CASES,
+                WRITE_OPERATION_CASES,
+                FIND_MODIFY_CASES,
+                SHARED_ERROR_CASES,
+            ):
                 result.append(
                     {
                         case.id: await observe_async_write_case(
-                            db, f"c{len(result)}_{case.id}", case
+                            db,
+                            f"c{len(result)}_{case.id}",
+                            case,
+                            error_contract=cases is SHARED_ERROR_CASES,
                         )
                         for case in cases
                     }
@@ -81,6 +102,11 @@ async def capture_async(uri, name):
                     case.id: await observe_async_raw_write(db, "query_" + case.id, case)
                     for case in RAW_QUERY_CASES
                 }
+            )
+            result.append(await observe_async_collation_keys(db))
+            require(
+                pool.observation()["reused"],
+                "native async physical connection not reused",
             )
             return result
         finally:
@@ -113,6 +139,12 @@ def verify_inventory(root):
         "unexpected operation payload corpus inventory",
     )
     require(
+        len(FIND_MODIFY_CASES)
+        == len({case.id for case in FIND_MODIFY_CASES})
+        == FIND_MODIFY_CASE_COUNT,
+        "unexpected findAndModify command-error corpus inventory",
+    )
+    require(
         len(RAW_IDENTITY_CASE_IDS) == RAW_IDENTITY_CASE_COUNT
         and set(RAW_IDENTITY_CASE_IDS) <= {case.id for case in IDENTITY_CASES},
         "unexpected raw identity corpus inventory",
@@ -122,6 +154,10 @@ def verify_inventory(root):
         == len({case.id for case in RAW_QUERY_CASES})
         == RAW_QUERY_CASE_COUNT,
         "unexpected raw query corpus inventory",
+    )
+    require(
+        len(SHARED_ERROR_CASES) == SHARED_ERROR_CASE_COUNT,
+        "unexpected shared-error inventory",
     )
     return plan
 
@@ -138,7 +174,18 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
     root = Path(__file__).resolve().parents[1]
     catalog = root / "tests/differential/write_cases.py"
     plan = verify_inventory(root)
-    with pymongo.MongoClient(uri, serverSelectionTimeoutMS=3000) as client:
+    inputs = {
+        path: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in (
+            *sorted((root / "tests/differential").glob("*.py")),
+            root / "tests/support_write_parity.py",
+            root / "tests/support_collation_diagnostics.py",
+        )
+    }
+    pool = PoolObservation()
+    with pymongo.MongoClient(
+        uri, maxPoolSize=1, event_listeners=[pool], serverSelectionTimeoutMS=3000
+    ) as client:
         build = client.server_info()
         require(
             build["versionArray"][:2] == [int(x) for x in args.target.split(".")],
@@ -158,6 +205,7 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
             "fcv": fcv,
             "sdk": pymongo.version,
             "native_facades": ["sync", "async"],
+            "native_physical_connection_reuse": True,
             "catalog_sha256": hashlib.sha256(catalog.read_bytes()).hexdigest(),
             "observer_sha256": hashlib.sha256(
                 (root / "tests/support_write_parity.py").read_bytes()
@@ -184,6 +232,20 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
                 case.id: observe_write_case(db, "op_" + case.id, case)
                 for case in WRITE_OPERATION_CASES
             }
+            find_modify = {
+                case.id: observe_write_case(db, "fm_" + case.id, case)
+                for case in FIND_MODIFY_CASES
+            }
+            shared_errors = {
+                case.id: observe_write_case(
+                    db, "shared_" + case.id, case, error_contract=True
+                )
+                for case in SHARED_ERROR_CASES
+            }
+            require(
+                pool.observation()["reused"],
+                "native sync physical connection not reused",
+            )
             raw = {
                 case.id: observe_raw_write(db, "raw_" + case.id, case)
                 for case in WRITE_CASES
@@ -198,6 +260,7 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
                 case.id: observe_raw_write(db, case.id, case)
                 for case in RAW_QUERY_CASES
             }
+            collation_keys = observe_collation_keys(db)
             histories = []
             for identifier in HISTORY_CASES:
                 for repetition in range(10):
@@ -212,9 +275,26 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
             client.drop_database(name)
             require(name not in client.list_database_names(), "cleanup failed")
         require(
-            [observations, identity, operations, raw, identity_raw, queries]
+            [
+                observations,
+                identity,
+                operations,
+                find_modify,
+                shared_errors,
+                raw,
+                identity_raw,
+                queries,
+                collation_keys,
+            ]
             == asyncio.run(capture_async(uri, name + "_async")),
             "native sync/async observations differ",
+        )
+        require(
+            all(
+                hashlib.sha256(path.read_bytes()).hexdigest() == digest
+                for path, digest in inputs.items()
+            ),
+            "capture inputs changed during the native observation",
         )
         args.output_dir.mkdir(parents=True, exist_ok=True)
         args.histories_dir.mkdir(parents=True, exist_ok=True)
@@ -232,6 +312,9 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
             (f"write_identity_mongodb_{suffix}.json", identity),
             (f"write_operations_mongodb_{suffix}.json", operations),
             (f"write_queries_mongodb_{suffix}.json", queries),
+            (f"find_modify_mongodb_{suffix}.json", find_modify),
+            (f"shared_errors_mongodb_{suffix}.json", shared_errors),
+            (f"collation_keys_mongodb_{suffix}.json", collation_keys),
         ):
             if args.check_dir is not None:
                 expected = json.loads((args.check_dir / filename).read_text())
@@ -240,6 +323,28 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
                     f"native capture differs: {filename}",
                 )
             capture = {**meta, "observations": data}
+            if data is collation_keys:
+                capture["collation_catalog_sha256"] = hashlib.sha256(
+                    (
+                        root / "tests/differential/collation_diagnostic_cases.py"
+                    ).read_bytes()
+                ).hexdigest()
+                capture["collation_observer_sha256"] = hashlib.sha256(
+                    (root / "tests/support_collation_diagnostics.py").read_bytes()
+                ).hexdigest()
+            if data is shared_errors:
+                capture["shared_error_mirror_catalog_sha256"] = hashlib.sha256(
+                    (
+                        root / "tests/differential/shared_error_mirror_cases.py"
+                    ).read_bytes()
+                ).hexdigest()
+                capture["shared_error_catalog_sha256"] = hashlib.sha256(
+                    (root / "tests/differential/shared_error_cases.py").read_bytes()
+                ).hexdigest()
+            if data is find_modify:
+                capture["find_modify_catalog_sha256"] = hashlib.sha256(
+                    (root / "tests/differential/find_modify_cases.py").read_bytes()
+                ).hexdigest()
             if data is identity:
                 capture["identity_catalog_sha256"] = hashlib.sha256(
                     (root / "tests/differential/write_identity_cases.py").read_bytes()
@@ -271,6 +376,8 @@ def main():  # noqa: PLR0915 - native capture owns setup, facade comparison and 
             f"{len(identity_raw)} identity commands; "
             f"{len(queries)} query commands; "
             f"{len(operations)} operation payloads; "
+            f"{len(find_modify)} findAndModify cases; "
+            f"{len(shared_errors)} shared errors; "
             "native sync/async equal; cleanup verified"
         )
 

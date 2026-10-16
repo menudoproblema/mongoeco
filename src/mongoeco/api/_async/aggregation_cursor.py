@@ -36,14 +36,15 @@ from mongoeco.core.aggregation.grouping_stages import _IncrementalGroup
 from mongoeco.core.aggregation.lookup_physical import (
     explain_lookup_physical_plans,
 )
+from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.preparation import prepare_pipeline
 from mongoeco.core.aggregation.resources import AggregationResources
-from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
 from mongoeco.core.aggregation.spill import _AggregationGroupStateSerializationError
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.error_documents import command_errors, error_message
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
 )
@@ -2188,7 +2189,7 @@ class AsyncAggregationCursor:
                         "pipeline": list(self._pipeline),
                     },
                     duration_ns=time.perf_counter_ns() - started_at,
-                    errmsg=str(exc),
+                    errmsg=error_message(exc),
                 )
             raise
         profiler = getattr(self._collection, "_profile_operation", None)
@@ -2479,6 +2480,7 @@ class AsyncAggregationCursor:
     def __aiter__(self) -> AsyncIterator[Document]:
         return self
 
+    @command_errors
     async def __anext__(self) -> Document:
         if self._closed:
             raise StopAsyncIteration

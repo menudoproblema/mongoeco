@@ -43,6 +43,7 @@ from mongoeco.errors import (
     DuplicateKeyError,
     InvalidOperation,
     OperationFailure,
+    WriteError,
 )
 from mongoeco.types import PlanningMode
 
@@ -5515,7 +5516,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_replace_one_and_find_one_and_family(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory(), pymongo_profile="4.11") as client:
+                with MongoClient(
+                    factory(), mongodb_dialect="8.0", pymongo_profile="4.11"
+                ) as client:
                     collection = client.test.users
                     collection.insert_one(
                         {"_id": "1", "kind": "view", "rank": 2, "done": False},
@@ -6308,7 +6311,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_update_one_sort_updates_first_sorted_document(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory(), pymongo_profile="4.11") as client:
+                with MongoClient(
+                    factory(), mongodb_dialect="8.0", pymongo_profile="4.11"
+                ) as client:
                     collection = client.test.users
                     collection.insert_one(
                         {"_id": "1", "kind": "view", "rank": 2, "done": False},
@@ -11646,8 +11651,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(TypeError):
                         collection.update_one([], {})
 
-                    with self.assertRaises(TypeError):
+                    with self.assertRaises(OperationFailure) as error:
                         collection.update_one({}, [1])
+                    self.assertEqual(error.exception.code, 14)
 
                     with self.assertRaises(TypeError):
                         collection.delete_one([])
@@ -11713,8 +11719,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         collection.update_one({}, [])
 
-                    with self.assertRaises(TypeError):
+                    with self.assertRaises(WriteError) as caught:
                         collection.update_one({}, {"$set": []})
+                    self.assertEqual(caught.exception.code, 9)
+                    self.assertEqual(caught.exception.details["index"], 0)
+                    self.assertTrue(caught.exception.details["errmsg"])
 
     def test_update_operations_support_aggregation_pipeline_updates(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import decimal
 import math
-from datetime import UTC, datetime
+
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from mongoeco.errors import OperationFailure
@@ -278,9 +279,14 @@ def bson_divide(left: object, right: object) -> object:
     if wrapped_left is None or wrapped_right is None:
         raise TypeError("BSON arithmetic requires numeric values")
     if unwrap_bson_numeric(right) == 0:
-        raise OperationFailure("$divide cannot divide by zero")
-    if isinstance(wrapped_left, BsonDecimal128) or isinstance(wrapped_right, BsonDecimal128):
-        result = _normalize_decimal128(_numeric_to_decimal(wrapped_left.value) / _numeric_to_decimal(wrapped_right.value))
+        raise OperationFailure("can't $divide by zero", code=2)
+    if isinstance(wrapped_left, BsonDecimal128) or isinstance(
+        wrapped_right, BsonDecimal128
+    ):
+        result = _normalize_decimal128(
+            _numeric_to_decimal(wrapped_left.value)
+            / _numeric_to_decimal(wrapped_right.value)
+        )
         return _wrap_from_templates(result, left, right)
     result = float(unwrap_bson_numeric(left)) / float(unwrap_bson_numeric(right))
     return _wrap_from_templates(result, left, right)
@@ -292,8 +298,10 @@ def bson_mod(left: object, right: object) -> object:
     if wrapped_left is None or wrapped_right is None:
         raise TypeError("BSON arithmetic requires numeric values")
     if unwrap_bson_numeric(right) == 0:
-        raise OperationFailure("$mod cannot divide by zero")
-    if isinstance(wrapped_left, BsonDecimal128) or isinstance(wrapped_right, BsonDecimal128):
+        raise OperationFailure("can't $mod by zero", code=16610)
+    if isinstance(wrapped_left, BsonDecimal128) or isinstance(
+        wrapped_right, BsonDecimal128
+    ):
         left_decimal = _numeric_to_decimal(wrapped_left.value)
         right_decimal = _numeric_to_decimal(wrapped_right.value)
         quotient = decimal.Decimal(int(left_decimal / right_decimal))

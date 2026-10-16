@@ -29,6 +29,7 @@ from mongoeco.core.bson_scalars import (
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     Binary,
@@ -129,7 +130,7 @@ def evaluate_scalar_expression(
             )
         try:
             if target not in aliases:
-                raise OperationFailure("$convert target type is not supported")
+                raise server_error("$convert target type is not supported", code=2)
             if extended:
                 converted = _convert_extended_scalar(
                     value, aliases[target], base=base, stringify_value=stringify_value
@@ -239,9 +240,14 @@ def evaluate_scalar_expression(
             "$toObjectId": "objectId",
             "$toUUID": "uuid",
         }[operator]
-        converted = _convert_aggregation_scalar(
-            operator, value, target, stringify_value=stringify_value
-        )
+        try:
+            converted = _convert_aggregation_scalar(
+                operator, value, target, stringify_value=stringify_value
+            )
+        except OperationFailure as error:
+            if error.code is not None:
+                raise
+            raise server_error(str(error), code=241) from error
         return _typed_conversion_result(converted, target, variables)
 
     if operator == "$isArray":
@@ -373,7 +379,11 @@ def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:
 
 
 def _datetime_to_epoch_millis(value: datetime.datetime) -> int:
-    normalized = value.astimezone(datetime.UTC) if value.tzinfo is not None else value.replace(tzinfo=datetime.UTC)
+    normalized = (
+        value.astimezone(datetime.UTC)
+        if value.tzinfo is not None
+        else value.replace(tzinfo=datetime.UTC)
+    )
     return int(normalized.timestamp() * 1000)
 
 
@@ -426,22 +436,30 @@ def _conversion_base(value: object) -> int | None:
     message = "In $convert, 'base' argument is not a valid base"
     raise OperationFailure(
         message,
-        code=3501301, details={"codeName": "Location3501301"},
+        code=3501301,
+        details={"codeName": "Location3501301"},
     )
 
 
 def _extended_string(value: Any, *, stringify_value: Stringifier) -> str:
     value = unwrap_bson_numeric(DocumentCodec.to_internal(value))
     if isinstance(value, dict):
-        return "{" + ",".join(
-            json.dumps(key, ensure_ascii=False)
-            + ":" + _extended_json_value(item, stringify_value)
-            for key, item in value.items()
-        ) + "}"
+        return (
+            "{"
+            + ",".join(
+                json.dumps(key, ensure_ascii=False)
+                + ":"
+                + _extended_json_value(item, stringify_value)
+                for key, item in value.items()
+            )
+            + "}"
+        )
     if isinstance(value, list):
-        return "[" + ",".join(
-            _extended_json_value(item, stringify_value) for item in value
-        ) + "]"
+        return (
+            "["
+            + ",".join(_extended_json_value(item, stringify_value) for item in value)
+            + "]"
+        )
     # MaxKey and MinKey remain optional BSON types owned by the codec.
     if type(value).__module__ in {"bson.max_key", "bson.min_key"}:
         return type(value).__name__
@@ -481,10 +499,7 @@ def _convert_base_value(value: Any, target: str, base: int) -> Any:
         if (
             not math.isfinite(value)
             or int(value) != value
-            or (
-                not isinstance(value, int)
-                and not INT32_MIN <= value <= INT32_MAX
-            )
+            or (not isinstance(value, int) and not INT32_MIN <= value <= INT32_MAX)
         ):
             message = "$convert base conversion to string requires an integer input"
             raise OperationFailure(
@@ -536,7 +551,9 @@ def _convert_aggregation_scalar(
 ) -> Any:
     if value is None or isinstance(value, UndefinedType):
         return None
-    preserve_numeric_wrappers = isinstance(value, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128)
+    preserve_numeric_wrappers = isinstance(
+        value, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128
+    )
     value = unwrap_bson_numeric(value)
 
     if target == "bool":
@@ -544,7 +561,21 @@ def _convert_aggregation_scalar(
             return value
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             return value != 0
-        if isinstance(value, (str, list, dict, bytes, bytearray, uuid.UUID, Binary, ObjectId, datetime.datetime, Timestamp)):
+        if isinstance(
+            value,
+            (
+                str,
+                list,
+                dict,
+                bytes,
+                bytearray,
+                uuid.UUID,
+                Binary,
+                ObjectId,
+                datetime.datetime,
+                Timestamp,
+            ),
+        ):
             return True
         raise OperationFailure(f"{operator} cannot convert the value")
 
@@ -608,7 +639,9 @@ def _convert_aggregation_scalar(
                 result = float(text)
                 return BsonDouble(result) if preserve_numeric_wrappers else result
             except ValueError as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+                raise OperationFailure(
+                    f"{operator} cannot convert the string value"
+                ) from exc
         if isinstance(value, datetime.datetime):
             result = float(_datetime_to_epoch_millis(value))
             return BsonDouble(result) if preserve_numeric_wrappers else result
@@ -618,16 +651,24 @@ def _convert_aggregation_scalar(
         if isinstance(value, datetime.datetime):
             return _to_utc_naive(value)
         if isinstance(value, ObjectId):
-            return datetime.datetime.fromtimestamp(value.generation_time, tz=datetime.UTC).replace(tzinfo=None)
+            return datetime.datetime.fromtimestamp(
+                value.generation_time, tz=datetime.UTC
+            ).replace(tzinfo=None)
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             if not math.isfinite(value):
                 raise OperationFailure(f"{operator} cannot convert the value")
-            return datetime.datetime.fromtimestamp(value / 1000, tz=datetime.UTC).replace(tzinfo=None)
+            return datetime.datetime.fromtimestamp(
+                value / 1000, tz=datetime.UTC
+            ).replace(tzinfo=None)
         if isinstance(value, str):
             try:
-                return _to_utc_naive(datetime.datetime.fromisoformat(value.replace("Z", "+00:00")))
+                return _to_utc_naive(
+                    datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
+                )
             except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+                raise OperationFailure(
+                    f"{operator} cannot convert the string value"
+                ) from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "objectId":
@@ -637,7 +678,9 @@ def _convert_aggregation_scalar(
             try:
                 return ObjectId(value)
             except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+                raise OperationFailure(
+                    f"{operator} cannot convert the string value"
+                ) from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "uuid":
@@ -654,7 +697,9 @@ def _convert_aggregation_scalar(
             try:
                 return uuid.UUID(value)
             except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+                raise OperationFailure(
+                    f"{operator} cannot convert the string value"
+                ) from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "decimal":
@@ -688,7 +733,9 @@ def _convert_aggregation_scalar(
                 validate_bson_value(result)
                 return BsonDecimal128(result) if preserve_numeric_wrappers else result
             except Exception as exc:
-                raise OperationFailure(f"{operator} cannot convert the string value") from exc
+                raise OperationFailure(
+                    f"{operator} cannot convert the string value"
+                ) from exc
         raise OperationFailure(f"{operator} cannot convert the value")
 
     if target == "string":

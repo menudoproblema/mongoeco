@@ -7,12 +7,34 @@ import pytest
 
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MongoDialect
 from mongoeco.core import projections
+from mongoeco.core.aggregation.preparation import prepare_expression
+from mongoeco.core.aggregation.runtime import evaluate_expression
+from mongoeco.core.runtime_metadata import RuntimeDocumentState, RuntimeMetadataKey
 from mongoeco.core.search import TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD
 from mongoeco.engines.semantic_core import (
     compile_find_semantics,
     stream_finalize_documents,
 )
 from mongoeco.errors import OperationFailure
+
+
+EXPRESSION_DOCUMENT_ERROR = 40181
+
+
+def test_runtime_rejects_a_multiple_operator_expression_as_a_literal_object():
+    with pytest.raises(OperationFailure) as caught:
+        evaluate_expression({}, {"$abs": 1, "$sqrt": 1})
+    assert caught.value.code == EXPRESSION_DOCUMENT_ERROR
+
+
+def test_metadata_expression_preparation_preserves_its_document_context():
+    expression = {"$meta": "textScore"}
+    prepare_expression(expression, dialect=MONGODB_DIALECT_70, fold_constants=True)
+    score = 3.0
+    document = RuntimeDocumentState({"_id": 1}).with_metadata_value(
+        RuntimeMetadataKey.TEXT_SCORE, score
+    )
+    assert evaluate_expression(document, expression) == score
 
 
 @pytest.fixture
@@ -145,19 +167,14 @@ def test_stream_compiles_once_after_skip_and_retains_prefix_before_source_error(
 
 
 @pytest.mark.parametrize("max_time_ms", [None, 60_000])
-def test_stream_does_not_validate_skipped_or_empty_projection(max_time_ms):
+def test_stream_validates_projection_even_without_returned_documents(max_time_ms):
     semantics = compile_find_semantics(
         {}, projection={"name": 1, "nested": 0}, skip=1, max_time_ms=max_time_ms
     )
-    with patch.object(
-        projections, "_parse_projection_spec", wraps=projections._parse_projection_spec
-    ) as parse:
-        assert list(stream_finalize_documents([], semantics)) == []
-        assert list(stream_finalize_documents([{"name": "skipped"}], semantics)) == []
-        assert parse.call_count == 0
-        with pytest.raises(OperationFailure):
-            list(stream_finalize_documents([{}, {}], semantics))
-        assert parse.call_count == 1
+    for documents in ([], [{"name": "skipped"}], [{}, {}]):
+        with pytest.raises(OperationFailure) as caught:
+            list(stream_finalize_documents(documents, semantics))
+        assert caught.value.code == 31254  # noqa: PLR2004 - native projection code
 
 
 def test_projection_preparation_uses_its_own_dialect():
@@ -167,13 +184,12 @@ def test_projection_preparation_uses_its_own_dialect():
                 return None
             return super().projection_flag(value)
 
-    strict = projections._ProjectionExecutor(
-        {"name": True},
-        dialect=NoBooleanProjectionDialect(
-            key="no-bool", server_version="test", label="No boolean flags"
-        ),
-    )
+    with pytest.raises(OperationFailure):
+        projections._ProjectionExecutor(
+            {"name": True},
+            dialect=NoBooleanProjectionDialect(
+                key="no-bool", server_version="test", label="No boolean flags"
+            ),
+        )
     default = projections._ProjectionExecutor({"name": True})
     assert default({"name": "one"}) == {"name": "one"}
-    with pytest.raises(OperationFailure):
-        strict({"name": "one"})

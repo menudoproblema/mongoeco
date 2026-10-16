@@ -12,6 +12,17 @@
       ]
     },
     {
+      "after": "Command-level bindings are propagated into every delete filter through $expr.",
+      "before": "Propagated into per-delete filters through $expr when supplied on individual specs.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "delete",
+        "let",
+        "note"
+      ]
+    },
+    {
       "after": "Limits the wire firstBatch; database.command() uses it for local prefetch but materializes the full command result.",
       "before": "Materialized into the command cursor surface.",
       "operation": "replace",
@@ -42,6 +53,17 @@
         "listCollections",
         "authorizedCollections",
         "status"
+      ]
+    },
+    {
+      "after": "Command-level bindings are propagated into every update filter through $expr.",
+      "before": "Propagated into per-update filters through $expr when supplied on individual specs.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "update",
+        "let",
+        "note"
       ]
     },
     {
@@ -215,6 +237,16 @@
         "mongodb_dialects",
         "7.0",
         "behavior_flags",
+        "densify_full_nonadvancing_step_errors"
+      ]
+    },
+    {
+      "after": false,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "7.0",
+        "behavior_flags",
         "documents_join_omits_collection_namespace"
       ]
     },
@@ -246,6 +278,16 @@
         "8.0",
         "behavior_flags",
         "densify_equal_bounds_are_empty"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "8.0",
+        "behavior_flags",
+        "densify_full_nonadvancing_step_errors"
       ]
     },
     {
@@ -601,6 +643,16 @@
       ]
     },
     {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "9.0",
+        "behavior_flags",
+        "densify_full_nonadvancing_step_errors"
+      ]
+    },
+    {
       "after": {
         "note": "Accepted and type-checked for API parity; it does not schedule a background index build.",
         "status": "accepted-noop"
@@ -626,6 +678,32 @@
     },
     {
       "after": {
+        "comment": {
+          "note": "Preserved in batch insert profiling, active operations and session metadata.",
+          "status": "effective"
+        }
+      },
+      "operation": "add",
+      "path": [
+        "operation_options",
+        "insert_many"
+      ]
+    },
+    {
+      "after": {
+        "comment": {
+          "note": "Preserved in insert profiling, active operations and session metadata.",
+          "status": "effective"
+        }
+      },
+      "operation": "add",
+      "path": [
+        "operation_options",
+        "insert_one"
+      ]
+    },
+    {
+      "after": {
         "aliases": [
           "4.18"
         ],
@@ -645,52 +723,6 @@
       "path": [
         "pymongo_profiles",
         "4.18"
-      ]
-    },
-    {
-      "after": [
-        7,
-        8,
-        9
-      ],
-      "before": [
-        7,
-        8
-      ],
-      "operation": "replace",
-      "path": [
-        "supported_majors",
-        "mongodb"
-      ]
-    },
-    {
-      "after": false,
-      "operation": "add",
-      "path": [
-        "mongodb_dialects",
-        "7.0",
-        "behavior_flags",
-        "densify_full_nonadvancing_step_errors"
-      ]
-    },
-    {
-      "after": true,
-      "operation": "add",
-      "path": [
-        "mongodb_dialects",
-        "8.0",
-        "behavior_flags",
-        "densify_full_nonadvancing_step_errors"
-      ]
-    },
-    {
-      "after": true,
-      "operation": "add",
-      "path": [
-        "mongodb_dialects",
-        "9.0",
-        "behavior_flags",
-        "densify_full_nonadvancing_step_errors"
       ]
     },
     {
@@ -719,29 +751,19 @@
       ]
     },
     {
-      "after": {
-        "comment": {
-          "note": "Preserved in insert profiling, active operations and session metadata.",
-          "status": "effective"
-        }
-      },
-      "operation": "add",
+      "after": [
+        7,
+        8,
+        9
+      ],
+      "before": [
+        7,
+        8
+      ],
+      "operation": "replace",
       "path": [
-        "operation_options",
-        "insert_one"
-      ]
-    },
-    {
-      "after": {
-        "comment": {
-          "note": "Preserved in batch insert profiling, active operations and session metadata.",
-          "status": "effective"
-        }
-      },
-      "operation": "add",
-      "path": [
-        "operation_options",
-        "insert_many"
+        "supported_majors",
+        "mongodb"
       ]
     }
   ],

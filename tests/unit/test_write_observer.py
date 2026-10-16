@@ -101,3 +101,159 @@ def test_count_observer_detects_wrong_values_and_numeric_width():
     assert public_result(1, observer) != public_result(1.0, observer)
     boolean = True
     assert public_result(1, observer) != public_result(boolean, observer)
+
+
+def test_command_error_observer_rejects_partial_or_malformed_details():
+    observer = BSONObservation([])
+    details = {
+        "ok": 0.0,
+        "code": 11000,
+        "codeName": "DuplicateKey",
+        "errmsg": "Plan executor error during findAndModify :: caused by :: "
+        "E11000 duplicate key error collection: db.items "
+        'index: key_1 dup key: { key: "taken" }',
+        "keyPattern": {"key": 1},
+        "keyValue": {"key": "taken"},
+    }
+
+    def observed(value):
+        return public_error(
+            OperationFailure("failed", code=11000, details=value),
+            observer,
+            command_namespace="db.items",
+        )
+
+    reference = observed(details)
+    assert observed(None) != observed({})
+    for field in details:
+        assert (
+            observed({key: value for key, value in details.items() if key != field})
+            != reference
+        )
+    for message in (
+        None,
+        1,
+        "",
+        "duplicate key",
+        details["errmsg"].replace("key_1", "wrong"),
+        details["errmsg"].replace("db.items", "db.other"),
+    ):
+        assert observed({**details, "errmsg": message}) != reference
+    assert observed({**details, "keyValue": {"key": Int64(2)}}) != reference
+    assert observed({**details, "code": 2}) != reference
+
+
+def test_strict_command_observer_detects_partial_envelopes_and_embedded_exceptions():
+    observer = BSONObservation([], error_contract=True)
+    details = {
+        "ok": 0.0,
+        "code": 17276,
+        "codeName": "Location17276",
+        "errmsg": "Use of undefined variable: missing",
+    }
+
+    def observe(value):
+        return public_error(
+            OperationFailure("original", code=17276, details=value), observer
+        )
+
+    reference = observe(details)
+    assert observe(None) != observe({})
+    for field in details:
+        assert observe({k: v for k, v in details.items() if k != field}) != reference
+    for value in [None, 1, "", "diagnostic, full error: {}"]:
+        assert observe({**details, "errmsg": value}) != reference
+
+
+def test_bulk_observer_detects_missing_write_concern_errors_and_message_corruption():
+    observer = BSONObservation([], error_contract=True)
+    details = {
+        "writeErrors": [{"index": 0, "code": 2, "errmsg": "can't $divide by zero"}],
+        "writeConcernErrors": [],
+    }
+
+    def observe(value):
+        return public_error(BulkWriteError(value), observer)
+
+    reference = observe(details)
+    assert observe({"writeErrors": details["writeErrors"]}) != reference
+    with pytest.raises(KeyError):
+        observe({**details, "writeErrors": [{"code": 2, "errmsg": "invalid"}]})
+    for field in ["code", "errmsg"]:
+        assert (
+            observe(
+                {
+                    **details,
+                    "writeErrors": [
+                        {
+                            k: v
+                            for k, v in details["writeErrors"][0].items()
+                            if k != field
+                        }
+                    ],
+                }
+            )
+            != reference
+        )
+    assert (
+        observe(
+            {
+                **details,
+                "writeErrors": [
+                    {
+                        **details["writeErrors"][0],
+                        "errmsg": "diagnostic, full error: {}",
+                    }
+                ],
+            }
+        )
+        != reference
+    )
+
+
+@pytest.mark.parametrize("kind", ["item", "bulk", "raw"])
+def test_duplicate_item_observer_retains_diagnostic_content(kind):
+    observer = BSONObservation([], namespace="db.items", error_contract=True)
+
+    def observed(message, *, code=11000):
+        entry = {
+            "index": 0,
+            "code": code,
+            "errmsg": message,
+            "keyPattern": {"key": 1},
+            "keyValue": {"key": "taken"},
+        }
+        if kind == "raw":
+            return raw_result({"ok": 1.0, "writeErrors": [entry]}, observer)
+        error = (
+            BulkWriteError({"writeErrors": [entry], "writeConcernErrors": []})
+            if kind == "bulk"
+            else WriteError(message, code=code, details=entry)
+        )
+        return public_error(error, observer)
+
+    message = (
+        'E11000 duplicate key error collection: db.items index: key_1 '
+        'dup key: { key: "taken" }'
+    )
+    reference = observed(message)
+    for mutation in (
+        "Duplicate key for unique index 'key_1'",
+        message.replace("taken", "other"),
+        message.replace("db.items", "other.items"),
+        message.replace("key_1", "other_1"),
+        "Plan executor error during update :: caused by :: " + message,
+    ):
+        assert observed(mutation) != reference
+    # Omitting the mandatory code is an observable defect, including raw replies.
+    assert observed(message, code=None) != reference
+
+
+def test_raw_observer_preserves_missing_code_as_a_difference_without_crashing():
+    observer = BSONObservation([], error_contract=True)
+    missing = raw_result({"writeErrors": [{"index": 0, "errmsg": "bad"}]}, observer)
+    complete = raw_result(
+        {"writeErrors": [{"index": 0, "code": 9, "errmsg": "bad"}]}, observer
+    )
+    assert missing != complete
+    assert missing["write_errors"] == [[0, None]]

@@ -698,7 +698,7 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         client.alpha.command({"createIndexes": "events", "indexes": [1]})
                     with self.assertRaisesRegex(Exception, "wire dropIndexes index must be '\\*', a name, or a key specification"):
                         client.alpha.command({"dropIndexes": "events", "index": 1.5})
-                    with self.assertRaisesRegex(Exception, "wire findAndModify let must be a dict"):
+                    with self.assertRaisesRegex(Exception, "let must be a document"):
                         client.alpha.command(
                             {
                                 "findAndModify": "events",

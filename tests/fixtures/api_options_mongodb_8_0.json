@@ -49,7 +49,7 @@
   "source_sha256": {
     "tests/differential/api_option_cases.py": "129f459c5b20d82cf3c835ec11b7820a5bfd86309e37c04926731fd63328e708",
     "tests/support_api_options.py": "74fd0ac5742634ec6f9c460b4444f03be4e42f5ad903bb4a48dc1f74575737fb",
-    "tests/support_write_parity.py": "be6f848fbe372e6a539ce235e404d2729c938556d5c9a59d8a4ddde9eaef1cd7"
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
   },
   "native_facades": [
     "sync",
@@ -6030,6 +6030,18 @@
             11000
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -6143,6 +6155,18 @@
             121
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -6247,6 +6271,18 @@
             1,
             11000
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -6374,6 +6410,18 @@
             1,
             121
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -6620,6 +6668,18 @@
             11000
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -6746,6 +6806,18 @@
             121
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -6863,6 +6935,18 @@
             1,
             11000
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -7003,6 +7087,18 @@
             1,
             121
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -7251,6 +7347,18 @@
             11000
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -7366,6 +7474,18 @@
             121
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -7472,6 +7592,18 @@
             1,
             11000
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -7601,6 +7733,18 @@
             1,
             121
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -7954,6 +8098,18 @@
             11000
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -8073,6 +8229,18 @@
             1,
             11000
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -8328,6 +8496,18 @@
             11000
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -8447,6 +8627,18 @@
             1,
             11000
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {

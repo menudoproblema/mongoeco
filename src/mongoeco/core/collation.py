@@ -158,7 +158,7 @@ def compare_with_collation(
         return _compare_collated_documents(left, right, dialect, collation)
     if collation is not None and isinstance(left, list) and isinstance(right, list):
         return _compare_collated_arrays(left, right, dialect, collation)
-    if collation is None or not isinstance(left, str) or not isinstance(right, str):
+    if collation is None or type(left) is not str or type(right) is not str:
         return dialect.policy.compare_values(left, right)
     if _requires_icu_backend(collation) and not _can_use_icu_collation(collation):
         message = "requested collation options require an ICU backend"
@@ -236,6 +236,29 @@ def string_equality_key(value: str, collation: CollationSpec | None) -> object:
         if collation.case_level or collation.strength >= tertiary_strength
         else primary
     )
+
+
+def index_collation_key(value: str, collation: CollationSpec) -> bytes:
+    """Render MongoDB's ICU 57 comparison key without changing storage ordering."""
+    # Avoid loading the diagnostic codec during optional-dependency imports.
+    from mongoeco.core.collation_diagnostics import comparison_key  # noqa: PLC0415
+    return comparison_key(value, collation)
+
+
+def index_collation_document(collation: CollationSpec) -> dict[str, object]:
+    """Describe the versioned MongoDB diagnostic representation."""
+    return {
+        "locale": collation.locale,
+        "caseLevel": collation.case_level,
+        "caseFirst": "off",
+        "strength": collation.strength,
+        "numericOrdering": collation.numeric_ordering,
+        "alternate": collation.alternate,
+        "maxVariable": collation.max_variable,
+        "normalization": collation.normalization,
+        "backwards": collation.backwards,
+        "version": "57.1",
+    }
 
 
 def values_equal_with_collation(

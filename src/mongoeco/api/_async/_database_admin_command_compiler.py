@@ -26,13 +26,17 @@ from mongoeco.api.operations import (
     compile_find_selection_from_update_operation,
     compile_update_operation,
 )
+from mongoeco.core.server_errors import operation_error
+from mongoeco.errors import OperationFailure
+
+
 if TYPE_CHECKING:
     from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
     from mongoeco.types import Document, Filter, IndexModel, Projection
 
 
 class DatabaseAdminCommandCompiler:
-    def __init__(self, admin: "AsyncDatabaseAdminService") -> None:
+    def __init__(self, admin: AsyncDatabaseAdminService) -> None:
         self._admin = admin
 
     @staticmethod
@@ -40,7 +44,9 @@ class DatabaseAdminCommandCompiler:
         return normalize_filter_document(filter_spec)
 
     @staticmethod
-    def normalize_command(command: object, kwargs: dict[str, object]) -> dict[str, object]:
+    def normalize_command(
+        command: object, kwargs: dict[str, object]
+    ) -> dict[str, object]:
         return normalize_command_document(command, kwargs)
 
     @staticmethod
@@ -216,7 +222,9 @@ class DatabaseAdminCommandCompiler:
             limit=limit,
         )
 
-    def compile_count_operation(self, spec: dict[str, object]) -> tuple[str, FindOperation]:
+    def compile_count_operation(
+        self, spec: dict[str, object]
+    ) -> tuple[str, FindOperation]:
         return self.compile_find_operation(
             spec,
             collection_field="count",
@@ -225,7 +233,9 @@ class DatabaseAdminCommandCompiler:
             let_field=None,
         )
 
-    def compile_distinct_operation(self, spec: dict[str, object]) -> tuple[str, str, FindOperation]:
+    def compile_distinct_operation(
+        self, spec: dict[str, object]
+    ) -> tuple[str, str, FindOperation]:
         collection_name = self.require_collection_name(
             spec.get("distinct"),
             "distinct",
@@ -233,13 +243,21 @@ class DatabaseAdminCommandCompiler:
         key = spec.get("key")
         if not isinstance(key, str) or not key:
             raise TypeError("key must be a non-empty string")
-        _, operation = self.compile_find_operation(
-            spec,
-            collection_field="distinct",
-            filter_field="query",
-            batch_size_field=None,
-            let_field=None,
-        )
+        try:
+            _, operation = self.compile_find_operation(
+                spec,
+                collection_field="distinct",
+                filter_field="query",
+                batch_size_field=None,
+                let_field=None,
+            )
+        except OperationFailure as error:
+            resolved = operation_error(
+                error, "distinct", self._admin._mongodb_dialect.key
+            )
+            if resolved is error:
+                raise
+            raise resolved from error
         return collection_name, key, operation
 
     def compile_find_and_modify_selection_operation(

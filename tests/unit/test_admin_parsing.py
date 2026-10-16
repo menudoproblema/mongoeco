@@ -252,16 +252,19 @@ class AdminParsingTests(unittest.TestCase):
             normalize_command_scale(0)
         with self.assertRaises(TypeError):
             normalize_command_max_time_ms("slow")
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure) as error:
             normalize_find_and_modify_options({"findAndModify": "users", "arrayFilters": ["bad"]})
-        with self.assertRaises(TypeError):
+        self.assertEqual(error.exception.code, 14)
+        with self.assertRaises(OperationFailure) as error:
             normalize_find_and_modify_options({"findAndModify": "users", "let": []})
-        with self.assertRaises(TypeError):
+        self.assertEqual(error.exception.code, 14)
+        with self.assertRaises(OperationFailure) as error:
             normalize_find_and_modify_options({"findAndModify": "users", "collation": []})
-        with self.assertRaises(TypeError):
+        self.assertEqual(error.exception.code, 14)
+        with self.assertRaises(OperationFailure) as error:
             normalize_find_and_modify_options({"findAndModify": "users", "update": 1})
-        with self.assertRaises(TypeError):
-            normalize_find_and_modify_options({"findAndModify": "users", "bypassDocumentValidation": 1})
+        self.assertEqual(error.exception.code, 14)
+        self.assertTrue(normalize_find_and_modify_options({"findAndModify": "users", "bypassDocumentValidation": 1}).bypass_document_validation)
         pipeline_options = normalize_find_and_modify_options(
             {"findAndModify": "users", "update": [{"$set": {"rank": 1}}]}
         )

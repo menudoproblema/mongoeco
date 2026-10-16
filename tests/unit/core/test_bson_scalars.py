@@ -1,16 +1,21 @@
 import decimal
 import math
 import unittest
+
 from unittest.mock import patch
 
-from mongoeco.errors import OperationFailure
-from mongoeco.types import Decimal128
 from mongoeco.core.bson_scalars import (
     BsonDecimal128,
     BsonDouble,
     BsonInt32,
     BsonInt64,
     BsonScalarOverflowError,
+    _coerce_integral,
+    _numeric_template_metadata,
+    _numeric_to_decimal,
+    _try_fast_float_arithmetic,
+    _wrap_from_templates,
+    _wrap_numeric_result,
     bson_add,
     bson_bitwise,
     bson_divide,
@@ -21,16 +26,12 @@ from mongoeco.core.bson_scalars import (
     bson_subtract,
     compare_bson_numeric,
     is_bson_numeric,
-    _coerce_integral,
-    _numeric_template_metadata,
-    _numeric_to_decimal,
-    _try_fast_float_arithmetic,
-    _wrap_from_templates,
-    _wrap_numeric_result,
     unwrap_bson_numeric,
     validate_bson_value,
     wrap_bson_numeric,
 )
+from mongoeco.errors import OperationFailure
+from mongoeco.types import Decimal128
 
 
 class BsonScalarTests(unittest.TestCase):
@@ -181,9 +182,9 @@ class BsonScalarTests(unittest.TestCase):
             bson_divide(5, 0)
         with self.assertRaisesRegex(OperationFailure, "divide by zero"):
             bson_divide(BsonDecimal128(decimal.Decimal("5")), decimal.Decimal("0"))
-        with self.assertRaisesRegex(OperationFailure, "divide by zero"):
+        with self.assertRaisesRegex(OperationFailure, r"\$mod by zero"):
             bson_mod(5, 0)
-        with self.assertRaisesRegex(OperationFailure, "divide by zero"):
+        with self.assertRaisesRegex(OperationFailure, r"\$mod by zero"):
             bson_mod(BsonDecimal128(decimal.Decimal("5.5")), decimal.Decimal("0"))
 
     def test_bson_bitwise_and_integral_helpers_cover_wrapped_and_error_paths(self):

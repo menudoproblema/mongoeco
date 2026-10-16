@@ -12,6 +12,7 @@ from mongoeco.api.operations import (
     UpdateOperation,
     compile_find_operation,
 )
+from mongoeco.core.error_documents import error_message
 from mongoeco.core.identity import (
     is_valid_root_document_id,
     materialize_replacement_document,
@@ -486,7 +487,7 @@ class CollectionRuntimeCoordinator:
                     "bypassDocumentValidation": bypass_document_validation,
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
-                errmsg=str(exc),
+                errmsg=error_message(exc),
             )
             raise
         self._dispatch_engine_changes(operation.context)
@@ -647,7 +648,7 @@ class CollectionRuntimeCoordinator:
                     "q": operation.filter_spec,
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
-                errmsg=str(exc),
+                errmsg=error_message(exc),
             )
             raise
         self._dispatch_engine_changes(operation.context)

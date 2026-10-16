@@ -7,6 +7,7 @@ import uuid
 from unittest.mock import patch
 
 import mongoeco.core.filtering as filtering_module
+import mongoeco.core._filtering_support as filtering_support_module
 from mongoeco.core._filtering_matching import FilteringMatchingMixin
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
@@ -338,8 +339,8 @@ class FilteringHelperTests(unittest.TestCase):
             )
 
     def test_query_engine_regex_reuses_compiled_patterns(self):
-        filtering_module._compile_regex.cache_clear()
-        with patch("mongoeco.core.filtering.re.compile", wraps=re.compile) as compile_regex:
+        filtering_support_module.compile_regex.cache_clear()
+        with patch("mongoeco.core._filtering_support.re.compile", wraps=re.compile) as compile_regex:
             self.assertTrue(QueryEngine.match({"name": "Ada"}, {"name": {"$regex": "^a", "$options": "i"}}))
             self.assertTrue(QueryEngine.match({"name": "Alan"}, {"name": {"$regex": "^a", "$options": "i"}}))
 

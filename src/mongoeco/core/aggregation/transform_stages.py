@@ -12,6 +12,7 @@ from mongoeco.core.query_operators import (
 )
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.work_control import iter_with_deadline
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
@@ -233,17 +234,15 @@ def _apply_replace_root(
     if not isinstance(spec, dict) or "newRoot" not in spec:
         raise OperationFailure("$replaceRoot requires a document with newRoot")
     new_root_spec = spec["newRoot"]
-    if new_root_spec is None or isinstance(new_root_spec, (int, float, bool, list)):
-        raise OperationFailure(
-            "$replaceRoot newRoot must be a document-producing expression"
-        )
     result: list[Document] = []
     for document in iter_with_deadline(documents, deadline):
         new_root = evaluate_expression(
             document, new_root_spec, variables, dialect=dialect
         )
         if not isinstance(new_root, dict):
-            raise OperationFailure("$replaceRoot newRoot must evaluate to a document")
+            raise server_error(
+                "$replaceRoot newRoot must evaluate to a document", code=40228
+            )
         result.append(deepcopy(new_root))
     return result
 

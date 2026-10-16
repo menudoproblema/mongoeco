@@ -21,16 +21,19 @@ from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import (
     assert_classic_update_preserves_id,
-    document_id_bson_type_changed,
     assert_valid_root_document_id,
+    document_id_bson_type_changed,
     preserve_and_validate_pipeline_id,
 )
+from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.update_array_operators import (
     apply_add_to_set,
     apply_pop,
     apply_pull,
     apply_pull_all,
     apply_push,
+    validate_array_update_operand,
 )
 from mongoeco.core.update_paths import (
     CompiledUpdateInstruction,
@@ -53,6 +56,8 @@ from mongoeco.core.update_scalar_operators import (
     apply_unset,
 )
 from mongoeco.errors import OperationFailure
+
+
 if TYPE_CHECKING:
     from mongoeco.types import ArrayFilters, Filter, Update
 
@@ -187,10 +192,9 @@ class CompiledUpdatePipelinePlan:
                 "Update pipeline must produce a single document",
             )
         replacement = result[0]
-        modified = (
-            document_id_bson_type_changed(original, replacement)
-            or not self.context.dialect.values_equal(original, replacement)
-        )
+        modified = document_id_bson_type_changed(
+            original, replacement
+        ) or not self.context.dialect.values_equal(original, replacement)
         preserve_and_validate_pipeline_id(
             original,
             replacement,
@@ -202,7 +206,7 @@ class CompiledUpdatePipelinePlan:
         return modified
 
 
-type CompiledExecutableUpdatePlan = (CompiledUpdatePlan | CompiledUpdatePipelinePlan)
+type CompiledExecutableUpdatePlan = CompiledUpdatePlan | CompiledUpdatePipelinePlan
 
 
 @dataclass(frozen=True, slots=True)
@@ -297,13 +301,11 @@ class UpdateEngine:
             context=context,
             helpers=UpdateEngine,
         ),
-        "$addToSet": lambda doc, instructions, context, variables: (
-            apply_add_to_set(
-                doc,
-                instructions,
-                context=context,
-                helpers=UpdateEngine,
-            )
+        "$addToSet": lambda doc, instructions, context, variables: apply_add_to_set(
+            doc,
+            instructions,
+            context=context,
+            helpers=UpdateEngine,
         ),
         "$pull": lambda doc, instructions, context, variables: apply_pull(
             doc,
@@ -311,13 +313,11 @@ class UpdateEngine:
             context=context,
             helpers=UpdateEngine,
         ),
-        "$pullAll": lambda doc, instructions, context, variables: (
-            apply_pull_all(
-                doc,
-                instructions,
-                context=context,
-                helpers=UpdateEngine,
-            )
+        "$pullAll": lambda doc, instructions, context, variables: apply_pull_all(
+            doc,
+            instructions,
+            context=context,
+            helpers=UpdateEngine,
         ),
         "$pop": lambda doc, instructions, context, variables: apply_pop(
             doc,
@@ -421,22 +421,26 @@ class UpdateEngine:
             update_spec,
             dialect=context.dialect,
         )
-        if context.raw_array_filters is not None:
-            raise OperationFailure(
+        if context.raw_array_filters:
+            raise server_error(
                 "arrayFilters may not be specified for pipeline-style updates",
+                code=9,
             )
-        apply_pipeline(
-            [],
+        from mongoeco.core.aggregation.preparation import (  # noqa: PLC0415 - expression/query preparation cycle
+            prepare_pipeline,
+        )
+
+        prepared = prepare_pipeline(
             update_spec,
-            variables=variables,
             dialect=context.dialect,
-            collation=context.collation,
+            scope="update",
+            variables=set(variables or {}),
         )
         return CompiledUpdatePipelinePlan(
-            update_spec=list(update_spec),
+            update_spec=prepared,
             context=context,
             compiled_pipeline=compile_pipeline(
-                update_spec,
+                prepared,
                 dialect=context.dialect,
                 collation=context.collation,
             ),
@@ -468,25 +472,47 @@ class UpdateEngine:
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
     ) -> None:
-        if not isinstance(update_spec, list) or not update_spec:
-            raise OperationFailure("update pipeline must be a non-empty list")
+        if not isinstance(update_spec, list):
+            message="update pipeline must be a list"
+            raise server_error(message,code=14,scope=ErrorScope.COMMAND)
         for stage in update_spec:
-            if not isinstance(stage, dict) or len(stage) != 1:
-                raise OperationFailure(
-                    "Each update pipeline stage must be a single-key document",
+            if not isinstance(stage, dict):
+                message = "Each pipeline stage must be a document"
+                raise server_error(
+                    message,
+                    code=14,
+                    scope=ErrorScope.COMMAND,
+                )
+            if len(stage) != 1:
+                message = "Each pipeline stage must contain exactly one field"
+                raise server_error(
+                    message,
+                    code=40323,
+                    scope=ErrorScope.COMMAND,
                 )
             operator = next(iter(stage))
             if not isinstance(operator, str) or not operator.startswith("$"):
                 raise OperationFailure(
                     "Update pipeline stage operator must start with '$'",
                 )
+            if operator in {"$set", "$addFields"} and not isinstance(
+                stage[operator], dict
+            ):
+                message = f"{operator} requires an object"
+                raise server_error(message, code=40272)
             if operator not in UpdateEngine._UPDATE_PIPELINE_STAGE_OPERATORS:
-                raise OperationFailure(
-                    f"Unsupported update pipeline stage: {operator}",
+                message = f"Unsupported update pipeline stage: {operator}"
+                raise server_error(
+                    message,
+                    code=40324,
+                    scope=ErrorScope.COMMAND,
                 )
             if not dialect.supports_aggregation_stage(operator):
-                raise OperationFailure(
-                    f"Unsupported update pipeline stage: {operator}",
+                message = f"Unsupported update pipeline stage: {operator}"
+                raise server_error(
+                    message,
+                    code=40324,
+                    scope=ErrorScope.COMMAND,
                 )
 
     @staticmethod
@@ -503,10 +529,12 @@ class UpdateEngine:
             if not dialect.supports_update_operator(operator):
                 raise OperationFailure(
                     f"Unsupported update operator: {operator}",
+                    code=9,
                 )
             if not isinstance(params, dict):
                 raise OperationFailure(
                     f"{operator} requires a document specification",
+                    code=9,
                 )
             instructions: list[CompiledUpdateInstruction] = []
             for path, value in UpdateEngine._iter_ordered_update_items(
@@ -522,6 +550,7 @@ class UpdateEngine:
                         ):
                             raise OperationFailure(
                                 "No array filter found for identifier used in update path",
+                                code=2,
                             )
                         referenced_identifiers.add(segment.identifier)
                 UpdateEngine._register_update_path(
@@ -531,9 +560,8 @@ class UpdateEngine:
                 target_path: CompiledUpdatePath | None = None
                 if operator == "$rename":
                     if not isinstance(value, str):
-                        raise OperationFailure(
-                            "$rename requires string target paths",
-                        )
+                        message = "$rename requires string target paths"
+                        raise server_error(message, code=2)
                     target_path = compile_update_path(value)
                     UpdateEngine._register_update_path(
                         seen_paths,
@@ -552,6 +580,7 @@ class UpdateEngine:
                         compiled_path,
                         allow_positional=True,
                     )
+                validate_array_update_operand(operator, value)
                 instructions.append(
                     CompiledUpdateInstruction(
                         operator=operator,
@@ -572,84 +601,94 @@ class UpdateEngine:
         if unused_identifiers:
             raise OperationFailure(
                 "array_filters contains identifiers that are not used in the update document",
+                code=9,
             )
         return tuple(compiled_operators)
 
     @staticmethod
-    def _compile_array_filters(
-        array_filters: ArrayFilters | None,
-    ) -> dict[str, dict[str, Any]]:
+    def _compile_array_filters(array_filters):
         if array_filters is None:
             return {}
-        compiled: dict[str, dict[str, Any]] = {}
+
+        compiled = {}
+
+        def identifiers(spec):
+            roots = set()
+            if not isinstance(spec, dict):
+                message = "array filter must be a document"
+                raise server_error(message, code=2)
+            for key, value in spec.items():
+                if not isinstance(key, str):
+                    message = "array_filters field names must be strings"
+                    raise server_error(message, code=2)
+                if key in {"$and", "$or", "$nor"}:
+                    if not isinstance(value, list) or not value:
+                        message = "logical array filter requires a nonempty list"
+                        raise server_error(message, code=2)
+                    for child in value:
+                        roots.update(identifiers(child))
+                elif key.startswith("$"):
+                    message = f"{key} is not allowed in array filters"
+                    raise server_error(message, code=2)
+                else:
+                    roots.add(key.split(".")[0])
+            return roots
+
+        def reject_expr(value):
+            if isinstance(value, dict):
+                if "$expr" in value:
+                    message = "$expr is not allowed in array filters"
+                    raise server_error(message, code=2)
+                for child in value.values():
+                    reject_expr(child)
+            elif isinstance(value, list):
+                for child in value:
+                    reject_expr(child)
+
         for item in array_filters:
             if not isinstance(item, dict) or not item:
-                raise OperationFailure(
-                    "array_filters entries must be non-empty documents",
+                message = "array_filters entries must be non-empty documents"
+                raise server_error(message, code=9)
+            reject_expr(item)
+            roots = identifiers(item)
+            if len(roots) != 1:
+                message = (
+                    "each array filter document must reference exactly one identifier"
                 )
-            identifier: str | None = None
-            normalized: dict[str, Any] = {}
-            for key, value in item.items():
-                if not isinstance(key, str):
-                    raise OperationFailure(
-                        "array_filters field names must be strings",
-                    )
-                if key.startswith("$"):
-                    raise OperationFailure(
-                        "Top-level operators in array_filters are not supported",
-                    )
-                root, dot, rest = key.partition(".")
-                if not is_valid_array_filter_identifier(root):
-                    raise OperationFailure(
-                        "array filter identifiers must begin with a lowercase letter and contain only alphanumerics",
-                    )
-                if identifier is None:
-                    identifier = root
-                elif root != identifier:
-                    raise OperationFailure(
-                        "each array filter document must reference exactly one identifier",
-                    )
-                normalized[rest if dot else ""] = value
-            assert identifier is not None
+                raise server_error(
+                    message,
+                    code=9,
+                )
+            identifier = next(iter(roots))
+            if not is_valid_array_filter_identifier(identifier):
+                message = "array filter identifiers must begin with a lowercase letter and contain only alphanumerics"
+                raise server_error(
+                    message,
+                    code=2,
+                )
             if identifier in compiled:
-                raise OperationFailure(
-                    "duplicate array filter identifiers are not allowed",
+                message = f"Found multiple array filters with the same top-level field name {identifier}"
+                raise server_error(
+                    message,
+                    code=9,
                 )
-            compiled[identifier] = normalized
+            compile_filter(item)
+            compiled[identifier] = deepcopy(item)
         return compiled
 
     @staticmethod
     def _array_filter_matches(
-        identifier: str,
-        candidate: Any,
+        identifier,
+        candidate,
         *,
-        array_filters: dict[str, dict[str, Any]],
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-        collation: CollationSpec | None = None,
-    ) -> bool:
-        filter_spec = array_filters.get(identifier)
-        if filter_spec is None:
-            return False
-        for path, condition in filter_spec.items():
-            if path == "":
-                if not QueryEngine._match_elem_match_candidate(
-                    candidate,
-                    condition,
-                    dialect=dialect,
-                    collation=collation,
-                ):
-                    return False
-                continue
-            if not isinstance(candidate, dict):
-                return False
-            if not QueryEngine.match(
-                candidate,
-                {path: condition},
-                dialect=dialect,
-                collation=collation,
-            ):
-                return False
-        return True
+        array_filters,
+        dialect=MONGODB_DIALECT_70,
+        collation=None,
+    ):
+        selector = array_filters.get(identifier)
+        return selector is not None and QueryEngine.match(
+            {identifier: candidate}, selector, dialect=dialect, collation=collation
+        )
 
     @staticmethod
     def _resolve_update_targets(
@@ -779,17 +818,19 @@ class UpdateEngine:
         # Sorting components keeps ancestors adjacent without quadratic scans
         # over every expanded array element (or interference from keys like a-b).
         if any(
-            current[:len(previous)] == previous
+            current[: len(previous)] == previous
             for previous, current in pairwise(sorted(paths))
         ):
             message = "conflicting update paths are not allowed"
             raise OperationFailure(message, code=40)
         return replace(
             context,
-            resolved_update_targets=MappingProxyType({
-                application.instruction.path.raw: application.targets
-                for application in applications
-            }),
+            resolved_update_targets=MappingProxyType(
+                {
+                    application.instruction.path.raw: application.targets
+                    for application in applications
+                }
+            ),
         )
 
     @staticmethod
@@ -907,8 +948,8 @@ class UpdateEngine:
                     ]
                     if and_matchers:
                         matchers.append(
-                            lambda candidate, and_matchers=tuple(and_matchers): (
-                                all(matcher(candidate) for matcher in and_matchers)
+                            lambda candidate, and_matchers=tuple(and_matchers): all(
+                                matcher(candidate) for matcher in and_matchers
                             ),
                         )
                     continue
@@ -930,8 +971,8 @@ class UpdateEngine:
                     ]
                     if or_matchers:
                         matchers.append(
-                            lambda candidate, or_matchers=tuple(or_matchers): (
-                                any(matcher(candidate) for matcher in or_matchers)
+                            lambda candidate, or_matchers=tuple(or_matchers): any(
+                                matcher(candidate) for matcher in or_matchers
                             ),
                         )
                     continue
@@ -1016,9 +1057,8 @@ class UpdateEngine:
                 code=2,
             )
         if any(segment.kind == "index" for segment in segments):
-            raise OperationFailure(
-                "$rename does not support embedded documents in arrays",
-            )
+            message = "$rename does not support embedded documents in arrays"
+            raise server_error(message, code=2)
 
     @staticmethod
     def _is_numeric(value: Any) -> bool:

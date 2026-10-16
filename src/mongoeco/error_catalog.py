@@ -102,3 +102,31 @@ def _merge_labels(
         if label not in merged:
             merged.append(label)
     return tuple(merged)
+
+
+SERVER_CODE_NAMES = {
+    168: "InvalidPipelineOperator",
+    27: "IndexNotFound",
+    67: "CannotCreateIndex",
+    85: "IndexOptionsConflict",
+    86: "IndexKeySpecsConflict",
+    241: "ConversionFailure",
+    2: "BadValue",
+    9: "FailedToParse",
+    14: "TypeMismatch",
+    28: "PathNotViable",
+    40: "ConflictingUpdateOperators",
+    50: "MaxTimeMSExpired",
+    53: "InvalidIdField",
+    54: "NotSingleValueField",
+    66: "ImmutableField",
+    121: "DocumentValidationFailure",
+    11000: "DuplicateKey",
+    16610: "Location16610",
+    17276: "Location17276",
+    28714: "Location28714",
+    40414: "IDLFailedToParse",
+    40415: "IDLUnknownField",
+    51144: "Location51144",
+    10071200: "Location10071200",
+}

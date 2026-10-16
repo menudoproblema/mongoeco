@@ -175,9 +175,10 @@ def _batch_id_equality_keys(
     }
 
 
-def insert_document_batch(  # noqa: PLR0913, PLR0915 - SQLite batch transaction boundary
+def insert_document_batch(  # noqa: PLR0912, PLR0913, PLR0915 - SQLite batch transaction boundary
     conn: sqlite3.Connection,
     *,
+    rejections: dict | None = None,
     db_name: str,
     coll_name: str,
     documents: list[Document],
@@ -398,7 +399,11 @@ def insert_document_batch(  # noqa: PLR0913, PLR0915 - SQLite batch transaction 
                 )
                 results.append(True)
                 seen_storage_keys.add(storage_key)
-            except (DuplicateKeyError, sqlite3.IntegrityError):
+            except (DuplicateKeyError, sqlite3.IntegrityError) as error:
+                if rejections is not None and isinstance(error, DuplicateKeyError):
+                    rejections[len(results)] = getattr(
+                        error, "_duplicate_key_context", None
+                    )
                 results.append(False)
                 break
         invalidate_collection_features_cache(db_name, coll_name)

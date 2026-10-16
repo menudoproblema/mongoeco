@@ -1,5 +1,6 @@
 from typing import Any
 
+
 try:  # pragma: no cover - optional dependency bridge
     from pymongo import errors as _pymongo_errors
 except Exception:  # pragma: no cover - pymongo is optional
@@ -35,10 +36,10 @@ from mongoeco.error_catalog import (
     DOCUMENT_VALIDATION_ERROR,
     DUPLICATE_KEY_ERROR,
     EXECUTION_TIMEOUT_ERROR,
-    MongoErrorDescriptor,
     OPERATION_FAILURE,
     SERVER_SELECTION_TIMEOUT_ERROR,
     WRITE_ERROR,
+    MongoErrorDescriptor,
     build_error_metadata,
 )
 
@@ -78,6 +79,7 @@ def _init_operation_failure_like(
     code_name: str | None,
     pymongo_base: type[Exception],
 ) -> None:
+    exc._mongoeco_error_message = message  # type: ignore[attr-defined]
     labels = _labels_from_details(details)
     if _HAS_PYMONGO:
         pymongo_base.__init__(exc, message, code=code, details=details)  # type: ignore[misc]
@@ -191,6 +193,18 @@ class OperationFailure(PyMongoError, _OperationFailureBase):
 
 class WriteError(OperationFailure, _WriteErrorBase):
     """Se produce cuando una operación de escritura falla."""
+
+    @classmethod
+    def _from_server_document(cls, message, *, code, details):
+        """A per-item server document does not acquire command-only codeName."""
+        error = cls.__new__(cls)
+        duplicate = issubclass(cls, DuplicateKeyError)
+        _init_operation_failure_like(
+            error, message, code=code, details=dict(details),
+            code_name="DuplicateKey" if duplicate else None,
+            pymongo_base=_DuplicateKeyErrorBase if duplicate else _WriteErrorBase,
+        )
+        return error
 
     def __init__(
         self,

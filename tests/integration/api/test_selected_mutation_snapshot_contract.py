@@ -1,7 +1,8 @@
 import asyncio
+import unittest
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 
 from mongoeco import AsyncMongoClient, ReturnDocument
 from mongoeco.engines.memory import MemoryEngine
@@ -212,7 +213,7 @@ class SelectedMutationSnapshotContractTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(engine=engine_name):
                 engine = engine_factory()
                 async with AsyncMongoClient(
-                    engine, pymongo_profile='4.11'
+                    engine, mongodb_dialect='8.0', pymongo_profile='4.11'
                 ) as client:
                     collection = client.test.atomic_sort
                     await collection.insert_many(
@@ -229,12 +230,22 @@ class SelectedMutationSnapshotContractTests(unittest.IsolatedAsyncioTestCase):
                             comment='gate-before',
                         )
                     )
-                    await engine.before_entered.wait()
-                    await collection.update_one(
-                        {'_id': 'first'}, {'$set': {'score': 3}}
-                    )
-                    engine.before_release.set()
-                    result = await task
+                    entered = asyncio.create_task(engine.before_entered.wait())
+                    try:
+                        completed, _ = await asyncio.wait(
+                            (task, entered), return_when=asyncio.FIRST_COMPLETED
+                        )
+                        if task in completed:
+                            await task
+                            self.fail("mutation completed before the selection barrier")
+                        await collection.update_one(
+                            {'_id': 'first'}, {'$set': {'score': 3}}
+                        )
+                    finally:
+                        engine.before_release.set()
+                        entered.cancel()
+                        await asyncio.gather(task, entered, return_exceptions=True)
+                    result = task.result()
 
                     self.assertEqual(result.matched_count, 1)
                     selected = await collection.find_one({'selected': True})

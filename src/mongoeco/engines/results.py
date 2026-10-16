@@ -114,6 +114,21 @@ class InsertOutcome:
 
 
 @dataclass(frozen=True, slots=True)
+class _RejectedInsertOutcome(InsertOutcome):
+    """Retain a rejected key under the engine's write authority."""
+    _duplicate_key_context: Document | None = None
+
+    def __post_init__(self) -> None:
+        InsertOutcome.__post_init__(self)
+        if self.applied:
+            message = "a rejected insert cannot be applied"
+            raise ValueError(message)
+        object.__setattr__(
+            self, "_duplicate_key_context", deepcopy(self._duplicate_key_context)
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class BulkOutcome:
     result: BulkWriteResult[DocumentId]
     mutations: tuple[InsertOutcome | MutationOutcome | DeleteOutcome, ...] = ()

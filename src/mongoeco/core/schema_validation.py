@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from copy import deepcopy
-from dataclasses import dataclass, field
 import datetime
 import decimal
 import math
 import re
 import uuid
-from typing import Any, Mapping
+
+from copy import deepcopy
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import (
@@ -20,7 +21,16 @@ from mongoeco.core.bson_scalars import (
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, DBRef, Decimal128, Document, ObjectId, Regex, SON, Timestamp, UndefinedType
+from mongoeco.types import (
+    SON,
+    Binary,
+    DBRef,
+    Decimal128,
+    Document,
+    ObjectId,
+    Regex,
+    Timestamp,
+)
 
 
 _JSON_TYPE_MAP: dict[str, tuple[type[Any], ...]] = {
@@ -152,7 +162,9 @@ class CompiledJsonSchema:
 
         required = schema.get("required")
         if required is not None:
-            if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
+            if not isinstance(required, list) or not all(
+                isinstance(item, str) for item in required
+            ):
                 raise OperationFailure("$jsonSchema required must be a list of strings")
 
         properties = schema.get("properties")
@@ -161,11 +173,15 @@ class CompiledJsonSchema:
                 raise OperationFailure("$jsonSchema properties must be a document")
             for sub_schema in properties.values():
                 if not isinstance(sub_schema, dict):
-                    raise OperationFailure("$jsonSchema property definitions must be documents")
+                    raise OperationFailure(
+                        "$jsonSchema property definitions must be documents"
+                    )
                 self._validate_schema_definition(sub_schema)
 
         additional_properties = schema.get("additionalProperties")
-        if additional_properties is not None and not isinstance(additional_properties, bool):
+        if additional_properties is not None and not isinstance(
+            additional_properties, bool
+        ):
             raise OperationFailure("$jsonSchema additionalProperties must be a bool")
 
         items_schema = schema.get("items")
@@ -181,7 +197,9 @@ class CompiledJsonSchema:
             if value is not None and (
                 not isinstance(value, int) or isinstance(value, bool) or value < 0
             ):
-                raise OperationFailure(f"$jsonSchema {field_name} must be a non-negative integer")
+                raise OperationFailure(
+                    f"$jsonSchema {field_name} must be a non-negative integer"
+                )
 
         pattern = schema.get("pattern")
         if pattern is not None and not isinstance(pattern, str):
@@ -201,7 +219,9 @@ class CompiledJsonSchema:
         issues: list[SchemaValidationIssue] = []
         required = schema.get("required")
         if required is not None:
-            if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
+            if not isinstance(required, list) or not all(
+                isinstance(item, str) for item in required
+            ):
                 raise OperationFailure("$jsonSchema required must be a list of strings")
             for field_name in required:
                 if field_name not in value:
@@ -219,7 +239,9 @@ class CompiledJsonSchema:
                 raise OperationFailure("$jsonSchema properties must be a document")
             for field_name, sub_schema in properties.items():
                 if not isinstance(field_name, str) or not isinstance(sub_schema, dict):
-                    raise OperationFailure("$jsonSchema property definitions must be documents")
+                    raise OperationFailure(
+                        "$jsonSchema property definitions must be documents"
+                    )
                 property_schemas[field_name] = sub_schema
 
         additional_properties = schema.get("additionalProperties", True)
@@ -237,7 +259,9 @@ class CompiledJsonSchema:
                         )
                     )
                 continue
-            issues.extend(self._validate_schema(sub_schema, field_value, path + (field_name,)))
+            issues.extend(
+                self._validate_schema(sub_schema, field_value, path + (field_name,))
+            )
 
         return issues
 
@@ -250,22 +274,44 @@ class CompiledJsonSchema:
         issues: list[SchemaValidationIssue] = []
         min_items = schema.get("minItems")
         if min_items is not None:
-            if not isinstance(min_items, int) or isinstance(min_items, bool) or min_items < 0:
-                raise OperationFailure("$jsonSchema minItems must be a non-negative integer")
+            if (
+                not isinstance(min_items, int)
+                or isinstance(min_items, bool)
+                or min_items < 0
+            ):
+                raise OperationFailure(
+                    "$jsonSchema minItems must be a non-negative integer"
+                )
             if len(value) < min_items:
-                issues.append(SchemaValidationIssue(path, f"array has fewer than {min_items} items"))
+                issues.append(
+                    SchemaValidationIssue(
+                        path, f"array has fewer than {min_items} items"
+                    )
+                )
         max_items = schema.get("maxItems")
         if max_items is not None:
-            if not isinstance(max_items, int) or isinstance(max_items, bool) or max_items < 0:
-                raise OperationFailure("$jsonSchema maxItems must be a non-negative integer")
+            if (
+                not isinstance(max_items, int)
+                or isinstance(max_items, bool)
+                or max_items < 0
+            ):
+                raise OperationFailure(
+                    "$jsonSchema maxItems must be a non-negative integer"
+                )
             if len(value) > max_items:
-                issues.append(SchemaValidationIssue(path, f"array has more than {max_items} items"))
+                issues.append(
+                    SchemaValidationIssue(
+                        path, f"array has more than {max_items} items"
+                    )
+                )
         items_schema = schema.get("items")
         if items_schema is not None:
             if not isinstance(items_schema, dict):
                 raise OperationFailure("$jsonSchema items must be a document")
             for index, item in enumerate(value):
-                issues.extend(self._validate_schema(items_schema, item, path + (str(index),)))
+                issues.extend(
+                    self._validate_schema(items_schema, item, path + (str(index),))
+                )
         return issues
 
     def _validate_string(
@@ -277,22 +323,40 @@ class CompiledJsonSchema:
         issues: list[SchemaValidationIssue] = []
         min_length = schema.get("minLength")
         if min_length is not None:
-            if not isinstance(min_length, int) or isinstance(min_length, bool) or min_length < 0:
-                raise OperationFailure("$jsonSchema minLength must be a non-negative integer")
+            if (
+                not isinstance(min_length, int)
+                or isinstance(min_length, bool)
+                or min_length < 0
+            ):
+                raise OperationFailure(
+                    "$jsonSchema minLength must be a non-negative integer"
+                )
             if len(value) < min_length:
-                issues.append(SchemaValidationIssue(path, f"string shorter than {min_length}"))
+                issues.append(
+                    SchemaValidationIssue(path, f"string shorter than {min_length}")
+                )
         max_length = schema.get("maxLength")
         if max_length is not None:
-            if not isinstance(max_length, int) or isinstance(max_length, bool) or max_length < 0:
-                raise OperationFailure("$jsonSchema maxLength must be a non-negative integer")
+            if (
+                not isinstance(max_length, int)
+                or isinstance(max_length, bool)
+                or max_length < 0
+            ):
+                raise OperationFailure(
+                    "$jsonSchema maxLength must be a non-negative integer"
+                )
             if len(value) > max_length:
-                issues.append(SchemaValidationIssue(path, f"string longer than {max_length}"))
+                issues.append(
+                    SchemaValidationIssue(path, f"string longer than {max_length}")
+                )
         pattern = schema.get("pattern")
         if pattern is not None:
             if not isinstance(pattern, str):
                 raise OperationFailure("$jsonSchema pattern must be a string")
             if re.search(pattern, value) is None:
-                issues.append(SchemaValidationIssue(path, "string does not match pattern"))
+                issues.append(
+                    SchemaValidationIssue(path, "string does not match pattern")
+                )
         return issues
 
     def _validate_numeric(
@@ -304,8 +368,16 @@ class CompiledJsonSchema:
         issues: list[SchemaValidationIssue] = []
         comparable = self._as_decimal(value)
         for field_name, operator, label in (
-            ("minimum", lambda current, expected: current < expected, "less than minimum"),
-            ("maximum", lambda current, expected: current > expected, "greater than maximum"),
+            (
+                "minimum",
+                lambda current, expected: current < expected,
+                "less than minimum",
+            ),
+            (
+                "maximum",
+                lambda current, expected: current > expected,
+                "greater than maximum",
+            ),
         ):
             raw_bound = schema.get(field_name)
             if raw_bound is None:
@@ -323,9 +395,13 @@ class CompiledJsonSchema:
         normalized: list[str] = []
         for candidate in candidates:
             if not isinstance(candidate, str):
-                raise OperationFailure(f"$jsonSchema {field_name} entries must be strings")
+                raise OperationFailure(
+                    f"$jsonSchema {field_name} entries must be strings"
+                )
             if candidate not in _BSON_TYPE_ALIASES and candidate not in _JSON_TYPE_MAP:
-                raise OperationFailure(f"$jsonSchema {field_name} value '{candidate}' is not supported")
+                raise OperationFailure(
+                    f"$jsonSchema {field_name} value '{candidate}' is not supported"
+                )
             normalized.append(candidate)
         return normalized
 
@@ -359,7 +435,10 @@ class CompiledJsonSchema:
 
     @staticmethod
     def _matches_any_type(value: object, type_names: list[str]) -> bool:
-        return any(CompiledJsonSchema._matches_type(value, type_name) for type_name in type_names)
+        return any(
+            CompiledJsonSchema._matches_type(value, type_name)
+            for type_name in type_names
+        )
 
     @staticmethod
     def _matches_type(value: object, type_name: str) -> bool:
@@ -372,7 +451,9 @@ class CompiledJsonSchema:
         if type_name == "double":
             return bson_numeric_alias(value) == "double"
         if type_name == "decimal":
-            return bson_numeric_alias(value) == "decimal" or isinstance(value, Decimal128)
+            return bson_numeric_alias(value) == "decimal" or isinstance(
+                value, Decimal128
+            )
         if type_name == "objectId":
             return isinstance(value, ObjectId)
         if type_name == "date":
@@ -410,8 +491,14 @@ class CompiledJsonSchema:
 
         any_of = schema.get("anyOf")
         if isinstance(any_of, list):
-            if not any(not self._validate_schema(sub_schema, value, path) for sub_schema in any_of if isinstance(sub_schema, dict)):
-                issues.append(SchemaValidationIssue(path, "value does not satisfy anyOf"))
+            if not any(
+                not self._validate_schema(sub_schema, value, path)
+                for sub_schema in any_of
+                if isinstance(sub_schema, dict)
+            ):
+                issues.append(
+                    SchemaValidationIssue(path, "value does not satisfy anyOf")
+                )
 
         one_of = schema.get("oneOf")
         if isinstance(one_of, list):
@@ -421,10 +508,14 @@ class CompiledJsonSchema:
                 if not self._validate_schema(sub_schema, value, path):
                     matches += 1
             if matches != 1:
-                issues.append(SchemaValidationIssue(path, "value does not satisfy oneOf"))
+                issues.append(
+                    SchemaValidationIssue(path, "value does not satisfy oneOf")
+                )
 
         not_schema = schema.get("not")
-        if isinstance(not_schema, dict) and not self._validate_schema(not_schema, value, path):
+        if isinstance(not_schema, dict) and not self._validate_schema(
+            not_schema, value, path
+        ):
             issues.append(SchemaValidationIssue(path, "value must not satisfy not"))
 
         return issues
@@ -441,10 +532,14 @@ class CompiledJsonSchema:
             if raw_value is None:
                 continue
             if not isinstance(raw_value, list) or not raw_value:
-                raise OperationFailure(f"$jsonSchema {field_name} must be a non-empty list of documents")
+                raise OperationFailure(
+                    f"$jsonSchema {field_name} must be a non-empty list of documents"
+                )
             for sub_schema in raw_value:
                 if not isinstance(sub_schema, dict):
-                    raise OperationFailure(f"$jsonSchema {field_name} entries must be documents")
+                    raise OperationFailure(
+                        f"$jsonSchema {field_name} entries must be documents"
+                    )
                 self._validate_schema_definition(sub_schema)
 
 
@@ -464,7 +559,11 @@ class CompiledCollectionValidator:
     ) -> bool:
         if self.validation_level == "off":
             return False
-        if self.validation_level == "moderate" and original_document is not None and not is_upsert_insert:
+        if (
+            self.validation_level == "moderate"
+            and original_document is not None
+            and not is_upsert_insert
+        ):
             previous = self.validate_document(
                 original_document,
                 original_document=None,
@@ -493,7 +592,9 @@ class CompiledCollectionValidator:
             self.query_validator,
             dialect=effective_dialect,
         ):
-            issues.append(SchemaValidationIssue((), "document failed validator expression"))
+            issues.append(
+                SchemaValidationIssue((), "document failed validator expression")
+            )
         if self.json_schema is not None:
             issues.extend(self.json_schema.validate(document).issues)
         return SchemaValidationResult(valid=not issues, issues=tuple(issues))
@@ -513,10 +614,17 @@ def compile_collection_validator(
         raise OperationFailure("collection validator must be a document")
 
     validation_level = options.get("validationLevel", "strict")
-    if not isinstance(validation_level, str) or validation_level not in {"off", "strict", "moderate"}:
+    if not isinstance(validation_level, str) or validation_level not in {
+        "off",
+        "strict",
+        "moderate",
+    }:
         raise OperationFailure("validationLevel must be 'off', 'strict' or 'moderate'")
     validation_action = options.get("validationAction", "error")
-    if not isinstance(validation_action, str) or validation_action not in {"error", "warn"}:
+    if not isinstance(validation_action, str) or validation_action not in {
+        "error",
+        "warn",
+    }:
         raise OperationFailure("validationAction must be 'error' or 'warn'")
 
     validator_document = deepcopy(validator_spec)
@@ -541,3 +649,88 @@ def compile_collection_validator(
         validation_level=validation_level,
         validation_action=validation_action,
     )
+
+
+def schema_failure_details(schema, value):
+    """Describe the same schema tree used by validation, preserving BSON values."""
+    validator = CompiledJsonSchema(schema)
+    if validator.validate(value).valid:
+        return []
+    failures = []
+    for keyword in ("bsonType", "type"):
+        if keyword not in schema:
+            continue
+        expected = validator._normalize_type_names(schema[keyword], field_name=keyword)
+        if not validator._matches_any_type(value, expected):
+            # Test specific BSON aliases before generic numeric/object aliases.
+            candidates = (
+                "bool",
+                "int",
+                "long",
+                "double",
+                "decimal",
+                "string",
+                "array",
+                "object",
+                "null",
+                "binData",
+                "date",
+                "objectId",
+                "regex",
+                "timestamp",
+            )
+            actual = next(
+                (name for name in candidates if validator._matches_type(value, name)),
+                type(value).__name__,
+            )
+            return [
+                {
+                    "operatorName": keyword,
+                    "specifiedAs": {keyword: deepcopy(schema[keyword])},
+                    "reason": "type did not match",
+                    "consideredValue": deepcopy(value),
+                    "consideredType": actual,
+                }
+            ]
+    if isinstance(value, dict):
+        properties = []
+        for name, child in schema.get("properties", {}).items():
+            if name in value:
+                details = schema_failure_details(child, value[name])
+                if details:
+                    properties.append(
+                        {
+                            "propertyName": name,
+                            **{
+                                key: deepcopy(child[key])
+                                for key in ("title", "description")
+                                if key in child
+                            },
+                            "details": details,
+                        }
+                    )
+        if properties:
+            failures.append(
+                {"operatorName": "properties", "propertiesNotSatisfied": properties}
+            )
+        missing = [name for name in schema.get("required", []) if name not in value]
+        if missing:
+            failures.append(
+                {
+                    "operatorName": "required",
+                    "specifiedAs": {"required": deepcopy(schema["required"])},
+                    "missingProperties": missing,
+                }
+            )
+    # Preserve diagnostics for remaining supported keywords without inventing a
+    # native code or parsing human-readable messages into structural metadata.
+    if not failures:
+        failures = [
+            {"operatorName": "$jsonSchema", "reason": issue.message}
+            for issue in validator.validate(value).issues
+        ]
+    return failures
+
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping

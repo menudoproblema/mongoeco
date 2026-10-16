@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, NoReturn
 
 from mongoeco.core.bson_scalars import wrap_bson_numeric
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.errors import OperationFailure
+from mongoeco.core.server_errors import ErrorScope, server_error
 
 
 if TYPE_CHECKING:
@@ -28,18 +28,7 @@ _WRITE_CONCERN_FIELDS = frozenset(
 
 
 def command_shape_error(message: str, *, code: int = 14) -> NoReturn:
-    raise OperationFailure(
-        message,
-        code=code,
-        details={
-            "codeName": {
-                2: "BadValue",
-                9: "FailedToParse",
-                40414: "IDLFailedToParse",
-                40415: "IDLUnknownField",
-            }.get(code, "TypeMismatch"),
-        },
-    )
+    raise server_error(message, code=code, scope=ErrorScope.COMMAND)
 
 
 def validate_selection_shapes(spec: dict[str, object], *, update: bool = False) -> None:
@@ -108,3 +97,16 @@ def write_command_acknowledged(spec: dict[str, object], *, dialect: str) -> bool
         command_shape_error("fsync and j cannot both be enabled", code=9)
     acknowledged = _write_concern_w(concern.get("w", 1))
     return acknowledged or journal or fsync
+
+
+def validate_update_entry_shape(update, array_filters=None):
+    """BSON command parsing precedes every write in its physical batch."""
+    if isinstance(update, list) and any(
+        not isinstance(stage, dict) for stage in update
+    ):
+        command_shape_error("Each element of the pipeline array must be an object")
+    if array_filters is not None and (
+        not isinstance(array_filters, list)
+        or any(not isinstance(item, dict) for item in array_filters)
+    ):
+        command_shape_error("arrayFilters must be a list of documents")

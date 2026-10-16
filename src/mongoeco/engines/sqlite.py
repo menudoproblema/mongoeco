@@ -48,6 +48,7 @@ from mongoeco.core.collation import (
     normalize_collation,
     values_equal_with_collation,
 )
+from mongoeco.core.duplicate_keys import duplicate_key_context
 from mongoeco.core.expression_context import (
     current_execution_now,
     ensure_expression_context,
@@ -245,6 +246,7 @@ from mongoeco.engines.results import (
     InsertOutcome,
     MergeOutcome,
     MutationOutcome,
+    _RejectedInsertOutcome,
 )
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
@@ -1730,7 +1732,7 @@ class SQLiteEngine(AsyncStorageEngine):
             return ("bool", "1" if value else "0")
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             return ("number", SQLiteEngine._normalize_multikey_number(value))
-        if isinstance(value, str):
+        if type(value) is str:
             return ("string", value)
 
         encoded = DocumentCodec.encode(value)
@@ -3101,6 +3103,21 @@ class SQLiteEngine(AsyncStorageEngine):
     def _typed_engine_key(value: Any) -> Any:
         return bson_engine_key(value)
 
+    def _unique_key_error(
+        self, message, namespace, document, *, index=None, conflict=None
+    ):
+        if index is None:
+            index = {"name": "_id_", "key": [("_id", 1)], "fields": ["_id"]}
+        error = DuplicateKeyError(message)
+        error._duplicate_key_context = duplicate_key_context(
+            namespace=namespace,
+            index=index,
+            values=self._unique_index_values(document, index["fields"]),
+            conflict=conflict,
+            equality=self._typed_engine_key,
+        )
+        return error
+
     def _validate_document_against_unique_indexes(
         self,
         db_name: str,
@@ -3126,8 +3143,10 @@ class SQLiteEngine(AsyncStorageEngine):
                     (db_name, coll_name, document_id_storage_key),
                 ).fetchone()
                 if row is not None:
-                    raise DuplicateKeyError(
+                    raise self._unique_key_error(
                         f"Duplicate key: _id={document['_id']}",
+                        f"{db_name}.{coll_name}",
+                        document,
                     )
             if scan_payload_id or (
                 document_id_storage_key != exclude_storage_key
@@ -3142,13 +3161,13 @@ class SQLiteEngine(AsyncStorageEngine):
                         and storage_key == exclude_storage_key
                     ):
                         continue
-                    if (
-                        "_id" in existing_document
-                        and bson_equality_key(existing_document["_id"])
-                        == bson_equality_key(document["_id"])
-                    ):
-                        raise DuplicateKeyError(
+                    if "_id" in existing_document and bson_equality_key(
+                        existing_document["_id"]
+                    ) == bson_equality_key(document["_id"]):
+                        raise self._unique_key_error(
                             f"Duplicate key: _id={document['_id']}",
+                            f"{db_name}.{coll_name}",
+                            document,
                         )
         indexes = self._load_indexes(db_name, coll_name)
         for index in indexes:
@@ -3186,8 +3205,13 @@ class SQLiteEngine(AsyncStorageEngine):
                         index,
                     )
                     if duplicate_key is not None:
-                        raise DuplicateKeyError(
-                            f"Duplicate key for unique index '{index['name']}': {fields}={duplicate_key!r}",
+                        raise self._unique_key_error(
+                            f"Duplicate key for unique index '{index['name']}': "
+                            f"{fields}={duplicate_key!r}",
+                            f"{db_name}.{coll_name}",
+                            document,
+                            index=index,
+                            conflict=duplicate_key,
                         )
                 continue
             scalar_conflict = self._unique_index_conflict_via_scalar_entries(
@@ -3198,8 +3222,14 @@ class SQLiteEngine(AsyncStorageEngine):
                 exclude_storage_key=exclude_storage_key,
             )
             if scalar_conflict is True:
-                raise DuplicateKeyError(
-                    f"Duplicate key for unique index '{index['name']}': {fields}={tuple(self._index_value(document, field) for field in fields)!r}",
+                key = tuple(self._index_value(document, field) for field in fields)
+                raise self._unique_key_error(
+                    f"Duplicate key for unique index '{index['name']}': "
+                    f"{fields}={key!r}",
+                    f"{db_name}.{coll_name}",
+                    document,
+                    index=index,
+                    conflict=None,
                 )
             if scalar_conflict is False:
                 continue
@@ -3219,11 +3249,16 @@ class SQLiteEngine(AsyncStorageEngine):
                     self._index_value(existing_document, field) for field in fields
                 )
                 if existing_key == key:
-                    raise DuplicateKeyError(
-                        f"Duplicate key for unique index '{index['name']}': {fields}={key!r}",
+                    raise self._unique_key_error(
+                        f"Duplicate key for unique index '{index['name']}': "
+                        f"{fields}={key!r}",
+                        f"{db_name}.{coll_name}",
+                        document,
+                        index=index,
+                        conflict=key,
                     )
 
-    def _unique_index_conflict_via_scalar_entries(
+    def _unique_index_conflict_via_scalar_entries(  # noqa: PLR0911 - optional physical hit plus legacy payload guard
         self,
         conn: sqlite3.Connection,
         collection_id: int | None,
@@ -3255,14 +3290,32 @@ class SQLiteEngine(AsyncStorageEngine):
             element_key,
         ]
         sql = (
-            f"SELECT 1 FROM scalar_index_entries INDEXED BY {self._quote_identifier(str(physical_name))} "
+            f"SELECT storage_key FROM scalar_index_entries INDEXED BY {self._quote_identifier(str(physical_name))} "
             "WHERE collection_id = ? AND index_name = ? AND type_score = ? AND element_key = ?"
         )
         if exclude_storage_key is not None:
             sql += " AND storage_key != ?"
             params.append(exclude_storage_key)
         sql += " LIMIT 1"
-        return conn.execute(sql, tuple(params)).fetchone() is not None
+        match = conn.execute(sql, tuple(params)).fetchone()
+        if match is None:
+            return False
+        if element_type == "string":
+            # Older files indexed BSON Code as a plain string. Verify the payload
+            # before trusting such a physical hit, without rewriting those files.
+            existing = conn.execute(
+                "SELECT document FROM documents WHERE (db_name, coll_name) = "
+                "(SELECT db_name, coll_name FROM collections WHERE collection_id=?) "
+                "AND storage_key=?",
+                (collection_id, match[0]),
+            ).fetchone()
+            if existing is not None:
+                found, existing_value = get_document_value(
+                    self._deserialize_document(existing[0]), field
+                )
+                if found and type(existing_value) is not str:
+                    return None
+        return True
 
     def _index_value(self, document: Document, field: str) -> Any:
         values = QueryEngine.extract_values(document, field)
@@ -3979,7 +4032,11 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     def _delete_document_index_entries(
-        self, conn: sqlite3.Connection, db_name: str, coll_name: str, storage_key: str,
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
     ) -> None:
         self._delete_multikey_entries_for_storage_key(
             conn, db_name, coll_name, storage_key
@@ -5371,10 +5428,19 @@ class SQLiteEngine(AsyncStorageEngine):
                             serialize_document=self._serialize_document,
                             max_entries=self._change_outbox_max_entries,
                         )
-                return InsertOutcome(
-                    applied=applied,
-                    document=deepcopy(document) if applied else None,
-                    commit_sequence=commit_sequence,
+                return (
+                    InsertOutcome(
+                        applied=True,
+                        document=deepcopy(document),
+                        commit_sequence=commit_sequence,
+                    )
+                    if applied
+                    else _RejectedInsertOutcome(
+                        applied=False,
+                        _duplicate_key_context=self._unique_key_error(
+                            "Duplicate key", f"{db_name}.{coll_name}", document
+                        )._duplicate_key_context,
+                    )
                 )
 
     def _merge_document_sync(  # noqa: PLR0912, PLR0913, PLR0915
@@ -5662,8 +5728,10 @@ class SQLiteEngine(AsyncStorageEngine):
                         context,
                     ),
                 ):
+                    rejections = {}
                     results = _sqlite_insert_document_batch(
                         conn,
+                        rejections=rejections,
                         db_name=db_name,
                         coll_name=coll_name,
                         documents=documents,
@@ -5759,8 +5827,10 @@ class SQLiteEngine(AsyncStorageEngine):
                                 context=operation_context,
                                 event_index=(
                                     operation_context.change_event_index
-                                    if operation_context is not None else 0
-                                ) + event_index,
+                                    if operation_context is not None
+                                    else 0
+                                )
+                                + event_index,
                                 operation_type="insert",
                                 db_name=db_name,
                                 coll_name=coll_name,
@@ -5773,9 +5843,17 @@ class SQLiteEngine(AsyncStorageEngine):
                             )
                         outcomes.append(
                             InsertOutcome(
-                                applied=applied,
-                                document=deepcopy(document) if applied else None,
+                                applied=True,
+                                document=deepcopy(document),
                                 commit_sequence=commit_sequence,
+                            )
+                            if applied
+                            else _RejectedInsertOutcome(
+                                applied=False,
+                                _duplicate_key_context=rejections.get(event_index)
+                                or self._unique_key_error(
+                                    "Duplicate key", f"{db_name}.{coll_name}", document
+                                )._duplicate_key_context,
                             ),
                         )
                 return tuple(outcomes)
@@ -6312,6 +6390,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         filter_spec,
                         plan,
                         dialect=effective_dialect,
+                        variables=effective_variables,
                     )
                     self._resolve_hint_index(
                         db_name,
@@ -6336,6 +6415,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 current_filter,
                                 current_plan,
                                 dialect=effective_dialect,
+                                variables=effective_variables,
                             )
                         ),
                         require_connection=lambda: conn,
@@ -7529,8 +7609,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     enforce_deadline(deadline)
                     if result.after_document is not None and (
-                        result.result.did_upsert
-                        or result.result.modified_count > 0
+                        result.result.did_upsert or result.result.modified_count > 0
                     ):
                         change_context = operation_context
                         if (

@@ -695,23 +695,23 @@ class QueryPlanTests(unittest.TestCase):
         )
 
     def test_compile_filter_rejects_invalid_nor_payload(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'$nor': {'name': 'Ada'}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'$and': []})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'$or': []})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'$nor': []})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'$and': [[]]})  # type: ignore[list-item]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'$or': [[]]})  # type: ignore[list-item]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'$nor': [[]]})  # type: ignore[list-item]
 
     def test_compile_filter_rejects_non_document_top_level_payload(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter([])  # type: ignore[arg-type]
 
     def test_compile_filter_accepts_none_as_match_all(self):

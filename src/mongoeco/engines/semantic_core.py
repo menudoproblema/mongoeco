@@ -20,8 +20,10 @@ from mongoeco.core.schema_validation import (
     CompiledCollectionValidator,
     SchemaValidationResult,
     compile_collection_validator,
+    schema_failure_details,
 )
 from mongoeco.core.search import ClassicTextQuery, strip_search_result_metadata
+from mongoeco.core.server_errors import ServerDiagnostic
 from mongoeco.core.sorting import sort_documents, sort_documents_limited
 from mongoeco.errors import DocumentValidationFailure
 from mongoeco.types import (
@@ -178,13 +180,25 @@ def enforce_collection_document_validation(
     )
     if result.valid or validator.validation_action == "warn":
         return
-    raise DocumentValidationFailure(
-        f"Document failed validation: {result.first_message}",
-        details={
+
+    schema = (getattr(validator, "raw_validator", None) or {}).get("$jsonSchema")
+    context = {
+        "errInfo": {
             "failingDocumentId": document.get("_id"),
-            "schemaRulesNotSatisfied": [issue.render() for issue in result.issues],
-        },
+            "details": {
+                "operatorName": "$jsonSchema" if schema is not None else "$and",
+                "schemaRulesNotSatisfied": schema_failure_details(schema, document)
+                if schema is not None
+                else [{"reason": issue.message} for issue in result.issues],
+            },
+        }
+    }
+    diagnostic = ServerDiagnostic(121, "Document failed validation", context=context)
+    error = DocumentValidationFailure._from_server_document(
+        diagnostic.message, code=121, details=diagnostic.item_document()
     )
+    error._server_diagnostic = diagnostic
+    raise error
 
 
 def compile_find_semantics(
@@ -222,7 +236,12 @@ def compile_find_semantics(
         filter_spec if selector_filter is None else selector_filter
     )
     query_plan = ensure_query_plan(
-        effective_selector_filter, plan, dialect=effective_dialect
+        effective_selector_filter,
+        plan,
+        dialect=effective_dialect,
+        variables=operation_context.expressions
+        if operation_context is not None
+        else variables,
     )
 
     return EngineFindSemantics(
@@ -310,6 +329,9 @@ def compile_update_semantics(
                 effective_selector_filter,
                 None,
                 dialect=effective_dialect,
+                variables=operation.context.expressions
+                if operation.context is not None
+                else (variables or operation.let),
             )
             if selector_filter is not None
             else None

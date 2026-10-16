@@ -1,17 +1,25 @@
-import asyncio
 import ast
+import asyncio
+import unittest
+
 from pathlib import Path
 from types import SimpleNamespace
-import unittest
 from unittest.mock import patch
 
+from mongoeco.api._async._database_admin_command_compiler import (
+    DatabaseAdminCommandCompiler,
+)
 from mongoeco.api._async.client import AsyncDatabase
-from mongoeco.api._async._database_admin_command_compiler import DatabaseAdminCommandCompiler
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.engines.results import EngineUpdateResult, FindAndModifyOutcome
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.results import EngineUpdateResult, FindAndModifyOutcome
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import CollectionInvalid, InvalidOperation, OperationFailure, WriteError
+from mongoeco.errors import (
+    CollectionInvalid,
+    InvalidOperation,
+    OperationFailure,
+    WriteError,
+)
 from mongoeco.session import ClientSession
 from mongoeco.types import UpdateResult
 
@@ -41,6 +49,10 @@ class _AsyncCursor:
 
 
 class _FakeCollection:
+    @staticmethod
+    def _apply_codec_options_to_optional_document(document):
+        return document
+
     def __init__(self, documents=None):
         self.documents = list(documents or [])
         self.insert_calls = []
@@ -393,6 +405,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                     {"q": {}, "u": 1},
                     {"q": {}, "u": {"$set": {"x": 1}}, "upsert": "yes"},
                     {"q": {}, "u": {"$set": {"x": 1}}, "let": 1},
+                    {"q": {}, "u": {"$set": {"x": 1}}, "arrayFilters": None},
                 ):
                     with self.assertRaises(OperationFailure):
                         await service._command_update({"update": "events", "updates": [update]})
@@ -415,7 +428,10 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                     let=None,
                     bypass_document_validation=False,
                 )
-                with patch.object(service._write_commands, "find_and_modify_before_full", return_value={"_id": 1}):
+                with patch(
+                    "mongoeco.api._async._collection_modify.find_one_and_replace_outcome",
+                    new=lambda _collection, query, change, **kwargs: collection._find_one_and_replace_outcome(query, change, **kwargs),
+                ):
                     result = await service._execute_find_and_modify_replacement(collection, options)
                 self.assertEqual(result.value, {"_id": 1, "replaced": True})
 
@@ -588,12 +604,12 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         fake_collection = _FakeCollection()
         update_one = fake_collection.update_one
         delete_one = fake_collection.delete_one
-        async def update(query, document, **kwargs):
+        async def update(_collection, query, document, **kwargs):
             if document == {"$set": {"name": "Ada"}}:
                 message = "controlled update failure"
                 raise WriteError(message, code=14)
             return await update_one(query, document, **kwargs)
-        async def delete(query, **kwargs):
+        async def delete(_collection, query, **kwargs):
             if query.get("fail"):
                 message = "controlled delete failure"
                 raise WriteError(message, code=2)
@@ -602,31 +618,43 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         fake_collection.delete_one = delete
 
         async def _run_update():
-            with patch.object(database, "get_collection", return_value=fake_collection):
+            with (
+                patch.object(database, "get_collection", return_value=fake_collection),
+                patch(
+                    "mongoeco.api._async._collection_modify.execute_server_update",
+                    side_effect=update,
+                ),
+            ):
                 exc_info = await service._command_update(
-                        {
-                            "update": "users",
-                            "ordered": False,
-                            "updates": [
-                                {"q": {}, "u": {"$set": {"name": "Ada"}}},
-                                {"q": {}, "u": {"$set": {"name": "Grace"}}, "upsert": True},
-                            ],
-                        }
-                    )
+                    {
+                        "update": "users",
+                        "ordered": False,
+                        "updates": [
+                            {"q": {}, "u": {"$set": {"name": "Ada"}}},
+                            {"q": {}, "u": {"$set": {"name": "Grace"}}, "upsert": True},
+                        ],
+                    }
+                )
                 return exc_info.to_document()
 
         async def _run_delete():
-            with patch.object(database, "get_collection", return_value=fake_collection):
+            with (
+                patch.object(database, "get_collection", return_value=fake_collection),
+                patch(
+                    "mongoeco.api._async._collection_modify.execute_server_delete",
+                    side_effect=delete,
+                ),
+            ):
                 exc_info = await service._command_delete(
-                        {
-                            "delete": "users",
-                            "ordered": False,
-                            "deletes": [
-                                {"q": {"fail": True}, "limit": 1},
-                                {"q": {}, "limit": 1},
-                            ],
-                        }
-                    )
+                    {
+                        "delete": "users",
+                        "ordered": False,
+                        "deletes": [
+                            {"q": {"fail": True}, "limit": 1},
+                            {"q": {}, "limit": 1},
+                        ],
+                    }
+                )
                 return exc_info.to_document()
 
         update_details = asyncio.run(_run_update())
@@ -647,7 +675,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
             del document, kwargs
             raise WriteError("invalid id", code=53)
 
-        async def _update_one(query, update, **kwargs):
+        async def _update_one(_collection, query, update, **kwargs):
             del query, update, kwargs
             raise WriteError("immutable id", code=66)
 
@@ -664,15 +692,21 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         async def _run_update():
             fake_collection.update_one = _update_one
-            with patch.object(database, "get_collection", return_value=fake_collection):
+            with (
+                patch.object(database, "get_collection", return_value=fake_collection),
+                patch(
+                    "mongoeco.api._async._collection_modify.execute_server_update",
+                    side_effect=_update_one,
+                ),
+            ):
                 exc_info = await service._command_update(
-                        {
-                            "update": "users",
-                            "updates": [
-                                {"q": {"_id": "1"}, "u": [{"$set": {"_id": "2"}}]},
-                            ],
-                        }
-                    )
+                    {
+                        "update": "users",
+                        "updates": [
+                            {"q": {"_id": "1"}, "u": [{"$set": {"_id": "2"}}]},
+                        ],
+                    }
+                )
                 return exc_info.to_document()
 
         insert_details = asyncio.run(_run_insert())
@@ -815,9 +849,9 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         async def _run():
             with patch.object(database, "get_collection", return_value=fake_collection):
-                with self.assertRaisesRegex(TypeError, "bypassDocumentValidation must be a bool"):
+                with self.assertRaisesRegex(OperationFailure, "bypassDocumentValidation must be a boolean"):
                     await service._command_insert({"insert": "users", "documents": [{"_id": 1}], "bypassDocumentValidation": "yes"})
-                with self.assertRaisesRegex(TypeError, "bypassDocumentValidation must be a bool"):
+                with self.assertRaisesRegex(OperationFailure, "bypassDocumentValidation must be a boolean"):
                     await service._command_update(
                         {
                             "update": "users",
@@ -870,25 +904,53 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         async def _run():
             with patch.object(database, "get_collection", return_value=fake_collection):
-                with self.assertRaisesRegex(TypeError, "explain must be a non-empty document"):
+                with self.assertRaisesRegex(
+                    TypeError, "explain must be a non-empty document"
+                ):
                     await service._command_explain({"explain": []})
                 with self.assertRaisesRegex(TypeError, "verbosity must be a string"):
-                    await service._command_explain({"explain": {"find": "users"}, "verbosity": 1})
-                with self.assertRaisesRegex(OperationFailure, "exactly one update specification"):
-                    await service._command_explain({"explain": {"update": "users", "updates": [{}, {}]}})
-                with self.assertRaisesRegex(OperationFailure, "exactly one delete specification"):
-                    await service._command_explain({"explain": {"delete": "users", "deletes": [{}, {}]}})
+                    await service._command_explain(
+                        {"explain": {"find": "users"}, "verbosity": 1}
+                    )
+                with self.assertRaisesRegex(
+                    OperationFailure, "exactly one update specification"
+                ):
+                    await service._command_explain(
+                        {"explain": {"update": "users", "updates": [{}, {}]}}
+                    )
+                with self.assertRaisesRegex(
+                    OperationFailure, "exactly one delete specification"
+                ):
+                    await service._command_explain(
+                        {"explain": {"delete": "users", "deletes": [{}, {}]}}
+                    )
                 with self.assertRaisesRegex(TypeError, "multi must be a bool"):
                     await service._command_explain(
-                        {"explain": {"update": "users", "updates": [{"q": {}, "u": {"$set": {"a": 1}}, "multi": "yes"}]}}
+                        {
+                            "explain": {
+                                "update": "users",
+                                "updates": [
+                                    {"q": {}, "u": {"$set": {"a": 1}}, "multi": "yes"}
+                                ],
+                            }
+                        }
                     )
                 with self.assertRaisesRegex(TypeError, "limit must be 0 or 1"):
                     await service._command_explain(
-                        {"explain": {"delete": "users", "deletes": [{"q": {}, "limit": 2}]}}
+                        {
+                            "explain": {
+                                "delete": "users",
+                                "deletes": [{"q": {}, "limit": 2}],
+                            }
+                        }
                     )
-                with self.assertRaisesRegex(OperationFailure, "Unsupported explain command"):
+                with self.assertRaisesRegex(
+                    OperationFailure, "Unsupported explain command"
+                ):
                     await service._command_explain({"explain": {"ping": 1}})
-                count_explain = await service._command_explain({"explain": {"count": "users", "query": {}}})
+                count_explain = await service._command_explain(
+                    {"explain": {"count": "users", "query": {}}}
+                )
                 distinct_explain = await service._command_explain(
                     {"explain": {"distinct": "users", "key": "kind", "query": {}}}
                 )
@@ -914,31 +976,39 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 self.assertEqual(distinct_explain["namespace"], "db.users")
                 self.assertEqual(distinct_explain["key"], "kind")
                 self.assertEqual(find_and_modify_explain["command"], "findAndModify")
-                self.assertEqual(find_and_modify_explain["explained_command"], "findAndModify")
+                self.assertEqual(
+                    find_and_modify_explain["explained_command"], "findAndModify"
+                )
                 self.assertEqual(find_and_modify_explain["collection"], "users")
                 self.assertEqual(find_and_modify_explain["namespace"], "db.users")
                 self.assertTrue(find_and_modify_explain["new"])
                 self.assertTrue(find_and_modify_explain["upsert"])
                 self.assertEqual(find_and_modify_explain["fields"], {"_id": 1})
 
-                remove_result = await service._execute_find_and_modify_remove(
-                    fake_collection,
-                    SimpleNamespace(
-                        update_spec=None,
-                        upsert=False,
-                        query={},
-                        fields=None,
-                        collation=None,
-                        sort=None,
-                        hint=None,
-                        comment=None,
-                        max_time_ms=None,
-                        let=None,
-                    ),
-                )
+                with patch(
+                    "mongoeco.api._async._collection_modify.find_one_and_delete",
+                    return_value={"_id": 1},
+                ):
+                    remove_result = await service._execute_find_and_modify_remove(
+                        fake_collection,
+                        SimpleNamespace(
+                            update_spec=None,
+                            upsert=False,
+                            query={},
+                            fields=None,
+                            collation=None,
+                            sort=None,
+                            hint=None,
+                            comment=None,
+                            max_time_ms=None,
+                            let=None,
+                        ),
+                    )
                 self.assertEqual(remove_result.value, {"_id": 1})
 
-                with self.assertRaisesRegex(OperationFailure, "cannot be specified together"):
+                with self.assertRaisesRegex(
+                    OperationFailure, "cannot be specified together"
+                ):
                     await service._execute_find_and_modify_remove(
                         fake_collection,
                         SimpleNamespace(
@@ -954,7 +1024,9 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                             let=None,
                         ),
                     )
-                with self.assertRaisesRegex(OperationFailure, "does not support upsert"):
+                with self.assertRaisesRegex(
+                    OperationFailure, "does not support upsert"
+                ):
                     await service._execute_find_and_modify_remove(
                         fake_collection,
                         SimpleNamespace(
@@ -971,59 +1043,95 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                         ),
                     )
 
-                with patch.object(service._write_commands, "find_and_modify_before_full", return_value=None), patch.object(
-                    service._write_commands,
-                    "find_and_modify_fetch_upserted_value",
-                    return_value={"_id": "upserted-1"},
+                with (
+                    patch(
+                        "mongoeco.api._async._collection_modify.find_one_and_update_outcome",
+                        new=lambda _collection, query, change, **kwargs: (
+                            fake_collection._find_one_and_update_outcome(
+                                query,
+                                change,
+                                **{
+                                    key: value
+                                    for key, value in kwargs.items()
+                                    if key != "update"
+                                },
+                            )
+                        ),
+                    ),
+                    patch(
+                        "mongoeco.api._async._collection_modify.find_one_and_replace_outcome",
+                        new=lambda _collection, query, change, **kwargs: (
+                            fake_collection._find_one_and_replace_outcome(
+                                query, change, **kwargs
+                            )
+                        ),
+                    ),
                 ):
-                    operator_result = await service._execute_find_and_modify_operator_update(
-                        fake_collection,
-                        SimpleNamespace(
-                            collection_name="users",
-                            query={},
-                            update_spec={"$set": {"a": 1}},
-                            fields=None,
-                            collation=None,
-                            sort=[("name", 1)],
-                            upsert=True,
-                            return_new=True,
-                            array_filters=None,
-                            hint="name_1",
-                            comment="trace",
-                            max_time_ms=10,
-                            let={"tenant": "a"},
-                            bypass_document_validation=True,
-                        ),
+                    operator_result = (
+                        await service._execute_find_and_modify_operator_update(
+                            fake_collection,
+                            SimpleNamespace(
+                                collection_name="users",
+                                query={},
+                                update_spec={"$set": {"a": 1}},
+                                fields=None,
+                                collation=None,
+                                sort=[("name", 1)],
+                                upsert=True,
+                                return_new=True,
+                                array_filters=None,
+                                hint="name_1",
+                                comment="trace",
+                                max_time_ms=10,
+                                let={"tenant": "a"},
+                                bypass_document_validation=True,
+                            ),
+                        )
                     )
-                    replacement_result = await service._execute_find_and_modify_replacement(
-                        fake_collection,
-                        SimpleNamespace(
-                            collection_name="users",
-                            query={},
-                            update_spec={"name": "Ada"},
-                            fields=None,
-                            collation=None,
-                            sort=[("name", 1)],
-                            upsert=True,
-                            return_new=True,
-                            hint="name_1",
-                            comment="trace",
-                            max_time_ms=10,
-                            let={"tenant": "a"},
-                            bypass_document_validation=True,
-                        ),
+                    replacement_result = (
+                        await service._execute_find_and_modify_replacement(
+                            fake_collection,
+                            SimpleNamespace(
+                                collection_name="users",
+                                query={},
+                                update_spec={"name": "Ada"},
+                                fields=None,
+                                collation=None,
+                                sort=[("name", 1)],
+                                upsert=True,
+                                return_new=True,
+                                hint="name_1",
+                                comment="trace",
+                                max_time_ms=10,
+                                let={"tenant": "a"},
+                                bypass_document_validation=True,
+                            ),
+                        )
                     )
                 self.assertEqual(operator_result.value, {"_id": "upserted-1"})
                 self.assertEqual(replacement_result.value, {"_id": "upserted-1"})
 
-                indexes_result = await service._execute_list_indexes_command("users", comment="trace")
-                self.assertEqual(indexes_result.first_batch, [{"name": "_id_", "key": {"_id": 1}, "ns": "db.users"}])
-                self.assertEqual(fake_collection.list_indexes_calls[-1]["comment"], "trace")
+                indexes_result = await service._execute_list_indexes_command(
+                    "users", comment="trace"
+                )
+                self.assertEqual(
+                    indexes_result.first_batch,
+                    [{"name": "_id_", "key": {"_id": 1}, "ns": "db.users"}],
+                )
+                self.assertEqual(
+                    fake_collection.list_indexes_calls[-1]["comment"], "trace"
+                )
 
-                drop_all = await service._command_drop_indexes({"dropIndexes": "users", "index": "*"})
+                drop_all = await service._command_drop_indexes(
+                    {"dropIndexes": "users", "index": "*"}
+                )
                 self.assertIn("non-_id indexes", drop_all.message)
-                with self.assertRaisesRegex(TypeError, "index must be '\\*', a name, or a key specification"):
-                    await service._command_drop_indexes({"dropIndexes": "users", "index": 1.5})
+                with self.assertRaisesRegex(
+                    TypeError, "index must be '\\*', a name, or a key specification"
+                ):
+                    await service._command_drop_indexes(
+                        {"dropIndexes": "users", "index": 1.5}
+                    )
 
         asyncio.run(_run())
 

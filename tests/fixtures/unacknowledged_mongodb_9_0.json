@@ -50,7 +50,7 @@
     "tests/differential/unacknowledged_cases.py": "ca7963cc09dc7e147bf01aea32361d36ea530e275cf95cee20104f25f86fbdfc",
     "tests/differential/write_preflight_cases.py": "4495cfd30e9d19ca196e1c56b4fb554fc106ec0d98f4dfdd0176fe462eb8be0f",
     "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
-    "tests/support_write_parity.py": "be6f848fbe372e6a539ce235e404d2729c938556d5c9a59d8a4ddde9eaef1cd7"
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
   },
   "native_facades": [
     "sync",
@@ -1635,6 +1635,18 @@
             11000
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -1836,6 +1848,18 @@
             1,
             11000
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {
@@ -2631,6 +2655,18 @@
             11000
           ]
         ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
+        ],
         "write_error_operations": [
           {
             "index": 1,
@@ -2828,6 +2864,18 @@
             1,
             11000
           ]
+        ],
+        "write_concern_errors": {
+          "present": true,
+          "value": []
+        },
+        "write_error_messages": [
+          {
+            "present": true,
+            "type": "str",
+            "nonempty": true,
+            "formatted_exception": false
+          }
         ],
         "write_error_operations": [
           {

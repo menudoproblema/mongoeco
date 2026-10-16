@@ -119,8 +119,7 @@ class UpdateEngineTests(unittest.TestCase):
     def test_update_rejects_empty_or_non_document_specs(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"a": 1}, {})
-        with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"a": 1}, [])  # type: ignore[arg-type]
+        self.assertFalse(UpdateEngine.apply_update({"a": 1}, []))
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"a": 1}, None)  # type: ignore[arg-type]
         with self.assertRaises(OperationFailure):
@@ -497,7 +496,7 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(context.raw_array_filters, [{"item.qty": {"$gt": 1}}])
         self.assertEqual(
             context.compiled_array_filters,
-            {"item": {"qty": {"$gt": 1}}},
+            {"item": {"item.qty": {"$gt": 1}}},
         )
         self.assertTrue(context.is_upsert_insert)
 
@@ -562,7 +561,7 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(document, {"done": True})
 
     def test_validate_update_pipeline_rejects_invalid_stage_shapes(self):
-        with self.assertRaisesRegex(OperationFailure, "single-key document"):
+        with self.assertRaisesRegex(OperationFailure, "exactly one field"):
             UpdateEngine.validate_update_pipeline(
                 [{"$set": {"a": 1}, "$unset": {"b": ""}}],
             )
@@ -643,7 +642,7 @@ class UpdateEngineTests(unittest.TestCase):
         invalid_specs = [
             ([{}], "non-empty documents"),
             ([{1: {"$gt": 0}}], "field names must be strings"),
-            ([{"$and": [{"i.qty": {"$gt": 0}}]}], "Top-level operators"),
+            ([{"$expr": {"$eq": [1, 1]}}], "not allowed"),
             (
                 [{"9.qty": {"$gt": 0}}],
                 "identifiers must begin with a lowercase letter",
@@ -654,7 +653,7 @@ class UpdateEngineTests(unittest.TestCase):
             ),
             (
                 [{"i.qty": {"$gt": 0}}, {"i.name": "Ada"}],
-                "duplicate array filter identifiers",
+                "multiple array filters",
             ),
         ]
 
@@ -677,14 +676,14 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine._array_filter_matches(
                 "i",
                 "not-a-document",
-                array_filters={"i": {"qty": {"$gt": 1}}},
+                array_filters={"i": {"i.qty": {"$gt": 1}}},
             ),
         )
         self.assertTrue(
             UpdateEngine._array_filter_matches(
                 "i",
                 {"qty": 2},
-                array_filters={"i": {"qty": {"$gt": 1}}},
+                array_filters={"i": {"i.qty": {"$gt": 1}}},
             ),
         )
 
@@ -693,7 +692,7 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine._array_filter_matches(
                 "item",
                 {"kind": "Ada"},
-                array_filters={"item": {"kind": "ada"}},
+                array_filters={"item": {"item.kind": "ada"}},
                 collation=normalize_collation({"locale": "en", "strength": 2}),
             ),
         )

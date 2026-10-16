@@ -86,17 +86,21 @@ from mongoeco.core.bson_scalars import (
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.duplicate_keys import duplicate_key_error, duplicate_key_message
+from mongoeco.core.error_documents import (
+    error_message,
+    sync_command_errors,
+    write_error_details,
+)
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
 )
-from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.core.operation_context import (
     ChangeOperationType,
     ChangePublicationPolicy,
     OperationContext,
 )
-from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import QueryNode  # noqa: TC001
 from mongoeco.core.validation import (
     is_document,
@@ -332,12 +336,12 @@ class AsyncCollection:
             change_operation_type=change_operation_type,
         )
 
-    def __getattr__(self, name: str) -> "AsyncCollection":
+    def __getattr__(self, name: str) -> AsyncCollection:
         if name.startswith("_"):
             raise AttributeError(name)
         return self.__getitem__(name)
 
-    def __getitem__(self, name: str) -> "AsyncCollection":
+    def __getitem__(self, name: str) -> AsyncCollection:
         if not isinstance(name, str) or not name:
             raise TypeError("subcollection name must be a non-empty string")
         return self.database.get_collection(
@@ -395,16 +399,6 @@ class AsyncCollection:
         if isinstance(update_spec, list):
             if not update_spec:
                 raise ValueError("update_spec must not be empty")
-            for stage in update_spec:
-                if not is_document(stage):
-                    raise TypeError("update pipeline stages must be dicts")
-                if len(stage) != 1:
-                    raise ValueError(
-                        "update pipeline stages must be single-key documents"
-                    )
-                operator = next(iter(stage))
-                if not isinstance(operator, str) or not operator.startswith("$"):
-                    raise ValueError("update pipeline stages must start with '$'")
             return DocumentCodec.to_internal(update_spec)
         if not is_update(update_spec):
             raise TypeError("update_spec must be a dict or list")
@@ -412,9 +406,6 @@ class AsyncCollection:
             raise ValueError("update_spec must not be empty")
         if not all(isinstance(key, str) and key.startswith("$") for key in update_spec):
             raise ValueError("update_spec must contain only update operators")
-        for operator, params in update_spec.items():
-            if not is_document(params):
-                raise TypeError(f"{operator} value must be a dict")
         return DocumentCodec.to_internal(update_spec)
 
     @staticmethod
@@ -509,7 +500,8 @@ class AsyncCollection:
             # PyMongo's individual UpdateResult exposes n=1 when the upsert ID
             # is null. Bulk/raw consumers use did_upsert, not this public count.
             matched_count=(
-                1 if result.did_upsert and result.upserted_id is None
+                1
+                if result.did_upsert and result.upserted_id is None
                 else result.matched_count
             ),
             modified_count=result.modified_count,
@@ -922,14 +914,31 @@ class AsyncCollection:
                     ),
                 )
             if not outcome:
-                raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
+                raise duplicate_key_error(outcome, f"Duplicate key: _id={doc['_id']}")
         except Exception as exc:
             await self._profile_operation(
                 op="insert",
                 command_factory=_insert_one_profile_command,
                 duration_ns=time.perf_counter_ns() - started_at,
-                errmsg=str(exc),
+                errmsg=error_message(exc),
             )
+            if (
+                isinstance(exc, DuplicateKeyError)
+                and getattr(exc, "_duplicate_key_context", None) is not None
+            ):
+                message = duplicate_key_message(
+                    exc._duplicate_key_context, command=False
+                )
+                raise DuplicateKeyError._from_server_document(
+                    message,
+                    code=exc.code,
+                    details={
+                        "index": 0,
+                        "code": exc.code,
+                        "errmsg": message,
+                        **write_error_details(exc),
+                    },
+                ) from exc
             raise
         self._notify_instrumented_insert_outcome(outcome, session=session)
         await self._profile_operation(
@@ -1120,6 +1129,7 @@ class AsyncCollection:
             session=options.get("session"),
         )
 
+    @sync_command_errors
     def aggregate(
         self,
         pipeline: Pipeline,

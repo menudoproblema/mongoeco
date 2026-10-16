@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from collections.abc import Mapping
+from copy import deepcopy
 from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
@@ -12,9 +12,15 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
 )
 from mongoeco.core.expression_context import ensure_expression_context
-from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
+from mongoeco.core.paths import (
+    delete_document_value,
+    get_document_value,
+    set_document_value,
+)
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Timestamp
+
 
 if TYPE_CHECKING:
     from mongoeco.core.operators import UpdateExecutionContext
@@ -46,14 +52,18 @@ def _document_traverses_array_on_field(document: dict[str, Any], field: str) -> 
 
 def _is_signed_int64(value: Any) -> bool:
     unwrapped = unwrap_bson_numeric(value)
-    return isinstance(unwrapped, int) and not isinstance(unwrapped, bool) and _INT64_MIN <= unwrapped <= _INT64_MAX
+    return (
+        isinstance(unwrapped, int)
+        and not isinstance(unwrapped, bool)
+        and _INT64_MIN <= unwrapped <= _INT64_MAX
+    )
 
 
 def apply_set(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     modified = False
@@ -75,9 +85,9 @@ def apply_set(
 
 def apply_unset(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     modified = False
@@ -95,9 +105,9 @@ def apply_unset(
 
 def apply_inc(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     modified = False
@@ -118,18 +128,21 @@ def apply_inc(
                 continue
             if not helpers._is_numeric(current):
                 raise OperationFailure(
-                    "$inc requires the target field to be numeric", code=14,
+                    "$inc requires the target field to be numeric",
+                    code=14,
                 )
-            if set_document_value(doc, target.concrete_path, bson_add(current, increment)):
+            if set_document_value(
+                doc, target.concrete_path, bson_add(current, increment)
+            ):
                 modified = True
     return modified
 
 
 def apply_min(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     modified = False
@@ -150,9 +163,9 @@ def apply_min(
 
 def apply_max(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     modified = False
@@ -173,9 +186,9 @@ def apply_max(
 
 def apply_mul(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     modified = False
@@ -187,7 +200,8 @@ def apply_mul(
     ):
         factor = application.instruction.value
         if not helpers._is_numeric(factor):
-            raise OperationFailure("$mul requires numeric values")
+            message = "$mul requires numeric values"
+            raise server_error(message, code=2)
         for target in application.targets:
             found, current = get_document_value(doc, target.concrete_path)
             if not found:
@@ -199,17 +213,20 @@ def apply_mul(
                     modified = True
                 continue
             if not helpers._is_numeric(current):
-                raise OperationFailure("$mul requires the target field to be numeric")
-            if set_document_value(doc, target.concrete_path, bson_multiply(current, factor)):
+                message = "$mul requires the target field to be numeric"
+                raise server_error(message, code=2)
+            if set_document_value(
+                doc, target.concrete_path, bson_multiply(current, factor)
+            ):
                 modified = True
     return modified
 
 
 def apply_bit(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     modified = False
@@ -221,24 +238,34 @@ def apply_bit(
     ):
         bit_spec = application.instruction.value
         if not isinstance(bit_spec, dict):
-            raise OperationFailure("$bit requires a document of bitwise operations")
+            message = "$bit requires a document of bitwise operations"
+            raise server_error(message, code=2)
         if not bit_spec:
             continue
         if len(bit_spec) != 1:
-            raise OperationFailure("$bit requires exactly one of and, or, or xor")
+            message = "$bit requires exactly one of and, or, or xor"
+            raise server_error(message, code=2)
         operator, operand = next(iter(bit_spec.items()))
         if operator not in {"and", "or", "xor"}:
-            raise OperationFailure("$bit only supports and, or, and xor")
+            message = "$bit only supports and, or, and xor"
+            raise server_error(message, code=2)
         if not helpers._is_integral(operand) or not _is_signed_int64(operand):
-            raise OperationFailure("$bit requires signed 64-bit integer operands")
+            message = "$bit requires signed 64-bit integer operands"
+            raise server_error(message, code=2)
         for target in application.targets:
             found, current = get_document_value(doc, target.concrete_path)
             if not found:
-                if set_document_value(doc, target.concrete_path, bson_bitwise(operator, 0, operand)):
+                if set_document_value(
+                    doc, target.concrete_path, bson_bitwise(operator, 0, operand)
+                ):
                     modified = True
                 continue
             if not helpers._is_integral(current) or not _is_signed_int64(current):
-                raise OperationFailure("$bit requires the target field to be a signed 64-bit integer")
+                message = "$bit requires the target field to be a signed 64-bit integer"
+                raise server_error(
+                    message,
+                    code=2,
+                )
             replacement = bson_bitwise(operator, current, operand)
             if set_document_value(doc, target.concrete_path, replacement):
                 modified = True
@@ -247,21 +274,25 @@ def apply_bit(
 
 def apply_rename(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     del context, helpers
     modified = False
     for instruction in instructions:
         if instruction.target_path is None:
-            raise OperationFailure("$rename requires string target paths")
-        if _document_traverses_array_on_field(doc, instruction.path.raw) or _document_traverses_array_on_field(
+            message = "$rename requires string target paths"
+            raise server_error(message, code=2)
+        if _document_traverses_array_on_field(
+            doc, instruction.path.raw
+        ) or _document_traverses_array_on_field(
             doc,
             instruction.target_path.raw,
         ):
-            raise OperationFailure("Cannot use $rename when source or target path crosses an array")
+            message = "Cannot use $rename when source or target path crosses an array"
+            raise server_error(message, code=2)
         found, current = get_document_value(doc, instruction.path.raw)
         if not found:
             continue
@@ -274,9 +305,9 @@ def apply_rename(
 
 def apply_current_date(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
     variables: Mapping[str, Any] | None = None,
 ) -> bool:
@@ -291,15 +322,22 @@ def apply_current_date(
         allow_positional=True,
     ):
         value = application.instruction.value
-        if value is True:
+        if value is True or (
+            isinstance(value, dict)
+            and set(value) == {"$type"}
+            and value["$type"] == "date"
+        ):
             replacement = now
-        elif isinstance(value, dict) and set(value) == {"$type"} and value["$type"] == "date":
-            replacement = now
-        elif isinstance(value, dict) and set(value) == {"$type"} and value["$type"] == "timestamp":
+        elif (
+            isinstance(value, dict)
+            and set(value) == {"$type"}
+            and value["$type"] == "timestamp"
+        ):
             timestamp_inc += 1
             replacement = Timestamp(now_seconds, timestamp_inc)
         else:
-            raise OperationFailure("$currentDate only supports True or {$type: 'date'/'timestamp'}")
+            message = "$currentDate only supports True or {$type: 'date'/'timestamp'}"
+            raise server_error(message, code=2)
         for target in application.targets:
             if set_document_value(doc, target.concrete_path, replacement):
                 modified = True
@@ -308,9 +346,9 @@ def apply_current_date(
 
 def apply_set_on_insert(
     doc: dict[str, Any],
-    instructions: tuple["CompiledUpdateInstruction", ...],
+    instructions: tuple[CompiledUpdateInstruction, ...],
     *,
-    context: "UpdateExecutionContext",
+    context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
     if not context.is_upsert_insert:

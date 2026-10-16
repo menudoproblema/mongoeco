@@ -1,17 +1,18 @@
 import datetime
 import decimal
 import math
+import uuid
+
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Callable, ClassVar
-import uuid
 
+from mongoeco.compat._catalog_dialects import BsonCode
 from mongoeco.compat.catalog import (
     DEFAULT_BSON_TYPE_ORDER,
     MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED,
     MONGODB_DIALECT_ALIASES,
     MONGODB_DIALECT_CATALOG,
-    MongoBehaviorPolicySpec,
     MONGODB_DIALECT_HOOK_NAMES,
     PYMONGO_CAP_UPDATE_ONE_SORT,
     PYMONGO_PROFILE_ALIASES,
@@ -26,9 +27,21 @@ from mongoeco.compat.catalog import (
     SUPPORTED_QUERY_TOP_LEVEL_OPERATORS,
     SUPPORTED_UPDATE_OPERATORS,
     SUPPORTED_WINDOW_ACCUMULATORS,
+    MongoBehaviorPolicySpec,
 )
-from mongoeco.core.bson_scalars import compare_bson_numeric, unwrap_bson_numeric, wrap_bson_numeric
-from mongoeco.types import Binary, ObjectId, Timestamp, UndefinedType, is_object_id_like, normalize_object_id
+from mongoeco.core.bson_scalars import (
+    compare_bson_numeric,
+    unwrap_bson_numeric,
+    wrap_bson_numeric,
+)
+from mongoeco.types import (
+    Binary,
+    ObjectId,
+    Timestamp,
+    UndefinedType,
+    is_object_id_like,
+    normalize_object_id,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +107,32 @@ def _sort_update_path_items_default(params: dict[str, object]) -> list[tuple[str
     return sorted(params.items(), key=sort_key)
 
 
+def _plain_code_scope(value):
+    if isinstance(value, dict):
+        return {key: _plain_code_scope(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_plain_code_scope(item) for item in value]
+    return value
+
+
+def _compare_code_values(left, right, compare):
+    if (
+        BsonCode is None
+        or not isinstance(left, BsonCode)
+        or not isinstance(right, BsonCode)
+    ):
+        return None
+    if (left.scope is None) != (right.scope is None):
+        return -1 if left.scope is None else 1
+    if str(left) != str(right):
+        return -1 if str(left) < str(right) else 1
+    return (
+        0
+        if left.scope is None
+        else compare(_plain_code_scope(left.scope), _plain_code_scope(right.scope))
+    )
+
+
 def _compare_values_default(
     left: Any,
     right: Any,
@@ -115,13 +154,25 @@ def _compare_values_default(
     normalized_left = normalize_object_id(comparable_left)
     normalized_right = normalize_object_id(comparable_right)
 
+    code_comparison = _compare_code_values(
+        normalized_left,
+        normalized_right,
+        lambda left, right: _compare_values_default(left, right, bson_type_order),
+    )
+    if code_comparison is not None:
+        return code_comparison
+
     if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
         left_items = list(normalized_left.items())
         right_items = list(normalized_right.items())
-        for (left_key, left_value), (right_key, right_value) in zip(left_items, right_items):
+        for (left_key, left_value), (right_key, right_value) in zip(
+            left_items, right_items
+        ):
             if left_key != right_key:
                 return -1 if left_key < right_key else 1
-            value_comparison = _compare_values_default(left_value, right_value, bson_type_order)
+            value_comparison = _compare_values_default(
+                left_value, right_value, bson_type_order
+            )
             if value_comparison != 0:
                 return value_comparison
         if len(left_items) == len(right_items):
@@ -130,7 +181,9 @@ def _compare_values_default(
 
     if isinstance(normalized_left, list) and isinstance(normalized_right, list):
         for left_value, right_value in zip(normalized_left, normalized_right):
-            comparison = _compare_values_default(left_value, right_value, bson_type_order)
+            comparison = _compare_values_default(
+                left_value, right_value, bson_type_order
+            )
             if comparison != 0:
                 return comparison
         if len(normalized_left) == len(normalized_right):
@@ -146,7 +199,9 @@ def _compare_values_default(
             return 0
         return -1 if left_bytes < right_bytes else 1
 
-    if isinstance(normalized_left, Timestamp) and isinstance(normalized_right, Timestamp):
+    if isinstance(normalized_left, Timestamp) and isinstance(
+        normalized_right, Timestamp
+    ):
         left_key = (normalized_left.time, normalized_left.inc)
         right_key = (normalized_right.time, normalized_right.inc)
         if left_key == right_key:
@@ -154,7 +209,11 @@ def _compare_values_default(
         return -1 if left_key < right_key else 1
 
     if isinstance(normalized_left, float) and math.isnan(normalized_left):
-        return 0 if isinstance(normalized_right, float) and math.isnan(normalized_right) else -1
+        return (
+            0
+            if isinstance(normalized_right, float) and math.isnan(normalized_right)
+            else -1
+        )
     if isinstance(normalized_right, float) and math.isnan(normalized_right):
         return 1
 
@@ -259,8 +318,12 @@ class MongoDialect:
     catalog_capabilities: frozenset[str] = frozenset()
     catalog_query_field_operators: frozenset[str] | None = None
     catalog_update_operators: frozenset[str] | None = None
-    _base_policy_cache: MongoBehaviorPolicy | None = field(default=None, init=False, repr=False, compare=False)
-    _policy_cache: MongoBehaviorPolicy | None = field(default=None, init=False, repr=False, compare=False)
+    _base_policy_cache: MongoBehaviorPolicy | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
+    _policy_cache: MongoBehaviorPolicy | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
     _SEMANTIC_OVERRIDE_NAMES: ClassVar[tuple[str, ...]] = (
         "null_query_matches_undefined",
         "expression_truthy",
@@ -419,7 +482,9 @@ class MongoDialect:
 
     def compare_values(self, left: Any, right: Any) -> int:
         if self.policy_spec.comparison_mode != "bson-total-order":
-            raise ValueError(f"unsupported comparison strategy: {self.policy_spec.comparison_mode}")
+            raise ValueError(
+                f"unsupported comparison strategy: {self.policy_spec.comparison_mode}"
+            )
         wrapped_left = wrap_bson_numeric(left)
         wrapped_right = wrap_bson_numeric(right)
         if wrapped_left is not None and wrapped_right is not None:
@@ -433,10 +498,18 @@ class MongoDialect:
         if type_left != type_right:
             return -1 if type_left < type_right else 1
 
+        code_comparison = _compare_code_values(
+            normalized_left, normalized_right, self.compare_values
+        )
+        if code_comparison is not None:
+            return code_comparison
+
         if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
             left_items = list(normalized_left.items())
             right_items = list(normalized_right.items())
-            for (left_key, left_value), (right_key, right_value) in zip(left_items, right_items):
+            for (left_key, left_value), (right_key, right_value) in zip(
+                left_items, right_items
+            ):
                 if left_key != right_key:
                     return -1 if left_key < right_key else 1
                 value_comparison = self.compare_values(left_value, right_value)
@@ -456,7 +529,11 @@ class MongoDialect:
             return -1 if len(normalized_left) < len(normalized_right) else 1
 
         if isinstance(normalized_left, float) and math.isnan(normalized_left):
-            return 0 if isinstance(normalized_right, float) and math.isnan(normalized_right) else -1
+            return (
+                0
+                if isinstance(normalized_right, float) and math.isnan(normalized_right)
+                else -1
+            )
         if isinstance(normalized_right, float) and math.isnan(normalized_right):
             return 1
 

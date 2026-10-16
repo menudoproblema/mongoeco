@@ -160,6 +160,10 @@ jobs:
             --target "$MONGOECO_REAL_MONGODB_TARGET" \
             --output "artifacts/${{ matrix.target }}/api-options.json" \
             --check "tests/fixtures/api_options_mongodb_${TARGET_SUFFIX}.json"
+          python scripts/capture_error_phases.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --output "artifacts/${{ matrix.target }}/error-phases.json" \
+            --check "tests/fixtures/error_phases_mongodb_${TARGET_SUFFIX}.json"
           python -m pytest -q \
             tests/integration/api/test_write_parity_corpus.py \
             tests/integration/api/test_write_identity_parity.py \
@@ -169,6 +173,13 @@ jobs:
             tests/unit/core/test_id_bson_conversion.py \
             tests/integration/api/test_null_identity_conservation.py \
             tests/integration/api/test_write_operation_parity.py \
+            tests/integration/api/test_find_modify_errors.py \
+            tests/integration/api/test_shared_error_parity.py \
+            tests/integration/api/test_error_phases.py \
+            tests/integration/api/test_server_command_inputs.py \
+            tests/integration/api/test_code_index_legacy.py \
+            tests/unit/core/test_collation_diagnostics.py \
+            tests/unit/core/test_shared_error_documents.py \
             tests/integration/api/test_write_operation_conservation.py \
             tests/integration/api/test_api_option_parity.py \
             tests/integration/api/test_api_option_conservation.py \
@@ -195,6 +206,16 @@ jobs:
               --output "artifacts/${{ matrix.target }}/${CASE_SET}-capture.json" \
               --check "tests/fixtures/mongodb_${FIXTURE_SET}_${TARGET_SUFFIX}.json"
           done
+
+      - name: Verify native error payload deltas with the minimum SDK
+        run: |
+          python -m pip install --target artifacts/native-sdk49 "pymongo==4.9.2"
+          TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"
+          PYTHONPATH="$PWD/artifacts/native-sdk49" python scripts/capture_error_phases.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --output "artifacts/${{ matrix.target }}/error-phases-sdk49.json" \
+            --baseline "tests/fixtures/error_phases_mongodb_${TARGET_SUFFIX}.json" \
+            --check tests/fixtures/error_phases_pymongo49_deltas.json
 
       - name: Record exact MongoDB runtime
         if: always()

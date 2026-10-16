@@ -10,6 +10,7 @@ from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
     VECTOR_SEARCH_SCORE_FIELD,
 )
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Filter, Projection
 
@@ -38,6 +39,9 @@ class _ProjectionPathNode:
         if self.children is None:
             self.children = {}
         return self.children.setdefault(segment, _ProjectionPathNode())
+
+
+_SLICE_PAIR_LENGTH = 2
 
 
 def _projection_flag(value: object, *, dialect: MongoDialect) -> int | None:
@@ -73,49 +77,33 @@ def apply_projection(
 
 
 class _ProjectionExecutor:
-    """Execution-owned projection program, reused for every projected row.
+    """One prepared projection, validated independently of matching rows."""
 
-    Prepare on the first projected row to preserve error timing for empty or
-    skipped results. The private parsed operands/path tree are read-only after
-    preparation and then never borrow mutable caller operands. No global cache holds
-    a selector, dialect or execution context beyond this stream's lifetime.
-    """
+    __slots__ = ("_dialect", "_parsed", "_root", "_selector")
 
-    __slots__ = ("_dialect", "_parsed", "_projection", "_root", "_selector")
-
-    def __init__(
-        self,
-        projection: Projection | None,
-        *,
-        selector_filter: Filter | None = None,
-        dialect: MongoDialect = MONGODB_DIALECT_70,
-    ) -> None:
-        self._projection = projection
-        self._selector = selector_filter
+    def __init__(self, projection, *, selector_filter=None, dialect=MONGODB_DIALECT_70):
         self._dialect = dialect
-        self._parsed: _ParsedProjection | None = None
-        self._root: _ProjectionPathNode | None = None
+        self._parsed = (
+            None
+            if projection is None
+            else _parse_projection_spec(deepcopy(projection), dialect=dialect)
+        )
+        self._root = (
+            None if self._parsed is None else _projection_inclusion_root(self._parsed)
+        )
+        self._selector = (
+            deepcopy(selector_filter)
+            if self._parsed is not None
+            and any(
+                spec.operator == "$positional"
+                for spec in self._parsed.operator_fields.values()
+            )
+            else None
+        )
 
-    def __call__(self, doc: Document) -> Document:
-        if self._projection is None:
-            return doc
+    def __call__(self, doc):
         if self._parsed is None:
-            parsed = _parse_projection_spec(
-                deepcopy(self._projection), dialect=self._dialect
-            )
-            self._root = _projection_inclusion_root(parsed)
-            # Only positional projection consumes the selector. Do not copy a
-            # potentially large filter for ordinary inclusion/exclusion.
-            self._selector = (
-                deepcopy(self._selector)
-                if any(
-                    spec.operator == "$positional"
-                    for spec in parsed.operator_fields.values()
-                )
-                else None
-            )
-            self._projection = parsed.projection
-            self._parsed = parsed
+            return doc
         return _apply_parsed_projection(
             doc,
             self._parsed,
@@ -278,8 +266,10 @@ def _parse_projection_spec(
         else:
             has_regular_exclusion = True
     if has_regular_inclusion and has_regular_exclusion:
-        raise OperationFailure(
-            "cannot mix inclusion and exclusion in projection",
+        message = "cannot mix inclusion and exclusion in projection"
+        raise server_error(
+            message,
+            code=31254,
         )
     if has_elem_match and has_regular_exclusion:
         raise OperationFailure(
@@ -298,7 +288,8 @@ def _parse_projection_spec(
         )
         > 1
     ):
-        raise OperationFailure("only one positional projection is supported")
+        message = "only one positional projection is supported"
+        raise server_error(message, code=31276)
     _validate_projection_operator_path_collisions(
         {*regular_fields, *operator_fields},
     )
@@ -330,8 +321,10 @@ def _parse_projection_operator_value(
         return _ProjectionOperatorSpec(operator=operator, value=operand)
     if operator == "$elemMatch":
         if not isinstance(operand, dict):
-            raise OperationFailure(
-                "$elemMatch projection requires a document specification",
+            message = "$elemMatch projection requires a document specification"
+            raise server_error(
+                message,
+                code=31274,
             )
         return _ProjectionOperatorSpec(operator=operator, value=operand)
     if operator == "$meta":
@@ -340,13 +333,19 @@ def _parse_projection_operator_value(
             "textScore",
             "vectorSearchScore",
         }:
-            raise OperationFailure(
+            message = (
                 "$meta projection only supports searchHighlights, textScore "
-                "or vectorSearchScore",
+                "or vectorSearchScore"
+            )
+            raise server_error(
+                message,
+                code=17308,
             )
         return _ProjectionOperatorSpec(operator=operator, value=operand)
-    raise OperationFailure(
-        f"Unsupported projection operator: {operator} for field {path}",
+    message = f"Unsupported projection operator: {operator} for field {path}"
+    raise server_error(
+        message,
+        code=31325,
     )
 
 
@@ -371,7 +370,7 @@ def _parse_positional_projection_path(path: str) -> str | None:
 def _validate_projection_slice_operand(value: object) -> None:
     if isinstance(value, int) and not isinstance(value, bool):
         return
-    if isinstance(value, list) and len(value) == 2:
+    if isinstance(value, list) and len(value) == _SLICE_PAIR_LENGTH:
         skip, limit = value
         if (
             isinstance(skip, int)
@@ -381,8 +380,12 @@ def _validate_projection_slice_operand(value: object) -> None:
             and limit > 0
         ):
             return
-    raise OperationFailure(
-        "$slice projection requires an integer or a [skip, limit] pair",
+    message = "$slice projection requires an integer or a [skip, limit] pair"
+    raise server_error(
+        message,
+        code=28724
+        if isinstance(value, list) and len(value) == _SLICE_PAIR_LENGTH
+        else 28667,
     )
 
 
@@ -391,8 +394,10 @@ def _validate_projection_operator_path_collisions(paths: set[str]) -> None:
     for index, left in enumerate(ordered_paths):
         for right in ordered_paths[index + 1 :]:
             if right.startswith(left + ".") or left.startswith(right + "."):
-                raise OperationFailure(
-                    f"Path collision in projection between {left!r} and {right!r}",
+                message = f"Path collision in projection between {left!r} and {right!r}"
+                raise server_error(
+                    message,
+                    code=31249,
                 )
 
 
@@ -457,9 +462,13 @@ def _apply_meta_projection(
             SEARCH_HIGHLIGHTS_METADATA_FIELD,
         )
     else:
-        raise OperationFailure(
+        message = (
             "$meta projection only supports searchHighlights, textScore "
-            "or vectorSearchScore",
+            "or vectorSearchScore"
+        )
+        raise server_error(
+            message,
+            code=17308,
         )
     set_document_value(target, path, deepcopy(value) if found else None)
 
