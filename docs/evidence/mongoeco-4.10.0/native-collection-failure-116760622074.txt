@@ -1,0 +1,28 @@
+2026-10-16T01:20:57.5410817Z ##[group]Run TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"
+2026-10-16T01:20:57.5411113Z TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"
+2026-10-16T01:20:57.5411348Z python scripts/capture_unacknowledged_parity.py \
+2026-10-16T01:20:57.5411572Z   --target "$MONGOECO_REAL_MONGODB_TARGET" \
+2026-10-16T01:20:57.5411796Z   --output "artifacts/8.0/unacknowledged.json" \
+2026-10-16T01:20:57.5412048Z   --check "tests/fixtures/unacknowledged_mongodb_${TARGET_SUFFIX}.json"
+2026-10-16T01:20:57.5412334Z python -m pytest tests/integration/wire/test_unacknowledged.py \
+2026-10-16T01:20:57.5412599Z   tests/integration/api/test_write_preflight_parity.py -q \
+2026-10-16T01:20:57.5412827Z   2>&1 | tee "artifacts/8.0/unacknowledged.log"
+2026-10-16T01:20:57.5465512Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T01:20:57.5465792Z env:
+2026-10-16T01:20:57.5466003Z   MONGOECO_REAL_MONGODB_URI: mongodb://localhost:27017
+2026-10-16T01:20:57.5466196Z   MONGOECO_REAL_MONGODB_TARGET: 8.0
+2026-10-16T01:20:57.5466359Z   MONGOECO_DIFFERENTIAL_SEED: 42
+2026-10-16T01:20:57.5466518Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-16T01:20:57.5466712Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-16T01:20:57.5466966Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-16T01:20:57.5467205Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-16T01:20:57.5467423Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-16T01:20:57.5467646Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-16T01:20:57.5467867Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-16T01:20:57.5468057Z ##[endgroup]
+2026-10-16T01:21:00.8039849Z MongoDB 8.0.32 / PyMongo 4.19.0: 172 cases per facade and 4 raw; native sync/async equal, physical connection reused and cleanup verified
+2026-10-16T01:21:01.3827650Z ImportError while loading conftest '/home/runner/work/mongoeco/mongoeco/tests/conftest.py'.
+2026-10-16T01:21:01.3914760Z tests/conftest.py:6: in <module>
+2026-10-16T01:21:01.3915049Z     from hypothesis import HealthCheck, settings
+2026-10-16T01:21:01.3915358Z E   ModuleNotFoundError: No module named 'hypothesis'
+2026-10-16T01:21:01.4142441Z ##[error]Process completed with exit code 4.

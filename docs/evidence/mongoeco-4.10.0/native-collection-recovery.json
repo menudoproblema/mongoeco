@@ -1,0 +1,36 @@
+{
+  "initial_tag_object": "0b37388861ad129f5fa31ecbafcc27a9c1ad33cf",
+  "initial_commit": "10e82bf4a98c775c79cf88e0350e97cfbf506846",
+  "failed_tag_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38834508070",
+  "status": "publication_blocked_and_not_attempted",
+  "cause": "The differential workflow installed pytest without Hypothesis, which is required by tests/conftest.py. Native capture succeeds; candidate pytest collection fails.",
+  "correction": "Declare Hypothesis explicitly in both source and installed-wheel differential setup; keep existing constraints and all assertions.",
+  "runtime_change": false,
+  "jobs": [
+    {
+      "name": "Required MongoDB release differential / MongoDB 7.0 differential",
+      "job_id": 116760621978,
+      "log": "native-collection-failure-116760621978.txt",
+      "full_job_log_sha256": "33a8d62d6963fb2fbec40a2d05d75d31d521994313706199ba6c6080821ed1f4",
+      "captured_native_cases_per_facade": 172,
+      "collection_error": "ModuleNotFoundError: No module named 'hypothesis'"
+    },
+    {
+      "name": "Required MongoDB release differential / MongoDB 8.0 differential",
+      "job_id": 116760622074,
+      "log": "native-collection-failure-116760622074.txt",
+      "full_job_log_sha256": "03133f8915429f15a5791786aa48b762c2a2ebb29b0991049550a6764502f20c",
+      "captured_native_cases_per_facade": 172,
+      "collection_error": "ModuleNotFoundError: No module named 'hypothesis'"
+    },
+    {
+      "name": "Required MongoDB release differential / MongoDB 9.0 differential",
+      "job_id": 116760622399,
+      "log": "native-collection-failure-116760622399.txt",
+      "full_job_log_sha256": "0ffadf6ef222452fddf72301e28e5cadeb4de6a3c2d247c025053c762bc1d968",
+      "captured_native_cases_per_facade": 172,
+      "collection_error": "ModuleNotFoundError: No module named 'hypothesis'"
+    }
+  ],
+  "retry": "Preserve the unpublished initial tag object and verify the corrected workflow before retrying the release."
+}
