@@ -1,9 +1,11 @@
 """The eight existing boundaries remain typed through their API consumer."""
 
+from collections.abc import AsyncIterable
 from typing import assert_type
 
 from mongoeco.api._async._collection_runtime import CollectionRuntimeCoordinator
-from mongoeco.api.operations import UpdateOperation
+from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines import Document
 from mongoeco.engines.adapter import EngineSpiAdapter
@@ -15,6 +17,13 @@ from mongoeco.engines.results import (
 )
 from mongoeco.engines.semantic_core import EngineFindSemantics
 from mongoeco.engines.snapshots import ReadSnapshot
+
+
+def exercise_cursor(cursor: AsyncCursor) -> None:
+    assert_type(cursor._base_operation(), FindOperation)
+    assert_type(cursor._base_semantics(), EngineFindSemantics)
+    assert_type(cursor._scan(limit=1), AsyncIterable[Document])
+    assert_type(cursor._open_read_source(skip=1, limit=None), AsyncIterable[Document])
 
 
 async def exercise(

@@ -21,6 +21,13 @@ usa Semantic Versioning.
 
 ### Changed
 
+- Type cursor read preparation and consolidate source opening while preserving
+  collection providers, fallback, context, windows and deadline lifetimes.
+  Remove the unused private SQLite scan wrapper and raw count overload; migrate
+  their resource and interruption tests to the production reader. Preserve API,
+  Engine SPI v2 and existing SQLite files. See
+  [read validation](docs/engine-read-validation.md).
+
 - Give the eight existing CRUD/read adapter boundaries explicit signatures and
   retain their type through the collection coordinator. Check both ends with
   positive/negative typing fixtures while preserving runtime guards, snapshot

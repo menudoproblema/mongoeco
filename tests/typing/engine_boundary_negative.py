@@ -3,10 +3,21 @@
 """Wrong control arguments must fail directly and through the coordinator."""
 
 from mongoeco.api._async._collection_runtime import CollectionRuntimeCoordinator
+from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.api.operations import UpdateOperation
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.semantic_core import EngineFindSemantics
+
+
+def invalid_cursor(cursor: AsyncCursor) -> None:
+    cursor._base_operation().missing_member()  # typing-error: attr-defined
+    cursor._base_semantics().missing_member()  # typing-error: attr-defined
+    cursor._open_read_source(skip="1", limit=1)  # typing-error: arg-type
+    cursor._open_read_source(skip=0, limit="1")  # typing-error: arg-type
+    cursor._open_read_source(skip=0)  # typing-error: call-arg
+    cursor._open_read_source(skip=0, limit=1, other=True)  # typing-error: call-arg
+    cursor._scan(limit="1")  # typing-error: arg-type
 
 
 async def invalid(

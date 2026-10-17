@@ -6055,59 +6055,6 @@ class SQLiteEngine(AsyncStorageEngine):
 
         return _iter()
 
-    def _iter_scan_documents_sync(
-        self,
-        db_name: str,
-        coll_name: str,
-        semantics_or_filter_spec: EngineFindSemantics | Filter | None,
-        plan: QueryNode | None = None,
-        projection: Projection | None = None,
-        sort: SortSpec | None = None,
-        skip: int = 0,
-        limit: int | None = None,
-        context: ClientSession | None = None,
-        stop_event: threading.Event | None = None,
-        *,
-        hint: str | IndexKeySpec | None = None,
-        max_time_ms: int | None = None,
-        dialect: MongoDialect | None = None,
-    ):
-        """Synchronous adapter over the same finite, explicitly owned reader."""
-        semantics = (
-            semantics_or_filter_spec
-            if isinstance(semantics_or_filter_spec, EngineFindSemantics)
-            else compile_find_semantics(
-                semantics_or_filter_spec,
-                plan=plan,
-                projection=projection,
-                sort=sort,
-                skip=skip,
-                limit=limit,
-                hint=hint,
-                max_time_ms=max_time_ms,
-                dialect=dialect,
-            )
-        )
-        reader = SQLiteScanReader(
-            self,
-            db_name,
-            coll_name,
-            semantics,
-            context=context,
-            stop_event=stop_event,
-            tracked=False,
-        )
-        try:
-            while True:
-                batch = reader.fetch(1, _ASYNC_SCAN_BATCH_BYTES)
-                yield from batch.documents
-                if batch.error is not None:
-                    raise batch.error
-                if batch.exhausted:
-                    return
-        finally:
-            reader.close()
-
     def _open_scan_documents_sync(
         self,
         reader: SQLiteScanReader,
@@ -6492,21 +6439,10 @@ class SQLiteEngine(AsyncStorageEngine):
         self,
         db_name: str,
         coll_name: str,
-        semantics_or_filter_spec: EngineFindSemantics | Filter,
-        plan: QueryNode | None,
+        semantics: EngineFindSemantics,
         context: ClientSession | None,
-        dialect: MongoDialect | None = None,
     ) -> int:
         self._ensure_session_can_use_engine(context)
-        semantics = (
-            semantics_or_filter_spec
-            if isinstance(semantics_or_filter_spec, EngineFindSemantics)
-            else compile_find_semantics(
-                semantics_or_filter_spec,
-                plan=plan,
-                dialect=dialect,
-            )
-        )
         effective_dialect = semantics.dialect
         deadline = semantics.deadline
         enforce_deadline(deadline)
@@ -7705,9 +7641,7 @@ class SQLiteEngine(AsyncStorageEngine):
             db_name,
             coll_name,
             semantics,
-            None,
             context,
-            None,
         )
 
     @override

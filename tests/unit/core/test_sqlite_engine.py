@@ -28,6 +28,7 @@ from mongoeco.core.search import (
 from mongoeco.core.search_execution import SearchRequest
 from mongoeco.core.search_models import SearchExecutionMode, SearchExplainVerbosity
 from mongoeco.core.sorting import sort_documents
+from mongoeco.engines._sqlite_reader import SQLiteScanReader
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.engines.sqlite import (
@@ -107,6 +108,20 @@ async def _explain_search(  # noqa: PLR0913
         downstream_filter_spec=downstream_filter_spec,
     )
     return await engine.explain_search(db_name, coll_name, request, verbosity)
+
+
+def _reader_documents(reader: SQLiteScanReader):
+    """Drive finite production reader jobs one row at a time, including cleanup."""
+    try:
+        while True:
+            batch = reader.fetch(1, 1)
+            yield from batch.documents
+            if batch.error is not None:
+                raise batch.error
+            if batch.exhausted:
+                return
+    finally:
+        reader.close()
 
 
 class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
@@ -421,10 +436,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         count = engine._count_matching_documents_sync(
             "db",
             "coll",
-            {"kind": "match"},
-            compile_filter({"kind": "match"}),
+            compile_find_semantics({"kind": "match"}, dialect=CustomDialect()),
             None,
-            CustomDialect(),
         )
 
         self.assertEqual(count, 1)
@@ -3402,83 +3415,108 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             stop_event.set()
             self.assertEqual(
                 list(
-                    engine._iter_scan_documents_sync(
-                        "db",
-                        engine._PROFILE_COLLECTION_NAME,
-                        None,
-                        None,
-                        None,
-                        None,
-                        0,
-                        None,
-                        None,
-                        stop_event,
+                    _reader_documents(
+                        SQLiteScanReader(
+                            engine,
+                            "db",
+                            engine._PROFILE_COLLECTION_NAME,
+                            compile_find_semantics(
+                                None,
+                                plan=None,
+                                projection=None,
+                                sort=None,
+                                skip=0,
+                                limit=None,
+                            ),
+                            context=None,
+                            stop_event=stop_event,
+                        )
                     )
                 ),
                 [],
             )
             profile_sorted = list(
-                engine._iter_scan_documents_sync(
-                    "db",
-                    engine._PROFILE_COLLECTION_NAME,
-                    None,
-                    None,
-                    None,
-                    [("_id", 1)],
-                    0,
-                    None,
-                    None,
-                    None,
+                _reader_documents(
+                    SQLiteScanReader(
+                        engine,
+                        "db",
+                        engine._PROFILE_COLLECTION_NAME,
+                        compile_find_semantics(
+                            None,
+                            plan=None,
+                            projection=None,
+                            sort=[("_id", 1)],
+                            skip=0,
+                            limit=None,
+                        ),
+                        context=None,
+                        stop_event=None,
+                    )
                 )
             )
             self.assertGreaterEqual(len(profile_sorted), 1)
             profile_stop_event = threading.Event()
             profile_seen: list[dict[str, object]] = []
-            for document in engine._iter_scan_documents_sync(
-                "db",
-                engine._PROFILE_COLLECTION_NAME,
-                None,
-                None,
-                None,
-                [("_id", 1)],
-                0,
-                None,
-                None,
-                profile_stop_event,
+            for document in _reader_documents(
+                SQLiteScanReader(
+                    engine,
+                    "db",
+                    engine._PROFILE_COLLECTION_NAME,
+                    compile_find_semantics(
+                        None,
+                        plan=None,
+                        projection=None,
+                        sort=[("_id", 1)],
+                        skip=0,
+                        limit=None,
+                    ),
+                    context=None,
+                    stop_event=profile_stop_event,
+                )
             ):
                 profile_seen.append(document)
                 profile_stop_event.set()
             self.assertEqual(len(profile_seen), 1)
 
             fast_docs = list(
-                engine._iter_scan_documents_sync(
-                    "db",
-                    "coll",
-                    {"kind": "note"},
-                    None,
-                    None,
-                    None,
-                    0,
-                    1,
-                    None,
-                    None,
+                _reader_documents(
+                    SQLiteScanReader(
+                        engine,
+                        "db",
+                        "coll",
+                        compile_find_semantics(
+                            {"kind": "note"},
+                            plan=None,
+                            projection=None,
+                            sort=None,
+                            skip=0,
+                            limit=1,
+                        ),
+                        context=None,
+                        stop_event=None,
+                    )
                 )
             )
             self.assertEqual(len(fast_docs), 1)
 
             sql_stop_event = threading.Event()
             seen: list[dict[str, object]] = []
-            for document in engine._iter_scan_documents_sync(
-                "db",
-                "coll",
-                {"kind": "note"},
-                None,
-                None,
-                [("_id", 1)],
-                0,
-                None,
-                None,
-                sql_stop_event,
+            for document in _reader_documents(
+                SQLiteScanReader(
+                    engine,
+                    "db",
+                    "coll",
+                    compile_find_semantics(
+                        {"kind": "note"},
+                        plan=None,
+                        projection=None,
+                        sort=[("_id", 1)],
+                        skip=0,
+                        limit=None,
+                    ),
+                    context=None,
+                    stop_event=sql_stop_event,
+                )
             ):
                 seen.append(document)
                 sql_stop_event.set()
@@ -3508,16 +3546,21 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     ),
                 ):
                     docs_in_tx = list(
-                        file_engine._iter_scan_documents_sync(
-                            "db",
-                            "coll",
-                            {"kind": "note"},
-                            None,
-                            None,
-                            [("_id", 1)],
-                            0,
-                            None,
-                            session,
+                        _reader_documents(
+                            SQLiteScanReader(
+                                file_engine,
+                                "db",
+                                "coll",
+                                compile_find_semantics(
+                                    {"kind": "note"},
+                                    plan=None,
+                                    projection=None,
+                                    sort=[("_id", 1)],
+                                    skip=0,
+                                    limit=None,
+                                ),
+                                context=session,
+                            )
                         )
                     )
                 self.assertEqual(
@@ -3539,16 +3582,21 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     side_effect=_tracking_create,
                 ):
                     docs_dedicated = list(
-                        file_engine._iter_scan_documents_sync(
-                            "db",
-                            "coll",
-                            {"kind": "note"},
-                            None,
-                            None,
-                            [("_id", 1)],
-                            0,
-                            None,
-                            None,
+                        _reader_documents(
+                            SQLiteScanReader(
+                                file_engine,
+                                "db",
+                                "coll",
+                                compile_find_semantics(
+                                    {"kind": "note"},
+                                    plan=None,
+                                    projection=None,
+                                    sort=[("_id", 1)],
+                                    skip=0,
+                                    limit=None,
+                                ),
+                                context=None,
+                            )
                         )
                     )
                 self.assertEqual(
@@ -3581,12 +3629,15 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                         return_value=(execution_plan.sql, execution_plan.params),
                     ),
                 ):
-                    for document in file_engine._iter_scan_documents_sync(
-                        "db",
-                        "coll",
-                        semantics,
-                        context=None,
-                        stop_event=sorted_stop_event,
+                    for document in _reader_documents(
+                        SQLiteScanReader(
+                            file_engine,
+                            "db",
+                            "coll",
+                            semantics,
+                            context=None,
+                            stop_event=sorted_stop_event,
+                        )
                     ):
                         sorted_seen.append(document)
                         sorted_stop_event.set()
@@ -3842,8 +3893,16 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 await engine.drop_collection("db", "system.profile", context=session)
             with self.assertRaises(InvalidOperation):
                 list(
-                    engine._iter_scan_documents_sync(
-                        "db", "system.profile", {}, context=session
+                    _reader_documents(
+                        SQLiteScanReader(
+                            engine,
+                            "db",
+                            "system.profile",
+                            compile_find_semantics(
+                                {},
+                            ),
+                            context=session,
+                        )
                     )
                 )
 
@@ -3879,11 +3938,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
             with self.assertRaises(InvalidOperation):
                 engine._count_matching_documents_sync(
-                    "db", "users", expr_semantics, None, session
+                    "db", "users", expr_semantics, session
                 )
             with self.assertRaises(InvalidOperation):
                 engine._count_matching_documents_sync(
-                    "db", "users", elem_match_semantics, None, session
+                    "db", "users", elem_match_semantics, session
                 )
             with self.assertRaises(InvalidOperation):
                 engine._iter_documents_for_classic_text_query_sync(
@@ -5003,8 +5062,21 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ),
             ):
                 documents = list(
-                    engine._iter_scan_documents_sync(
-                        "db", "coll", None, MatchAll(), None, None, 1, None, None
+                    _reader_documents(
+                        SQLiteScanReader(
+                            engine,
+                            "db",
+                            "coll",
+                            compile_find_semantics(
+                                None,
+                                plan=MatchAll(),
+                                projection=None,
+                                sort=None,
+                                skip=1,
+                                limit=None,
+                            ),
+                            context=None,
+                        )
                     )
                 )
         finally:
@@ -5029,17 +5101,22 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ),
             ):
                 documents = list(
-                    engine._iter_scan_documents_sync(
-                        "db",
-                        "coll",
-                        None,
-                        MatchAll(),
-                        None,
-                        [("_id", 1)],
-                        0,
-                        None,
-                        None,
-                        stop_event=stop_event,
+                    _reader_documents(
+                        SQLiteScanReader(
+                            engine,
+                            "db",
+                            "coll",
+                            compile_find_semantics(
+                                None,
+                                plan=MatchAll(),
+                                projection=None,
+                                sort=[("_id", 1)],
+                                skip=0,
+                                limit=None,
+                            ),
+                            context=None,
+                            stop_event=stop_event,
+                        )
                     )
                 )
         finally:
@@ -5231,17 +5308,22 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             stop_event = threading.Event()
             seen: list[dict[str, object]] = []
 
-            for document in engine._iter_scan_documents_sync(
-                "db",
-                "coll",
-                {"kind": "view"},
-                None,
-                None,
-                [("_id", 1)],
-                0,
-                None,
-                None,
-                stop_event,
+            for document in _reader_documents(
+                SQLiteScanReader(
+                    engine,
+                    "db",
+                    "coll",
+                    compile_find_semantics(
+                        {"kind": "view"},
+                        plan=None,
+                        projection=None,
+                        sort=[("_id", 1)],
+                        skip=0,
+                        limit=None,
+                    ),
+                    context=None,
+                    stop_event=stop_event,
+                )
             ):
                 seen.append(document)
                 stop_event.set()
@@ -5261,17 +5343,22 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             stop_event.set()
 
             seen = list(
-                engine._iter_scan_documents_sync(
-                    "db",
-                    "coll",
-                    {"data": {"b": 1}},
-                    None,
-                    None,
-                    None,
-                    0,
-                    None,
-                    None,
-                    stop_event,
+                _reader_documents(
+                    SQLiteScanReader(
+                        engine,
+                        "db",
+                        "coll",
+                        compile_find_semantics(
+                            {"data": {"b": 1}},
+                            plan=None,
+                            projection=None,
+                            sort=None,
+                            skip=0,
+                            limit=None,
+                        ),
+                        context=None,
+                        stop_event=stop_event,
+                    )
                 )
             )
         finally:
@@ -5290,21 +5377,30 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 yielded.append(document_id)
                 yield document_id, {"_id": document_id, "name": name}
 
-        with patch.object(engine, "_load_documents", side_effect=_documents):
-            seen = list(
-                engine._iter_scan_documents_sync(
-                    "db",
-                    "coll",
-                    {"name": {"$regex": "^A"}},
-                    None,
-                    None,
-                    None,
-                    0,
-                    1,
-                    None,
-                    None,
+        await engine.connect()
+        try:
+            with patch.object(engine, "_load_documents", side_effect=_documents):
+                seen = list(
+                    _reader_documents(
+                        SQLiteScanReader(
+                            engine,
+                            "db",
+                            "coll",
+                            compile_find_semantics(
+                                {"name": {"$regex": "^A"}},
+                                plan=None,
+                                projection=None,
+                                sort=None,
+                                skip=0,
+                                limit=1,
+                            ),
+                            context=None,
+                            stop_event=None,
+                        )
+                    )
                 )
-            )
+        finally:
+            await engine.disconnect()
 
         self.assertEqual(seen, [{"_id": "1", "name": "Ada"}])
         self.assertEqual(yielded, ["1"])

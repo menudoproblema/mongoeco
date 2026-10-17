@@ -3,8 +3,9 @@ import sys
 import time
 
 from collections import deque
-from collections.abc import Mapping
+from collections.abc import AsyncIterable, Mapping
 from dataclasses import replace
+from typing import TYPE_CHECKING, cast
 
 from mongoeco.api.argument_validation import (
     HintSpec,
@@ -24,6 +25,7 @@ from mongoeco.core.operation_context import (
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
+from mongoeco.engines.semantic_core import EngineFindSemantics
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -35,6 +37,15 @@ from mongoeco.types import (
     QueryPlanExplanation,
     SortSpec,
 )
+
+
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class _ReadSourceFactory(Protocol):
+        def __call__(
+            self, operation: FindOperation, *, session: ClientSession | None
+        ) -> AsyncIterable[Document]: ...
 
 
 _DEFAULT_LOCAL_PREFETCH_SIZE = 101
@@ -316,7 +327,7 @@ class AsyncCursor:
         self._closed = False
         self._active_async_iterable: _AsyncCursorIterator | None = None
         self._operation_cache: FindOperation | None = None
-        self._semantics_cache = None
+        self._semantics_cache: EngineFindSemantics | None = None
         self._batch_source = None
         self._retired_sources: list[object] = []
 
@@ -363,7 +374,7 @@ class AsyncCursor:
             self._operation_cache = self._as_operation()
         return self._operation_cache
 
-    def _base_semantics(self):
+    def _base_semantics(self) -> EngineFindSemantics:
         if self._semantics_cache is None:
             from mongoeco.engines.semantic_core import (  # noqa: PLC0415
                 compile_find_semantics_from_operation,
@@ -376,11 +387,21 @@ class AsyncCursor:
             )
         return self._semantics_cache
 
-    def _operation_with_overrides(self, **changes: object):
-        return self._base_operation().with_overrides(**changes)
-
-    def _semantics_with_overrides(self, **changes: object):
-        return replace(self._base_semantics(), **changes)
+    def _open_read_source(
+        self, *, skip: int, limit: int | None
+    ) -> AsyncIterable[Document]:
+        operation = replace(self._base_operation(), skip=skip, limit=limit)
+        _ensure_operation_executable(self._collection, operation)
+        open_snapshot = getattr(self._collection, "_engine_scan_with_operation", None)
+        if callable(open_snapshot):
+            factory = cast("_ReadSourceFactory", open_snapshot)
+            return factory(operation, session=self._session)
+        return EngineSpiAdapter(self._collection._engine).open_read_snapshot(
+            self._collection._db_name,
+            self._collection._collection_name,
+            replace(self._base_semantics(), skip=skip, limit=limit),
+            operation_context=operation.context,
+        )
 
     def _materialize_document(self, document: Document) -> Document:
         applier = getattr(self._collection, "_apply_codec_options_to_document", None)
@@ -388,32 +409,16 @@ class AsyncCursor:
             return applier(document)
         return document
 
-    def _scan(self, *, limit: int | None = None):
+    def _scan(self, *, limit: int | None = None) -> AsyncIterable[Document]:
         self._started = True
         engine = self._collection._engine
         record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
         if callable(record_runtime_opcounter):
             record_runtime_opcounter("query")
-        operation = self._operation_with_overrides(
-            limit=self._limit if limit is None else limit
+        return self._open_read_source(
+            skip=self._skip,
+            limit=self._limit if limit is None else limit,
         )
-        _ensure_operation_executable(self._collection, operation)
-        open_snapshot = getattr(
-            self._collection,
-            "_engine_scan_with_operation",
-            None,
-        )
-        stream = (
-            open_snapshot(operation, session=self._session)
-            if callable(open_snapshot)
-            else EngineSpiAdapter(engine).open_read_snapshot(
-                self._collection._db_name,
-                self._collection._collection_name,
-                self._semantics_with_overrides(limit=operation.limit),
-                operation_context=operation.context,
-            )
-        )
-        return stream
 
     async def _fetch_batch(self, offset: int, batch_size: int) -> list[Document]:
         await self._close_retired_sources()
@@ -431,28 +436,9 @@ class AsyncCursor:
         if callable(record_runtime_opcounter):
             record_runtime_opcounter("query" if offset == 0 else "getmore")
         if self._batch_source is None:
-            operation = self._operation_with_overrides(
+            source = self._open_read_source(
                 skip=self._skip,
                 limit=self._limit,
-            )
-            _ensure_operation_executable(self._collection, operation)
-            open_snapshot = getattr(
-                self._collection,
-                "_engine_scan_with_operation",
-                None,
-            )
-            source = (
-                open_snapshot(operation, session=self._session)
-                if callable(open_snapshot)
-                else EngineSpiAdapter(engine).open_read_snapshot(
-                    self._collection._db_name,
-                    self._collection._collection_name,
-                    self._semantics_with_overrides(
-                        skip=self._skip,
-                        limit=self._limit,
-                    ),
-                    operation_context=operation.context,
-                )
             )
             self._batch_source = source.__aiter__()
 
