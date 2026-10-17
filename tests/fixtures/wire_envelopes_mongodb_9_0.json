@@ -269,7 +269,7 @@
     }
   },
   "source_sha256": {
-    "scripts/capture_wire_read_parity.py": "cafd908bfa8cf0722437219ee34c2ac15fe382f1c68fb2d0e0bdabb57df7080c",
+    "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
     "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
     "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
     "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",

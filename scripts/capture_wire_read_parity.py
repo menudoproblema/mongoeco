@@ -91,6 +91,8 @@ def main():
     if any(n == "mongoeco" or n.startswith("mongoeco.") for n in sys.modules):
         message = "native observer imported the candidate"
         raise RuntimeError(message)
+    # Compare the persisted JSON representation, including socket reply pairs.
+    observations = json.loads(json.dumps(observations))
     result = {
         "target": args.target,
         "version": build["version"],

@@ -11,6 +11,44 @@ from pathlib import Path
 
 
 class ModuleImportSmokeTests(unittest.TestCase):
+    def test_pytest_helpers_require_only_the_optional_runner(self):
+        environment = dict(os.environ)
+        if environment.get("MONGOECO_TEST_INSTALLED_ARTIFACT") != "1":
+            environment["PYTHONPATH"] = str(self._repo_root() / "src")
+        code = textwrap.dedent("""
+            import importlib
+            import importlib.abc
+            import sys
+
+            class MissingPytest(importlib.abc.MetaPathFinder):
+                def find_spec(self, fullname, path=None, target=None):
+                    if fullname == "pytest" or fullname.startswith("pytest."):
+                        raise ModuleNotFoundError("pytest is optional", name="pytest")
+                    return None
+
+            sys.meta_path.insert(0, MissingPytest())
+            import mongoeco
+            assert "pytest" not in sys.modules
+            for module in (
+                "mongoeco._pytest_diagnostics", "mongoeco.pytest_plugin",
+                "mongoeco.pytest_asyncio", "mongoeco.pytest_anyio",
+            ):
+                try:
+                    importlib.import_module(module)
+                except ModuleNotFoundError as error:
+                    assert error.name == "pytest", (module, error)
+                else:
+                    raise AssertionError(module)
+        """)
+        result = subprocess.run(  # noqa: S603 - fixed optional-import regression
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            env=environment,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_core_import_does_not_load_pytest(self):
         environment = dict(os.environ)
         if environment.get("MONGOECO_TEST_INSTALLED_ARTIFACT") != "1":
@@ -150,6 +188,7 @@ class ModuleImportSmokeTests(unittest.TestCase):
                         import sys
 
                         optional = {
+                            "mongoeco._pytest_diagnostics": {"pytest"},
                             "mongoeco.pytest_plugin": {"pytest"},
                             "mongoeco.pytest_asyncio": {"pytest", "pytest_asyncio"},
                             "mongoeco.pytest_anyio": {"pytest"},

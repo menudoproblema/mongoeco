@@ -74,3 +74,69 @@ class MongoClient:
     assert result.returncode != 0
     assert "sources changed during execution" in result.stderr
     assert not output.exists()
+
+
+@pytest.mark.parametrize("corpus", ["reads", "envelopes"])
+@pytest.mark.parametrize("changed", [False, True])
+def test_observer_checks_json_pairs_without_hiding_differences(
+    tmp_path, corpus, changed
+):
+    root = Path(__file__).parents[2]
+    for source in SOURCES:
+        destination = tmp_path / source
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(root / source, destination)
+    (tmp_path / "tests/__init__.py").touch()
+    (tmp_path / "tests/support_wire_reads.py").write_text("""
+CASES = ((False, False, 'document'),)
+def case_id(*case): return 'pairs'
+async def observe(*args, **kwargs):
+    return {'replies': [(42, {'ok': 1, 'code': 14})]}
+""")
+    (tmp_path / "tests/support_wire_envelopes.py").write_text("""
+CASES = ('pairs',)
+def observe_sync(*args): return {'replies': [(42, {'ok': 1, 'code': 14})]}
+async def observe_async(*args): return observe_sync(*args)
+""")
+    (tmp_path / "scripts/pymongo.py").write_text("""
+version = 'controlled'
+class MongoClient:
+    def __init__(self, *args, **kwargs): self.admin = self
+    def __enter__(self): return self
+    def __exit__(self, *args): pass
+    def server_info(self): return {'version': '7.0.43'}
+    def command(self, command):
+        return {'featureCompatibilityVersion': {'version': '7.0'}}
+    def list_database_names(self): return []
+    def drop_database(self, database): pass
+""")
+    output = tmp_path / "receipt.json"
+    baseline = tmp_path / "baseline.json"
+    baseline.write_text(
+        '{"observations":{"pairs":{"replies":[[42,{"ok":1,"code":'
+        + ("15" if changed else "14")
+        + " }]]}}}"
+    )
+    result = subprocess.run(  # noqa: S603 - controlled observer subprocess
+        [
+            sys.executable,
+            str(tmp_path / "scripts/capture_wire_read_parity.py"),
+            "--target",
+            "7.0",
+            "--corpus",
+            corpus,
+            "--output",
+            str(output),
+            "--check",
+            str(baseline),
+        ],
+        cwd=tmp_path,
+        env={**os.environ, "MONGOECO_REAL_MONGODB_URI": "controlled"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert (result.returncode == 0) is not changed, result.stderr
+    assert output.exists() is not changed
+    if changed:
+        assert "native observations differ" in result.stderr

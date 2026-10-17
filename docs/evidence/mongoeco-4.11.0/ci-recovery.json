@@ -1,0 +1,242 @@
+{
+  "status": "locally_corrected_awaiting_release_ci",
+  "initial_commit": "2254a40f63a6746e5475fb3526b16cd7257300c8",
+  "initial_main_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38997890406",
+  "initial_native_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38997890106",
+  "incidents": [
+    {
+      "gate": "minimal-imports",
+      "cause": "The explicit optional-runner import inventory omitted the new private pytest diagnostics helper.",
+      "correction": "Declare pytest as its required optional runner and verify blocked-runner imports even when pytest is installed."
+    },
+    {
+      "gate": "native wire envelope --check, all three dialects",
+      "cause": "In-memory socket reply tuples were compared directly against persisted JSON arrays.",
+      "correction": "Normalize observations to their JSON representation before comparing; regressions retain rejection of differing native error codes."
+    },
+    {
+      "gate": "first local socket replay retry",
+      "cause": "The sandbox denied loopback bind (Errno 1); all 432 socket cases failed before dispatch.",
+      "correction": "Repeat unchanged tests with local socket permissions; preserve the denied attempt."
+    }
+  ],
+  "runtime_changed": false,
+  "local_focal": {
+    "passed": 442,
+    "subtests_passed": 273,
+    "seconds": 7.87
+  },
+  "minimal_without_pytest": {
+    "tests": 13,
+    "passed": true
+  },
+  "lint": {
+    "changed_python_files": 66,
+    "passed": true,
+    "baseline_changed": false
+  },
+  "native_recapture": [
+    {
+      "target": "7.0",
+      "corpus": "reads",
+      "cases": 16,
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+        "scripts/capture_wire_read_parity.py",
+        "--target",
+        "7.0",
+        "--corpus",
+        "reads",
+        "--output",
+        "/Users/uve/Proyectos/mongoeco/.tmp/release-4.11.0/native-recapture/7.0/reads.json",
+        "--check",
+        "/Users/uve/Proyectos/mongoeco/tests/fixtures/wire_reads_mongodb_7_0.json"
+      ],
+      "observations_unchanged": true,
+      "source_sha256": {
+        "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
+        "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+        "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+        "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      }
+    },
+    {
+      "target": "7.0",
+      "corpus": "envelopes",
+      "cases": 14,
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+        "scripts/capture_wire_read_parity.py",
+        "--target",
+        "7.0",
+        "--corpus",
+        "envelopes",
+        "--output",
+        "/Users/uve/Proyectos/mongoeco/.tmp/release-4.11.0/native-recapture/7.0/envelopes.json",
+        "--check",
+        "/Users/uve/Proyectos/mongoeco/tests/fixtures/wire_envelopes_mongodb_7_0.json"
+      ],
+      "observations_unchanged": true,
+      "source_sha256": {
+        "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
+        "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+        "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+        "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      }
+    },
+    {
+      "target": "8.0",
+      "corpus": "reads",
+      "cases": 16,
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+        "scripts/capture_wire_read_parity.py",
+        "--target",
+        "8.0",
+        "--corpus",
+        "reads",
+        "--output",
+        "/Users/uve/Proyectos/mongoeco/.tmp/release-4.11.0/native-recapture/8.0/reads.json",
+        "--check",
+        "/Users/uve/Proyectos/mongoeco/tests/fixtures/wire_reads_mongodb_8_0.json"
+      ],
+      "observations_unchanged": true,
+      "source_sha256": {
+        "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
+        "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+        "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+        "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      }
+    },
+    {
+      "target": "8.0",
+      "corpus": "envelopes",
+      "cases": 14,
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+        "scripts/capture_wire_read_parity.py",
+        "--target",
+        "8.0",
+        "--corpus",
+        "envelopes",
+        "--output",
+        "/Users/uve/Proyectos/mongoeco/.tmp/release-4.11.0/native-recapture/8.0/envelopes.json",
+        "--check",
+        "/Users/uve/Proyectos/mongoeco/tests/fixtures/wire_envelopes_mongodb_8_0.json"
+      ],
+      "observations_unchanged": true,
+      "source_sha256": {
+        "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
+        "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+        "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+        "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      }
+    },
+    {
+      "target": "9.0",
+      "corpus": "reads",
+      "cases": 16,
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+        "scripts/capture_wire_read_parity.py",
+        "--target",
+        "9.0",
+        "--corpus",
+        "reads",
+        "--output",
+        "/Users/uve/Proyectos/mongoeco/.tmp/release-4.11.0/native-recapture/9.0/reads.json",
+        "--check",
+        "/Users/uve/Proyectos/mongoeco/tests/fixtures/wire_reads_mongodb_9_0.json"
+      ],
+      "observations_unchanged": true,
+      "source_sha256": {
+        "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
+        "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+        "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+        "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      }
+    },
+    {
+      "target": "9.0",
+      "corpus": "envelopes",
+      "cases": 14,
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+        "scripts/capture_wire_read_parity.py",
+        "--target",
+        "9.0",
+        "--corpus",
+        "envelopes",
+        "--output",
+        "/Users/uve/Proyectos/mongoeco/.tmp/release-4.11.0/native-recapture/9.0/envelopes.json",
+        "--check",
+        "/Users/uve/Proyectos/mongoeco/tests/fixtures/wire_envelopes_mongodb_9_0.json"
+      ],
+      "observations_unchanged": true,
+      "source_sha256": {
+        "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
+        "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+        "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+        "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      }
+    }
+  ],
+  "source_sha256": {
+    "scripts/capture_wire_read_parity.py": "7e485c477ebbde37ccfcc3da664c506a8431043f892d8d6ff8bda890e3394f03",
+    "tests/unit/test_capture_identity.py": "2b0acf6cebc980ecf584792ee8a6233c712f91f50bca35d76ec944a712987ca1",
+    "tests/unit/test_module_imports.py": "11720f56ee2399ab4534aafc8fde152feed380d7e4aa6679923dbc01b2767846",
+    "tests/fixtures/wire_reads_mongodb_7_0.json": "783a2ceb9949320deaa7435344d2bfc892a8d5ac1429311b1ecb9af112359188",
+    "tests/fixtures/wire_reads_mongodb_8_0.json": "17358e42cbbeba33c02e87f0d0e2a417920f47f2e205073308f3e570655f8eef",
+    "tests/fixtures/wire_reads_mongodb_9_0.json": "91e63f54f16ea339265f2798493c230f20326bc16ced2792cfd971457b138149",
+    "tests/fixtures/wire_envelopes_mongodb_7_0.json": "b78ba416b742c0fe8df33e3787a2932e43698a5ca4d9487d9ce029800933015a",
+    "tests/fixtures/wire_envelopes_mongodb_8_0.json": "1531d35aefe4aba8506f2a9785d6830cc02f04e3224dc076d0daa27e9ea636d9",
+    "tests/fixtures/wire_envelopes_mongodb_9_0.json": "b22a7be01ddf5c764b5bc9836a95b8a6bdb8cf24004c99d49a2b490fbda6f8ad"
+  },
+  "logs": {
+    "failure-117294360210.log.gz": {
+      "content_sha256": "dfa0cd3f8d985a99ac7e21a47b5a87c38558de4266c84a8f8a7fe8ba0d1694b3",
+      "compressed_sha256": "0e05e6f1430fc3c80eed19c14c4fd8245e7315267c9e4c84b311128e775e8979"
+    },
+    "failure-117294360451.log.gz": {
+      "content_sha256": "ef9e9f2ecb6bfb59d0a9f3b11cb9e3e4069694bd4a5c7b7a4944c403f996b06e",
+      "compressed_sha256": "86ac8dcd34283cb1778f35daa2a61fcff933e4bd9dd75a5a0a3a65109ccb344f"
+    },
+    "failure-117294360655.log.gz": {
+      "content_sha256": "c2fa3ea463b1837a09bb45a5ec52ff5ddbb17a793a3418afb0c88870684ada4e",
+      "compressed_sha256": "186a369bbfdb0a37399f8e1324084694b949899ea311cace9d3f42727d2921a6"
+    },
+    "failure-117294453486.log.gz": {
+      "content_sha256": "aa8eda31c560546a2ea235370a876b99bcd9c8ee1831e84cd740dd00d6ded2bf",
+      "compressed_sha256": "49ca756f86d2972bcd27721af7fbe01c2d577ec833da931a033e5017f8756617"
+    },
+    "recovery-focal.log.gz": {
+      "content_sha256": "490979fd635b2f8a801b732e1961b0e382554f9cad53d056ca266048d54b9432",
+      "compressed_sha256": "4f174433771231cc8f61afc9ce92439a0a14f5c6d577af4a63653a7da1803a01"
+    },
+    "recovery-focal-sandbox-denied.log.gz": {
+      "content_sha256": "765124566e99aa0e6bb07e21f1c98611c4640ab50880a5f3be165fbae5d5cb53",
+      "compressed_sha256": "461467b127d6089a442a3faee0c9b393b138dfda2f61c7db313839a22a90e730"
+    },
+    "minimal-recovery.log.gz": {
+      "content_sha256": "b0f5bace55b09154b5162271a2e8e137371812681a7d35ce7d42fcd96be2cd4d",
+      "compressed_sha256": "9da54c4301cb231a963b9e9c11d2bf9e301dfad8876263af90b7c1acd5981b61"
+    },
+    "recovery-lint.log.gz": {
+      "content_sha256": "993a299aa2c4542c8fbfaa95789e2fc012e238dcba321c5163b29d47a4d5936b",
+      "compressed_sha256": "4bfcc09d74cb8756eda1e5be082306d3db7f407b080675b38f8ba52d217ccbe2"
+    }
+  },
+  "historical_receipts_unchanged": true
+}
