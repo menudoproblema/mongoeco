@@ -1,0 +1,160 @@
+{
+  "info": {
+    "author": "Vicente Ruiz",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Programming Language :: Python :: 3.15",
+      "Topic :: Database",
+      "Topic :: Software Development :: Testing",
+      "Typing :: Typed"
+    ],
+    "description": "# Mongoeco\n\nLocal MongoDB testing and embedded persistence for Python, with PyMongo-style\nsync and async APIs.\n\nTest application queries and writes locally, using a fresh in-memory database\nor SQLite. Start with the direct Python API, or keep real PyMongo clients and\npoint them at an isolated local server with the optional pytest kit.\n\n**4.11.0** adds optional wire diagnostics to pytest, validates wire framing and\nchecksums, and consolidates internal engine preparation and reads. See the\n[release notes](https://github.com/menudoproblema/mongoeco/blob/main/docs/release-4.11.0.md)\nfor changes, compatibility limits and validation. The pytest kit is available\nsince 4.10.0; wire diagnostics require 4.11.0 or later.\n\n## Install and try it\n\n```bash\npython -m pip install mongoeco\n```\n\n```python\nfrom mongoeco import MongoClient\n\nwith MongoClient() as client:\n    users = client.demo.users\n    users.insert_one({\"_id\": \"ada\", \"name\": \"Ada\"})\n    assert users.find_one({\"_id\": \"ada\"})[\"name\"] == \"Ada\"\n```\n\nThe default engine is in memory. Mongoeco 4.11 supports CPython **3.13,\n3.14 and 3.15**, with Python 3.13 support through **October 2028**.\nSee the [support policy](https://github.com/menudoproblema/mongoeco/blob/main/docs/python-support.md).\n\n## Test an application that uses MongoDB\n\nIf your application already accepts a database client or connection URI, start\nby changing that test fixture. Keep its queries, writes and assertions, then\nrun the operations your application actually uses against both local engines.\n\n### Keep real PyMongo clients with pytest\n\nInstall Mongoeco 4.10 or later with the `pytest` extra:\n\n```bash\npython -m pip install \"mongoeco[pytest]>=4.10\"\n```\n\nLoad the plugin explicitly in your root `conftest.py`:\n\n```python\npytest_plugins = (\"mongoeco.pytest_plugin\",)\n```\n\nThen use a managed, real `pymongo.MongoClient` in a test:\n\n```python\ndef test_create_user(mongoeco_client):\n    users = mongoeco_client.app.users\n    users.insert_one({\"_id\": \"ada\", \"name\": \"Ada\"})\n    assert users.count_documents({}) == 1\n```\n\n```bash\npython -m pytest --mongoeco-backend=both\n```\n\nEach test gets its own server, dynamic port and engine. The kit closes its\nclients and server and removes temporary SQLite files, including after failures.\n`both` runs only tests that depend on the kit against Memory and SQLite.\nTo preserve your own client constructor and options, consume `mongoeco_uri`\nin your existing fixture instead.\n\nFor native async clients, install your runner and load its adapter:\n\n```bash\npython -m pip install \"mongoeco[pytest]>=4.10\" \"pytest-asyncio>=1.4,<2\"\n```\n\n```python\n# conftest.py: use this adapter instead of mongoeco.pytest_plugin\npytest_plugins = (\"mongoeco.pytest_asyncio\",)\n```\n\n```python\nimport pytest\n\n@pytest.mark.asyncio\nasync def test_create_user(mongoeco_async_client):\n    users = mongoeco_async_client.app.users\n    await users.insert_one({\"_id\": \"ada\", \"name\": \"Ada\"})\n    assert await users.count_documents({}) == 1\n```\n\nAn AnyIO adapter is also available for the asyncio backend. The\n[pytest guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/pytest.md)\ncovers runners, options, ownership and parallel execution with pytest-xdist.\n\n### Use the direct async API\n\nThe base package also provides its own async client without a wire server:\n\n```python\nimport asyncio\nfrom mongoeco import AsyncMongoClient\n\nasync def main():\n    async with AsyncMongoClient() as client:\n        await client.demo.users.insert_one({\"_id\": \"ada\", \"name\": \"Ada\"})\n        assert await client.demo.users.count_documents({}) == 1\n\nasyncio.run(main())\n```\n\nComing from mongomock? Follow the\n[migration guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/migrating-from-mongomock.md)\nfor client injection, preserving PyMongo imports and testing one application\npath first. The [application testing guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/use-cases/test-runtime.md)\nshows a complete fixture and application function.\n\n## Verified compatibility and limits\n\nMongoeco's regression corpus compares observable results with captured\n**MongoDB 7.0.43, 8.0.32 and 9.0.2** results. It checks BSON types, error codes,\nwrite counters and partial effects through sync/async APIs and Memory/SQLite.\nExamples covered in 4.10 include:\n\n| Application operation | Verified behavior | Evidence and coverage |\n| --- | --- | --- |\n| `insert_many(..., ordered=True/False)` with an invalid document or duplicate | Preserve successful writes, original error indices, duplicate code `11000` and `nInserted`; continue later independent writes only when unordered | [Write corpus](https://github.com/menudoproblema/mongoeco/blob/main/docs/write-parity-validation.md) |\n| Positional update on a field that contains a number instead of an array | Reject the update without applying its other changes to that document | [Positional regression cases](https://github.com/menudoproblema/mongoeco/blob/main/tests/differential/positional_cases.py) |\n| Failed inserts and bulk models | Preserve `writeErrors[].op`, BSON values and partial counts | [Error payload regressions](https://github.com/menudoproblema/mongoeco/blob/main/docs/write-error-operations.md) |\n\nThe [compatibility guide](https://github.com/menudoproblema/mongoeco/blob/main/COMPATIBILITY.md)\nand [dialect guide](https://github.com/menudoproblema/mongoeco/blob/main/DIALECTS.md)\ndefine the supported subset. MongoDB dialect and PyMongo API profile are separate\nchoices; defaults remain MongoDB `7.0` and PyMongo `4.9`.\nThe [pytest acceptance report](https://github.com/menudoproblema/mongoeco/blob/main/docs/pytest-review.md)\nrecords the installed-wheel matrix, failure cleanup and anonymous consumer canary.\n\nUse MongoDB integration tests for replication, sharding, server failover,\nnetwork retry behavior, distributed transactions and Atlas-specific behavior.\nLocal sessions, change streams and search have their own documented limits.\nThe finite regression corpus does not establish universal MongoDB or PyMongo\ncompatibility. See the [comparison guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/comparisons.md)\nwhen choosing which tests to run locally and which to keep on a real server.\n\n## SQLite persistence and local search\n\nKeep data on disk without running a database service:\n\n```python\nfrom mongoeco import MongoClient\nfrom mongoeco.engines import SQLiteEngine\n\nwith MongoClient(SQLiteEngine(\"app.db\")) as client:\n    client.app.todos.update_one(\n        {\"_id\": \"ship\"}, {\"$set\": {\"done\": False}}, upsert=True\n    )\n    assert client.app.todos.find_one({\"_id\": \"ship\"})[\"done\"] is False\n```\n\nThe local runtime supports aggregation, classic `$text`, a documented `$search`\nsubset and ANN-backed `$vectorSearch`. `explain()` reports candidate selection,\nresidual filtering and fallback behavior. This is local search, with its own\nranking and supported operators; it does not establish Atlas Search parity.\n\n- [Embedded persistence guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/use-cases/embedded-app.md)\n- [Search and retrieval guide](https://github.com/menudoproblema/mongoeco/blob/main/docs/use-cases/local-search-and-retrieval.md)\n- [Executable examples](https://github.com/menudoproblema/mongoeco/blob/main/examples/README.md)\n\n## Documentation and development\n\nStart at the [documentation index](https://github.com/menudoproblema/mongoeco/blob/main/docs/README.md).\nAdvanced topics have their own guides:\n\n- [Runtime options, collation and change streams](https://github.com/menudoproblema/mongoeco/blob/main/docs/runtime-reference.md)\n- [Architecture and public contracts](https://github.com/menudoproblema/mongoeco/blob/main/docs/architecture/index.md)\n- [CXP capability exports](https://github.com/menudoproblema/mongoeco/blob/main/docs/cxp-exchange.md)\n- [Custom engines and conformance](https://github.com/menudoproblema/mongoeco/blob/main/docs/engine-conformance.md)\n- [Development and checks](https://github.com/menudoproblema/mongoeco/blob/main/docs/development.md)\n- [Reproducible benchmarks](https://github.com/menudoproblema/mongoeco/blob/main/benchmarks/README.md)\n- [Changelog](https://github.com/menudoproblema/mongoeco/blob/main/CHANGELOG.md) and [release checklist](https://github.com/menudoproblema/mongoeco/blob/main/docs/release-checklist.md)\n\nMongoeco is a PEP 561 typed package. The documented public API and engine SPI v2\nare supported contracts; see [deprecations and migrations](https://github.com/menudoproblema/mongoeco/blob/main/docs/deprecations.md)\nfor version-specific changes.\nThe [engine SPI decision](https://github.com/menudoproblema/mongoeco/blob/main/docs/architecture/engine-spi-v3-proposal.md)\nkeeps v2 and shelves v3; no engine migration is planned for the next release.\n\n## License\n\n[Apache License 2.0](https://github.com/menudoproblema/mongoeco/blob/main/LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "mongodb, pymongo, testing, sqlite, embedded-database",
+    "license": null,
+    "license_expression": "Apache-2.0 AND ICU",
+    "license_files": [
+      "LICENSE",
+      "src/mongoeco/core/resources/ICU-LICENSE.txt"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "mongoeco",
+    "package_url": "https://pypi.org/project/mongoeco/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/mongoeco/",
+    "project_urls": {
+      "Changelog": "https://github.com/menudoproblema/mongoeco/blob/main/CHANGELOG.md",
+      "Documentation": "https://github.com/menudoproblema/mongoeco/blob/main/docs/README.md",
+      "Homepage": "https://github.com/menudoproblema/mongoeco",
+      "Issues": "https://github.com/menudoproblema/mongoeco/issues",
+      "Repository": "https://github.com/menudoproblema/mongoeco"
+    },
+    "provides_extra": [
+      "dev",
+      "engine-testing",
+      "mongodb7",
+      "mongodb8",
+      "mongodb9",
+      "mongodb-real",
+      "wire",
+      "pytest",
+      "json-fast"
+    ],
+    "release_url": "https://pypi.org/project/mongoeco/4.11.0/",
+    "requires_dist": [
+      "cxp[exchange]<6,>=5.0.0",
+      "msgspec<1,>=0.20",
+      "pyuca<2,>=1.2",
+      "rpds-py<2027,>=0.27",
+      "shapely<3,>=2.2",
+      "usearch<3,>=2.26.4",
+      "build; extra == \"dev\"",
+      "coverage; extra == \"dev\"",
+      "hypothesis<6.166,>=6.165; extra == \"dev\"",
+      "jsonschema<5,>=4.26; extra == \"dev\"",
+      "mypy<2.4,>=2.3; extra == \"dev\"",
+      "pre-commit; extra == \"dev\"",
+      "pytest; extra == \"dev\"",
+      "pytest-cov; extra == \"dev\"",
+      "pytest-asyncio<2,>=1.4; extra == \"dev\"",
+      "anyio<5,>=4.11; extra == \"dev\"",
+      "pytest-xdist<4,>=3.8; extra == \"dev\"",
+      "ruff==0.16.2; extra == \"dev\"",
+      "twine; extra == \"dev\"",
+      "jsonschema<5,>=4.26; extra == \"engine-testing\"",
+      "pytest<10,>=8; extra == \"engine-testing\"",
+      "pymongo<5,>=4.9; extra == \"mongodb7\"",
+      "pymongo<5,>=4.9; extra == \"mongodb8\"",
+      "pymongo<5,>=4.18.2; extra == \"mongodb9\"",
+      "pymongo<5,>=4.9; extra == \"mongodb-real\"",
+      "pymongo<5,>=4.9; extra == \"wire\"",
+      "pytest<10,>=8.4; extra == \"pytest\"",
+      "pymongo<5,>=4.9; extra == \"pytest\"",
+      "orjson<4,>=3.11; extra == \"json-fast\""
+    ],
+    "requires_python": ">=3.13",
+    "summary": "Local MongoDB testing and embedded persistence for Python, with PyMongo-style sync and async APIs.",
+    "version": "4.11.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 42349737,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "menudoproblema"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "1ae26523008b1d447d0935f183f51a56bc805dae325f616427180f091b036b9e"
+      },
+      "digests": {
+        "blake2b_256": "4ddaa3c65b231a2c8006e5f9ea2307128e29e8b81f629d47c2b2cd14eb421a4d",
+        "md5": "857413802ab5397916e15366443dbf5b",
+        "sha256": "568480e5980863517590feadd6c1843cc86a60124be5298886fd7b26002ea0ff"
+      },
+      "downloads": -1,
+      "filename": "mongoeco-4.11.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "857413802ab5397916e15366443dbf5b",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.13",
+      "size": 1154316,
+      "upload_time": "2026-10-17T04:29:36",
+      "upload_time_iso_8601": "2026-10-17T04:29:36.578750Z",
+      "url": "https://files.pythonhosted.org/packages/4d/da/a3c65b231a2c8006e5f9ea2307128e29e8b81f629d47c2b2cd14eb421a4d/mongoeco-4.11.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "95ea94adf91928c5a14538ecd9fb60e84ae51a8389cceb7e25e42c8bdab7364c",
+        "md5": "d52dfd6499336954c35a919164bbfc86",
+        "sha256": "8e932f1a7714cbb2ea6167c48f8a719c583dc707a55a4cf1dbb72ad4e5a8b0f3"
+      },
+      "downloads": -1,
+      "filename": "mongoeco-4.11.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "d52dfd6499336954c35a919164bbfc86",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.13",
+      "size": 1080935,
+      "upload_time": "2026-10-17T04:29:38",
+      "upload_time_iso_8601": "2026-10-17T04:29:38.091492Z",
+      "url": "https://files.pythonhosted.org/packages/95/ea/94adf91928c5a14538ecd9fb60e84ae51a8389cceb7e25e42c8bdab7364c/mongoeco-4.11.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

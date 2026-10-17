@@ -1,8 +1,8 @@
 # Release 4.11.0
 
-Fecha de cierre: **17 de octubre de 2026**. Estado: **preparada para CI**.
-La etiqueta prevista es **v4.11.0**. Este documento no acredita por sí solo una
-publicación; el [changelog](../CHANGELOG.md#4110---2026-10-17) resume el alcance.
+Fecha de publicación: **17 de octubre de 2026**. Estado: **publicada y verificada**
+en PyPI como **4.11.0**, con la etiqueta **v4.11.0**.
+El [changelog](../CHANGELOG.md#4110---2026-10-17) resume el alcance.
 
 ## Versión y alcance
 
@@ -37,7 +37,7 @@ perfiles PyMongo y los defaults MongoDB 7.0/PyMongo 4.9.
 
 ## Migración y uso
 
-Al publicarse, actualiza a `mongoeco==4.11.0` o
+Actualiza a `mongoeco==4.11.0` o
 `mongoeco[pytest]==4.11.0`. Los clientes, fixtures y adaptadores existentes
 mantienen su configuración. No hace falta migrar archivos SQLite ni motores
 SPI v2.
@@ -82,6 +82,51 @@ wheel instalado en los tres Python y ejecuta la matriz pytest/PyMongo. Antes
 de etiquetar deben pasar CI de main y el diferencial previo. La CI de etiqueta
 exige de nuevo el corpus MongoDB 7/8/9 y publica mediante Trusted Publishing
 los mismos artefactos que ha probado, sin reconstruirlos en el publisher.
+
+## Publicación verificada
+
+- [PyPI 4.11.0](https://pypi.org/project/mongoeco/4.11.0/) y
+  [GitHub Release](https://github.com/menudoproblema/mongoeco/releases/tag/v4.11.0).
+- Commit etiquetado: `bb0597c1b42d4228b547a8eec87ce704489bcb7b`.
+- Etiqueta anotada: `36a2f0386a1d8a2eab2bc13687f2dfc7f38e7179`.
+- [CI de main](https://github.com/menudoproblema/mongoeco/actions/runs/38998396902),
+  [diferencial previo](https://github.com/menudoproblema/mongoeco/actions/runs/38998397196) y
+  [CI de etiqueta](https://github.com/menudoproblema/mongoeco/actions/runs/39000652456):
+  terminados en verde sobre el mismo commit. La etiqueta se creó después de los
+  dos primeros workflows.
+- El [recibo final](evidence/mongoeco-4.11.0/published-verification.json) conserva
+  comandos, entornos, resultados, hashes y atestaciones públicas. PyPI, GitHub
+  Release y ambos builds de CI contienen distribuciones idénticas byte a byte.
+  El publisher público identifica este repositorio, `ci.yml` y el entorno `pypi`;
+  los subjects coinciden con los hashes de los artefactos.
+
+| Artefacto publicado | SHA-256 |
+| --- | --- |
+| `mongoeco-4.11.0-py3-none-any.whl` | `568480e5980863517590feadd6c1843cc86a60124be5298886fd7b26002ea0ff` |
+| `mongoeco-4.11.0.tar.gz` | `8e932f1a7714cbb2ea6167c48f8a719c583dc707a55a4cf1dbb72ad4e5a8b0f3` |
+
+| Gate final | Resultado |
+| --- | --- |
+| Global instalada, main y etiqueta, por Python 3.13/3.14/3.15 | 45.208 pruebas y 14.463 subtests correctos; 31 omisiones |
+| Cobertura instalada en Python 3.14 | 99,04 %, mínimo 99 % intacto |
+| Unittest por Python | 3.629 pruebas, tres omitidas, sin fallos |
+| Kit Python × pytest × PyMongo | 12 celdas aprobadas en main y etiqueta |
+| Referencias nativas | MongoDB 7/8/9, FCV correspondiente, códigos, contadores, efectos y reutilización aprobados |
+| Instalación pública | 563 regresiones y 273 subtests correctos; API, dependencias, canario y conformance Memory/SQLite aprobados |
+| Identidad del runtime | 293 archivos iguales entre checkout, wheel probado, wheel público e instalación |
+
+El primer intento de CI detectó dos defectos de sus comprobaciones: faltaba el
+helper privado de diagnóstico en el inventario de imports opcionales, y el
+observador comparaba tuplas de memoria con arrays JSON. Se corrigieron sin
+cambiar el runtime, se añadieron regresiones y se repitieron las seis capturas
+nativos sin alterar observaciones. El [recibo de recuperación](evidence/mongoeco-4.11.0/ci-recovery.json)
+conserva los fallos originales y sus correcciones.
+
+La primera instalación por nombre encontró el índice simple de PyPI todavía sin
+propagar. Se conserva ese resultado; el siguiente intento limpio aprobó el
+contrato desde el índice oficial. Los logs nativos retenidos incluyen todos los
+pasos de pruebas y la limpieza; se excluye explícitamente el volcado masivo de
+stdout del servicio, conservando el hash del log completo.
 
 ## Límites
 
