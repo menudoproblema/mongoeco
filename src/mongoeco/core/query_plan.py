@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core._filtering_support import compile_bson_regex, compile_regex
 from mongoeco.core.bson_scalars import INT32_MAX, unwrap_bson_numeric
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.geo import (
@@ -467,6 +468,19 @@ def _validate_filter_field_name(field: object) -> None:
         )
 
 
+def _prepare_regex_condition(
+    field: str, pattern: str, options: str = ""
+) -> RegexCondition:
+    compile_regex(pattern, options)
+    return RegexCondition(field, pattern, options)
+
+
+def _validate_regex_values(values: list[Any] | tuple[Any, ...]) -> None:
+    for value in values:
+        if isinstance(value, Regex):
+            compile_bson_regex(value)
+
+
 def _compile_field_condition(
     field: str,
     condition: Any,
@@ -476,13 +490,13 @@ def _compile_field_condition(
 ) -> QueryNode:
     _validate_filter_field_name(field)
     if isinstance(condition, Regex):
-        return RegexCondition(
+        return _prepare_regex_condition(
             field,
             condition.pattern,
             condition.flags,
         )
     if isinstance(condition, re.Pattern):
-        return RegexCondition(
+        return _prepare_regex_condition(
             field,
             condition.pattern,
             _regex_options_from_pattern(condition),
@@ -507,10 +521,12 @@ def _compile_field_condition(
             raise server_error(message, code=2)
         if operator == "$eq":
             if isinstance(value, Regex):
-                clauses.append(RegexCondition(field, value.pattern, value.flags))
+                clauses.append(
+                    _prepare_regex_condition(field, value.pattern, value.flags)
+                )
             elif isinstance(value, re.Pattern):
                 clauses.append(
-                    RegexCondition(
+                    _prepare_regex_condition(
                         field,
                         value.pattern,
                         _regex_options_from_pattern(value),
@@ -539,6 +555,7 @@ def _compile_field_condition(
             if not isinstance(value, (list, tuple)):
                 message = "$in necesita una lista"
                 raise server_error(message, code=2)
+            _validate_regex_values(value)
             clauses.append(
                 InCondition(
                     field,
@@ -551,6 +568,7 @@ def _compile_field_condition(
             if not isinstance(value, (list, tuple)):
                 message = "$nin necesita una lista"
                 raise server_error(message, code=2)
+            _validate_regex_values(value)
             clauses.append(
                 NotInCondition(
                     field,
@@ -562,6 +580,7 @@ def _compile_field_condition(
         elif operator == "$all":
             if not isinstance(value, (list, tuple)):
                 raise ValueError("$all necesita una lista")
+            _validate_regex_values(value)
             clauses.append(AllCondition(field, tuple(value)))
         elif operator == "$size":
             if (
@@ -775,7 +794,7 @@ def _compile_field_condition(
         message = "$options requires $regex"
         raise server_error(message, code=2)
     if regex_value is not None:
-        clauses.append(RegexCondition(field, regex_value, regex_options))
+        clauses.append(_prepare_regex_condition(field, regex_value, regex_options))
 
     if len(clauses) == 1:
         return clauses[0]

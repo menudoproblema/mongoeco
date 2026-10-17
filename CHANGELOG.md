@@ -10,6 +10,10 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Reject malformed query regex with native code 51091 during preparation,
+  including empty/no-match reads and nested membership filters. Retain complete
+  error documents, defensive plan evaluation and rejected-write state.
+
 - Correct the independent SPI v2 canary to intersect identity and selector for
   update/delete. Extend the existing atomicity check to reject ignored
   conditions, incorrect images/counters and effects on unrelated documents,

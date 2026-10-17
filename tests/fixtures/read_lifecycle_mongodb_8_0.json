@@ -1,0 +1,1785 @@
+{
+  "target": "8.0",
+  "version": "8.0.32",
+  "fcv": {
+    "version": "8.0"
+  },
+  "sdk": "4.19.0",
+  "native_sync_async_equal": true,
+  "native_physical_connection_reuse": true,
+  "observations": {
+    "window": {
+      "stages": [
+        {
+          "method": "find",
+          "result": [
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        },
+        {
+          "method": "rewind",
+          "result": [
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        },
+        {
+          "method": "clone",
+          "result": [
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        },
+        {
+          "method": "count",
+          "result": 2
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "empty": {
+      "stages": [
+        {
+          "method": "find",
+          "result": []
+        },
+        {
+          "method": "rewind",
+          "result": []
+        },
+        {
+          "method": "clone",
+          "result": []
+        },
+        {
+          "method": "count",
+          "result": 0
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex": {
+      "stages": [
+        {
+          "method": "find",
+          "result": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        },
+        {
+          "method": "rewind",
+          "result": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        },
+        {
+          "method": "clone",
+          "result": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        },
+        {
+          "method": "count",
+          "result": 3
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "collation": {
+      "stages": [
+        {
+          "method": "find",
+          "result": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            }
+          ]
+        },
+        {
+          "method": "rewind",
+          "result": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            }
+          ]
+        },
+        {
+          "method": "clone",
+          "result": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            }
+          ]
+        },
+        {
+          "method": "count",
+          "result": 2
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "projection_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 31254,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Cannot do exclusion on field name in inclusion projection",
+              "code": {
+                "$numberInt": "31254"
+              },
+              "codeName": "Location31254"
+            },
+            "message": "Cannot do exclusion on field name in inclusion projection, full error: {'ok': 0.0, 'errmsg': 'Cannot do exclusion on field name in inclusion projection', 'code': 31254, 'codeName': 'Location31254'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 31254,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Cannot do exclusion on field name in inclusion projection",
+              "code": {
+                "$numberInt": "31254"
+              },
+              "codeName": "Location31254"
+            },
+            "message": "Cannot do exclusion on field name in inclusion projection, full error: {'ok': 0.0, 'errmsg': 'Cannot do exclusion on field name in inclusion projection', 'code': 31254, 'codeName': 'Location31254'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 31254,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Cannot do exclusion on field name in inclusion projection",
+              "code": {
+                "$numberInt": "31254"
+              },
+              "codeName": "Location31254"
+            },
+            "message": "Cannot do exclusion on field name in inclusion projection, full error: {'ok': 0.0, 'errmsg': 'Cannot do exclusion on field name in inclusion projection', 'code': 31254, 'codeName': 'Location31254'}"
+          }
+        },
+        {
+          "method": "count",
+          "result": 4
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_literal_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_not_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_in_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_nin_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_all_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_no_match_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 5
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "group": "A",
+          "name": "Ada",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "group": "A",
+          "name": "ada",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "c",
+          "group": "A",
+          "name": "Ana",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "d",
+          "group": "B",
+          "name": "Bob",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    },
+    "regex_empty_error": {
+      "stages": [
+        {
+          "method": "find",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "rewind",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "clone",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "count",
+          "error": {
+            "family": "OperationFailure",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "ok": {
+                "$numberDouble": "0.0"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+              "code": {
+                "$numberInt": "51091"
+              },
+              "codeName": "Location51091"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+          }
+        },
+        {
+          "method": "update_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "delete_many",
+          "error": {
+            "family": "WriteError",
+            "module": "pymongo.errors",
+            "code": 51091,
+            "details": {
+              "index": {
+                "$numberInt": "0"
+              },
+              "code": {
+                "$numberInt": "51091"
+              },
+              "errmsg": "Regular expression is invalid: missing terminating ] for character class"
+            },
+            "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'index': 0, 'code': 51091, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class'}"
+          }
+        },
+        {
+          "method": "recovery",
+          "result": 1
+        }
+      ],
+      "documents": [
+        {
+          "_id": "following",
+          "group": "recovery"
+        }
+      ]
+    }
+  },
+  "inputs_sha256": {
+    "scripts/capture_read_lifecycle_parity.py": "64fd6dad591582d0711f1f1c95bd9d295ba452d01cedcbe738c4461f7f0ea230",
+    "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+    "tests/differential/read_lifecycle_cases.py": "89c2d668fee41724609ca9852f41abd5fac7c1a64a85b0d3154fa562a84fe55d",
+    "tests/support_read_lifecycle.py": "4957de38ef5413165f429b035c6bcefb3e68974cb35b183a49fb22e4c23c7f88",
+    "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+    "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+  }
+}

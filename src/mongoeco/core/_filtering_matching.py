@@ -6,7 +6,10 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec, compare_with_collation
-from mongoeco.core._filtering_support import extract_all_candidates as _extract_all_candidates
+from mongoeco.core._filtering_support import (
+    compile_bson_regex,
+    extract_all_candidates as _extract_all_candidates,
+)
 from mongoeco.types import Regex, UndefinedType
 
 
@@ -34,7 +37,9 @@ class FilteringMatchingMixin:
         collation: CollationSpec | None = None,
     ) -> bool:
         if isinstance(item, Regex):
-            return cls._regex_item_matches_candidate(candidate, item.compile())
+            return cls._regex_item_matches_candidate(
+                candidate, compile_bson_regex(item)
+            )
         if isinstance(item, re.Pattern):
             return cls._regex_item_matches_candidate(candidate, item)
         return cls._query_equality_matches(
@@ -58,7 +63,7 @@ class FilteringMatchingMixin:
         residual_values: list[Any] = []
         for item in values:
             if isinstance(item, Regex):
-                regex_values.append(item.compile())
+                regex_values.append(compile_bson_regex(item))
                 continue
             if isinstance(item, re.Pattern):
                 regex_values.append(item)

@@ -8,8 +8,15 @@ from collections.abc import Mapping
 from functools import lru_cache
 from typing import Any
 
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
-from mongoeco.types import DBRef, Timestamp, is_object_id_like, normalize_object_id
+from mongoeco.types import (
+    DBRef,
+    Regex,
+    Timestamp,
+    is_object_id_like,
+    normalize_object_id,
+)
 
 
 @lru_cache(maxsize=4096)
@@ -36,7 +43,17 @@ def compile_regex(pattern: str, options: str) -> re.Pattern[str]:
             raise OperationFailure(f"Duplicate regex option: {option}")
         seen.add(option)
         flags |= supported[option]
-    return re.compile(pattern, flags)
+    try:
+        return re.compile(pattern, flags)
+    except re.error as error:
+        message = f"Regular expression is invalid: {error}"
+        raise server_error(message, code=51091) from error
+
+
+def compile_bson_regex(value: Regex) -> re.Pattern[str]:
+    # Preserve Regex.compile's treatment of BSON locale/Unicode flags.
+    options = "".join(flag for flag in value.flags if flag in "imsx")
+    return compile_regex(value.pattern, options)
 
 
 def hashable_in_lookup_key(value: Any) -> tuple[str, Any] | None:
