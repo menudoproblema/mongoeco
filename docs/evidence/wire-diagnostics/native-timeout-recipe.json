@@ -1,0 +1,95 @@
+{
+  "7.0": {
+    "version": "7.0.43",
+    "sync": {
+      "error": {
+        "type": "ExecutionTimeout",
+        "code": 50,
+        "codeName": "MaxTimeMSExpired",
+        "errmsg_present": true
+      },
+      "after_error": 0,
+      "after_recovery": 1,
+      "connection": {
+        "physical_connections": 1,
+        "reused": true
+      }
+    },
+    "async": {
+      "error": {
+        "type": "ExecutionTimeout",
+        "code": 50,
+        "codeName": "MaxTimeMSExpired",
+        "errmsg_present": true
+      },
+      "after_error": 0,
+      "after_recovery": 1,
+      "connection": {
+        "physical_connections": 1,
+        "reused": true
+      }
+    }
+  },
+  "8.0": {
+    "version": "8.0.32",
+    "sync": {
+      "error": {
+        "type": "ExecutionTimeout",
+        "code": 50,
+        "codeName": "MaxTimeMSExpired",
+        "errmsg_present": true
+      },
+      "after_error": 0,
+      "after_recovery": 1,
+      "connection": {
+        "physical_connections": 1,
+        "reused": true
+      }
+    },
+    "async": {
+      "error": {
+        "type": "ExecutionTimeout",
+        "code": 50,
+        "codeName": "MaxTimeMSExpired",
+        "errmsg_present": true
+      },
+      "after_error": 0,
+      "after_recovery": 1,
+      "connection": {
+        "physical_connections": 1,
+        "reused": true
+      }
+    }
+  },
+  "9.0": {
+    "version": "9.0.2",
+    "sync": {
+      "error": {
+        "type": "ExecutionTimeout",
+        "code": 50,
+        "codeName": "MaxTimeMSExpired",
+        "errmsg_present": true
+      },
+      "after_error": 0,
+      "after_recovery": 1,
+      "connection": {
+        "physical_connections": 1,
+        "reused": true
+      }
+    },
+    "async": {
+      "error": {
+        "type": "ExecutionTimeout",
+        "code": 50,
+        "codeName": "MaxTimeMSExpired",
+        "errmsg_present": true
+      },
+      "after_error": 0,
+      "after_recovery": 1,
+      "connection": {
+        "physical_connections": 1,
+        "reused": true
+      }
+    }
+  }
+}

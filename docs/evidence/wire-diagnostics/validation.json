@@ -1,0 +1,365 @@
+{
+  "status": "implemented_and_verified",
+  "base_commit": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "candidate_wheel_sha256": "ac190db8b87b1200f4f6fce02aee94a992fa89878593d4dcf52a28f6fd72dec3",
+  "runtime_sha256": {
+    "src/mongoeco/_pytest_runtime.py": "dc85580c211e7b3f47b9dcb6e32cf0df6374b62ba9cf0a7b5343f123a4ade068",
+    "src/mongoeco/_pytest_diagnostics.py": "7dbd5a5f61f384497234f0b09ba25b855e91930966239dc0cce8a60f583f0366",
+    "src/mongoeco/pytest_plugin.py": "32d18afe9936cbf46eb413a941034fc60988088b835efc63d13f905575d08c61",
+    "src/mongoeco/wire/proxy.py": "45617f11e022ad09c0b5de81f0db0cdd1cc166d6833f1e2aba86f64c653aae2f",
+    "src/mongoeco/wire/_diagnostics.py": "e659d1dab428310e3eed921dd34746f3ebe55b176f319de7fa81ffb75ef347cc",
+    "src/mongoeco/wire/_executor_validation.py": "2c4eb141f883c2753cd93c5ecb208f3ef3702ce084deaaf676e1459b50f14457",
+    "src/mongoeco/wire/connections.py": "ff2d7685eb0ce9ef6fd2bdcb0ecc6f875bbe64cf2a7951efe8c0300a3987b458",
+    "src/mongoeco/wire/cursors.py": "f53d9f36c31c709a2a922442d4ff2f3ff6a663a204f71507b425315f4a8c1883",
+    "src/mongoeco/wire/sessions.py": "1103333ecc6cc892d7513c871ee0d636412a34c9bdfad7e36800fac7f270a922"
+  },
+  "scope": [
+    "bounded optional wire diagnostics",
+    "pytest failure reporting after teardown",
+    "ordinary and mirrored read reply contract",
+    "find filter BSON type mismatch code 14",
+    "deterministic timeout recipe"
+  ],
+  "native_reads": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "cases_per_target": 16,
+    "candidate_backend_checks": 96,
+    "captures": [
+      "tests/fixtures/wire_reads_mongodb_7_0.json",
+      "tests/fixtures/wire_reads_mongodb_8_0.json",
+      "tests/fixtures/wire_reads_mongodb_9_0.json"
+    ],
+    "driver_facades": "raw OP_MSG socket contract; not replica-set mirroring generation"
+  },
+  "native_timeout_recipe": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "code": 50,
+    "unchanged_after_failure": true,
+    "recovery_verified": true,
+    "physical_connection_reused": true,
+    "receipt": "native-timeout-recipe.json"
+  },
+  "wheel_regressions": [
+    {
+      "python": "3.13.15",
+      "pymongo": "4.19.0",
+      "pytest": "9.1.1",
+      "passed": 134,
+      "wheel_sha256": "ac190db8b87b1200f4f6fce02aee94a992fa89878593d4dcf52a28f6fd72dec3",
+      "log": "scoped-313.log"
+    },
+    {
+      "python": "3.15.0",
+      "pymongo": "4.19.0",
+      "pytest": "9.1.1",
+      "passed": 134,
+      "wheel_sha256": "ac190db8b87b1200f4f6fce02aee94a992fa89878593d4dcf52a28f6fd72dec3",
+      "log": "scoped-315.log"
+    },
+    {
+      "python": "3.14.5",
+      "pymongo": "4.9.2",
+      "pytest": "9.1.1",
+      "passed": 134,
+      "wheel_sha256": "ac190db8b87b1200f4f6fce02aee94a992fa89878593d4dcf52a28f6fd72dec3",
+      "log": "scoped-sdk49.log"
+    },
+    {
+      "python": "3.14.5",
+      "pymongo": "4.9.2",
+      "pytest": "8.4.2",
+      "passed": 134,
+      "wheel_sha256": "ac190db8b87b1200f4f6fce02aee94a992fa89878593d4dcf52a28f6fd72dec3",
+      "log": "scoped-pytest8.log"
+    }
+  ],
+  "unittest": {
+    "passed": 3625,
+    "skipped": 3,
+    "total": 3628,
+    "log": "unittest-scoped.log",
+    "basis": "scoped installed wheel and stable source tree"
+  },
+  "serial_global": {
+    "passed": 44360,
+    "failed": 3,
+    "skipped": 31,
+    "subtests_passed": 14461,
+    "coverage_percent": 99.00888888888889,
+    "coverage_floor": 99.0,
+    "failures": "three conservation matrices had stale source hashes; refreshed after field review, with no executable runtime change",
+    "log": "global-final-314.log"
+  },
+  "prior_attempts": [
+    {
+      "log": "global-314.log",
+      "status": "interrupted",
+      "reason": "superseded wheel: release diagnostic references after teardown",
+      "passed_before_stop": 38229,
+      "skipped": 1
+    },
+    {
+      "log": "unittest-final.log",
+      "status": "failed",
+      "reason": "new monotonic telemetry reads not yet classified in required clock inventory; classification and gate corrected"
+    }
+  ],
+  "report_guarantees": [
+    "disabled by default",
+    "128 events per pytest server",
+    "eviction count retained",
+    "no BSON, namespaces, URI, credentials or exception text retained",
+    "snapshot and report open no runtime resources",
+    "sync and both async adapters",
+    "Memory and SQLite",
+    "xdist controller reporting",
+    "references released after teardown"
+  ],
+  "limits": [
+    "No external repositories changed or consumers identified",
+    "No CI run, commit, tag or publication performed",
+    "Existing SPI implementation work was preserved; this receipt closes only the declared diagnostic scope",
+    "The shared checkout continues to receive unrelated SPI work; no combined-workspace closure is claimed. The declared scope is verified independently against the stable 4.10.1 base."
+  ],
+  "logs": {
+    "global-314.log": {
+      "file": "global-314.log.gz",
+      "sha256": "04122356161e499d92bc58ee09954642567678d3e92a0af7738c69bbc385f49f",
+      "gzip_sha256": "16a4e3b5688b77a88d30087d11ac838d296b93d0a16e674e8cdcb62787240944"
+    },
+    "global-final-314.log": {
+      "file": "global-final-314.log.gz",
+      "sha256": "0f0725f1c2ac3e6202208b34dc071214a802f9a14147eaee5448bcf4d4525ac2",
+      "gzip_sha256": "0996deaa7be5758dace63207b025d6b5db65c30f05c4db776e72234ac740ae79"
+    },
+    "unittest-final.log": {
+      "file": "unittest-final.log.gz",
+      "sha256": "71f97dc8f1cc44a7ad3de32b3ae479defa4735e99b9ce4591c43543bf685b40e",
+      "gzip_sha256": "d2b398052159ec3a9a8bc653dc8e2719a57b4bdc2299935f5d1ec0f70b3aa1e0"
+    },
+    "unittest-final-verified.log": {
+      "file": "unittest-final-verified.log.gz",
+      "sha256": "fa6f24d46d1f2d358b3bc5f6fb09386b319661c3ed4d8efa59e43de522cae6e4",
+      "gzip_sha256": "b12038758724664bfd706c8ff8e048338b40cf67c97488da3a9179e151d9ac8e"
+    },
+    "native.log": {
+      "file": "native.log.gz",
+      "sha256": "e6d1522b3a5f750767c43857af51fba2b70a589c1eb3881fd15e5ad9332fbc21",
+      "gzip_sha256": "c849ccb8272acb5103d628df835552b7638cdd3c4e279db23f697ae03663de16"
+    },
+    "native-recipe.log": {
+      "file": "native-recipe.log.gz",
+      "sha256": "2ab046a8ec79c364c5975c05c0d554aa398ce34fec37717e3ba21296610dd05b",
+      "gzip_sha256": "bdb73751f2b319da6d742b325cec6615ae0195f4f380d9cad7b3793b33045de6"
+    },
+    "wheel-final-313.log": {
+      "file": "wheel-final-313.log.gz",
+      "sha256": "99498a392030be431bb7c691ea7c0b8b413a9957374217ae97ce3faa3a02e828",
+      "gzip_sha256": "6b2c19cbba4c974e93b9b5fe61f2881b3fb98d7ca1ff41cade00715ffb9dc8d5"
+    },
+    "wheel-final-315.log": {
+      "file": "wheel-final-315.log.gz",
+      "sha256": "5fa98ca5a01bbec2db389f454ba27f553918ee003c0ed3dbfecc8fc6aa148d55",
+      "gzip_sha256": "741cd691a495c79225bb2518c2c4d07e0af83f5df11b8a2aacc081a2241713fa"
+    },
+    "wheel-final-sdk49.log": {
+      "file": "wheel-final-sdk49.log.gz",
+      "sha256": "b8861e28b2e7fdd0a88379078177d894d3eb0e2d0f5230f8337b404058526142",
+      "gzip_sha256": "616ce4039b38a6931d163b3601d30c539ac991bb1c6362360e98325bc927fb7f"
+    },
+    "wheel-final-pytest8.log": {
+      "file": "wheel-final-pytest8.log.gz",
+      "sha256": "7ed755e4c2354bed1dd81f985526247c48cb186dec2a2bba179999df2ff699bb",
+      "gzip_sha256": "743aca29aa8e4799ecc9c20dbbcc1784b3f5e422f38810967ae95c6e55bd2016"
+    },
+    "retention.log": {
+      "file": "retention.log.gz",
+      "sha256": "7178d4041cfb434de3945c99c1df14416b379ed907aab085cb40ada3da7349c3",
+      "gzip_sha256": "f6829c1af07669b8e31b220bd3d99abe14fa3641f366335dbbaa7671b3d6ca62"
+    },
+    "conservation.log": {
+      "file": "conservation.log.gz",
+      "sha256": "22e161c3837c0909ef7764e990b336dc164308e40f782b22414ca1013b6d1e3f",
+      "gzip_sha256": "5e600814c204b131aa5cc2d36f37cabf7d7d9dd83cfdfabf9fb3d56abf48b4af"
+    },
+    "clock-policy.log": {
+      "file": "clock-policy.log.gz",
+      "sha256": "2d4559159d796d894a552cf882a85c8da42866459214a6678bd4a78bf68f1e36",
+      "gzip_sha256": "b0b2e471b7837c39f9d55592ecea6dafd4a2b574d370fafdb91a4fa5fcf970c5"
+    },
+    "global-mixed-worktree.log": {
+      "file": "global-mixed-worktree.log.gz",
+      "sha256": "4895a1fec4921eb28b1429180ba0caf1126ca5119af5d8aab24b1e0dc0e7e5a3",
+      "gzip_sha256": "05aceaca40d91826d030648b550d491a9375ffdcca41e44983218ae37846042a"
+    },
+    "global-scoped.log": {
+      "file": "global-scoped.log.gz",
+      "sha256": "37e7d71985166b00f594ad6934b725cbd94895c4b06f943cd1116a2d8ae3efd2",
+      "gzip_sha256": "9ea44bd72f85a18b3ac4b5bc80ddc392decacb9ef7df94811165b4f43241bebb"
+    },
+    "lint-scoped.log": {
+      "file": "lint-scoped.log.gz",
+      "sha256": "908a5b2ef5edc361457d187562e1d9e6ee7e76f3ae013f27bc55cc4150a3468f",
+      "gzip_sha256": "81f3a46cf2de2702446dd9308057225b17339bf7d38456e141bca2aa84c94a5b"
+    },
+    "scoped-313.log": {
+      "file": "scoped-313.log.gz",
+      "sha256": "623976075f65a14e6017dc14c7be16c6404a60d291c8cde2ae53b3afb1d2b86a",
+      "gzip_sha256": "4ba83682c13ae5944bab9825639b778640e25dbe4bfda3b7e0466d22a76a9150"
+    },
+    "scoped-315.log": {
+      "file": "scoped-315.log.gz",
+      "sha256": "2390e3f4607ee33fe0d3039141f7dbf0d3c16272efb684a2c97b3ad179cb3d62",
+      "gzip_sha256": "94cf10bac1aa83e8d827fa3d6a3f12f392e412ec0da3e9b4890cf0f4aa6f0d69"
+    },
+    "scoped-sdk49.log": {
+      "file": "scoped-sdk49.log.gz",
+      "sha256": "d09a2b7d3bc90e4758b44ec4eaf80fb381c8d20b6009aafefb6f36c85d9c361a",
+      "gzip_sha256": "7a30c16da4a0ba99fb060d933ca24c0389ae307b1407421d3f0963ef469de40b"
+    },
+    "scoped-pytest8.log": {
+      "file": "scoped-pytest8.log.gz",
+      "sha256": "dc125ad377f866c06d804b374917e8b16658048bb2b6fe9746619abd741f4b32",
+      "gzip_sha256": "1bbde3206387e5dade9fd348fa0b8e08935cb1cb4b6f6eab25b99706382be54d"
+    },
+    "unittest-scoped.log": {
+      "file": "unittest-scoped.log.gz",
+      "sha256": "b5d88da0731ae333a2b3bdf3c0a84388984e79d7532ec79f86c6cb8dd1ea4f06",
+      "gzip_sha256": "4c708ceba0c0dd3973c424383ee2284dff1bfad9a0dd711f6a67d03591aba441"
+    }
+  },
+  "source_sha256": {
+    "src/mongoeco/_pytest_runtime.py": "dc85580c211e7b3f47b9dcb6e32cf0df6374b62ba9cf0a7b5343f123a4ade068",
+    "src/mongoeco/_pytest_diagnostics.py": "7dbd5a5f61f384497234f0b09ba25b855e91930966239dc0cce8a60f583f0366",
+    "src/mongoeco/pytest_plugin.py": "32d18afe9936cbf46eb413a941034fc60988088b835efc63d13f905575d08c61",
+    "src/mongoeco/wire/proxy.py": "45617f11e022ad09c0b5de81f0db0cdd1cc166d6833f1e2aba86f64c653aae2f",
+    "src/mongoeco/wire/_diagnostics.py": "e659d1dab428310e3eed921dd34746f3ebe55b176f319de7fa81ffb75ef347cc",
+    "src/mongoeco/wire/_executor_validation.py": "2c4eb141f883c2753cd93c5ecb208f3ef3702ce084deaaf676e1459b50f14457",
+    "src/mongoeco/wire/connections.py": "ff2d7685eb0ce9ef6fd2bdcb0ecc6f875bbe64cf2a7951efe8c0300a3987b458",
+    "src/mongoeco/wire/cursors.py": "f53d9f36c31c709a2a922442d4ff2f3ff6a663a204f71507b425315f4a8c1883",
+    "src/mongoeco/wire/sessions.py": "1103333ecc6cc892d7513c871ee0d636412a34c9bdfad7e36800fac7f270a922",
+    "scripts/capture_wire_read_parity.py": "26734698bd428b840fb46d857150cbca5bded98b54f18ef0595f130aee60d591",
+    "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+    "tests/unit/wire/test_diagnostics.py": "656baa050aea2fcf45497c1cf93c13ceca8d7deb5247e97ce877ab165fd145cf",
+    "tests/integration/wire/test_diagnostics.py": "1c596393e450c12a018918adee96b69a7f1c4b7571eaf1a076ffcc647bac069e",
+    "tests/integration/wire/test_read_reply_parity.py": "c65266633362f65ac800a65bc510fd8ca82e512b6fb389361b9dc662bd040852",
+    "tests/integration/pytest_kit/test_wire_diagnostics.py": "8c0d9347c313025016580480354c4f588717e412c754e9c8c324a5929b4e9caf",
+    "tests/fixtures/clock_call_allowlist.json": "51118655fa033148bb5c61fa67d48d6a17dfadf4df5a03753d8eed8c56c19012",
+    "docs/wire-diagnostics.md": "29ce0c0a1a719c3adc6fbceb1c7149e6c127cc42de6ef1357abbc2dfffc507ab",
+    "docs/pytest.md": "275793fb2cc8e382f8a2297d4bbbb617af2cb0e5533e60cbadcd6501ac2c8819",
+    "docs/cxp-wire-cursor-field-conservation.csv": "2ca52e14b42ca424dd9e6bcd8995cfdc357420ca365a6c227edae75ef28f3627",
+    "docs/cxp-wire-hello-field-conservation.csv": "f810be5fe86ece63c2acaa18c5e34ade27dfd744080adcd5c21d181d704ba9e3",
+    "docs/cxp-wire-static-admin-field-conservation.csv": "f39ed9c10a81c3e261de21a5c4aa6272e0342c49ffb4998501e5d3311ac860ee",
+    ".github/workflows/ci.yml": "89aa1c88fd96e9f5062cf2fbad51d64ce4e174da80ab6e03964908822cfca160",
+    ".github/workflows/mongodb-differential.yml": "253928c647306e97a61c31fab9da736b23292917b2d246ae77e1f36a85046369",
+    "tests/fixtures/wire_reads_mongodb_7_0.json": "ad2d7c51114e0d056780f7169c030332f43350647b8e09620294519237366b02",
+    "tests/fixtures/wire_reads_mongodb_8_0.json": "ffcaa4bdec0b4cf016e956e2fc6837a90a08b70fdf8f7d99dbb6e6572f48a9e6",
+    "tests/fixtures/wire_reads_mongodb_9_0.json": "32cc508c47afb904a2c592039d1136dd2893182fe8bfbd76384fb796a9b0262b"
+  },
+  "checks": {
+    "strict_mypy": "passed: six runtime modules",
+    "public_typing": "passed: positive specimen and twenty expected negative errors",
+    "public_api_manifest": "unchanged and current",
+    "lint_ratchet": "passed: all 15 scope-owned Python changes, compared with the original tracked base; no baseline relaxed",
+    "yaml_workflows": "parsed successfully",
+    "clock_inventory": "new monotonic telemetry reads explicitly classified; policy tests passed",
+    "conservation_matrices": "reviewed and source hashes refreshed; all seven conservation/clock tests passed",
+    "diff_whitespace": "passed",
+    "privacy": "no external consumer identities in added evidence",
+    "artifact_runtime_identity": "all nine modified runtime sources match the installed wheel",
+    "final_diff_review": "completed for the declared scope; unchanged file hashes verified after all runs"
+  },
+  "coverage_modules": {
+    "wire._diagnostics": 100.0,
+    "_pytest_diagnostics": 100.0,
+    "_pytest_runtime": 100.0,
+    "pytest_plugin": 100.0
+  },
+  "mixed_worktree_global": {
+    "passed": 44397,
+    "failed": 6,
+    "skipped": 31,
+    "subtests_passed": 14461,
+    "status": "not_admissible_for_scope_closure",
+    "cause": "concurrent SPI test/source changes after wheel construction; test corpus and installed artifact did not share a fixed identity",
+    "log": "global-mixed-worktree.log",
+    "failures": [
+      "conformance ignored identity/selector: four cases",
+      "SPI v2 operation context exception message",
+      "runtime annotation inventory for FindOperation in a concurrently modified cursor module"
+    ]
+  },
+  "scoped_candidate": {
+    "base_commit": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+    "isolation": "tracked base plus the 26 scope-owned input files; concurrent SPI work excluded without modifying the shared checkout",
+    "wheel_sha256": "ac190db8b87b1200f4f6fce02aee94a992fa89878593d4dcf52a28f6fd72dec3",
+    "same_nine_diagnostic_runtime_sources": true,
+    "global_status": "passed",
+    "global": {
+      "passed": 44116,
+      "skipped": 31,
+      "subtests_passed": 14461,
+      "seconds": 286.39,
+      "workers": 4,
+      "coverage_percent": 99.00871266002845,
+      "coverage_floor": 99.0,
+      "log": "global-scoped.log"
+    }
+  },
+  "coverage": {
+    "covered_lines": 44546,
+    "num_statements": 44992,
+    "percent_covered": 99.00871266002845,
+    "percent_covered_display": "99.01",
+    "missing_lines": 446,
+    "excluded_lines": 938,
+    "percent_statements_covered": 99.00871266002845,
+    "percent_statements_covered_display": "99.01",
+    "basis": "scoped installed wheel, same run as the complete four-worker suite"
+  },
+  "prior_wheel_regressions": {
+    "wheel_sha256": "210292450feb7d96e822590d71915c8bdf1d996dfa8fbc32cdd84f6d792427fb",
+    "matrix": [
+      {
+        "python": "3.13.15",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "passed": 134,
+        "log": "wheel-final-313.log"
+      },
+      {
+        "python": "3.15.0",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "passed": 134,
+        "log": "wheel-final-315.log"
+      },
+      {
+        "python": "3.14.5",
+        "pymongo": "4.9.2",
+        "pytest": "9.1.1",
+        "passed": 134,
+        "log": "wheel-final-sdk49.log"
+      },
+      {
+        "python": "3.14.5",
+        "pymongo": "4.9.2",
+        "pytest": "8.4.2",
+        "passed": 134,
+        "log": "wheel-final-pytest8.log"
+      }
+    ]
+  }
+}

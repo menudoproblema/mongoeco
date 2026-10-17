@@ -1,0 +1,58 @@
+{
+  "document": {
+    "response": {
+      "ok": 1.0
+    },
+    "documents": [
+      {
+        "_id": "a"
+      },
+      {
+        "_id": "following"
+      }
+    ],
+    "connection_reused": true
+  },
+  "array": {
+    "response": {
+      "ok": 0.0
+    },
+    "documents": [
+      {
+        "_id": "a"
+      },
+      {
+        "_id": "following"
+      }
+    ],
+    "connection_reused": true
+  },
+  "null": {
+    "response": {
+      "ok": 1.0
+    },
+    "documents": [
+      {
+        "_id": "a"
+      },
+      {
+        "_id": "following"
+      }
+    ],
+    "connection_reused": true
+  },
+  "scalar": {
+    "response": {
+      "ok": 0.0
+    },
+    "documents": [
+      {
+        "_id": "a"
+      },
+      {
+        "_id": "following"
+      }
+    ],
+    "connection_reused": true
+  }
+}

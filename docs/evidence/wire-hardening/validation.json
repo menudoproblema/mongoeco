@@ -1,0 +1,450 @@
+{
+  "status": "implemented_and_verified",
+  "authorization": "User approved three blocks and findings, regressions, native7/8/9 matrix and final global; no release or commits requested",
+  "base_commit": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "source_sha256": {
+    ".github/workflows/ci.yml": "541223a00d7fcf82496369ebb68288b7b8f9acb8df7751e8123747b8a1a24b78",
+    ".github/workflows/mongodb-differential.yml": "e589c2a11f4c38fb78254480f538721358b6a892acd60528a606a8738a1847d5",
+    "docs/cxp-wire-cursor-field-conservation.csv": "34c8c433e9a78811b859085adafffd26031f1f35a36be3ebea9fb85db2489eaf",
+    "docs/cxp-wire-hello-field-conservation.csv": "edc87bc5196f759d6fe2af902a8af776a3cba6d15433403cbba15e466d2f3ad3",
+    "docs/cxp-wire-static-admin-field-conservation.csv": "2f4e2c3c143aca3b95c108285034dc4c4adfb81718ef6783375d761066f308df",
+    "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+    "scripts/capture_wire_read_parity.py": "cafd908bfa8cf0722437219ee34c2ac15fe382f1c68fb2d0e0bdabb57df7080c",
+    "src/mongoeco/driver/transports.py": "2ca5b94d1043dc92ffc3fb245fc4bfeff0be56a117851f9e9d8f5bdd6a6b2f5c",
+    "src/mongoeco/wire/_diagnostics.py": "52c45e3d10f5b693e034db9f9e07fe2886287c7da1143f1a0b586d82ec28ddea",
+    "src/mongoeco/wire/_executor_support.py": "3ea6df73caaa46f2c1a27a2add510997900327768ce95385fe64cb99203895fa",
+    "src/mongoeco/wire/_framing.py": "809495d99c05a0f326579fa65f61fc227a83885ac4af76e68cc430dc28d2b6c1",
+    "src/mongoeco/wire/_request_state.py": "523a32c68aaa8e9963e5c6f2cada8022c73ab6e906573cf1a5fb323afe05d34c",
+    "src/mongoeco/wire/executor.py": "24d71db52f16852be61077ff65494fa71ba209b873ae4a736ff73973985e06c3",
+    "src/mongoeco/wire/protocol.py": "9100758dc7f244b8e7a1a46a53cb64b28c3766431c589002c434671711a94ace",
+    "src/mongoeco/wire/proxy.py": "473ed25ba4b8baaf2aa1bf89cdcb5adc4447744ae3a239cab924cdc45c88eb09",
+    "tests/fixtures/wire_envelopes_mongodb_7_0.json": "22af081d05bbb5fa8393b0d2888103d1a7b6aa4bd783519a7675cc3ebaff27e7",
+    "tests/fixtures/wire_envelopes_mongodb_8_0.json": "084ed18cb18d23688dd6531e1200dd7300e896249cf2d4cd9aab92b5d67630b0",
+    "tests/fixtures/wire_envelopes_mongodb_9_0.json": "70e66ff0e2b4034107c215a579928ae9b6aa967ef6b921ed257a379e850b3a8e",
+    "tests/fixtures/wire_reads_mongodb_7_0.json": "2f948b2a7c326c5d224b2e492be1315e0366a145ffba4e839d5c6d1a03988263",
+    "tests/fixtures/wire_reads_mongodb_8_0.json": "287bdc9f004353eb7804f32f15d18381e30e4660e07f30861c2480268ae7df69",
+    "tests/fixtures/wire_reads_mongodb_9_0.json": "8d5766c642621632ce31faa595796ac3fc615d2914a5587c3a053d5866f67932",
+    "tests/integration/wire/test_diagnostic_phases.py": "e1d104a03b64cbc26f89824f32aff90d2960a5718a0acf19a0e14a5198511531",
+    "tests/integration/wire/test_diagnostics.py": "cfd966ffff4eac61fded579840ac6b540e3056c407f105aa6b5d47dce2262b0e",
+    "tests/integration/wire/test_envelope_parity.py": "30ae275220f30394a8d182a030b7b3a02d352c280c20b9333a83c5d39ae2b5e1",
+    "tests/integration/wire/test_read_reply_parity.py": "c65266633362f65ac800a65bc510fd8ca82e512b6fb389361b9dc662bd040852",
+    "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+    "tests/unit/test_capture_identity.py": "8d2f766af6d002ac78dcb30a470232ecca44eb28455a08bbdb10f3806f1b76c5",
+    "tests/unit/wire/test_diagnostics.py": "aac4e80d09f37e8abfe46f62c7f5d245393d28e45b643d5f49e077fee84520c8",
+    "tests/unit/wire/test_framing.py": "a4c54ce08d6a2ddf2e594627b99ce1ddcf1704b1ecca42e9123d5a4cceced6c1",
+    "tests/unit/wire/test_protocol.py": "481b78ee7727fc3b06f717f9ab88f33d8e9f1a70800acf12852b88c1cf303d91",
+    "tests/integration/wire/test_proxy_lifecycle.py": "3e5bd13367f93478ba780336934c3bb0643769a2512589a64d295dd0cdeaef37"
+  },
+  "focal": {
+    "passed": 669,
+    "subtests": 82,
+    "log": "focal-final14-complete.log.gz",
+    "includes": "All wire/driver unit tests, CXP, lifecycle, observer tamper regression, diagnostic phases, pytest/xdist, unchanged legacy error inventory and432native replay cases"
+  },
+  "native_replay": {
+    "passed": 432,
+    "cells": "14 envelopes\u00d73targets\u00d72engines\u00d72surfaces\u00d72capture modes;16 reads\u00d73targets\u00d72engines",
+    "log": "focal-final14-complete.log.gz"
+  },
+  "native_sdk": {
+    "7.0": {
+      "sync": {
+        "timeout": {
+          "class": "ExecutionTimeout",
+          "code": 50,
+          "errmsg_present": true
+        },
+        "concern": {
+          "class": "WriteConcernError",
+          "code": 64,
+          "errmsg_present": true
+        },
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b"
+          }
+        ],
+        "physical_connections": 1
+      },
+      "async": {
+        "timeout": {
+          "class": "ExecutionTimeout",
+          "code": 50,
+          "errmsg_present": true
+        },
+        "concern": {
+          "class": "WriteConcernError",
+          "code": 64,
+          "errmsg_present": true
+        },
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b"
+          }
+        ],
+        "physical_connections": 1
+      },
+      "probe_source_sha256": "e796e20ef9976821388c62da671451226d4b034d198412afe3e8a623516fc1fa"
+    },
+    "8.0": {
+      "sync": {
+        "timeout": {
+          "class": "ExecutionTimeout",
+          "code": 50,
+          "errmsg_present": true
+        },
+        "concern": {
+          "class": "WriteConcernError",
+          "code": 64,
+          "errmsg_present": true
+        },
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b"
+          }
+        ],
+        "physical_connections": 1
+      },
+      "async": {
+        "timeout": {
+          "class": "ExecutionTimeout",
+          "code": 50,
+          "errmsg_present": true
+        },
+        "concern": {
+          "class": "WriteConcernError",
+          "code": 64,
+          "errmsg_present": true
+        },
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b"
+          }
+        ],
+        "physical_connections": 1
+      },
+      "probe_source_sha256": "e796e20ef9976821388c62da671451226d4b034d198412afe3e8a623516fc1fa"
+    },
+    "9.0": {
+      "sync": {
+        "timeout": {
+          "class": "ExecutionTimeout",
+          "code": 50,
+          "errmsg_present": true
+        },
+        "concern": {
+          "class": "WriteConcernError",
+          "code": 64,
+          "errmsg_present": true
+        },
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b"
+          }
+        ],
+        "physical_connections": 1
+      },
+      "async": {
+        "timeout": {
+          "class": "ExecutionTimeout",
+          "code": 50,
+          "errmsg_present": true
+        },
+        "concern": {
+          "class": "WriteConcernError",
+          "code": 64,
+          "errmsg_present": true
+        },
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b"
+          }
+        ],
+        "physical_connections": 1
+      },
+      "probe_source_sha256": "e796e20ef9976821388c62da671451226d4b034d198412afe3e8a623516fc1fa"
+    }
+  },
+  "mypy": {
+    "modules": 8,
+    "result": "Success: no issues found in 8 source files\n"
+  },
+  "lint": "lint ratchet passed for 64 changed Python files\n",
+  "global": {
+    "status": "passed",
+    "python": [
+      "3.13",
+      "3.14",
+      "3.15"
+    ],
+    "each": {
+      "passed": 45203,
+      "skipped": 31,
+      "subtests": 14463
+    },
+    "wheel_sha256": "bf3d6b778b600a9b12913693eb98af4ff1f82b84c9e34f050a98533a2f2b2bab",
+    "coverage_python": "3.14",
+    "coverage_floor": 99.0,
+    "coverage_percent": 99.03731244190679
+  },
+  "prior_attempts": [
+    {
+      "result": "8 checksum-truncated mismatches",
+      "reason": "Native7/8 code51252 instead of22; corrected and all408 replay checks now pass",
+      "log": ".tmp/wire-hardening/parity-initial.log"
+    },
+    {
+      "result": "1 driver error-family mismatch",
+      "reason": "Checksum error discarded connection but leaked parser exception; now ConnectionFailure; corrected and222 focal checks pass",
+      "log": ".tmp/wire-hardening/focal-final.log"
+    },
+    {
+      "result": "Pre-global candidate superseded before any global run",
+      "wheel_sha256": "fe9e316ba015572c043a2d887c931e834407776bd10416683836dcdc47a18350",
+      "reason": "Final review found known command lost on validation failure; normalized metadata now projected before validation, with regression and630 green focal cases"
+    },
+    {
+      "result": "Three complete global runs rejected by unchanged uncoded-emitter inventory",
+      "wheel_sha256": "caae4045b67a348f3c25ebb58ed81782acd41310182be27e818f566c95e7659d",
+      "each": {
+        "passed": 45178,
+        "failed": 1,
+        "skipped": 31,
+        "subtests": 14463
+      },
+      "reason": "Two existing opcode emitters moved and a legacy rejection duplicated an uncoded path. Original opcode owners restored; legacy namespace now has independently observed code5739101/query error envelope. Baseline unchanged. Full globals must be repeated.",
+      "logs": [
+        "prior-global-313.log.gz",
+        "prior-global-314.log.gz",
+        "prior-global-315.log.gz"
+      ],
+      "coverage": {
+        "covered_lines": 44746,
+        "num_statements": 45183,
+        "percent_covered": 99.03282207910054,
+        "percent_covered_display": "99.03",
+        "missing_lines": 437,
+        "excluded_lines": 979,
+        "percent_statements_covered": 99.03282207910054,
+        "percent_statements_covered_display": "99.03"
+      }
+    }
+  ],
+  "limits": [
+    "Raw envelope corpus uses independent sync/async sockets; PyMongo SDK is exercised by diagnostic and kit suites",
+    "Local writeConcernError is controlled at executor return after actual write; native failpoint probe does not imply replica simulation"
+  ],
+  "logs_sha256": {
+    "final-focal-integrated.log.gz": "9d9a6e0c845ac6d211ac038ee1af0b974cb9e456c8426b49bdf006550ae00502",
+    "parity-verified.log.gz": "0b0fe70005594f367214248ab3a087704dd0debe2aeb36437f2d981f6b065b6a",
+    "mypy-complete.log.gz": "99fa702b2bb9ffbc36c5fb6c064b55e38bcf63ddc814b9dee4c41c794002309e",
+    "ratchet-complete.log.gz": "8816194d4db52cbab9a6413f5bc6adcf41967faf5ceb4d5d44ad2121983587fc",
+    "capture-native-sdk.log.gz": "b5c234a85c19017ce03ef7067d95149859f7a6917405391106338584908b5c52",
+    "parity-initial.log.gz": "9a99213bf3e2672af9706bfd5b4ed9815857c03c7a9435ba7e9ec206e379e633",
+    "focal-final.log.gz": "6aaa2a32b84f10dbf9d722196b85c7895bb89c824071618880a3d994a760d27d",
+    "lifecycle-final.log.gz": "5db5b490760a31dfe40ca438a7636ad98c438834283bdf4f437161d3408b1cd7",
+    "prior-global-313.log.gz": "f96e10f75f244f0df4abaf647f73e828bcec2d7522359108c6612d1410e0cbdd",
+    "prior-global-314.log.gz": "9ae546acec3c1d7f1d65eb8e4b2502fd67911fd2f4c6e8514c8fc5293a0cd5ac",
+    "prior-global-315.log.gz": "aa7dbcd2ffc34aa5d7078c3d1c52e40769cc3e9b6a0f5402c361efb9ea1de787",
+    "focal-final14-complete.log.gz": "699fef0dbc09e857bd80c5ea39b08d8ed5564c0d6324eaff9190b1befa9d88ec",
+    "guard-final14.log.gz": "3e19c42c4c6fbb6c092267c938f6613874ea60f811825c15ab193d8db273d163",
+    "capture-native-final14.log.gz": "ee694d08266abead90129da2fafab5c28ff5c5fa456db6a4bc2d8650c78b63d0",
+    "final-global-313.log.gz": "4d5e6b2762cb59823500fe77c8ed8233f8c08f3638efcde2529a50ca8e2f2a82",
+    "final-global-315.log.gz": "2dee14406048f459c18677b52fb767ed789ea2e44c377b1e9744646d2ee59a57",
+    "final-global-314.log.gz": "63c1ed80a2627df0dc39bf51164d4a0051dbd8f66f75966a7e221f2b3046fc9b"
+  },
+  "native_sdk_probe_source": "native-sdk-probe.py",
+  "native_sdk_probe_sha256": "e796e20ef9976821388c62da671451226d4b034d198412afe3e8a623516fc1fa",
+  "candidate": {
+    "wheel_sha256": "bf3d6b778b600a9b12913693eb98af4ff1f82b84c9e34f050a98533a2f2b2bab",
+    "sdist_sha256": "1d6d3ac96fabc28f944bc170c690be31e03ceb5c0aa9c480af09861144a7c07a",
+    "tree_manifest_sha256": "093a5904bc7c7784de2ce1d6a3528abb36aa6fe5e73e8a158b72f751bbaec56d",
+    "snapshot": ".tmp/spi-v2-reads/validation-tree",
+    "block_inputs_identical": 31,
+    "runtime_members_identical_to_wheel": 8,
+    "global_status": "passed"
+  },
+  "lifecycle_regression": {
+    "passed": 13,
+    "log": "lifecycle-final.log.gz",
+    "source_sha256": "3e5bd13367f93478ba780336934c3bb0643769a2512589a64d295dd0cdeaef37",
+    "condition": "Updated only executor injection point; retained8MiB unread reply and bounded readiness signal; wheel runtime unchanged"
+  },
+  "legacy_inventory": {
+    "baseline_unchanged": true,
+    "sha256": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14",
+    "result": "....................                                                     [100%]\n20 passed in 0.91s\n"
+  },
+  "global_runs": {
+    "313": {
+      "command": [
+        "$WORK/venv-313/bin/python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "log_sha256": "9cf27ef597af6ecda3c36df2b45ff4e5cf4015185661883e7f54f130f25faa17",
+      "summary": "45203 passed, 31 skipped, 14463 subtests passed in 683.84s (0:11:23)",
+      "log": "final-global-313.log.gz",
+      "environment": {
+        "MONGOECO_TEST_INSTALLED_ARTIFACT": "1",
+        "TMPDIR": "$WORK/global-tmp-313"
+      }
+    },
+    "315": {
+      "command": [
+        "$WORK/venv-315/bin/python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4a528d95d7530469f5c3bc9c2bf19600ffa7994f3afb7843fbf981bd634b85b5",
+      "summary": "45203 passed, 31 skipped, 14463 subtests passed in 742.34s (0:12:22)",
+      "log": "final-global-315.log.gz",
+      "environment": {
+        "MONGOECO_TEST_INSTALLED_ARTIFACT": "1",
+        "TMPDIR": "$WORK/global-tmp-315"
+      }
+    },
+    "314": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--cov=mongoeco",
+        "--cov-report=term",
+        "--cov-report=json:$WORK/final-coverage.json"
+      ],
+      "exit_code": 0,
+      "log_sha256": "7b150cb18d359337d3d5ca4888384963813d73c56cadeef33208512b72f4cc33",
+      "summary": "45203 passed, 31 skipped, 14463 subtests passed in 746.24s (0:12:26)",
+      "log": "final-global-314.log.gz",
+      "environment": {
+        "MONGOECO_TEST_INSTALLED_ARTIFACT": "1",
+        "TMPDIR": "$WORK/global-tmp-314"
+      }
+    }
+  },
+  "coverage": {
+    "covered_lines": 44751,
+    "num_statements": 45186,
+    "percent_covered": 99.03731244190679,
+    "percent_covered_display": "99.04",
+    "missing_lines": 435,
+    "excluded_lines": 979,
+    "percent_statements_covered": 99.03731244190679,
+    "percent_statements_covered_display": "99.04"
+  },
+  "global_status": "passed",
+  "integrated_validation": {
+    "path": "../engine-reads/validation.json",
+    "sha256": "59e5c20f78ed2943f7b8fd8b561c6c0c78bb56dfeb759f8e523b8f2679f8f440",
+    "inputs_path": "../engine-reads/inputs.json",
+    "inputs_sha256": "d21610c5b90a4c4c45d83b6f1990293c41ef3e81a4e516f740628313086cd12b",
+    "causal_inputs": 791,
+    "unchanged_at_close": true
+  },
+  "closure": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "all_required_gates_on_final_candidate": true,
+    "concurrent_changes_preserved_and_included_in_frozen_candidate": true,
+    "public_api_manifest": "current",
+    "legacy_error_inventory_baseline": "unchanged",
+    "publication_or_commits": "not_requested",
+    "consumer_identity_scan": "passed"
+  },
+  "module_coverage": {
+    "mongoeco/wire/_diagnostics.py": {
+      "covered_lines": 49,
+      "num_statements": 49,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100.00",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100.00"
+    },
+    "mongoeco/wire/_framing.py": {
+      "covered_lines": 31,
+      "num_statements": 31,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100.00",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100.00"
+    },
+    "mongoeco/wire/_request_state.py": {
+      "covered_lines": 30,
+      "num_statements": 31,
+      "percent_covered": 96.7741935483871,
+      "percent_covered_display": "96.77",
+      "missing_lines": 1,
+      "excluded_lines": 4,
+      "percent_statements_covered": 96.7741935483871,
+      "percent_statements_covered_display": "96.77"
+    },
+    "mongoeco/wire/executor.py": {
+      "covered_lines": 41,
+      "num_statements": 41,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100.00",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100.00"
+    },
+    "mongoeco/wire/protocol.py": {
+      "covered_lines": 188,
+      "num_statements": 188,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100.00",
+      "missing_lines": 0,
+      "excluded_lines": 6,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100.00"
+    },
+    "mongoeco/wire/proxy.py": {
+      "covered_lines": 246,
+      "num_statements": 249,
+      "percent_covered": 98.79518072289157,
+      "percent_covered_display": "98.80",
+      "missing_lines": 3,
+      "excluded_lines": 2,
+      "percent_statements_covered": 98.79518072289157,
+      "percent_statements_covered_display": "98.80"
+    }
+  },
+  "documentation_sha256": {
+    "docs/wire-hardening-validation.md": "7896629cc968ddd457b449cab6c8779bcd98cf754eacf3899a1ed6ddef4a0a21",
+    "docs/wire-diagnostics.md": "4b0403d55d9ab6f9571137a4dd36d9a556343f12cd2e12ed84f9bf5782f1bbd7"
+  }
+}

@@ -120,6 +120,12 @@ de pytest antes de que pueda generarse el resumen.
 
 ## Conservar el constructor del consumidor
 
+Para registrar metadatos del servidor durante las pruebas y mostrarlos solo
+cuando fallen, activa `--mongoeco-wire-diagnostics`. El informe se genera después
+del teardown, incluye el estado de cierre y funciona también con xdist. La
+[guía de diagnóstico wire](wire-diagnostics.md) detalla los datos retenidos,
+límites y una receta con `failCommand` para provocar errores controlados.
+
 La fixture `mongoeco_uri` permite cambiar solo la conexión en una preparación
 existente, conservando sus imports, genéricos y opciones:
 

@@ -8,7 +8,26 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Optional `--mongoeco-wire-diagnostics` captures bounded wire metadata and reports
+  failed pytest tests after teardown, including xdist and both async adapters.
+  Record reply expectations, outcomes, error codes, timing and resource counts
+  without retaining BSON, credentials or URIs. The proxy also exposes detached
+  diagnostic snapshots. See [wire diagnostics](docs/wire-diagnostics.md).
+- Native MongoDB 7/8/9 regression corpus for ordinary and mirrored reads, reply
+  suppression and physical connection reuse, plus a tested `failCommand` recipe
+  for deterministic timeout recovery with real sync/async PyMongo clients.
+
 ### Fixed
+
+- Validate wire message sizes before waiting for bodies, accept optional OP_MSG
+  flags and verify CRC32C checksums in the shared proxy/driver codec. Preserve
+  reply suppression after decode failures and native MongoDB 7/8/9 parse codes
+  and connection-close behavior.
+- Reuse the executed request context for diagnostics, classify write concern
+  errors, retain the first failure and report encoding/send phases accurately.
+  Reject native observation receipts if their source inputs change during capture.
 
 - Reject malformed query regex with native code 51091 during preparation,
   including empty/no-match reads and nested membership filters. Retain complete
@@ -17,6 +36,8 @@ usa Semantic Versioning.
   update/delete. Extend the existing atomicity check to reject ignored
   conditions, incorrect images/counters and effects on unrelated documents,
   including competing writers. Preserve conformance IDs and report schema.
+- Reject wire `find` filters of the wrong BSON type, including explicit null,
+  with native error code 14 (`TypeMismatch`).
 - Preserve the dialect of unbound find/update operations when converting them to
   engine semantics. Respect explicitly empty update bindings in selector
   preparation. Keep the public API and Engine SPI v2 unchanged.
