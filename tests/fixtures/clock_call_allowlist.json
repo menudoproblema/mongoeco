@@ -25,7 +25,9 @@
     "src/mongoeco/driver/topology.py": "estado SDAM",
     "src/mongoeco/engines/_active_operations.py": "duración y registro de operaciones activas",
     "src/mongoeco/engines/memory.py": "registro de operaciones activas",
-    "src/mongoeco/engines/sqlite.py": "registro de operaciones activas"
+    "src/mongoeco/engines/sqlite.py": "registro de operaciones activas",
+    "src/mongoeco/wire/_diagnostics.py": "marcas relativas de telemetría wire, ajenas al reloj BSON semántico",
+    "src/mongoeco/wire/proxy.py": "duración observada de peticiones wire, sin alterar presupuestos de ejecución"
   },
   "utc_bson_now": {
     "src/mongoeco/api/_async/aggregation_cursor.py": "fallback para doble de prueba sin cliente",

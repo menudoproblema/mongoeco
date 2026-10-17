@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable  # noqa: TC003 - introspectable annotations
 from typing import Any
 
 from mongoeco.api import AsyncMongoClient
@@ -15,8 +16,10 @@ from mongoeco.wire.auth import WireAuthenticationService
 from mongoeco.wire.connections import WireConnectionContext
 from mongoeco.wire.cursors import WireCursorStore
 from mongoeco.wire.requests import WireRequestContext
+from mongoeco.wire.sessions import (
+    WireSessionStore,  # noqa: TC001 - introspectable annotations
+)
 from mongoeco.wire.surface import WireSurface
-from mongoeco.wire.sessions import WireSessionStore
 
 
 class WireCommandExecutor:
@@ -49,6 +52,10 @@ class WireCommandExecutor:
         db_name: str | None = None,
     ) -> dict[str, Any]:
         context = self._build_request_context(body, connection=connection, db_name=db_name)
+        return await self.execute_prepared(context)
+
+    async def execute_prepared(self, context: WireRequestContext) -> dict[str, Any]:
+        """Execute the context already normalized for this request."""
         with execution_now_scope(context.execution_context.now):
             return await self._handlers.dispatch(context)
 
@@ -75,6 +82,7 @@ class WireCommandExecutor:
         *,
         connection: WireConnectionContext,
         db_name: str | None = None,
+        on_normalized: Callable[[str, dict[str, Any]], None] | None = None,
     ) -> WireRequestContext:
         return build_request_context(
             body,
@@ -83,6 +91,7 @@ class WireCommandExecutor:
             client=self._client,
             surface=self._surface,
             session_store=self._session_store,
+            on_normalized=on_normalized,
         )
 
     @staticmethod

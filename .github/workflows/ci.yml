@@ -203,6 +203,8 @@ jobs:
           python -m mypy --strict --follow-imports=silent --ignore-missing-imports \
             -m mongoeco.pytest_plugin -m mongoeco.pytest_asyncio \
             -m mongoeco.pytest_anyio -m mongoeco._pytest_runtime \
+            -m mongoeco._pytest_diagnostics -m mongoeco.wire._diagnostics \
+            -m mongoeco.wire._framing -m mongoeco.wire._request_state \
             -m mongoeco.wire._lifecycle
           python -m mypy --follow-imports=silent --ignore-missing-imports \
             -m mongoeco.engines.adapter -m mongoeco.api._async._collection_runtime
@@ -323,6 +325,8 @@ jobs:
             tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection \
             tests/integration/wire/test_proxy_lifecycle.py \
             tests/integration/wire/test_unacknowledged.py \
+            tests/integration/wire/test_diagnostics.py \
+            tests/integration/wire/test_read_reply_parity.py \
             tests/integration/api/test_write_preflight_parity.py -q
 
   release-differential:

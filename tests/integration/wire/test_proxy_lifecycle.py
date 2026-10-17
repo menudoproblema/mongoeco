@@ -118,7 +118,7 @@ class ProxyLifecycleTests(unittest.IsolatedAsyncioTestCase):
             seen.set()
             return {"ok": 1, "data": "x" * (8 * 1024 * 1024)}
 
-        proxy._executor.execute_command = reply
+        proxy._executor.execute_prepared = reply
         _, peer = await asyncio.open_connection(proxy.address.host, proxy.address.port)
         server = proxy._server
         try:
@@ -128,7 +128,7 @@ class ProxyLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 )
             )
             await peer.drain()
-            await seen.wait()
+            await asyncio.wait_for(seen.wait(), timeout=2)
             closing = asyncio.create_task(proxy.close())
             done, _ = await asyncio.wait({closing}, timeout=2)
             if not done:

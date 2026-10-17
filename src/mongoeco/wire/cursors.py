@@ -45,6 +45,9 @@ class WireCursorStore:
         self._next_cursor_id = 1
         self._state: dict[int, WireCursorState] = {}
 
+    def __len__(self) -> int:
+        return len(self._state)
+
     def clear(self) -> None:
         self._state.clear()
 

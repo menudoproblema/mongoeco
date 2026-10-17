@@ -12,6 +12,7 @@ from mongoeco.api.admin_parsing import (
     normalize_filter_document,
     normalize_index_models_from_command,
 )
+from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.errors import OperationFailure
 
 
@@ -86,8 +87,18 @@ def _validate_wire_find_like_command(
     require_batch_size: bool = False,
 ) -> None:
     try:
+        if (
+            command_name == "find"
+            and filter_field in command_document
+            and command_document[filter_field] is None
+        ):
+            message = "filter_spec must be a dict"
+            raise TypeError(message)
         normalize_filter_document(command_document.get(filter_field))
     except TypeError as exc:
+        if command_name == "find":
+            message = f"wire find {exc}"
+            raise server_error(message, code=14, scope=ErrorScope.COMMAND) from exc
         _raise_wire_shape_error(command_name, str(exc))
     try:
         normalize_command_projection(command_document.get("projection"))

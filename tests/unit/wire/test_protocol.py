@@ -4,6 +4,7 @@ import unittest
 from bson import BSON
 
 from mongoeco.types import ObjectId
+from mongoeco.wire._framing import crc32c
 from mongoeco.wire.protocol import (
     OP_MSG,
     OP_REPLY,
@@ -122,7 +123,9 @@ class WireProtocolTests(unittest.TestCase):
 
     def test_decode_op_msg_accepts_known_protocol_flags(self):
         payload = struct.pack("<i", OP_MSG_CHECKSUM_PRESENT | OP_MSG_EXHAUST_ALLOWED) + b"\x00" + BSON.encode({"ping": 1})
-        header = parse_message_header(struct.pack("<iiii", 16 + len(payload), 7, 0, OP_MSG))
+        header = parse_message_header(struct.pack("<iiii", 20 + len(payload), 7, 0, OP_MSG))
+        raw_header = struct.pack("<iiii", header.message_length, 7, 0, OP_MSG)
+        payload += struct.pack("<I", crc32c(raw_header + payload))
 
         request = decode_op_msg(header, payload)
 

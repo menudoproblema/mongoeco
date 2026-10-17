@@ -145,6 +145,23 @@ jobs:
             tests/integration/api/test_write_preflight_parity.py -q \
             2>&1 | tee "artifacts/${{ matrix.target }}/unacknowledged.log"
 
+      - name: Verify ordinary and mirrored read reply suppression
+        shell: bash
+        run: |
+          TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"
+          python scripts/capture_wire_read_parity.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --output "artifacts/${{ matrix.target }}/wire-reads.json" \
+            --check "tests/fixtures/wire_reads_mongodb_${TARGET_SUFFIX}.json"
+          python -m pytest tests/integration/wire/test_read_reply_parity.py -q \
+            2>&1 | tee "artifacts/${{ matrix.target }}/wire-reads.log"
+          python scripts/capture_wire_read_parity.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" --corpus envelopes \
+            --output "artifacts/${{ matrix.target }}/wire-envelopes.json" \
+            --check "tests/fixtures/wire_envelopes_mongodb_${TARGET_SUFFIX}.json"
+          python -m pytest tests/integration/wire/test_envelope_parity.py -q \
+            2>&1 | tee "artifacts/${{ matrix.target }}/wire-envelopes.log"
+
       - name: Admit the complete write corpus and public routes
         shell: bash
         env:

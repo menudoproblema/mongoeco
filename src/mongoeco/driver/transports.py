@@ -14,13 +14,18 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - bson is optional
     BsonBinary = type("_MissingBsonBinary", (bytes,), {})
 
-from mongoeco.driver.connections import ConnectionRegistry, DriverConnection
+from mongoeco.driver.connections import (  # noqa: TC001 - introspectable annotations
+    ConnectionRegistry, DriverConnection,
+)
 from mongoeco.driver.requests import (  # noqa: TC001 - exported annotations are introspectable
     PreparedRequestExecution,
 )
 from mongoeco.driver.security import TlsPolicy  # noqa: TC001 - exported annotations are introspectable
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.types import Binary
+from mongoeco.wire._framing import (
+    MAX_MESSAGE_LENGTH, WireProtocolError, valid_message_length,
+)
 from mongoeco.wire.protocol import (
     OP_MSG,
     OP_REPLY,
@@ -41,7 +46,7 @@ if TYPE_CHECKING:
 
 
 _MESSAGE_HEADER_LENGTH = 16
-_MAX_MESSAGE_LENGTH = 48_000_000
+_MAX_MESSAGE_LENGTH = MAX_MESSAGE_LENGTH
 
 
 @dataclass(frozen=True, slots=True)
@@ -260,11 +265,7 @@ class WireProtocolCommandTransport:
             if header.response_to != request_id:
                 message = "wire response does not match the active request"
                 raise ConnectionFailure(message)
-            if not (
-                _MESSAGE_HEADER_LENGTH
-                <= header.message_length
-                <= _MAX_MESSAGE_LENGTH
-            ):
+            if not valid_message_length(header.message_length, _MAX_MESSAGE_LENGTH):
                 message = "wire response has an invalid message length"
                 raise ConnectionFailure(message)
             payload = await resource.reader.readexactly(
@@ -330,6 +331,8 @@ def _require_bson() -> None:
 def _wrap_connection_failure(exc: Exception, message: str) -> Exception:
     if isinstance(exc, ConnectionFailure):
         return exc
-    if isinstance(exc, (OSError, EOFError, asyncio.TimeoutError, ssl.SSLError)):
+    if isinstance(
+        exc, (OSError, EOFError, asyncio.TimeoutError, ssl.SSLError, WireProtocolError)
+    ):
         return ConnectionFailure(f"{message}: {exc}")
     return exc

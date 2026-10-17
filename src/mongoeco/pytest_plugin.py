@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from mongoeco._pytest_diagnostics import SERVER, WireDiagnosticsReporter
 from mongoeco._pytest_runtime import ProxyThread
 from mongoeco._version import __version__
 from mongoeco.compat import resolve_mongodb_dialect, resolve_pymongo_profile
@@ -32,6 +33,19 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "--mongoeco-mongodb-dialect", choices=("7.0", "8.0", "9.0"), default="7.0"
     )
     group.addoption("--mongoeco-pymongo-profile", default="strict-auto-installed")
+    group.addoption(
+        "--mongoeco-wire-diagnostics",
+        action="store_true",
+        default=False,
+        help="Capture bounded wire metadata and report failed tests after teardown.",
+    )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    if config.getoption("--mongoeco-wire-diagnostics"):
+        config.pluginmanager.register(
+            WireDiagnosticsReporter(), "mongoeco-wire-diagnostics"
+        )
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
@@ -107,7 +121,17 @@ def mongoeco_uri(
     profile = resolve_pymongo_profile(
         request.config.getoption("--mongoeco-pymongo-profile")
     )
-    server = ProxyThread(request.param, tmp_path, dialect.key, profile.key)
+    server = ProxyThread(
+        request.param,
+        tmp_path,
+        dialect.key,
+        profile.key,
+        diagnostic_capacity=128
+        if request.config.getoption("--mongoeco-wire-diagnostics")
+        else 0,
+    )
+    if request.config.getoption("--mongoeco-wire-diagnostics"):
+        request.node.stash[SERVER] = server
     try:
         yield server.start()
     finally:

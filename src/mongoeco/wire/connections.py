@@ -55,6 +55,9 @@ class WireConnectionRegistry:
         self._next_connection_id = 1
         self._connections: dict[int, WireConnectionContext] = {}
 
+    def __len__(self) -> int:
+        return len(self._connections)
+
     def create(self, peer_name: object) -> WireConnectionContext:
         host = "127.0.0.1"
         port = 0

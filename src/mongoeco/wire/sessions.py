@@ -22,6 +22,9 @@ class WireSessionStore:
     def __init__(self) -> None:
         self._sessions: dict[str, WireSessionContext] = {}
 
+    def __len__(self) -> int:
+        return len(self._sessions)
+
     def clear(self) -> None:
         for context in self._sessions.values():
             context.session.close()

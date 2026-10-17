@@ -12,6 +12,8 @@ from mongoeco.wire.requests import WireRequestContext
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from mongoeco.wire.surface import WireSurface
 
 
@@ -36,6 +38,7 @@ def build_request_context(
     client: AsyncMongoClient,
     surface: WireSurface,
     session_store,
+    on_normalized: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> WireRequestContext:
     if db_name is None:
         db_name = body.get("$db")
@@ -56,6 +59,8 @@ def build_request_context(
     if not surface.supports_command(command_name):
         raise OperationFailure(f"unsupported wire command: {command_name}")
 
+    if on_normalized is not None:
+        on_normalized(command_name, body)
     capability = resolve_wire_command_capability(command_name)
     validate_wire_command_document(
         body,

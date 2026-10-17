@@ -10,6 +10,7 @@ except Exception:  # pragma: no cover - bson is optional
     BSON = None
 
 from mongoeco.errors import OperationFailure
+from mongoeco.wire._framing import WireProtocolError, crc32c, op_msg_flags
 from mongoeco.wire.bson_bridge import decode_wire_value, encode_wire_value
 
 
@@ -94,9 +95,14 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
         raise ValueError(f"unsupported wire opCode: {header.op_code}")
     if len(payload) < 5:
         raise ValueError("OP_MSG payload is too short")
-    flag_bits = struct.unpack("<i", payload[:4])[0]
-    if flag_bits & ~OP_MSG_ALLOWED_FLAGS_MASK:
-        raise ValueError(f"unsupported OP_MSG flags: {flag_bits}")
+    flag_bits = op_msg_flags(payload)
+    checksum = None
+    if flag_bits & OP_MSG_CHECKSUM_PRESENT:
+        if len(payload) < 9:
+            message = "OP_MSG checksum is truncated"
+            raise WireProtocolError(message, code=51252, code_name="Location51252")
+        checksum = struct.unpack("<I", payload[-4:])[0]
+        payload = payload[:-4]
     position = 4
     body: dict[str, Any] | None = None
     pending_sequences: dict[str, list[dict[str, Any]]] = {}
@@ -110,7 +116,7 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
                 raise ValueError("OP_MSG body section is truncated")
             document_size = struct.unpack("<i", payload[position : position + 4])[0]
             if document_size <= 0 or position + document_size > len(payload):
-                raise ValueError("OP_MSG body document has invalid size")
+                raise WireProtocolError("OP_MSG body document has invalid size")
             raw_document = payload[position : position + document_size]
             body = decode_wire_value(BSON(raw_document).decode())
             for identifier, sequence in pending_sequences.items():
@@ -126,7 +132,7 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
             section_size = struct.unpack("<i", payload[position : position + 4])[0]
             section_start = position
             section_end = section_start + section_size
-            if section_size <= 4 or section_end > len(payload):
+            if section_size <= struct.calcsize("<i") or section_end > len(payload):
                 raise ValueError("OP_MSG document sequence has invalid size")
             position += 4
             identifier_end = payload.index(0, position, section_end)
@@ -151,9 +157,21 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
                     raise ValueError("OP_MSG document sequence identifier must not duplicate a body field")
                 body[identifier] = sequence
             continue
-        raise ValueError(f"unsupported OP_MSG section kind: {kind}")
+        message = f"unsupported OP_MSG section kind: {kind}"
+        raise WireProtocolError(
+            message,
+            code=40432, code_name="Location40432",
+        )
     if body is None:
         raise ValueError("OP_MSG body document is required")
+    if checksum is not None:
+        raw_header = struct.pack(
+            "<iiii", header.message_length, header.request_id,
+            header.response_to, header.op_code,
+        )
+        if crc32c(raw_header + payload) != checksum:
+            message = "OP_MSG checksum mismatch"
+            raise WireProtocolError(message, fatal=True)
     return OpMsgRequest(header=header, flag_bits=flag_bits, body=body)
 
 
@@ -218,10 +236,13 @@ def encode_op_reply(
     *,
     request_id: int,
     response_to: int,
+    response_flags: int = 0,
 ) -> bytes:
     _require_bson()
     encoded_documents = b"".join(BSON.encode(encode_wire_value(document)) for document in documents)
-    payload = struct.pack("<iqii", 0, 0, 0, len(documents)) + encoded_documents
+    payload = (
+        struct.pack("<iqii", response_flags, 0, 0, len(documents)) + encoded_documents
+    )
     header = struct.pack("<iiii", 16 + len(payload), request_id, response_to, OP_REPLY)
     return header + payload
 

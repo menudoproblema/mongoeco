@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING, Any
 
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.wire import AsyncMongoEcoProxyServer
 from mongoeco.wire._lifecycle import finish_cleanup
+from mongoeco.wire.proxy import AsyncMongoEcoProxyServer
 
 
 if TYPE_CHECKING:
@@ -26,11 +26,21 @@ if TYPE_CHECKING:
 class ProxyThread:
     """Own one server, loop and engine; never borrow the test's event loop."""
 
-    def __init__(self, backend: str, directory: Path, dialect: str, profile: str):
+    def __init__(
+        self,
+        backend: str,
+        directory: Path,
+        dialect: str,
+        profile: str,
+        *,
+        diagnostic_capacity: int = 0,
+    ):
         self._backend = backend
         self._directory = directory
         self._dialect = dialect
         self._profile = profile
+        self._diagnostic_capacity = diagnostic_capacity
+        self._proxy: AsyncMongoEcoProxyServer | None = None
         self._ready: concurrent.futures.Future[str] = concurrent.futures.Future()
         self._error: BaseException | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -39,6 +49,13 @@ class ProxyThread:
         self._thread = threading.Thread(
             target=self._run, name="mongoeco-pytest-server", daemon=False
         )
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        """Read already captured metadata, including after the server stops."""
+        if self._proxy is None:
+            return {"status": "not_started", "events": [], "resources": {}}
+        return self._proxy.diagnostics
 
     def start(self) -> str:
         self._thread.start()
@@ -89,7 +106,9 @@ class ProxyThread:
                 engine=engine,
                 mongodb_dialect=self._dialect,
                 pymongo_profile=self._profile,
+                diagnostic_capacity=self._diagnostic_capacity,
             )
+            self._proxy = proxy
             try:
                 await asyncio.wait_for(proxy.start(), timeout=10)
                 self._ready.set_result(proxy.address.uri)
