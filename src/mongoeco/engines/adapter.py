@@ -39,39 +39,33 @@ from mongoeco.types import QueryPlanExplanation
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import AsyncIterator, Callable, Sequence
+    from typing import Protocol
 
     from mongoeco.api.operations import FindOperation
     from mongoeco.compat import MongoDialect
     from mongoeco.engines.base import (
+        AsyncBatchInsertEngine,
+        AsyncCrudEngine,
         AsyncExplainSemanticsEngine,
         AsyncReadPlanningEngine,
     )
     from mongoeco.engines.semantic_core import EngineReadExecutionPlan
     from mongoeco.session import ClientSession
+    from mongoeco.types import Document, DocumentId, Filter, Projection
+
+    class _ScanEngine(Protocol):
+        def scan_find_semantics(
+            self,
+            db_name: str,
+            coll_name: str,
+            semantics: EngineFindSemantics,
+            *,
+            context: ClientSession | None = None,
+        ) -> AsyncIterator[Document]: ...
 
 
-_DOCUMENT_ARGUMENT_INDEX = 2
-_MISSING_ARGUMENT = object()
 _LOCAL_CHANGE_CONSUMER_INSTANCE = uuid.uuid4().hex
-
-
-def _call_argument(
-    args: tuple[object, ...],
-    kwargs: dict[str, object],
-    *,
-    name: str,
-    index: int,
-    default: object = _MISSING_ARGUMENT,
-) -> object:
-    if name in kwargs:
-        return kwargs[name]
-    if len(args) > index:
-        return args[index]
-    if default is not _MISSING_ARGUMENT:
-        return default
-    message = f"missing required engine argument: {name}"
-    raise TypeError(message)
 
 
 def _require_callable(
@@ -94,17 +88,9 @@ def _require_operation_context(value: object) -> OperationContext:
 
 
 def _require_bound_update_context(
-    args: tuple[object, ...],
-    kwargs: dict[str, object],
+    operation: UpdateOperation,
     operation_context: OperationContext,
 ) -> None:
-    operation = _call_argument(
-        args,
-        kwargs,
-        name="operation",
-        index=_DOCUMENT_ARGUMENT_INDEX,
-        default=None,
-    )
     if (
         isinstance(operation, UpdateOperation)
         and operation.context is not operation_context
@@ -114,17 +100,9 @@ def _require_bound_update_context(
 
 
 def _require_bound_read_context(
-    args: tuple[object, ...],
-    kwargs: dict[str, object],
+    semantics: EngineFindSemantics,
     operation_context: OperationContext,
 ) -> None:
-    semantics = _call_argument(
-        args,
-        kwargs,
-        name="semantics",
-        index=_DOCUMENT_ARGUMENT_INDEX,
-        default=None,
-    )
     if (
         isinstance(semantics, EngineFindSemantics)
         and semantics.operation_context is not operation_context
@@ -456,111 +434,140 @@ class EngineSpiAdapter:
             "publish",
             message="change sink must implement publish",
         )
-        publish(**change.payload)
+        if change.payload is not None:
+            publish(**change.payload)
 
-    async def update_outcome(
+    async def update_outcome(  # noqa: PLR0913 - mirrors the SPI with local callback
         self,
-        *args: object,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        upsert: bool = False,  # noqa: FBT001, FBT002 - SPI signature
+        upsert_seed: Document | None = None,
+        *,
+        operation_context: OperationContext | None,
+        selector_filter: Filter | None = None,
+        bypass_document_validation: bool = False,
+        replacement_document: Document | None = None,
         on_commit: Callable[[MutationOutcome], None] | None = None,
-        **kwargs: object,
     ) -> MutationOutcome:
-        method = _require_callable(
+        _require_callable(
             self.engine,
             "update_with_operation",
             message="engine must implement update_with_operation",
         )
-        call_kwargs = dict(kwargs)
-        operation_context = _require_operation_context(
-            call_kwargs.get("operation_context"),
+        context = _require_operation_context(operation_context)
+        _require_bound_update_context(operation, context)
+        engine = cast("AsyncCrudEngine", self.engine)
+        result = await engine.update_with_operation(
+            db_name,
+            coll_name,
+            operation,
+            upsert=upsert,
+            upsert_seed=upsert_seed,
+            operation_context=context,
+            selector_filter=selector_filter,
+            bypass_document_validation=bypass_document_validation,
+            replacement_document=replacement_document,
         )
-        _require_bound_update_context(args, call_kwargs, operation_context)
-        result = await method(*args, **call_kwargs)
-        outcome = self._require_mutation_outcome(
-            result,
-            operation_context=operation_context,
-        )
+        outcome = self._require_mutation_outcome(result, operation_context=context)
         if self._publishes_after_return and on_commit is not None:
             on_commit(outcome)
         return outcome
 
-    async def delete_outcome(
+    async def delete_outcome(  # noqa: PLR0913 - SPI with local callback
         self,
-        *args: object,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        *,
+        operation_context: OperationContext | None,
+        selector_filter: Filter | None = None,
         on_commit: Callable[[DeleteOutcome], None] | None = None,
-        **kwargs: object,
     ) -> DeleteOutcome:
-        method = _require_callable(
+        _require_callable(
             self.engine,
             "delete_with_operation",
             message="engine must implement delete_with_operation",
         )
-        call_kwargs = dict(kwargs)
-        operation_context = _require_operation_context(
-            call_kwargs.get("operation_context"),
+        context = _require_operation_context(operation_context)
+        _require_bound_update_context(operation, context)
+        engine = cast("AsyncCrudEngine", self.engine)
+        result = await engine.delete_with_operation(
+            db_name,
+            coll_name,
+            operation,
+            operation_context=context,
+            selector_filter=selector_filter,
         )
-        _require_bound_update_context(args, call_kwargs, operation_context)
-        result = await method(*args, **call_kwargs)
-        outcome = self._require_delete_outcome(
-            result,
-            operation_context=operation_context,
-        )
+        outcome = self._require_delete_outcome(result, operation_context=context)
         if self._publishes_after_return and on_commit is not None:
             on_commit(outcome)
         return outcome
 
-    async def insert_outcome(
+    async def insert_outcome(  # noqa: PLR0913 - mirrors the SPI with local callback
         self,
-        *args: object,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        overwrite: bool = True,  # noqa: FBT001, FBT002 - SPI signature
+        *,
+        operation_context: OperationContext | None,
+        bypass_document_validation: bool = False,
         on_commit: Callable[[InsertOutcome], None] | None = None,
-        **kwargs: object,
     ) -> InsertOutcome:
-        method = _require_callable(
+        _require_callable(
             self.engine,
             "insert_document",
             message="SPI v2 engine must implement insert_document",
         )
-        call_kwargs = dict(kwargs)
-        operation_context = _require_operation_context(
-            call_kwargs.get("operation_context"),
-        )
+        context = _require_operation_context(operation_context)
+        engine = cast("AsyncCrudEngine", self.engine)
         outcome = self._require_insert_outcome(
-            await method(*args, **call_kwargs),
-            operation_context=operation_context,
+            await engine.insert_document(
+                db_name,
+                coll_name,
+                document,
+                overwrite=overwrite,
+                operation_context=context,
+                bypass_document_validation=bypass_document_validation,
+            ),
+            operation_context=context,
         )
         if self._publishes_after_return and on_commit is not None and outcome:
             on_commit(outcome)
         return outcome
 
-    async def insert_many_outcomes(
+    async def insert_many_outcomes(  # noqa: PLR0913 - SPI with local callback
         self,
-        db_name: object,
-        coll_name: object,
-        documents: Sequence[object],
+        db_name: str,
+        coll_name: str,
+        documents: Sequence[Document],
         *,
+        operation_context: OperationContext | None,
+        bypass_document_validation: bool = False,
         on_commit: Callable[[InsertOutcome], None] | None = None,
-        **kwargs: object,
     ) -> tuple[InsertOutcome, ...]:
+        context = _require_operation_context(operation_context)
         if self.capabilities.batch_inserts:
-            method = _require_callable(
+            _require_callable(
                 self.engine,
                 "insert_documents",
                 message="SPI v2 engine must implement insert_documents",
             )
-            call_kwargs = dict(kwargs)
-            _require_operation_context(call_kwargs.get("operation_context"))
+            engine = cast("AsyncBatchInsertEngine", self.engine)
+            batch = documents if isinstance(documents, list) else list(documents)
             results = tuple(
-                await method(
+                await engine.insert_documents(
                     db_name,
                     coll_name,
-                    documents,
-                    **call_kwargs,
-                ),
+                    batch,
+                    operation_context=context,
+                    bypass_document_validation=bypass_document_validation,
+                )
             )
             outcomes = tuple(
-                self._require_insert_outcome(
-                    item,
-                    operation_context=call_kwargs["operation_context"],
-                )
+                self._require_insert_outcome(item, operation_context=context)
                 for item in results
             )
             if len(outcomes) > len(documents) or (
@@ -570,21 +577,14 @@ class EngineSpiAdapter:
                 message = "batch insert outcome cardinality is inconsistent"
                 raise RuntimeError(message)
         else:
-            base_context = _require_operation_context(
-                kwargs.get("operation_context"),
-            )
             outcomes_list: list[InsertOutcome] = []
             for event_index, document in enumerate(documents):
-                single_kwargs = dict(kwargs)
-                single_kwargs["operation_context"] = base_context.derive(
-                    change_event_index=event_index,
-                )
                 outcome = await self.insert_outcome(
                     db_name,
                     coll_name,
                     document,
-                    on_commit=None,
-                    **single_kwargs,
+                    operation_context=context.derive(change_event_index=event_index),
+                    bypass_document_validation=bypass_document_validation,
                 )
                 outcomes_list.append(outcome)
                 if not outcome.applied:
@@ -596,25 +596,34 @@ class EngineSpiAdapter:
                     on_commit(outcome)
         return outcomes
 
-    async def merge_outcome(
+    async def merge_outcome(  # noqa: PLR0913 - mirrors the SPI with local callback
         self,
-        *args: object,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        *,
+        when_matched: str,
+        when_not_matched: str,
+        operation_context: OperationContext | None,
         on_commit: Callable[[MergeOutcome], None] | None = None,
-        **kwargs: object,
     ) -> MergeOutcome:
-        method = _require_callable(
+        _require_callable(
             self.engine,
             "merge_document",
             message="engine must implement merge_document",
         )
-        call_kwargs = dict(kwargs)
-        operation_context = _require_operation_context(
-            call_kwargs.get("operation_context"),
-        )
-        outcome = await method(*args, **call_kwargs)
+        context = _require_operation_context(operation_context)
+        engine = cast("AsyncCrudEngine", self.engine)
         outcome = self._require_merge_outcome(
-            outcome,
-            operation_context=operation_context,
+            await engine.merge_document(
+                db_name,
+                coll_name,
+                document,
+                when_matched=when_matched,
+                when_not_matched=when_not_matched,
+                operation_context=context,
+            ),
+            operation_context=context,
         )
         if self._publishes_after_return and on_commit is not None:
             on_commit(outcome)
@@ -622,14 +631,16 @@ class EngineSpiAdapter:
 
     def open_read_snapshot(
         self,
-        *args: object,
-        operation_context=None,
-        **kwargs: object,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        operation_context: OperationContext | None,
     ) -> ReadSnapshot:
-        operation_context = _require_operation_context(operation_context)
-        _require_bound_read_context(args, kwargs, operation_context)
+        context = _require_operation_context(operation_context)
+        _require_bound_read_context(semantics, context)
         if self.capabilities.explicit_read_snapshots:
-            method = _require_callable(
+            _require_callable(
                 self.engine,
                 "open_read_snapshot",
                 message=(
@@ -637,15 +648,17 @@ class EngineSpiAdapter:
                     "implement open_read_snapshot"
                 ),
             )
-            snapshot = method(
-                *args,
-                operation_context=operation_context,
-                **kwargs,
+            engine = cast("AsyncCrudEngine", self.engine)
+            snapshot = engine.open_read_snapshot(
+                db_name,
+                coll_name,
+                semantics,
+                operation_context=context,
             )
             if not isinstance(snapshot, ReadSnapshot):
                 message = "SPI v2 engine did not return ReadSnapshot"
                 raise TypeError(message)
-            if snapshot.metadata.operation_id != operation_context.operation_id:
+            if snapshot.metadata.operation_id != context.operation_id:
                 snapshot.discard()
                 message = "SPI v2 snapshot operation identity is inconsistent"
                 raise RuntimeError(message)
@@ -654,7 +667,7 @@ class EngineSpiAdapter:
                 message = "collection reads require a STABLE SPI v2 snapshot"
                 raise RuntimeError(message)
             return snapshot
-        method = _require_callable(
+        _require_callable(
             self.engine,
             "scan_find_semantics",
             message=(
@@ -662,54 +675,65 @@ class EngineSpiAdapter:
                 "scan_find_semantics"
             ),
         )
-        source = method(
-            *args,
-            context=operation_context.session,
-            **kwargs,
+        source = cast("_ScanEngine", self.engine).scan_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=context.session,
         )
         return ReadSnapshot(
             source,
             policy=SnapshotPolicy.STABLE,
-            operation_id=operation_context.operation_id,
+            operation_id=context.operation_id,
         )
 
     async def get_document(
         self,
-        *args: object,
-        operation_context=None,
-        **kwargs: object,
-    ):
-        method = _require_callable(
+        db_name: str,
+        coll_name: str,
+        doc_id: DocumentId,
+        *,
+        projection: Projection | None = None,
+        operation_context: OperationContext | None,
+    ) -> Document | None:
+        _require_callable(
             self.engine,
             "get_document",
             message="engine must implement get_document",
         )
-        operation_context = _require_operation_context(operation_context)
-        return await method(
-            *args,
-            operation_context=operation_context,
-            **kwargs,
+        context = _require_operation_context(operation_context)
+        engine = cast("AsyncCrudEngine", self.engine)
+        return await engine.get_document(
+            db_name,
+            coll_name,
+            doc_id,
+            projection=projection,
+            operation_context=context,
         )
 
     async def count_documents(
         self,
-        *args: object,
-        operation_context=None,
-        **kwargs: object,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        operation_context: OperationContext | None,
     ) -> int:
-        method = _require_callable(
+        _require_callable(
             self.engine,
             "count_find_semantics",
             message="engine must implement count_find_semantics",
         )
-        operation_context = _require_operation_context(operation_context)
-        _require_bound_read_context(args, kwargs, operation_context)
+        context = _require_operation_context(operation_context)
+        _require_bound_read_context(semantics, context)
+        engine = cast("AsyncCrudEngine", self.engine)
         return int(
-            await method(
-                *args,
-                operation_context=operation_context,
-                **kwargs,
-            ),
+            await engine.count_find_semantics(
+                db_name,
+                coll_name,
+                semantics,
+                operation_context=context,
+            )
         )
 
     @property

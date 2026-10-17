@@ -120,26 +120,7 @@ class _NativeEngine:
 
 
 class EngineSpiV2ContractTests(unittest.TestCase):
-    def test_adapter_argument_resolution_has_explicit_missing_semantics(self):
-        marker = object()
-
-        assert (
-            adapter_module._call_argument(
-                (),
-                {},
-                name="value",
-                index=2,
-                default=marker,
-            )
-            is marker
-        )
-        with self.assertRaisesRegex(TypeError, "missing required"):
-            adapter_module._call_argument(
-                (),
-                {},
-                name="value",
-                index=2,
-            )
+    def test_adapter_rejects_a_missing_callable(self):
         with self.assertRaisesRegex(TypeError, "missing callable"):
             adapter_module._require_callable(
                 object(),
@@ -354,6 +335,8 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 "db",
                 "coll",
                 {"_id": 4},
+                when_matched="merge",
+                when_not_matched="insert",
                 operation_context=context,
                 on_commit=callbacks.append,
             )
@@ -413,6 +396,8 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                     "db",
                     "c",
                     {},
+                    when_matched="merge",
+                    when_not_matched="insert",
                     operation_context=context,
                 ),
             )
@@ -515,11 +500,12 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 explicit_read_snapshots=True,
             )
 
-            async def insert_document(
+            async def insert_document(  # noqa: PLR0913 - SPI signature
                 self,
                 db_name,
                 coll_name,
                 document,
+                overwrite=True,  # noqa: FBT002 - SPI signature
                 *,
                 operation_context,
                 bypass_document_validation=False,
@@ -578,13 +564,15 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 explicit_read_snapshots=True,
             )
 
-            async def insert_document(
+            async def insert_document(  # noqa: PLR0913 - SPI signature
                 self,
                 db_name,
                 coll_name,
                 document,
+                overwrite=True,  # noqa: FBT002 - SPI signature
                 *,
                 operation_context,
+                bypass_document_validation=False,
             ):
                 self.calls.append((db_name, coll_name, document))
                 return InsertOutcome(applied=True, document=document)
@@ -735,7 +723,7 @@ class EngineSpiV2ContractTests(unittest.TestCase):
     def test_v2_adapter_rejects_missing_operation_context(self):
         adapter = EngineSpiAdapter(_NativeEngine())
 
-        with self.assertRaisesRegex(TypeError, "OperationContext"):
+        with self.assertRaisesRegex(TypeError, "operation_context"):
             asyncio.run(adapter.insert_outcome("db", "coll", {"_id": 1}))
 
     def test_v2_adapter_rejects_a_divergent_embedded_update_context(self):

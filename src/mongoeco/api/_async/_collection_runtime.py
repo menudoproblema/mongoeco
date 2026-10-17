@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api.operations import (
@@ -17,7 +17,7 @@ from mongoeco.core.identity import (
     is_valid_root_document_id,
     materialize_replacement_document,
 )
-from mongoeco.core.operation_context import resolve_operation_session
+from mongoeco.core.operation_context import OperationContext, resolve_operation_session
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import OperationFailure, WriteError
 from mongoeco.session import ClientSession, EngineTransactionContext
@@ -28,12 +28,14 @@ from mongoeco.types import (
     Filter,
     HintSpec,
     ObjectId,
+    Projection,
     SortSpec,
 )
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import TypedDict
 
     from mongoeco.api._async.collection import AsyncCollection
     from mongoeco.core.query_plan import QueryNode
@@ -45,6 +47,14 @@ if TYPE_CHECKING:
     )
     from mongoeco.engines.snapshots import ReadSnapshot
 
+    class _ChangePayload(TypedDict):
+        operation_type: str
+        db_name: str
+        coll_name: str
+        document_key: Document
+        full_document: Document | None
+        update_description: dict[str, object] | None
+
 
 _CHANGE_STREAM_TRANSACTION_PREFIX = "change_stream_hub:"
 _PENDING_CHANGE_EVENTS_KEY = "pending_change_events"
@@ -53,11 +63,16 @@ _PENDING_CHANGE_EVENTS_KEY = "pending_change_events"
 class CollectionRuntimeCoordinator:
     def __init__(self, collection: "AsyncCollection"):
         self._collection = collection
-        self._engine_spi = getattr(collection, "_validated_engine_spi", None)
-        if self._engine_spi is None:
-            self._engine_spi = EngineSpiAdapter(
-                getattr(collection, "_engine", object())
-            )
+        engine_spi: EngineSpiAdapter | None = getattr(
+            collection,
+            "_validated_engine_spi",
+            None,
+        )
+        self._engine_spi: EngineSpiAdapter = (
+            engine_spi
+            if engine_spi is not None
+            else EngineSpiAdapter(getattr(collection, "_engine", object()))
+        )
         try:
             self._engine_spi.prepare_change_delivery(
                 getattr(collection, "_change_hub", None)
@@ -66,7 +81,10 @@ class CollectionRuntimeCoordinator:
             # Lazy clients register immediately before their first write.
             pass
 
-    def _prepare_engine_change_delivery(self, operation_context) -> None:
+    def _prepare_engine_change_delivery(
+        self,
+        operation_context: OperationContext | None,
+    ) -> None:
         change_hub = self._collection._change_hub
         self._engine_spi.prepare_change_delivery(change_hub)
         if (
@@ -90,7 +108,10 @@ class CollectionRuntimeCoordinator:
             commit=lambda _session: self._dispatch_engine_changes(),
         )
 
-    def _dispatch_engine_changes(self, operation_context=None) -> None:
+    def _dispatch_engine_changes(
+        self,
+        operation_context: OperationContext | None = None,
+    ) -> None:
         if (
             operation_context is not None
             and operation_context.session is not None
@@ -253,7 +274,7 @@ class CollectionRuntimeCoordinator:
         ) and not self._change_hub_should_publish(change_hub):
             self._mark_change_hub_gap(change_hub)
             return
-        payload = {
+        payload: _ChangePayload = {
             "operation_type": operation_type,
             "db_name": self._collection._db_name,
             "coll_name": self._collection._collection_name,
@@ -301,7 +322,7 @@ class CollectionRuntimeCoordinator:
 
     def _pending_transaction_change_events(
         self, session: ClientSession
-    ) -> list[dict[str, object]]:
+    ) -> list[_ChangePayload]:
         change_hub = self._collection._change_hub
         if change_hub is None:
             return []
@@ -339,7 +360,7 @@ class CollectionRuntimeCoordinator:
                 return
             for event in queued:
                 if isinstance(event, dict):
-                    self._publish_change_payload(event)
+                    self._publish_change_payload(cast("_ChangePayload", event))
 
         def _abort(active_session: ClientSession) -> None:
             active_context = active_session.get_engine_context(engine_key)
@@ -356,7 +377,7 @@ class CollectionRuntimeCoordinator:
         )
         return pending_events
 
-    def _publish_change_payload(self, payload: dict[str, object]) -> None:
+    def _publish_change_payload(self, payload: _ChangePayload) -> None:
         change_hub = self._collection._change_hub
         if change_hub is None:
             return
@@ -383,9 +404,7 @@ class CollectionRuntimeCoordinator:
         ):
             return
         self.publish_change_event(
-            operation_type=(
-                "insert" if result.did_upsert else matched_operation_type
-            ),
+            operation_type=("insert" if result.did_upsert else matched_operation_type),
             document_key={"_id": deepcopy(document["_id"])},
             full_document=document,
             session=session,
@@ -510,7 +529,7 @@ class CollectionRuntimeCoordinator:
         session: ClientSession | None,
         bypass_document_validation: bool,
         on_commit: Callable[[InsertOutcome], None] | None,
-        operation_context=None,
+        operation_context: OperationContext | None = None,
     ) -> InsertOutcome:
         self._prepare_engine_change_delivery(operation_context)
         outcome = await self._engine_spi.insert_outcome(
@@ -532,7 +551,7 @@ class CollectionRuntimeCoordinator:
         session: ClientSession | None,
         bypass_document_validation: bool,
         on_commit: Callable[[InsertOutcome], None] | None,
-        operation_context=None,
+        operation_context: OperationContext | None = None,
     ) -> tuple[InsertOutcome, ...]:
         self._prepare_engine_change_delivery(operation_context)
         outcomes = await self._engine_spi.insert_many_outcomes(
@@ -552,7 +571,7 @@ class CollectionRuntimeCoordinator:
         *,
         when_matched: str,
         when_not_matched: str,
-        operation_context,
+        operation_context: OperationContext,
     ) -> MergeOutcome:
         self._prepare_engine_change_delivery(operation_context)
         outcome = await self._engine_spi.merge_outcome(
@@ -598,8 +617,8 @@ class CollectionRuntimeCoordinator:
         self,
         document_id: DocumentId,
         *,
-        projection,
-        operation_context,
+        projection: Projection | None,
+        operation_context: OperationContext,
     ) -> Document | None:
         return await self._engine_spi.get_document(
             self._collection._db_name,

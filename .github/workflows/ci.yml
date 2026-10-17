@@ -204,6 +204,8 @@ jobs:
             -m mongoeco.pytest_plugin -m mongoeco.pytest_asyncio \
             -m mongoeco.pytest_anyio -m mongoeco._pytest_runtime \
             -m mongoeco.wire._lifecycle
+          python -m mypy --follow-imports=silent --ignore-missing-imports \
+            -m mongoeco.engines.adapter -m mongoeco.api._async._collection_runtime
 
       - name: Validate independent SPI v2 consumer
         run: python scripts/smoke_external_engine.py

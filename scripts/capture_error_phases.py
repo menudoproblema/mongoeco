@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import pymongo
 
+from tests.differential.engine_boundary_cases import BOUNDARY_CASES
 from tests.differential.engine_preparation_cases import PREPARATION_CASES
 from tests.differential.error_absence_cases import EXTRA_CASES
 from tests.differential.error_composition_cases import COMPOSITION_CASES
@@ -59,16 +60,18 @@ def capture(  # noqa: PLR0913 - capture inputs and explicit corpus selection
     corpus="errors",
     batch_size=64,
 ):
-    cases = (
-        PREPARATION_CASES
-        if corpus == "preparation"
-        else CASES + EXTRA_CASES + COMPOSITION_CASES
-    )
-    inputs = (
-        (*INPUTS, "tests/differential/engine_preparation_cases.py")
-        if corpus == "preparation"
-        else INPUTS
-    )
+    corpora = {
+        "errors": (CASES + EXTRA_CASES + COMPOSITION_CASES, INPUTS),
+        "preparation": (
+            PREPARATION_CASES,
+            (*INPUTS, "tests/differential/engine_preparation_cases.py"),
+        ),
+        "boundary": (
+            BOUNDARY_CASES,
+            (*INPUTS, "tests/differential/engine_boundary_cases.py"),
+        ),
+    }
+    cases, inputs = corpora[corpus]
     name = "phase_reference_" + uuid.uuid4().hex[:16]
     batches = [
         cases[start : start + batch_size] for start in range(0, len(cases), batch_size)
@@ -148,7 +151,11 @@ def capture(  # noqa: PLR0913 - capture inputs and explicit corpus selection
         },
         "observations": sync,
     }
-    fixture_prefix = "engine_preparation" if corpus == "preparation" else "error_phases"
+    fixture_prefix = {
+        "preparation": "engine_preparation",
+        "boundary": "engine_boundary",
+        "errors": "error_phases",
+    }[corpus]
     path = output or (
         ROOT
         / "tests/fixtures"
@@ -202,7 +209,9 @@ def main():
     )
     parser.add_argument("--target", choices=("7.0", "8.0", "9.0"))
     parser.add_argument("--uri", default=os.getenv("MONGOECO_REAL_MONGODB_URI"))
-    parser.add_argument("--corpus", choices=("errors", "preparation"), default="errors")
+    parser.add_argument(
+        "--corpus", choices=("errors", "preparation", "boundary"), default="errors"
+    )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--check", type=Path)
     parser.add_argument(

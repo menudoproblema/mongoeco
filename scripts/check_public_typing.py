@@ -65,28 +65,39 @@ def _observed_errors(output: str) -> set[tuple[int, str]]:
     return observed
 
 
-def main() -> int:
-    positive = _run_mypy(POSITIVE)
+def _check_contract(positive_path: Path, negative_path: Path, label: str) -> int:
+    positive = _run_mypy(positive_path)
     if positive.returncode != 0:
-        sys.stderr.write("positive public typing contract failed\n")
+        sys.stderr.write(f"positive {label} typing contract failed\n")
         sys.stderr.write(positive.stdout)
         sys.stderr.write(positive.stderr)
         return 1
 
-    negative = _run_mypy(NEGATIVE)
-    expected = _expected_errors(NEGATIVE)
+    negative = _run_mypy(negative_path)
+    expected = _expected_errors(negative_path)
     observed = _observed_errors(negative.stdout)
     if negative.returncode == 0 or observed != expected:
-        sys.stderr.write("negative public typing contract diverged\n")
+        sys.stderr.write(f"negative {label} typing contract diverged\n")
         sys.stderr.write(f"expected={sorted(expected)!r}\n")
         sys.stderr.write(f"observed={sorted(observed)!r}\n")
         sys.stderr.write(negative.stdout)
         sys.stderr.write(negative.stderr)
         return 1
     sys.stdout.write(
-        f"public typing contract passed: positive=1, negative-errors={len(expected)}\n",
+        f"{label} typing contract passed: positive=1, "
+        f"negative-errors={len(expected)}\n",
     )
     return 0
+
+
+def main() -> int:
+    if _check_contract(POSITIVE, NEGATIVE, "public"):
+        return 1
+    return _check_contract(
+        ROOT / "tests/typing/engine_boundary_positive.py",
+        ROOT / "tests/typing/engine_boundary_negative.py",
+        "engine boundary",
+    )
 
 
 if __name__ == "__main__":

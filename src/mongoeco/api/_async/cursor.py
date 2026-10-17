@@ -13,6 +13,7 @@ from mongoeco.api.argument_validation import (
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
 )
+from mongoeco.api.operations import FindOperation
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
@@ -268,7 +269,7 @@ class AsyncCursor:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
-        let: dict[str, object] | None = None,
+        let: Mapping[str, object] | None = None,
         execution_variables: Mapping[str, object] | None = None,
         operation_context: OperationContext | None = None,
         session: ClientSession | None = None,
@@ -314,7 +315,7 @@ class AsyncCursor:
         self._exhausted = False
         self._closed = False
         self._active_async_iterable: _AsyncCursorIterator | None = None
-        self._operation_cache = None
+        self._operation_cache: FindOperation | None = None
         self._semantics_cache = None
         self._batch_source = None
         self._retired_sources: list[object] = []
@@ -357,7 +358,7 @@ class AsyncCursor:
     def _current_dialect(self):
         return getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
 
-    def _base_operation(self):
+    def _base_operation(self) -> FindOperation:
         if self._operation_cache is None:
             self._operation_cache = self._as_operation()
         return self._operation_cache
@@ -777,7 +778,7 @@ class AsyncCursor:
             apply_codec_options=self._apply_codec_options,
         )
 
-    def _as_operation(self):
+    def _as_operation(self) -> FindOperation:
         if self._operation_cache is None:
             from mongoeco.api.operations import compile_find_operation
 

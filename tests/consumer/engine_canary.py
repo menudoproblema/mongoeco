@@ -95,11 +95,13 @@ class ExternalCanaryEngine:
         replacement_document: Document | None = None,
     ) -> MutationOutcome:
         del operation_context, upsert, upsert_seed, bypass_document_validation
-        effective_filter = selector_filter or operation.filter_spec
         async with self._mutation_lock:
             collection = self._collection(db_name, coll_name)
             for identifier, current in collection.items():
-                if not self._matches(current, effective_filter):
+                if not self._matches(current, operation.filter_spec) or (
+                    selector_filter is not None
+                    and not self._matches(current, selector_filter)
+                ):
                     continue
                 before = deepcopy(current)
                 after = (
@@ -140,11 +142,12 @@ class ExternalCanaryEngine:
         selector_filter: object | None = None,
     ) -> DeleteOutcome:
         del operation_context
-        effective_filter = selector_filter or operation.filter_spec
         async with self._mutation_lock:
             collection = self._collection(db_name, coll_name)
             for identifier, current in tuple(collection.items()):
-                if self._matches(current, effective_filter):
+                if self._matches(current, operation.filter_spec) and (
+                    selector_filter is None or self._matches(current, selector_filter)
+                ):
                     del collection[identifier]
                     return DeleteOutcome(DeleteResult(1), deepcopy(current))
         return DeleteOutcome(DeleteResult(0))

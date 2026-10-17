@@ -91,7 +91,7 @@ async def run_engine_conformance(
                 )
             )
             capabilities = None
-        for definition in (() if capabilities is None else _checks(capabilities)):
+        for definition in () if capabilities is None else _checks(capabilities):
             if definition.profile not in selected:
                 continue
             if not definition.applicable:
@@ -360,6 +360,14 @@ async def _check_operation_context(
 
 async def _check_atomic_mutation(engine: object, db: str, coll: str) -> None:
     context = _context()
+    decoy = {"_id": "cas-decoy", "revision": 1, "fence": 0}
+    await engine.insert_document(
+        db,
+        coll,
+        decoy,
+        overwrite=False,
+        operation_context=context,
+    )
     await engine.insert_document(
         db,
         coll,
@@ -374,8 +382,8 @@ async def _check_atomic_mutation(engine: object, db: str, coll: str) -> None:
         await start.wait()
         competitor_context = _context()
         operation = compile_update_operation(
-            {"_id": "cas", "revision": 1},
-            update_spec={"$inc": {"revision": 1, "fence": 1}},
+            {"_id": "cas"},
+            update_spec={"$set": {"revision": 2, "fence": 1}},
             dialect=MONGODB_DIALECT_70,
         ).with_overrides(
             context=competitor_context,
@@ -386,6 +394,7 @@ async def _check_atomic_mutation(engine: object, db: str, coll: str) -> None:
             coll,
             operation,
             operation_context=competitor_context,
+            selector_filter={"revision": 1},
         )
 
     competitors = [asyncio.create_task(compete()) for _ in range(8)]
@@ -408,6 +417,201 @@ async def _check_atomic_mutation(engine: object, db: str, coll: str) -> None:
     if stored != {"_id": "cas", "revision": 2, "fence": 1}:
         message = "compare-and-set must commit only the winning mutation"
         raise AssertionError(message)
+    if (
+        await engine.get_document(
+            db,
+            coll,
+            "cas-decoy",
+            operation_context=context,
+        )
+        != decoy
+    ):
+        message = "atomic selection must preserve the other identity"
+        raise AssertionError(message)
+    for outcome in outcomes:
+        won = outcome.matched_count == 1
+        if (
+            outcome.modified_count != int(won)
+            or outcome.result.did_upsert
+            or outcome.before_document
+            != ({"_id": "cas", "revision": 1, "fence": 0} if won else None)
+            or outcome.after_document != (stored if won else None)
+        ):
+            message = (
+                "atomic selection must expose only the winning images and counters"
+            )
+            raise AssertionError(message)
+    await _check_identity_selector(engine, db, coll)
+    await _check_atomic_delete(engine, db, coll)
+
+
+async def _check_atomic_delete(engine: object, db: str, coll: str) -> None:
+    context = _context()
+    other = {"_id": "delete-decoy", "eligible": 1}
+    target = {"_id": "delete-cas", "eligible": 1}
+    for document in (other, target):
+        await engine.insert_document(
+            db,
+            coll,
+            document,
+            overwrite=False,
+            operation_context=context,
+        )
+    start = asyncio.Event()
+
+    async def compete() -> DeleteOutcome:
+        await start.wait()
+        context = _context()
+        operation = compile_update_operation(
+            {"_id": "delete-cas"},
+            dialect=context.dialect,
+        ).bind(context)
+        return await engine.delete_with_operation(
+            db,
+            coll,
+            operation,
+            operation_context=context,
+            selector_filter={"eligible": 1},
+        )
+
+    competitors = [asyncio.create_task(compete()) for _ in range(8)]
+    await asyncio.sleep(0)
+    start.set()
+    outcomes = await asyncio.gather(*competitors)
+    if not all(isinstance(outcome, DeleteOutcome) for outcome in outcomes):
+        message = "atomic delete selection must return DeleteOutcome"
+        raise AssertionError(message)
+    if sum(outcome.deleted_count for outcome in outcomes) != 1 or any(
+        outcome.deleted_document != (target if outcome.deleted_count == 1 else None)
+        for outcome in outcomes
+    ):
+        message = "atomic delete selection must expose one winner and its image"
+        raise AssertionError(message)
+    if (
+        await engine.get_document(
+            db,
+            coll,
+            target["_id"],
+            operation_context=context,
+        )
+        is not None
+        or await engine.get_document(
+            db,
+            coll,
+            other["_id"],
+            operation_context=context,
+        )
+        != other
+    ):
+        message = "atomic delete selection must preserve the other identity"
+        raise AssertionError(message)
+
+
+async def _check_identity_selector(engine: object, db: str, coll: str) -> None:
+    for action in ("update", "delete"):
+        for index, (selector, eligible) in enumerate(
+            ((None, 0), ({}, 0), ({"eligible": 1}, 1), ({"eligible": 1}, 0)),
+        ):
+            namespace = f"{coll}_{action}_{index}"
+            context = _context()
+            other = {"_id": "a", "eligible": 1}
+            target = {"_id": "b", "eligible": eligible}
+            for document in (other, target):
+                await engine.insert_document(
+                    db,
+                    namespace,
+                    document,
+                    overwrite=False,
+                    operation_context=context,
+                )
+            operation = compile_update_operation(
+                {"_id": "b"},
+                update_spec={"$set": {"eligible": 2}},
+                dialect=context.dialect,
+            ).bind(context)
+            method = getattr(engine, f"{action}_with_operation")
+            matches = selector is None or not selector or eligible == 1
+            outcome = await method(
+                db,
+                namespace,
+                operation,
+                operation_context=context,
+                selector_filter=selector,
+            )
+            if action == "update":
+                expected = {"_id": "b", "eligible": 2} if matches else target
+                valid = (
+                    isinstance(outcome, MutationOutcome)
+                    and outcome.matched_count == int(matches)
+                    and outcome.modified_count == int(matches)
+                    and not outcome.result.did_upsert
+                    and outcome.before_document == (target if matches else None)
+                    and outcome.after_document == (expected if matches else None)
+                )
+            else:
+                expected = None if matches else target
+                valid = (
+                    isinstance(outcome, DeleteOutcome)
+                    and outcome.deleted_count == int(matches)
+                    and outcome.deleted_document == (target if matches else None)
+                )
+            if (
+                not valid
+                or await engine.get_document(
+                    db,
+                    namespace,
+                    "b",
+                    operation_context=context,
+                )
+                != expected
+            ):
+                message = (
+                    f"{action} selection must intersect identity and selector, "
+                    "including images and counters"
+                )
+                raise AssertionError(message)
+            # A repeated conditional write or delete must not move to the decoy.
+            if selector or action == "delete":
+                repeated = await method(
+                    db,
+                    namespace,
+                    operation,
+                    operation_context=context,
+                    selector_filter=selector,
+                )
+                empty = (
+                    isinstance(repeated, MutationOutcome)
+                    and repeated.matched_count == repeated.modified_count == 0
+                    and not repeated.result.did_upsert
+                    and repeated.before_document is repeated.after_document is None
+                    if action == "update"
+                    else isinstance(repeated, DeleteOutcome)
+                    and repeated.deleted_count == 0
+                    and repeated.deleted_document is None
+                )
+                if not empty:
+                    message = f"{action} repeated selection must return no match"
+                    raise AssertionError(message)
+            if (
+                await engine.get_document(
+                    db,
+                    namespace,
+                    "a",
+                    operation_context=context,
+                )
+                != other
+                or await engine.get_document(
+                    db,
+                    namespace,
+                    "b",
+                    operation_context=context,
+                )
+                != expected
+            ):
+                message = (
+                    f"{action} selection must preserve unrelated and rejected documents"
+                )
+                raise AssertionError(message)
 
 
 async def _check_injected_clock(engine: object, db: str, coll: str) -> None:
