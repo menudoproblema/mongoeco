@@ -8,6 +8,21 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve the dialect of unbound find/update operations when converting them to
+  engine semantics. Respect explicitly empty update bindings in selector
+  preparation. Keep the public API and Engine SPI v2 unchanged.
+
+### Changed
+
+- Consolidate internal context binding, paired identity selection and
+  planning/explain dispatch. Reuse SQLite mutation semantics within the same
+  attempt, avoiding a second selector compilation while retaining atomic
+  revalidation, deadline phases and the existing file format. Add regression
+  coverage and MongoDB 7/8/9 references for both engines and sync/async clients.
+  See [implementation and validation](docs/engine-preparation-validation.md).
+
 ## [4.10.1] - 2026-10-16
 
 ### Fixed

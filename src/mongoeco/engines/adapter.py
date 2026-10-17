@@ -5,12 +5,13 @@ import uuid
 
 from dataclasses import replace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from mongoeco.api.operations import UpdateOperation
 from mongoeco.core.operation_context import (
     ChangePublicationPolicy,
     OperationContext,
+    resolve_operation_session,
 )
 from mongoeco.core.search_execution import SearchRequest
 from mongoeco.core.search_models import (
@@ -39,6 +40,15 @@ from mongoeco.types import QueryPlanExplanation
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+
+    from mongoeco.api.operations import FindOperation
+    from mongoeco.compat import MongoDialect
+    from mongoeco.engines.base import (
+        AsyncExplainSemanticsEngine,
+        AsyncReadPlanningEngine,
+    )
+    from mongoeco.engines.semantic_core import EngineReadExecutionPlan
+    from mongoeco.session import ClientSession
 
 
 _DOCUMENT_ARGUMENT_INDEX = 2
@@ -134,6 +144,56 @@ class EngineSpiAdapter:
         # thread; keep this tiny state guard reentrant like the close path.
         self._change_delivery_lock = threading.RLock()
         self._prepared_change_sink: object | None = None
+
+    async def plan_find_execution(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: FindOperation,
+        *,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan:
+        engine = cast("AsyncReadPlanningEngine", self.engine)
+        return await engine.plan_find_execution(
+            db_name,
+            coll_name,
+            operation,
+            dialect=dialect,
+            context=resolve_operation_session(operation.context, context),
+        )
+
+    async def plan_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> EngineReadExecutionPlan:
+        engine = cast("AsyncReadPlanningEngine", self.engine)
+        return await engine.plan_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=resolve_operation_session(semantics.operation_context, context),
+        )
+
+    async def explain_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation:
+        engine = cast("AsyncExplainSemanticsEngine", self.engine)
+        return await engine.explain_find_semantics(
+            db_name,
+            coll_name,
+            semantics,
+            context=resolve_operation_session(semantics.operation_context, context),
+        )
 
     async def execute_search(
         self,

@@ -295,7 +295,7 @@ def compile_find_semantics_from_operation(
         hint=operation.hint,
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
-        dialect=dialect,
+        dialect=operation.dialect if dialect is None else dialect,
         compiled_query=compiled_query,
         variables=operation.let if variables is None else variables,
         operation_context=operation.context,
@@ -312,7 +312,7 @@ def compile_update_semantics(
     effective_dialect = (
         operation.context.dialect
         if operation.context is not None
-        else (dialect or MONGODB_DIALECT_70)
+        else (operation.dialect if dialect is None else dialect)
     )
     if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
         raise ValueError("UpdateOperation must include compiled update plans")
@@ -331,7 +331,7 @@ def compile_update_semantics(
                 dialect=effective_dialect,
                 variables=operation.context.expressions
                 if operation.context is not None
-                else (variables or operation.let),
+                else (operation.let if variables is None else variables),
             )
             if selector_filter is not None
             else None

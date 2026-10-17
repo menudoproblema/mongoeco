@@ -188,21 +188,19 @@ class CollectionRuntimeCoordinator:
         execution_lineage: tuple[object, ...] = ()
         fallback_reason: str | None = None
         if operation is not None:
-            planner = getattr(self._collection._engine, "plan_find_execution", None)
-            if callable(planner):
-                try:
-                    execution_plan = await planner(
-                        self._collection._db_name,
-                        self._collection._collection_name,
-                        operation,
-                        dialect=self._collection._mongodb_dialect,
-                        context=None,
-                    )
-                    execution_lineage = execution_plan.execution_lineage
-                    fallback_reason = execution_plan.fallback_reason
-                except Exception:
-                    execution_lineage = ()
-                    fallback_reason = None
+            try:
+                execution_plan = await self._engine_spi.plan_find_execution(
+                    self._collection._db_name,
+                    self._collection._collection_name,
+                    operation,
+                    dialect=self._collection._mongodb_dialect,
+                    context=None,
+                )
+                execution_lineage = execution_plan.execution_lineage
+                fallback_reason = execution_plan.fallback_reason
+            except Exception:
+                execution_lineage = ()
+                fallback_reason = None
         resolved_command = command
         if resolved_command is None and command_factory is not None:
             resolved_command = command_factory()

@@ -56,7 +56,17 @@ from mongoeco.types import (
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
     from mongoeco.api.argument_validation import HintSpec, ProjectionInput
+    from mongoeco.compat import MongoDialect
+    from mongoeco.core.query_plan import QueryNode
     from mongoeco.session import ClientSession
+
+
+def _document_selection(
+    document_id: DocumentId, *, dialect: MongoDialect,
+) -> tuple[Filter, QueryNode]:
+    """Build the identity filter and its plan together, without recompiling updates."""
+    identity_filter = {"_id": document_id}
+    return identity_filter, compile_filter(identity_filter, dialect=dialect)
 
 
 def _bind_execution_context(
@@ -107,7 +117,9 @@ async def _delete_selected_document(
     session: ClientSession | None,
 ) -> bool:
     document_id = _selected_document_id(document)
-    identity_filter = {"_id": document_id}
+    identity_filter, identity_plan = _document_selection(
+        document_id, dialect=collection._mongodb_dialect,
+    )
     operation_context = selector_operation.context
     if operation_context is None:
         message = "delete operation is missing OperationContext"
@@ -120,10 +132,7 @@ async def _delete_selected_document(
         collation=selector_operation.collation,
         let=selector_operation.let,
         dialect=collection._mongodb_dialect,
-        plan=compile_filter(
-            identity_filter,
-            dialect=collection._mongodb_dialect,
-        ),
+        plan=identity_plan,
         planning_mode=collection._planning_mode,
     ).bind(item_context)
     result = await collection._engine_delete_with_operation(
@@ -322,9 +331,8 @@ async def update_many(
     modified_count = 0
     for event_index, matched in enumerate(matched_documents):
         matched_id = _selected_document_id(matched)
-        identity_filter = {"_id": matched_id}
-        identity_plan = compile_filter(
-            identity_filter, dialect=collection._mongodb_dialect
+        identity_filter, identity_plan = _document_selection(
+            matched_id, dialect=collection._mongodb_dialect,
         )
         operation_context = operation.context
         if operation_context is None:

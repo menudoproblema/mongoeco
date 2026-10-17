@@ -10,6 +10,7 @@ from itertools import islice
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async.cursor import (
     HintSpec,
+    _engine_spi,
     _ensure_operation_executable,
     _operation_issue_message,
     _resolve_planning_mode,
@@ -361,13 +362,9 @@ class AsyncAggregationCursor:
                         now=utc_bson_now(),
                     ).with_bindings(self._let),
                 )
-                self._operation_context = context
-                self._execution_context = context.expressions
-                self._operation = operation.bind(context)
-            else:
-                self._operation_context = context
-                self._execution_context = context.expressions
-                self._operation = operation.bind(context)
+            self._operation_context = context
+            self._execution_context = context.expressions
+            self._operation = operation.bind(context)
         self._session = resolve_operation_session(
             self._operation_context,
             session,
@@ -2376,7 +2373,7 @@ class AsyncAggregationCursor:
                 operation,
                 dialect=dialect,
             )
-            engine_plan = await self._collection._engine.explain_find_semantics(
+            engine_plan = await _engine_spi(self._collection).explain_find_semantics(
                 self._collection._db_name,
                 self._collection._collection_name,
                 semantics,

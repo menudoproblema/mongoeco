@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "mongoeco-sqlite-fixture/v1",
+  "fixture": "mongoeco-4.10.1-preparation.sqlite",
+  "fixtureSha256": "8dcc2c7509990086b0f4ead8dde6d0cf66195f8498b7a4a25ed83726b53f5aed",
+  "generator": {
+    "version": "4.10.1",
+    "artifactSha256": "0b4419ec41777a2914e1a331473c5bc2dc3e9770c31a61061b894d89135a7ddd",
+    "python": "3.14.5",
+    "sqlite": "3.53.4",
+    "fromSitePackages": true,
+    "payload": "scripts/_sqlite_45_fixture_payload.py:_generate",
+    "payloadSha256": "e37650897f01a7074720a2f1b01a42733a8168d2c080147d2a390320b641ea5e"
+  },
+  "database": {
+    "namespace": "bridge.items",
+    "documentCount": 3,
+    "consumerCheckpoint": 2,
+    "pendingSequences": [
+      3
+    ],
+    "operationId": "mongoeco-4.10.1-preparation-operation"
+  }
+}

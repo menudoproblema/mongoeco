@@ -39,6 +39,11 @@ from mongoeco.types import (
 _DEFAULT_LOCAL_PREFETCH_SIZE = 101
 
 
+def _engine_spi(collection) -> EngineSpiAdapter:
+    adapter = getattr(collection, "_validated_engine_spi", None)
+    return adapter if adapter is not None else EngineSpiAdapter(collection._engine)
+
+
 def _serialize_explanation(result: object) -> dict[str, object]:
     to_document = getattr(result, "to_document", None)
     if callable(to_document):
@@ -826,9 +831,8 @@ class AsyncCursor:
             ).to_document()
             explanation["cxp"] = _find_explain_cxp_projection(self._filter_spec)
             return explanation
-        engine = self._collection._engine
         semantics = self._base_semantics()
-        result = await engine.explain_find_semantics(
+        result = await _engine_spi(self._collection).explain_find_semantics(
             self._collection._db_name,
             self._collection._collection_name,
             semantics,

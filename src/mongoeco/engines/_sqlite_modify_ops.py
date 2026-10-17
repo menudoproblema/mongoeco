@@ -230,11 +230,16 @@ def update_with_operation(
     invalidate_collection_features_cache: Callable[[str, str], None],
     delete_index_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
     replacement_document: Document | None = None,
+    prepared_semantics: object | None = None,
 ) -> MutationOutcome:
-    semantics = compile_update_semantics(
-        operation,
-        dialect=dialect,
-        selector_filter=selector_filter,
+    semantics = (
+        prepared_semantics
+        if prepared_semantics is not None
+        else compile_update_semantics(
+            operation,
+            dialect=dialect,
+            selector_filter=selector_filter,
+        )
     )
     conn = require_connection()
     purge_expired_documents(conn, db_name, coll_name)

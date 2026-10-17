@@ -1,0 +1,2735 @@
+{
+  "mongodb": "7.0.43",
+  "fcv": {
+    "version": "7.0"
+  },
+  "sdk": "4.19.0",
+  "native_sync_async_equal": true,
+  "native_physical_connection_reuse": true,
+  "capture_batches": 1,
+  "inputs_sha256": {
+    "tests/differential/error_phase_cases.py": "13095536f3c5e90ccb7c7133654842c2ba371e7467c6ac1f0bb71d95a0373bae",
+    "tests/differential/error_absence_cases.py": "af2e2e416f08d6cb1eb826a1fd3d5454540c40ed02ccc7eb4b209a16cfbe5c9e",
+    "tests/differential/error_composition_cases.py": "1231f7528b184e828475f05f6bca53e8fa9c0a1c5c97a4fb96d1bd2cd2b908be",
+    "tests/differential/write_cases.py": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+    "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/differential/engine_preparation_cases.py": "9dd4142758e4f236d12ec0859b596f60827a8634f4ae0f985d2835fedfa81889"
+  },
+  "observations": {
+    "prep_update_let_selector": [
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_many",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "8"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "8"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_update_partial": [
+      {
+        "error": {
+          "family": "WriteError",
+          "module": "pymongo.errors",
+          "code": 14,
+          "details": {
+            "index": {
+              "$numberInt": "0"
+            },
+            "code": {
+              "$numberInt": "14"
+            },
+            "errmsg": "Cannot apply $inc to a value of non-numeric type. {_id: \"c\"} has the field 'n' of non-numeric type string"
+          },
+          "message": "Cannot apply $inc to a value of non-numeric type. {_id: \"c\"} has the field 'n' of non-numeric type string, full error: {'index': 0, 'code': 14, 'errmsg': 'Cannot apply $inc to a value of non-numeric type. {_id: \"c\"} has the field \\'n\\' of non-numeric type string'}"
+        },
+        "method": "update_many",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "3"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "3"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_pipeline_partial": [
+      {
+        "error": {
+          "family": "WriteError",
+          "module": "pymongo.errors",
+          "code": 14,
+          "details": {
+            "index": {
+              "$numberInt": "0"
+            },
+            "code": {
+              "$numberInt": "14"
+            },
+            "errmsg": "$add only supports numeric or date types, not string"
+          },
+          "message": "$add only supports numeric or date types, not string, full error: {'index': 0, 'code': 14, 'errmsg': '$add only supports numeric or date types, not string'}"
+        },
+        "method": "update_many",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "3"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "3"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_delete_selector": [
+      {
+        "result": {
+          "acknowledged": true,
+          "deleted_count": 2
+        },
+        "method": "delete_many",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_delete_let": [
+      {
+        "result": {
+          "acknowledged": true,
+          "deleted_count": 1
+        },
+        "method": "delete_many",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_replacement_seed": [
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "new",
+          "did_upsert": true
+        },
+        "method": "replace_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": "new",
+            "n": {
+              "$numberInt": "8"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": "new",
+            "n": {
+              "$numberInt": "8"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_update_null_upsert": [
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 0,
+          "upserted_id": null,
+          "did_upsert": true
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": null,
+            "n": {
+              "$numberInt": "8"
+            }
+          },
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": null,
+            "n": {
+              "$numberInt": "8"
+            }
+          },
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_fam_null_upsert": [
+      {
+        "result": {
+          "_id": null,
+          "n": {
+            "$numberInt": "8"
+          }
+        },
+        "method": "find_one_and_update",
+        "documents": [
+          {
+            "_id": null,
+            "n": {
+              "$numberInt": "8"
+            }
+          },
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": null,
+            "n": {
+              "$numberInt": "8"
+            }
+          },
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_replacement_collision": [
+      {
+        "error": {
+          "family": "DuplicateKeyError",
+          "module": "pymongo.errors",
+          "code": 11000,
+          "details": {
+            "ok": {
+              "$numberDouble": "0.0"
+            },
+            "errmsg": "Plan executor error during findAndModify :: caused by :: E11000 duplicate key error collection: <namespace> index: key_1 dup key: { key: 1 }",
+            "code": {
+              "$numberInt": "11000"
+            },
+            "codeName": "DuplicateKey",
+            "keyPattern": {
+              "key": {
+                "$numberInt": "1"
+              }
+            },
+            "keyValue": {
+              "key": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "message": "Plan executor error during findAndModify :: caused by :: E11000 duplicate key error collection: <namespace> index: key_1 dup key: { key: 1 }, full error: {'ok': 0.0, 'errmsg': 'Plan executor error during findAndModify :: caused by :: E11000 duplicate key error collection: <namespace> index: key_1 dup key: { key: 1 }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'key': 1}, 'keyValue': {'key': 1}}"
+        },
+        "method": "find_one_and_replace",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          },
+          {
+            "key": {
+              "key": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "key_1",
+            "unique": true
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          },
+          {
+            "key": {
+              "key": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "key_1",
+            "unique": true
+          }
+        ]
+      }
+    ],
+    "prep_delete_projection": [
+      {
+        "result": {
+          "_id": "b",
+          "key": {
+            "$numberInt": "2"
+          }
+        },
+        "method": "find_one_and_delete",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_update_projection_invalid": [
+      {
+        "error": {
+          "family": "OperationFailure",
+          "module": "pymongo.errors",
+          "code": 31254,
+          "details": {
+            "ok": {
+              "$numberDouble": "0.0"
+            },
+            "errmsg": "Cannot do exclusion on field key in inclusion projection",
+            "code": {
+              "$numberInt": "31254"
+            },
+            "codeName": "Location31254"
+          },
+          "message": "Cannot do exclusion on field key in inclusion projection, full error: {'ok': 0.0, 'errmsg': 'Cannot do exclusion on field key in inclusion projection', 'code': 31254, 'codeName': 'Location31254'}"
+        },
+        "method": "find_one_and_update",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_no_match_dynamic": [
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_many",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_aggregate_context": [
+      {
+        "result": [
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "sameNow": true
+          }
+        ],
+        "method": "aggregate",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_count_selector": [
+      {
+        "result": {
+          "$numberInt": "2"
+        },
+        "method": "count_documents",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          }
+        ]
+      }
+    ],
+    "prep_bulk_partial_True": [
+      {
+        "error": {
+          "family": "BulkWriteError",
+          "module": "pymongo.errors",
+          "code": 65,
+          "details": {
+            "writeErrors": [
+              {
+                "index": {
+                  "$numberInt": "1"
+                },
+                "code": {
+                  "$numberInt": "11000"
+                },
+                "errmsg": "E11000 duplicate key error collection: <namespace> index: key_1 dup key: { key: 1 }",
+                "keyPattern": {
+                  "key": {
+                    "$numberInt": "1"
+                  }
+                },
+                "keyValue": {
+                  "key": {
+                    "$numberInt": "1"
+                  }
+                },
+                "op": {
+                  "q": {
+                    "_id": "b"
+                  },
+                  "u": {
+                    "$set": {
+                      "key": {
+                        "$numberInt": "1"
+                      }
+                    }
+                  },
+                  "multi": false,
+                  "upsert": false
+                }
+              }
+            ],
+            "writeConcernErrors": [],
+            "nInserted": {
+              "$numberInt": "0"
+            },
+            "nUpserted": {
+              "$numberInt": "0"
+            },
+            "nMatched": {
+              "$numberInt": "1"
+            },
+            "nModified": {
+              "$numberInt": "1"
+            },
+            "nRemoved": {
+              "$numberInt": "0"
+            },
+            "upserted": []
+          },
+          "message": "batch op errors occurred, full error: {'writeErrors': [{'index': 1, 'code': 11000, 'errmsg': 'E11000 duplicate key error collection: <namespace> index: key_1 dup key: { key: 1 }', 'keyPattern': {'key': 1}, 'keyValue': {'key': 1}, 'op': {'q': {'_id': 'b'}, 'u': {'$set': {'key': 1}}, 'multi': False, 'upsert': False}}], 'writeConcernErrors': [], 'nInserted': 0, 'nUpserted': 0, 'nMatched': 1, 'nModified': 1, 'nRemoved': 0, 'upserted': []}"
+        },
+        "method": "bulk_write",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "before": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          },
+          {
+            "key": {
+              "key": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "key_1",
+            "unique": true
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "before": true,
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          },
+          {
+            "key": {
+              "key": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "key_1",
+            "unique": true
+          }
+        ]
+      }
+    ],
+    "prep_bulk_partial_False": [
+      {
+        "error": {
+          "family": "BulkWriteError",
+          "module": "pymongo.errors",
+          "code": 65,
+          "details": {
+            "writeErrors": [
+              {
+                "index": {
+                  "$numberInt": "1"
+                },
+                "code": {
+                  "$numberInt": "11000"
+                },
+                "errmsg": "E11000 duplicate key error collection: <namespace> index: key_1 dup key: { key: 1 }",
+                "keyPattern": {
+                  "key": {
+                    "$numberInt": "1"
+                  }
+                },
+                "keyValue": {
+                  "key": {
+                    "$numberInt": "1"
+                  }
+                },
+                "op": {
+                  "q": {
+                    "_id": "b"
+                  },
+                  "u": {
+                    "$set": {
+                      "key": {
+                        "$numberInt": "1"
+                      }
+                    }
+                  },
+                  "multi": false,
+                  "upsert": false
+                }
+              }
+            ],
+            "writeConcernErrors": [],
+            "nInserted": {
+              "$numberInt": "0"
+            },
+            "nUpserted": {
+              "$numberInt": "0"
+            },
+            "nMatched": {
+              "$numberInt": "2"
+            },
+            "nModified": {
+              "$numberInt": "2"
+            },
+            "nRemoved": {
+              "$numberInt": "0"
+            },
+            "upserted": []
+          },
+          "message": "batch op errors occurred, full error: {'writeErrors': [{'index': 1, 'code': 11000, 'errmsg': 'E11000 duplicate key error collection: <namespace> index: key_1 dup key: { key: 1 }', 'keyPattern': {'key': 1}, 'keyValue': {'key': 1}, 'op': {'q': {'_id': 'b'}, 'u': {'$set': {'key': 1}}, 'multi': False, 'upsert': False}}], 'writeConcernErrors': [], 'nInserted': 0, 'nUpserted': 0, 'nMatched': 2, 'nModified': 2, 'nRemoved': 0, 'upserted': []}"
+        },
+        "method": "bulk_write",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "before": true,
+            "after": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          },
+          {
+            "key": {
+              "key": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "key_1",
+            "unique": true
+          }
+        ]
+      },
+      {
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        },
+        "method": "update_one",
+        "documents": [
+          {
+            "_id": "a",
+            "n": {
+              "$numberInt": "1"
+            },
+            "arr": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "1"
+              }
+            },
+            "key": {
+              "$numberInt": "1"
+            },
+            "before": true,
+            "after": true,
+            "recovered": true
+          },
+          {
+            "_id": "b",
+            "n": {
+              "$numberInt": "2"
+            },
+            "arr": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "obj": {
+              "x": {
+                "$numberInt": "2"
+              }
+            },
+            "key": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "n": "bad",
+            "arr": {
+              "$numberInt": "5"
+            },
+            "obj": {
+              "x": {
+                "$numberInt": "3"
+              }
+            },
+            "key": {
+              "$numberInt": "3"
+            }
+          }
+        ],
+        "indexes": [
+          {
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_"
+          },
+          {
+            "key": {
+              "key": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "key_1",
+            "unique": true
+          }
+        ]
+      }
+    ]
+  }
+}

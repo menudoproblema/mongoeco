@@ -7535,6 +7535,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         dialect=dialect,
                         bypass_document_validation=bypass_document_validation,
                         compile_update_semantics=compile_update_semantics,
+                        prepared_semantics=semantics,
                         require_connection=lambda: conn,
                         purge_expired_documents=lambda current, current_db_name, current_coll_name: (
                             self._purge_expired_documents_sync(

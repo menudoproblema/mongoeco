@@ -243,16 +243,7 @@ def _validate_bound_context(
         raise ValueError(message)
     if variables is None:
         return
-    normalized_variables = (
-        variables.bindings
-        if isinstance(variables, ExpressionExecutionContext)
-        else (
-            variables
-            if DocumentCodec.is_internal(variables)
-            else DocumentCodec.to_internal(dict(variables))
-        )
-    )
-    if normalized_variables != context.expressions.bindings:
+    if _normalized_bindings(variables) != context.expressions.bindings:
         message = "bound operation variables diverge from OperationContext"
         raise ValueError(message)
 
@@ -267,16 +258,21 @@ def _context_changes_compilation(
         return True
     if normalize_collation(collation) != context.collation:
         return True
-    normalized_variables = (
+    return _normalized_bindings(variables) != context.expressions.bindings
+
+
+def _normalized_bindings(
+    variables: Mapping[str, object] | None,
+) -> Mapping[str, object]:
+    return (
         variables.bindings
         if isinstance(variables, ExpressionExecutionContext)
         else (
             variables
             if DocumentCodec.is_internal(variables)
-            else DocumentCodec.to_internal(dict(variables or {}))
+            else DocumentCodec.to_internal(dict({} if variables is None else variables))
         )
     )
-    return normalized_variables != context.expressions.bindings
 
 
 _CACHEABLE_UPDATE_OPERATORS = frozenset(
