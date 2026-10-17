@@ -83,8 +83,10 @@ Pendientes:
   [release-4.8.1](docs/release-4.8.1.md);
 * seguir revisando packaging y metadatos en cada release;
 * mantener documentacion publica de uso, alcance y posicionamiento;
-* ejecutar el roadmap verificable de `docs/roadmap-5.0.md` sin ampliar el
-  contrato publico de engines fuera de una decision arquitectonica aceptada;
+* conservar el [roadmap 5.0](docs/roadmap-5.0.md) como referencia histórica y
+  futura, sin tratarlo como entrega activa: la
+  [decisión del Engine SPI](docs/architecture/engine-spi-v3-proposal.md) mantiene
+  v2 y aparca v3; las candidatas de mantenimiento se evalúan por su valor propio;
 * decidir si compensa publicar un adaptador CXP live opcional para `mongoeco`
   ahora que:
   * capabilities, operations y profiles ya salen del catálogo canónico

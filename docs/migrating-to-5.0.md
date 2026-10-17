@@ -2,10 +2,15 @@
 
 ## Estado
 
-MongoEco 5.0 y sus contratos no se han publicado. La linea 4.7 expone SPI v2
+MongoEco 5.0 y sus contratos no se han publicado. La linea actual 4.10.1 expone SPI v2
 como unico engine SPI estable y mantiene `search-v1`. Los engines anteriores se
 migran mediante la [guia de 4.7](migrating-to-4.7.md), no mediante una futura
 release.
+
+La [decisión posterior a T1–T6 y S1/S2](architecture/engine-spi-v3-proposal.md)
+mantiene SPI v2 y aparca v3. No hay migración a un sucesor, retirada de v2 ni
+cambio SQLite aprobados. Esta guía conserva material futuro e histórico, sin
+una migración SPI que deba preparar el usuario actual.
 
 ## Inventario previo
 
@@ -30,6 +35,11 @@ silenciosamente el significado de SPI v2.
 
 ## Search v1 a v2
 
+Esta sección conserva los cambios contemplados por la
+[propuesta Search v2](architecture/search-contract-v2-proposal.md), no una
+receta ejecutable. `search-v1` sigue siendo el único contrato disponible;
+no existe actualmente una opción pública para activar v2.
+
 - solicita highlight con `$meta: "searchHighlights"`;
 - sustituye previews por collectors estables;
 - usa `queryMatchedCount`, no `matchedCount`;
@@ -37,8 +47,9 @@ silenciosamente el significado de SPI v2.
 - exige `contractVersion` en explain;
 - elimina normalizadores que mezclen shapes v1/v2.
 
-Activa v2 primero en un entorno de test y conserva fixtures separadas. Compara
-documentos, metadata, collectors, orden y explain, no solo el numero de hits.
+Si se aprueba y publica ese contrato, su guía deberá activar v2 primero en un
+entorno de test y conservar fixtures separadas. Comparará documentos, metadata,
+collectors, orden y explain, no solo el numero de hits.
 
 ## SQLite
 

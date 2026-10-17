@@ -17,6 +17,10 @@ Los tipos publicos se importan desde `mongoeco.engines`. Los protocolos
 completos de lifecycle, CRUD, planning y administracion viven en
 `mongoeco.engines.base`.
 
+La [decisión de evolución del SPI](engine-spi-v3-proposal.md), posterior a
+T1–T6 y S1/S2, mantiene v2 y aparca v3. No hay deprecación de v2 ni una
+migración a un sucesor prevista para la próxima entrega.
+
 ## Declaracion minima
 
 Un engine v2 debe exponer `capabilities` y cumplir de forma nativa los metodos
@@ -75,10 +79,17 @@ recompila el plan antes de ejecutarlo; si coinciden, conserva el plan y no
 repite la normalizacion BSON. El adaptador rechaza una operacion o semantica
 compilada con un contexto distinto del argumento SPI. `derive()` crea un nuevo
 valor para suboperaciones sin mutar el contexto original.
-Mientras los campos duplicados sigan presentes por compatibilidad 4.x, una
-operacion o semantica ligada valida que dialecto, collation y variables
-coincidan exactamente con el contexto. En 5.0 esos duplicados deben desaparecer
-de los comandos ejecutables.
+Las operaciones ligadas validan dialecto y los duplicados explícitos de collation
+y variables; un valor ausente puede heredar del contexto durante la conversión.
+La semántica ligada exige coherencia canónica con ese contexto. Estas guardas
+no acreditan que un plan suministrado mediante override corresponda a su filtro.
+La [propuesta de preparación interna](engine-preparation-proposal.md) consolida
+los productores conservando esos tipos y el contrato v2; no aprueba su retirada.
+
+La frase prospectiva anterior «En 5.0 esos duplicados deben desaparecer de los
+comandos ejecutables» pertenecía al plan histórico de ADR-016. La revisión de
+ADR-018 registra expresamente su corrección documental; no cambia firmas ni
+concede una transición a un SPI sucesor.
 
 ## Outcomes y snapshots
 

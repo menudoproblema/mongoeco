@@ -27,6 +27,14 @@ capability remain visible with status `not-applicable`; they never count as a
 pass. A report with no executed checks fails explicitly, so an empty or wholly
 inapplicable selection cannot pass vacuously.
 
+The existing `spi-v2-atomicity:compare-and-set` check requires update and delete
+to intersect the operation filter with `selector_filter` under the same atomic
+boundary. It covers absent, empty, matching and rejected selectors, repeated
+operations, competing writers, images, counters and preservation of other
+documents. A previously passing engine that substitutes one condition for the
+other now fails this check. This strengthens detection of the existing SPI v2
+guarantee; check IDs, profiles, report schema and capabilities are unchanged.
+
 The Search profile exercises every declared optional capability: hit
 execution, every declared operator and vector similarity, metadata collectors,
 typed highlight runtime metadata, persistence isolation and both explain

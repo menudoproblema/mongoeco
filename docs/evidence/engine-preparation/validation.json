@@ -1,0 +1,658 @@
+{
+  "schema": "mongoeco-engine-preparation-validation/v1",
+  "date": "2026-10-17",
+  "phase_result": "completed",
+  "scope": "T1-T6 on explicit base plus scoped source/test/tool/fixture overlays; no SPI v3 or release authorization.",
+  "base_revision": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "artifact": {
+    "wheel_sha256": "5f6c56ae3290c8fb334402b2613a612d2b00905f99c0196d8f1ac080153efc2e",
+    "sdist_sha256": "cd60efcd53a62c38adbc7ef1b7b4aecca5b1c2fba98ed49042ae73652dc31e12",
+    "source_sdist_wheel_runtime_files_verified": 289,
+    "environments": {
+      "313": {
+        "python": "3.13.15",
+        "version": "4.10.1",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "hypothesis": "6.165.9",
+        "runtime_files_verified": 289
+      },
+      "314": {
+        "python": "3.14.5",
+        "version": "4.10.1",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "hypothesis": "6.170.1",
+        "runtime_files_verified": 289
+      },
+      "315": {
+        "python": "3.15.0",
+        "version": "4.10.1",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "hypothesis": "6.165.9",
+        "runtime_files_verified": 289
+      }
+    }
+  },
+  "published": false,
+  "validation_tree": {
+    "base_plus_overlays": {
+      "src/mongoeco/api/operations.py": "a4cbc4446411be6b3aa8599414bef306451b3656bd33b77304bab938c4422102",
+      "src/mongoeco/engines/semantic_core.py": "f62e680cb710815eed97ceda2edaa0a829f6a314f36e6bec186c4a9016c6854d",
+      "src/mongoeco/engines/adapter.py": "adb751d1fae8bbdb21c794fd25eebaa44c01664894fdc5b62fb1f9d23b724b23",
+      "src/mongoeco/engines/sqlite.py": "df431ce5d8322026fa49f258d956237f378ff6df652767354e444ddc3ac2d607",
+      "src/mongoeco/engines/_sqlite_modify_ops.py": "65041e05249e00862eda53b2209242ede762f4c567970b0a33a558e75f768539",
+      "src/mongoeco/api/_async/_collection_modify.py": "73d6ac56d8035905bbdf5a475e156ec6306ead7889c0329b324f6a2bfc0662fb",
+      "src/mongoeco/api/_async/_collection_runtime.py": "01a0bd2d3b431ae32b5c80dd26c92a99e0624febae9f6c478db3779bd8ee738b",
+      "src/mongoeco/api/_async/cursor.py": "f8a0d4c8f98495976a31ecd380172e9f3d54932f176be1682a344474c9f03143",
+      "src/mongoeco/api/_async/aggregation_cursor.py": "4f4dad025dc1503c24fe34df562240fb9c438f19db59eff66840fa9c471cafd2",
+      "scripts/capture_error_phases.py": "adec779f706acc766a7ca05eb2cd1ba5469654965de2256624dabf7645428afa",
+      "scripts/generate_sqlite_preparation_fixture.py": "6e6b0c9683ff703a97b583c6e2558f740e842938d5448e5bb4fa8ba839acceb1",
+      "tests/unit/core/test_engine_preparation.py": "c2970747590ff95230b88820ae302f2bd7b4282168e16a2dc41229819aa9edde",
+      "tests/integration/api/test_engine_preparation.py": "dffd729b2630047ea893290ee43d688ef2e2a9ab166eed7a8e8118e36cd7197b",
+      "tests/integration/api/test_sqlite_410_fixture_compatibility.py": "3a7ab4a606a72ffd1906fe95e76f57336f4fee0ad92e4eb39161148d2332b87a",
+      "tests/differential/engine_preparation_cases.py": "9dd4142758e4f236d12ec0859b596f60827a8634f4ae0f985d2835fedfa81889",
+      "tests/fixtures/engine_preparation_mongodb_7_0.json": "9b61ac5e948b8b2f8faf7a91be368f37443baf39efc6a08b3a70a6a37ad63c9a",
+      "tests/fixtures/engine_preparation_mongodb_9_0.json": "5be50e0d0d7726206dc67ee9eeb8068d4886201243f059946f09cf6a6dfafd60",
+      "tests/fixtures/engine_preparation_mongodb_8_0.json": "6a0b0458f253baec101afb237271dff97bb1bc9a45397950126618dcbefecbf2",
+      "tests/fixtures/sqlite/mongoeco-4.10.1-preparation.sqlite": "8dcc2c7509990086b0f4ead8dde6d0cf66195f8498b7a4a25ed83726b53f5aed",
+      "tests/fixtures/sqlite/mongoeco-4.10.1-preparation.json": "9e5130ad1f72eeaa6cb8cd993f77a4fd65abec1264e01044bf3d17d1461f682e"
+    },
+    "runtime_source_files_equal_to_wheel": 289,
+    "combined_shared_tree_accredited": false,
+    "concurrent_changes": "Unrelated pytest/proxy diagnostics and wire-read work were preserved and excluded; require their own integrated global.",
+    "concurrent_paths_excluded_at_final_review": [
+      ".github/workflows/mongodb-differential.yml",
+      "docs/pytest.md",
+      "docs/wire-diagnostics.md",
+      "scripts/capture_wire_read_parity.py",
+      "src/mongoeco/_pytest_runtime.py",
+      "src/mongoeco/pytest_plugin.py",
+      "src/mongoeco/_pytest_diagnostics.py",
+      "src/mongoeco/wire/_diagnostics.py",
+      "src/mongoeco/wire/_executor_validation.py",
+      "src/mongoeco/wire/connections.py",
+      "src/mongoeco/wire/cursors.py",
+      "src/mongoeco/wire/proxy.py",
+      "src/mongoeco/wire/sessions.py",
+      "tests/fixtures/wire_reads_mongodb_7_0.json",
+      "tests/fixtures/wire_reads_mongodb_8_0.json",
+      "tests/fixtures/wire_reads_mongodb_9_0.json",
+      "tests/integration/pytest_kit/test_wire_diagnostics.py",
+      "tests/integration/wire/test_diagnostics.py",
+      "tests/integration/wire/test_read_reply_parity.py",
+      "tests/support_wire_reads.py",
+      "tests/unit/wire/test_diagnostics.py"
+    ]
+  },
+  "coverage": {
+    "floor": 99.0,
+    "covered_lines": 44401,
+    "num_statements": 44844,
+    "percent_covered": 99.01213094282402,
+    "percent_covered_display": "99.01",
+    "missing_lines": 443,
+    "excluded_lines": 941,
+    "percent_statements_covered": 99.01213094282402,
+    "percent_statements_covered_display": "99.01",
+    "log": {
+      "file": ".tmp/engine-preparation/isolated-global-314.log",
+      "sha256": "494a442e6f8e0afa682103128a2e8afcefceb5732cbfcc6fbdcad8b188b9f40d"
+    }
+  },
+  "checks": [
+    {
+      "command": "python -m pytest -q",
+      "status": "passed",
+      "summary": "44229 passed, 31 skipped, 14459 subtests passed in 568.93s (0:09:28)",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-global-313.log",
+        "sha256": "446956e5fa0aa34e7c6ae3053933ebd010485a9a5b9474e8623c7f5467e074cf"
+      },
+      "python": "3.13.15",
+      "pymongo": "4.19.0"
+    },
+    {
+      "command": "python -m pytest --cov=mongoeco --cov-report=term -q",
+      "status": "passed",
+      "summary": "44229 passed, 31 skipped, 14459 subtests passed in 626.94s (0:10:26)",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-global-314.log",
+        "sha256": "494a442e6f8e0afa682103128a2e8afcefceb5732cbfcc6fbdcad8b188b9f40d"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    },
+    {
+      "command": "python -m pytest -q",
+      "status": "passed",
+      "summary": "44229 passed, 31 skipped, 14459 subtests passed in 623.46s (0:10:23)",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-global-315.log",
+        "sha256": "bbfd35abff77ad8a640b19c34ea4cfdc99a9d7f967dec8d23b0b8310a60a7e8a"
+      },
+      "python": "3.15.0",
+      "pymongo": "4.19.0"
+    },
+    {
+      "command": "python -m pytest tests/unit/core/test_engine_preparation.py tests/integration/api/test_engine_preparation.py tests/integration/api/test_sqlite_410_fixture_compatibility.py tests/integration/api/test_sqlite_45_fixture_compatibility.py -q",
+      "status": "passed",
+      "summary": "253 passed in 8.48s",
+      "log": {
+        "file": ".tmp/engine-preparation/review-focal-final.log",
+        "sha256": "8bfc4938d1942fed6ce90151be0b7f5ceee23a7c3acdc3fa4298ad30753aa02a"
+      }
+    },
+    {
+      "command": "python -m pytest tests/integration/api/test_engine_preparation.py tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection tests/integration/pytest_kit -q",
+      "status": "passed",
+      "summary": "293 passed in 185.07s (0:03:05)",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-sdk49.log",
+        "sha256": "c7d503ed654f070d7a3e6113d4c18eb0d165c7565abc21b0434089ab4a2b1b21"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.9.2"
+    },
+    {
+      "command": "MONGOECO_HYPOTHESIS_PROFILE=deep python -m pytest tests/property -q",
+      "status": "passed",
+      "summary": "9 passed in 24.23s",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-properties-deep.log",
+        "sha256": "f7502802efc8028545b8da88b7095d94df505f7cb997b497f4ea6479f52f9749"
+      }
+    },
+    {
+      "command": "python -m unittest discover -s tests -p 'test*.py'",
+      "status": "passed",
+      "tests": 3628,
+      "skipped": 3,
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-unittest.log",
+        "sha256": "3f25b6b11455bf45bee4b9b972e1cb9898e34b37204b68b0f3cbf5fa8ea94860"
+      }
+    },
+    {
+      "command": "python scripts/update_public_api_manifest.py --check",
+      "status": "passed",
+      "expected_observation": "public API manifest is current",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-api-manifest.log",
+        "sha256": "3c70e7c5dc9b8641d082109a9d551c026c8bc7f11d2628b17d067186ab7979c0"
+      }
+    },
+    {
+      "command": "python scripts/check_public_typing.py",
+      "status": "passed",
+      "expected_observation": "positive=1, negative-errors=20",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-public-typing.log",
+        "sha256": "8523fc7226b47c529dcce7d50145334b21c53f8f68ff2d5081f1b5c2fd637beb"
+      }
+    },
+    {
+      "command": "GIT_WORK_TREE=<validation-tree> python scripts/check_lint_ratchet.py --base-ref 738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+      "status": "passed",
+      "expected_observation": "lint ratchet passed for 15 changed Python files",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-lint.log",
+        "sha256": "908a5b2ef5edc361457d187562e1d9e6ee7e76f3ae013f27bc55cc4150a3468f"
+      }
+    },
+    {
+      "command": "python -m mypy --strict --follow-imports=silent --ignore-missing-imports -m mongoeco.pytest_plugin -m mongoeco.pytest_asyncio -m mongoeco.pytest_anyio -m mongoeco._pytest_runtime -m mongoeco.wire._lifecycle",
+      "status": "passed",
+      "expected_observation": "Success: no issues found in 5 source files",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-strict-typing.log",
+        "sha256": "e317872697c2cbfdefa321527a6efe73290dff3a390b0fa8723b87092eccba6a"
+      }
+    },
+    {
+      "command": "python scripts/smoke_external_engine.py",
+      "status": "passed",
+      "expected_observation": "passed=5, failed=0, error=0, not-applicable=5",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-canary.log",
+        "sha256": "fc0c13553ba47169d65e86792f4e9596b2898ce0179b93599fce7a45d263530f"
+      }
+    },
+    {
+      "command": "python -m pip check",
+      "status": "passed",
+      "expected_observation": "No broken requirements found.",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-pip-check.log",
+        "sha256": "50d2a28389df4a607923441309bcd3f0c370259e1996b48d6a915852a8845fc7"
+      }
+    },
+    {
+      "command": "execute scripts/smoke_installed_wheel.py:_smoke_script in installed candidate environment",
+      "status": "passed",
+      "expected_observation": "unicode_collation True",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-artifact-smoke.log",
+        "sha256": "9d537521674be93e25502bc1e1eb544bf40c4b900ae8a5a9df5af3c6288bc5e6"
+      }
+    },
+    {
+      "command": "execute scripts/smoke_installed_wheel.py:_pytest_smoke_script in installed candidate environment",
+      "status": "passed",
+      "expected_observation": "4 passed",
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-kit-smoke.log",
+        "sha256": "8453e9dff4b95481f0c655d9b303a5bb885bd6923f493fc41bcdc29b3858df98"
+      }
+    },
+    {
+      "command": "python -m mongoeco.conformance mongoeco.engines:MemoryEngine --require-success --format json",
+      "status": "passed",
+      "summary": {
+        "error": 0,
+        "failed": 0,
+        "not-applicable": 0,
+        "passed": 10
+      },
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-conformance-memory.json",
+        "sha256": "cb1cabee32a0290aa7768de9bac2eae368855b4bcc5af0af8af4ac0af511d71a"
+      }
+    },
+    {
+      "command": "python -m mongoeco.conformance mongoeco.engines:SQLiteEngine --require-success --format json",
+      "status": "passed",
+      "summary": {
+        "error": 0,
+        "failed": 0,
+        "not-applicable": 0,
+        "passed": 10
+      },
+      "log": {
+        "file": ".tmp/engine-preparation/isolated-conformance-sqlite.json",
+        "sha256": "94d4747ddf960064203dbe9c7d69da30a99adc6976c1af0aece783a8431ffcde"
+      }
+    }
+  ],
+  "execution": {
+    "working_directory": ".tmp/engine-preparation/validation-tree",
+    "environment": {
+      "MONGOECO_TEST_INSTALLED_ARTIFACT": "1"
+    },
+    "default_python": "3.14.5",
+    "default_pymongo": "4.19.0",
+    "deep_property_max_examples": 300
+  },
+  "native": [
+    {
+      "mongodb": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "sdk": "4.19.0",
+      "fresh_existing_scenarios": 1072,
+      "fresh_preparation_scenarios": 16,
+      "sync_async_equal": true,
+      "one_physical_application_connection_per_corpus_and_facade": true,
+      "existing_reference_equal": true,
+      "capture_batch_count_existing": 17,
+      "existing_capture": {
+        "file": ".tmp/engine-preparation/retry-7.0-full.json",
+        "sha256": "11721610e364c583ae10923436da59d7114622188a68f3fc0aaf24630839b7d1"
+      },
+      "existing_fixture_sha256": "1e2d9a07c6e9c2f3ced08cce06cc9e63f1187bbb0086afca6f87d40f6bb24186",
+      "preparation_fixture": "tests/fixtures/engine_preparation_mongodb_7_0.json",
+      "preparation_fixture_sha256": "9b61ac5e948b8b2f8faf7a91be368f37443baf39efc6a08b3a70a6a37ad63c9a",
+      "preparation_inputs_sha256": {
+        "tests/differential/error_phase_cases.py": "13095536f3c5e90ccb7c7133654842c2ba371e7467c6ac1f0bb71d95a0373bae",
+        "tests/differential/error_absence_cases.py": "af2e2e416f08d6cb1eb826a1fd3d5454540c40ed02ccc7eb4b209a16cfbe5c9e",
+        "tests/differential/error_composition_cases.py": "1231f7528b184e828475f05f6bca53e8fa9c0a1c5c97a4fb96d1bd2cd2b908be",
+        "tests/differential/write_cases.py": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+        "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+        "tests/differential/engine_preparation_cases.py": "9dd4142758e4f236d12ec0859b596f60827a8634f4ae0f985d2835fedfa81889"
+      }
+    },
+    {
+      "mongodb": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "sdk": "4.19.0",
+      "fresh_existing_scenarios": 1072,
+      "fresh_preparation_scenarios": 16,
+      "sync_async_equal": true,
+      "one_physical_application_connection_per_corpus_and_facade": true,
+      "existing_reference_equal": true,
+      "capture_batch_count_existing": 17,
+      "existing_capture": {
+        "file": ".tmp/engine-preparation/retry-8.0-full.json",
+        "sha256": "18e0ea7a48e4863dc712102d2dd6c29afdae3e28b1252d64a7de97be1665b64b"
+      },
+      "existing_fixture_sha256": "e7cf4e8d52bc039fa078ad002fb03853eba463a4ab54f8ec3fc587e37686d543",
+      "preparation_fixture": "tests/fixtures/engine_preparation_mongodb_8_0.json",
+      "preparation_fixture_sha256": "6a0b0458f253baec101afb237271dff97bb1bc9a45397950126618dcbefecbf2",
+      "preparation_inputs_sha256": {
+        "tests/differential/error_phase_cases.py": "13095536f3c5e90ccb7c7133654842c2ba371e7467c6ac1f0bb71d95a0373bae",
+        "tests/differential/error_absence_cases.py": "af2e2e416f08d6cb1eb826a1fd3d5454540c40ed02ccc7eb4b209a16cfbe5c9e",
+        "tests/differential/error_composition_cases.py": "1231f7528b184e828475f05f6bca53e8fa9c0a1c5c97a4fb96d1bd2cd2b908be",
+        "tests/differential/write_cases.py": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+        "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+        "tests/differential/engine_preparation_cases.py": "9dd4142758e4f236d12ec0859b596f60827a8634f4ae0f985d2835fedfa81889"
+      }
+    },
+    {
+      "mongodb": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "sdk": "4.19.0",
+      "fresh_existing_scenarios": 1072,
+      "fresh_preparation_scenarios": 16,
+      "sync_async_equal": true,
+      "one_physical_application_connection_per_corpus_and_facade": true,
+      "existing_reference_equal": true,
+      "capture_batch_count_existing": 1,
+      "existing_capture": {
+        "file": ".tmp/engine-preparation/native-full-9.0.json",
+        "sha256": "4051637a024de7c6785a976bee82d61d3d92493317b70660c91d70b9c401383f"
+      },
+      "existing_fixture_sha256": "c03a0181062ea8ad288531d2545d200295273854bd23ef4646b666bf55195143",
+      "preparation_fixture": "tests/fixtures/engine_preparation_mongodb_9_0.json",
+      "preparation_fixture_sha256": "5be50e0d0d7726206dc67ee9eeb8068d4886201243f059946f09cf6a6dfafd60",
+      "preparation_inputs_sha256": {
+        "tests/differential/error_phase_cases.py": "13095536f3c5e90ccb7c7133654842c2ba371e7467c6ac1f0bb71d95a0373bae",
+        "tests/differential/error_absence_cases.py": "af2e2e416f08d6cb1eb826a1fd3d5454540c40ed02ccc7eb4b209a16cfbe5c9e",
+        "tests/differential/error_composition_cases.py": "1231f7528b184e828475f05f6bca53e8fa9c0a1c5c97a4fb96d1bd2cd2b908be",
+        "tests/differential/write_cases.py": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+        "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+        "tests/differential/engine_preparation_cases.py": "9dd4142758e4f236d12ec0859b596f60827a8634f4ae0f985d2835fedfa81889"
+      }
+    }
+  ],
+  "observation": {
+    "dimensions": [
+      "MongoDB 7/8/9",
+      "sync/async",
+      "Memory/SQLite",
+      "direct/wire"
+    ],
+    "compared": [
+      "BSON results and state",
+      "exception family and code",
+      "full structured details and diagnostic shape",
+      "counters and bulk operation payloads",
+      "partial effects and indexes",
+      "recovery and one physical wire connection"
+    ],
+    "normalization": "Existing observer retained: namespace, exception module/message and diagnostic errmsg text normalized; error codes, structured metadata, errmsg presence/nonempty/exception-repr, application BSON, counters and effects preserved.",
+    "new_preparation_error_codes": [
+      14,
+      65,
+      11000,
+      31254
+    ],
+    "sdk49_limit": "Installed PyMongo 4.9.2 replay, including the existing explicit native SDK delta; new independent native captures use PyMongo 4.19.0."
+  },
+  "conservation": {
+    "byte_identical_to_base": {
+      "src/mongoeco/engines/base.py": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+      "src/mongoeco/engines/__init__.py": "99544c3349de74cd23499c3b20ec0a0ddc1e836ebd68642e17c88bbc60c42c62",
+      "src/mongoeco/core/operation_context.py": "d98c4df3d5728336484eaea3292646da088866980a200675ab66c1c6637b7016",
+      "tests/fixtures/public_api_manifest_exchange_source.json": "3f5f6a4061d67d611df160d910c67b62430d8c4846fb6b7a9b3fe17c9a5657ee",
+      "tests/fixtures/sqlite/mongoeco-4.5.0-bridge.sqlite": "e671484cd736c42eb3c4e11dbc5ca2f5564c35072f0e1a5fcc4dded172400efe"
+    },
+    "compat_exchange_snapshots_equal": true,
+    "dto_classes_ast_identical": [
+      "FindOperation",
+      "UpdateOperation",
+      "AggregateOperation",
+      "EngineFindSemantics",
+      "EngineUpdateSemantics"
+    ]
+  },
+  "sqlite": {
+    "previous_fixture_unchanged": "tests/fixtures/sqlite/mongoeco-4.5.0-bridge.sqlite",
+    "published_release_fixture": {
+      "schemaVersion": "mongoeco-sqlite-fixture/v1",
+      "fixture": "mongoeco-4.10.1-preparation.sqlite",
+      "fixtureSha256": "8dcc2c7509990086b0f4ead8dde6d0cf66195f8498b7a4a25ed83726b53f5aed",
+      "generator": {
+        "version": "4.10.1",
+        "artifactSha256": "0b4419ec41777a2914e1a331473c5bc2dc3e9770c31a61061b894d89135a7ddd",
+        "python": "3.14.5",
+        "sqlite": "3.53.4",
+        "fromSitePackages": true,
+        "payload": "scripts/_sqlite_45_fixture_payload.py:_generate",
+        "payloadSha256": "e37650897f01a7074720a2f1b01a42733a8168d2c080147d2a390320b641ea5e"
+      },
+      "database": {
+        "namespace": "bridge.items",
+        "documentCount": 3,
+        "consumerCheckpoint": 2,
+        "pendingSequences": [
+          3
+        ],
+        "operationId": "mongoeco-4.10.1-preparation-operation"
+      }
+    },
+    "compatibility_tests": 13,
+    "schema_or_key_format_change": false
+  },
+  "complexity": {
+    "runtime_files_changed": 9,
+    "new_public_types": 0,
+    "new_spi_versions": 0,
+    "new_global_caches": 0,
+    "new_clock_captures": 0,
+    "new_storage_migrations": 0,
+    "adapter_methods_added": 3,
+    "boundary_guards_removed": 0,
+    "selector_preparations": {
+      "sizes": [
+        1,
+        3
+      ],
+      "facades": [
+        "sync",
+        "async"
+      ],
+      "memory_before_after": [
+        "N",
+        "N"
+      ],
+      "sqlite_before_after": [
+        "2N",
+        "N"
+      ],
+      "atomic_selector_recheck_preserved": true
+    }
+  },
+  "performance": {
+    "artifact": "docs/evidence/engine-preparation/benchmark.json",
+    "sha256": "c890197e21fc65ca1d2db2500294fb1844e506df3ce719bffa1880c07a53533f",
+    "conclusion": "Latency inconclusive; all four time medians over +5% have overlapping IQRs. No peak Python allocation median over +5%. No general speedup claimed.",
+    "script_sha256": "48f6a121dd1bb3eacfd077ef0269bcbef9b35fb944cac9daab76df83476c280c"
+  },
+  "retained_attempts": [
+    {
+      "id": "original_regressions",
+      "log": {
+        "file": ".tmp/engine-preparation/baseline-regressions.log",
+        "sha256": "482c1cfc975a6bc7555a8c97ec4638dfb0d00cdec7be48372c1511be087fd3bc"
+      },
+      "disposition": "Expected nine failures before runtime corrections; retained."
+    },
+    {
+      "id": "parallel_native_capture",
+      "log": {
+        "file": ".tmp/engine-preparation/native-full-summary.log",
+        "sha256": "2dd5dc090489f0d6eb8ce5a5624f72cd1882fc04722ecf93f5523fa1df4d5666"
+      },
+      "disposition": "MongoDB 7/8 host ENFILE; recovered sequentially with 64-case temporary databases and unchanged system/runtime limits."
+    },
+    {
+      "id": "stale_corpus_hashes",
+      "log": {
+        "file": ".tmp/engine-preparation/final-corpus-source.log",
+        "sha256": "296f6486d9e00780fe740936f3a165cd871bf149f14c4f39db0c826d6f26baa7"
+      },
+      "disposition": "Input formatting invalidated two capture hashes; recaptured independently before final replay."
+    },
+    {
+      "id": "missing_test_tool",
+      "log": {
+        "file": ".tmp/engine-preparation/global-314-missing-plugin.log",
+        "sha256": "36f051d11d68b12d7d40c872e118404a058b908d257ef686b67a9623ed249b3e"
+      },
+      "disposition": "pytest-cov absent; no collection. Provisioned test tools before final runs."
+    },
+    {
+      "id": "missing_typing_tool",
+      "log": {
+        "file": ".tmp/engine-preparation/installed-typing.log",
+        "sha256": "f41d72eb042ea09ddf481c63120a812a6bd114225fdc3ee0cdff2deaa6d692c3"
+      },
+      "disposition": "mypy absent; provisioned test tools before final typing gate."
+    },
+    {
+      "id": "concurrent_source_tree",
+      "log": {
+        "file": ".tmp/engine-preparation/unittest-314.log",
+        "sha256": "7d5a8a013fe97a3b7e86eddd2f1412b004b7e2bb0b642e671858770691049d63"
+      },
+      "disposition": "Two source-census checks failed after unrelated diagnostics modules appeared while testing a previously fixed wheel. Final scope isolated by exact source manifest; combined shared tree remains unverified."
+    },
+    {
+      "id": "review_test_setup",
+      "log": {
+        "file": ".tmp/engine-preparation/review-regression-red.log",
+        "sha256": "61e48d82e702b739d614da2bc0d7456ddc408290db12bb6a8e56cf3a4850f0ab"
+      },
+      "disposition": "Initial new regression setup omitted the required dialect; corrected test setup before measuring candidate behavior."
+    },
+    {
+      "id": "review_regressions",
+      "log": {
+        "file": ".tmp/engine-preparation/review-regression-red-final.log",
+        "sha256": "0d2f32ca91272f11b2460b7a16c47e7602fccd5f7acd7c346086a799017e6cc6"
+      },
+      "disposition": "Six valid regressions exposed truthiness-based mapping normalization in the first candidate. Corrected; final 253 focal tests pass."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-compat-snapshots.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-global-313.log",
+        "sha256": "6371e8291ee913f9a7cb55e0d1dc9e8561c3881df3562f2c07fa077b53084e42"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-global-314.log",
+        "sha256": "9038ba9637484e82c1ceb595b559773b97457d2003e391d37c048f4d99f2d169"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-global-315.log",
+        "sha256": "5d23424b757a113c02414b1328ac4d8f319f79641b1ff94c359fa13deff100c6"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-lint.log",
+        "sha256": "908a5b2ef5edc361457d187562e1d9e6ee7e76f3ae013f27bc55cc4150a3468f"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-sdk49.log",
+        "sha256": "9d19beefcb2f4c3c826d7aa2fae4e24fd1e08bcedd9d15365a8ade12ca64900d"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-strict-typing.log",
+        "sha256": "e317872697c2cbfdefa321527a6efe73290dff3a390b0fa8723b87092eccba6a"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "superseded_before_final_review_fix",
+      "log": {
+        "file": ".tmp/engine-preparation/superseded-review-isolated-unittest.log",
+        "sha256": "ff2b5842b2c9ee6a683add64eb4e0df7147771e45c26004a3bfa601edbe29922"
+      },
+      "disposition": "Superseded candidate evidence; incomplete global/unittest/SDK runs were terminated before reinstalling the final wheel. Not counted as final green."
+    },
+    {
+      "id": "native_host_resource_failure_7.0",
+      "log": {
+        "file": ".tmp/engine-preparation/native-7.0/mongod.log",
+        "sha256": "a086aa783fbcb764f766ff12748194866842f33fb00c6b49d3a8cd47a3f99bef"
+      },
+      "disposition": "Original fatal server log retained; sequential bounded capture completed and reference matched. Private server processes closed."
+    },
+    {
+      "id": "native_host_resource_failure_8.0",
+      "log": {
+        "file": ".tmp/engine-preparation/native-8.0/mongod.log",
+        "sha256": "2c4391e340f2f6b70fa29cde5435ef02b13ebf2db84791f3b7df3b8b1dae9acb"
+      },
+      "disposition": "Original fatal server log retained; sequential bounded capture completed and reference matched. Private server processes closed."
+    }
+  ],
+  "final_review": {
+    "scoped_diff_reviewed": true,
+    "documentation_aligned": true,
+    "twenty_scoped_files_still_equal_manifest": true,
+    "concurrent_changes_preserved": true,
+    "publication_commit_push": "not part of this task",
+    "active_scoped_pytest_unittest_processes": 0,
+    "scoped_whitespace_and_documentation_links_passed": true
+  },
+  "limits": [
+    "Finite corpus, not universal MongoDB compatibility.",
+    "Final globals apply to the scoped immutable candidate, not the combined concurrent working tree.",
+    "No claim that SPI v3 is justified or implemented.",
+    "The sdist was built and its complete runtime compared byte for byte; execution and consumer gates use the installed wheel."
+  ],
+  "native_process_cleanup": [
+    {
+      "file": ".tmp/engine-preparation/servers.log",
+      "sha256": "0773e3a1d5417464065ba42822d8a28107a7aa5b0628a5e5d4c7914a0b79868d",
+      "closed": true
+    },
+    {
+      "file": ".tmp/engine-preparation/retry-7.0/servers.log",
+      "sha256": "e989a64760d3993413f0d7acb8d3242d88e8fced153f565484ad6399b9371396",
+      "closed": true
+    },
+    {
+      "file": ".tmp/engine-preparation/retry-8.0/servers.log",
+      "sha256": "1fc4e48fd63e59baaa97fa4ffbeec6e7b320d26e4231d0c1fb2d94c4f3f11699",
+      "closed": true
+    }
+  ]
+}

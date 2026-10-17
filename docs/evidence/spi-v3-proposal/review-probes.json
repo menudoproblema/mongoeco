@@ -1,0 +1,135 @@
+{
+  "schema": "mongoeco-spi-proposal-review/1",
+  "source_revision": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "python": "3.14.5",
+  "structural": {
+    "guards": {
+      "operation_absent_collation_and_let_with_nonempty_context": "accepted",
+      "read_semantics_cleared_collation": "ValueError",
+      "read_semantics_compilation_resolves_context": true
+    },
+    "foreign_plan_with_overrides": {
+      "accepted": true,
+      "specification": {
+        "x": 1
+      },
+      "executed_match": {
+        "x": 2
+      },
+      "scope": "direct construction/helper; no facade injection demonstrated"
+    },
+    "unbound_dialect_conversion": {
+      "operation": "8.0",
+      "implicit_conversion": "7.0",
+      "explicit_conversion": "8.0",
+      "scope": "unbound helper; bound facade paths resolve from context"
+    },
+    "curated_exports": {
+      "FindOperation": false,
+      "UpdateOperation": true,
+      "AggregateOperation": false,
+      "EngineFindSemantics": true,
+      "EngineUpdateSemantics": false
+    },
+    "unexported_but_in_spi_planning": "FindOperation",
+    "operation_context_contains_deadline": false,
+    "context_collation_is_normalized": true
+  },
+  "cursor": {
+    "find_construction_deadline_calls": 0,
+    "two_semantics_reads_then_rewind_deadline_calls": 2,
+    "rewind_keeps_operation_context": true,
+    "rewind_recaptures_deadline": true,
+    "clone_creates_new_context": true,
+    "clock_patch": "local deadline function; no global clock patch"
+  },
+  "update_many": [
+    {
+      "engine": "memory",
+      "surface": "sync",
+      "documents": 1,
+      "selector_plan_requests_without_plan": 1,
+      "matched_count": 1,
+      "modified_count": 1,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    },
+    {
+      "engine": "memory",
+      "surface": "sync",
+      "documents": 3,
+      "selector_plan_requests_without_plan": 3,
+      "matched_count": 3,
+      "modified_count": 3,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    },
+    {
+      "engine": "memory",
+      "surface": "async",
+      "documents": 1,
+      "selector_plan_requests_without_plan": 1,
+      "matched_count": 1,
+      "modified_count": 1,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    },
+    {
+      "engine": "memory",
+      "surface": "async",
+      "documents": 3,
+      "selector_plan_requests_without_plan": 3,
+      "matched_count": 3,
+      "modified_count": 3,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    },
+    {
+      "engine": "sqlite",
+      "surface": "sync",
+      "documents": 1,
+      "selector_plan_requests_without_plan": 2,
+      "matched_count": 1,
+      "modified_count": 1,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    },
+    {
+      "engine": "sqlite",
+      "surface": "sync",
+      "documents": 3,
+      "selector_plan_requests_without_plan": 6,
+      "matched_count": 3,
+      "modified_count": 3,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    },
+    {
+      "engine": "sqlite",
+      "surface": "async",
+      "documents": 1,
+      "selector_plan_requests_without_plan": 2,
+      "matched_count": 1,
+      "modified_count": 1,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    },
+    {
+      "engine": "sqlite",
+      "surface": "async",
+      "documents": 3,
+      "selector_plan_requests_without_plan": 6,
+      "matched_count": 3,
+      "modified_count": 3,
+      "scope": "N semantic compiler entries; not latency or AST instruction counts"
+    }
+  ],
+  "additional_source_sha256": {
+    "src/mongoeco/api/_async/cursor.py": "87282af594cc113a09773b7be97961d1d94fa88d640da43af918734ca42ee265",
+    "src/mongoeco/api/_async/_collection_modify.py": "df8ab9556157a4b90ed0d5050dfa5238550835a38fb600b3d602d2c5ba141c1e",
+    "src/mongoeco/api/_async/_collection_runtime.py": "c9132ae75a0fb9a8a71b86405a6d08c9c9f20015a6a2e804e3d5bbec0c7fee94",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "0fae2b133b20bca3efb67d4f903854717745bbebdee95035cdd46db3560d0233",
+    "src/mongoeco/engines/memory.py": "6ef201b5e9d398d3e5b62f2a45066f0363d02245950fc0fac983dc599331bf9c",
+    "src/mongoeco/engines/sqlite.py": "14ab185f106b72a9050a2d9ee7ef1e9b1dc70e478355e0973c9074849f11c9aa",
+    "src/mongoeco/engines/_sqlite_modify_ops.py": "4da2eed5b6924dae2e720179ed5e00d3e276bcbefaa124b1e21202f907c26fc7",
+    "src/mongoeco/engines/__init__.py": "99544c3349de74cd23499c3b20ec0a0ddc1e836ebd68642e17c88bbc60c42c62",
+    "src/mongoeco/core/operation_limits.py": "b996255e756af3f0d141633259151811c949eb3d1aad27075a7d9d7e8326c076"
+  },
+  "limits": [
+    "No code fixes, no SPI v3, no native MongoDB or sockets.",
+    "SQLite uses in-memory databases; compilation counters are not benchmarks."
+  ]
+}

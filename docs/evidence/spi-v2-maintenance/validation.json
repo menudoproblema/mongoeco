@@ -1,0 +1,96 @@
+{
+  "schema": "mongoeco-spi-v2-maintenance-validation/v1",
+  "date": "2026-10-17",
+  "scope": "Documentation decision and residual-maintenance analysis after T1-T6 and S1/S2; candidate runtime unchanged",
+  "decision_owner": "docs/architecture/engine-spi-v3-proposal.md",
+  "decision": "Keep SPI v2 and shelve v3; no scheduled retirement, successor contract or 5.0 commitment",
+  "new_refactors_implemented": false,
+  "prior_candidate_inputs_verified": 735,
+  "prior_candidate_input_drift": [],
+  "documents_sha256": {
+    "README.md": "6d78267f37148f21d1f4c4081884c64f2d56c46d9682a42bf81371c9b1c26966",
+    "TODO.md": "f359a098e90ac145fa0646eb014d439d4329977f97b952e58df4aca56b11a4bb",
+    "CHANGELOG.md": "f09440fd4aadffbf25b6babac68787b54f38c9f2df2cd3d01d0ad7fb7ee75b4d",
+    "docs/README.md": "a691fb37249e150277f134c25734716a5873f56e3d7216136fefda2e9818815a",
+    "docs/architecture/engine-spi-v3-proposal.md": "171d500a0069f2864d91cd8df9f893438866ada604355d4ca8b9ca9938d5d596",
+    "docs/architecture/engine-preparation-proposal.md": "66d73e820ceec9e72288d9895620bb604b2ff008c0904150e7881c32b69d5a4f",
+    "docs/architecture/spi-v2-boundary-proposal.md": "d477f57859961a97eccd3e92a448aab7df3891cb0a71fbca6eec383d1f241576",
+    "docs/architecture/spi-proposal-review.md": "7dd593d18c3b10ee3d07b802eebf9b2276f76c83f290e71889087f5ad876b582",
+    "docs/architecture/decisions/ADR-018-propuesta-operaciones-preparadas-spi-v3.md": "32213f112f94bdb6d2ef7dae430dca670c70f44c933286c078f31bec66335b6b",
+    "docs/architecture/decisions/index.md": "57d48f64f17fb849f938e301fc65e3c609d1e60b5f540f2bc85234a6938e84b9",
+    "docs/architecture/index.md": "3ad933b42d7bb31b3f255b35b0baaf3e036c6211186558ae4323f4f35e40b7b9",
+    "docs/architecture/engine-spi-v2.md": "be41318a7de98a462f35dda11dbaa5a022396d3c86446906a779df942d7ae68f",
+    "docs/architecture/engine-adapter-versioning.md": "8810512a9fce6da76fcaaf313436dd7935e8e17ef7d4f7b846c0ef772a26e6b8",
+    "docs/roadmap-5.0.md": "2e80b8eb23a4e04eea3a7b09145d1595bafe1cc10e26e3853aa6d6da74227827",
+    "docs/migrating-to-5.0.md": "a933cbbae8c96b201f45e4ab5e609772bc6bc061cd1d567751ed9fd476caeadd",
+    "docs/engine-preparation-validation.md": "623a4ec6033121175ef1c34569e256f57dc36f50fbc6d0855eb39419b7bfb9c0",
+    "docs/engine-boundary-validation.md": "c545e46ba2ebfe9145c9ecf945a3233a5b56b4546df17ecdb97752a9c1592332"
+  },
+  "gates": {
+    "documents": {
+      "documents": [
+        "README.md",
+        "TODO.md",
+        "CHANGELOG.md",
+        "docs/README.md",
+        "docs/architecture/engine-spi-v3-proposal.md",
+        "docs/architecture/engine-preparation-proposal.md",
+        "docs/architecture/spi-v2-boundary-proposal.md",
+        "docs/architecture/spi-proposal-review.md",
+        "docs/architecture/decisions/ADR-018-propuesta-operaciones-preparadas-spi-v3.md",
+        "docs/architecture/decisions/index.md",
+        "docs/architecture/index.md",
+        "docs/architecture/engine-spi-v2.md",
+        "docs/architecture/engine-adapter-versioning.md",
+        "docs/roadmap-5.0.md",
+        "docs/migrating-to-5.0.md",
+        "docs/engine-preparation-validation.md",
+        "docs/engine-boundary-validation.md"
+      ],
+      "local_file_links_checked": 211,
+      "anchors_checked": 0,
+      "failures": [],
+      "scope": "Markdown inline local links and own-repository GitHub blob links; no external network verification"
+    },
+    "public_api": {
+      "command": "python scripts/update_public_api_manifest.py --check",
+      "exit_code": 0,
+      "result": "public API manifest is current"
+    },
+    "public_typing": {
+      "command": "python scripts/check_public_typing.py",
+      "exit_code": 0,
+      "positive_fixtures": 2,
+      "expected_negative_diagnostics": {
+        "public": 20,
+        "engine_boundary": 18
+      }
+    },
+    "focal": {
+      "command": "python -m pytest tests/unit/test_architecture_engine_operations.py tests/unit/core/test_engine_spi_v2.py tests/unit/core/test_engine_boundary.py tests/integration/api/test_find_preparation_contract.py tests/integration/api/test_cursor_snapshot_contract.py -q",
+      "exit_code": 0,
+      "passed": 173,
+      "subtests_passed": 21,
+      "log_sha256": "c0d5b1c4e9042123eb870cf6fdbc1bc76c5fcb44a576f6d5ef7d7e16bf00b989"
+    },
+    "ruff": {
+      "command": "python -m ruff check docs/evidence/spi-v2-maintenance/observe.py",
+      "exit_code": 0
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  },
+  "author_probe_correction": "The initial probe expected no-untyped-call for all three helpers. Actual strict checking reports it only for the helper without annotated parameters; the two override helpers retain Any returns. Corrected observer expectations, without changing runtime or regression assertions.",
+  "limits": [
+    "No independent architecture audit or ADR lifecycle transition.",
+    "No new global suite, native capture or latency benchmark for this documentation-only runtime scope.",
+    "Prior integrated validation retains its artifact identity; no claims of complete MongoDB parity.",
+    "Only local repository references were inspected; no consumers identified."
+  ],
+  "analysis_artifacts_sha256": {
+    "observe.py": "2e43e9d0738d164aaa2623d539e79cc8728606a727f1f81137d12d69bd47fa21",
+    "observations.json": "a3ce05970f65e5d5df215f23aff1c30c97286be2a3dab56d76153a64a2b30363"
+  }
+}

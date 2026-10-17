@@ -1,5 +1,29 @@
 # Roadmap verificable hacia MongoEco 5.0
 
+## Estado actual: SPI v3 aparcado, sin versión comprometida
+
+Revisado desde 4.10.1, 2026-10-17. SPI v1 se retiró en 4.7; SPI v2 es el
+único contrato vigente. SPI v3 y Search v2 no están implementados ni publicados.
+La existencia de este roadmap no acepta sus contratos ni fija una entrega 5.0.
+
+La [decisión posterior a T1–T6 y S1/S2](architecture/engine-spi-v3-proposal.md)
+mantiene SPI v2 y aparca v3. Esas mejoras están completadas; sus registros de
+[preparación](engine-preparation-validation.md) y
+[frontera](engine-boundary-validation.md) conservan resultados y límites.
+No existe un plan activo de migración a v3 ni una versión 5.0 comprometida.
+
+Preparar 5.0 exige primero demostrar el beneficio de la ruptura, aprobar su
+contrato y migración y cumplir las condiciones de convivencia/deprecación.
+No se exige Search v2 para mejorar preparación. La evolución de Search tiene su
+[propuesta independiente](architecture/search-contract-v2-proposal.md).
+
+## Plan histórico anterior a 4.7
+
+Las secciones siguientes conservan el plan de ADR-016 para trazabilidad; **no
+son estado de implementación ni gates activos de una entrega actual**. Su fila
+`search-v2` opt-in en 4.7 no se materializó. ADR-017 sustituyó el calendario
+SPI; la propuesta nueva deberá rebasar el plan de rc antes de ejecutarlo.
+
 Los responsables indicados son roles, no personas. Un gate bloqueado no se
 convierte en verde por documentacion o por paridad local indirecta.
 

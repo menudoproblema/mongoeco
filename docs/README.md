@@ -52,6 +52,16 @@ cover the pytest kit and supported Python/PyMongo versions.
 - [CXP exchange](cxp-exchange.md): inspect the declared compatibility subset.
 - [Engine SPI v2](architecture/engine-spi-v2.md) and
   [engine conformance](engine-conformance.md).
+- [Engine SPI evolution](architecture/engine-spi-v3-proposal.md): keep v2,
+  shelve v3, and assess further maintenance candidates without a migration plan.
+- [Engine preparation proposal](architecture/engine-preparation-proposal.md):
+  internal simplification preserving SPI v2, review evidence and acceptance.
+- [Engine preparation implementation](engine-preparation-validation.md):
+  T1–T6, native references, installed-artifact checks and SQLite compatibility.
+- [SPI v2 boundary validation](engine-boundary-validation.md): identity/selector
+  conformance, typed adapter calls and installed-artifact regression evidence.
+- [SPI v2 read simplification](engine-read-validation.md): typed cursor opening,
+  production SQLite reader coverage and malformed-query regex diagnostics.
 - [Development](development.md) and [benchmarks](../benchmarks/README.md).
 - [Changelog](../CHANGELOG.md), [deprecations](deprecations.md),
   [release checklist](release-checklist.md), [backlog](../TODO.md) and

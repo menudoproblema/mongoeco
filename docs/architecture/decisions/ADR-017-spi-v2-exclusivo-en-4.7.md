@@ -43,6 +43,17 @@ posterior requiere autoridad arquitectonica independiente.
 
 ## Consecuencias
 
+### Aclaración editorial de timeout (2026-10-17)
+
+La expresión anterior «OperationContext conserva identidad, timeout, sesion y
+reloj ligados» no describe un campo timeout del DTO: el código de 4.10.1 captura
+plazos en semánticas y coordinadores de ejecución. Se conserva aquí el cuerpo
+histórico y el estado de la decisión. La
+[propuesta de preparación interna](../engine-preparation-proposal.md) caracteriza
+esas rutas sin mover plazos al contexto ni autorizar cambios de su inicio.
+
+### Efectos de la decisión aceptada
+
 Los engines que no hayan migrado dejan de importarse o construirse con 4.7.
 Los consumidores v2 no cambian de contrato y ganan una frontera sin
 negociacion ambigua. El catalogo de deprecaciones deja de anunciar simbolos ya

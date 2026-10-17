@@ -1,0 +1,408 @@
+{
+  "schema": "mongoeco-spi-v2-followup-probes/v1",
+  "installed_version": "4.10.1",
+  "sources_sha256": {
+    "src/mongoeco/engines/adapter.py": "adb751d1fae8bbdb21c794fd25eebaa44c01664894fdc5b62fb1f9d23b724b23",
+    "src/mongoeco/engines/base.py": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+    "src/mongoeco/engines/capabilities.py": "087c3b2d19bebebf26bb59f227a7fb850ed2f15675c9ecf25c4081fe589bbdc0",
+    "src/mongoeco/engines/semantic_core.py": "f62e680cb710815eed97ceda2edaa0a829f6a314f36e6bec186c4a9016c6854d",
+    "src/mongoeco/engines/memory.py": "6ef201b5e9d398d3e5b62f2a45066f0363d02245950fc0fac983dc599331bf9c",
+    "src/mongoeco/engines/sqlite.py": "df431ce5d8322026fa49f258d956237f378ff6df652767354e444ddc3ac2d607",
+    "src/mongoeco/engines/_sqlite_modify_ops.py": "65041e05249e00862eda53b2209242ede762f4c567970b0a33a558e75f768539",
+    "src/mongoeco/api/operations.py": "a4cbc4446411be6b3aa8599414bef306451b3656bd33b77304bab938c4422102",
+    "src/mongoeco/api/_async/_collection_modify.py": "73d6ac56d8035905bbdf5a475e156ec6306ead7889c0329b324f6a2bfc0662fb",
+    "src/mongoeco/api/_async/_collection_runtime.py": "01a0bd2d3b431ae32b5c80dd26c92a99e0624febae9f6c478db3779bd8ee738b",
+    "src/mongoeco/conformance/runner.py": "84cd275084c3a239ca3ff4ce440b969e115659bc831a4aec6b8cc0a40aaa6c89",
+    "src/mongoeco/conformance/models.py": "2a2bdd7e9a7ef71451d23522cdfda1a90e15209efab4f440e1da36cbecf52f3c",
+    "src/mongoeco/core/query_plan.py": "70c0566c49bcfa4bfae6bd2a584027c0d295d5e12bced2cfb4641a627887b63c",
+    "src/mongoeco/core/compiled_query.py": "4a7414dd78626eb804388387ec2310ca081a30c4f8beb07e9167fff0937a80ac",
+    "tests/consumer/engine_canary.py": "3f2c98c2034bff747be242585dbc0e6ef14b2f1d2bae891ab365d0a90ebc164c"
+  },
+  "independent_canary_default_conformance": {
+    "passed": 5,
+    "failed": 0,
+    "error": 0,
+    "not-applicable": 5
+  },
+  "selector_identity_cases": {
+    "memory": {
+      "update/target_eligible=False": {
+        "expected_id": null,
+        "actual_id": null,
+        "count": 0,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          {
+            "_id": "b",
+            "eligible": 0
+          }
+        ],
+        "matches_contract": true
+      },
+      "update/target_eligible=True": {
+        "expected_id": "b",
+        "actual_id": "b",
+        "count": 1,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          {
+            "_id": "b",
+            "eligible": 1,
+            "changed": true
+          }
+        ],
+        "matches_contract": true
+      },
+      "delete/target_eligible=False": {
+        "expected_id": null,
+        "actual_id": null,
+        "count": 0,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          {
+            "_id": "b",
+            "eligible": 0
+          }
+        ],
+        "matches_contract": true
+      },
+      "delete/target_eligible=True": {
+        "expected_id": "b",
+        "actual_id": "b",
+        "count": 1,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          null
+        ],
+        "matches_contract": true
+      }
+    },
+    "sqlite": {
+      "update/target_eligible=False": {
+        "expected_id": null,
+        "actual_id": null,
+        "count": 0,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          {
+            "_id": "b",
+            "eligible": 0
+          }
+        ],
+        "matches_contract": true
+      },
+      "update/target_eligible=True": {
+        "expected_id": "b",
+        "actual_id": "b",
+        "count": 1,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          {
+            "_id": "b",
+            "eligible": 1,
+            "changed": true
+          }
+        ],
+        "matches_contract": true
+      },
+      "delete/target_eligible=False": {
+        "expected_id": null,
+        "actual_id": null,
+        "count": 0,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          {
+            "_id": "b",
+            "eligible": 0
+          }
+        ],
+        "matches_contract": true
+      },
+      "delete/target_eligible=True": {
+        "expected_id": "b",
+        "actual_id": "b",
+        "count": 1,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1
+          },
+          null
+        ],
+        "matches_contract": true
+      }
+    },
+    "independent-canary": {
+      "update/target_eligible=False": {
+        "expected_id": null,
+        "actual_id": "a",
+        "count": 1,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1,
+            "changed": true
+          },
+          {
+            "_id": "b",
+            "eligible": 0
+          }
+        ],
+        "matches_contract": false
+      },
+      "update/target_eligible=True": {
+        "expected_id": "b",
+        "actual_id": "a",
+        "count": 1,
+        "state": [
+          {
+            "_id": "a",
+            "eligible": 1,
+            "changed": true
+          },
+          {
+            "_id": "b",
+            "eligible": 1
+          }
+        ],
+        "matches_contract": false
+      },
+      "delete/target_eligible=False": {
+        "expected_id": null,
+        "actual_id": "a",
+        "count": 1,
+        "state": [
+          null,
+          {
+            "_id": "b",
+            "eligible": 0
+          }
+        ],
+        "matches_contract": false
+      },
+      "delete/target_eligible=True": {
+        "expected_id": "b",
+        "actual_id": "a",
+        "count": 1,
+        "state": [
+          null,
+          {
+            "_id": "b",
+            "eligible": 1
+          }
+        ],
+        "matches_contract": false
+      }
+    }
+  },
+  "internal_update_semantics_attribute_reads": {
+    "memory/sync": {
+      "collation": 18,
+      "compiled_update_plan": 6,
+      "compiled_upsert_plan": 1,
+      "dialect": 24,
+      "hint": 5,
+      "query_plan": 16,
+      "selector_plan": 6,
+      "sort": 5,
+      "variables": 17
+    },
+    "memory/async": {
+      "collation": 18,
+      "compiled_update_plan": 6,
+      "compiled_upsert_plan": 1,
+      "dialect": 24,
+      "hint": 5,
+      "query_plan": 16,
+      "selector_plan": 6,
+      "sort": 5,
+      "variables": 17
+    },
+    "sqlite/sync": {
+      "collation": 12,
+      "compiled_update_plan": 11,
+      "compiled_upsert_plan": 1,
+      "dialect": 22,
+      "hint": 5,
+      "query_plan": 10,
+      "selector_plan": 4,
+      "sort": 5,
+      "variables": 11
+    },
+    "sqlite/async": {
+      "collation": 12,
+      "compiled_update_plan": 11,
+      "compiled_upsert_plan": 1,
+      "dialect": 22,
+      "hint": 5,
+      "query_plan": 10,
+      "selector_plan": 4,
+      "sort": 5,
+      "variables": 11
+    }
+  },
+  "unbound_builtin_delete": {
+    "scope": "direct convenience call omitting operation_context required by the v2 protocol; no facade defect demonstrated",
+    "observations": {
+      "memory": {
+        "implicit": 1,
+        "explicit_8_0": 0
+      },
+      "sqlite": {
+        "implicit": 1,
+        "explicit_8_0": 0
+      }
+    }
+  },
+  "typing": {
+    "variadic_update": {
+      "exit_code": 0,
+      "output": "Success: no issues found in 1 source file\n",
+      "stderr": ""
+    },
+    "variadic_read": {
+      "exit_code": 0,
+      "output": "Success: no issues found in 1 source file\n",
+      "stderr": ""
+    },
+    "typed_control": {
+      "exit_code": 1,
+      "output": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-spi-typing-8u4my9sr/typed_control.py:3: error: Argument 1 to \"plan_find_execution\" of \"EngineSpiAdapter\" has incompatible type \"int\"; expected \"str\"  [arg-type]\n/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-spi-typing-8u4my9sr/typed_control.py:3: error: Argument 2 to \"plan_find_execution\" of \"EngineSpiAdapter\" has incompatible type \"None\"; expected \"str\"  [arg-type]\n/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-spi-typing-8u4my9sr/typed_control.py:3: error: Argument 3 to \"plan_find_execution\" of \"EngineSpiAdapter\" has incompatible type \"object\"; expected \"FindOperation\"  [arg-type]\nFound 3 errors in 1 file (checked 1 source file)\n",
+      "stderr": ""
+    },
+    "coordinator_typed_method_through_field": {
+      "exit_code": 0,
+      "output": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-spi-typing-w8w34ju9/coordinator_typed_method_through_field.py:6: note: Revealed type is \"Any | None\"\n/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-spi-typing-w8w34ju9/coordinator_typed_method_through_field.py:8: note: Revealed type is \"Any\"\nSuccess: no issues found in 1 source file\n",
+      "stderr": ""
+    }
+  },
+  "static": {
+    "variadic_adapter_entrypoints": [
+      "update_outcome",
+      "delete_outcome",
+      "insert_outcome",
+      "insert_many_outcomes",
+      "merge_outcome",
+      "open_read_snapshot",
+      "get_document",
+      "count_documents"
+    ],
+    "private_reader_references": {
+      "_iter_scan_documents_sync": [
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3437
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3471
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 5234
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3421
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3454
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 5264
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 5295
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3405
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3584
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3845
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 5006
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 5032
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3511
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3542
+        }
+      ],
+      "_count_matching_documents_sync": [
+        {
+          "file": "src/mongoeco/engines/sqlite.py",
+          "line": 7704
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 421
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3881
+        },
+        {
+          "file": "tests/unit/core/test_sqlite_engine.py",
+          "line": 3885
+        }
+      ]
+    }
+  },
+  "reachable_read_matcher": {
+    "access": "semantics.compiled_query.match(document, variables=semantics.variables)",
+    "result": {
+      "matching": true,
+      "wrong_binding": false
+    },
+    "scope": "reachable through an exported DTO field; filtering only",
+    "limits": [
+      "compiled_query is optional in the public DTO constructor",
+      "does not execute projection, sort, paging, deadlines or mutations",
+      "reachability alone does not settle the stability of every method"
+    ]
+  },
+  "limits": [
+    "No production code changed.",
+    "No native MongoDB or global suite rerun for this proposal.",
+    "Attribute traces characterize the selected scenarios, not every possible dynamic consumer."
+  ]
+}

@@ -1,0 +1,668 @@
+{
+  "schema": "mongoeco-engine-boundary-validation/v1",
+  "date": "2026-10-17",
+  "phase_result": "completed",
+  "contract_state": "S1/S2 authorized by direct user instruction; existing API, SPI v2 and SQLite preserved",
+  "entry_gate": "Local ordinary change; approved proposal, fresh census and source hashes present; no new RFC or lifecycle transition required",
+  "functional_scope": "S1 selection/conformance and canary correction; S2 explicit typed existing boundary; closed",
+  "base_revision": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "candidate": {
+    "version_label": "4.10.1 (unpublished development artifact)",
+    "wheel_sha256": "c5c3bbd9dc8a09359b78e9cf46405c78a8ab967c2b6fd5873fda80be5652d72c",
+    "sdist_sha256": "8e9205b0dfd7cb091102242d65db11ac46d0805da241b0c4504ccb51fbefdc8a",
+    "runtime_files_verified": 291,
+    "scope": "Combined frozen tree including existing preparation and diagnostics work; wheel/sdist/source/installed runtimes verified"
+  },
+  "inputs_manifest_sha256": "0763a0a27a087d3b7a15cc8b49f320c8bdf61152e6789b559aafae53865f637a",
+  "frozen_tree_manifest_sha256": "af46b875445bdbe00dfce919f97cab59a0086aa9d5201dce51c8c5755575eeaa",
+  "frozen_tree_files": 3293,
+  "environments": {
+    "313": {
+      "python": "3.13.15",
+      "pymongo": "4.19.0",
+      "runtime_files_verified": 291,
+      "dependencies": {
+        "pytest": "9.1.1",
+        "hypothesis": "6.165.9",
+        "mypy": "2.3.1",
+        "ruff": "0.16.2",
+        "cxp": "5.0.0",
+        "msgspec": "0.21.1",
+        "rpds-py": "2026.6.3",
+        "usearch": "2.26.4",
+        "shapely": "2.2.0",
+        "pyuca": "1.2"
+      }
+    },
+    "314": {
+      "python": "3.14.5",
+      "pymongo": "4.19.0",
+      "runtime_files_verified": 291,
+      "dependencies": {
+        "pytest": "9.1.1",
+        "hypothesis": "6.170.1",
+        "mypy": "2.3.1",
+        "ruff": "0.16.2",
+        "cxp": "5.0.0",
+        "msgspec": "0.22.0",
+        "rpds-py": "2026.9.1",
+        "usearch": "2.26.4",
+        "shapely": "2.2.0",
+        "pyuca": "1.2"
+      }
+    },
+    "315": {
+      "python": "3.15.0",
+      "pymongo": "4.19.0",
+      "runtime_files_verified": 291,
+      "dependencies": {
+        "pytest": "9.1.1",
+        "hypothesis": "6.165.9",
+        "mypy": "2.3.1",
+        "ruff": "0.16.2",
+        "cxp": "5.0.0",
+        "msgspec": "0.21.1",
+        "rpds-py": "2026.6.3",
+        "usearch": "2.26.4",
+        "shapely": "2.2.0",
+        "pyuca": "1.2"
+      }
+    },
+    "sdk49-final": {
+      "python": "3.14.5",
+      "pymongo": "4.9.2",
+      "runtime_files_verified": 291,
+      "dependencies": {
+        "pytest": "9.1.1",
+        "hypothesis": "6.170.1",
+        "mypy": "2.3.1",
+        "ruff": "0.16.2",
+        "cxp": "5.0.0",
+        "msgspec": "0.22.0",
+        "rpds-py": "2026.9.1",
+        "usearch": "2.26.4",
+        "shapely": "2.2.0",
+        "pyuca": "1.2"
+      }
+    }
+  },
+  "gates": {
+    "typing": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "scripts/check_public_typing.py"
+      ],
+      "exit_code": 0,
+      "seconds": 12.685789749957621,
+      "log_sha256": "6e50231d8088d37743292b47364ba57f123560bee07af5795f7a91b029b0bf65"
+    },
+    "mypy": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "mypy",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.engines.adapter",
+        "-m",
+        "mongoeco.api._async._collection_runtime"
+      ],
+      "exit_code": 0,
+      "seconds": 2.942136292345822,
+      "log_sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "strict-typing": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "mypy",
+        "--strict",
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "-m",
+        "mongoeco.pytest_plugin",
+        "-m",
+        "mongoeco.pytest_asyncio",
+        "-m",
+        "mongoeco.pytest_anyio",
+        "-m",
+        "mongoeco._pytest_runtime",
+        "-m",
+        "mongoeco._pytest_diagnostics",
+        "-m",
+        "mongoeco.wire._diagnostics",
+        "-m",
+        "mongoeco.wire._lifecycle"
+      ],
+      "exit_code": 0,
+      "seconds": 2.9579160842113197,
+      "log_sha256": "050c52a2b0c61e8b681ef5c485e0bc03340b8d55148e0acef27d744c8be42033"
+    },
+    "api": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "scripts/update_public_api_manifest.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.35722962487488985,
+      "log_sha256": "3c70e7c5dc9b8641d082109a9d551c026c8bc7f11d2628b17d067186ab7979c0"
+    },
+    "canary": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "scripts/smoke_external_engine.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.25658300006762147,
+      "log_sha256": "fc0c13553ba47169d65e86792f4e9596b2898ce0179b93599fce7a45d263530f"
+    },
+    "focal": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "pytest",
+        "tests/contracts/engines",
+        "tests/unit/core/test_engine_spi_v2.py",
+        "tests/unit/core/test_engine_boundary.py",
+        "tests/unit/core/test_engine_preparation.py",
+        "tests/unit/core/test_conformance_cli.py",
+        "tests/unit/test_module_imports.py",
+        "tests/integration/api/test_engine_preparation.py",
+        "tests/integration/api/test_engine_boundary.py",
+        "tests/integration/api/test_sqlite_410_fixture_compatibility.py",
+        "tests/integration/api/test_sqlite_45_fixture_compatibility.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "seconds": 14.882867583073676,
+      "log_sha256": "edab1b62c58425989f8b679ecea1a3e8aa50cf181ccd08d81ad4410418fe159d",
+      "summary": "740 passed, 318 subtests passed in 14.49s"
+    },
+    "unittest": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py"
+      ],
+      "exit_code": 0,
+      "seconds": 64.93562929192558,
+      "log_sha256": "cb2bfddb0be22b36894bc7923b5f95b19248af4b7ad0d221c934bacdb6729f61",
+      "summary": "Ran 3628 tests in 63.950s; OK (skipped=3)"
+    },
+    "properties": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "pytest",
+        "tests/property",
+        "-q"
+      ],
+      "exit_code": 0,
+      "seconds": 22.736942541785538,
+      "log_sha256": "ed9909ce5df36e9761eeea61f52e39d8aa6d61708a21a81a7e7f69da55756268",
+      "summary": "9 passed in 22.34s"
+    },
+    "conformance-memory": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:MemoryEngine",
+        "--format",
+        "json",
+        "--require-success",
+        "--output",
+        "$WORK/final-conformance-memory.json"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "conformance-sqlite": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:SQLiteEngine",
+        "--format",
+        "json",
+        "--require-success",
+        "--output",
+        "$WORK/final-conformance-sqlite.json"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compat-snapshots": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "scripts/update_compat_snapshots.py"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "benchmark-memory": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "benchmarks.run",
+        "--engine",
+        "memory-sync",
+        "--size",
+        "250",
+        "--warmup",
+        "0",
+        "--repetitions",
+        "1",
+        "--workload",
+        "search_diagnostics",
+        "--workload",
+        "vector_search_diagnostics",
+        "--format",
+        "json"
+      ],
+      "exit_code": 0,
+      "log_sha256": "8438946ac6957f62f0b5f1605eeb65f03c26ac41e949b6696ba432a0458a4efc"
+    },
+    "benchmark-sqlite": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "benchmarks.run",
+        "--engine",
+        "sqlite-sync",
+        "--size",
+        "250",
+        "--warmup",
+        "0",
+        "--repetitions",
+        "1",
+        "--workload",
+        "search_diagnostics",
+        "--workload",
+        "vector_search_diagnostics",
+        "--format",
+        "json"
+      ],
+      "exit_code": 0,
+      "log_sha256": "b5d5b66a1f4edcf93e4ecaaeff7a35ac0cf95b04acf67afa241cb6ed00f6bee5"
+    },
+    "smoke-wheel": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "$WORK/dist-accepted/mongoeco-4.10.1-py3-none-any.whl"
+      ],
+      "exit_code": 0,
+      "log_sha256": "8fa4c1e611ca33540ee5c8f9f6f7f00dfa3866f16f1e0daf1465b8bb367d7d87"
+    },
+    "smoke-sdist": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--sdist",
+        "$WORK/dist-accepted/mongoeco-4.10.1.tar.gz"
+      ],
+      "exit_code": 0,
+      "log_sha256": "c5adf69efe9295d358f358b62b6fb42246febcf069bcf045262571176427ede5"
+    },
+    "smoke-pytest": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "scripts/smoke_installed_wheel.py",
+        "--wheel",
+        "$WORK/dist-accepted/mongoeco-4.10.1-py3-none-any.whl",
+        "--pytest-kit"
+      ],
+      "exit_code": 0,
+      "log_sha256": "af6805ca0e2ff4541e3945a801a13d257e1de1d720ed255c68f7070dcb487767"
+    },
+    "sdk49": {
+      "command": [
+        "$WORK/venv-sdk49-final/bin/python",
+        "-m",
+        "pytest",
+        "tests/integration/api/test_engine_preparation.py",
+        "tests/integration/api/test_engine_boundary.py",
+        "tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection",
+        "tests/integration/pytest_kit",
+        "-q"
+      ],
+      "exit_code": 0,
+      "seconds": 185.5888890409842,
+      "log_sha256": "e9132737ddae2c11c5eddf0ce7caf60396fc6da29c3b3930a1e376e067e3db72",
+      "summary": "636 passed in 185.09s (0:03:05)"
+    }
+  },
+  "global_pytest": {
+    "313": {
+      "command": [
+        "$WORK/venv-313/bin/python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "log_sha256": "7e954e9e6242987089a683b249b5254b34f0403c79262638cd3b9cfadd09aba8",
+      "summary": "44773 passed, 31 skipped, 14461 subtests passed in 587.72s (0:09:47)"
+    },
+    "315": {
+      "command": [
+        "$WORK/venv-315/bin/python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_code": 0,
+      "log_sha256": "d55058642c51cdd53dd804383ffd541d3039f64978d5f0d4b0ba33fa575257dc",
+      "summary": "44773 passed, 31 skipped, 14461 subtests passed in 643.83s (0:10:43)"
+    },
+    "314": {
+      "command": [
+        "$WORK/venv-314/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--cov=mongoeco",
+        "--cov-report=term",
+        "--cov-report=json:$WORK/final-coverage.json"
+      ],
+      "environment": {
+        "MONGOECO_TEST_INSTALLED_ARTIFACT": "1",
+        "TMPDIR": "$WORK/global-tmp-314",
+        "TEMP": "$WORK/global-tmp-314",
+        "TMP": "$WORK/global-tmp-314"
+      },
+      "seconds": 674.0868027918041,
+      "exit_code": 0,
+      "log_sha256": "302f19a32d4ff95c170fcbcfd38246e0528de612c0c5d280e5cf7793da5f7500",
+      "repetition_reason": "Shared host temp-directory census interference reproduced with an unrelated file; rerun full 3.14 suite in isolated TMPDIR, preserving assertions and runtime.",
+      "summary": "44773 passed, 31 skipped, 14461 subtests passed in 671.94s (0:11:11)"
+    }
+  },
+  "coverage": {
+    "covered_lines": 44614,
+    "num_statements": 45055,
+    "percent_covered": 99.02119631561425,
+    "percent_covered_display": "99.02",
+    "missing_lines": 441,
+    "excluded_lines": 966,
+    "percent_statements_covered": 99.02119631561425,
+    "percent_statements_covered_display": "99.02"
+  },
+  "native": {
+    "7.0": {
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "captures": {
+        "boundary": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/7.0-boundary.log",
+          "output": "tests/fixtures/engine_boundary_mongodb_7_0.json",
+          "log_sha256": "7e53cb88b6f3bd7c9e4d0a40b568b2a40ea223e0baa4d66618c3a8588f4cbedf",
+          "output_sha256": "580bc60c5a26ca27f42a9a3d7f672b153bdd9892d3761413a1aa5cad001c0f86"
+        },
+        "errors": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/7.0-errors.log",
+          "output": ".tmp/spi-v2-boundary/7.0-errors.json",
+          "log_sha256": "d1bf5ecc46c2082edbf9b5617c23fbf86f7a3199ea427f78190bb339aa7259f0",
+          "output_sha256": "c40de25349112a8573bb79e647b8efdb7eb19e3d1c75799e3ae7a5bd74b4a81e"
+        },
+        "preparation": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/7.0-preparation.log",
+          "output": ".tmp/spi-v2-boundary/7.0-preparation.json",
+          "log_sha256": "2a6076e846102bb317970afac738c5316e28d3f0bde832019c768dc1b18990b4",
+          "output_sha256": "9b61ac5e948b8b2f8faf7a91be368f37443baf39efc6a08b3a70a6a37ad63c9a"
+        }
+      },
+      "new_reference_sha256": "580bc60c5a26ca27f42a9a3d7f672b153bdd9892d3761413a1aa5cad001c0f86",
+      "corpus_sizes": {
+        "boundary": 26,
+        "existing_errors": 1072,
+        "preparation": 16
+      }
+    },
+    "8.0": {
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "captures": {
+        "boundary": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/8.0-boundary.log",
+          "output": "tests/fixtures/engine_boundary_mongodb_8_0.json",
+          "log_sha256": "e16f7591c256b34d682dbf009e3e5b8c2cd590db5fd0ffda0f9850e01c773942",
+          "output_sha256": "02cb400faadfbc3dd65d1c59e8d315c50b8f6e441a3e9722d4d5820916d778f1"
+        },
+        "errors": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/8.0-errors.log",
+          "output": ".tmp/spi-v2-boundary/8.0-errors.json",
+          "log_sha256": "8cc120dc3d52d5314d262bd7afafd3d2bb770b83c3a816e971f494c440af5679",
+          "output_sha256": "e5e52349ed0d60f4c088864c518de099a06b53b2a2ea4a4b0dfc48959f4f8f97"
+        },
+        "preparation": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/8.0-preparation.log",
+          "output": ".tmp/spi-v2-boundary/8.0-preparation.json",
+          "log_sha256": "cf392864cdf4ca13bb9f195d7ce15d51c752fa987ee0086f99d0a8d458fbb386",
+          "output_sha256": "6a0b0458f253baec101afb237271dff97bb1bc9a45397950126618dcbefecbf2"
+        }
+      },
+      "new_reference_sha256": "02cb400faadfbc3dd65d1c59e8d315c50b8f6e441a3e9722d4d5820916d778f1",
+      "corpus_sizes": {
+        "boundary": 26,
+        "existing_errors": 1072,
+        "preparation": 16
+      }
+    },
+    "9.0": {
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "captures": {
+        "boundary": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/9.0-boundary.log",
+          "output": "tests/fixtures/engine_boundary_mongodb_9_0.json",
+          "log_sha256": "fb26a886be2141d980a8d50c9d9757b8df316a9a21e487e9f8b1854a0610538c",
+          "output_sha256": "7f4e8868683b6d07bf357724ae24a6a11d0ad99ae568d6bb4ab30441652ede41"
+        },
+        "errors": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/9.0-errors.log",
+          "output": ".tmp/spi-v2-boundary/9.0-errors.json",
+          "log_sha256": "29d3e93b5d42c733bd340f8157104effc7efae00f398cdd8251b7a60275eed8e",
+          "output_sha256": "93e63426c11baff2558e08d344dd8dc644814d6fea9792fc931702e9e7b24e65"
+        },
+        "preparation": {
+          "exit_code": 0,
+          "log": ".tmp/spi-v2-boundary/9.0-preparation.log",
+          "output": ".tmp/spi-v2-boundary/9.0-preparation.json",
+          "log_sha256": "bb466243198eafeda6f4c3528a4e297f77943b93ab550170ab776eb4581f120b",
+          "output_sha256": "f67e59c603aa7f09e6c5e60f45a317855d1567418ee6ee6442a54832e34f0c9b"
+        }
+      },
+      "new_reference_sha256": "7f4e8868683b6d07bf357724ae24a6a11d0ad99ae568d6bb4ab30441652ede41",
+      "corpus_sizes": {
+        "boundary": 26,
+        "existing_errors": 1072,
+        "preparation": 16
+      }
+    }
+  },
+  "native_servers_closed": true,
+  "conformance": {
+    "memory": {
+      "checks_passed": 10,
+      "report_sha256": "4b9b3e49afc170e23f017f17b3da95eebf6d0fe47b70713fb41aab5f0d699d82"
+    },
+    "sqlite": {
+      "checks_passed": 10,
+      "report_sha256": "52d75b9bd1a40b09de39a59b299b05052194472048e60ae84a6b8c8d98e05417"
+    }
+  },
+  "temp_census_probe": {
+    "injected_unrelated_file": {
+      "tests": 1,
+      "expected_census_failures": 1,
+      "errors": 0,
+      "foreign_files_detected": 1
+    },
+    "without_unrelated_file": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0
+    },
+    "production_or_assertions_modified": false
+  },
+  "parallel_global_attempt": {
+    "status": "superseded_314_replayed_in_isolated_tmpdir",
+    "results": {
+      "313": {
+        "command": [
+          "$WORK/venv-313/bin/python",
+          "-m",
+          "pytest",
+          "-q"
+        ],
+        "exit_code": 0,
+        "log_sha256": "7e954e9e6242987089a683b249b5254b34f0403c79262638cd3b9cfadd09aba8"
+      },
+      "315": {
+        "command": [
+          "$WORK/venv-315/bin/python",
+          "-m",
+          "pytest",
+          "-q"
+        ],
+        "exit_code": 0,
+        "log_sha256": "d55058642c51cdd53dd804383ffd541d3039f64978d5f0d4b0ba33fa575257dc"
+      },
+      "314": {
+        "command": [
+          "$WORK/venv-314/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "--cov=mongoeco",
+          "--cov-report=term",
+          "--cov-report=json:$WORK/final-coverage.json"
+        ],
+        "exit_code": 1,
+        "log_sha256": "67c3eecf91affc06c140b4923c2b42b71b53aa704407e7a46d5d402bee36263a"
+      }
+    }
+  },
+  "conservation": {
+    "unchanged_spi_and_conformance": {
+      "src/mongoeco/engines/base.py": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+      "src/mongoeco/engines/__init__.py": "99544c3349de74cd23499c3b20ec0a0ddc1e836ebd68642e17c88bbc60c42c62",
+      "src/mongoeco/engines/capabilities.py": "087c3b2d19bebebf26bb59f227a7fb850ed2f15675c9ecf25c4081fe589bbdc0",
+      "src/mongoeco/core/operation_context.py": "d98c4df3d5728336484eaea3292646da088866980a200675ab66c1c6637b7016",
+      "src/mongoeco/conformance/models.py": "2a2bdd7e9a7ef71451d23522cdfda1a90e15209efab4f440e1da36cbecf52f3c",
+      "src/mongoeco/conformance/schemas/conformance-report-v1.json": "dc98efb2b51e908e9d3dea3b5c9fddfa2395fc03d73f1815fdbf219ca4cf05cd"
+    },
+    "unchanged_sqlite": {
+      "src/mongoeco/engines/_sqlite_plan_heuristics.py": "741d38816ebf8f94076081da1523316a209b7c72c02c5649c2c9f2179c5106ce",
+      "src/mongoeco/engines/_sqlite_admin_runtime.py": "3a2b35ef8aa784c219dd3fe0553783daeb17875ed014c7ba00f03a128c173852",
+      "src/mongoeco/engines/_sqlite_search_backend.py": "8cc4645aa3ee5ca434beffa7d314882d2dad7c6f7cf1c48590bd8a7e88d75b4e",
+      "src/mongoeco/engines/_sqlite_reader.py": "ee1ceb78a98d56ec49c6b8dc328b4da517dc08659baa9c302387b3a02ee23fd6",
+      "src/mongoeco/engines/_sqlite_compound_ranking.py": "e9fe9509dddf84b7875735621fc4732e43a00a8f245cd9d93b164f092b2f04e1",
+      "src/mongoeco/engines/_sqlite_compound_prefilter.py": "f07dd66a59a050795d945a238dcbf3ca009195961fc92ecdb35b10bb018c699a",
+      "src/mongoeco/engines/_sqlite_session_runtime.py": "b85976a6c55189c4345c869cda5d3b481cf5d91adce18291cd89b897e12a567e",
+      "src/mongoeco/engines/_sqlite_runtime.py": "81d99ec2de1e33c02480f3912fc86ea1b6284c955c802039ad7991e2f91e26ec",
+      "src/mongoeco/engines/_sqlite_catalog.py": "42608dbb64463ff08eb437b701bb5b632e7fc3549b05a0be6b90d8eb36d5062c",
+      "src/mongoeco/engines/_sqlite_read_ops.py": "2bfcd2e1c29de5d209ccb25f8d085e47d4f9dd556fd71dcb662e3a3fc949c7e1",
+      "src/mongoeco/engines/sqlite_query.py": "78b60d1e6a7a493ac964adcb8e2f1f316bec5e24433a53d71c161785e2ec1432",
+      "src/mongoeco/engines/_sqlite_connection.py": "5362e77cf7e2fe988f034578e8fd2bd8a59191a3de399e79e75ee001e157121a",
+      "src/mongoeco/engines/_sqlite_search_runtime.py": "72dd455874b1e105e364acaebdcb17cd63024fab72f9b66b18b020fde0d99042",
+      "src/mongoeco/engines/sqlite_planner.py": "d18fe18b2f2ea88a7d8e94dcaabf1a6f83ac68cabd5c8e800ead686e602f1487",
+      "src/mongoeco/engines/_sqlite_fast_paths.py": "9f46cd1738c85dad18eba9cd94968a8242931f0e6f0616228a6f552154daf892",
+      "src/mongoeco/engines/_sqlite_read_runtime.py": "0e63eeabcff7258d9a4a4a2a073f0d85d76e087a144baf59849cc38716af3551",
+      "src/mongoeco/engines/_sqlite_search_admin.py": "a2995bedc87b36ee5bfc08e49a7506a9f718b7af8a4ffc5fb0b4de28ea121abf",
+      "src/mongoeco/engines/_sqlite_outbox.py": "fd541fa1b07a6bad5ff2e37bb664dd43c24af7161ae1655f251006b7f4b2b843",
+      "src/mongoeco/engines/sqlite.py": "df431ce5d8322026fa49f258d956237f378ff6df652767354e444ddc3ac2d607",
+      "src/mongoeco/engines/_sqlite_read_fast_path_runtime.py": "65ebcefb9598255d1781ebb16b00cadf921ab5da7596d99808c520ae315221ff",
+      "src/mongoeco/engines/_sqlite_namespace_admin.py": "69f87986c5a672928a8bc1d87ec060743af1ff564c24739d56f612810c59012e",
+      "src/mongoeco/engines/_sqlite_vector_backend.py": "ae0f89521b93d46bbc06176fcad5953f82b9690c28d3d8a8e3b1835c518f5010",
+      "src/mongoeco/engines/_sqlite_index_catalog.py": "6f7c91ffc370e5928230f7aad2b053a932b22bee6442a86fc274e1d818cb48db",
+      "src/mongoeco/engines/_sqlite_write_ops.py": "8a8d445029ed0f20bd27e6bbbd6819c3f92281aacc866c88e6846b8fdfd3553d",
+      "src/mongoeco/engines/_sqlite_index_runtime.py": "a81e09f3682eb702e460c285c78ce878b1a450f203e6339a221d612e2ef0fc93",
+      "src/mongoeco/engines/_sqlite_write_scope.py": "ff4f4af2ec48fd750b824a5f2f6c2521d836a22f3392c3ed17bde7cf6bcfcff2",
+      "src/mongoeco/engines/_sqlite_index_admin.py": "e137033c2c880f9ad9e6262c6c1d95d9f008db58945ad2d9072f5a05057c0db2",
+      "src/mongoeco/engines/_sqlite_bulk.py": "12449f18523bc9b19b209802a2a526b8139372fcd958639d795bc6e0c3903d2f",
+      "src/mongoeco/engines/_sqlite_read_execution.py": "f8a03ad67941c9f4d8c353ac36363f8dbfc919df7e16b63d451f4074aa03dd2c",
+      "src/mongoeco/engines/_sqlite_modify_ops.py": "65041e05249e00862eda53b2209242ede762f4c567970b0a33a558e75f768539",
+      "src/mongoeco/engines/_sqlite_explain_contract.py": "28a167e98c40d6d8ebca207ffff376987d55ffcbf4beba2d85f725dc95bbc145",
+      "tests/fixtures/sqlite/numeric-identities-before-fix.sqlite": "3f0ebc5a30130c4eb0631ffaff6d07d5ff45bbc5e9e936de84da17491680644b",
+      "tests/fixtures/sqlite/mongoeco-4.5.0-bridge.json": "5489a37cb4c905d848bfadca96c481468b1dcd2a355103d8e62370dcc78861aa",
+      "tests/fixtures/sqlite/mongoeco-4.10.1-preparation.sqlite": "8dcc2c7509990086b0f4ead8dde6d0cf66195f8498b7a4a25ed83726b53f5aed",
+      "tests/fixtures/sqlite/numeric-identities-before-fix.json": "b687aa092414aee73ce008409b741ca45c921d5c585a347117e90f51b50c5708",
+      "tests/fixtures/sqlite/mongoeco-4.10.1-preparation.json": "9e5130ad1f72eeaa6cb8cd993f77a4fd65abec1264e01044bf3d17d1461f682e",
+      "tests/fixtures/sqlite/mongoeco-4.5.0-bridge.sqlite": "e671484cd736c42eb3c4e11dbc5ca2f5564c35072f0e1a5fcc4dded172400efe"
+    },
+    "public_api": "final-api.log: manifest is current"
+  },
+  "regressions": {
+    "expected_red_before_S1": 8,
+    "identity_selector_tests": 51,
+    "explicit_boundary_tests": 35,
+    "native_command_scenarios_per_server": 26,
+    "typing_positive_fixtures": 2,
+    "typing_expected_public_errors": 20,
+    "typing_expected_boundary_errors": 18,
+    "additional_typecheck_baseline_errors": 23,
+    "additional_typecheck_final_errors": 0,
+    "mypy_new_ignores": 0
+  },
+  "lint": {
+    "log_sha256": "fb535d0cc1fad112c9f495fb422abf0c75979ea720aad2b649a0ff737de201d9",
+    "result": "symbol ratchet passed, 40 changed Python files; baseline unchanged",
+    "inputs_unchanged_since_check": true
+  },
+  "retained_attempt_log_hashes": {
+    "s1-red.log": "6823ebe607f8017f4741ef87e6f942d717c5bb52361a9959d224b01246ff75bf",
+    "s2-first-focal.log": "1f2657583443a85a82c66ee000138e44cf7cc81c006adcd1aba55d8a3571f73f",
+    "s2-core-focal.log": "a3c2d11a6f31e45a7d80e51790e5fcb542812448b641c57d328ee26804828091",
+    "focal-source.log": "b38f527d6bab4ed6cd6e96d8939c93941f3f1eedc223c1cefab6a239ec7dcdb0",
+    "installation-final.log": "beb92df26c5bc2232a11e8f91091fb750b7f89b1de926897752270c5db83d0f7",
+    "unittest-installed.log": "d7509c5d367328f790158da9f2d4f330ef700c4e67223405b489fdb6a6acf59c",
+    "review-typecomment-lint.log": "93ae50c933174b011e508cd7194c61ce2ab72a0758cd33fbd9e992959f16bb2d",
+    "superseded-annotation-final-global-run.log": "c7863a4dbc4be1ee0224d3cc8ad5ff3fc0a059e0975d01bad92af350caf534f2",
+    "parallel-global-314.log": "67c3eecf91affc06c140b4923c2b42b71b53aa704407e7a46d5d402bee36263a",
+    "parallel-coverage-314.json": "cce722066ae6a841d040957d4d55cb080389e0a51aa24bb562ca1fbe1bc0d09f"
+  },
+  "incidents": [
+    "Expected S1 red confirmed four incorrect canary effects and four false-positive conformance verdicts.",
+    "Early adapter focal exposed incomplete test stubs and retired private argument-helper tests; fixtures updated to SPI signatures and existing validation assertions retained.",
+    "Restricted sockets, missing native 8/9 fixtures and nested dependency paths caused preparation failures; retained and superseded by complete authorized runs.",
+    "Full unittest caught the cursor annotation name invariant; the quoted and type-comment alternatives conflicted with lint. Final cache and producer annotations satisfy imports, mypy and the unchanged lint ratchet.",
+    "A global run begun before the final lint reconciliation was interrupted and retained; all final gates and globals were repeated on the accepted artifact.",
+    "The parallel accepted 3.14 run passed coverage but a shared temp-directory census observed files from another process. A controlled unrelated-file injection reproduced that assertion failure; the unchanged test passed without it. The final full 3.14 coverage run uses an isolated TMPDIR. Passing 3.13/3.15 runs remain valid on the identical artifact."
+  ],
+  "review": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "required_local_gates_passed": true,
+    "existing_unrelated_changes_preserved": true,
+    "outside_repositories_modified": false,
+    "independent_audit": false,
+    "spi_v3_adoption_accredited": false,
+    "latency_improvement_claimed": false,
+    "release_or_commits_performed": false
+  }
+}

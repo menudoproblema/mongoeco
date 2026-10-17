@@ -50,6 +50,17 @@ Integración oficial con pytest:
 [contrato y aceptación](pytest-integration-proposal.md) y [guía de uso](../pytest.md).
 La autorización de implementación consta en el encargo del usuario.
 
+Evolución del engine: [mantener SPI v2 y aparcar v3](engine-spi-v3-proposal.md).
+Ese documento posee la decisión actual y la evaluación de simplificaciones
+compatibles pendientes. No se compromete una migración ni una entrega 5.0.
+
+Están completados la [preparación T1–T6](engine-preparation-proposal.md) y la
+[frontera S1/S2](spi-v2-boundary-proposal.md). Sus registros de
+[preparación](../engine-preparation-validation.md) y
+[frontera](../engine-boundary-validation.md) conservan verificación y límites.
+[ADR-018](decisions/ADR-018-propuesta-operaciones-preparadas-spi-v3.md) conserva
+la propuesta revisada como antecedente, sin cambiar su estado documental.
+
 ## Patrones principales
 
 Los patrones de diseno que aparecen de forma sistematica en el codigo son:

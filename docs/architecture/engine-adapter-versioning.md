@@ -7,6 +7,10 @@ MongoEco 4.7 dispone de una sola frontera estable para engines: SPI v2.
 conformidad con ese contrato; no selecciona versiones ni traduce shapes
 alternativos.
 
+La [decisión vigente](engine-spi-v3-proposal.md) mantiene esta frontera y
+aparca v3 tras T1–T6 y S1/S2. Las firmas internas ya tipadas no introducen
+negociación de versiones ni una traducción a otro contrato.
+
 ```text
 API publica / conformance
     -> EngineSpiAdapter

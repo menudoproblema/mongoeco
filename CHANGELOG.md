@@ -13,12 +13,10 @@ usa Semantic Versioning.
 - Reject malformed query regex with native code 51091 during preparation,
   including empty/no-match reads and nested membership filters. Retain complete
   error documents, defensive plan evaluation and rejected-write state.
-
 - Correct the independent SPI v2 canary to intersect identity and selector for
   update/delete. Extend the existing atomicity check to reject ignored
   conditions, incorrect images/counters and effects on unrelated documents,
   including competing writers. Preserve conformance IDs and report schema.
-
 - Preserve the dialect of unbound find/update operations when converting them to
   engine semantics. Respect explicitly empty update bindings in selector
   preparation. Keep the public API and Engine SPI v2 unchanged.
@@ -31,13 +29,14 @@ usa Semantic Versioning.
   their resource and interruption tests to the production reader. Preserve API,
   Engine SPI v2 and existing SQLite files. See
   [read validation](docs/engine-read-validation.md).
-
+- Record the decision to retain Engine SPI v2 and shelve v3 after T1–T6 and
+  S1/S2. Update architecture, roadmap and migration guidance; assess further
+  compatible maintenance candidates without committing a successor or 5.0.
 - Give the eight existing CRUD/read adapter boundaries explicit signatures and
   retain their type through the collection coordinator. Check both ends with
   positive/negative typing fixtures while preserving runtime guards, snapshot
   cleanup, batch fallbacks and change delivery. Keep the public API, SPI v2 and
   SQLite file format unchanged.
-
 - Consolidate internal context binding, paired identity selection and
   planning/explain dispatch. Reuse SQLite mutation semantics within the same
   attempt, avoiding a second selector compilation while retaining atomic

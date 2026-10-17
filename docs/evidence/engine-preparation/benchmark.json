@@ -1,0 +1,4222 @@
+{
+  "fresh_processes_per_artifact": 7,
+  "timing": "perf_counter_ns; tracing disabled during timing",
+  "memory": "separate tracemalloc peak Python allocations; not RSS",
+  "samples": {
+    "baseline": [
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 64625,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 71292,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 221000,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 60375,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 56000,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 199375,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 57208,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 110083,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9598042,
+          "python_peak_bytes": 65649
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 51500,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 112875,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9561792,
+          "python_peak_bytes": 62940
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 60750,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 602291,
+          "python_peak_bytes": 17000
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 95084250,
+          "python_peak_bytes": 460255
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 52667,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 486833,
+          "python_peak_bytes": 15765
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 96329000,
+          "python_peak_bytes": 458956
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 170708,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 225041,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 932875,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 111541,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 151000,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 848250,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 186708,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 306583,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 36668791,
+          "python_peak_bytes": 73075
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 145583,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 202334,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 36044500,
+          "python_peak_bytes": 70981
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 182125,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 512750,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 360160292,
+          "python_peak_bytes": 441626
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 148333,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 512708,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 368058958,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 70959,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 81917,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 230333,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 49792,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 56833,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 202834,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 64083,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 115834,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 10254708,
+          "python_peak_bytes": 63816
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 56417,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 104959,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9563833,
+          "python_peak_bytes": 62940
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 61875,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 524959,
+          "python_peak_bytes": 16859
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 101705708,
+          "python_peak_bytes": 459973
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 53833,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 514500,
+          "python_peak_bytes": 15765
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 99744542,
+          "python_peak_bytes": 459411
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 315458,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 266625,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 1155792,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 242333,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 285333,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 1182791,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 274250,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 383500,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 38539083,
+          "python_peak_bytes": 73075
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 152375,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 196708,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 37688500,
+          "python_peak_bytes": 70981
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 215250,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 585083,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 432274584,
+          "python_peak_bytes": 441626
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 206250,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 694416,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 423773666,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 72333,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 93500,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 223125,
+          "python_peak_bytes": 14843
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 48417,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 59917,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 204167,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 58666,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 111042,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9794333,
+          "python_peak_bytes": 67435
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 49416,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 102958,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9733083,
+          "python_peak_bytes": 63222
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 58667,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 515708,
+          "python_peak_bytes": 16859
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 99488500,
+          "python_peak_bytes": 459738
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 54750,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 483750,
+          "python_peak_bytes": 15812
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 98648083,
+          "python_peak_bytes": 459050
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 200583,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 255833,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 911708,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 144333,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 183625,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 795125,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 201708,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 289792,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 38714167,
+          "python_peak_bytes": 73075
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 149709,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 210125,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 37632125,
+          "python_peak_bytes": 70981
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 191667,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 595625,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 378995917,
+          "python_peak_bytes": 441598
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 135667,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 549000,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 375942250,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 72709,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 79666,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 228208,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 50500,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 57583,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 204500,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 54666,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 108166,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9721958,
+          "python_peak_bytes": 63111
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 53125,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 108792,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9921708,
+          "python_peak_bytes": 62094
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 64875,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 556708,
+          "python_peak_bytes": 16859
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 100587209,
+          "python_peak_bytes": 460255
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 56541,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 533667,
+          "python_peak_bytes": 16047
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 96915250,
+          "python_peak_bytes": 459238
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 188583,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 259958,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 880958,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 127375,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 167500,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 735000,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 161041,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 230666,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 36735083,
+          "python_peak_bytes": 73075
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 141958,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 224041,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 37316917,
+          "python_peak_bytes": 70981
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 307208,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 601083,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 369293125,
+          "python_peak_bytes": 441598
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 149000,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 539709,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 368553833,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 71625,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 78291,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 221708,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 52334,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 62750,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 209458,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 58500,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 113708,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9569708,
+          "python_peak_bytes": 63252
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 50542,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 106208,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9559292,
+          "python_peak_bytes": 63598
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 60916,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 513208,
+          "python_peak_bytes": 16859
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 96878542,
+          "python_peak_bytes": 460255
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 54208,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 532125,
+          "python_peak_bytes": 15859
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 96925542,
+          "python_peak_bytes": 459426
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 215709,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 278458,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 788750,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 153833,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 185125,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 739084,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 180875,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 242083,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 37187583,
+          "python_peak_bytes": 73075
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 149250,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 254000,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 37249709,
+          "python_peak_bytes": 70981
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 204084,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 576708,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 375241292,
+          "python_peak_bytes": 441626
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 137667,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 522667,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 369675042,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 75375,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 81375,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 230000,
+          "python_peak_bytes": 14843
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 50333,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 59833,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 200958,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 55750,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 118042,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9604708,
+          "python_peak_bytes": 65461
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 50667,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 104541,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9347667,
+          "python_peak_bytes": 61765
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 58167,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 517791,
+          "python_peak_bytes": 16906
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 98212625,
+          "python_peak_bytes": 460020
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 54333,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 516208,
+          "python_peak_bytes": 15765
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 96483875,
+          "python_peak_bytes": 460225
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 257750,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 264583,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 1005167,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 141750,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 195250,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 857208,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 190250,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 261416,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 36810333,
+          "python_peak_bytes": 73075
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 155041,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 203750,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 36121583,
+          "python_peak_bytes": 70981
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 201959,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 571959,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 360898792,
+          "python_peak_bytes": 441598
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 163500,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 533833,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 358996500,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 70625,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 77708,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 216083,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 49958,
+          "python_peak_bytes": 5522
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 60625,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 196000,
+          "python_peak_bytes": 12989
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 53917,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 117875,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9362500,
+          "python_peak_bytes": 65649
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 47791,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 101500,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9588375,
+          "python_peak_bytes": 62047
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 58625,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 493083,
+          "python_peak_bytes": 16859
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 96672250,
+          "python_peak_bytes": 459926
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 57833,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 493792,
+          "python_peak_bytes": 15765
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 95093208,
+          "python_peak_bytes": 458659
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 204208,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 240334,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 843667,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 138625,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 173167,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 736250,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 194500,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 264000,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 37418916,
+          "python_peak_bytes": 73075
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 169084,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 229667,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 35839709,
+          "python_peak_bytes": 70981
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 201208,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 615583,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 359977250,
+          "python_peak_bytes": 441626
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 162583,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 503375,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 360382916,
+          "python_peak_bytes": 439464
+        }
+      }
+    ],
+    "candidate": [
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 65875,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 77709,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 233750,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 59875,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 65291,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 192459,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 58666,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 112125,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 10089417,
+          "python_peak_bytes": 64521
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 52375,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 106625,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9880833,
+          "python_peak_bytes": 62423
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 60916,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 526166,
+          "python_peak_bytes": 16812
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 98703750,
+          "python_peak_bytes": 460114
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 51333,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 514625,
+          "python_peak_bytes": 15718
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 99193125,
+          "python_peak_bytes": 459082
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 209792,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 241000,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 944959,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 147625,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 161875,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 843584,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 266875,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 385625,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 36288375,
+          "python_peak_bytes": 72851
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 142708,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 252917,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 39996833,
+          "python_peak_bytes": 70757
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 218791,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 578417,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 423212958,
+          "python_peak_bytes": 441626
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 174083,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 576959,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 421201875,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 70042,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 77500,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 226584,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 50583,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 59875,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 200000,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 57250,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 109459,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9572416,
+          "python_peak_bytes": 69080
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 53917,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 113208,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9931083,
+          "python_peak_bytes": 66606
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 63667,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 524417,
+          "python_peak_bytes": 16859
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 98332417,
+          "python_peak_bytes": 459879
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 52709,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 487334,
+          "python_peak_bytes": 15906
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 99988375,
+          "python_peak_bytes": 459661
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 300875,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 333583,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 1318000,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 215292,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 323625,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 1134334,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 202917,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 284208,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 44352709,
+          "python_peak_bytes": 72851
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 160542,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 221709,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 40013791,
+          "python_peak_bytes": 70757
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 281000,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 706083,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 422071500,
+          "python_peak_bytes": 441598
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 194042,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 562875,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 415949250,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 70959,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 78334,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 219500,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 53250,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 63375,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 201125,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 61584,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 118000,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9835750,
+          "python_peak_bytes": 65226
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 51292,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 108209,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9913458,
+          "python_peak_bytes": 61812
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 60125,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 517666,
+          "python_peak_bytes": 16906
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 97263375,
+          "python_peak_bytes": 460005
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 56625,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 539583,
+          "python_peak_bytes": 15765
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 99421250,
+          "python_peak_bytes": 459238
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 226042,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 247375,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 902000,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 147917,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 194750,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 747084,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 166334,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 275083,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 35899125,
+          "python_peak_bytes": 72851
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 117917,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 209916,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 35511917,
+          "python_peak_bytes": 70757
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 195292,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 597583,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 356812417,
+          "python_peak_bytes": 441598
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 117167,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 596750,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 381320042,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 71625,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 80584,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 220000,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 49333,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 60667,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 205167,
+          "python_peak_bytes": 12989
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 55458,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 108834,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9684958,
+          "python_peak_bytes": 66636
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 47500,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 103834,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9659208,
+          "python_peak_bytes": 61671
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 59750,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 507417,
+          "python_peak_bytes": 16906
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 96201000,
+          "python_peak_bytes": 460114
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 57584,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 501459,
+          "python_peak_bytes": 15718
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 97099792,
+          "python_peak_bytes": 458674
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 174333,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 259708,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 906375,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 146917,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 192209,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 724792,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 215916,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 264541,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 37166125,
+          "python_peak_bytes": 72851
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 135000,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 242792,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 37097666,
+          "python_peak_bytes": 70757
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 163875,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 570417,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 370161500,
+          "python_peak_bytes": 441626
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 117958,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 547167,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 373246500,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 76167,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 81375,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 222667,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 51667,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 61834,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 207708,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 56042,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 111542,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9504333,
+          "python_peak_bytes": 63064
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 53958,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 108250,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9333959,
+          "python_peak_bytes": 61765
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 62333,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 519542,
+          "python_peak_bytes": 16812
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 97505458,
+          "python_peak_bytes": 461806
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 58666,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 501333,
+          "python_peak_bytes": 15859
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 97612917,
+          "python_peak_bytes": 459050
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 251750,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 257083,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 869792,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 143750,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 164542,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 903625,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 206250,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 270625,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 38556333,
+          "python_peak_bytes": 72851
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 155458,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 219875,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 38077500,
+          "python_peak_bytes": 70757
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 209750,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 670167,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 596516875,
+          "python_peak_bytes": 441598
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 128792,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 591542,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 380989209,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 73792,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 79125,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 225084,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 49667,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 62542,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 201750,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 57584,
+          "python_peak_bytes": 6263
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 110959,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9604250,
+          "python_peak_bytes": 62923
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 56167,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 108375,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9605541,
+          "python_peak_bytes": 62282
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 63500,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 529333,
+          "python_peak_bytes": 16859
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 98199000,
+          "python_peak_bytes": 459817
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 55000,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 503584,
+          "python_peak_bytes": 15812
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 97386833,
+          "python_peak_bytes": 459003
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 201334,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 222500,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 834875,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 113292,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 167334,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 769250,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 197291,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 274750,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 35659125,
+          "python_peak_bytes": 72851
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 135958,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 208125,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 37556542,
+          "python_peak_bytes": 70757
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 178125,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 906375,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 379732000,
+          "python_peak_bytes": 441598
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 127250,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 519166,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 361212042,
+          "python_peak_bytes": 439464
+        }
+      },
+      {
+        "memory/sync/1/find": {
+          "elapsed_ns": 71459,
+          "python_peak_bytes": 6967
+        },
+        "memory/sync/1/count": {
+          "elapsed_ns": 79250,
+          "python_peak_bytes": 9644
+        },
+        "memory/sync/1/update": {
+          "elapsed_ns": 226000,
+          "python_peak_bytes": 14890
+        },
+        "memory/async/1/find": {
+          "elapsed_ns": 49875,
+          "python_peak_bytes": 5569
+        },
+        "memory/async/1/count": {
+          "elapsed_ns": 57500,
+          "python_peak_bytes": 8038
+        },
+        "memory/async/1/update": {
+          "elapsed_ns": 197209,
+          "python_peak_bytes": 13036
+        },
+        "memory/sync/100/find": {
+          "elapsed_ns": 55208,
+          "python_peak_bytes": 6216
+        },
+        "memory/sync/100/count": {
+          "elapsed_ns": 108875,
+          "python_peak_bytes": 9732
+        },
+        "memory/sync/100/update": {
+          "elapsed_ns": 9505500,
+          "python_peak_bytes": 63581
+        },
+        "memory/async/100/find": {
+          "elapsed_ns": 50917,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/100/count": {
+          "elapsed_ns": 108458,
+          "python_peak_bytes": 8622
+        },
+        "memory/async/100/update": {
+          "elapsed_ns": 9480542,
+          "python_peak_bytes": 63081
+        },
+        "memory/sync/1000/find": {
+          "elapsed_ns": 60250,
+          "python_peak_bytes": 6255
+        },
+        "memory/sync/1000/count": {
+          "elapsed_ns": 515042,
+          "python_peak_bytes": 17141
+        },
+        "memory/sync/1000/update": {
+          "elapsed_ns": 94837916,
+          "python_peak_bytes": 460443
+        },
+        "memory/async/1000/find": {
+          "elapsed_ns": 55542,
+          "python_peak_bytes": 5337
+        },
+        "memory/async/1000/count": {
+          "elapsed_ns": 511792,
+          "python_peak_bytes": 15765
+        },
+        "memory/async/1000/update": {
+          "elapsed_ns": 94586416,
+          "python_peak_bytes": 459144
+        },
+        "sqlite/sync/1/find": {
+          "elapsed_ns": 202667,
+          "python_peak_bytes": 14226
+        },
+        "sqlite/sync/1/count": {
+          "elapsed_ns": 239166,
+          "python_peak_bytes": 16631
+        },
+        "sqlite/sync/1/update": {
+          "elapsed_ns": 912208,
+          "python_peak_bytes": 25279
+        },
+        "sqlite/async/1/find": {
+          "elapsed_ns": 138708,
+          "python_peak_bytes": 12812
+        },
+        "sqlite/async/1/count": {
+          "elapsed_ns": 170667,
+          "python_peak_bytes": 14769
+        },
+        "sqlite/async/1/update": {
+          "elapsed_ns": 1034750,
+          "python_peak_bytes": 23265
+        },
+        "sqlite/sync/100/find": {
+          "elapsed_ns": 187167,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/100/count": {
+          "elapsed_ns": 249833,
+          "python_peak_bytes": 16663
+        },
+        "sqlite/sync/100/update": {
+          "elapsed_ns": 35677208,
+          "python_peak_bytes": 72851
+        },
+        "sqlite/async/100/find": {
+          "elapsed_ns": 125792,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/100/count": {
+          "elapsed_ns": 203833,
+          "python_peak_bytes": 14833
+        },
+        "sqlite/async/100/update": {
+          "elapsed_ns": 34804666,
+          "python_peak_bytes": 70757
+        },
+        "sqlite/sync/1000/find": {
+          "elapsed_ns": 181250,
+          "python_peak_bytes": 14082
+        },
+        "sqlite/sync/1000/count": {
+          "elapsed_ns": 623709,
+          "python_peak_bytes": 16391
+        },
+        "sqlite/sync/1000/update": {
+          "elapsed_ns": 353423333,
+          "python_peak_bytes": 441682
+        },
+        "sqlite/async/1000/find": {
+          "elapsed_ns": 131833,
+          "python_peak_bytes": 12748
+        },
+        "sqlite/async/1000/count": {
+          "elapsed_ns": 529375,
+          "python_peak_bytes": 14561
+        },
+        "sqlite/async/1000/update": {
+          "elapsed_ns": 353798042,
+          "python_peak_bytes": 439464
+        }
+      }
+    ]
+  },
+  "summary": {
+    "memory/sync/1/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 71625,
+          "iqr": 2084.0,
+          "values": [
+            64625,
+            70959,
+            72333,
+            72709,
+            71625,
+            75375,
+            70625
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 6967,
+          "iqr": 0.0,
+          "values": [
+            6967,
+            6967,
+            6967,
+            6967,
+            6967,
+            6967,
+            6967
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 71459,
+          "iqr": 3750.0,
+          "values": [
+            65875,
+            70042,
+            70959,
+            71625,
+            76167,
+            73792,
+            71459
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 6967,
+          "iqr": 0.0,
+          "values": [
+            6967,
+            6967,
+            6967,
+            6967,
+            6967,
+            6967,
+            6967
+          ]
+        }
+      },
+      "time_ratio": 0.9976823734729494
+    },
+    "memory/sync/1/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 79666,
+          "iqr": 4209.0,
+          "values": [
+            71292,
+            81917,
+            93500,
+            79666,
+            78291,
+            81375,
+            77708
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 9644,
+          "iqr": 0.0,
+          "values": [
+            9644,
+            9644,
+            9644,
+            9644,
+            9644,
+            9644,
+            9644
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 79125,
+          "iqr": 2875.0,
+          "values": [
+            77709,
+            77500,
+            78334,
+            80584,
+            81375,
+            79125,
+            79250
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 9644,
+          "iqr": 0.0,
+          "values": [
+            9644,
+            9644,
+            9644,
+            9644,
+            9644,
+            9644,
+            9644
+          ]
+        }
+      },
+      "time_ratio": 0.9932091481937088
+    },
+    "memory/sync/1/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 223125,
+          "iqr": 9000.0,
+          "values": [
+            221000,
+            230333,
+            223125,
+            228208,
+            221708,
+            230000,
+            216083
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14890,
+          "iqr": 47.0,
+          "values": [
+            14890,
+            14890,
+            14843,
+            14890,
+            14890,
+            14843,
+            14890
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 225084,
+          "iqr": 6584.0,
+          "values": [
+            233750,
+            226584,
+            219500,
+            220000,
+            222667,
+            225084,
+            226000
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14890,
+          "iqr": 0.0,
+          "values": [
+            14890,
+            14890,
+            14890,
+            14890,
+            14890,
+            14890,
+            14890
+          ]
+        }
+      },
+      "time_ratio": 1.0087798319327732
+    },
+    "memory/async/1/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 50333,
+          "iqr": 2542.0,
+          "values": [
+            60375,
+            49792,
+            48417,
+            50500,
+            52334,
+            50333,
+            49958
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 5569,
+          "iqr": 0.0,
+          "values": [
+            5569,
+            5569,
+            5569,
+            5569,
+            5569,
+            5569,
+            5522
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 50583,
+          "iqr": 3583.0,
+          "values": [
+            59875,
+            50583,
+            53250,
+            49333,
+            51667,
+            49667,
+            49875
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 5569,
+          "iqr": 0.0,
+          "values": [
+            5569,
+            5569,
+            5569,
+            5569,
+            5569,
+            5569,
+            5569
+          ]
+        }
+      },
+      "time_ratio": 1.0049669203107305
+    },
+    "memory/async/1/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 59833,
+          "iqr": 3792.0,
+          "values": [
+            56000,
+            56833,
+            59917,
+            57583,
+            62750,
+            59833,
+            60625
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 8038,
+          "iqr": 0.0,
+          "values": [
+            8038,
+            8038,
+            8038,
+            8038,
+            8038,
+            8038,
+            8038
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 61834,
+          "iqr": 3500.0,
+          "values": [
+            65291,
+            59875,
+            63375,
+            60667,
+            61834,
+            62542,
+            57500
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 8038,
+          "iqr": 0.0,
+          "values": [
+            8038,
+            8038,
+            8038,
+            8038,
+            8038,
+            8038,
+            8038
+          ]
+        }
+      },
+      "time_ratio": 1.0334430832483747
+    },
+    "memory/async/1/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 202834,
+          "iqr": 5125.0,
+          "values": [
+            199375,
+            202834,
+            204167,
+            204500,
+            209458,
+            200958,
+            196000
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 13036,
+          "iqr": 0.0,
+          "values": [
+            13036,
+            13036,
+            13036,
+            13036,
+            13036,
+            13036,
+            12989
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 201125,
+          "iqr": 7958.0,
+          "values": [
+            192459,
+            200000,
+            201125,
+            205167,
+            207708,
+            201750,
+            197209
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 13036,
+          "iqr": 0.0,
+          "values": [
+            13036,
+            13036,
+            13036,
+            12989,
+            13036,
+            13036,
+            13036
+          ]
+        }
+      },
+      "time_ratio": 0.9915743908812132
+    },
+    "memory/sync/100/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 57208,
+          "iqr": 4000.0,
+          "values": [
+            57208,
+            64083,
+            58666,
+            54666,
+            58500,
+            55750,
+            53917
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 6263,
+          "iqr": 0.0,
+          "values": [
+            6263,
+            6263,
+            6263,
+            6263,
+            6263,
+            6263,
+            6263
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 57250,
+          "iqr": 3208.0,
+          "values": [
+            58666,
+            57250,
+            61584,
+            55458,
+            56042,
+            57584,
+            55208
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 6263,
+          "iqr": 0.0,
+          "values": [
+            6263,
+            6263,
+            6263,
+            6263,
+            6263,
+            6263,
+            6216
+          ]
+        }
+      },
+      "time_ratio": 1.0007341630541182
+    },
+    "memory/sync/100/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 113708,
+          "iqr": 7792.0,
+          "values": [
+            110083,
+            115834,
+            111042,
+            108166,
+            113708,
+            118042,
+            117875
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 9732,
+          "iqr": 0.0,
+          "values": [
+            9732,
+            9732,
+            9732,
+            9732,
+            9732,
+            9732,
+            9732
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 110959,
+          "iqr": 3250.0,
+          "values": [
+            112125,
+            109459,
+            118000,
+            108834,
+            111542,
+            110959,
+            108875
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 9732,
+          "iqr": 0.0,
+          "values": [
+            9732,
+            9732,
+            9732,
+            9732,
+            9732,
+            9732,
+            9732
+          ]
+        }
+      },
+      "time_ratio": 0.9758240405248532
+    },
+    "memory/sync/100/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 9604708,
+          "iqr": 224625.0,
+          "values": [
+            9598042,
+            10254708,
+            9794333,
+            9721958,
+            9569708,
+            9604708,
+            9362500
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 65461,
+          "iqr": 2397.0,
+          "values": [
+            65649,
+            63816,
+            67435,
+            63111,
+            63252,
+            65461,
+            65649
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 9604250,
+          "iqr": 330250.0,
+          "values": [
+            10089417,
+            9572416,
+            9835750,
+            9684958,
+            9504333,
+            9604250,
+            9505500
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 64521,
+          "iqr": 3572.0,
+          "values": [
+            64521,
+            69080,
+            65226,
+            66636,
+            63064,
+            62923,
+            63581
+          ]
+        }
+      },
+      "time_ratio": 0.9999523150521599
+    },
+    "memory/async/100/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 50667,
+          "iqr": 3709.0,
+          "values": [
+            51500,
+            56417,
+            49416,
+            53125,
+            50542,
+            50667,
+            47791
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 5337,
+          "iqr": 0.0,
+          "values": [
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 52375,
+          "iqr": 3041.0,
+          "values": [
+            52375,
+            53917,
+            51292,
+            47500,
+            53958,
+            56167,
+            50917
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 5337,
+          "iqr": 0.0,
+          "values": [
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337
+          ]
+        }
+      },
+      "time_ratio": 1.0337103045374703
+    },
+    "memory/async/100/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 104959,
+          "iqr": 5834.0,
+          "values": [
+            112875,
+            104959,
+            102958,
+            108792,
+            106208,
+            104541,
+            101500
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 8622,
+          "iqr": 0.0,
+          "values": [
+            8622,
+            8622,
+            8622,
+            8622,
+            8622,
+            8622,
+            8622
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 108250,
+          "iqr": 1833.0,
+          "values": [
+            106625,
+            113208,
+            108209,
+            103834,
+            108250,
+            108375,
+            108458
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 8622,
+          "iqr": 0.0,
+          "values": [
+            8622,
+            8622,
+            8622,
+            8622,
+            8622,
+            8622,
+            8622
+          ]
+        }
+      },
+      "time_ratio": 1.031355100563077
+    },
+    "memory/async/100/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 9563833,
+          "iqr": 173791.0,
+          "values": [
+            9561792,
+            9563833,
+            9733083,
+            9921708,
+            9559292,
+            9347667,
+            9588375
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 62940,
+          "iqr": 1175.0,
+          "values": [
+            62940,
+            62940,
+            63222,
+            62094,
+            63598,
+            61765,
+            62047
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 9659208,
+          "iqr": 432916.0,
+          "values": [
+            9880833,
+            9931083,
+            9913458,
+            9659208,
+            9333959,
+            9605541,
+            9480542
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 62282,
+          "iqr": 1316.0,
+          "values": [
+            62423,
+            66606,
+            61812,
+            61671,
+            61765,
+            62282,
+            63081
+          ]
+        }
+      },
+      "time_ratio": 1.0099724660604175
+    },
+    "memory/sync/1000/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 60750,
+          "iqr": 3250.0,
+          "values": [
+            60750,
+            61875,
+            58667,
+            64875,
+            60916,
+            58167,
+            58625
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 6255,
+          "iqr": 0.0,
+          "values": [
+            6255,
+            6255,
+            6255,
+            6255,
+            6255,
+            6255,
+            6255
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 60916,
+          "iqr": 3375.0,
+          "values": [
+            60916,
+            63667,
+            60125,
+            59750,
+            62333,
+            63500,
+            60250
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 6255,
+          "iqr": 0.0,
+          "values": [
+            6255,
+            6255,
+            6255,
+            6255,
+            6255,
+            6255,
+            6255
+          ]
+        }
+      },
+      "time_ratio": 1.0027325102880658
+    },
+    "memory/sync/1000/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 517791,
+          "iqr": 43500.0,
+          "values": [
+            602291,
+            524959,
+            515708,
+            556708,
+            513208,
+            517791,
+            493083
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16859,
+          "iqr": 47.0,
+          "values": [
+            17000,
+            16859,
+            16859,
+            16859,
+            16859,
+            16906,
+            16859
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 519542,
+          "iqr": 11124.0,
+          "values": [
+            526166,
+            524417,
+            517666,
+            507417,
+            519542,
+            529333,
+            515042
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16859,
+          "iqr": 94.0,
+          "values": [
+            16812,
+            16859,
+            16906,
+            16906,
+            16812,
+            16859,
+            17141
+          ]
+        }
+      },
+      "time_ratio": 1.0033816733006173
+    },
+    "memory/sync/1000/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 98212625,
+          "iqr": 3914959.0,
+          "values": [
+            95084250,
+            101705708,
+            99488500,
+            100587209,
+            96878542,
+            98212625,
+            96672250
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 460020,
+          "iqr": 329.0,
+          "values": [
+            460255,
+            459973,
+            459738,
+            460255,
+            460255,
+            460020,
+            459926
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 97505458,
+          "iqr": 2131417.0,
+          "values": [
+            98703750,
+            98332417,
+            97263375,
+            96201000,
+            97505458,
+            98199000,
+            94837916
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 460114,
+          "iqr": 564.0,
+          "values": [
+            460114,
+            459879,
+            460005,
+            460114,
+            461806,
+            459817,
+            460443
+          ]
+        }
+      },
+      "time_ratio": 0.9927996324301483
+    },
+    "memory/async/1000/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 54333,
+          "iqr": 2708.0,
+          "values": [
+            52667,
+            53833,
+            54750,
+            56541,
+            54208,
+            54333,
+            57833
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 5337,
+          "iqr": 0.0,
+          "values": [
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 55542,
+          "iqr": 4875.0,
+          "values": [
+            51333,
+            52709,
+            56625,
+            57584,
+            58666,
+            55000,
+            55542
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 5337,
+          "iqr": 0.0,
+          "values": [
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337,
+            5337
+          ]
+        }
+      },
+      "time_ratio": 1.0222516702556457
+    },
+    "memory/async/1000/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 514500,
+          "iqr": 45292.0,
+          "values": [
+            486833,
+            514500,
+            483750,
+            533667,
+            532125,
+            516208,
+            493792
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 15765,
+          "iqr": 94.0,
+          "values": [
+            15765,
+            15765,
+            15812,
+            16047,
+            15859,
+            15765,
+            15765
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 503584,
+          "iqr": 13292.0,
+          "values": [
+            514625,
+            487334,
+            539583,
+            501459,
+            501333,
+            503584,
+            511792
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 15765,
+          "iqr": 141.0,
+          "values": [
+            15718,
+            15906,
+            15765,
+            15718,
+            15859,
+            15812,
+            15765
+          ]
+        }
+      },
+      "time_ratio": 0.9787832847424685
+    },
+    "memory/async/1000/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 96915250,
+          "iqr": 2319083.0,
+          "values": [
+            96329000,
+            99744542,
+            98648083,
+            96915250,
+            96925542,
+            96483875,
+            95093208
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 459238,
+          "iqr": 470.0,
+          "values": [
+            458956,
+            459411,
+            459050,
+            459238,
+            459426,
+            460225,
+            458659
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 97612917,
+          "iqr": 2321458.0,
+          "values": [
+            99193125,
+            99988375,
+            99421250,
+            97099792,
+            97612917,
+            97386833,
+            94586416
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 459082,
+          "iqr": 235.0,
+          "values": [
+            459082,
+            459661,
+            459238,
+            458674,
+            459050,
+            459003,
+            459144
+          ]
+        }
+      },
+      "time_ratio": 1.0071987329135508
+    },
+    "sqlite/sync/1/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 204208,
+          "iqr": 69167.0,
+          "values": [
+            170708,
+            315458,
+            200583,
+            188583,
+            215709,
+            257750,
+            204208
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14226,
+          "iqr": 0.0,
+          "values": [
+            14226,
+            14226,
+            14226,
+            14226,
+            14226,
+            14226,
+            14226
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 209792,
+          "iqr": 50416.0,
+          "values": [
+            209792,
+            300875,
+            226042,
+            174333,
+            251750,
+            201334,
+            202667
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14226,
+          "iqr": 0.0,
+          "values": [
+            14226,
+            14226,
+            14226,
+            14226,
+            14226,
+            14226,
+            14226
+          ]
+        }
+      },
+      "time_ratio": 1.027344668181462
+    },
+    "sqlite/sync/1/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 259958,
+          "iqr": 26291.0,
+          "values": [
+            225041,
+            266625,
+            255833,
+            259958,
+            278458,
+            264583,
+            240334
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16631,
+          "iqr": 0.0,
+          "values": [
+            16631,
+            16631,
+            16631,
+            16631,
+            16631,
+            16631,
+            16631
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 247375,
+          "iqr": 20542.0,
+          "values": [
+            241000,
+            333583,
+            247375,
+            259708,
+            257083,
+            222500,
+            239166
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16631,
+          "iqr": 0.0,
+          "values": [
+            16631,
+            16631,
+            16631,
+            16631,
+            16631,
+            16631,
+            16631
+          ]
+        }
+      },
+      "time_ratio": 0.9515960270505236
+    },
+    "sqlite/sync/1/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 911708,
+          "iqr": 161500.0,
+          "values": [
+            932875,
+            1155792,
+            911708,
+            880958,
+            788750,
+            1005167,
+            843667
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 25279,
+          "iqr": 0.0,
+          "values": [
+            25279,
+            25279,
+            25279,
+            25279,
+            25279,
+            25279,
+            25279
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 906375,
+          "iqr": 75167.0,
+          "values": [
+            944959,
+            1318000,
+            902000,
+            906375,
+            869792,
+            834875,
+            912208
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 25279,
+          "iqr": 0.0,
+          "values": [
+            25279,
+            25279,
+            25279,
+            25279,
+            25279,
+            25279,
+            25279
+          ]
+        }
+      },
+      "time_ratio": 0.9941505394270973
+    },
+    "sqlite/async/1/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 141750,
+          "iqr": 26458.0,
+          "values": [
+            111541,
+            242333,
+            144333,
+            127375,
+            153833,
+            141750,
+            138625
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 12812,
+          "iqr": 0.0,
+          "values": [
+            12812,
+            12812,
+            12812,
+            12812,
+            12812,
+            12812,
+            12812
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 146917,
+          "iqr": 9209.0,
+          "values": [
+            147625,
+            215292,
+            147917,
+            146917,
+            143750,
+            113292,
+            138708
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 12812,
+          "iqr": 0.0,
+          "values": [
+            12812,
+            12812,
+            12812,
+            12812,
+            12812,
+            12812,
+            12812
+          ]
+        }
+      },
+      "time_ratio": 1.0364514991181657
+    },
+    "sqlite/async/1/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 183625,
+          "iqr": 27750.0,
+          "values": [
+            151000,
+            285333,
+            183625,
+            167500,
+            185125,
+            195250,
+            173167
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14769,
+          "iqr": 0.0,
+          "values": [
+            14769,
+            14769,
+            14769,
+            14769,
+            14769,
+            14769,
+            14769
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 170667,
+          "iqr": 30208.0,
+          "values": [
+            161875,
+            323625,
+            194750,
+            192209,
+            164542,
+            167334,
+            170667
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14769,
+          "iqr": 0.0,
+          "values": [
+            14769,
+            14769,
+            14769,
+            14769,
+            14769,
+            14769,
+            14769
+          ]
+        }
+      },
+      "time_ratio": 0.929432266848196
+    },
+    "sqlite/async/1/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 795125,
+          "iqr": 120958.0,
+          "values": [
+            848250,
+            1182791,
+            795125,
+            735000,
+            739084,
+            857208,
+            736250
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 23265,
+          "iqr": 0.0,
+          "values": [
+            23265,
+            23265,
+            23265,
+            23265,
+            23265,
+            23265,
+            23265
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 843584,
+          "iqr": 287666.0,
+          "values": [
+            843584,
+            1134334,
+            747084,
+            724792,
+            903625,
+            769250,
+            1034750
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 23265,
+          "iqr": 0.0,
+          "values": [
+            23265,
+            23265,
+            23265,
+            23265,
+            23265,
+            23265,
+            23265
+          ]
+        }
+      },
+      "time_ratio": 1.0609451344128282
+    },
+    "sqlite/sync/100/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 190250,
+          "iqr": 20833.0,
+          "values": [
+            186708,
+            274250,
+            201708,
+            161041,
+            180875,
+            190250,
+            194500
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14082,
+          "iqr": 0.0,
+          "values": [
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 202917,
+          "iqr": 28749.0,
+          "values": [
+            266875,
+            202917,
+            166334,
+            215916,
+            206250,
+            197291,
+            187167
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14082,
+          "iqr": 0.0,
+          "values": [
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082
+          ]
+        }
+      },
+      "time_ratio": 1.066580814717477
+    },
+    "sqlite/sync/100/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 264000,
+          "iqr": 64500.0,
+          "values": [
+            306583,
+            383500,
+            289792,
+            230666,
+            242083,
+            261416,
+            264000
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16663,
+          "iqr": 0.0,
+          "values": [
+            16663,
+            16663,
+            16663,
+            16663,
+            16663,
+            16663,
+            16663
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 274750,
+          "iqr": 19667.0,
+          "values": [
+            385625,
+            284208,
+            275083,
+            264541,
+            270625,
+            274750,
+            249833
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16663,
+          "iqr": 0.0,
+          "values": [
+            16663,
+            16663,
+            16663,
+            16663,
+            16663,
+            16663,
+            16663
+          ]
+        }
+      },
+      "time_ratio": 1.040719696969697
+    },
+    "sqlite/sync/100/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 37187583,
+          "iqr": 1804000.0,
+          "values": [
+            36668791,
+            38539083,
+            38714167,
+            36735083,
+            37187583,
+            36810333,
+            37418916
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 73075,
+          "iqr": 0.0,
+          "values": [
+            73075,
+            73075,
+            73075,
+            73075,
+            73075,
+            73075,
+            73075
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 36288375,
+          "iqr": 2879125.0,
+          "values": [
+            36288375,
+            44352709,
+            35899125,
+            37166125,
+            38556333,
+            35659125,
+            35677208
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 72851,
+          "iqr": 0.0,
+          "values": [
+            72851,
+            72851,
+            72851,
+            72851,
+            72851,
+            72851,
+            72851
+          ]
+        }
+      },
+      "time_ratio": 0.975819670775592
+    },
+    "sqlite/async/100/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 149709,
+          "iqr": 9458.0,
+          "values": [
+            145583,
+            152375,
+            149709,
+            141958,
+            149250,
+            155041,
+            169084
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 12748,
+          "iqr": 0.0,
+          "values": [
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 135958,
+          "iqr": 29666.0,
+          "values": [
+            142708,
+            160542,
+            117917,
+            135000,
+            155458,
+            135958,
+            125792
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 12748,
+          "iqr": 0.0,
+          "values": [
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748
+          ]
+        }
+      },
+      "time_ratio": 0.9081484747075994
+    },
+    "sqlite/async/100/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 210125,
+          "iqr": 27333.0,
+          "values": [
+            202334,
+            196708,
+            210125,
+            224041,
+            254000,
+            203750,
+            229667
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14833,
+          "iqr": 0.0,
+          "values": [
+            14833,
+            14833,
+            14833,
+            14833,
+            14833,
+            14833,
+            14833
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 219875,
+          "iqr": 34667.0,
+          "values": [
+            252917,
+            221709,
+            209916,
+            242792,
+            219875,
+            208125,
+            203833
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14833,
+          "iqr": 0.0,
+          "values": [
+            14833,
+            14833,
+            14833,
+            14833,
+            14833,
+            14833,
+            14833
+          ]
+        }
+      },
+      "time_ratio": 1.0464009518143962
+    },
+    "sqlite/async/100/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 37249709,
+          "iqr": 1587625.0,
+          "values": [
+            36044500,
+            37688500,
+            37632125,
+            37316917,
+            37249709,
+            36121583,
+            35839709
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 70981,
+          "iqr": 0.0,
+          "values": [
+            70981,
+            70981,
+            70981,
+            70981,
+            70981,
+            70981,
+            70981
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 37556542,
+          "iqr": 4484916.0,
+          "values": [
+            39996833,
+            40013791,
+            35511917,
+            37097666,
+            38077500,
+            37556542,
+            34804666
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 70757,
+          "iqr": 0.0,
+          "values": [
+            70757,
+            70757,
+            70757,
+            70757,
+            70757,
+            70757,
+            70757
+          ]
+        }
+      },
+      "time_ratio": 1.0082371918663848
+    },
+    "sqlite/sync/1000/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 201959,
+          "iqr": 23583.0,
+          "values": [
+            182125,
+            215250,
+            191667,
+            307208,
+            204084,
+            201959,
+            201208
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14082,
+          "iqr": 0.0,
+          "values": [
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 195292,
+          "iqr": 40666.0,
+          "values": [
+            218791,
+            281000,
+            195292,
+            163875,
+            209750,
+            178125,
+            181250
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14082,
+          "iqr": 0.0,
+          "values": [
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082,
+            14082
+          ]
+        }
+      },
+      "time_ratio": 0.966988349120366
+    },
+    "sqlite/sync/1000/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 585083,
+          "iqr": 29124.0,
+          "values": [
+            512750,
+            585083,
+            595625,
+            601083,
+            576708,
+            571959,
+            615583
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16391,
+          "iqr": 0.0,
+          "values": [
+            16391,
+            16391,
+            16391,
+            16391,
+            16391,
+            16391,
+            16391
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 623709,
+          "iqr": 127666.0,
+          "values": [
+            578417,
+            706083,
+            597583,
+            570417,
+            670167,
+            906375,
+            623709
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 16391,
+          "iqr": 0.0,
+          "values": [
+            16391,
+            16391,
+            16391,
+            16391,
+            16391,
+            16391,
+            16391
+          ]
+        }
+      },
+      "time_ratio": 1.0660179837732424
+    },
+    "sqlite/sync/1000/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 369293125,
+          "iqr": 18835625.0,
+          "values": [
+            360160292,
+            432274584,
+            378995917,
+            369293125,
+            375241292,
+            360898792,
+            359977250
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 441626,
+          "iqr": 28.0,
+          "values": [
+            441626,
+            441626,
+            441598,
+            441598,
+            441626,
+            441598,
+            441626
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 379732000,
+          "iqr": 66400541.0,
+          "values": [
+            423212958,
+            422071500,
+            356812417,
+            370161500,
+            596516875,
+            379732000,
+            353423333
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 441598,
+          "iqr": 28.0,
+          "values": [
+            441626,
+            441598,
+            441598,
+            441626,
+            441598,
+            441598,
+            441682
+          ]
+        }
+      },
+      "time_ratio": 1.028267179357861
+    },
+    "sqlite/async/1000/find": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 149000,
+          "iqr": 25833.0,
+          "values": [
+            148333,
+            206250,
+            135667,
+            149000,
+            137667,
+            163500,
+            162583
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 12748,
+          "iqr": 0.0,
+          "values": [
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 128792,
+          "iqr": 56125.0,
+          "values": [
+            174083,
+            194042,
+            117167,
+            117958,
+            128792,
+            127250,
+            131833
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 12748,
+          "iqr": 0.0,
+          "values": [
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748,
+            12748
+          ]
+        }
+      },
+      "time_ratio": 0.8643758389261745
+    },
+    "sqlite/async/1000/count": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 533833,
+          "iqr": 36292.0,
+          "values": [
+            512708,
+            694416,
+            549000,
+            539709,
+            522667,
+            533833,
+            503375
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14561,
+          "iqr": 0.0,
+          "values": [
+            14561,
+            14561,
+            14561,
+            14561,
+            14561,
+            14561,
+            14561
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 562875,
+          "iqr": 62167.0,
+          "values": [
+            576959,
+            562875,
+            596750,
+            547167,
+            591542,
+            519166,
+            529375
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 14561,
+          "iqr": 0.0,
+          "values": [
+            14561,
+            14561,
+            14561,
+            14561,
+            14561,
+            14561,
+            14561
+          ]
+        }
+      },
+      "time_ratio": 1.0544027813941814
+    },
+    "sqlite/async/1000/update": {
+      "baseline": {
+        "elapsed_ns": {
+          "median": 368553833,
+          "iqr": 15559334.0,
+          "values": [
+            368058958,
+            423773666,
+            375942250,
+            368553833,
+            369675042,
+            358996500,
+            360382916
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 439464,
+          "iqr": 0.0,
+          "values": [
+            439464,
+            439464,
+            439464,
+            439464,
+            439464,
+            439464,
+            439464
+          ]
+        }
+      },
+      "candidate": {
+        "elapsed_ns": {
+          "median": 380989209,
+          "iqr": 54737208.0,
+          "values": [
+            421201875,
+            415949250,
+            381320042,
+            373246500,
+            380989209,
+            361212042,
+            353798042
+          ]
+        },
+        "python_peak_bytes": {
+          "median": 439464,
+          "iqr": 0.0,
+          "values": [
+            439464,
+            439464,
+            439464,
+            439464,
+            439464,
+            439464,
+            439464
+          ]
+        }
+      },
+      "time_ratio": 1.0337410030409315
+    }
+  },
+  "artifact_identity": {
+    "baseline_version": "4.10.1",
+    "baseline_wheel_sha256": "0b4419ec41777a2914e1a331473c5bc2dc3e9770c31a61061b894d89135a7ddd",
+    "candidate_wheel_sha256": "5f6c56ae3290c8fb334402b2613a612d2b00905f99c0196d8f1ac080153efc2e",
+    "python": "3.14.5",
+    "runtime": "installed artifacts; same interpreter and dependency cohort"
+  },
+  "assessment": {
+    "cells": 36,
+    "time_median_over_five_percent": [
+      {
+        "cell": "sqlite/async/1/update",
+        "median_ratio": 1.0609451344128282,
+        "iqr_overlap": true
+      },
+      {
+        "cell": "sqlite/sync/100/find",
+        "median_ratio": 1.066580814717477,
+        "iqr_overlap": true
+      },
+      {
+        "cell": "sqlite/sync/1000/count",
+        "median_ratio": 1.0660179837732424,
+        "iqr_overlap": true
+      },
+      {
+        "cell": "sqlite/async/1000/count",
+        "median_ratio": 1.0544027813941814,
+        "iqr_overlap": true
+      }
+    ],
+    "all_flagged_time_iqrs_overlap": true,
+    "peak_allocation_median_over_five_percent": [],
+    "latency_conclusion": "inconclusive; no general speedup claim",
+    "deterministic_result": "SQLite selector preparations 2N -> N; Memory N; N=1 and N=3, sync/async",
+    "limitations": [
+      "Time is end-to-end; preparation counts are measured in separate deterministic regressions.",
+      "Peak is Python allocations for a separate invocation, not RSS.",
+      "Host background load is not controlled; overlapping sample intervals do not establish a regression or speedup."
+    ]
+  }
+}

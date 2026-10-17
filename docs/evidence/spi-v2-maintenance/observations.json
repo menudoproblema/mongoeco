@@ -1,0 +1,152 @@
+{
+  "schema": "mongoeco-spi-v2-maintenance-observation/v1",
+  "mypy_version": "2.3.1",
+  "sources_sha256": {
+    "src/mongoeco/api/_async/cursor.py": "36ea911bd6562b4ce01a3cc4ffdc1dbcc14dbda9bd65d9d4cb75e5a97ec2aaaa",
+    "src/mongoeco/api/_async/collection.py": "55796a755ccda9434555056c0241e04c65e8653717894f399fb0918cd2ed2d94",
+    "src/mongoeco/api/_async/_collection_runtime.py": "c8abe525d0cd5a17a1e8e62a41caa05efbae605efaaf4f7d850efa2d752f3b62",
+    "src/mongoeco/api/operations.py": "a4cbc4446411be6b3aa8599414bef306451b3656bd33b77304bab938c4422102",
+    "src/mongoeco/engines/base.py": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+    "src/mongoeco/engines/adapter.py": "b843337031b456d1209e61e3e17e69f0da4783db6dc035ac43ce2f7f97f7ae41",
+    "src/mongoeco/engines/semantic_core.py": "f62e680cb710815eed97ceda2edaa0a829f6a314f36e6bec186c4a9016c6854d",
+    "src/mongoeco/engines/sqlite.py": "df431ce5d8322026fa49f258d956237f378ff6df652767354e444ddc3ac2d607",
+    "src/mongoeco/engines/_sqlite_reader.py": "ee1ceb78a98d56ec49c6b8dc328b4da517dc08659baa9c302387b3a02ee23fd6"
+  },
+  "references": {
+    "_iter_scan_documents_sync": [
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3437,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3471,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 5234,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3421,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3454,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 5264,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 5295,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3405,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3584,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3845,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 5006,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 5032,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3511,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3542,
+        "kind": "call"
+      }
+    ],
+    "_count_matching_documents_sync": [
+      {
+        "path": "src/mongoeco/engines/sqlite.py",
+        "line": 7704,
+        "kind": "reference"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 421,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3881,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/core/test_sqlite_engine.py",
+        "line": 3885,
+        "kind": "call"
+      }
+    ],
+    "EngineUpdateSemantics": [
+      {
+        "path": "src/mongoeco/engines/semantic_core.py",
+        "line": 311,
+        "kind": "reference"
+      },
+      {
+        "path": "src/mongoeco/engines/semantic_core.py",
+        "line": 322,
+        "kind": "call"
+      },
+      {
+        "path": "tests/unit/test_architecture_engine_operations.py",
+        "line": 255,
+        "kind": "reference"
+      }
+    ]
+  },
+  "typing_probe_source": "from mongoeco.api._async.cursor import AsyncCursor\n\ndef inspect(cursor: AsyncCursor) -> None:\n    reveal_type(cursor._base_operation())\n    reveal_type(cursor._operation_with_overrides(limit=1))\n    reveal_type(cursor._base_semantics())\n    reveal_type(cursor._semantics_with_overrides(limit=1))\n    cursor._base_operation().missing_member()\n    cursor._operation_with_overrides(limit=1).missing_member()\n",
+  "typing": {
+    "ordinary": {
+      "expected_exit_code": 1,
+      "error_codes": [
+        "attr-defined"
+      ],
+      "output": "<probe>:4: note: Revealed type is \"mongoeco.api.operations.FindOperation\"\n<probe>:5: note: Revealed type is \"Any\"\n<probe>:6: note: Revealed type is \"Any\"\n<probe>:7: note: Revealed type is \"Any\"\n<probe>:8: error: \"FindOperation\" has no attribute \"missing_member\"  [attr-defined]\n"
+    },
+    "strict": {
+      "expected_exit_code": 1,
+      "error_codes": [
+        "no-untyped-call",
+        "attr-defined"
+      ],
+      "output": "<probe>:4: note: Revealed type is \"mongoeco.api.operations.FindOperation\"\n<probe>:5: note: Revealed type is \"Any\"\n<probe>:6: error: Call to untyped function \"_base_semantics\" in typed context  [no-untyped-call]\n<probe>:6: note: Revealed type is \"Any\"\n<probe>:7: note: Revealed type is \"Any\"\n<probe>:8: error: \"FindOperation\" has no attribute \"missing_member\"  [attr-defined]\n"
+    }
+  },
+  "limits": [
+    "AST reference census does not resolve dynamic dispatch or external uses.",
+    "Expected negative typing diagnostics demonstrate a local annotation gap.",
+    "No engine resources, sockets or native MongoDB servers are opened.",
+    "No runtime correction, latency gain or v3 adoption is accredited."
+  ]
+}

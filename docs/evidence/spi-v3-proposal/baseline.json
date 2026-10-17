@@ -1,0 +1,283 @@
+{
+  "schema": "mongoeco-spi-v3-baseline/1",
+  "source_revision": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "mongoeco_version": "4.10.1",
+  "python_version": "3.14.5",
+  "source_sha256": {
+    "src/mongoeco/api/operations.py": "5d997c8d7f89b7224b3fb20ad5b37a69ccda8067adbbb01b9d3da9ad1dcd9962",
+    "src/mongoeco/core/operation_context.py": "d98c4df3d5728336484eaea3292646da088866980a200675ab66c1c6637b7016",
+    "src/mongoeco/core/search_execution.py": "fa453786b2148ca489ba0b32d76e393611be1e770e8091147d38824d85acd541",
+    "src/mongoeco/engines/adapter.py": "c58e09bf47ca7506ad5b91d98f249d93391b8561bc233bd2a5d7244660373bf6",
+    "src/mongoeco/engines/base.py": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+    "src/mongoeco/engines/capabilities.py": "087c3b2d19bebebf26bb59f227a7fb850ed2f15675c9ecf25c4081fe589bbdc0",
+    "src/mongoeco/engines/semantic_core.py": "f2605f39bf0b2ec5e4707a7d93c7af1e5f28d4f47363bca094bbcf78ee5b2fb3",
+    "src/mongoeco/engines/results.py": "9c356636546a1bad36792b9d02a6ddc6a820776b8d80f3eb0fb7b0f0e20c3a09",
+    "src/mongoeco/engines/snapshots.py": "099797553576812b0e7ed7f63ee74c7947c08abe7622a4b99977031c9dcad102",
+    "tests/consumer/engine_canary.py": "3f2c98c2034bff747be242585dbc0e6ef14b2f1d2bae891ab365d0a90ebc164c"
+  },
+  "supported_spi": {
+    "2": 2,
+    "1": {
+      "type": "ValueError",
+      "message": "spi_version must be 2"
+    },
+    "3": {
+      "type": "ValueError",
+      "message": "spi_version must be 2"
+    }
+  },
+  "operation_shapes": {
+    "FindOperation": {
+      "context_fields": [
+        "context"
+      ],
+      "semantic_duplicate_fields": [
+        "collation",
+        "let",
+        "dialect"
+      ]
+    },
+    "UpdateOperation": {
+      "context_fields": [
+        "context"
+      ],
+      "semantic_duplicate_fields": [
+        "collation",
+        "let",
+        "dialect"
+      ]
+    },
+    "AggregateOperation": {
+      "context_fields": [
+        "context"
+      ],
+      "semantic_duplicate_fields": [
+        "collation",
+        "let",
+        "dialect"
+      ]
+    },
+    "EngineFindSemantics": {
+      "context_fields": [
+        "operation_context"
+      ],
+      "semantic_duplicate_fields": [
+        "collation",
+        "dialect",
+        "variables"
+      ]
+    },
+    "EngineUpdateSemantics": {
+      "context_fields": [
+        "operation_context"
+      ],
+      "semantic_duplicate_fields": [
+        "collation",
+        "dialect",
+        "variables"
+      ]
+    },
+    "SearchRequest": {
+      "context_fields": [
+        "operation_context"
+      ],
+      "semantic_duplicate_fields": []
+    }
+  },
+  "binding": {
+    "find": {
+      "unbound_state_constructible": true,
+      "same_context_binding_is_idempotent": true,
+      "equivalent_context_additional_compilations": 0,
+      "different_dialect_additional_compilations": 1,
+      "different_context_rebinding": {
+        "type": "RuntimeError",
+        "message": "find operation is already bound to another context"
+      },
+      "divergent_duplicate_dialect": {
+        "type": "ValueError",
+        "message": "bound operation dialect diverges from OperationContext"
+      }
+    },
+    "update": {
+      "unbound_state_constructible": true,
+      "same_context_binding_is_idempotent": true,
+      "equivalent_context_additional_compilations": 0,
+      "different_dialect_additional_compilations": 1,
+      "different_context_rebinding": {
+        "type": "RuntimeError",
+        "message": "update operation is already bound to another context"
+      },
+      "divergent_duplicate_dialect": {
+        "type": "ValueError",
+        "message": "bound operation dialect diverges from OperationContext"
+      }
+    },
+    "aggregate": {
+      "unbound_state_constructible": true,
+      "same_context_binding_is_idempotent": true,
+      "equivalent_context_additional_compilations": 0,
+      "different_dialect_additional_compilations": 1,
+      "different_context_rebinding": {
+        "type": "RuntimeError",
+        "message": "aggregate operation is already bound to another context"
+      },
+      "divergent_duplicate_dialect": {
+        "type": "ValueError",
+        "message": "bound operation dialect diverges from OperationContext"
+      }
+    }
+  },
+  "syntactic_call_sites": [
+    {
+      "path": "src/mongoeco/api/_async/_collection_runtime.py",
+      "line": 58,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/api/_async/_collection_runtime.py",
+      "line": 586,
+      "callee": "compile_find_semantics_from_operation"
+    },
+    {
+      "path": "src/mongoeco/api/_async/_collection_runtime.py",
+      "line": 688,
+      "callee": "compile_find_semantics_from_operation"
+    },
+    {
+      "path": "src/mongoeco/api/_async/aggregation_cursor.py",
+      "line": 659,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/api/_async/aggregation_cursor.py",
+      "line": 1212,
+      "callee": "compile_find_semantics_from_operation"
+    },
+    {
+      "path": "src/mongoeco/api/_async/aggregation_cursor.py",
+      "line": 1217,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/api/_async/aggregation_cursor.py",
+      "line": 2348,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/api/_async/aggregation_cursor.py",
+      "line": 2375,
+      "callee": "compile_find_semantics_from_operation"
+    },
+    {
+      "path": "src/mongoeco/api/_async/client.py",
+      "line": 470,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/api/_async/cursor.py",
+      "line": 366,
+      "callee": "compile_find_semantics_from_operation"
+    },
+    {
+      "path": "src/mongoeco/api/_async/cursor.py",
+      "line": 403,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/api/_async/cursor.py",
+      "line": 441,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/conformance/runner.py",
+      "line": 309,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/conformance/runner.py",
+      "line": 469,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/conformance/runner.py",
+      "line": 474,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/conformance/runner.py",
+      "line": 655,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/conformance/runner.py",
+      "line": 741,
+      "callee": "EngineSpiAdapter"
+    },
+    {
+      "path": "src/mongoeco/engines/_sqlite_modify_ops.py",
+      "line": 62,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/_sqlite_modify_ops.py",
+      "line": 70,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/_sqlite_modify_ops.py",
+      "line": 234,
+      "callee": "compile_update_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/_sqlite_read_fast_path_runtime.py",
+      "line": 281,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/_sqlite_read_runtime.py",
+      "line": 309,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/memory.py",
+      "line": 3923,
+      "callee": "compile_update_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/memory.py",
+      "line": 5544,
+      "callee": "compile_find_semantics_from_operation"
+    },
+    {
+      "path": "src/mongoeco/engines/semantic_core.py",
+      "line": 285,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/sqlite.py",
+      "line": 3432,
+      "callee": "compile_find_semantics_from_operation"
+    },
+    {
+      "path": "src/mongoeco/engines/sqlite.py",
+      "line": 6079,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/sqlite.py",
+      "line": 6504,
+      "callee": "compile_find_semantics"
+    },
+    {
+      "path": "src/mongoeco/engines/sqlite.py",
+      "line": 7515,
+      "callee": "compile_update_semantics"
+    }
+  ],
+  "limits": [
+    "Named AST calls only; not a semantic call graph or adoption census.",
+    "Compilation counts cover the three documented probes, not throughput.",
+    "No SPI v3 implementation, native MongoDB run or performance comparison."
+  ]
+}

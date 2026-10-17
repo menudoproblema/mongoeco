@@ -1,0 +1,136 @@
+{
+  "schema": "mongoeco-spi-v3-proposal-validation/1",
+  "date": "2026-10-16",
+  "source_revision": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "python": "3.14.5",
+  "pymongo": "4.19.0",
+  "scope": "P0 baseline only; no SPI v3 implementation",
+  "checks": [
+    {
+      "id": "binding-observer",
+      "command": ".venv/bin/python docs/evidence/spi-v3-proposal/observe_baseline.py",
+      "status": "passed",
+      "operation_probes": 3,
+      "named_ast_call_sites": 29
+    },
+    {
+      "id": "focal-contracts",
+      "command": "pytest selection listed in README.md",
+      "status": "passed",
+      "tests_passed": 140,
+      "subtests_passed": 1080
+    },
+    {
+      "id": "phase-corpus-sandbox",
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_error_phases.py -q",
+      "status": "failed",
+      "tests_passed": 12868,
+      "tests_failed": 12,
+      "failure_kind": "sandbox_localhost_bind_denied",
+      "failure_type": "PermissionError",
+      "errno": 1,
+      "all_failures_before_wire_scenarios": true,
+      "retry": "phase-wire-localhost"
+    },
+    {
+      "id": "phase-wire-localhost",
+      "status": "passed",
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection -q",
+      "execution": "localhost bind permitted; no external network",
+      "tests_passed": 12,
+      "seconds": 116.73
+    },
+    {
+      "id": "public-manifest",
+      "status": "passed",
+      "command": ".venv/bin/python scripts/update_public_api_manifest.py --check"
+    },
+    {
+      "id": "public-typing",
+      "status": "passed",
+      "positive_programs": 1,
+      "expected_negative_errors": 20,
+      "command": ".venv/bin/python scripts/check_public_typing.py"
+    },
+    {
+      "id": "installed-canary",
+      "status": "passed",
+      "applicable_passed": 5,
+      "not_applicable": 5,
+      "command": "MONGOECO_TEST_INSTALLED_ARTIFACT=1 .tmp/release-4.10.1/published-venv/bin/python scripts/smoke_external_engine.py",
+      "artifact": {
+        "contracts": {
+          "conformanceReport": "mongoeco-conformance-report/v1",
+          "deprecationCatalog": "mongoeco-deprecations/v1",
+          "engineSpi": [
+            2
+          ],
+          "search": [
+            "search-v1"
+          ]
+        },
+        "from_site_packages": true,
+        "version": "4.10.1"
+      }
+    },
+    {
+      "id": "observer-lint",
+      "status": "passed",
+      "command": ".venv/bin/python -m ruff check docs/evidence/spi-v3-proposal/observe_baseline.py"
+    }
+  ],
+  "log_sha256": {
+    "focal.log": "0573f64b2181ea54e54edbfc2dfe54cb449d83f7c186d0f7979c10a373dc0065",
+    "error-phases.log": "930dadf50944d1b97a1521d9f14a5bab0838f4adc1baa2b35e8f41d5e23e7962",
+    "typing.log": "8523fc7226b47c529dcce7d50145334b21c53f8f68ff2d5081f1b5c2fd637beb",
+    "installed-canary.log": "fc0c13553ba47169d65e86792f4e9596b2898ce0179b93599fce7a45d263530f",
+    "wire.log": "a457f764e116d47099eb0d50ef7078e453eb029a1af1976c09e4845f6711346d"
+  },
+  "log_retention": "Original unredacted logs remain local under .tmp/spi-v3-proposal; summaries are anonymous.",
+  "artifacts_sha256": {
+    "baseline.json": "9835a8c36f34abcd2dd51b8d7543ce9dce8ac8c46774484b0b69f80fcc8ffd14",
+    "observe_baseline.py": "2d39eafeb3180d8cf53312c788805280ceb8e8e1b5cad0fe23353da9a6aab5dc"
+  },
+  "not_executed": [
+    "SPI v3 pilot",
+    "A/B performance and memory comparison",
+    "fresh native MongoDB captures",
+    "new wheel build",
+    "new global suite",
+    "external adoption inventory"
+  ],
+  "production_changed": false,
+  "phase_corpus_combined": {
+    "tests_passed": 12880,
+    "unresolved_failures": 0,
+    "basis": "12868 sandbox passes plus 12 successful wire retries",
+    "fresh_native_capture": false,
+    "reference_targets": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "surfaces": [
+      "sync",
+      "async"
+    ],
+    "backends": [
+      "memory",
+      "sqlite"
+    ],
+    "transports": [
+      "direct",
+      "wire"
+    ]
+  },
+  "document_checks": {
+    "local_markdown_targets_checked": 108,
+    "missing_targets": 0,
+    "source_hashes_match_revision": 10,
+    "production_tests_packaging_ci_unchanged": true,
+    "consumer_privacy": "passed",
+    "proposal_state": "proposed",
+    "diff_whitespace": "passed",
+    "observer_format": "passed"
+  }
+}

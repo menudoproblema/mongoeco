@@ -1,0 +1,110 @@
+{
+  "schema": "mongoeco-spi-v2-boundary-author-validation/v1",
+  "date": "2026-10-17",
+  "state": "proposed",
+  "workflow_result": "no_rfc_required",
+  "implementation_authorized": false,
+  "runtime_modified": false,
+  "independent_audit": false,
+  "base_revision": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "installed_candidate_wheel_sha256": "5f6c56ae3290c8fb334402b2613a612d2b00905f99c0196d8f1ac080153efc2e",
+  "environment": {
+    "python": "3.14.5",
+    "mypy": "2.3.1",
+    "ruff": "0.16.2",
+    "mongoeco": "4.10.1"
+  },
+  "scope": "Current T1-T6 engine boundary modules, verified byte-identical to installed candidate; unrelated concurrent diagnostics work excluded.",
+  "source_hashes": {
+    "src/mongoeco/engines/adapter.py": "adb751d1fae8bbdb21c794fd25eebaa44c01664894fdc5b62fb1f9d23b724b23",
+    "src/mongoeco/engines/base.py": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+    "src/mongoeco/engines/capabilities.py": "087c3b2d19bebebf26bb59f227a7fb850ed2f15675c9ecf25c4081fe589bbdc0",
+    "src/mongoeco/engines/semantic_core.py": "f62e680cb710815eed97ceda2edaa0a829f6a314f36e6bec186c4a9016c6854d",
+    "src/mongoeco/engines/memory.py": "6ef201b5e9d398d3e5b62f2a45066f0363d02245950fc0fac983dc599331bf9c",
+    "src/mongoeco/engines/sqlite.py": "df431ce5d8322026fa49f258d956237f378ff6df652767354e444ddc3ac2d607",
+    "src/mongoeco/engines/_sqlite_modify_ops.py": "65041e05249e00862eda53b2209242ede762f4c567970b0a33a558e75f768539",
+    "src/mongoeco/api/operations.py": "a4cbc4446411be6b3aa8599414bef306451b3656bd33b77304bab938c4422102",
+    "src/mongoeco/api/_async/_collection_modify.py": "73d6ac56d8035905bbdf5a475e156ec6306ead7889c0329b324f6a2bfc0662fb",
+    "src/mongoeco/api/_async/_collection_runtime.py": "01a0bd2d3b431ae32b5c80dd26c92a99e0624febae9f6c478db3779bd8ee738b",
+    "src/mongoeco/conformance/runner.py": "84cd275084c3a239ca3ff4ce440b969e115659bc831a4aec6b8cc0a40aaa6c89",
+    "src/mongoeco/conformance/models.py": "2a2bdd7e9a7ef71451d23522cdfda1a90e15209efab4f440e1da36cbecf52f3c",
+    "src/mongoeco/core/query_plan.py": "70c0566c49bcfa4bfae6bd2a584027c0d295d5e12bced2cfb4641a627887b63c",
+    "src/mongoeco/core/compiled_query.py": "4a7414dd78626eb804388387ec2310ca081a30c4f8beb07e9167fff0937a80ac",
+    "tests/consumer/engine_canary.py": "3f2c98c2034bff747be242585dbc0e6ef14b2f1d2bae891ab365d0a90ebc164c"
+  },
+  "authored_proposal": "docs/architecture/spi-v2-boundary-proposal.md",
+  "probe": {
+    "command": "python docs/evidence/spi-v2-next/probe.py --output docs/evidence/spi-v2-next/probes.json",
+    "exit_code": 0,
+    "script_sha256": "6f02c742ec3ea04c9959e4ec5faeff9467c741647e93d9064a9a26fe3d8e0119",
+    "observations_sha256": "54d444e63b724e96b568b97edd6cad75651aca3f73c675ac88e761ecdcf69e48",
+    "builtin_identity_selector_controls_passed": 8,
+    "independent_canary_identity_selector_mismatches": 4,
+    "mismatch_status": "Observed fixture defect; not corrected by this proposal.",
+    "matcher_controls": {
+      "matching": true,
+      "wrong_binding": false
+    },
+    "ruff_check": "passed"
+  },
+  "additional_module_typecheck": {
+    "command": "python -m mypy --follow-imports=silent --ignore-missing-imports -m mongoeco.engines.adapter -m mongoeco.api._async._collection_runtime",
+    "exit_code": 1,
+    "status": "observed baseline debt; proposed S2 acceptance requires zero, not green today",
+    "errors": 23,
+    "files": 2,
+    "raw_log_sha256": "593ce614e7016d68f7767b862eb6417a1ac3fdad880c0a1c0ec94a0f3f47263a",
+    "sanitized_errors": [
+      "<installed>/mongoeco/engines/adapter.py:459: error: Argument after ** must be a mapping, not \"dict[str, Any] | None\"  [arg-type]",
+      "<installed>/mongoeco/engines/adapter.py:562: error: Argument \"operation_context\" to \"_require_insert_outcome\" of \"EngineSpiAdapter\" has incompatible type \"object\"; expected \"OperationContext | None\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:71: error: Item \"None\" of \"Any | None\" has no attribute \"prepare_change_delivery\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:77: error: Item \"None\" of \"Any | None\" has no attribute \"capabilities\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:102: error: Item \"None\" of \"Any | None\" has no attribute \"dispatch_committed_changes\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:192: error: Item \"None\" of \"Any | None\" has no attribute \"plan_find_execution\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:232: error: Item \"None\" of \"Any | None\" has no attribute \"get_document\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:270: error: Argument 1 to \"append\" of \"list\" has incompatible type \"dict[str, str | dict[str, Any] | dict[str, object] | None]\"; expected \"dict[str, object]\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:272: error: Argument 1 to \"_publish_change_payload\" of \"CollectionRuntimeCoordinator\" has incompatible type \"dict[str, str | dict[str, Any] | dict[str, object] | None]\"; expected \"dict[str, object]\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:364: error: Argument 1 to \"publish\" of \"ChangeStreamHub\" has incompatible type \"**dict[str, object]\"; expected \"str\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:364: error: Argument 1 to \"publish\" of \"ChangeStreamHub\" has incompatible type \"**dict[str, object]\"; expected \"dict[str, Any]\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:364: error: Argument 1 to \"publish\" of \"ChangeStreamHub\" has incompatible type \"**dict[str, object]\"; expected \"dict[str, Any] | None\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:364: error: Argument 1 to \"publish\" of \"ChangeStreamHub\" has incompatible type \"**dict[str, object]\"; expected \"dict[str, object] | None\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:465: error: Item \"None\" of \"Any | None\" has no attribute \"update_outcome\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:516: error: Item \"None\" of \"Any | None\" has no attribute \"insert_outcome\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:538: error: Item \"None\" of \"Any | None\" has no attribute \"insert_many_outcomes\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:558: error: Item \"None\" of \"Any | None\" has no attribute \"merge_outcome\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:590: error: Item \"None\" of \"Any | None\" has no attribute \"open_read_snapshot\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:604: error: Item \"None\" of \"Any | None\" has no attribute \"get_document\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:624: error: Item \"None\" of \"Any | None\" has no attribute \"delete_outcome\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:690: error: Item \"None\" of \"Any | None\" has no attribute \"count_documents\"  [union-attr]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:774: error: Argument \"let\" to \"AsyncCursor\" has incompatible type \"Mapping[str, object] | None\"; expected \"dict[str, object] | None\"  [arg-type]",
+      "<installed>/mongoeco/api/_async/_collection_runtime.py:782: error: Incompatible types in assignment (expression has type \"FindOperation\", variable has type \"None\")  [assignment]"
+    ]
+  },
+  "retained_attempts": [
+    {
+      "id": "matcher-probe-setup-error",
+      "raw_log": ".tmp/spi-v2-next/matcher-setup-failure.log",
+      "sha256": "73bb5c18bf7c22c083f8754c37f3c9a68badfc4e126c2671419b32aa135c6651",
+      "classification": "Probe initially omitted expression bindings before compilation and received code 17276. Setup corrected, no runtime change, final independent matcher controls pass."
+    }
+  ],
+  "review": {
+    "selected_blocks": [
+      "S1 identity/selector conformance and minimal canary correction",
+      "S2 explicit existing adapter signatures and typed coordinator field"
+    ],
+    "public_spi_or_schema_change": false,
+    "new_public_requests_or_capabilities": false,
+    "production_patch_written": false,
+    "native_mongodb": "not rerun for this analysis; fresh native reproduction belongs to implementation acceptance",
+    "global_suite": "not rerun for documentation/probe-only change; prior T1-T6 scoped global is not combined-tree accreditation",
+    "adoption_of_v3": "not justified by these findings",
+    "external_engine_author_demand": "unknown; no consumer identities inspected or recorded",
+    "documentation_links_valid": true,
+    "source_hashes_revalidated": true,
+    "scoped_whitespace_and_anonymity_passed": true,
+    "piece_dispositions_recorded": true
+  },
+  "temporary_census": ".tmp/spi-v2-next/impact.json",
+  "proposal_sha256": "5a01015a57ed1db25091e436d2c1e6a5f5170c9933e400a1c7489251272f8943"
+}

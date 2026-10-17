@@ -31,3 +31,8 @@ decisiones que siguen vivas y explican la arquitectura actual.
 - [ADR-015 - Pushdown SQLite sujeto a prueba de equivalencia](ADR-015-pushdown-sqlite-sujeto-a-prueba-de-equivalencia.md)
 - [ADR-016 - Transicion cohesiva y observable hacia 5.0](ADR-016-transicion-cohesiva-hacia-5.0.md)
 - [ADR-017 - SPI v2 exclusivo en MongoEco 4.7](ADR-017-spi-v2-exclusivo-en-4.7.md)
+- [ADR-018 - Preparación interna conservando SPI v2 (propuesta revisada)](ADR-018-propuesta-operaciones-preparadas-spi-v3.md)
+
+La [decisión posterior a T1–T6 y S1/S2](../engine-spi-v3-proposal.md) mantiene
+SPI v2 y aparca v3. ADR-018 conserva el estado de su propuesta como antecedente;
+no anuncia un contrato sucesor ni una entrega 5.0.

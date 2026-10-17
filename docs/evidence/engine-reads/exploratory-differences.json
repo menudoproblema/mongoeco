@@ -1,0 +1,1251 @@
+{
+  "schema": "mongoeco-read-exploration/v1",
+  "state": "Initial preexisting differences retained; regex correction subsequently authorized and implemented, clone/let discrepancy retained without changing binding semantics.",
+  "native": {
+    "7_0": {
+      "target": "7.0",
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "sdk": "4.19.0",
+      "inputs_sha256": {
+        "tests/differential/read_lifecycle_cases.py": "bda52f3697227b9eaad6701158cf68b15bf281cd688dc05f95a15b1b856fc8ee",
+        "tests/support_read_lifecycle.py": "bb242f95a8da6f66da38c9ee3fadaed557bbe8888b2fb9a2e58fad2f990f16e5",
+        "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      },
+      "observations": {
+        "bindings": {
+          "stages": [
+            {
+              "method": "find",
+              "result": [
+                {
+                  "_id": "b",
+                  "group": "A",
+                  "name": "ada",
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "_id": "c",
+                  "group": "A",
+                  "name": "Ana",
+                  "n": {
+                    "$numberInt": "3"
+                  }
+                },
+                {
+                  "_id": "d",
+                  "group": "B",
+                  "name": "Bob",
+                  "n": {
+                    "$numberInt": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "method": "rewind",
+              "result": [
+                {
+                  "_id": "b",
+                  "group": "A",
+                  "name": "ada",
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "_id": "c",
+                  "group": "A",
+                  "name": "Ana",
+                  "n": {
+                    "$numberInt": "3"
+                  }
+                },
+                {
+                  "_id": "d",
+                  "group": "B",
+                  "name": "Bob",
+                  "n": {
+                    "$numberInt": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "method": "clone",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 17276,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Use of undefined variable: minimum",
+                  "code": {
+                    "$numberInt": "17276"
+                  },
+                  "codeName": "Location17276"
+                },
+                "message": "Use of undefined variable: minimum, full error: {'ok': 0.0, 'errmsg': 'Use of undefined variable: minimum', 'code': 17276, 'codeName': 'Location17276'}"
+              }
+            },
+            {
+              "method": "count",
+              "result": 3
+            },
+            {
+              "method": "recovery",
+              "result": 5
+            }
+          ],
+          "documents": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            },
+            {
+              "_id": "d",
+              "group": "B",
+              "name": "Bob",
+              "n": {
+                "$numberInt": "4"
+              }
+            },
+            {
+              "_id": "following",
+              "group": "recovery"
+            }
+          ]
+        },
+        "regex_error": {
+          "stages": [
+            {
+              "method": "find",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "rewind",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "clone",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "count",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "recovery",
+              "result": 5
+            }
+          ],
+          "documents": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            },
+            {
+              "_id": "d",
+              "group": "B",
+              "name": "Bob",
+              "n": {
+                "$numberInt": "4"
+              }
+            },
+            {
+              "_id": "following",
+              "group": "recovery"
+            }
+          ]
+        }
+      }
+    },
+    "8_0": {
+      "target": "8.0",
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "sdk": "4.19.0",
+      "inputs_sha256": {
+        "tests/differential/read_lifecycle_cases.py": "bda52f3697227b9eaad6701158cf68b15bf281cd688dc05f95a15b1b856fc8ee",
+        "tests/support_read_lifecycle.py": "bb242f95a8da6f66da38c9ee3fadaed557bbe8888b2fb9a2e58fad2f990f16e5",
+        "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      },
+      "observations": {
+        "bindings": {
+          "stages": [
+            {
+              "method": "find",
+              "result": [
+                {
+                  "_id": "b",
+                  "group": "A",
+                  "name": "ada",
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "_id": "c",
+                  "group": "A",
+                  "name": "Ana",
+                  "n": {
+                    "$numberInt": "3"
+                  }
+                },
+                {
+                  "_id": "d",
+                  "group": "B",
+                  "name": "Bob",
+                  "n": {
+                    "$numberInt": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "method": "rewind",
+              "result": [
+                {
+                  "_id": "b",
+                  "group": "A",
+                  "name": "ada",
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "_id": "c",
+                  "group": "A",
+                  "name": "Ana",
+                  "n": {
+                    "$numberInt": "3"
+                  }
+                },
+                {
+                  "_id": "d",
+                  "group": "B",
+                  "name": "Bob",
+                  "n": {
+                    "$numberInt": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "method": "clone",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 17276,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Use of undefined variable: minimum",
+                  "code": {
+                    "$numberInt": "17276"
+                  },
+                  "codeName": "Location17276"
+                },
+                "message": "Use of undefined variable: minimum, full error: {'ok': 0.0, 'errmsg': 'Use of undefined variable: minimum', 'code': 17276, 'codeName': 'Location17276'}"
+              }
+            },
+            {
+              "method": "count",
+              "result": 3
+            },
+            {
+              "method": "recovery",
+              "result": 5
+            }
+          ],
+          "documents": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            },
+            {
+              "_id": "d",
+              "group": "B",
+              "name": "Bob",
+              "n": {
+                "$numberInt": "4"
+              }
+            },
+            {
+              "_id": "following",
+              "group": "recovery"
+            }
+          ]
+        },
+        "regex_error": {
+          "stages": [
+            {
+              "method": "find",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "rewind",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "clone",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "count",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "recovery",
+              "result": 5
+            }
+          ],
+          "documents": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            },
+            {
+              "_id": "d",
+              "group": "B",
+              "name": "Bob",
+              "n": {
+                "$numberInt": "4"
+              }
+            },
+            {
+              "_id": "following",
+              "group": "recovery"
+            }
+          ]
+        }
+      }
+    },
+    "9_0": {
+      "target": "9.0",
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "sdk": "4.19.0",
+      "inputs_sha256": {
+        "tests/differential/read_lifecycle_cases.py": "bda52f3697227b9eaad6701158cf68b15bf281cd688dc05f95a15b1b856fc8ee",
+        "tests/support_read_lifecycle.py": "bb242f95a8da6f66da38c9ee3fadaed557bbe8888b2fb9a2e58fad2f990f16e5",
+        "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+        "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+        "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+      },
+      "observations": {
+        "bindings": {
+          "stages": [
+            {
+              "method": "find",
+              "result": [
+                {
+                  "_id": "b",
+                  "group": "A",
+                  "name": "ada",
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "_id": "c",
+                  "group": "A",
+                  "name": "Ana",
+                  "n": {
+                    "$numberInt": "3"
+                  }
+                },
+                {
+                  "_id": "d",
+                  "group": "B",
+                  "name": "Bob",
+                  "n": {
+                    "$numberInt": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "method": "rewind",
+              "result": [
+                {
+                  "_id": "b",
+                  "group": "A",
+                  "name": "ada",
+                  "n": {
+                    "$numberInt": "2"
+                  }
+                },
+                {
+                  "_id": "c",
+                  "group": "A",
+                  "name": "Ana",
+                  "n": {
+                    "$numberInt": "3"
+                  }
+                },
+                {
+                  "_id": "d",
+                  "group": "B",
+                  "name": "Bob",
+                  "n": {
+                    "$numberInt": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "method": "clone",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 17276,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Use of undefined variable: minimum",
+                  "code": {
+                    "$numberInt": "17276"
+                  },
+                  "codeName": "Location17276"
+                },
+                "message": "Use of undefined variable: minimum, full error: {'ok': 0.0, 'errmsg': 'Use of undefined variable: minimum', 'code': 17276, 'codeName': 'Location17276'}"
+              }
+            },
+            {
+              "method": "count",
+              "result": 3
+            },
+            {
+              "method": "recovery",
+              "result": 5
+            }
+          ],
+          "documents": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            },
+            {
+              "_id": "d",
+              "group": "B",
+              "name": "Bob",
+              "n": {
+                "$numberInt": "4"
+              }
+            },
+            {
+              "_id": "following",
+              "group": "recovery"
+            }
+          ]
+        },
+        "regex_error": {
+          "stages": [
+            {
+              "method": "find",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "rewind",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "clone",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "count",
+              "error": {
+                "family": "OperationFailure",
+                "module": "pymongo.errors",
+                "code": 51091,
+                "details": {
+                  "ok": {
+                    "$numberDouble": "0.0"
+                  },
+                  "errmsg": "Regular expression is invalid: missing terminating ] for character class",
+                  "code": {
+                    "$numberInt": "51091"
+                  },
+                  "codeName": "Location51091"
+                },
+                "message": "Regular expression is invalid: missing terminating ] for character class, full error: {'ok': 0.0, 'errmsg': 'Regular expression is invalid: missing terminating ] for character class', 'code': 51091, 'codeName': 'Location51091'}"
+              }
+            },
+            {
+              "method": "recovery",
+              "result": 5
+            }
+          ],
+          "documents": [
+            {
+              "_id": "a",
+              "group": "A",
+              "name": "Ada",
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": "b",
+              "group": "A",
+              "name": "ada",
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "_id": "c",
+              "group": "A",
+              "name": "Ana",
+              "n": {
+                "$numberInt": "3"
+              }
+            },
+            {
+              "_id": "d",
+              "group": "B",
+              "name": "Bob",
+              "n": {
+                "$numberInt": "4"
+              }
+            },
+            {
+              "_id": "following",
+              "group": "recovery"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "prior_candidate": {
+    "sync": {
+      "bindings": {
+        "stages": [
+          {
+            "method": "find",
+            "result": [
+              {
+                "_id": "b",
+                "group": "A",
+                "name": "ada",
+                "n": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "_id": "c",
+                "group": "A",
+                "name": "Ana",
+                "n": {
+                  "$numberInt": "3"
+                }
+              },
+              {
+                "_id": "d",
+                "group": "B",
+                "name": "Bob",
+                "n": {
+                  "$numberInt": "4"
+                }
+              }
+            ]
+          },
+          {
+            "method": "rewind",
+            "result": [
+              {
+                "_id": "b",
+                "group": "A",
+                "name": "ada",
+                "n": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "_id": "c",
+                "group": "A",
+                "name": "Ana",
+                "n": {
+                  "$numberInt": "3"
+                }
+              },
+              {
+                "_id": "d",
+                "group": "B",
+                "name": "Bob",
+                "n": {
+                  "$numberInt": "4"
+                }
+              }
+            ]
+          },
+          {
+            "method": "clone",
+            "error": {
+              "family": "TypeError",
+              "module": "builtins",
+              "code": null,
+              "details": null,
+              "message": "'mongoeco.api._sync.cursor.Cursor' object does not support the context manager protocol (missed __exit__ method)"
+            }
+          },
+          {
+            "method": "count",
+            "result": 3
+          },
+          {
+            "method": "recovery",
+            "result": 5
+          }
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "group": "A",
+            "name": "Ada",
+            "n": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "group": "A",
+            "name": "ada",
+            "n": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "group": "A",
+            "name": "Ana",
+            "n": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": "d",
+            "group": "B",
+            "name": "Bob",
+            "n": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": "following",
+            "group": "recovery"
+          }
+        ]
+      },
+      "regex_error": {
+        "stages": [
+          {
+            "method": "find",
+            "error": {
+              "family": "PatternError",
+              "module": "re",
+              "code": null,
+              "details": null,
+              "message": "unterminated character set at position 0"
+            }
+          },
+          {
+            "method": "rewind",
+            "error": {
+              "family": "PatternError",
+              "module": "re",
+              "code": null,
+              "details": null,
+              "message": "unterminated character set at position 0"
+            }
+          },
+          {
+            "method": "clone",
+            "error": {
+              "family": "TypeError",
+              "module": "builtins",
+              "code": null,
+              "details": null,
+              "message": "'mongoeco.api._sync.cursor.Cursor' object does not support the context manager protocol (missed __exit__ method)"
+            }
+          },
+          {
+            "method": "count",
+            "error": {
+              "family": "PatternError",
+              "module": "re",
+              "code": null,
+              "details": null,
+              "message": "unterminated character set at position 0"
+            }
+          },
+          {
+            "method": "recovery",
+            "result": 5
+          }
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "group": "A",
+            "name": "Ada",
+            "n": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "group": "A",
+            "name": "ada",
+            "n": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "group": "A",
+            "name": "Ana",
+            "n": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": "d",
+            "group": "B",
+            "name": "Bob",
+            "n": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": "following",
+            "group": "recovery"
+          }
+        ]
+      }
+    },
+    "async": {
+      "bindings": {
+        "stages": [
+          {
+            "method": "find",
+            "result": [
+              {
+                "_id": "b",
+                "group": "A",
+                "name": "ada",
+                "n": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "_id": "c",
+                "group": "A",
+                "name": "Ana",
+                "n": {
+                  "$numberInt": "3"
+                }
+              },
+              {
+                "_id": "d",
+                "group": "B",
+                "name": "Bob",
+                "n": {
+                  "$numberInt": "4"
+                }
+              }
+            ]
+          },
+          {
+            "method": "rewind",
+            "result": [
+              {
+                "_id": "b",
+                "group": "A",
+                "name": "ada",
+                "n": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "_id": "c",
+                "group": "A",
+                "name": "Ana",
+                "n": {
+                  "$numberInt": "3"
+                }
+              },
+              {
+                "_id": "d",
+                "group": "B",
+                "name": "Bob",
+                "n": {
+                  "$numberInt": "4"
+                }
+              }
+            ]
+          },
+          {
+            "method": "clone",
+            "result": [
+              {
+                "_id": "b",
+                "group": "A",
+                "name": "ada",
+                "n": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "_id": "c",
+                "group": "A",
+                "name": "Ana",
+                "n": {
+                  "$numberInt": "3"
+                }
+              },
+              {
+                "_id": "d",
+                "group": "B",
+                "name": "Bob",
+                "n": {
+                  "$numberInt": "4"
+                }
+              }
+            ]
+          },
+          {
+            "method": "count",
+            "result": 3
+          },
+          {
+            "method": "recovery",
+            "result": 5
+          }
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "group": "A",
+            "name": "Ada",
+            "n": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "group": "A",
+            "name": "ada",
+            "n": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "group": "A",
+            "name": "Ana",
+            "n": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": "d",
+            "group": "B",
+            "name": "Bob",
+            "n": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": "following",
+            "group": "recovery"
+          }
+        ]
+      },
+      "regex_error": {
+        "stages": [
+          {
+            "method": "find",
+            "error": {
+              "family": "PatternError",
+              "module": "re",
+              "code": null,
+              "details": null,
+              "message": "unterminated character set at position 0"
+            }
+          },
+          {
+            "method": "rewind",
+            "error": {
+              "family": "PatternError",
+              "module": "re",
+              "code": null,
+              "details": null,
+              "message": "unterminated character set at position 0"
+            }
+          },
+          {
+            "method": "clone",
+            "error": {
+              "family": "PatternError",
+              "module": "re",
+              "code": null,
+              "details": null,
+              "message": "unterminated character set at position 0"
+            }
+          },
+          {
+            "method": "count",
+            "error": {
+              "family": "PatternError",
+              "module": "re",
+              "code": null,
+              "details": null,
+              "message": "unterminated character set at position 0"
+            }
+          },
+          {
+            "method": "recovery",
+            "result": 5
+          }
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "group": "A",
+            "name": "Ada",
+            "n": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": "b",
+            "group": "A",
+            "name": "ada",
+            "n": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": "c",
+            "group": "A",
+            "name": "Ana",
+            "n": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": "d",
+            "group": "B",
+            "name": "Bob",
+            "n": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": "following",
+            "group": "recovery"
+          }
+        ]
+      }
+    }
+  },
+  "observer_sources": {
+    "tests/differential/read_lifecycle_cases.py": "\"\"\"Finite read windows, repeated executions, count and static failures.\"\"\"\n\nDOCUMENTS = [\n    {\"_id\": \"a\", \"group\": \"A\", \"name\": \"Ada\", \"n\": 1},\n    {\"_id\": \"b\", \"group\": \"A\", \"name\": \"ada\", \"n\": 2},\n    {\"_id\": \"c\", \"group\": \"A\", \"name\": \"Ana\", \"n\": 3},\n    {\"_id\": \"d\", \"group\": \"B\", \"name\": \"Bob\", \"n\": 4},\n]\nREAD_CASES = {\n    \"window\": {\"filter\": {\"group\": \"A\"}, \"skip\": 1, \"limit\": 2},\n    \"empty\": {\"filter\": {\"group\": \"missing\"}},\n    \"regex\": {\"filter\": {\"name\": {\"$regex\": \"^a\", \"$options\": \"i\"}}},\n    \"bindings\": {\n        \"filter\": {\"$expr\": {\"$gte\": [\"$n\", \"$$minimum\"]}},\n        \"options\": {\"let\": {\"minimum\": 2}},\n    },\n    \"collation\": {\n        \"filter\": {\"name\": \"ada\"},\n        \"options\": {\"collation\": {\"locale\": \"en\", \"strength\": 2}},\n    },\n    \"projection_error\": {\"filter\": {}, \"projection\": {\"group\": 1, \"name\": 0}},\n    \"regex_error\": {\"filter\": {\"name\": {\"$regex\": \"[\"}}},\n}\n",
+    "tests/support_read_lifecycle.py": "\"\"\"Observe public reads independently of Mongoeco implementation details.\"\"\"\n\nimport inspect\n\nfrom copy import deepcopy\n\nfrom tests.differential.read_lifecycle_cases import DOCUMENTS, READ_CASES\nfrom tests.support_error_phases import encoded, err\n\n\ndef _cursor(collection, specification):\n    cursor = collection.find(\n        deepcopy(specification[\"filter\"]),\n        specification.get(\"projection\"),\n        **deepcopy(specification.get(\"options\", {})),\n    )\n    cursor = cursor.sort(\"_id\", 1).skip(specification.get(\"skip\", 0))\n    if \"limit\" in specification:\n        cursor = cursor.limit(specification[\"limit\"])\n    return cursor.batch_size(1)\n\n\ndef _count_options(specification):\n    return {\n        **deepcopy(specification.get(\"options\", {})),\n        **{k: specification[k] for k in (\"skip\", \"limit\") if k in specification},\n    }\n\n\ndef observe_reads(client, database):\n    result = {}\n    for name, specification in READ_CASES.items():\n        collection = client[database].create_collection(name)\n        collection.insert_many(deepcopy(DOCUMENTS))\n        stages = []\n        cursor = None\n        try:\n            for action in (\"find\", \"rewind\", \"clone\"):\n                try:\n                    if action == \"find\":\n                        cursor = _cursor(collection, specification)\n                    elif cursor is None:\n                        continue\n                    elif action == \"rewind\":\n                        cursor.rewind()\n                    if action == \"clone\":\n                        with cursor.clone() as clone:\n                            documents = list(clone)\n                    else:\n                        documents = list(cursor)\n                    stages.append({\"method\": action, \"result\": encoded(documents)})\n                except Exception as error:\n                    stages.append(\n                        {\"method\": action, \"error\": err(error, collection.full_name)}\n                    )\n        finally:\n            if cursor is not None:\n                cursor.close()\n        try:\n            count = collection.count_documents(\n                deepcopy(specification[\"filter\"]), **_count_options(specification)\n            )\n            stages.append({\"method\": \"count\", \"result\": count})\n        except Exception as error:\n            stages.append(\n                {\"method\": \"count\", \"error\": err(error, collection.full_name)}\n            )\n        collection.insert_one({\"_id\": \"following\", \"group\": \"recovery\"})\n        stages.append({\"method\": \"recovery\", \"result\": collection.count_documents({})})\n        result[name] = {\n            \"stages\": stages,\n            \"documents\": encoded(list(collection.find().sort(\"_id\", 1))),\n        }\n    return result\n\n\nasync def _resolved(value):\n    return await value if inspect.isawaitable(value) else value\n\n\nasync def observe_async_reads(client, database):\n    result = {}\n    for name, specification in READ_CASES.items():\n        collection = await client[database].create_collection(name)\n        await collection.insert_many(deepcopy(DOCUMENTS))\n        stages = []\n        cursor = None\n        try:\n            for action in (\"find\", \"rewind\", \"clone\"):\n                try:\n                    if action == \"find\":\n                        cursor = _cursor(collection, specification)\n                    elif cursor is None:\n                        continue\n                    elif action == \"rewind\":\n                        await _resolved(cursor.rewind())\n                    if action == \"clone\":\n                        clone = await _resolved(cursor.clone())\n                        try:\n                            documents = await clone.to_list()\n                        finally:\n                            await _resolved(clone.close())\n                    else:\n                        documents = await cursor.to_list()\n                    stages.append({\"method\": action, \"result\": encoded(documents)})\n                except Exception as error:\n                    stages.append(\n                        {\"method\": action, \"error\": err(error, collection.full_name)}\n                    )\n        finally:\n            if cursor is not None:\n                await _resolved(cursor.close())\n        try:\n            count = await collection.count_documents(\n                deepcopy(specification[\"filter\"]), **_count_options(specification)\n            )\n            stages.append({\"method\": \"count\", \"result\": count})\n        except Exception as error:\n            stages.append(\n                {\"method\": \"count\", \"error\": err(error, collection.full_name)}\n            )\n        await collection.insert_one({\"_id\": \"following\", \"group\": \"recovery\"})\n        stages.append(\n            {\"method\": \"recovery\", \"result\": await collection.count_documents({})}\n        )\n        result[name] = {\n            \"stages\": stages,\n            \"documents\": encoded(await collection.find().sort(\"_id\", 1).to_list()),\n        }\n    return result\n"
+  },
+  "classification": [
+    "The initial sync clone observer used a context manager that Mongoeco does not publish; final observer uses explicit close.",
+    "The prior installed candidate emits PatternError without native query code 51091 for malformed regex.",
+    "Native PyMongo 4.19 clone loses let; the prior candidate retains it. No change to binding semantics is authorized in this refactor."
+  ],
+  "limits": "Exploration is retained separately from the accepted read-window corpus; no regression expectations or existing tests are weakened.",
+  "disposition": {
+    "regex": "fixed under the later explicit user authorization; final 13-case native corpus covers reads, rejected writes, empty/no-match and recovery",
+    "clone_let": "retained discrepancy in native PyMongo 4.19 clone; no change to Mongoeco binding preservation"
+  }
+}

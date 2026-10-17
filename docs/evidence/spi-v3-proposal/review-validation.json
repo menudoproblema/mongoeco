@@ -1,0 +1,172 @@
+{
+  "schema": "mongoeco-spi-proposal-author-review-validation/1",
+  "date": "2026-10-17",
+  "proposal_revision": 2,
+  "state": "proposed",
+  "independent_audit": false,
+  "source_revision": "738fd0eb5ece0adabf071e312ee0ff7b82b8589d",
+  "python": "3.14.5",
+  "inputs": [
+    {
+      "id": "R1",
+      "sha256": "3e481fdb7d39dee4b6968250ce5dbfe4a1b8e815a0bc390231038adfd2f9a13e"
+    },
+    {
+      "id": "R2",
+      "sha256": "c761a2eb2365deba9c24e3f0c4fca4384f91db49bda40d28f4410440c8fad7aa"
+    },
+    {
+      "id": "R3",
+      "provenance": "inline report supplied in the user message; no private URL fetched"
+    }
+  ],
+  "decision": "minimal internal preparation; preserve SPI v2; close B for this scope",
+  "checks": [
+    {
+      "id": "review-probes",
+      "command": ".venv/bin/python docs/evidence/spi-v3-proposal/probe_review.py",
+      "status": "passed",
+      "multi_cells": 8,
+      "backends": [
+        "memory",
+        "sqlite"
+      ],
+      "surfaces": [
+        "sync",
+        "async"
+      ],
+      "sizes": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "contracts-context-semantics",
+      "status": "passed",
+      "tests_passed": 93,
+      "subtests_passed": 1049,
+      "command": ".venv/bin/python -m pytest tests/contracts/engines tests/unit/core/test_operation_context.py tests/unit/core/test_semantic_core.py tests/unit/core/test_engine_spi_v2.py tests/integration/api/test_aggregation_semantic_context.py -q"
+    },
+    {
+      "id": "private-sqlite-scan",
+      "status": "passed",
+      "tests_passed": 2,
+      "deselected": 213,
+      "command": ".venv/bin/python -m pytest tests/unit/core/test_sqlite_engine.py -k iter_scan_documents_sync -q"
+    },
+    {
+      "id": "public-manifest",
+      "status": "passed",
+      "command": ".venv/bin/python scripts/update_public_api_manifest.py --check"
+    },
+    {
+      "id": "public-typing",
+      "status": "passed",
+      "positive_programs": 1,
+      "expected_negative_errors": 20,
+      "command": ".venv/bin/python scripts/check_public_typing.py"
+    },
+    {
+      "id": "observer-lint-format",
+      "status": "passed",
+      "paths": [
+        "docs/evidence/spi-v3-proposal/observe_baseline.py",
+        "docs/evidence/spi-v3-proposal/probe_review.py"
+      ]
+    },
+    {
+      "id": "original-P0-log-integrity",
+      "status": "passed",
+      "verified_logs": 5,
+      "claim": "hash verification only; original tests not re-executed"
+    },
+    {
+      "id": "original-draft-integrity",
+      "status": "passed",
+      "documents": 2
+    }
+  ],
+  "source_sha256": {
+    "src/mongoeco/api/operations.py": "5d997c8d7f89b7224b3fb20ad5b37a69ccda8067adbbb01b9d3da9ad1dcd9962",
+    "src/mongoeco/core/operation_context.py": "d98c4df3d5728336484eaea3292646da088866980a200675ab66c1c6637b7016",
+    "src/mongoeco/core/search_execution.py": "fa453786b2148ca489ba0b32d76e393611be1e770e8091147d38824d85acd541",
+    "src/mongoeco/engines/adapter.py": "c58e09bf47ca7506ad5b91d98f249d93391b8561bc233bd2a5d7244660373bf6",
+    "src/mongoeco/engines/base.py": "8b3f639b7db0698899b99347d400046d7afcc7344eb24bbc765a0532ed1c8e41",
+    "src/mongoeco/engines/capabilities.py": "087c3b2d19bebebf26bb59f227a7fb850ed2f15675c9ecf25c4081fe589bbdc0",
+    "src/mongoeco/engines/semantic_core.py": "f2605f39bf0b2ec5e4707a7d93c7af1e5f28d4f47363bca094bbcf78ee5b2fb3",
+    "src/mongoeco/engines/results.py": "9c356636546a1bad36792b9d02a6ddc6a820776b8d80f3eb0fb7b0f0e20c3a09",
+    "src/mongoeco/engines/snapshots.py": "099797553576812b0e7ed7f63ee74c7947c08abe7622a4b99977031c9dcad102",
+    "tests/consumer/engine_canary.py": "3f2c98c2034bff747be242585dbc0e6ef14b2f1d2bae891ab365d0a90ebc164c",
+    "src/mongoeco/api/_async/cursor.py": "87282af594cc113a09773b7be97961d1d94fa88d640da43af918734ca42ee265",
+    "src/mongoeco/api/_async/_collection_modify.py": "df8ab9556157a4b90ed0d5050dfa5238550835a38fb600b3d602d2c5ba141c1e",
+    "src/mongoeco/api/_async/_collection_runtime.py": "c9132ae75a0fb9a8a71b86405a6d08c9c9f20015a6a2e804e3d5bbec0c7fee94",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "0fae2b133b20bca3efb67d4f903854717745bbebdee95035cdd46db3560d0233",
+    "src/mongoeco/engines/memory.py": "6ef201b5e9d398d3e5b62f2a45066f0363d02245950fc0fac983dc599331bf9c",
+    "src/mongoeco/engines/sqlite.py": "14ab185f106b72a9050a2d9ee7ef1e9b1dc70e478355e0973c9074849f11c9aa",
+    "src/mongoeco/engines/_sqlite_modify_ops.py": "4da2eed5b6924dae2e720179ed5e00d3e276bcbefaa124b1e21202f907c26fc7",
+    "src/mongoeco/engines/__init__.py": "99544c3349de74cd23499c3b20ec0a0ddc1e836ebd68642e17c88bbc60c42c62",
+    "src/mongoeco/core/operation_limits.py": "b996255e756af3f0d141633259151811c949eb3d1aad27075a7d9d7e8326c076",
+    "src/mongoeco/core/query_plan.py": "70c0566c49bcfa4bfae6bd2a584027c0d295d5e12bced2cfb4641a627887b63c",
+    "src/mongoeco/wire/cursors.py": "0030d5ae7a685cb1bd02b1d34fb0e0c60aa08da9e945afdd8589c51f0945b55a",
+    "src/mongoeco/api/__init__.py": "8b273eba98f92e35bcfc12c977282dd41aa47438bcf41834f965303d39957061"
+  },
+  "initial_probe_attempt": {
+    "status": "failed",
+    "kind": "observer_assumption",
+    "assumed": "selector preparations equal N on both engines",
+    "observed": "Memory N; SQLite 2N",
+    "resolution": "inspected both SQLite compiler entries; corrected observer expectation only",
+    "log_sha256": "3feebe72e041986ff2b8fab5f33b5067006111db912e6fda90f7522553ca39bd"
+  },
+  "log_sha256": {
+    "review-focal.log": "433d16a1eb54c4cf0d42446249a9373a9b73c460579f6e7117e19342053cec87",
+    "review-sqlite.log": "fd73321153b6c24118a731083f237d5bff74d7197d0db1cba3629e45306acbec",
+    "review-typing.log": "8523fc7226b47c529dcce7d50145334b21c53f8f68ff2d5081f1b5c2fd637beb",
+    "review-probes-final.log": "b378502677f85c7ee60da4313fd914228b300252be4496ac86d9939af8a32f54"
+  },
+  "log_retention": "Original logs retained locally under .tmp/spi-v3-proposal; public records are anonymous summaries.",
+  "previous_validation_sha256": "33166501f26c7ae8e951aad1feafec01392fc5e91887b243c9cb8e94fda06afd",
+  "not_executed": [
+    "production implementation",
+    "SPI v3",
+    "fresh native MongoDB capture",
+    "new wheel build or installed-wheel canary",
+    "new global suite",
+    "latency or memory benchmark",
+    "external adoption census"
+  ],
+  "public_contract": "spi-v2",
+  "native_servers_started": false,
+  "production_tests_packaging_ci_changed": false,
+  "document_checks": {
+    "local_targets_checked": 126,
+    "missing_targets": 0,
+    "consumer_privacy": "passed",
+    "whitespace": "passed",
+    "proposal_state": "proposed",
+    "accepted_ADR_state_unchanged": true
+  },
+  "artifacts_sha256": {
+    "docs/README.md": "0a5d5d20bbc6a482ef0cefbe855adf2ba599ab556540035588c6b5c4e9fe2624",
+    "docs/architecture/core-runtime.md": "34c026efe254728ae4044053572db35f45858767fc0ab5382acc21fcb7400d33",
+    "docs/architecture/decisions/ADR-017-spi-v2-exclusivo-en-4.7.md": "1b0394195bc2a889dc83607fa8428ef0ca82331bd4923454c10eb321b2aceda1",
+    "docs/architecture/decisions/ADR-018-propuesta-operaciones-preparadas-spi-v3.md": "1f1986e585083ed19d96a48d54dcd224d142ebfa29f217474f390b013ef52cc1",
+    "docs/architecture/decisions/index.md": "010a4f4442cdcad0b5e2cf4bf68b829c18fd2706180c10475d5755eb1e54d792",
+    "docs/architecture/engine-preparation-proposal.md": "32a1873f1c6f02eecec0cadec190693e2aaf26d4665e68e4567417e69a39ee31",
+    "docs/architecture/engine-spi-v2.md": "3824a7fb083868be4e6fcb8cd0247117906adf5936c4171b1a6b23e1f7f3f493",
+    "docs/architecture/engine-spi-v3-proposal.md": "ae3f0538c5dea0d14b838374aa5fac16830497188c0bab3c851c314e427fcd7c",
+    "docs/architecture/index.md": "db244bc15a75ede869a8031b739caaa1b9245814ca314e898eb66cd02c8c64ca",
+    "docs/architecture/spi-proposal-review.md": "fb28a5be239113e34c51d83e9be3aed964a2eb1c440accaef3bf07b6d99a4e3f",
+    "docs/evidence/spi-v3-proposal/README.md": "4555707d6d503194a8404af02041ac52241634fe9b0d5ac95eff891fde1dbb96",
+    "docs/evidence/spi-v3-proposal/baseline.json": "9835a8c36f34abcd2dd51b8d7543ce9dce8ac8c46774484b0b69f80fcc8ffd14",
+    "docs/evidence/spi-v3-proposal/observe_baseline.py": "2d39eafeb3180d8cf53312c788805280ceb8e8e1b5cad0fe23353da9a6aab5dc",
+    "docs/evidence/spi-v3-proposal/probe_review.py": "54e3fa8bd472691d61e9d8544e9f23dbe22a1d907b5be3a311066e64f9185a19",
+    "docs/evidence/spi-v3-proposal/review-probes.json": "152edd303fd077aa6f748c61e5876ed5aaac3330ff0955b9a0b7163aa970194a",
+    "docs/evidence/spi-v3-proposal/revision-1.json": "cd067e07653771b1a0621e88718df7e45174d5b2d191b72fcbbb03fd8afc9b8e",
+    "docs/evidence/spi-v3-proposal/validation.json": "33166501f26c7ae8e951aad1feafec01392fc5e91887b243c9cb8e94fda06afd",
+    "docs/migrating-to-5.0.md": "17d056162b413bc97eeb59b79e4fd7ba3a84fd1d5c4c83bdeb11b03ed7294dee",
+    "docs/roadmap-5.0.md": "07e9295b788d94bcf3a36f6bb4d0dff7a76092d1eb7f13e356c9820b7266f9b1"
+  },
+  "artifacts_bundle_sha256": "c29522717cd30537ff54d935e52dabd404d6133132c638927a9927a7c2cd6e05",
+  "bundle_hash_format": "sorted relative path + NUL + sha256 + newline; excludes this validation record"
+}

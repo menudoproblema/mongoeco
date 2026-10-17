@@ -184,6 +184,8 @@ Advanced topics have their own guides:
 Mongoeco is a PEP 561 typed package. The documented public API and engine SPI v2
 are supported contracts; see [deprecations and migrations](https://github.com/menudoproblema/mongoeco/blob/main/docs/deprecations.md)
 for version-specific changes.
+The [engine SPI decision](https://github.com/menudoproblema/mongoeco/blob/main/docs/architecture/engine-spi-v3-proposal.md)
+keeps v2 and shelves v3; no engine migration is planned for the next release.
 
 ## License
 
