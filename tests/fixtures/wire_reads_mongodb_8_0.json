@@ -1,0 +1,257 @@
+{
+  "target": "8.0",
+  "version": "8.0.32",
+  "fcv": {
+    "version": "8.0"
+  },
+  "sdk": "4.19.0",
+  "python": "3.14.5",
+  "case_ids": [
+    "mirrored_False_more_False_filter_document",
+    "mirrored_False_more_False_filter_array",
+    "mirrored_False_more_False_filter_null",
+    "mirrored_False_more_False_filter_scalar",
+    "mirrored_False_more_True_filter_document",
+    "mirrored_False_more_True_filter_array",
+    "mirrored_False_more_True_filter_null",
+    "mirrored_False_more_True_filter_scalar",
+    "mirrored_True_more_False_filter_document",
+    "mirrored_True_more_False_filter_array",
+    "mirrored_True_more_False_filter_null",
+    "mirrored_True_more_False_filter_scalar",
+    "mirrored_True_more_True_filter_document",
+    "mirrored_True_more_True_filter_array",
+    "mirrored_True_more_True_filter_null",
+    "mirrored_True_more_True_filter_scalar"
+  ],
+  "observations": {
+    "mirrored_False_more_False_filter_document": {
+      "response": {
+        "ok": 1.0
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_False_more_False_filter_array": {
+      "response": {
+        "ok": 0.0,
+        "code": 14,
+        "codeName": "TypeMismatch"
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_False_more_False_filter_null": {
+      "response": {
+        "ok": 0.0,
+        "code": 14,
+        "codeName": "TypeMismatch"
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_False_more_False_filter_scalar": {
+      "response": {
+        "ok": 0.0,
+        "code": 14,
+        "codeName": "TypeMismatch"
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_False_more_True_filter_document": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_False_more_True_filter_array": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_False_more_True_filter_null": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_False_more_True_filter_scalar": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_False_filter_document": {
+      "response": {
+        "ok": 1.0
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_False_filter_array": {
+      "response": {
+        "ok": 0.0,
+        "code": 14,
+        "codeName": "TypeMismatch"
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_False_filter_null": {
+      "response": {
+        "ok": 0.0,
+        "code": 14,
+        "codeName": "TypeMismatch"
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_False_filter_scalar": {
+      "response": {
+        "ok": 0.0,
+        "code": 14,
+        "codeName": "TypeMismatch"
+      },
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_True_filter_document": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_True_filter_array": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_True_filter_null": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    },
+    "mirrored_True_more_True_filter_scalar": {
+      "response": null,
+      "documents": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "following"
+        }
+      ],
+      "connection_reused": true
+    }
+  },
+  "source_sha256": {
+    "scripts/capture_wire_read_parity.py": "cafd908bfa8cf0722437219ee34c2ac15fe382f1c68fb2d0e0bdabb57df7080c",
+    "scripts/_capture_identity.py": "95835d8aa0617e02786dd6780ccdfe9047f8788f9d76a4d9ee55658bf337872f",
+    "tests/support_wire_reads.py": "fb8b887f7f43456813489fcad519c68c63296f685c66e2ccbeb1420877cebbe9",
+    "tests/support_wire_envelopes.py": "6afa3b2d686a838c07455e8bf7181c4892f8495ba6fce817787c0e97d9ea32b8",
+    "tests/support_unacknowledged.py": "ff346964848c4ebe861479b9b47a94bff41d3a317172e570e183b44f98837177",
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+  }
+}
