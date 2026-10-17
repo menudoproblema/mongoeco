@@ -1,0 +1,34 @@
+{
+  "version": "4.11.0",
+  "tag": "v4.11.0",
+  "date": "2026-10-17",
+  "status": "prepared_for_release_ci",
+  "implementation_commit": "e63ae8578c28e49391a78095a61a44d9f0002074",
+  "versioning": "minor; additive opt-in wire diagnostics and compatible fixes/refactoring",
+  "local_validation": "../engine-reads/validation.json",
+  "wire_validation": "../wire-hardening/validation.json",
+  "local_artifact_version": "4.10.1 development candidate; not the published distribution",
+  "local_artifact_sha256": "bf3d6b778b600a9b12913693eb98af4ff1f82b84c9e34f050a98533a2f2b2bab",
+  "local_inputs": 791,
+  "release_only_input_changes": [
+    "CHANGELOG.md",
+    "README.md",
+    "src/mongoeco/_version.py",
+    "tests/fixtures/public_api_manifest_exchange_source.json"
+  ],
+  "api_manifest_delta": "packageVersion only, 4.10.1 -> 4.11.0",
+  "compatibility": "Existing API use, Engine SPI v2 and SQLite files preserved",
+  "required_before_tag": [
+    "main CI on the release commit",
+    "MongoDB 7/8/9 differential on the release commit",
+    "review immutable release artifact identities and publisher preflight"
+  ],
+  "required_after_tag": [
+    "tag CI including installed wheel and MongoDB differential",
+    "Trusted Publishing job",
+    "verify public artifact identity and provenance"
+  ],
+  "history_preserved": true,
+  "final_diff_reviewed": true,
+  "publication_verified": false
+}

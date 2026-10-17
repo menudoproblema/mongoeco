@@ -8,6 +8,8 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.11.0] - 2026-10-17
+
 ### Added
 
 - Optional `--mongoeco-wire-diagnostics` captures bounded wire metadata and reports
@@ -28,7 +30,6 @@ usa Semantic Versioning.
 - Reuse the executed request context for diagnostics, classify write concern
   errors, retain the first failure and report encoding/send phases accurately.
   Reject native observation receipts if their source inputs change during capture.
-
 - Reject malformed query regex with native code 51091 during preparation,
   including empty/no-match reads and nested membership filters. Retain complete
   error documents, defensive plan evaluation and rejected-write state.
@@ -64,6 +65,9 @@ usa Semantic Versioning.
   revalidation, deadline phases and the existing file format. Add regression
   coverage and MongoDB 7/8/9 references for both engines and sync/async clients.
   See [implementation and validation](docs/engine-preparation-validation.md).
+
+See the [release notes](docs/release-4.11.0.md) for migration, finite corpus
+coverage and delivery evidence.
 
 ## [4.10.1] - 2026-10-16
 

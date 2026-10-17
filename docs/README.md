@@ -1,9 +1,11 @@
 # Mongoeco documentation
 
 Start with application tests, then choose local persistence or search as needed.
-The [4.10.1 release notes](release-4.10.1.md) describe the error and BSON fixes,
-migration and delivery evidence. The [4.10.0 release notes](release-4.10.0.md)
-cover the pytest kit and supported Python/PyMongo versions.
+The [4.11.0 release notes](release-4.11.0.md) describe optional wire diagnostics,
+protocol fixes and engine simplification, with migration and delivery evidence.
+The [4.10.1 release notes](release-4.10.1.md) cover error and BSON fixes; the
+[4.10.0 release notes](release-4.10.0.md) cover the pytest kit and supported
+Python/PyMongo versions.
 
 ## Test a Python application
 
@@ -13,6 +15,8 @@ cover the pytest kit and supported Python/PyMongo versions.
   retain application assertions, and identify compatibility checks to keep.
 - [Pytest fixtures](pytest.md): native sync/async PyMongo clients, a local URI,
   runner setup, backend selection and cleanup.
+- [Wire diagnostics](wire-diagnostics.md): bounded metadata, failure reports
+  after teardown and controlled timeout recovery.
 - [Comparisons](comparisons.md): choose between a local runtime and MongoDB tests.
 
 ## Check compatibility
@@ -21,6 +25,8 @@ cover the pytest kit and supported Python/PyMongo versions.
   supported operations, API profiles and explicit limits.
 - [Native write corpus](write-parity-validation.md): results, BSON, error codes,
   counters and partial effects compared with real MongoDB captures.
+- [Wire validation](wire-hardening-validation.md): MongoDB 7/8/9 envelopes,
+  reply suppression, physical connection reuse and diagnostic phases.
 - [findAndModify errors](find-modify-errors.md): complete command errors and
   recovery after a unique-key collision.
 - [Shared error documents](shared-error-documents.md) and
