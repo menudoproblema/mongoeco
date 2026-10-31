@@ -1,0 +1,162 @@
+{
+  "status": "D01b functionally closed; whole consolidation goal remains in progress",
+  "base": "f8344e75f3d6eb4a09176f7766273dbd74a6bd9b",
+  "production_unchanged": true,
+  "production_evidence_reused": {
+    "owner": "../update-events/receipt.json",
+    "receipt_sha256": "e26ff13a20a9bd9eadbfbd1d7445a3c1a71e3da143a34738dafbd1b69e01f58c",
+    "manifest": "../update-events/runtime-sources.json",
+    "manifest_sha256": "b81689891e3c722954207a39924bc99fb8d3b9b6984056c90294a3c40f61e290",
+    "reason": "all current production hashes match; no changed causal inputs for existing properties/typing/SDK-free/storage/performance acceptance"
+  },
+  "workset": {
+    "manifest": "workset.json",
+    "sha256": "d645a096d5e14ac2b71bd3c83c1cc1fc5c79a2ff2054e736026123888be84cca",
+    "paths": [
+      "tests/differential/semantic_update_entrypoint_cases.py",
+      "tests/differential/semantic_corpora.py",
+      "tests/integration/api/test_semantic_group_regressions.py",
+      "tests/fixtures/semantic_update_entrypoint_7_0.json",
+      "tests/fixtures/semantic_update_entrypoint_8_0.json",
+      "tests/fixtures/semantic_update_entrypoint_9_0.json"
+    ]
+  },
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "topology": "preexisting owned single-member replica sets",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "actions": 4,
+    "scenarios_per_major": 101,
+    "new_captures_checked": true,
+    "logs": [
+      "native-accepted-7.0.txt.gz",
+      "native-accepted-8.0.txt.gz",
+      "native-accepted-9.0.txt.gz"
+    ],
+    "disposable_databases": "UUID; dropped in finally; habitual instance untouched"
+  },
+  "checks": {
+    "focal": {
+      "passed": 51,
+      "seconds": 3.97,
+      "surfaces": [
+        "sync",
+        "async"
+      ],
+      "backends": [
+        "Memory",
+        "SQLite"
+      ],
+      "dialects": [
+        "7.0",
+        "8.0",
+        "9.0"
+      ],
+      "log": "accepted-focal.txt.gz"
+    },
+    "orjson": {
+      "passed": 51,
+      "seconds": 4.31,
+      "env": "MONGOECO_JSON_BACKEND=orjson",
+      "log": "orjson.txt.gz"
+    },
+    "contracts": {
+      "passed": 74,
+      "subtests_passed": 8,
+      "seconds": 0.87,
+      "scope": "delivery, merge atomicity, SPI v2, BSON journal integrity, corpus inventory",
+      "log": "contracts.txt.gz"
+    },
+    "integrated_semantic": {
+      "passed": 5956,
+      "seconds": 298.05,
+      "log": "integrated.txt.gz"
+    },
+    "lint": {
+      "status": "passed",
+      "changed_python_files": 3,
+      "log": "final-lint.txt.gz"
+    },
+    "baseline": {
+      "runtime": "375382a archive; preload before pytest",
+      "failed": 48,
+      "passed": 3,
+      "log": "before.txt.gz",
+      "expected": "missing or incorrect effects in old runtime; metadata controls green"
+    }
+  },
+  "review": {
+    "skill": "gdx-revisar-cambio",
+    "workset_fixed": true,
+    "new_production_changes": false,
+    "open_demonstrated_findings_in_D01b": 0,
+    "basis": "current workset plus accepted D01b identity/state/effect/delivery source and receipts; explicit per-guarantee mapping in README",
+    "limits": [
+      "Not an absence claim over all MongoDB behavior.",
+      "Native captures use sync PyMongo as reference; replay exercises local sync and async APIs.",
+      "Wire watch remains explicitly unsupported.",
+      "D04 preparation/context, fullDocument and native job RS fixtures are not accepted here.",
+      "D05 final matrices/wheel/global/coverage/performance remain required; no general B07 closure."
+    ]
+  },
+  "protected_files": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "historical_fixtures_unchanged": true,
+  "document_checks": {
+    "relative_links_checked": 34,
+    "git_diff_check": "passed"
+  },
+  "intermediate_runs": [
+    "Initial two actions and 27 green checks expanded before acceptance to projected images, empty document, and committed prefixes.",
+    "native-final logs precede final falsy-image expansion; native-accepted logs recapture and independently check the final four-action source.",
+    "No production correction or new semantic abstraction needed for the remaining entrypoints."
+  ],
+  "remaining": [
+    "D04 watch preparation/context and native replica-set jobs",
+    "D06a/D06b/D06c remaining grammar/raw/consumer acceptance",
+    "H53 disposition",
+    "scalar sNaN conversion differential",
+    "D07 optional disposition",
+    "D05 final program gates and matrices"
+  ],
+  "lifecycle": "No service start/stop/reconfiguration; owned native services retained for ongoing goal",
+  "artifacts": {
+    "README.md": "9499de8ccb260d8d0ed170e4d0d43ef0a8fb729e02e2424b35ca8447c296983c",
+    "accepted-focal.txt.gz": "d096708c319329be388d3dee293f6abaaa3dc7513a9df2f13ea2878371f6b7d2",
+    "before.txt.gz": "d70d47e7034751441b6e321c56736175d9363cb9ddfab93c23872ae4820fb5fd",
+    "contracts.txt.gz": "ce17ef3b0d0040933c8f1b0c49f6b0a79971ee1febba59611246206b072dc75b",
+    "final-focal.txt.gz": "59ad1d0898946660b615ed7bfecbf6f9cf40ae8b329717d13f5efe523895a6da",
+    "final-lint.txt.gz": "618a2529d9b291707f3dc516f5ad69cfd51557e18861871d41a7ea107d2ed1e3",
+    "focal.txt.gz": "8ad2fdad0296df735e5f09e71c26b077ebee431fbde545a3cd5b8934078cd698",
+    "integrated.txt.gz": "20071e50e9467c8f5b234cedb93bcc0d0d75058fb10db5fa9e69e38d295b58d5",
+    "lint.txt.gz": "618a2529d9b291707f3dc516f5ad69cfd51557e18861871d41a7ea107d2ed1e3",
+    "native-7.0.txt.gz": "ec26a8b3da8f718ba8ce8d1f5fa662a0e004fdfec31bb5d016fc1a64629dc60d",
+    "native-8.0.txt.gz": "1a74bef3463772695bbc3a57d2ad62cb87514f5a758404f9ccffb64f2647e8b5",
+    "native-9.0.txt.gz": "c67ee8d44374561d5c21b67db6d0986178455c898a70d16e0c9126f393c00d12",
+    "native-accepted-7.0.txt.gz": "16bd83a0e0a5443f54e98ae22b428fe6b73a0f806a8d54ba0c21291d14a7e331",
+    "native-accepted-8.0.txt.gz": "a0ae02ee3e089f7a6cf138988e5475f101d484daa8a74ad42a693607b06c536a",
+    "native-accepted-9.0.txt.gz": "497ee99181c994b350e31b5ea448535d47dfd877fd2e46341d16e5d4483cad63",
+    "native-final-7.0.txt.gz": "16bd83a0e0a5443f54e98ae22b428fe6b73a0f806a8d54ba0c21291d14a7e331",
+    "native-final-8.0.txt.gz": "a0ae02ee3e089f7a6cf138988e5475f101d484daa8a74ad42a693607b06c536a",
+    "native-final-9.0.txt.gz": "497ee99181c994b350e31b5ea448535d47dfd877fd2e46341d16e5d4483cad63",
+    "orjson.txt.gz": "1c395c4de48affde9e68758c07a8b3d1412235eb155304aa7a60052f132691f6",
+    "workset.json": "d645a096d5e14ac2b71bd3c83c1cc1fc5c79a2ff2054e736026123888be84cca"
+  }
+}

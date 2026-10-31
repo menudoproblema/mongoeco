@@ -462,9 +462,42 @@ La medición pequeña secuencial conserva checksums: razones aproximadas 1,01/0,
 en Memory/SQLite sin observador y 1,01/1,03 en no-ops con observador. D05 conserva
 su evaluación completa de costes y matrices.
 
+## D01b — Aceptación de entradas y cierre funcional
+
+La [aceptación restante](evidence/bson-consolidation-implementation/update-entrypoints/receipt.json)
+incorpora al registro/capturador/replay cuatro acciones permanentes de comandos
+y findAndModify, con 101 escenarios por major. Las referencias 7.0.43/8.0.32/
+9.0.2, FCV correspondiente y replica sets, se verifican con --check. Reemplazan
+la sonda diagnóstica sync anterior para las garantías ahora ejercidas también
+en async; no modifican los goldens de los incrementos ya aceptados.
+
+El corpus observa respuestas reales, errores por item frente a excepciones de
+comando, estado BSON y eventos tras barrera. Cubre classic/pipeline/replacement,
+no-op/cambio físico, upsert, ID permitido/rechazado y BEFORE/AFTER con proyección
+completa, solo ID y vacía. `{}` se conserva como imagen válida. Las APIs find
+no exponen modified_count y el observador no lo deduce de la imagen. Un prefijo
+confirmado de update command/update_many se entrega después del error sin otra
+petición, y la barrera posterior verifica ausencia de duplicados.
+
+Pasan 51 checks focales sync/async en ambos motores y tres dialectos, también
+con orjson. La base archivada 375382a falla 48 y pasa los tres de metadata.
+Pasan 74 checks de entrega/atomicidad/SPI/inventario con ocho subtests y el
+ratchet de lint. El gate integrado final pasa 5.956 checks. La revisión fija
+workset y base f8344e7 y verifica que producción es idéntica al incremento
+anterior: se reutilizan sus propiedades, typing, SDK-free, consumidores,
+persistencia y medidas cuyos inputs no han cambiado. No se introduce código
+productivo ni otro mecanismo para un requisito ya satisfecho.
+
+D01b queda cerrado funcionalmente con la evidencia conjunta de identidad,
+estado/índices/múltiples, contenido/entrega y estas entradas. La ficha de
+aceptación relaciona cada garantía con su receipt. No quedan findings
+demostrados abiertos de ese alcance en la revisión; D04 conserva preparación/
+contexto, fullDocument soportado y los fixtures replica set de jobs nativos.
+D05 conserva matrices, wheel, global/cobertura/costes finales y el cierre
+integrado de todo el programa. No se cierra B07 general ni los demás bloques.
+
 ## Trabajo restante
 
-- D01b: regresión permanente sync/async de commands/findAndModify y revisión final del bloque frente al plan. Los incrementos anteriores conservan estado/índices/múltiples y el actual contenido/entrega; no se declara cierre completo por la sonda adicional.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
 - D04: preparación/contexto de watch y fixtures de replica set para los jobs
   nativos que alcanzan watch/TTL; la entrega TTL no cierra esos errores de entrada.

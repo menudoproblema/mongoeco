@@ -1,0 +1,12 @@
+{
+  "base": "f8344e7",
+  "production_diff_empty": true,
+  "files": {
+    "tests/differential/semantic_update_entrypoint_cases.py": "59958b4ff8d476ee10ed4ed7bdaf19dff48ac720381d438ff8ff63cef76abd4c",
+    "tests/differential/semantic_corpora.py": "fd5cf6180362314bea1e73c01edabba09e84e573fffaebb355a75ddd54ce6fa4",
+    "tests/integration/api/test_semantic_group_regressions.py": "4e992fbae20cdcb40ad892dd01ae9e433658f358e8152f7907c3e793c5eadd41",
+    "tests/fixtures/semantic_update_entrypoint_7_0.json": "11c9ce9c0046fba0343ff4d3f0784d5ae768c1c75b1798d87becfc9d2aee618d",
+    "tests/fixtures/semantic_update_entrypoint_8_0.json": "08155e82bd65b53318d6f9f158414e7fa4158d24fb1b172d866537e59e3c0701",
+    "tests/fixtures/semantic_update_entrypoint_9_0.json": "4a352266cac3bb3fcb06ad74fffe7e412951d9ff3afdbf7d50ad9abe2a23f2dd"
+  }
+}

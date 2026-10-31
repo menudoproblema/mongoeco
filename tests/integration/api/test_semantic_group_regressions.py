@@ -184,6 +184,9 @@ class _AsyncView:
     def find_one_and_update(self, *args, **kwargs):
         return self._call("find_one_and_update", *args, **kwargs)
 
+    def find_one_and_replace(self, *args, **kwargs):
+        return self._call("find_one_and_replace", *args, **kwargs)
+
     def bulk_write(self, *args, **kwargs):
         return self._call("bulk_write", *args, **kwargs)
 

@@ -115,6 +115,10 @@ from tests.differential.semantic_type_query_cases import (
     SEED as TYPE_QUERY_SEED,
     SEMANTIC_TYPE_QUERY_CASES,
 )
+from tests.differential.semantic_update_entrypoint_cases import (
+    SEED as UPDATE_ENTRYPOINT_SEED,
+    SEMANTIC_UPDATE_ENTRYPOINT_CASES,
+)
 from tests.differential.semantic_update_event_cases import (
     SEED as UPDATE_EVENT_SEED,
     SEMANTIC_UPDATE_EVENT_CASES,
@@ -140,6 +144,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "update_entrypoint": SemanticCorpus(
+        "update-entrypoint",
+        "semantic_update_entrypoint_cases",
+        UPDATE_ENTRYPOINT_SEED,
+        SEMANTIC_UPDATE_ENTRYPOINT_CASES,
+        surfaces=("sync", "async"),
+    ),
     "update_event": SemanticCorpus(
         "update-event",
         "semantic_update_event_cases",
