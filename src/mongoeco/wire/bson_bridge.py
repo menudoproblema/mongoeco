@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import decimal
-import re
 import uuid
 
 from typing import Any
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
+from mongoeco.core.bson_values import regex_options as _regex_flags_to_string
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     SON,
@@ -144,18 +144,3 @@ def encode_wire_value(value: Any) -> Any:
     if isinstance(value, UndefinedType):
         return None
     return value
-
-
-def _regex_flags_to_string(flags: int | str) -> str:
-    if isinstance(flags, str):
-        return flags
-    rendered = ""
-    if flags & re.IGNORECASE:
-        rendered += "i"
-    if flags & re.MULTILINE:
-        rendered += "m"
-    if flags & re.DOTALL:
-        rendered += "s"
-    if flags & re.VERBOSE:
-        rendered += "x"
-    return rendered

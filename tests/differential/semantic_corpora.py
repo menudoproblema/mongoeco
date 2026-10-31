@@ -18,6 +18,10 @@ from tests.differential.semantic_binary_edge_cases import (
     SEED as BINARY_EDGE_SEED,
     SEMANTIC_BINARY_EDGE_CASES,
 )
+from tests.differential.semantic_bson_size_cases import (
+    SEED as BSON_SIZE_SEED,
+    SEMANTIC_BSON_SIZE_CASES,
+)
 from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
@@ -132,6 +136,12 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "bson_size": SemanticCorpus(
+        "bson-size",
+        "semantic_bson_size_cases",
+        BSON_SIZE_SEED,
+        SEMANTIC_BSON_SIZE_CASES,
+    ),
     "write_effect": SemanticCorpus(
         "write-effect",
         "semantic_write_effect_cases",

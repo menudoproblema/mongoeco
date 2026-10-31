@@ -56,6 +56,13 @@ from mongoeco.core.bson_scalars import (
     bson_numeric_alias,
     is_bson_numeric,
 )
+from mongoeco.core.bson_size import (
+    bson_cstring_size as _bson_cstring_size,  # noqa: F401 - private compatibility export
+    bson_document_size as _bson_document_size,
+    bson_element_size as _bson_element_size,  # noqa: F401 - private compatibility export
+    bson_string_size as _bson_string_size,  # noqa: F401 - private compatibility export
+    bson_value_size as _bson_value_size,  # noqa: F401 - private compatibility export
+)
 from mongoeco.core.collation import (
     CollationSpec,
     string_equality_key,
@@ -86,8 +93,6 @@ from mongoeco.types import (
     ObjectId,
     Regex,
     Timestamp,
-    UndefinedType,
-    is_object_id_like,
 )
 
 
@@ -710,71 +715,6 @@ def _trunc_numeric(value: float, place: int) -> int | float:
         return int(truncated) if place == 0 else truncated
     truncated = math.trunc(value / factor) * factor
     return int(truncated)
-
-
-def _bson_cstring_size(value: str) -> int:
-    encoded = value.encode("utf-8")
-    if b"\x00" in encoded:
-        raise OperationFailure(
-            "$bsonSize cannot encode strings containing NUL bytes",
-        )
-    return len(encoded) + 1
-
-
-def _bson_string_size(value: str) -> int:
-    encoded = value.encode("utf-8")
-    return 4 + len(encoded) + 1
-
-
-def _bson_value_size(value: Any) -> int:
-    if isinstance(value, float):
-        return 8
-    if isinstance(value, str):
-        return _bson_string_size(value)
-    if isinstance(value, dict):
-        return _bson_document_size(value)
-    if isinstance(value, list):
-        return _bson_document_size(
-            {str(index): item for index, item in enumerate(value)},
-        )
-    if isinstance(value, (bytes, bytearray, Binary)):
-        return 4 + 1 + len(value)
-    if isinstance(value, uuid.UUID):
-        return 4 + 1 + 16
-    if is_object_id_like(value):
-        return 12
-    if isinstance(value, bool):
-        return 1
-    if isinstance(value, datetime.datetime):
-        return 8
-    if value is None or isinstance(value, UndefinedType):
-        return 0
-    if isinstance(value, re.Pattern):
-        return _bson_cstring_size(value.pattern) + _bson_cstring_size("")
-    if isinstance(value, Regex):
-        return _bson_cstring_size(value.pattern) + _bson_cstring_size(
-            value.flags,
-        )
-    if isinstance(value, Timestamp):
-        return 8
-    if isinstance(value, int):
-        return 4 if -(1 << 31) <= value <= (1 << 31) - 1 else 8
-    raise OperationFailure(
-        f"$bsonSize cannot encode value of type {type(value).__name__}",
-    )
-
-
-def _bson_element_size(key: str, value: Any) -> int:
-    return 1 + _bson_cstring_size(key) + _bson_value_size(value)
-
-
-def _bson_document_size(document: dict[str, Any]) -> int:
-    total = 4 + 1
-    for key, value in document.items():
-        total += _bson_element_size(key, value)
-    return total
-
-
 
 
 def _evaluate_expression_with_missing(

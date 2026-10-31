@@ -1,0 +1,646 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_bson_size_expressions": [
+      {
+        "number_types": {
+          "$numberInt": "53"
+        },
+        "wrapped_array": {
+          "$numberInt": "43"
+        },
+        "dbref": {
+          "$numberInt": "56"
+        },
+        "empty": {
+          "$numberInt": "5"
+        },
+        "null": null,
+        "missing": null
+      }
+    ],
+    "semantic_bson_size_literal": [
+      {
+        "v0": {
+          "$numberInt": "8"
+        },
+        "v1": {
+          "$numberInt": "9"
+        },
+        "v2": {
+          "$numberInt": "9"
+        },
+        "v3": {
+          "$numberInt": "12"
+        },
+        "v4": {
+          "$numberInt": "16"
+        },
+        "v5": {
+          "$numberInt": "16"
+        },
+        "v6": {
+          "$numberInt": "16"
+        },
+        "v7": {
+          "$numberInt": "16"
+        },
+        "v8": {
+          "$numberInt": "16"
+        },
+        "v9": {
+          "$numberInt": "24"
+        },
+        "v10": {
+          "$numberInt": "24"
+        },
+        "v11": {
+          "$numberInt": "24"
+        },
+        "v12": {
+          "$numberInt": "13"
+        },
+        "v13": {
+          "$numberInt": "19"
+        },
+        "v14": {
+          "$numberInt": "15"
+        },
+        "v15": {
+          "$numberInt": "15"
+        },
+        "v16": {
+          "$numberInt": "19"
+        },
+        "v17": {
+          "$numberInt": "29"
+        },
+        "v18": {
+          "$numberInt": "29"
+        },
+        "v19": {
+          "$numberInt": "29"
+        },
+        "v20": {
+          "$numberInt": "20"
+        },
+        "v21": {
+          "$numberInt": "16"
+        },
+        "v22": {
+          "$numberInt": "16"
+        },
+        "v23": {
+          "$numberInt": "8"
+        },
+        "v24": {
+          "$numberInt": "8"
+        },
+        "v25": {
+          "$numberInt": "20"
+        },
+        "v26": {
+          "$numberInt": "18"
+        },
+        "v27": {
+          "$numberInt": "23"
+        },
+        "v28": {
+          "$numberInt": "48"
+        },
+        "v29": {
+          "$numberInt": "34"
+        },
+        "v30": {
+          "$numberInt": "64"
+        },
+        "v31": {
+          "$numberInt": "13"
+        },
+        "v32": {
+          "$numberInt": "123"
+        },
+        "v33": {
+          "$numberInt": "58"
+        },
+        "v34": {
+          "$numberInt": "73"
+        },
+        "v35": {
+          "$numberInt": "17"
+        }
+      }
+    ],
+    "semantic_bson_size_stored": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "size": {
+          "$numberInt": "17"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "size": {
+          "$numberInt": "18"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "size": {
+          "$numberInt": "18"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "size": {
+          "$numberInt": "21"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "size": {
+          "$numberInt": "33"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "10"
+        },
+        "size": {
+          "$numberInt": "33"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "11"
+        },
+        "size": {
+          "$numberInt": "33"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "12"
+        },
+        "size": {
+          "$numberInt": "22"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "13"
+        },
+        "size": {
+          "$numberInt": "28"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "14"
+        },
+        "size": {
+          "$numberInt": "24"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "15"
+        },
+        "size": {
+          "$numberInt": "24"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "16"
+        },
+        "size": {
+          "$numberInt": "28"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "17"
+        },
+        "size": {
+          "$numberInt": "38"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "18"
+        },
+        "size": {
+          "$numberInt": "38"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "19"
+        },
+        "size": {
+          "$numberInt": "38"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "20"
+        },
+        "size": {
+          "$numberInt": "29"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "21"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "22"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "23"
+        },
+        "size": {
+          "$numberInt": "17"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "24"
+        },
+        "size": {
+          "$numberInt": "17"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "25"
+        },
+        "size": {
+          "$numberInt": "29"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "26"
+        },
+        "size": {
+          "$numberInt": "27"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "27"
+        },
+        "size": {
+          "$numberInt": "32"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "28"
+        },
+        "size": {
+          "$numberInt": "57"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "29"
+        },
+        "size": {
+          "$numberInt": "43"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "30"
+        },
+        "size": {
+          "$numberInt": "73"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "31"
+        },
+        "size": {
+          "$numberInt": "22"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "32"
+        },
+        "size": {
+          "$numberInt": "132"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "33"
+        },
+        "size": {
+          "$numberInt": "67"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "34"
+        },
+        "size": {
+          "$numberInt": "82"
+        }
+      }
+    ],
+    "semantic_bson_size_validation": {
+      "0": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "1": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "2": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "3": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "4": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "5": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "6": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "7": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "8": {
+        "value": [
+          {
+            "size": null
+          }
+        ]
+      },
+      "9": {
+        "value": [
+          {
+            "size": {
+              "$numberInt": "26"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793454298,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793454298,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_bson_size_cases.py",
+    "sha256": "6d936f193c4648635290341aa43d78b34dcf07bf464def7d47da6a41fb2115d1"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_bson_size_literal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_literal"
+    },
+    {
+      "name": "semantic_bson_size_stored",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_stored"
+    },
+    {
+      "name": "semantic_bson_size_expressions",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_expressions"
+    },
+    {
+      "name": "semantic_bson_size_validation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_validation"
+    }
+  ]
+}

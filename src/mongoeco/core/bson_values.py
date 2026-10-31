@@ -13,10 +13,10 @@ from mongoeco.types import (
     Binary,
     DBRef,
     Decimal128,
-    ObjectId,
     Regex,
     Timestamp,
     UndefinedType,
+    is_object_id_like,
 )
 
 
@@ -25,9 +25,13 @@ try:
     from bson.dbref import DBRef as DriverDBRef
     from bson.max_key import MaxKey as BsonMaxKey
     from bson.min_key import MinKey as BsonMinKey
+    from bson.regex import Regex as DriverRegex
+    from bson.timestamp import Timestamp as DriverTimestamp
 except ImportError:  # pragma: no cover - optional SDK
     BsonCode = BsonMaxKey = BsonMinKey = None
     DriverDBRef = ()
+    DriverRegex = ()
+    DriverTimestamp = Timestamp
 
 
 _OLD_BINARY_SUBTYPE = 2
@@ -85,17 +89,17 @@ def matches_bson_type(candidate: Any, alias: str) -> bool:  # noqa: PLR0911, PLR
     if alias == "binData":
         return isinstance(candidate, (bytes, Binary, uuid.UUID))
     if alias == "objectId":
-        return isinstance(candidate, ObjectId)
+        return is_object_id_like(candidate)
     if alias == "bool":
         return isinstance(candidate, bool)
     if alias == "date":
         return isinstance(candidate, datetime.datetime)
     if alias == "timestamp":
-        return isinstance(candidate, Timestamp)
+        return isinstance(candidate, (Timestamp, DriverTimestamp))
     if alias == "null":
         return candidate is None
     if alias == "regex":
-        return isinstance(candidate, (re.Pattern, Regex))
+        return regex_parts(candidate) is not None
     if alias == "javascript":
         return (
             BsonCode is not None
@@ -121,3 +125,30 @@ def code_parts(value: Any) -> tuple[str, Mapping[str, Any] | None] | None:
     if BsonCode is None or not isinstance(value, BsonCode):
         return None
     return str(value), value.scope
+
+
+def regex_options(flags: int | str) -> str:
+    """Render the six BSON regex option bits without dropping locale/unicode."""
+    if isinstance(flags, str):
+        return flags
+    return "".join(
+        flag
+        for flag, mask in (
+            ("i", re.IGNORECASE),
+            ("l", re.LOCALE),
+            ("m", re.MULTILINE),
+            ("s", re.DOTALL),
+            ("u", re.UNICODE),
+            ("x", re.VERBOSE),
+        )
+        if flags & mask
+    )
+
+
+def regex_parts(value: Any) -> tuple[str | bytes, str] | None:
+    """Pattern and canonical BSON option letters across SDK/local representations."""
+    if isinstance(value, Regex):
+        return value.pattern, value.flags
+    if not isinstance(value, re.Pattern) and not isinstance(value, DriverRegex):
+        return None
+    return value.pattern, regex_options(value.flags)

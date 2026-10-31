@@ -4,7 +4,6 @@ import binascii
 import datetime
 import decimal
 import math
-import re
 import struct
 import uuid
 
@@ -47,6 +46,7 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
     validate_bson_value,
 )
+from mongoeco.core.bson_values import regex_parts
 from mongoeco.types import (
     SON,
     UNDEFINED,
@@ -298,35 +298,12 @@ class DocumentCodec:
                 },
             )
 
-        if BsonRegex is not None and isinstance(data, BsonRegex):
-            flags = int(data.flags)
-            rendered_flags = "".join(
-                flag
-                for flag, mask in (
-                    ("i", re.IGNORECASE),
-                    ("l", re.LOCALE),
-                    ("m", re.MULTILINE),
-                    ("s", re.DOTALL),
-                    ("u", re.UNICODE),
-                    ("x", re.VERBOSE),
-                )
-                if flags & mask
-            )
+        if (BsonRegex is not None and isinstance(data, BsonRegex)) or isinstance(data, Regex):
+            parts = regex_parts(data)
+            assert parts is not None  # noqa: S101 - same guarded regex families
+            pattern, flags = parts
             return DocumentCodec._tagged_value(
-                "regex",
-                {
-                    "pattern": data.pattern,
-                    "flags": rendered_flags,
-                },
-            )
-
-        if isinstance(data, Regex):
-            return DocumentCodec._tagged_value(
-                "regex",
-                {
-                    "pattern": data.pattern,
-                    "flags": data.flags,
-                },
+                "regex", {"pattern": pattern, "flags": flags},
             )
 
         if isinstance(data, Timestamp):
@@ -393,7 +370,9 @@ class DocumentCodec:
             )
 
         if isinstance(data, bytes):
-            return DocumentCodec._tagged_value("bytes", binascii.hexlify(data).decode("ascii"))
+            return DocumentCodec._tagged_value(
+                "bytes", binascii.hexlify(data).decode("ascii")
+            )
 
         if isinstance(data, UndefinedType):
             return DocumentCodec._tagged_value("undefined", True)

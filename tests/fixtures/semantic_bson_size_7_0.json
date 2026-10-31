@@ -1,0 +1,642 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_bson_size_expressions": [
+      {
+        "number_types": {
+          "$numberInt": "53"
+        },
+        "wrapped_array": {
+          "$numberInt": "43"
+        },
+        "dbref": {
+          "$numberInt": "56"
+        },
+        "empty": {
+          "$numberInt": "5"
+        },
+        "null": null,
+        "missing": null
+      }
+    ],
+    "semantic_bson_size_literal": [
+      {
+        "v0": {
+          "$numberInt": "8"
+        },
+        "v1": {
+          "$numberInt": "9"
+        },
+        "v2": {
+          "$numberInt": "9"
+        },
+        "v3": {
+          "$numberInt": "12"
+        },
+        "v4": {
+          "$numberInt": "16"
+        },
+        "v5": {
+          "$numberInt": "16"
+        },
+        "v6": {
+          "$numberInt": "16"
+        },
+        "v7": {
+          "$numberInt": "16"
+        },
+        "v8": {
+          "$numberInt": "16"
+        },
+        "v9": {
+          "$numberInt": "24"
+        },
+        "v10": {
+          "$numberInt": "24"
+        },
+        "v11": {
+          "$numberInt": "24"
+        },
+        "v12": {
+          "$numberInt": "13"
+        },
+        "v13": {
+          "$numberInt": "19"
+        },
+        "v14": {
+          "$numberInt": "15"
+        },
+        "v15": {
+          "$numberInt": "15"
+        },
+        "v16": {
+          "$numberInt": "19"
+        },
+        "v17": {
+          "$numberInt": "29"
+        },
+        "v18": {
+          "$numberInt": "29"
+        },
+        "v19": {
+          "$numberInt": "29"
+        },
+        "v20": {
+          "$numberInt": "20"
+        },
+        "v21": {
+          "$numberInt": "16"
+        },
+        "v22": {
+          "$numberInt": "16"
+        },
+        "v23": {
+          "$numberInt": "8"
+        },
+        "v24": {
+          "$numberInt": "8"
+        },
+        "v25": {
+          "$numberInt": "20"
+        },
+        "v26": {
+          "$numberInt": "18"
+        },
+        "v27": {
+          "$numberInt": "23"
+        },
+        "v28": {
+          "$numberInt": "48"
+        },
+        "v29": {
+          "$numberInt": "34"
+        },
+        "v30": {
+          "$numberInt": "64"
+        },
+        "v31": {
+          "$numberInt": "13"
+        },
+        "v32": {
+          "$numberInt": "123"
+        },
+        "v33": {
+          "$numberInt": "58"
+        },
+        "v34": {
+          "$numberInt": "73"
+        },
+        "v35": {
+          "$numberInt": "17"
+        }
+      }
+    ],
+    "semantic_bson_size_stored": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "size": {
+          "$numberInt": "17"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "size": {
+          "$numberInt": "18"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "size": {
+          "$numberInt": "18"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "size": {
+          "$numberInt": "21"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "size": {
+          "$numberInt": "33"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "10"
+        },
+        "size": {
+          "$numberInt": "33"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "11"
+        },
+        "size": {
+          "$numberInt": "33"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "12"
+        },
+        "size": {
+          "$numberInt": "22"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "13"
+        },
+        "size": {
+          "$numberInt": "28"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "14"
+        },
+        "size": {
+          "$numberInt": "24"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "15"
+        },
+        "size": {
+          "$numberInt": "24"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "16"
+        },
+        "size": {
+          "$numberInt": "28"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "17"
+        },
+        "size": {
+          "$numberInt": "38"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "18"
+        },
+        "size": {
+          "$numberInt": "38"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "19"
+        },
+        "size": {
+          "$numberInt": "38"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "20"
+        },
+        "size": {
+          "$numberInt": "29"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "21"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "22"
+        },
+        "size": {
+          "$numberInt": "25"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "23"
+        },
+        "size": {
+          "$numberInt": "17"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "24"
+        },
+        "size": {
+          "$numberInt": "17"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "25"
+        },
+        "size": {
+          "$numberInt": "29"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "26"
+        },
+        "size": {
+          "$numberInt": "27"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "27"
+        },
+        "size": {
+          "$numberInt": "32"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "28"
+        },
+        "size": {
+          "$numberInt": "57"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "29"
+        },
+        "size": {
+          "$numberInt": "43"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "30"
+        },
+        "size": {
+          "$numberInt": "73"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "31"
+        },
+        "size": {
+          "$numberInt": "22"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "32"
+        },
+        "size": {
+          "$numberInt": "132"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "33"
+        },
+        "size": {
+          "$numberInt": "67"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "34"
+        },
+        "size": {
+          "$numberInt": "82"
+        }
+      }
+    ],
+    "semantic_bson_size_validation": {
+      "0": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "1": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "2": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "3": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "4": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "5": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "6": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "7": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31393"
+        }
+      },
+      "8": {
+        "value": [
+          {
+            "size": null
+          }
+        ]
+      },
+      "9": {
+        "value": [
+          {
+            "size": {
+              "$numberInt": "26"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793454297,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793454297,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_bson_size_cases.py",
+    "sha256": "6d936f193c4648635290341aa43d78b34dcf07bf464def7d47da6a41fb2115d1"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_bson_size_literal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_literal"
+    },
+    {
+      "name": "semantic_bson_size_stored",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_stored"
+    },
+    {
+      "name": "semantic_bson_size_expressions",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_expressions"
+    },
+    {
+      "name": "semantic_bson_size_validation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_bson_size_validation"
+    }
+  ]
+}

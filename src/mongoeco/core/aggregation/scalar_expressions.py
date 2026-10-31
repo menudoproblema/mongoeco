@@ -8,7 +8,7 @@ import random
 import re
 import uuid
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from typing import Any
 
@@ -33,6 +33,7 @@ from mongoeco.core.bson_scalars import (
     validate_bson_value,
     wrap_bson_numeric,
 )
+from mongoeco.core.bson_values import document_mapping
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.server_errors import server_error
@@ -51,7 +52,7 @@ from mongoeco.types import (
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
 type ExpressionArgValidator = Callable[[str, object, int, int | None], list[Any]]
 type Stringifier = Callable[[Any], str]
-type BsonSizer = Callable[[dict[str, Any]], int]
+type BsonSizer = Callable[[Mapping[str, Any]], int]
 
 
 SCALAR_EXPRESSION_OPERATORS = frozenset(SCALAR_EXPRESSION_ARGUMENTS) | frozenset(
@@ -160,9 +161,11 @@ def evaluate_scalar_expression(
         value = evaluate_expression_with_missing(document, args[0], variables)
         if value is missing_sentinel or value is None:
             return None
-        if not isinstance(value, dict):
-            raise OperationFailure("$bsonSize requires an object input")
-        return bson_document_size(value)
+        document_value = document_mapping(value)
+        if document_value is None:
+            message = "$bsonSize requires an object input"
+            raise OperationFailure(message, code=31393)
+        return bson_document_size(document_value)
 
     if operator == "$binarySize":
         args = require_expression_args(

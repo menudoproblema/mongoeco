@@ -1319,12 +1319,13 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual(_bson_value_size(created_at), 8)
         self.assertEqual(_bson_value_size(None), 0)
         self.assertEqual(_bson_value_size(UNDEFINED), 0)
-        self.assertEqual(_bson_value_size(re.compile("^a")), 4)
+        self.assertEqual(_bson_value_size(re.compile("^a")), 5)
         self.assertEqual(_bson_value_size(Regex("^a", "im")), 6)
         self.assertEqual(_bson_value_size(Timestamp(1, 2)), 8)
         self.assertEqual(_bson_value_size(1 << 40), 8)
-        with self.assertRaises(OperationFailure):
-            _bson_value_size(decimal.Decimal("1.5"))
+        self.assertEqual(_bson_value_size(decimal.Decimal("1.5")), 16)
+        with self.assertRaises(TypeError):
+            _bson_value_size(object())
 
         earlier = datetime.datetime(2026, 3, 25, 9, 59, 30)
         self.assertEqual(_subtract_values(created_at, earlier), 30000)

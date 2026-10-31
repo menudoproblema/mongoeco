@@ -41,7 +41,7 @@ class AggregationRuntimeTests(unittest.TestCase):
             ("timestamp", Timestamp(1, 2)),
         )
         self.assertIs(_aggregation_key(object())[0], object)
-        with self.assertRaisesRegex(OperationFailure, "NUL bytes"):
+        with self.assertRaisesRegex(ValueError, "NUL bytes"):
             _bson_cstring_size("a\x00b")
         self.assertEqual(
             evaluate_expression(
