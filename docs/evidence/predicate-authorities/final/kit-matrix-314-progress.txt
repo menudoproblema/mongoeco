@@ -1,0 +1,4 @@
+kit-3.14-8.4.2-4.9.2 {'python': '3.14', 'pytest': '8.4.2', 'pymongo': '4.9.2', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.14-8.4.2-4.9.2.txt'}
+kit-3.14-8.4.2-4.19.0 {'python': '3.14', 'pytest': '8.4.2', 'pymongo': '4.19.0', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.14-8.4.2-4.19.0.txt'}
+kit-3.14-9.1.1-4.9.2 {'python': '3.14', 'pytest': '9.1.1', 'pymongo': '4.9.2', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.14-9.1.1-4.9.2.txt', 'semantics_exit': 0}
+kit-3.14-9.1.1-4.19.0 {'python': '3.14', 'pytest': '9.1.1', 'pymongo': '4.19.0', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.14-9.1.1-4.19.0.txt', 'semantics_exit': 0}

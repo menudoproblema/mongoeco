@@ -1,0 +1,21 @@
+from pathlib import Path
+import ast,json,re
+base=Path('/tmp/mongoeco-predicate-c06');matrix=base/'matrix-clean';rows={}
+for line in (base/'reviewed/kit-matrix-progress.txt').read_text().splitlines():
+ if line.startswith('kit-'):
+  row=ast.literal_eval(line[line.index('{'):]);rows[(row['python'],row['pytest'],row['pymongo'])]=row
+for row in json.loads((matrix/'kit-matrix-314.json').read_text()):rows[(row['python'],row['pytest'],row['pymongo'])]=row
+for row in json.loads((matrix/'resumed-semantics.json').read_text()):
+ target=rows[(row['python'],row['pytest'],row['pymongo'])]
+ target['prior_semantics_exit']=target['semantics_exit'];assert target['prior_semantics_exit']==-15
+ target['semantics_exit']=row['semantics_exit'];target['resumed_after_adapter_fix']='b40ad4e'
+assert len(rows)==12
+for row in rows.values():
+ assert row['kit_exit']==0
+ log=Path(row['log']).read_text();assert re.search(r'3587 passed in',log[-1000:])
+ if row['pytest']=='9.1.1':
+  assert row['semantics_exit']==0
+  path=matrix/f"kit-{row['python']}-{row['pytest']}-{row['pymongo']}-semantics.txt"
+  log=path.read_text();assert re.search(r'392 passed, 4639 deselected in',log[-1000:])
+(matrix/'kit-matrix.json').write_text(json.dumps(sorted(rows.values(),key=lambda row:(row['python'],row['pytest'],row['pymongo'])),indent=2)+'\n')
+print('12 required kit cells and six semantic replays passed')

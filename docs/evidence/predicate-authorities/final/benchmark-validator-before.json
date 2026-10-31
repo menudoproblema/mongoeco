@@ -1,0 +1,55 @@
+{
+  "subject": "/tmp/mongoeco-predicate-c06/schema-before/src/mongoeco/__init__.py",
+  "rows": 250,
+  "dependencies": {
+    "pymongo": "4.19.0",
+    "msgspec": "0.21.1",
+    "rpds-py": "2026.6.3"
+  },
+  "results": {
+    "prepare": {
+      "repetitions": 3,
+      "wall_time_mean_sec": 0.0026,
+      "wall_time_median_sec": 0.0026,
+      "wall_time_min_sec": 0.0026,
+      "wall_time_max_sec": 0.0027,
+      "cpu_user_mean_sec": 0.0033,
+      "cpu_sys_mean_sec": 0.0,
+      "rss_delta_mean_mb": 0.0,
+      "rss_peak_max_mb": 111.94
+    },
+    "validate_prepared": {
+      "repetitions": 3,
+      "wall_time_mean_sec": 0.0011,
+      "wall_time_median_sec": 0.0011,
+      "wall_time_min_sec": 0.0011,
+      "wall_time_max_sec": 0.0011,
+      "cpu_user_mean_sec": 0.0,
+      "cpu_sys_mean_sec": 0.0,
+      "rss_delta_mean_mb": 0.0,
+      "rss_peak_max_mb": 111.94
+    },
+    "insert_many_memory": {
+      "repetitions": 3,
+      "wall_time_mean_sec": 0.0125,
+      "wall_time_median_sec": 0.0125,
+      "wall_time_min_sec": 0.0124,
+      "wall_time_max_sec": 0.0127,
+      "cpu_user_mean_sec": 0.0133,
+      "cpu_sys_mean_sec": 0.0,
+      "rss_delta_mean_mb": 0.06,
+      "rss_peak_max_mb": 112.12
+    },
+    "insert_many_sqlite": {
+      "repetitions": 3,
+      "wall_time_mean_sec": 0.0256,
+      "wall_time_median_sec": 0.0256,
+      "wall_time_min_sec": 0.0254,
+      "wall_time_max_sec": 0.0258,
+      "cpu_user_mean_sec": 0.0267,
+      "cpu_sys_mean_sec": 0.0,
+      "rss_delta_mean_mb": 0.3,
+      "rss_peak_max_mb": 113.02
+    }
+  }
+}

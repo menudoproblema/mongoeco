@@ -1,7 +1,7 @@
 # Estado de implementación de paridad semántica
 
 Contrato: [plan revisado](plan-semantic-parity-refactor.md). Base: `b38ef967`.
-Estado: implementación en curso; B01/B02 completados con validación focal; B00/B03/B04 abiertos.
+Estado del plan histórico B00–B10: implementación en curso; B01/B02 completados con validación focal; B00/B03/B04 abiertos. La ampliación C00–C06 / H37–H47 está completada; véase su aceptación integrada al final.
 
 ## B00: infraestructura inicial
 
@@ -770,11 +770,12 @@ El [análisis y plan H37–H47](predicate-authorities-analysis-and-plan.md) aña
 los cortes C00–C06 sobre la base `79529a2`, después de los commits del trabajo
 anterior. Posee sus causas, alcance y dependencias; este registro posee su estado.
 
-Estado: **implementación en curso**. La evidencia de caracterización previa
-conserva 65 estímulos de solo lectura contra MongoDB 9.0.2,
-ocho escenarios de rutas públicas en ambos motores privados y 38 pruebas
-existentes verdes. No es aceptación de los hallazgos nuevos ni captura nativa
-7/8. Se ha recibido un informe; el segundo anunciado sigue pendiente.
+Estado: **implementación completada para C00–C06 / H37–H47**. El
+[registro final](evidence/predicate-authorities/final/validation.json) posee la
+identidad, comandos y resultados de aceptación integrada. La caracterización
+inicial de 65 estímulos contra MongoDB 9.0.2 y ocho escenarios locales conserva
+su alcance histórico. Se recibió un informe; el segundo anunciado no se recibió
+y no forma parte de este cierre.
 
 Los receipts y cierres focales anteriores conservan su identidad y no se reescriben; los
 pendientes B00–B10 no quedan absorbidos ni cerrados por esta ampliación.
@@ -920,7 +921,7 @@ Receipt: `evidence/predicate-authorities/mod-validation.json`. C01–C05 quedan
 corregidos focalmente; sigue C06 sobre el candidato integrado. B00–B10 no se
 cierran automáticamente.
 
-### C06: integración en curso
+### C06: integración y cierre H37–H47
 
 El primer cierre global detectó contratos transversales que la regresión focal
 no incluía: familia wire de collMod, inventario de comandos, delta declarado del
@@ -967,3 +968,96 @@ negativos. Los tests de conservación mantienen sus comparaciones exactas; no se
 derivan los campos ni los comportamientos de la implementación que comprueban.
 Las suites previas (50.129 passed, 212 skipped, tres fallos documentales) y la
 cobertura 98,41% del wheel contaminado son diagnósticos, no aceptación final.
+
+### Aceptación integrada de C00–C06
+
+Contrato aprobado: plan revisado `c835181`. Gate de entrada satisfecho; no hay
+transición RFC adicional exigida por este repositorio. Cortes C00–C06 cerrados
+para H37–H47. Los apartados anteriores y sus receipts describen sus cortes
+históricos: las menciones a integración pendiente quedan resueltas por este
+registro final, sin promover sus observaciones a una identidad nueva.
+Los pendientes históricos B00–B10 conservan su estado.
+
+El runtime entregado coincide, archivo por archivo, con `d6e231c` (298 archivos
+del paquete) y con el wheel instalado. Los commits `d4f48e9` y `b40ad4e` añaden
+controles y aíslan el loop del cliente async del servidor en el replay; `994cac0`
+conserva la sonda de coste y corrige el límite documental B07. El sdist final
+incluye esa aclaración de COMPATIBILITY; sus fuentes productivas son idénticas.
+Wheel y sdist se construyeron desde archive limpio, se reprodujeron dos veces y
+pasaron comparación de inventario/bytes y Twine. Los hashes, dependencias,
+comandos y logs están en el [receipt final](evidence/predicate-authorities/final/validation.json)
+y su [manifiesto de comandos](evidence/predicate-authorities/final/commands.json).
+
+| Hallazgos | Garantía y fronteras verificadas | Casos mantenidos / controles |
+| --- | --- | --- |
+| H37 | Familias BSON MQL, null/ausencia/undefined y números exactos; find/count/distinct/match, SQL/scan/índice, selección de escrituras. | `semantic_query_matching_*`, control `$expr` y selección de escrituras. |
+| H38 | Misma selección de candidatos en rutas planas/punteadas, arrays, posiciones y booleanos; compilado y hojas MQL comunes. | Corpus de matching y `semantic_search_traversal_*`; fixtures SQLite anteriores y reapertura. |
+| H39 | Errores internos propagados, no transformados en no-match; caché sin retener instrumentación. | `test_query_matching_failures.py`, corpus schema con no finitos y gramática sin filas. |
+| H40 | Igualdad de schema recursiva, bool distinto de número, objetos reordenados y arrays atómicos; enum/uniqueItems/escrituras. | `semantic_schema_find`, `aggregate`, `equality_writes`, `configuration`. |
+| H41 | Límites exactos y política no finita, wrappers y Decimal128. | Corpus schema y controles de contexto decimal. |
+| H42 | Preparación antes de filas; errores de definición y copia defensiva. | `semantic_schema_preparation`, `validator_changes`, `test_schema_authorities.py`. |
+| H43 | Exclusividad, uniqueItems, multipleOf y additionalProperties como schema; restricciones restantes explícitamente rechazadas. | Corpus schema y escrituras por familia; catálogo del subset. |
+| H44 | Original/candidato usan dialecto y collation efectivos; strict/off/moderate/warn/bypass; bulk, upsert, findAndModify y merge. | BSON undefined físico 7/8/9, lifecycle/configuration/writeback, collMod directo y wire, reapertura y SPI sin capacidad. |
+| H45 | Claves escalares exactas y conservación de candidatos; sin colisión de enteros grandes. | `semantic_search_eligibility`, controles normativos search-v1 y propiedad Memory/SQLite/USearch. |
+| H46 | Residual MQL con contexto, sin poda no demostrada; ventana, barreras, collectors, merge, explain y recuperación. | Siete acciones Search, cuatro superficies, caché/fallback, mutaciones, collation y fallo SQL real. |
+| H47 | Argumentos preparados int64, truncamiento y resto exacto; orden de errores, entrada vacía/poblada y selección de escrituras. | Seis acciones `semantic_mod_*`, controles `%` SQL y aritmética de agregación preservada. |
+
+- Python 3.13: pytest completo **50.336 passed**. 214 skipped. 14.471 subpruebas; unittest **3.623**. 3 skips.
+- Python 3.14: pytest completo **50.347 passed**. 214 skipped. 14.471 subpruebas; unittest **3.623**. 3 skips.
+- Python 3.15: pytest completo **50.336 passed**. 214 skipped. 14.471 subpruebas; unittest **3.623**. 3 skips.
+
+Cobertura final 3.14: **99,00143%**, superior
+al mínimo del 99%; no se relajaron umbrales ni se añadieron exclusiones para
+este cierre. Las suites 3.13/3.15 se complementan con todos los consumidores del
+adaptador modificado y los once controles nuevos; el paquete y las demás
+entradas de sus suites completas no cambiaron. La suite 3.14 utiliza el
+adaptador definitivo. Los motivos de los 214 skips están en el log completo:
+213 requieren una URI nativa no configurada en la suite global y uno requiere
+el backend ICU opcional. El corpus nativo de esta ampliación sí se ejecutó
+explícitamente en 7/8/9; ninguna de sus celdas obligatorias quedó sin ejecutar.
+
+Los diferenciales físicos finales pasan **34 acciones × MongoDB 7.0.43,
+8.0.32 y 9.0.2**, comprobadas en Memory y SQLite, con FCV estable, sin fallos,
+errores ni skips. La matriz del kit pasa sus **12 celdas** (tres intérpretes,
+pytest 8.4.2/9.1.1 y SDK 4.9.2/4.19.0), 3.587 pruebas por celda; las seis celdas
+pytest 9 pasan además el replay semántico ampliado. Los dos replays interrumpidos
+por el bloqueo de loop de PyMongo 4.9 fueron reejecutados tras corregir el
+adaptador; sus ejecuciones interrumpidas no acreditan aceptación. No se cambió
+el SDK ni el runtime para esconder ese problema.
+
+Typing público/estricto/runtime, manifiesto, SPI externo, lint ratchet,
+proyecciones vigentes de compatibilidad, propiedades deep, instalación mínima
+y smokes wheel/sdist/pytest extra están verdes. Los perfiles SDK aislados y
+el contrato publicado se reutilizan solo por independencia causal: esos probes
+importan el SDK aislado o el release publicado; scripts y fixture requeridos
+permanecen idénticos. Los observers y snapshots históricos protegidos siguen
+idénticos a `c835181`.
+
+La suite 3.14 registra además un `ResourceWarning` de sqlite3 durante un test
+legacy de helpers de lectura. Ese test cierra su conexión en `finally`; la
+advertencia no identifica dónde se creó la conexión recogida por el GC. Se
+conserva en el log sin suprimirla ni atribuirle una causa no comprobada; no hace
+fallar el gate configurado.
+
+Los benchmarks se ejecutaron secuencialmente, con Python 3.14.5 y dependencias
+iguales, 250 documentos, tres repeticiones y sin warmup. Las fuentes de cada
+baseline se contrastaron byte a byte con su archive. Los cocientes de medianas
+se conservan como tendencias: predicados Memory 1,004–1,191× y SQLite
+0,992–1,026×; Search Memory 1,001–1,235× y SQLite 0,948–6,301×. El máximo
+corresponde al residual seguro de compound/exists, que pierde una aceleración
+sin cobertura demostrada. Preparar 250 validators pasa de 0,0026 a 0,0046 s y
+validarlos ya preparados de 0,0011 a 0,0027 s; insert_many pasa de 0,0125 a
+0,0114 s en Memory y de 0,0256 a 0,0246 s en SQLite, con preparación compartida
+por bulk. Ninguna cifra promete rendimiento fuera de ese protocolo.
+
+Límites conservados: B07 no cierra la frontera Python/BSON general (Decimal
+crudo sigue siendo aceptado en filtros de API directa); Search-v1 se contrasta
+contra su contrato local y MQL Community para elegibilidad, sin acreditar Atlas
+ni recall ANN arbitrario. $out y restricciones JSON Schema no soportadas siguen
+rechazadas explícitamente. No se acreditan nuevas garantías de concurrencia,
+sesiones distribuidas o change streams con estos servidores standalone.
+
+Diff final revisado y documentación alineada. No se incorporan cambios ajenos.
+Los tres servidores nativos temporales propios se retiraron y sus puertos
+quedaron cerrados. La entrega queda en commits semánticos locales; no se realiza
+push, publicación ni despliegue.

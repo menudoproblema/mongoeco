@@ -1,0 +1,16 @@
+{
+  "mongod9": {
+    "dbpath": "/tmp/mongoeco-predicate-impl9",
+    "port": 49931,
+    "shutdown_requested": true
+  },
+  "containers_removed": [
+    "mongoeco-predicate-7",
+    "mongoeco-predicate-8"
+  ],
+  "owned_ports_closed": [
+    49862,
+    49864,
+    49931
+  ]
+}

@@ -1,0 +1,32 @@
+kit-3.13-8.4.2-4.9.2 {'python': '3.13', 'pytest': '8.4.2', 'pymongo': '4.9.2', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.13-8.4.2-4.9.2.txt'}
+kit-3.15-8.4.2-4.9.2 {'python': '3.15', 'pytest': '8.4.2', 'pymongo': '4.9.2', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.15-8.4.2-4.9.2.txt'}
+kit-3.13-8.4.2-4.19.0 {'python': '3.13', 'pytest': '8.4.2', 'pymongo': '4.19.0', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.13-8.4.2-4.19.0.txt'}
+kit-3.15-8.4.2-4.19.0 {'python': '3.15', 'pytest': '8.4.2', 'pymongo': '4.19.0', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.15-8.4.2-4.19.0.txt'}
+kit-3.13-9.1.1-4.9.2 {'python': '3.13', 'pytest': '9.1.1', 'pymongo': '4.9.2', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.13-9.1.1-4.9.2.txt', 'semantics_exit': -15}
+kit-3.15-9.1.1-4.9.2 {'python': '3.15', 'pytest': '9.1.1', 'pymongo': '4.9.2', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.15-9.1.1-4.9.2.txt', 'semantics_exit': -15}
+kit-3.13-9.1.1-4.19.0 {'python': '3.13', 'pytest': '9.1.1', 'pymongo': '4.19.0', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.13-9.1.1-4.19.0.txt', 'semantics_exit': 0}
+kit-3.15-9.1.1-4.19.0 {'python': '3.15', 'pytest': '9.1.1', 'pymongo': '4.19.0', 'kit_exit': 0, 'log': '/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.15-9.1.1-4.19.0.txt', 'semantics_exit': 0}
+Traceback (most recent call last):
+  File "/tmp/mongoeco-predicate-c06/run_clean_kit_matrix.py", line 24, in <module>
+    results=[cell for result in pool.map(run,['3.13','3.14','3.15']) for cell in result]
+                                ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/uve/.local/share/uv/python/cpython-3.13.13-macos-aarch64-none/lib/python3.13/concurrent/futures/_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/uve/.local/share/uv/python/cpython-3.13.13-macos-aarch64-none/lib/python3.13/concurrent/futures/_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "/Users/uve/.local/share/uv/python/cpython-3.13.13-macos-aarch64-none/lib/python3.13/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/Users/uve/.local/share/uv/python/cpython-3.13.13-macos-aarch64-none/lib/python3.13/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/Users/uve/.local/share/uv/python/cpython-3.13.13-macos-aarch64-none/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/tmp/mongoeco-predicate-c06/run_clean_kit_matrix.py", line 13, in run
+    for cmd in cmds: subprocess.run(cmd,check=True,stdout=out,stderr=out,env=dict(os.environ,PIP_FIND_LINKS='/tmp/mongoeco-predicate-c06/build-wheels'))
+                     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/uve/.local/share/uv/python/cpython-3.13.13-macos-aarch64-none/lib/python3.13/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.14-8.4.2-4.9.2/bin/python', '-m', 'pip', 'install', '-c', '/tmp/mongoeco-predicate-c06/matrix-clean/kit-constraints.txt', '--cache-dir', '/tmp/mongoeco-predicate-pip-cache', '/tmp/mongoeco-predicate-c06/clean-dist-a/mongoeco-4.11.0-py3-none-any.whl[pytest]', 'pytest==8.4.2', 'pymongo==4.9.2', 'hypothesis', 'pytest-asyncio', 'anyio', 'pytest-xdist']' returned non-zero exit status 1.

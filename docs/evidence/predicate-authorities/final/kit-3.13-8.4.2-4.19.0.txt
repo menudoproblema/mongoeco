@@ -1,0 +1,146 @@
+Looking in links: /tmp/mongoeco-predicate-c06/build-wheels
+Processing /tmp/mongoeco-predicate-c06/clean-dist-a/mongoeco-4.11.0-py3-none-any.whl (from mongoeco==4.11.0)
+Collecting pytest==8.4.2
+  Using cached pytest-8.4.2-py3-none-any.whl.metadata (7.7 kB)
+Collecting pymongo==4.19.0
+  Using cached pymongo-4.19.0-cp313-cp313-macosx_11_0_arm64.whl.metadata (10 kB)
+Collecting hypothesis
+  Using cached hypothesis-6.165.9-cp313-cp313-macosx_11_0_arm64.whl.metadata (5.7 kB)
+Collecting pytest-asyncio
+  Using cached pytest_asyncio-1.4.0-py3-none-any.whl.metadata (4.1 kB)
+Collecting anyio
+  Using cached anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+Collecting pytest-xdist
+  Using cached pytest_xdist-3.8.0-py3-none-any.whl.metadata (3.0 kB)
+Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+Collecting msgspec<1,>=0.20 (from mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached msgspec-0.21.1-cp313-cp313-macosx_11_0_arm64.whl.metadata (5.8 kB)
+Collecting pyuca<2,>=1.2 (from mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+Collecting rpds-py<2027,>=0.27 (from mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached rpds_py-2026.6.3-cp313-cp313-macosx_11_0_arm64.whl.metadata (4.1 kB)
+Collecting shapely<3,>=2.2 (from mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached shapely-2.2.0-cp313-cp313-macosx_11_0_arm64.whl.metadata (6.7 kB)
+Collecting usearch<3,>=2.26.4 (from mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached usearch-2.26.4-cp313-cp313-macosx_11_0_arm64.whl.metadata (35 kB)
+Collecting iniconfig>=1 (from pytest==8.4.2)
+  Using cached iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting packaging>=20 (from pytest==8.4.2)
+  Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest==8.4.2)
+  Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest==8.4.2)
+  Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting dnspython<3.0.0,>=2.7.0 (from pymongo==4.19.0)
+  Using cached dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+Collecting jsonschema<5,>=4.23 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+Collecting referencing<1,>=0.35 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+Collecting attrs>=22.2.0 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+Collecting numpy>=1.26 (from shapely<3,>=2.2->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached numpy-2.5.2-cp313-cp313-macosx_14_0_arm64.whl.metadata (6.6 kB)
+Collecting tqdm (from usearch<3,>=2.26.4->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached tqdm-4.70.0-py3-none-any.whl.metadata (57 kB)
+Collecting numkong (from usearch<3,>=2.26.4->mongoeco==4.11.0->mongoeco==4.11.0)
+  Using cached numkong-7.8.0-cp313-cp313-macosx_11_0_arm64.whl.metadata (86 kB)
+Collecting sortedcontainers<3.0.0,>=2.1.0 (from hypothesis)
+  Using cached sortedcontainers-2.4.0-py2.py3-none-any.whl.metadata (10 kB)
+Collecting idna>=2.8 (from anyio)
+  Using cached idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+Collecting typing_extensions>=4.16.0 (from anyio)
+  Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting execnet>=2.1 (from pytest-xdist)
+  Using cached execnet-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+Using cached pytest-8.4.2-py3-none-any.whl (365 kB)
+Using cached pymongo-4.19.0-cp313-cp313-macosx_11_0_arm64.whl (827 kB)
+Using cached cxp-5.0.0-py3-none-any.whl (58 kB)
+Using cached dnspython-2.8.0-py3-none-any.whl (331 kB)
+Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+Using cached msgspec-0.21.1-cp313-cp313-macosx_11_0_arm64.whl (188 kB)
+Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+Using cached pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+Using cached rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+Using cached rpds_py-2026.6.3-cp313-cp313-macosx_11_0_arm64.whl (338 kB)
+Using cached shapely-2.2.0-cp313-cp313-macosx_11_0_arm64.whl (1.6 MB)
+Using cached usearch-2.26.4-cp313-cp313-macosx_11_0_arm64.whl (454 kB)
+Using cached hypothesis-6.165.9-cp313-cp313-macosx_11_0_arm64.whl (776 kB)
+Using cached sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+Using cached pytest_asyncio-1.4.0-py3-none-any.whl (16 kB)
+Using cached anyio-4.15.1-py3-none-any.whl (132 kB)
+Using cached pytest_xdist-3.8.0-py3-none-any.whl (46 kB)
+Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+Using cached execnet-2.1.2-py3-none-any.whl (40 kB)
+Using cached idna-3.18-py3-none-any.whl (65 kB)
+Using cached iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Using cached numpy-2.5.2-cp313-cp313-macosx_14_0_arm64.whl (5.3 MB)
+Using cached packaging-26.3-py3-none-any.whl (129 kB)
+Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
+Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Using cached numkong-7.8.0-cp313-cp313-macosx_11_0_arm64.whl (620 kB)
+Using cached tqdm-4.70.0-py3-none-any.whl (80 kB)
+Installing collected packages: sortedcontainers, pyuca, typing_extensions, tqdm, rpds-py, rfc8785, pygments, pluggy, packaging, numpy, numkong, msgspec, iniconfig, idna, hypothesis, execnet, dnspython, attrs, usearch, shapely, referencing, pytest, pymongo, cxp, anyio, pytest-xdist, pytest-asyncio, jsonschema-specifications, jsonschema, mongoeco
+
+Successfully installed anyio-4.15.1 attrs-26.1.0 cxp-5.0.0 dnspython-2.8.0 execnet-2.1.2 hypothesis-6.165.9 idna-3.18 iniconfig-2.3.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mongoeco-4.11.0 msgspec-0.21.1 numkong-7.8.0 numpy-2.5.2 packaging-26.3 pluggy-1.6.0 pygments-2.20.0 pymongo-4.19.0 pytest-8.4.2 pytest-asyncio-1.4.0 pytest-xdist-3.8.0 pyuca-1.2 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.6.3 shapely-2.2.0 sortedcontainers-2.4.0 tqdm-4.70.0 typing_extensions-4.16.0 usearch-2.26.4
+
+[notice] A new release of pip is available: 26.2 -> 26.2.2
+[notice] To update, run: /private/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.13-8.4.2-4.19.0/bin/python -m pip install --upgrade pip
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  6%]
+........................................................................ [  8%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 26%]
+........................................................................ [ 28%]
+........................................................................ [ 30%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 36%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 42%]
+........................................................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 48%]
+........................................................................ [ 50%]
+........................................................................ [ 52%]
+........................................................................ [ 54%]
+........................................................................ [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 60%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 72%]
+........................................................................ [ 74%]
+........................................................................ [ 76%]
+........................................................................ [ 78%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+........................................................................ [ 84%]
+........................................................................ [ 86%]
+........................................................................ [ 88%]
+........................................................................ [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+...........................................................              [100%]
+3587 passed in 215.09s (0:03:35)

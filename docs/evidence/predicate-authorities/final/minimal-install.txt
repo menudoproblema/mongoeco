@@ -1,0 +1,8 @@
+WARNING: The directory '/Users/uve/Library/Caches/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Processing /tmp/mongoeco-predicate-c06/clean-dist-a/mongoeco-4.11.0-py3-none-any.whl
+Installing collected packages: mongoeco
+  Attempting uninstall: mongoeco
+    Found existing installation: mongoeco 4.11.0
+    Uninstalling mongoeco-4.11.0:
+      Successfully uninstalled mongoeco-4.11.0
+Successfully installed mongoeco-4.11.0

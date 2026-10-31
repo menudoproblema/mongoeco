@@ -1,0 +1,25 @@
+import concurrent.futures,json,os,subprocess
+from pathlib import Path
+base=Path('/tmp/mongoeco-predicate-c06/matrix-clean');base.mkdir(exist_ok=True);wheel=next(Path('/tmp/mongoeco-predicate-c06/clean-dist-a').glob('*.whl'))
+constraints=base/'kit-constraints.txt';constraints.write_text('\n'.join(line for line in Path('requirements/ci-constraints.txt').read_text().splitlines() if not line.startswith(('pytest==','pymongo==')))+'\n')
+paths=['tests/integration/pytest_kit','tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection','tests/integration/wire/test_proxy_lifecycle.py','tests/integration/wire/test_unacknowledged.py','tests/integration/wire/test_diagnostics.py','tests/integration/wire/test_read_reply_parity.py','tests/integration/api/test_write_preflight_parity.py']
+def run(version):
+ results=[]
+ for pytest in ['8.4.2','9.1.1']:
+  for sdk in ['4.9.2','4.19.0']:
+   name=f'kit-{version}-{pytest}-{sdk}';root=base/name;py=root/'bin/python';log=base/(name+'.txt')
+   with log.open('w') as out:
+    cmds=[['/opt/homebrew/bin/python'+version,'-m','venv',str(root)], [str(py),'-m','pip','install','-c',str(constraints),'--cache-dir','/tmp/mongoeco-predicate-pip-cache',str(wheel)+'[pytest]','pytest=='+pytest,'pymongo=='+sdk,'hypothesis','pytest-asyncio','anyio','pytest-xdist']]
+    for cmd in cmds: subprocess.run(cmd,check=True,stdout=out,stderr=out,env=dict(os.environ,PIP_FIND_LINKS='/tmp/mongoeco-predicate-c06/build-wheels'))
+    env=dict(os.environ,MONGOECO_TEST_INSTALLED_ARTIFACT='1')
+    result=subprocess.run([str(py),'-m','pytest',*paths,'-q'],env=env,stdout=out,stderr=out)
+    results.append({'python':version,'pytest':pytest,'pymongo':sdk,'kit_exit':result.returncode,'log':str(log)})
+    if pytest=='9.1.1':
+     with (base/(name+'-semantics.txt')).open('w') as sem:
+      result=subprocess.run([str(py),'-m','pytest','tests/integration/api/test_semantic_group_regressions.py','tests/integration/api/test_search_predicate_authorities.py','tests/integration/api/test_validator_configuration.py','-k','(query_matching or schema or search_eligibility or mod or search_preserves or search_candidate_mutations or context_survives or share_eligible or coll_mod or universe_rebuilds or nonfinite_query) and 9.0','-q'],env=env,stdout=sem,stderr=sem)
+      results[-1]['semantics_exit']=result.returncode
+   print(name,results[-1],flush=True)
+ return results
+with concurrent.futures.ThreadPoolExecutor(3) as pool:
+ results=[cell for result in pool.map(run,['3.13','3.14','3.15']) for cell in result]
+(base/'kit-matrix.json').write_text(json.dumps(results,indent=2)+'\n')

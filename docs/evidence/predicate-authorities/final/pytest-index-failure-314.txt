@@ -1,0 +1,10 @@
+WARNING: Cache entry deserialization failed, entry ignored
+Looking in links: /tmp/mongoeco-predicate-c06/build-wheels
+Processing /tmp/mongoeco-predicate-c06/clean-dist-a/mongoeco-4.11.0-py3-none-any.whl (from mongoeco==4.11.0)
+WARNING: Cache entry deserialization failed, entry ignored
+WARNING: Skipping page https://pypi.org/simple/pytest/ because the GET request got Content-Type: Unknown. The only supported Content-Types are application/vnd.pypi.simple.v1+json, application/vnd.pypi.simple.v1+html, and text/html
+ERROR: Could not find a version that satisfies the requirement pytest==8.4.2 (from versions: none)
+
+[notice] A new release of pip is available: 26.1.1 -> 26.2.2
+[notice] To update, run: /private/tmp/mongoeco-predicate-c06/matrix-clean/kit-3.14-8.4.2-4.9.2/bin/python -m pip install --upgrade pip
+ERROR: No matching distribution found for pytest==8.4.2

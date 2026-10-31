@@ -1,0 +1,26 @@
+from pathlib import Path
+import json,os,subprocess
+base=Path('/tmp/mongoeco-predicate-c06');out=base/'reviewed';py=str(base/'py314/bin/python')
+subjects={
+ 'predicate_diagnostics':{'before':'/tmp/mongoeco-predicate-implementation-baseline/src','after':None},
+ 'search':{'before':'/tmp/mongoeco-predicate-c04-baseline/src','after':None},
+}
+identities=[]
+for family, versions in subjects.items():
+ for cut,source in versions.items():
+  env=dict(os.environ,PYTHONPATH=(source+':.' if source else '.'))
+  module=subprocess.check_output([py,'-c','import mongoeco;print(mongoeco.__file__)'],env=env,text=True).strip()
+  identities.append({'family':family,'cut':cut,'subject':module})
+  for engine in ['memory','sqlite']:
+   path=out/f'benchmark-{family}-{cut}-{engine}.json'
+   workloads=['predicate_diagnostics'] if family=='predicate_diagnostics' else ['search_diagnostics','vector_search_diagnostics']
+   command=[py,'-m','benchmarks.run','--engine',engine+'-sync','--size','250','--warmup','0','--repetitions','3']
+   for workload in workloads:command+=['--workload',workload]
+   command+=['--format','json','--output',str(path)]
+   with (out/(path.stem+'.txt')).open('w') as log:subprocess.run(command,env=env,stdout=log,stderr=log,check=True)
+   print(path.name,flush=True)
+for cut,source in [('before',str(base/'schema-before/src')),('after',None)]:
+ env=dict(os.environ,PYTHONPATH=(source+':.' if source else '.'))
+ subprocess.run([py,'docs/evidence/predicate-authorities/measure_validator_cost.py','--output',str(out/f'benchmark-validator-{cut}.json')],env=env,check=True)
+ print('validator-'+cut,flush=True)
+(out/'benchmark-identities.json').write_text(json.dumps(identities,indent=2)+'\n')

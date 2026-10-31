@@ -1,0 +1,246 @@
+{
+  "sqlite-sync": {
+    "predicate_diagnostics": {
+      "predicate_indexed_numeric_equality_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0773,
+        "wall_time_median_sec": 0.0778,
+        "wall_time_min_sec": 0.0756,
+        "wall_time_max_sec": 0.0784,
+        "cpu_user_mean_sec": 0.05,
+        "cpu_sys_mean_sec": 0.0067,
+        "rss_delta_mean_mb": 0.92,
+        "rss_peak_max_mb": 114.84,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "indexed scalar integer equality",
+          "observation_order": "sort returned IDs outside the cursor",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:63033e7ea7641b080aef7596fa6db97fd92e886d4225913a6a82a3be1dd866c8",
+          "outcome_items": 100
+        }
+      },
+      "predicate_eq_bool_high_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.1834,
+        "wall_time_median_sec": 0.1833,
+        "wall_time_min_sec": 0.1829,
+        "wall_time_max_sec": 0.184,
+        "cpu_user_mean_sec": 0.1333,
+        "cpu_sys_mean_sec": 0.0167,
+        "rss_delta_mean_mb": 6.7,
+        "rss_peak_max_mb": 115.61,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level bool equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "high",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:4dc641642e6bb27d185dd44553927bf8ae54205a2ef8aa9f45e2a86ca8051fa7",
+          "outcome_items": 100
+        }
+      },
+      "predicate_eq_string_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0959,
+        "wall_time_median_sec": 0.0909,
+        "wall_time_min_sec": 0.0904,
+        "wall_time_max_sec": 0.1065,
+        "cpu_user_mean_sec": 0.07,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.05,
+        "rss_peak_max_mb": 115.66,
+        "metadata": {
+          "summary": "sqlite/sql opaque",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": null,
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level string equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:eae2640ac0ebd85fcf4780de37b5414a0b1dc4d70ef9d77d1094d2fa1e1d248c",
+          "outcome_items": 100
+        }
+      },
+      "predicate_cmp_int_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.159,
+        "wall_time_median_sec": 0.1565,
+        "wall_time_min_sec": 0.156,
+        "wall_time_max_sec": 0.1645,
+        "cpu_user_mean_sec": 0.1167,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.02,
+        "rss_peak_max_mb": 115.7,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level int comparison",
+          "operator_shape": "$gte",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:f1ef9fd5e66cfad3a11fb973ca1016c9ec0635b049157215bac43b9b9386ded8",
+          "outcome_items": 100
+        }
+      },
+      "predicate_indexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.2395,
+        "wall_time_median_sec": 0.2385,
+        "wall_time_min_sec": 0.2371,
+        "wall_time_max_sec": 0.2429,
+        "cpu_user_mean_sec": 0.21,
+        "cpu_sys_mean_sec": 0.0167,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 115.7,
+        "metadata": {
+          "summary": "sqlite/python scan>filter",
+          "engine": "sqlite",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": "translator"
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "python",
+          "residual_required": false,
+          "filter_owner": "python",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "indexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium prefilter, lower residual",
+          "result_count": 29,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:bc5f474d8a66b43eb51abf17326c3c4fd60b2294df3d3b911ca27bb67d73984c",
+          "outcome_items": 100
+        }
+      },
+      "predicate_unindexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.2354,
+        "wall_time_median_sec": 0.2359,
+        "wall_time_min_sec": 0.2336,
+        "wall_time_max_sec": 0.2367,
+        "cpu_user_mean_sec": 0.21,
+        "cpu_sys_mean_sec": 0.0133,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 115.7,
+        "metadata": {
+          "summary": "sqlite/python scan>filter",
+          "engine": "sqlite",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": "translator"
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "python",
+          "residual_required": false,
+          "filter_owner": "python",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "unindexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "full Python reference",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:bc5f474d8a66b43eb51abf17326c3c4fd60b2294df3d3b911ca27bb67d73984c",
+          "outcome_items": 100
+        }
+      }
+    }
+  }
+}

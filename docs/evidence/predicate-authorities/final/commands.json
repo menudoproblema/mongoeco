@@ -1,0 +1,36 @@
+{
+  "environment": {
+    "MONGOECO_TEST_INSTALLED_ARTIFACT": "1",
+    "python_roots": "/tmp/mongoeco-predicate-c06/py{313,314,315}/bin/python",
+    "dependencies": "environment-{313,314,315}.txt; requirements/ci-constraints.txt"
+  },
+  "full_pytest": [
+    "python -m pytest -q (3.13/3.15)",
+    "python -m pytest --cov=mongoeco --cov-report=term --cov-report=json:coverage314.json -q -rs (3.14)"
+  ],
+  "unittest": "python -m unittest discover -s tests -p test*.py",
+  "supplementary": "python -m pytest tests/integration/api/test_semantic_group_regressions.py tests/integration/api/test_search_predicate_authorities.py tests/unit/core/test_predicate_boundary_controls.py -q (3.13/3.15 after adapter-only change)",
+  "native": "MONGOECO_REAL_MONGODB_URI=<owned loopback target> python scripts/run_mongodb_real_differential.py {7.0,8.0,9.0} semantic_query_matching_*,semantic_schema_*,semantic_search_*,semantic_mod_* --json-report native-{target}.json",
+  "typing": [
+    "python scripts/check_public_typing.py",
+    "python -m mypy --strict --follow-imports=silent --ignore-missing-imports -m mongoeco.pytest_plugin -m mongoeco.pytest_asyncio -m mongoeco.pytest_anyio -m mongoeco._pytest_runtime -m mongoeco._pytest_diagnostics -m mongoeco.wire._diagnostics -m mongoeco.wire._framing -m mongoeco.wire._request_state -m mongoeco.wire._lifecycle",
+    "python -m mypy --follow-imports=silent --ignore-missing-imports -m mongoeco.engines.adapter -m mongoeco.api._async._collection_runtime"
+  ],
+  "contracts": [
+    "python scripts/smoke_external_engine.py",
+    "python scripts/update_public_api_manifest.py --check",
+    "python scripts/check_lint_ratchet.py --base-ref v4.11.0",
+    "python scripts/update_compat_snapshots.py; cmp current outputs with tests/snapshots/compat-current; frozen files compared to c835181"
+  ],
+  "properties": "MONGOECO_HYPOTHESIS_PROFILE=deep python -m pytest tests/property -q",
+  "build": "clean git archive d6e231c + final COMPATIBILITY.md; SOURCE_DATE_EPOCH=git show -s --format=%ct d6e231c; python -m build --no-isolation --sdist --wheel (twice); python scripts/normalize_sdist.py each sdist; cmp wheel/sdist pairs; python scripts/check_distribution_sources.py both pairs; python -m twine check",
+  "smokes": [
+    "python scripts/smoke_installed_wheel.py --wheel /tmp/mongoeco-predicate-c06/clean-dist-a/mongoeco-4.11.0-py3-none-any.whl",
+    "python scripts/smoke_installed_wheel.py --sdist /tmp/mongoeco-predicate-c06/closed-dist-a/mongoeco-4.11.0.tar.gz",
+    "python scripts/smoke_installed_wheel.py --wheel /tmp/mongoeco-predicate-c06/clean-dist-a/mongoeco-4.11.0-py3-none-any.whl --pytest-kit (isolated venvs; resolved dependencies recorded by each log)"
+  ],
+  "minimal": "clean Python 3.13, install wheel without wire extras; python -m unittest tests.unit.test_optional_bson_imports tests.unit.test_module_imports tests.unit.test_public_exports",
+  "sdk_matrix": "See matrix-driver.py.txt, matrix-resume-314.py.txt and matrix-resume-semantics.py.txt: 3 Python x 2 pytest x 2 SDK; 3587 required kit tests/cell plus expanded semantic suite in pytest9 cells.",
+  "benchmarks": "See benchmark-driver.py.txt and ../measure_validator_cost.py; exact imported subjects are benchmark-identities.json.",
+  "evidence_reuse": "3.13/3.15 full suites precede adapter-only change; all consumers of that adapter and new controls reexecuted on each interpreter. Runtime/other tests identical. 3.14 full suite runs final adapter. No pre-fix interrupted SDK run accepted."
+}

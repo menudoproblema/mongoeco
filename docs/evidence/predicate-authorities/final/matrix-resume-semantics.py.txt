@@ -1,0 +1,13 @@
+import concurrent.futures,os,subprocess,json
+from pathlib import Path
+base=Path('/tmp/mongoeco-predicate-c06/matrix-clean')
+selection='(query_matching or schema or search_eligibility or mod or search_preserves or search_candidate_mutations or context_survives or share_eligible or coll_mod or universe_rebuilds or nonfinite_query) and 9.0'
+def run(version):
+ name=f'kit-{version}-9.1.1-4.9.2';path=base/(name+'-semantics.txt')
+ path.rename(base/(name+'-semantics-interrupted.txt'))
+ with path.open('w') as out:
+  result=subprocess.run([str(base/name/'bin/python'),'-m','pytest','tests/integration/api/test_semantic_group_regressions.py','tests/integration/api/test_search_predicate_authorities.py','tests/integration/api/test_validator_configuration.py','-k',selection,'-q','-rs'],env=dict(os.environ,MONGOECO_TEST_INSTALLED_ARTIFACT='1'),stdout=out,stderr=out)
+ return {'python':version,'pymongo':'4.9.2','pytest':'9.1.1','semantics_exit':result.returncode,'log':str(path)}
+with concurrent.futures.ThreadPoolExecutor(2) as pool:results=list(pool.map(run,['3.13','3.15']))
+(base/'resumed-semantics.json').write_text(json.dumps(results,indent=2)+'\n')
+print(results)

@@ -1,0 +1,227 @@
+{
+  "memory-sync": {
+    "predicate_diagnostics": {
+      "predicate_indexed_numeric_equality_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.027,
+        "wall_time_median_sec": 0.027,
+        "wall_time_min_sec": 0.0268,
+        "wall_time_max_sec": 0.0272,
+        "cpu_user_mean_sec": 0.02,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 92.95,
+        "metadata": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "query_shape": "indexed scalar integer equality",
+          "observation_order": "sort returned IDs outside the cursor",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:63033e7ea7641b080aef7596fa6db97fd92e886d4225913a6a82a3be1dd866c8",
+          "outcome_items": 100
+        }
+      },
+      "predicate_eq_bool_high_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.1347,
+        "wall_time_median_sec": 0.1343,
+        "wall_time_min_sec": 0.134,
+        "wall_time_max_sec": 0.1358,
+        "cpu_user_mean_sec": 0.1233,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 2.12,
+        "rss_peak_max_mb": 93.09,
+        "metadata": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "query_shape": "top-level bool equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "high",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:82cc961376190769cab76f7338ed034f2ff832f7e20e012e49e2ac9e62c334de",
+          "outcome_items": 100
+        }
+      },
+      "predicate_eq_string_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0512,
+        "wall_time_median_sec": 0.0486,
+        "wall_time_min_sec": 0.048,
+        "wall_time_max_sec": 0.057,
+        "cpu_user_mean_sec": 0.04,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.01,
+        "rss_peak_max_mb": 93.09,
+        "metadata": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "query_shape": "top-level string equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:ce8c001e041503f1a224a45a583d2bf53314593ab42e45326592e4d6a6849ae2",
+          "outcome_items": 100
+        }
+      },
+      "predicate_cmp_int_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.1187,
+        "wall_time_median_sec": 0.1168,
+        "wall_time_min_sec": 0.1159,
+        "wall_time_max_sec": 0.1233,
+        "cpu_user_mean_sec": 0.1033,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.22,
+        "rss_peak_max_mb": 93.09,
+        "metadata": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "query_shape": "top-level int comparison",
+          "operator_shape": "$gte",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:bdb5a72b027c4846014b2a8c523387d72a75a0ec1124be32301fb6c59797bb5b",
+          "outcome_items": 100
+        }
+      },
+      "predicate_indexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0815,
+        "wall_time_median_sec": 0.0809,
+        "wall_time_min_sec": 0.0807,
+        "wall_time_max_sec": 0.0828,
+        "cpu_user_mean_sec": 0.07,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.01,
+        "rss_peak_max_mb": 93.09,
+        "metadata": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "query_shape": "indexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium prefilter, lower residual",
+          "result_count": 29,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:31b8510ae0efca1399325f04245fdcd2ca3aa51283464b0210f5d2381f5b53d0",
+          "outcome_items": 100
+        }
+      },
+      "predicate_unindexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0885,
+        "wall_time_median_sec": 0.0887,
+        "wall_time_min_sec": 0.0875,
+        "wall_time_max_sec": 0.0892,
+        "cpu_user_mean_sec": 0.08,
+        "cpu_sys_mean_sec": 0.0067,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 93.09,
+        "metadata": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "query_shape": "unindexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "full Python reference",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:31b8510ae0efca1399325f04245fdcd2ca3aa51283464b0210f5d2381f5b53d0",
+          "outcome_items": 100
+        }
+      }
+    }
+  }
+}
