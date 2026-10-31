@@ -12,6 +12,7 @@ from mongoeco.core.aggregation.evaluation_environment import (
 )
 from mongoeco.core.aggregation.expression_values import expression_values_equal
 from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
+from mongoeco.core.bson_values import is_bson_string
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
@@ -97,7 +98,7 @@ def prepare_field_expression(operator, spec, *, dialect):
 
 def _prepare_constant_field(expression, *, getter):
     name = "$getField" if getter else "$setField"
-    if isinstance(expression, str) and expression.startswith("$"):
+    if is_bson_string(expression) and expression.startswith("$"):
         path = (
             "$" + expression[2:]
             if expression.startswith("$$")
@@ -126,7 +127,7 @@ def _prepare_constant_field(expression, *, getter):
         )
     else:
         value = expression
-    if not isinstance(value, str):
+    if not is_bson_string(value):
         kind = _aggregation_type_name(value, missing_sentinel=None)
         # null is a BSON value here, never the internal missing sentinel.
         kind = "null" if value is None else kind
@@ -353,7 +354,7 @@ def evaluate_control_object_expression(
     if operator == "$getField":
         parsed = prepare_field_expression(operator, spec, dialect=dialect)
         field_name = evaluate_expression(document, parsed["field"], variables)
-        if not isinstance(field_name, str):
+        if not is_bson_string(field_name):
             kind = _aggregation_type_name(field_name, missing_sentinel=missing_sentinel)
             message = (
                 f"$getField requires 'field' to evaluate to type String, but got {kind}"

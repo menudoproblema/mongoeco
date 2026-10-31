@@ -6,6 +6,8 @@ import time
 from hashlib import md5
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async._collection_reads import collect_distinct_values
+from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.api.admin_parsing import (
     normalize_command_max_time_ms,
     normalize_find_and_modify_options,
@@ -178,37 +180,19 @@ class DatabaseAdminReadCommandService:
         *,
         session: ClientSession | None = None,
     ) -> DistinctCommandResult:
-        distinct_values: list[object] = []
         normalized_collation = normalize_collation(operation.collation)
-        cursor = self._admin._database.get_collection(collection_name)._build_cursor(
-            operation,
-            session=session,
+        collection = self._admin._database.get_collection(collection_name)
+        cursor = collection._build_cursor(
+            operation, session=session, apply_codec_options=False
         )
-        # This command reuses find semantics, but owns distinct diagnostics.
         cursor._expression_error_operation = "distinct"
-        async for document in cursor:
-            values = QueryEngine.extract_values(document, key)
-            if not values:
-                found, value = QueryEngine._get_field_value(document, key)
-                if not found:
-                    values = [None]
-                elif isinstance(value, list):
-                    continue
-                else:
-                    values = [value]
-            candidates = values[1:] if isinstance(values[0], list) else values
-            for candidate in candidates:
-                if not any(
-                    QueryEngine._values_equal(
-                        existing,
-                        candidate,
-                        dialect=self._admin._mongodb_dialect,
-                        collation=normalized_collation,
-                    )
-                    for existing in distinct_values
-                ):
-                    distinct_values.append(candidate)
-        return DistinctCommandResult(values=distinct_values)
+        values = await collect_distinct_values(
+            cursor, key, dialect=self._admin._mongodb_dialect,
+            collation=normalized_collation,
+        )
+        return DistinctCommandResult(values=DocumentCodec.apply_codec_options(
+            materialize_public_value(values), codec_options=collection._codec_options
+        ))
 
     async def execute_count_command(
         self,

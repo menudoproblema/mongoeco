@@ -51,6 +51,7 @@ from mongoeco.core.aggregation.scalar_expressions import (
 )
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.bson_ordering import Code, bson_engine_key, bson_equality_key
+from mongoeco.core.bson_values import is_bson_string
 from mongoeco.core.bson_scalars import (
     BsonInt64,
     bson_numeric_alias,
@@ -745,7 +746,7 @@ def evaluate_expression(
         variables = aggregation_environment(variables, collation)
     variables = _variables_for_document(document, variables)
 
-    if isinstance(expression, str):
+    if is_bson_string(expression):
         if expression.startswith("$$"):
             return _resolve_variable_expression(expression, variables, dialect=dialect)
         if expression.startswith("$"):

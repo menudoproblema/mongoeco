@@ -37,6 +37,7 @@ except Exception:  # pragma: no cover - optional dependency
     BsonSON = None
     BsonTimestamp = None
 
+from mongoeco.core.bson_values import decoded_document_reference
 from mongoeco.core.bson_scalars import (
     BsonDecimal128,
     BsonDouble,
@@ -536,14 +537,32 @@ class DocumentCodec:
         *,
         codec_options: CodecOptions,
     ) -> Any:
+        if BsonCode is not None and isinstance(data, BsonCode):
+            converted = BsonCode(
+                str(data),
+                DocumentCodec._apply_codec_options_recursive(
+                    data.scope, codec_options=codec_options
+                ) if data.scope is not None else None,
+            )
+            return DocumentCodec._apply_codec_scalar_options(
+                converted, codec_options=codec_options
+            )
+        if BsonDBRef is not None and isinstance(data, BsonDBRef):
+            document = DocumentCodec._apply_codec_options_recursive(
+                data.as_doc(), codec_options=codec_options
+            )
+            return DocumentCodec._apply_codec_scalar_options(
+                decoded_document_reference(document), codec_options=codec_options
+            )
         if isinstance(data, dict):
             converted = {
                 key: DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)
                 for key, value in data.items()
             }
-            if codec_options.document_class is dict:
-                return converted
-            return codec_options.document_class(converted)
+            return (
+                converted if codec_options.document_class is dict
+                else codec_options.document_class(converted)
+            )
         if isinstance(data, list):
             return [
                 DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)

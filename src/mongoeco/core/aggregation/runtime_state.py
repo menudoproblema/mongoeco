@@ -57,6 +57,7 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_replace_root,
     _apply_unset,
 )
+from mongoeco.core.bson_values import is_bson_string
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline
 from mongoeco.core.paths import (
@@ -333,7 +334,7 @@ def _apply_replace_root_states(
             dialect=dialect,
             deadline=deadline,
         )[0]
-        if isinstance(new_root_spec, str) and new_root_spec in {
+        if is_bson_string(new_root_spec) and new_root_spec in {
             "$$ROOT",
             "$$CURRENT",
         }:
@@ -344,7 +345,7 @@ def _apply_replace_root_states(
             ]
             result.append(_detach_virtual_fields(state, output, mappings))
             continue
-        if isinstance(new_root_spec, str) and new_root_spec.startswith("$"):
+        if is_bson_string(new_root_spec) and new_root_spec.startswith("$"):
             prefix = new_root_spec[1:]
             mappings = []
             for field in state.metadata.virtual_fields:
@@ -368,7 +369,7 @@ def _expression_virtual_mappings(
     state: RuntimeDocumentState,
     prefix: str = "",
 ) -> list[tuple[str, RuntimeVirtualField]]:
-    if isinstance(expression, str) and expression in {"$$ROOT", "$$CURRENT"}:
+    if is_bson_string(expression) and expression in {"$$ROOT", "$$CURRENT"}:
         return [
             (
                 f"{prefix}.{field.path}" if prefix else field.path,
@@ -377,7 +378,7 @@ def _expression_virtual_mappings(
             for field in state.metadata.virtual_fields
             if not _field_is_shadowed(state, field.path)
         ]
-    if isinstance(expression, str) and expression.startswith("$"):
+    if is_bson_string(expression) and expression.startswith("$"):
         source_prefix = expression[1:]
         return [
             (

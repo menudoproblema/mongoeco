@@ -200,14 +200,18 @@ def test_optional_bson_unavailable_keeps_original_boundary(document, options):
         assert shape(actual) == shape(reference(document, options))
 
 
-def test_bson_code_scope_is_converted_but_not_recursively_codec_decoded():
+def test_bson_code_scope_nested_date_follows_sdk_timezone_decoding():
     bson = pytest.importorskip("bson")
     naive = datetime.datetime(2100, 1, 1, tzinfo=datetime.UTC).replace(tzinfo=None)
     value = {"code": bson.Code("value", {"date": naive})}
     options = CodecOptions(tz_aware=True)
     actual = materialize_public_document(value, codec_options=options)
     assert shape(actual) == shape(reference(value, options))
-    assert actual["code"].scope["date"].tzinfo is None
+    expected = bson.BSON(bson.BSON.encode(value)).decode(
+        codec_options=bson.codec_options.CodecOptions(tz_aware=True)
+    )
+    assert actual["code"].scope["date"] == expected["code"].scope["date"]
+    assert actual["code"].scope["date"].tzinfo is not None
 
 
 def test_collection_public_annotations_remain_resolvable():
@@ -234,3 +238,97 @@ def test_options_subclass_is_not_inspected_before_bson_conversion():
             {"id": ObjectId("0123456789abcdef01234567")}, codec_options=options
         )
     assert events == []
+
+
+@pytest.mark.parametrize("aware", [False, True])
+def test_decoded_dbref_shapes_and_code_scopes_follow_sdk_root_boundaries(aware):
+    bson = pytest.importorskip("bson")
+    sdk_codec_options = pytest.importorskip("bson.codec_options").CodecOptions
+
+    date = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC).replace(tzinfo=None)
+    reference = {"$id": date, "$ref": "c"}
+    value = {
+        "$ref": "root", "$id": 1,
+        "nested": [reference],
+        "code": bson.Code("$literal", {"$ref": "scope", "$id": 2, "v": reference}),
+    }
+    expected = bson.BSON(bson.BSON.encode(value)).decode(
+        codec_options=sdk_codec_options(tz_aware=aware)
+    )
+    actual = materialize_public_document(
+        DocumentCodec.to_internal(value), codec_options=CodecOptions(tz_aware=aware)
+    )
+    assert isinstance(actual, dict)
+    assert isinstance(actual["code"].scope, dict)
+    assert isinstance(actual["nested"][0], bson.DBRef)
+    assert isinstance(actual["code"].scope["v"], bson.DBRef)
+    assert shape(actual) == shape(expected)
+    assert (actual["nested"][0].id.tzinfo is not None) is aware
+    assert (actual["code"].scope["v"].id.tzinfo is not None) is aware
+
+
+def test_dbref_and_code_nested_values_are_decoded_once_before_container_callbacks():
+    bson = pytest.importorskip("bson")
+    seen = []
+
+    def decode_date(value):
+        seen.append(("date", value))
+        return "decoded-date"
+
+    def decode_ref(value):
+        seen.append(("ref", value.id))
+        return value
+
+    date = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC).replace(tzinfo=None)
+    value = {
+        "literal": {"$ref": "c", "$id": date},
+        "sdk": bson.DBRef("c", date),
+        "code": bson.Code("x", {"d": date}),
+    }
+    actual = materialize_public_document(
+        DocumentCodec.to_internal(value),
+        codec_options=CodecOptions(type_registry={
+            datetime.datetime: decode_date, bson.DBRef: decode_ref
+        }),
+    )
+    assert actual["literal"].id == actual["sdk"].id == "decoded-date"
+    assert actual["code"].scope["d"] == "decoded-date"
+    assert sum(kind == "date" for kind, _value in seen) == len(value)
+    assert [value for kind, value in seen if kind == "ref"] == ["decoded-date"] * 2
+
+
+@pytest.mark.parametrize("document", [
+    {"$ref": "c", "$id": 1},
+    {"$id": 1, "$ref": "c", "$db": None},
+    {"$ref": "c", "$id": 1, "$db": 42},
+    {"$ref": 42, "$id": 1},
+    {"$ref": "c"},
+])
+def test_response_dbref_hook_matches_sdk_shape_rules(document):
+    bson = pytest.importorskip("bson")
+    value = {"v": document}
+    expected = bson.BSON(bson.BSON.encode(value)).decode()
+    actual = materialize_public_document(value, codec_options=CodecOptions())
+    assert shape(actual) == shape(expected)
+
+
+def test_sdk_dbref_decoder_accepts_code_ref_and_db_without_expression_bracketing():
+    bson = pytest.importorskip("bson")
+    value = {"v": {"$ref": bson.Code("c"), "$id": 1, "$db": bson.Code("d")}}
+    expected = bson.BSON(bson.BSON.encode(value)).decode()
+    actual = materialize_public_document(value, codec_options=CodecOptions())
+    assert shape(actual) == shape(expected)
+    assert type(actual["v"].collection) is bson.Code
+    assert type(actual["v"].database) is bson.Code
+
+
+def test_decoded_sdk_reference_children_do_not_mutate_the_input_object():
+    bson = pytest.importorskip("bson")
+    child = {"$id": 2, "$ref": "nested"}
+    value = {"v": bson.DBRef("c", {"nested": child})}
+    before = bson.BSON.encode(value)
+    actual = materialize_public_document(value, codec_options=CodecOptions())
+    assert type(value["v"].id["nested"]) is dict
+    assert value["v"].id["nested"] is child
+    assert bson.BSON.encode(value) == before
+    assert isinstance(actual["v"].id["nested"], bson.DBRef)

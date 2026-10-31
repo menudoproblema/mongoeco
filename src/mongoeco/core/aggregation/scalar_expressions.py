@@ -33,7 +33,7 @@ from mongoeco.core.bson_scalars import (
     validate_bson_value,
     wrap_bson_numeric,
 )
-from mongoeco.core.bson_values import document_mapping
+from mongoeco.core.bson_values import code_parts, document_mapping
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.server_errors import server_error
@@ -356,6 +356,9 @@ def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:
         return numeric_alias
     if isinstance(value, bool):
         return "bool"
+    code = code_parts(value)
+    if code is not None:
+        return "javascript" if code[1] is None else "javascriptWithScope"
     if isinstance(value, str):
         return "string"
     if isinstance(value, dict):

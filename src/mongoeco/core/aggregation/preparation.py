@@ -58,7 +58,12 @@ from mongoeco.core.aggregation.runtime import (
 )
 from mongoeco.core.aggregation.scalar_expressions import validate_convert_spec
 from mongoeco.core.aggregation.write_validation import validate_merge_mode_pair
-from mongoeco.core.bson_values import binary_parts, code_parts, document_mapping
+from mongoeco.core.bson_values import (
+    binary_parts,
+    code_parts,
+    document_mapping,
+    is_bson_string,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.error_documents import command_error_document, error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
@@ -365,7 +370,7 @@ def _validate_expression_values(values, dialect, variables):
 
 
 def _expression_scalar_requires_document(expression, dialect, variables):
-    if not isinstance(expression, str):
+    if not is_bson_string(expression):
         return False
     _validate_variable_reference(expression, variables, dialect)
     if expression.startswith("$$"):
@@ -775,7 +780,7 @@ _PURE_CONSTANT_OPERATORS = frozenset(_EXPRESSION_ARITIES) - {"$range"} | {
 
 
 def _pure_constant(value):
-    if isinstance(value, str):
+    if is_bson_string(value):
         return not value.startswith("$")
     if isinstance(value, list):
         return all(_pure_constant(item) for item in value)

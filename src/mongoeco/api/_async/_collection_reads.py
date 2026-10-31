@@ -12,6 +12,8 @@ from mongoeco.api.public_api import (
     COLLECTION_FIND_ONE_SPEC,
     normalize_public_operation_arguments,
 )
+from mongoeco.core._public_materialization import materialize_public_value
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors, error_message
 from mongoeco.core.filtering import QueryEngine
@@ -285,25 +287,12 @@ async def distinct(
             session=options.get("session"),
         )
         cursor._expression_error_operation = "distinct"
-        async for document in cursor:
-            values = QueryEngine.extract_values(document, options["key"])
-            found, value = QueryEngine._get_field_value(document, options["key"])
-            candidates = resolve_distinct_candidates(
-                values,
-                exact_found=found,
-                exact_value=value,
-            )
-            for candidate in candidates:
-                if not any(
-                    QueryEngine._values_equal(
-                        existing,
-                        candidate,
-                        dialect=collection._mongodb_dialect,
-                        collation=normalized_collation,
-                    )
-                    for existing in distinct_values
-                ):
-                    distinct_values.append(candidate)
+        # Compare stored values before response decoding can erase field order.
+        cursor._apply_codec_options = False
+        distinct_values = await collect_distinct_values(
+            cursor, options["key"], dialect=collection._mongodb_dialect,
+            collation=normalized_collation,
+        )
     collection._record_operation_metadata(
         operation="distinct",
         comment=options.get("comment"),
@@ -311,6 +300,29 @@ async def distinct(
         max_time_ms=options.get("max_time_ms"),
         session=options.get("session"),
     )
+    return DocumentCodec.apply_codec_options(
+        materialize_public_value(distinct_values),
+        codec_options=collection._codec_options,
+    )
+
+
+async def collect_distinct_values(cursor, key, *, dialect, collation):
+    """Select semantic values before any public response decoding."""
+    distinct_values = []
+    async for document in cursor:
+        values = QueryEngine.extract_values(document, key)
+        found, value = QueryEngine._get_field_value(document, key)
+        candidates = resolve_distinct_candidates(
+            values, exact_found=found, exact_value=value
+        )
+        for candidate in candidates:
+            if not any(
+                QueryEngine._values_equal(
+                    existing, candidate, dialect=dialect, collation=collation
+                )
+                for existing in distinct_values
+            ):
+                distinct_values.append(candidate)
     return distinct_values
 
 

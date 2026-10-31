@@ -6,7 +6,7 @@ import re
 import uuid
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, TypeGuard
 
 from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.types import (
@@ -35,6 +35,32 @@ except ImportError:  # pragma: no cover - optional SDK
 
 
 _OLD_BINARY_SUBTYPE = 2
+
+
+def is_bson_string(value: object) -> TypeGuard[str]:
+    """A BSON String, excluding JavaScript's Python str subclass."""
+    return isinstance(value, str) and not (
+        BsonCode is not None and isinstance(value, BsonCode)
+    )
+
+
+def decoded_document_reference(document):
+    """Apply the SDK's DBRef shape rule only at a decoded nested-document boundary."""
+    if (
+        DriverDBRef
+        # The SDK hook follows Python str (including Code) and accepts null db.
+        # This is response decoding, not expression String type bracketing.
+        and isinstance(document.get("$ref"), str)
+        and "$id" in document
+        and (document.get("$db") is None or isinstance(document["$db"], str))
+    ):
+        return DriverDBRef(
+            document["$ref"],
+            document["$id"],
+            document.get("$db"),
+            **{k: v for k, v in document.items() if k not in {"$ref", "$id", "$db"}},
+        )
+    return document
 
 
 def binary_parts(value: Any) -> tuple[int, bytes] | None:
@@ -79,9 +105,7 @@ def matches_bson_type(candidate: Any, alias: str) -> bool:  # noqa: PLR0911, PLR
     if alias in {"int", "long"}:
         return isinstance(candidate, int) and not isinstance(candidate, bool)
     if alias == "string":
-        return isinstance(candidate, str) and not (
-            BsonCode is not None and isinstance(candidate, BsonCode)
-        )
+        return is_bson_string(candidate)
     if alias == "object":
         return document_mapping(candidate) is not None
     if alias == "array":
