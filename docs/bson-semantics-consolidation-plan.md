@@ -51,7 +51,7 @@ de la sección 5, sin crear bloques ni reabrir cortes cerrados.
 
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
-el cierre completo del incremento. Este documento posee H48–H55 y su integración con B00–B10 y
+el cierre completo del incremento. Este documento posee H48–H56 y su integración con B00–B10 y
 C00–C06. No reabre H37–H47 ni sustituye sus receipts. La implementación y los
 gates históricos siguen en el [registro vigente](semantic-parity-implementation.md).
 El [plan histórico](plan-semantic-parity-refactor.md) conserva las obligaciones
@@ -182,6 +182,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H53 | P2; diferencia caracterizada | Moderate evalúa primero el antiguo y puede devolver aceptación sin evaluar el nuevo. MongoDB evalúa el nuevo y registra warning 20294 para bad→bad bajo warn. Local tampoco emite warning en strict/warn: el hueco de observabilidad es más amplio que el orden moderate. No atribuir rechazo incorrecto de escrituras a este testigo. |
 | H54 | P1; confirmado | La identidad de escritura termina usando igualdad Python para Code; ésta ignora el orden del scope. MongoDB modifica y conserva el nuevo orden; classic y pipeline locales devuelven cero y conservan el anterior en ambos motores. |
 | H55 | P1; confirmado durante D04, pendiente D06a | Un Code BSON con prefijo $/$$ entra en la rama Python `str`: el runtime lo evalúa como campo y el preparador exige una variable inexistente. Referencias 7/8/9 y seis pares locales en la evidencia de imágenes confirman el mismo defecto en agregación ordinaria; $literal es control positivo. Reutilizar clasificación String/Code al decidir gramática y evaluar, con regresión permanente por contexto antes de corregir. No se confunde con identidad física H54. |
+| H56 | P1; confirmado durante D04, pendiente de corrección | `renameCollection` local exige que origen/destino pertenezcan a la base que recibe el comando. MongoDB exige ejecutar el comando en admin, incluso para renombrar dentro de una sola base. Las sondas físicas 7/8/9 rechazan la entrada por la base de origen con 13 y no cambian datos; los seis pares locales la aceptan y mueven datos. Admin hace lo contrario: funciona físicamente y falla localmente sin código. La API directa collection.rename sí queda cubierta por el corpus DDL; no acredita la entrada de comando ni wire. |
 
 Testigos físicos destacados: `Binary(ab,0)` selecciona IDs 1/2 en MongoDB y
 ninguno localmente; reasignar Binary idéntico devuelve 0 frente a 1;
@@ -355,11 +356,11 @@ Las prioridades ordenan riesgos, sin exigir una migración horizontal previa.
 
 | Bloque | Prioridad / hallazgos | Dependencias y entrega |
 | --- | --- | --- |
-| D00 — Oráculos y fronteras | P1 transversal; H48–H55 | Propiedades y testigos del primer corte antes de arreglar H48; ampliar registro/capturador/replay existentes, capturas 7/8/9 y fallo previo por familia. No otro runner. |
+| D00 — Oráculos y fronteras | P1 transversal; H48–H56 | Propiedades y testigos del primer corte antes de arreglar H48; ampliar registro/capturador/replay existentes, capturas 7/8/9 y fallo previo por familia. No otro runner. |
 | D01 — Identidad de modificación | P1; H48/H54 | Cortes D01a/D01b definidos abajo. Helper físico y consecuencias públicas, separados de igualdad semántica. |
 | D02 — Milisegundos exactos | P1; H49 | Independiente de Binary. Conversión, dateDiff/subtract, roundtrip; revisar ventanas, ambos lados de TTL y auxiliares antiguos frente a nuevo cutoff. Retirar resta sin callers tras comprobar usos/export privados. |
 | D03 — Tipos, Binary y especialización SQL | P1; H48/H51 | Cortes D03a/D03b definidos abajo. Clasificación/vistas y consumidores reales, incluyendo deduplicación pública. |
-| D04 — Watch: preparación, imágenes y ciclo de vida | P1; H52 | Tres garantías con aceptación separada dentro del mismo bloque. Preparación/contexto e imágenes CRUD ya entregadas; completar DDL, protocolo/reanudación e integración sobre el registro/entrega existentes. Testigos D00 con replica set; no depende del cierre completo de B04 ni de toda D06. |
+| D04 — Watch: preparación, imágenes y ciclo de vida | P1; H52/H56 | Tres garantías con aceptación separada dentro del mismo bloque. Preparación/contexto e imágenes CRUD ya entregadas; completar DDL, entradas de comando, protocolo/reanudación e integración sobre el registro/entrega existentes. Testigos D00 con replica set; no depende del cierre completo de B04 ni de toda D06. |
 | D05 — Cierre integrado | P1 transversal | Cierre por familia y final conjunto de entregas obligatorias; comparar wheel/código, contratos y archivos SQLite, registrar costes y commits semánticos. |
 | D06 — Gramática, transporte, vistas y claves | P1; H50 y consolidación contextual | Cortes D06a/D06b/D06c. Reconocimiento de literal DBRef, preservación en wire y claves por consumidor. H48 distinct y eq/in ya deben pasar en D03a. Conservar storage_key/tie-breakers. |
 | D07 — Piloto opcional schema | P2; no bloquea los fixes | Solo después de D03/D06 y una hipótesis medible. Evaluar nodos schema propios con arrays atómicos y diagnósticos anotados; no convertirlos a hojas MQL ordinarias. No compromiso de migración completa. |
@@ -797,6 +798,23 @@ La aceptación restante se ejecuta en este orden, dentro de D04:
 3. Integrar imágenes y DDL —incluida recreación que ya coincide— y fixture RS
    de CI. Reutilizar receipts de preparación/imágenes cuando no cambien sus
    inputs; repetir los gates alcanzados por la extracción y el integrado final.
+
+**Precisión de implementación D04.** Las nuevas sondas por ámbito obligan a
+conservar dos distinciones: una colección que nunca existió no se invalida al
+borrar su base; un rename invalida tanto el stream de origen como el del destino.
+No usar una invalidación de base para cerrar indiscriminadamente todos los
+streams de colección. Los nombres concretos del catálogo y el destino ya
+conocido de rename bastan; no introducir identidad de encarnación.
+
+La misma caracterización identifica H56 en la entrada de comando. Resolverlo
+en D04 antes de cerrar sus entradas DDL, con referencia permanente por versión:
+admin frente a base de origen, fase/clase/código y datos/eventos tras rechazo.
+Cubrir comandos directos y escrituras wire con observación local de eventos;
+esto no promete watch wire positivo. Reutilizar coordinación y primitiva de
+rename del motor, sin fabricar handles de colección para acceder a la entrega.
+La atomicidad de dropTarget y los errores de destino requieren sus propios
+testigos antes de aceptar esa opción; no extrapolar el caso de destino ausente
+ni ampliar silenciosamente el subset soportado a rename entre bases.
 
 El orden D06/H53/conversión/D07/D05 permanece en la tabla anterior. Las 88
 comprobaciones focales y 408 de replay de esta revisión usan el candidato

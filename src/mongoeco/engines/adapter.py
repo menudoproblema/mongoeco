@@ -414,6 +414,10 @@ class EngineSpiAdapter:
         sink: object,
         change: CommittedChange,
     ) -> None:
+        publish_committed = getattr(sink, "publish_committed", None)
+        if callable(publish_committed):
+            publish_committed(change.sequence, change.payload)
+            return
         state = getattr(sink, "state", None)
         next_token = getattr(state, "next_token", None)
         if isinstance(next_token, int) and change.sequence < next_token:

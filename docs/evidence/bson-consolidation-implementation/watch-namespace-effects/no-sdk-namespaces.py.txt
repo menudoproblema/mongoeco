@@ -1,0 +1,14 @@
+import json
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from tests.differential.semantic_watch_lifecycle_cases import namespace_lifecycle
+try:import bson
+except ModuleNotFoundError:pass
+else:raise AssertionError('Expected SDK-free environment')
+for version in ('7.0','8.0','9.0'):
+ expected=json.loads(Path('tests/fixtures/semantic_watch_lifecycle_'+version.replace('.','_')+'.json').read_text())['cases']['semantic_watch_namespace_lifecycle']
+ for backend in (MemoryEngine,SQLiteEngine):
+  with MongoClient(backend(),mongodb_dialect=version) as client:
+   assert namespace_lifecycle(client.test.records)==expected
+print('SDK-free Python 3.13: six pairs x 35 native-referenced namespace scenarios passed')

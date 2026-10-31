@@ -46,16 +46,18 @@ Eso se expone explicitamente con:
 - compaction de snapshot;
 - metadata observable de estado.
 
-Los engines locales entregan cambios por secuencia de commit. El hub alinea su
-token con esa secuencia y acepta replay idempotente: una fila anterior a
+Los engines locales entregan cambios por secuencia de commit. El adaptador usa
+`publish_committed` del hub para comprobar secuencia y publicar bajo el mismo
+guard, y acepta replay idempotente: una fila anterior a
 `next_token` ya esta aplicada. En SQLite, el outbox es atomico con la escritura;
 en Memory, la secuencia se asigna al commit MVCC. Cuando hay journal, su ultimo
 token es el checkpoint durable desde el que un proceso reiniciado reanuda el
 outbox pendiente.
 
-Una operacion sin consumidor activo registra un hueco de secuencia en vez de
-inventar un evento recuperable. Los resume tokens no pueden atravesar esos
-huecos silenciosamente.
+Las escrituras CRUD cuya politica no captura eventos registran un hueco de
+secuencia en vez de inventar una imagen recuperable. Los efectos de mantenimiento
+TTL y de catalogo conservan su payload en el registro atomico existente.
+Los resume tokens no pueden atravesar huecos silenciosamente.
 
 El contenido de los cambios de actualización se construye en
 `core/change_events.py`, compartido por Memory y SQLite. Los planes clásicos
@@ -63,6 +65,22 @@ conservan las rutas realmente aplicadas; los pipelines conservan la imagen
 calculada cuando difiere de la guardada por la política de `_id`. Ese contenido
 no se publica hasta confirmar la escritura: scopes transaccionales y outbox
 siguen siendo responsables de la entrega.
+
+Drop, rename y dropDatabase de Memory/SQLite registran el efecto de catalogo y
+su invalidacion en esa misma unidad atomica. La coordinacion API en
+`api/_change_delivery.py` comparte preparacion, hooks de commit y despacho tras
+la operacion, incluso si esta falla despues de confirmar efectos parciales.
+El productor decide si hubo un cambio real: drop inexistente no publica.
+
+El selector de ambito conserva los destinatarios concretos. Drop invalida la
+coleccion afectada; dropDatabase invalida sus colecciones existentes y el stream
+de base, manteniendo el de cliente y el de una coleccion que nunca existio.
+Rename entrega el evento e invalida streams de origen y destino. El destino se
+conserva como metadata opcional en journal; el evento publico rename expone
+`to`. Invalidate omite `ns`/`documentKey`, y dropDatabase omite `ns.coll`.
+El registro de [implementacion BSON](../bson-consolidation-implementation.md)
+posee la aceptacion y los pendientes de protocolo, reanudacion, entradas de
+comando y CI; esta descripcion no cierra todo D04.
 
 El journal conserva orden documental y anchos numéricos BSON al reanudar.
 Las entradas incrementales nuevas usan versión 2, cuyo checksum incluye el

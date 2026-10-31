@@ -108,6 +108,15 @@ class _AsyncView:
     def options(self, *args, **kwargs):
         return self._call("options", *args, **kwargs)
 
+    def drop(self, *args, **kwargs):
+        return self._call("drop", *args, **kwargs)
+
+    def drop_database(self, *args, **kwargs):
+        return self._call("drop_database", *args, **kwargs)
+
+    def rename(self, *args, **kwargs):
+        return self._call("rename", *args, **kwargs)
+
     def insert_many(self, *args, **kwargs):
         return self._call("insert_many", *args, **kwargs)
 

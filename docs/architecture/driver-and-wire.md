@@ -184,6 +184,12 @@ Es la forma documentada por el
 [comando MongoDB](https://www.mongodb.com/docs/v8.2/reference/command/dropDatabase/).
 `renameCollection` rechaza namespaces ajenos a la base seleccionada antes de
 aplicar el cambio.
+Esta restriccion local tiene una divergencia confirmada: MongoDB recibe el
+comando en admin y permite origen/destino en otra base, mientras rechaza la
+entrada por la base de origen con 13. H56 del
+[plan BSON](../bson-semantics-consolidation-plan.md) conserva la correccion y
+aceptacion pendientes; la API directa `collection.rename` no acredita esa
+ruta de comando ni su transporte wire.
 
 La validacion temprana del executor tambien cubre ya familias especiales
 fuera del passthrough puro:

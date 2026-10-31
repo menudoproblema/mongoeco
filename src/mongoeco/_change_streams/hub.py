@@ -314,6 +314,7 @@ class ChangeStreamHub:
         full_document: Document | None = None,
         update_description: dict[str, object] | None = None,
         post_image_available: bool = False,
+        to_namespace: dict | None = None,
     ) -> None:
         with self._condition:
             self._raise_if_degraded_locked()
@@ -326,6 +327,7 @@ class ChangeStreamHub:
                 full_document=full_document,
                 update_description=update_description,
                 post_image_available=post_image_available,
+                to_namespace=to_namespace,
             )
             self._append_committed_event_locked(event)
 

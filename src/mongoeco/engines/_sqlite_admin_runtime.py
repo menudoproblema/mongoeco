@@ -14,7 +14,7 @@ from mongoeco.engines._sqlite_namespace_admin import (
     list_collections as _sqlite_list_collections,
     list_databases as _sqlite_list_databases,
 )
-from mongoeco.types import Document
+from mongoeco.types import Document  # noqa: TC001 - introspectable helper signatures
 
 
 class SQLiteAdminRuntime:
@@ -136,6 +136,9 @@ class SQLiteAdminRuntime:
         conn = self._engine._require_connection(context)
         _sqlite_drop_database(
             conn=conn,
+            record_changes=lambda payloads: self._engine._record_namespace_changes(
+                conn, payloads
+            ),
             db_name=db_name,
             begin_write=lambda current: self._engine._begin_write(current, context),
             commit_write=lambda current: self._engine._commit_write(current, context),

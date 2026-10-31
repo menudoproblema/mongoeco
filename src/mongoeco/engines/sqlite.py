@@ -7093,6 +7093,19 @@ class SQLiteEngine(AsyncStorageEngine):
 
         await self._run_blocking(modify)
 
+    def _record_namespace_changes(self, conn, payloads):
+        operation_id = uuid.uuid4().hex
+        for index, payload in enumerate(payloads):
+            _sqlite_append_change(
+                conn,
+                context=None,
+                maintenance_operation_id=operation_id,
+                event_index=index,
+                serialize_document=self._serialize_document,
+                max_entries=self._change_outbox_max_entries,
+                **payload,
+            )
+
     def _rename_collection_sync(
         self,
         db_name: str,
@@ -7104,6 +7117,9 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             _sqlite_rename_collection(
                 conn=conn,
+                record_changes=lambda payloads: self._record_namespace_changes(
+                    conn, payloads
+                ),
                 db_name=db_name,
                 coll_name=coll_name,
                 new_name=new_name,
@@ -7140,6 +7156,9 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 _sqlite_drop_collection(
                     conn=conn,
+                    record_changes=lambda payloads: self._record_namespace_changes(
+                        conn, payloads
+                    ),
                     db_name=db_name,
                     coll_name=coll_name,
                     begin_write=lambda current: self._begin_write(

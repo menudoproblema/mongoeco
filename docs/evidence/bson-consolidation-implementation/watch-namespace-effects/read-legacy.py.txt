@@ -1,0 +1,23 @@
+import json,sqlite3
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path('/tmp/mongoeco-ddl-compat');before=json.loads((root/'before.json').read_text())
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ stream=client.compat.watch(resume_after=before['token'],max_await_time_ms=1)
+ assert stream.try_next()['operationType']=='update'
+ client.compat.source.rename('target')
+ event=stream.try_next();assert event['operationType']=='rename' and event['to']=={'db':'compat','coll':'target'} and stream.alive
+ assert client.compat.target.find_one({'v':1},hint='v_1')=={'_id':1,'v':1}
+ stream.close()
+with sqlite3.connect(root/'db.sqlite') as conn:
+ assert json.loads(json.dumps(conn.execute('SELECT name,sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY name').fetchall()))==before['schema']
+ assert json.loads(json.dumps(conn.execute('SELECT storage_key FROM documents ORDER BY storage_key').fetchall()))==before['keys']
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ stream=client.compat.watch(resume_after=before['token'],max_await_time_ms=1)
+ assert stream.try_next()['operationType']=='update'
+ assert stream.try_next()['to']=={'db':'compat','coll':'target'}
+ client.compat.target.insert_one({'_id':2})
+ assert stream.try_next()['documentKey']=={'_id':2}
+ stream.close()
+print('Actual 1a4e28b SQLite/journal: legacy update, rename target, indexes, schema/keys and replay continuity passed; no downgrade claim')

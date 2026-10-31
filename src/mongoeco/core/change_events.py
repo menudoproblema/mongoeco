@@ -66,6 +66,7 @@ def build_change_payload(  # noqa: PLR0913 - complete internal change payload
     full_document: dict | None = None,
     update_description: dict | None = None,
     post_image_available: bool = False,
+    to_namespace: dict | None = None,
 ) -> dict:
     payload = {
         "operation_type": operation_type,
@@ -78,7 +79,24 @@ def build_change_payload(  # noqa: PLR0913 - complete internal change payload
     # Omit the default to keep legacy outbox fingerprints and journal payloads.
     if operation_type == "update" and post_image_available:
         payload["post_image_available"] = True
+    if to_namespace is not None:
+        payload["to_namespace"] = deepcopy(to_namespace)
     return payload
+
+
+def namespace_change_payloads(operation_type, db_name, coll_name="", *, new_name=None):
+    """DDL effect and its scope-specific invalidation share one commit order."""
+    target = None if new_name is None else {"db": db_name, "coll": new_name}
+    return [
+        build_change_payload(
+            operation_type=kind,
+            db_name=db_name,
+            coll_name=coll_name,
+            document_key={},
+            to_namespace=target,
+        )
+        for kind in (operation_type, "invalidate")
+    ]
 
 
 @dataclass(slots=True)

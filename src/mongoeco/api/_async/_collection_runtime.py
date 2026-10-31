@@ -6,6 +6,11 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, cast
 
+from mongoeco.api._change_delivery import (
+    change_delivery_scope,
+    dispatch_change_delivery,
+    prepare_change_delivery,
+)
 from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api.operations import (
     AggregateOperation,
@@ -89,27 +94,10 @@ class CollectionRuntimeCoordinator:
         *,
         session: ClientSession | None = None,
     ) -> None:
-        change_hub = self._collection._change_hub
-        self._engine_spi.prepare_change_delivery(change_hub)
         if operation_context is not None:
             session = operation_context.session
-        if (
-            change_hub is None
-            or session is None
-            or not session.in_transaction
-            or self._engine_spi.capabilities.change_delivery
-            not in {
-                "commit-sequence",
-                "transactional-outbox",
-            }
-        ):
-            return
-        hook_key = (
-            f"change_outbox_dispatch:{id(self._collection._engine)}:{id(change_hub)}"
-        )
-        session.register_transaction_hooks(
-            hook_key,
-            commit=lambda _session: self._dispatch_engine_changes(),
+        prepare_change_delivery(
+            self._engine_spi, self._collection._change_hub, session=session
         )
 
     @contextmanager
@@ -119,35 +107,24 @@ class CollectionRuntimeCoordinator:
         *,
         session: ClientSession | None = None,
     ) -> Iterator[None]:
-        """Deliver committed request and maintenance effects, including on errors."""
         if operation_context is not None:
             session = operation_context.session
-        self._prepare_engine_change_delivery(operation_context, session=session)
-        try:
+        with change_delivery_scope(
+            self._engine_spi, self._collection._change_hub, session=session
+        ):
             yield
-        finally:
-            if session is None or not session.in_transaction:
-                self._dispatch_engine_changes(operation_context)
 
     def _dispatch_engine_changes(
         self,
         operation_context: OperationContext | None = None,
     ) -> None:
-        if (
-            operation_context is not None
-            and operation_context.session is not None
-            and operation_context.session.in_transaction
-        ):
-            return
-        change_hub = self._collection._change_hub
-        try:
-            self._engine_spi.dispatch_committed_changes(change_hub)
-        except Exception as exc:
-            if change_hub is None:
-                return
-            mark_failure = getattr(change_hub, "mark_publish_failure", None)
-            if callable(mark_failure):
-                mark_failure(exc)
+        dispatch_change_delivery(
+            self._engine_spi,
+            self._collection._change_hub,
+            session=(
+                operation_context.session if operation_context is not None else None
+            ),
+        )
 
     @staticmethod
     def ensure_session_active(session: object | None) -> None:

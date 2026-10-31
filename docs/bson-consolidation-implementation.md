@@ -599,12 +599,61 @@ la aceptación de preparación/contexto e imágenes CRUD y acota la extracción
 de entrega compartida para DDL. No cambia el estado de ningún corte ni
 sustituye los gates de aceptación anteriores.
 
+## D04 — Efectos de namespace y entrega por secuencia
+
+La [evidencia del corte](evidence/bson-consolidation-implementation/watch-namespace-effects/receipt.json)
+acepta drop/rename directos y drop/dropDatabase por comando en los escenarios
+del corpus. Memory/SQLite registran efecto e invalidacion en su unidad atomica
+existente, usando el mismo orden que CRUD y mantenimiento. La API deja de
+publicar invalidate directamente para estos motores; coleccion, base y cliente
+comparten preparacion de entrega, hooks de commit y despacho en finally.
+El adaptador usa publish_committed del hub para comprobar secuencia/publicar
+bajo un solo guard, manteniendo el fallback de sinks anteriores y SPI v2.
+
+Drop inexistente no publica. Drop invalida solo la coleccion afectada;
+dropDatabase invalida las colecciones existentes y la base, manteniendo cliente
+y colecciones que nunca existieron. Rename entrega evento e invalidacion a
+origen y destino, conservando `to` en metadata opcional del journal. Invalidate
+omite ns/documentKey y dropDatabase omite ns.coll; no cambia el formato de token,
+las claves persistidas ni el esquema SQL. No se introduce identidad de encarnacion.
+
+La revision con fallos inyectados detecto dos rollbacks incompletos de Memory:
+el snapshot del origen de rename dejaba de protegerlo antes de preparar el
+outbox, y dropDatabase retiraba roots sin restaurarlos si fallaba esa fase.
+Rename agrupa los dos namespaces en el mismo scope; drop de base retiene y
+restaura referencias a los roots, sin copiar todos los documentos. Las pruebas
+verifican catalogo, datos, opciones, indices y ausencia de eventos tras error;
+tienen controles de reintento, commit/abort local y reapertura del journal.
+
+Un corpus permanente con 35 escenarios por major tiene capturas fisicas
+7.0.43/8.0.32/9.0.2, FCV correspondiente, y --check. El runtime base 1a4e28b
+falla 12 checks de comportamiento y pasa tres de metadata. El candidato pasa
+6.133 integrados y 2.753 de core/propiedades/contratos (936 subtests, un skip).
+Pasan 82 de API/admin, 39 con orjson, typing publico/boundary y lint sin deuda
+nueva. Python 3.13 realmente sin SDK reproduce los 35 escenarios en seis pares,
+ademas de los ocho escenarios de imagen por par ya existentes.
+
+Un archivo SQLite/journal realmente creado por 1a4e28b conserva lectura de su
+update, claves/esquema e indices al renombrar; otra reapertura entrega destino
+y escritura posterior. No se acredita downgrade. El benchmark secuencial ABBA
+con diez muestras por runtime/caso conserva checksums: ratios de medianas
+aproximados 0,99/0,98 Memory y 1,01/0,97 SQLite para default/updateLookup. Mide
+el camino CRUD compartido, no throughput DDL ni los costes completos de D05.
+
+La nueva sonda de enrutamiento confirma H56: renameCollection por admin funciona
+en los tres nativos y falla localmente; por la base de origen sucede lo inverso,
+incluida una mutacion local que el servidor rechaza con 13. Es caracterizacion
+sync de entradas, no aceptacion ni regresion permanente todavia. D04 sigue
+abierto para esta ruta/dropTarget, protocolo/reanudacion/cierre filtrado,
+interacciones adicionales con imagenes y fixture replica set de CI.
+
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
-- D04: DDL/cierre por ámbito e interacción con imágenes, continuidad/reanudación
-  y fixtures replica set de jobs nativos. Preparación/contexto y modos CRUD de
-  imágenes tienen aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
+- D04: entradas DDL (H56 y dropTarget), protocolo/cierre filtrado, interacción
+  con imágenes, continuidad/reanudación y fixtures replica set de jobs nativos.
+  Preparación/contexto, modos CRUD de imágenes y efectos de namespace tienen
+  aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
   están en revisión 8 del plan; ni publicación TTL ni D01b los cierran.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.

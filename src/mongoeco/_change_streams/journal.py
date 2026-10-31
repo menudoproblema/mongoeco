@@ -23,6 +23,8 @@ def snapshot_to_document(snapshot: ChangeEventSnapshot) -> dict[str, object]:
         document["update_description"] = snapshot.update_description
     if snapshot.post_image_available:
         document["post_image_available"] = True
+    if snapshot.to_namespace is not None:
+        document["to_namespace"] = snapshot.to_namespace
     encoded = DocumentCodec.encode(document)
     if not isinstance(encoded, dict):
         raise OperationFailure("change stream journal could not be encoded")
@@ -41,6 +43,7 @@ def snapshot_from_document(document: object) -> ChangeEventSnapshot:
     document_key = document.get("document_key")
     update_description = document.get("update_description")
     post_image_available = document.get("post_image_available", False)
+    to_namespace = document.get("to_namespace")
     if (
         not isinstance(token, int)
         or isinstance(token, bool)
@@ -50,6 +53,14 @@ def snapshot_from_document(document: object) -> ChangeEventSnapshot:
         or not isinstance(coll_name, str)
         or not isinstance(document_key, dict)
         or not isinstance(post_image_available, bool)
+        or (
+            to_namespace is not None
+            and (
+                not isinstance(to_namespace, dict)
+                or set(to_namespace) != {"db", "coll"}
+                or not all(isinstance(value, str) for value in to_namespace.values())
+            )
+        )
         or (update_description is not None and not isinstance(update_description, dict))
     ):
         raise OperationFailure("change stream journal could not be loaded")
@@ -65,6 +76,7 @@ def snapshot_from_document(document: object) -> ChangeEventSnapshot:
         full_document=full_document,
         update_description=update_description,
         post_image_available=post_image_available,
+        to_namespace=to_namespace,
     )
 
 

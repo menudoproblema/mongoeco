@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from mongoeco.core.change_events import build_change_payload
 from mongoeco.core.operation_context import (
-    ChangeOperationType,
     ChangePublicationPolicy,
     OperationContext,
 )
@@ -714,13 +713,14 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
     *,
     context: OperationContext | None,
     event_index: int | None = None,
-    operation_type: ChangeOperationType,
+    operation_type: str,
     db_name: str,
     coll_name: str,
     document_key: Document,
     full_document: Document | None,
     update_description: Document | None = None,
     post_image_available: bool = False,
+    to_namespace: Document | None = None,
     serialize_document: Callable[[Document], str],
     max_entries: int = 10_000,
     maintenance_operation_id: str | None = None,
@@ -749,6 +749,7 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
         document_key=document_key, full_document=full_document,
         update_description=update_description,
         post_image_available=post_image_available,
+        to_namespace=to_namespace,
     ))
     payload = effect if kind == "event" else None
     effective_event_index = (

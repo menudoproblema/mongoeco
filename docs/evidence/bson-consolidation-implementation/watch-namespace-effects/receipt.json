@@ -1,0 +1,246 @@
+{
+  "status": "accepted namespace effects/scope delivery cut; D04 and whole program remain open",
+  "base": "1a4e28b5903bf46075f7a7a80e238d1d1850c6f0",
+  "runtime_manifest": {
+    "path": "runtime-sources.json",
+    "sha256": "57f3718644fa381952b32e70133fae6e2a098534d90b6633861fce8a932be9fc",
+    "files": 282
+  },
+  "reviewed_workset": {
+    "src/mongoeco/_change_streams/hub.py": "3e482cf87b0a7a0176b12a35a4ade73c1ecb334ad604a2a246d3e2daf92435c3",
+    "src/mongoeco/_change_streams/journal.py": "e8dc740c56133d457ec8297b0c32213c14b43318fcdde945dced40f3c9aef268",
+    "src/mongoeco/_change_streams/models.py": "38fa7e4f634af5d84c45e873be708789bac79e379fd41e2c0d9dea15feaedf68",
+    "src/mongoeco/_types/documents.py": "c901ea556e44f41239ade2970c01fe96fbce51a1fda5a981cad4e252b3cc865a",
+    "src/mongoeco/api/_async/_collection_runtime.py": "d38f08267cdb391f3cb4ce416d136120569bf687e155fc83f55e0185e601c4f0",
+    "src/mongoeco/api/_async/_database_admin_write_commands.py": "a9f74d645cbbe54cfd305af8b802057a4a91bed86accf91efed2481d9f97f467",
+    "src/mongoeco/api/_async/client.py": "bc7dc786e910e3b2e69280c58f296e71cec24fd3832e5566779b66c1d2fa9450",
+    "src/mongoeco/api/_async/collection.py": "9aa2a2e14e503db88fe9ba4d5f5e779d4a66a5cb13d03a07823c347c13cc0923",
+    "src/mongoeco/api/_change_delivery.py": "542b1a9a3343cd36ea6e443c302e369f807c4089e4d206471354c719870c7970",
+    "src/mongoeco/core/change_events.py": "8cf7335ccb9ef899c3e6e8dd14fb86743ad0e7366709cc8838e156c393b946b3",
+    "src/mongoeco/engines/_sqlite_admin_runtime.py": "fe53930baecba397104bebee3207634635d104637f2d8dd01e978f79997fa838",
+    "src/mongoeco/engines/_sqlite_namespace_admin.py": "340500899fed1fe44d43c4583f2ad3690f4aae8fcfa37848a944cfab832eddff",
+    "src/mongoeco/engines/_sqlite_outbox.py": "30083c488c25bbaddec55722a2fa41dcb70e60f6a92dab56f1ea6b88a922c8d4",
+    "src/mongoeco/engines/adapter.py": "3235388141b100cc9b035838c71682d1f25af9fbfc569bb1e76a3c97d304a191",
+    "src/mongoeco/engines/memory.py": "98cbd58fe47fda20678455b103f301aed56ab369763c761c454c58d716530f6d",
+    "src/mongoeco/engines/sqlite.py": "1629e538156e8eb95921f771bfa33bd8efa6429bc28ad044d18cd6cea1dcd758",
+    "tests/differential/semantic_corpora.py": "9251baf00ca121ad80e48b50149366642a49a7c8ed09fbd7725fa0a3b157079f",
+    "tests/differential/semantic_watch_lifecycle_cases.py": "8570c72e606b5ba2b1a0855c98ee8881c669e699e8a1de19ef462f26afa6e5fa",
+    "tests/integration/api/test_semantic_group_regressions.py": "349a545586357895dfe14e6b97e7628326aaf6d6a7d11566744d66e4d6bf9090",
+    "tests/integration/api/test_watch_namespace_contract.py": "4ee69ed660cd6f506248291f49d81435f9cbd6b7b656f2679b99b6e63d59c5c7",
+    "tests/unit/core/test_sqlite_engine.py": "30f622f2e7c7205c32d2fe70945de59511774c764842a25fe6f0c3c9317ad792",
+    "tests/unit/test_change_streams.py": "04d8d68ceb629feb4f710dab57cf814d47dbc290e8454d7358c61127ae3d5e19"
+  },
+  "native": {
+    "versions": {
+      "7.0": {
+        "version": "7.0.43",
+        "fcv": {
+          "version": "7.0"
+        },
+        "fixture": "tests/fixtures/semantic_watch_lifecycle_7_0.json",
+        "sha256": "327e7d6be79fdbb6123284a3d3b845ba23a1859e9e0f3a75bb670757b5563139",
+        "fresh_check_sha256": "5ac1e96cc4e00070eb5859e6a4670a04a5a779f049b65c1e32b5982c25fd1811",
+        "cases": 1,
+        "scenarios": 35,
+        "check_exit_code": 0
+      },
+      "8.0": {
+        "version": "8.0.32",
+        "fcv": {
+          "version": "8.0"
+        },
+        "fixture": "tests/fixtures/semantic_watch_lifecycle_8_0.json",
+        "sha256": "da479ed5e157548d96693dd01f1eaa1b9445e37282ca71631a8dec3c0d540606",
+        "fresh_check_sha256": "710d210021453db4abc4160154e1aeac336d5479dc0af42785c04dc0ccea0f38",
+        "cases": 1,
+        "scenarios": 35,
+        "check_exit_code": 0
+      },
+      "9.0": {
+        "version": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        },
+        "fixture": "tests/fixtures/semantic_watch_lifecycle_9_0.json",
+        "sha256": "1174118146af0f8eb1ca2308d3247f0005b9fe8d400cdaa89e4de983329ffcf6",
+        "fresh_check_sha256": "fb12d729ca1da76deb6298291edf5082b3769ba6a1fb62ef5c00b3c8219679dd",
+        "cases": 1,
+        "scenarios": 35,
+        "check_exit_code": 0
+      }
+    },
+    "topology": "preexisting owned single-member replica sets; primary/FCV verified before capture",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "directConnection": true,
+    "databases": "UUID runner namespaces; finally cleanup",
+    "service_lifecycle": "unchanged; habitual server untouched",
+    "capture_command": "MONGOECO_REAL_MONGODB_URI=<owned URI> .venv/bin/python scripts/capture_differential_replay_golden.py --target <major> --case-set watch-lifecycle --output tests/fixtures/semantic_watch_lifecycle_<major>_0.json",
+    "check_command": "same capture with separate /tmp output and --check immutable new fixture; exit 0 for all three"
+  },
+  "checks": {
+    "integrated": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "passed": 6133,
+      "seconds": 296.98,
+      "log": "acceptance-integrated.txt.gz",
+      "exit_code": 0
+    },
+    "core": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/property tests/unit/test_change_streams.py tests/integration/api/test_watch_image_contract.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_update_change_delivery.py tests/integration/api/test_watch_namespace_contract.py tests/integration/api/test_ttl_change_delivery.py --tb=short",
+      "passed": 2753,
+      "skipped": 1,
+      "subtests_passed": 936,
+      "seconds": 37.54,
+      "log": "acceptance-core.txt.gz",
+      "exit_code": 0
+    },
+    "api_admin": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/api/test_sync_client.py tests/unit/test_database_admin_namespace.py tests/integration/api/test_server_command_inputs.py --tb=short",
+      "passed": 82,
+      "subtests_passed": 2,
+      "log": "acceptance-api-admin.txt.gz",
+      "exit_code": 0
+    },
+    "orjson": {
+      "command": "MONGOECO_JSON_BACKEND=orjson .venv/bin/python -m pytest -q tests/integration/api/test_watch_namespace_contract.py tests/integration/api/test_semantic_group_regressions.py -k 'watch_lifecycle or test_ddl or local_transaction_delivers' --tb=short",
+      "passed": 39,
+      "log": "acceptance-orjson.txt.gz",
+      "exit_code": 0
+    },
+    "typing": {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "status": "public and engine boundary passed",
+      "log": "acceptance-typing.txt.gz",
+      "exit_code": 0
+    },
+    "lint": {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref 1a4e28b",
+      "status": "passed without baseline expansion",
+      "files": 22,
+      "log": "acceptance-lint.txt.gz",
+      "exit_code": 0
+    },
+    "sdk_free": {
+      "python": "3.13; genuinely without bson",
+      "pairs": 6,
+      "namespace_scenarios_per_pair": 35,
+      "image_scenarios_per_pair": 8,
+      "logs": [
+        "acceptance-sdk-free-namespaces.txt.gz",
+        "acceptance-sdk-free-images.txt.gz"
+      ],
+      "exit_code": 0
+    },
+    "baseline": {
+      "runtime": "1a4e28b archive; PYTHONPATH and pytest pythonpath explicitly set to archive/src",
+      "command": "PYTHONPATH=/tmp/mongoeco-ddl-base/src:. .venv/bin/python -m pytest -q -o pythonpath=/tmp/mongoeco-ddl-base/src tests/integration/api/test_semantic_group_regressions.py -k watch_lifecycle --tb=short",
+      "failed": 12,
+      "passed": 3,
+      "log": "before-regression.txt.gz",
+      "exit_code": 1
+    },
+    "legacy": {
+      "producer": "actual 1a4e28b archive; module path recorded in producer log",
+      "scripts": [
+        "create-legacy.py.txt",
+        "read-legacy.py.txt"
+      ],
+      "logs": [
+        "acceptance-legacy-producer.txt.gz",
+        "acceptance-legacy-reader.txt.gz"
+      ],
+      "schema_and_keys_unchanged": true,
+      "native_claim": false,
+      "downgrade_claim": false,
+      "exit_code": 0
+    },
+    "performance": {
+      "order": "before/candidate/candidate/before; sequential without other owned gates active",
+      "samples_per_runtime_case": 10,
+      "operations_per_sample": 200,
+      "documents": 100,
+      "checksums_equal": true,
+      "summary": "benchmark-paired-summary.json",
+      "scope": "shared CRUD default/updateLookup; not DDL throughput or D05 acceptance",
+      "exit_code": 0
+    }
+  },
+  "diagnostics": {
+    "scope_probe": {
+      "native_versions": 3,
+      "actions": 3,
+      "scopes": 5,
+      "artifact": "scope-probe.json",
+      "role": "never-existing collection survives database drop; source and target both invalidate on rename; permanent positive corpus covers these outcomes"
+    },
+    "H56": {
+      "artifact": "rename-routing.json",
+      "native_observations": 6,
+      "local_observations": 12,
+      "status": "confirmed, pending D04 correction and permanent differential; sync only; no wire acceptance"
+    },
+    "feedback": {
+      "atomic": "intermediate candidate failed rename/dropDatabase Memory rollback; fixed with grouped namespace protection and root restoration; not acceptance",
+      "core": "obsolete execute-returning-None mock failed new outbox SQL; replaced by real SQLite connection retaining lookup-count guard",
+      "unit": "interrupted owned pytest waiting for invalidate on client scope; native does not invalidate client; test now uses collection scope and bounded wait",
+      "capture": "initial witness used renameCollection outside admin and empty seed; corrected test authoring, no adjustment of native responses or old goldens"
+    }
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "historical_fixture_changes": [],
+  "limits": [
+    "D04 remains open for H56/admin command routing, dropTarget atomicity, cursor protocol/arguments, filtered invalidate, resume/start/retention/cancel and further image-DDL interactions.",
+    "No wire watch, cross-database rename, distributed/majority durability or native DDL transaction claim.",
+    "RS CI fixture and full D05 wheel/environment/global/coverage/performance matrices remain open.",
+    "D06, H53/conversion and optional D07 disposition retain their owners.",
+    "No automatic approval rejection; only explicitly owned hung test was interrupted."
+  ],
+  "document_checks": {
+    "git_diff_check": 0,
+    "dedicated_checker": "none found; relative links checked below",
+    "relative_links": 46
+  },
+  "artifacts": {
+    "README.md": "3a42c7d0dfc9601ed278cae05051322c1e48db29abc96635e7857f02a0693515",
+    "acceptance-api-admin.txt.gz": "838cc39878f4f62bd2ab0e821175271769394cc47ec88c35413c26309af42754",
+    "acceptance-benchmark.txt.gz": "3fc93d7b432265264665518a4323876a067c73a9b4cf4077bdeb9ffbbace211c",
+    "acceptance-core.txt.gz": "d7e50e0153580fd8bd77579b03a9e42814cfc02c2599e37c2f40afeb1b7834ea",
+    "acceptance-integrated.txt.gz": "da095352ae53a174f1f891c6f11a3a3db04c557dedaf04157a79cbc36658421b",
+    "acceptance-legacy-producer.txt.gz": "2ae8ea80cab28dcbf7078a91e26b00b27ff0d63c4f7bff1cbf889df8236caa54",
+    "acceptance-legacy-reader.txt.gz": "7c5efca1255e7e0f0a7d241d31f9e43aa80fe97137c37e46a71268a23b654071",
+    "acceptance-lint.txt.gz": "0b60a79fd10d6c919fecf40eeb0be8e255b871f7fede5ccd8afb570c83f532b9",
+    "acceptance-orjson.txt.gz": "7f8604860f1cf75a0541d57d8ed5b92e72575b7a062035f5c5425536c9523863",
+    "acceptance-sdk-free-images.txt.gz": "219e5d23b91682b3b67bb8ee41ce30a10c87dede470293b989838a2ab14c91e9",
+    "acceptance-sdk-free-namespaces.txt.gz": "7af6bc74b94c11df9d6b0528a3529e4895d1dea5f99782b77490ccb5e5608cc6",
+    "acceptance-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "before-regression.txt.gz": "c64a8b6125743fb6e8cf639054471201557a1d90783641fc2bcecec675eb1154",
+    "benchmark-after0.json": "a536cbd8a11383c49d8dd46aacff6ab8b08ac3cd0952b2139eddb3e7144cfabd",
+    "benchmark-after1.json": "b949e81a1cfda7154078c3902f8f4c9c738863395d1df3647a75c89e6f92414c",
+    "benchmark-before0.json": "06ff13b293be15d2b987a60075e787dfc05519e7040642018c302d381db1888e",
+    "benchmark-before1.json": "5aa6124ff519b801e8e5cd71f8af9c2ae32c7efd8387ee13291acb25615c8ef5",
+    "benchmark-paired-summary.json": "6404f2341bb9ddffd00ea73819e5bc0b5132361af06e6095d62d9abf25419ab8",
+    "benchmark.py.txt": "8526f989901cc3001560e072b9ec51244a6a892faf1376b1c99bfb01bc58b848",
+    "create-legacy.py.txt": "a93e379e230af96a4be2de5dfbee924d4bad3a27aad92e627d5850aac956d930",
+    "feedback-atomic.txt.gz": "874c805c7885b0870dcc8a9cb4798df28e06a47bbf9c4f7f2401016d5ef34c2f",
+    "feedback-core.txt.gz": "aa12357677b342cdac172416fc176bb4a6b297c778463eca445ac26c205c369a",
+    "feedback-unit-interrupted.txt.gz": "3c3279ed767bf7754d133b837ebef382c04faaf2de57cd084a082f2186cac8eb",
+    "legacy-before.json": "4a8c9b0b91a7bbd61462175381663f444b411995b22ed71eecc38183e39252ea",
+    "no-sdk-namespaces.py.txt": "813d10562e18b25ac19203b63fbc0670a2d3f94dedbbe136c44179d3819d8b72",
+    "paired-benchmark.py.txt": "93d23882dcd75d91aae6e7eadf9ef39a9cd10c7261f8ce95e1f9a7336528a723",
+    "read-legacy.py.txt": "224596ef3c06a2487cac144052d05c3ce499590d870f013f9214a06edd4154af",
+    "rename-routing.json": "9a199c7fefd06a016781a2f9852190d37b0a52c8e8c72fd2b0e8093c8563d23a",
+    "rename-routing.py.txt": "561fffc8f156a2fb407480a74ad660308bc54e96569ea147f8b186e30e1c1441",
+    "runtime-sources.json": "57f3718644fa381952b32e70133fae6e2a098534d90b6633861fce8a932be9fc",
+    "scope-probe.json": "463a2251123602766c618ed6918baddd34d8e7a5bb6aa51187a115a3844208a8",
+    "scope-probe.py.txt": "6d7d6a8eae6a434574de24c61ae27aa674016d451b0604911226f53fd5b7ff69"
+  }
+}

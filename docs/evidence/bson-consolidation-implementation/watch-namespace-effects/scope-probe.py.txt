@@ -1,0 +1,27 @@
+import json,time,uuid
+from pymongo import MongoClient
+report={}
+for port in (49973,49974,49975):
+ with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as client:
+  results={}; name='ddl_'+uuid.uuid4().hex; db=client[name]
+  try:
+   for action in ('drop_database','empty_database','rename'):
+    db.c.insert_one({'_id':1})
+    streams={s:o.watch(max_await_time_ms=20) for s,o in [('collection',db.c),('missing',db.missing),('target',db.target),('database',db),('client',client)]}
+    if action=='rename':db.c.rename('target')
+    elif action=='empty_database':client.drop_database(name+'absent')
+    else:client.drop_database(name)
+    db.barrier.insert_one({'_id':2})
+    rows={}
+    for scope,stream in streams.items():
+     events=[]; deadline=time.monotonic()+0.5
+     while stream.alive and time.monotonic()<deadline:
+      event=stream.try_next()
+      if event is not None:
+       events.append({k:v for k,v in event.items() if k not in ('_id','clusterTime','wallTime')})
+       if event.get('operationType')=='insert':break
+     rows[scope]={'events':events,'alive':stream.alive};stream.close()
+    results[action]=rows;client.drop_database(name)
+  finally:client.drop_database(name)
+  report[str(port)]=results
+print(json.dumps(report,indent=2,default=str))

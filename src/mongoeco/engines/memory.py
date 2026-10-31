@@ -24,6 +24,7 @@ from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.bson_ordering import bson_engine_key, bson_equality_key
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.change_events import (
+    namespace_change_payloads,
     build_change_payload,
     captures_changes,
     committed_change_content,
@@ -1438,6 +1439,10 @@ class MemoryEngine(AsyncStorageEngine):
         )
         return self._record_committed_payload(context.session, committed_payload)
 
+    def _record_namespace_changes(self, context, payloads):
+        for payload in payloads:
+            self._record_committed_payload(context, payload)
+
     def _record_committed_payload(
         self,
         session: ClientSession | None,
@@ -2188,6 +2193,30 @@ class MemoryEngine(AsyncStorageEngine):
                 self._publication_stack.pop()
 
     @contextmanager
+    def _database_drop_scope(self, db_name, storage, *, views):
+        # Drop removes whole roots; retain references rather than copy documents.
+        with self._meta_lock:
+            previous = [
+                (root, root.get(db_name, _MISSING)) for root in (storage, *views)
+            ]
+            names = set().union(*(
+                value for _, value in previous if value is not _MISSING
+            ))
+            with self._search_runtime_rollback_locked(db_name, names):
+                try:
+                    with self._publication_scope(
+                        storage, views=views, touched_databases={db_name}
+                    ):
+                        yield
+                except BaseException:
+                    for root, value in previous:
+                        if value is _MISSING:
+                            root.pop(db_name, None)
+                        else:
+                            root[db_name] = value
+                    raise
+
+    @contextmanager
     def _collection_state_rollback_locked(
         self,
         db_name: str,
@@ -2202,37 +2231,32 @@ class MemoryEngine(AsyncStorageEngine):
         search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
         collections: dict[str, set[str]],
         options: dict[str, dict[str, Document]],
+        related_names: set[str] | None = None,
     ) -> Iterator[_MemoryCollectionSnapshot]:
         with self._meta_lock:
-            snapshot = self._snapshot_collection_state_locked(
-                db_name,
-                coll_name,
-                storage=storage,
-                indexes=indexes,
-                index_data=index_data,
-                search_indexes=search_indexes,
-                collections=collections,
-                options=options,
-            )
+            names = {coll_name} | (related_names or set())
+            snapshots = {
+                name: self._snapshot_collection_state_locked(
+                    db_name, name, storage=storage, indexes=indexes,
+                    index_data=index_data, search_indexes=search_indexes,
+                    collections=collections, options=options,
+                )
+                for name in names
+            }
             try:
                 with self._publication_scope(
                     storage,
                     views=(indexes, index_data, search_indexes, collections, options),
-                    touched_namespaces={(db_name, coll_name)},
+                    touched_namespaces={(db_name, name) for name in names},
                 ):
-                    yield snapshot
+                    yield snapshots[coll_name]
             except BaseException:
-                self._restore_collection_state_locked(
-                    db_name,
-                    coll_name,
-                    snapshot,
-                    storage=storage,
-                    indexes=indexes,
-                    index_data=index_data,
-                    search_indexes=search_indexes,
-                    collections=collections,
-                    options=options,
-                )
+                for name, snapshot in snapshots.items():
+                    self._restore_collection_state_locked(
+                        db_name, name, snapshot, storage=storage, indexes=indexes,
+                        index_data=index_data, search_indexes=search_indexes,
+                        collections=collections, options=options,
+                    )
                 raise
 
     def _record_storage_undo_locked(
@@ -5030,11 +5054,17 @@ class MemoryEngine(AsyncStorageEngine):
             search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
             options = self._collection_options_view(context)
-            with self._publication_scope(
-                storage,
+            with self._database_drop_scope(
+                db_name, storage,
                 views=(indexes, index_data, search_indexes, collections, options),
-                touched_databases={db_name},
             ):
+                dropped_names = sorted(
+                    set(storage.get(db_name, {}))
+                    | set(indexes.get(db_name, {}))
+                    | set(search_indexes.get(db_name, {}))
+                    | set(collections.get(db_name, set()))
+                    | set(options.get(db_name, {}))
+                )
                 storage.pop(db_name, None)
                 indexes.pop(db_name, None)
                 index_data.pop(db_name, None)
@@ -5056,6 +5086,12 @@ class MemoryEngine(AsyncStorageEngine):
                 ]
                 for key in stale_vector_cache_keys:
                     del self._vector_document_cache[key]
+                for name in dropped_names:
+                    for payload in namespace_change_payloads("drop", db_name, name):
+                        self._record_committed_payload(context, payload)
+                if dropped_names:
+                    for payload in namespace_change_payloads("dropDatabase", db_name):
+                        self._record_committed_payload(context, payload)
         try:
             self._profiler.clear(db_name)
         except Exception:
@@ -5867,17 +5903,8 @@ class MemoryEngine(AsyncStorageEngine):
                     ),
                     self._collection_state_rollback_locked(
                         db_name,
-                        new_name,
-                        storage=storage,
-                        indexes=indexes,
-                        index_data=index_data,
-                        search_indexes=search_indexes,
-                        collections=collections,
-                        options=option_store,
-                    ),
-                    self._collection_state_rollback_locked(
-                        db_name,
                         coll_name,
+                        related_names={new_name},
                         storage=storage,
                         indexes=indexes,
                         index_data=index_data,
@@ -5950,6 +5977,12 @@ class MemoryEngine(AsyncStorageEngine):
                         collections=collections,
                         collection_options=option_store,
                     )
+                    self._record_namespace_changes(
+                        context,
+                        namespace_change_payloads(
+                            "rename", db_name, coll_name, new_name=new_name
+                        ),
+                    )
 
     @override
     async def drop_collection(
@@ -5987,6 +6020,12 @@ class MemoryEngine(AsyncStorageEngine):
                 ),
                 self._meta_lock,
             ):
+                existed = any(
+                    coll_name in store.get(db_name, {})
+                    for store in (
+                        storage, indexes, search_indexes, collections, option_store
+                    )
+                )
                 self._invalidate_search_runtime_cache(db_name, coll_name)
                 self._prune_collection_registry_locked(
                     db_name,
@@ -6016,3 +6055,8 @@ class MemoryEngine(AsyncStorageEngine):
                     key for key in ready_at if key[0] == db_name and key[1] == coll_name
                 ]:
                     del ready_at[key]
+                if existed:
+                    for payload in namespace_change_payloads(
+                        "drop", db_name, coll_name
+                    ):
+                        self._record_committed_payload(context, payload)

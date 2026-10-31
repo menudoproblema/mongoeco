@@ -620,13 +620,5 @@ class DatabaseAdminWriteCommandService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        while True:
-            collection_names = await self._admin._engine.list_collections(
-                self._admin._db_name,
-                context=session,
-            )
-            if not collection_names:
-                break
-            for collection_name in collection_names:
-                await self._admin.drop_collection(collection_name, session=session)
+        await self._admin._database._drop_database(session=session)
         return DropDatabaseCommandResult(database_name=self._admin._db_name)

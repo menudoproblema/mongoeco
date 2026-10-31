@@ -86,7 +86,8 @@ La publicacion valida que almacenamiento, indices y catalogo pertenezcan a la
 misma vista vigente. Los journals de namespace y la instalacion de la nueva
 generacion comparten el guard de metadatos. La preparacion del outbox ocurre
 antes de instalar su secuencia e historial; un fallo mantiene o restaura el
-estado anterior. Los scopes anidados de un rename comparten ownership. Los
+estado anterior. Rename captura ambos namespaces en el mismo scope de rollback,
+que sigue activo hasta preparar tambien sus efectos de commit. Los
 hooks de transaccion rechazan reentrada mientras se publica estado parcial;
 los callbacks de outcomes y de entrega no se ejecutan dentro de ese scope.
 
@@ -104,7 +105,9 @@ entradas de storage, las
 pertenencias a buckets de indices y la metadata de alta que realmente cambian.
 El rollback no reinvoca el helper que fallo y restaura tambien los ordinales de
 insercion. DDL conserva su snapshot de coleccion porque cambia catalogos enteros.
-Iniciar una transaccion todavia captura los contenedores superiores de bases,
+Drop de base retiene referencias a los roots que va a retirar y los restaura
+si falla la preparacion; no copia todos sus documentos. Iniciar una transaccion
+todavia captura los contenedores superiores de bases,
 namespaces y catalogos para fijar un instante coherente. Esta copia depende del
 numero de namespaces e indices, no de las filas; no se presenta como admision
 por bytes ni como un nuevo nivel de aislamiento.

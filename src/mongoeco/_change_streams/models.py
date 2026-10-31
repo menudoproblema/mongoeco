@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from mongoeco.types import ChangeEventSnapshot
+from mongoeco.types import ChangeEventSnapshot  # noqa: TC001 - introspectable signature
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,10 +12,22 @@ class ChangeStreamScope:
     coll_name: str | None = None
 
     def matches(self, event: ChangeEventSnapshot) -> bool:
+        if event.operation_type == "invalidate":
+            if self.db_name != event.db_name:
+                return False
+            if not event.coll_name:
+                return self.coll_name is None
+            return self.coll_name in {
+                event.coll_name,
+                (event.to_namespace or {}).get("coll"),
+            } and self.coll_name is not None
         if self.db_name is not None and event.db_name != self.db_name:
             return False
         if self.coll_name is not None and event.coll_name != self.coll_name:
-            return False
+            return event.operation_type == "rename" and event.to_namespace == {
+                "db": self.db_name,
+                "coll": self.coll_name,
+            }
         return True
 
 

@@ -1,0 +1,695 @@
+{
+  "49973": {
+    "drop_database": {
+      "collection": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "dropDatabase",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "client": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "dropDatabase",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    },
+    "empty_database": {
+      "collection": {
+        "events": [],
+        "alive": true
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    },
+    "rename": {
+      "collection": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "database": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a287b65e346841f094541943de56615a",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    }
+  },
+  "49974": {
+    "drop_database": {
+      "collection": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "dropDatabase",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "client": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "dropDatabase",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    },
+    "empty_database": {
+      "collection": {
+        "events": [],
+        "alive": true
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    },
+    "rename": {
+      "collection": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "database": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_4cd17c2c09ae458891110489b5949b07",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    }
+  },
+  "49975": {
+    "drop_database": {
+      "collection": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "dropDatabase",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "client": {
+        "events": [
+          {
+            "operationType": "drop",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "dropDatabase",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    },
+    "empty_database": {
+      "collection": {
+        "events": [],
+        "alive": true
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    },
+    "rename": {
+      "collection": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "missing": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "database": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "to": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "c"
+            }
+          },
+          {
+            "operationType": "insert",
+            "fullDocument": {
+              "_id": 2
+            },
+            "ns": {
+              "db": "ddl_a769c851a299476894d75b6acde013cd",
+              "coll": "barrier"
+            },
+            "documentKey": {
+              "_id": 2
+            }
+          }
+        ],
+        "alive": true
+      }
+    }
+  }
+}

@@ -1912,16 +1912,18 @@ class AsyncCollection:
 
     async def drop(self, *, session: ClientSession | None = None) -> None:
         self._ensure_session_active(session)
-        await self._engine.drop_collection(
-            self._db_name,
-            self._collection_name,
-            context=session,
-        )
-        self._publish_change_event(
-            operation_type="invalidate",
-            document_key={"_id": self.full_name},
-            session=session,
-        )
+        with self._runtime._engine_change_delivery_scope(session=session):
+            await self._engine.drop_collection(
+                self._db_name,
+                self._collection_name,
+                context=session,
+            )
+        if self._runtime._engine_spi.capabilities.change_delivery == "none":
+            self._publish_change_event(
+                operation_type="invalidate",
+                document_key={"_id": self.full_name},
+                session=session,
+            )
 
     async def rename(
         self,
@@ -1932,12 +1934,13 @@ class AsyncCollection:
         self._ensure_session_active(session)
         if not isinstance(new_name, str) or not new_name:
             raise TypeError("new_name must be a non-empty string")
-        await self._engine.rename_collection(
-            self._db_name,
-            self._collection_name,
-            new_name,
-            context=session,
-        )
+        with self._runtime._engine_change_delivery_scope(session=session):
+            await self._engine.rename_collection(
+                self._db_name,
+                self._collection_name,
+                new_name,
+                context=session,
+            )
         return self._new_collection(
             new_name,
             mongodb_dialect=self._mongodb_dialect,

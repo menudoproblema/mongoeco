@@ -66,7 +66,7 @@ class ProfileEntryDocument(TypedDict, total=False):
 
 class ChangeNamespaceDocument(TypedDict):
     db: str
-    coll: str
+    coll: NotRequired[str]
 
 
 class ResumeTokenDocument(TypedDict):
@@ -81,6 +81,7 @@ class ChangeEventDocument(TypedDict, total=False):
     fullDocument: Document | None
     clusterTime: int
     updateDescription: dict[str, object]
+    to: ChangeNamespaceDocument
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,15 +196,22 @@ class ChangeEventSnapshot:
     full_document: Document | None = None
     update_description: dict[str, object] | None = None
     post_image_available: bool = False
+    to_namespace: ChangeNamespaceDocument | None = None
 
     def to_document(self) -> ChangeEventDocument:
         document: ChangeEventDocument = {
             "_id": {"_data": encode_change_stream_token(self.token)},
             "operationType": self.operation_type,
-            "ns": {"db": self.db_name, "coll": self.coll_name},
-            "documentKey": deepcopy(self.document_key),
-            "clusterTime": self.token,
         }
+        if self.operation_type != "invalidate":
+            document["ns"] = {"db": self.db_name, "coll": self.coll_name}
+            if self.operation_type == "dropDatabase":
+                document["ns"].pop("coll")
+            if self.to_namespace is not None:
+                document["to"] = deepcopy(self.to_namespace)
+        if self.operation_type in {"insert", "update", "replace", "delete"}:
+            document["documentKey"] = deepcopy(self.document_key)
+        document["clusterTime"] = self.token
         if self.full_document is not None:
             document["fullDocument"] = deepcopy(self.full_document)
         if self.update_description is not None:

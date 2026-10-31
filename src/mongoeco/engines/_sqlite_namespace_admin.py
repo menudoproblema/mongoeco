@@ -4,6 +4,7 @@ import sqlite3
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from mongoeco.core.change_events import namespace_change_payloads
 from mongoeco.errors import CollectionInvalid
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines._shared_namespace_admin import (
@@ -105,6 +106,7 @@ def rename_collection(
     mark_index_metadata_changed: Callable[[str, str], None],
     invalidate_collection_id_cache: Callable[[str, str], None],
     invalidate_collection_features_cache: Callable[[str, str], None],
+    record_changes: Callable[[list[dict]], None] | None = None,
 ) -> None:
     if coll_name == new_name:
         raise CollectionInvalid("collection names must differ")
@@ -133,6 +135,10 @@ def rename_collection(
         invalidate_collection_id_cache(db_name, new_name)
         invalidate_collection_features_cache(db_name, coll_name)
         invalidate_collection_features_cache(db_name, new_name)
+        if record_changes is not None:
+            record_changes(namespace_change_payloads(
+                "rename", db_name, coll_name, new_name=new_name
+            ))
 
 
 def drop_collection(
@@ -153,6 +159,7 @@ def drop_collection(
     mark_index_metadata_changed: Callable[[str, str], None],
     invalidate_collection_id_cache: Callable[[str, str], None],
     invalidate_collection_features_cache: Callable[[str, str], None],
+    record_changes: Callable[[list[dict]], None] | None = None,
 ) -> None:
     indexes = load_indexes(db_name, coll_name)
     search_indexes = load_search_index_rows(db_name, coll_name)
@@ -230,6 +237,8 @@ def drop_collection(
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_id_cache(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
+        if collection_id is not None and record_changes is not None:
+            record_changes(namespace_change_payloads("drop", db_name, coll_name))
 
 
 def drop_database(
@@ -246,6 +255,7 @@ def drop_database(
     invalidate_collection_id_cache: Callable[[], None],
     invalidate_collection_features_cache: Callable[[], None],
     clear_profiler: Callable[[str], None],
+    record_changes: Callable[[list[dict]], None] | None = None,
 ) -> None:
     index_rows = conn.execute(
         """
@@ -269,6 +279,13 @@ def drop_database(
         commit_write=commit_write,
         rollback_write=rollback_write,
     ):
+        dropped_names = [
+            row[0] for row in conn.execute(
+                "SELECT coll_name FROM collections "
+                "WHERE db_name = ? ORDER BY coll_name",
+                (db_name,),
+            )
+        ]
         for physical_name, multikey_physical_name, scalar_physical_name in index_rows:
             if physical_name:
                 conn.execute(
@@ -343,6 +360,14 @@ def drop_database(
         invalidate_index_cache()
         invalidate_collection_id_cache()
         invalidate_collection_features_cache()
+        if dropped_names and record_changes is not None:
+            payloads = [
+                payload
+                for name in dropped_names
+                for payload in namespace_change_payloads("drop", db_name, name)
+            ]
+            payloads.extend(namespace_change_payloads("dropDatabase", db_name))
+            record_changes(payloads)
     try:
         clear_profiler(db_name)
     except Exception:

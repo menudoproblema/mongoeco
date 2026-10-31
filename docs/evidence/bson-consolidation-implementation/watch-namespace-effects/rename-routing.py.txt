@@ -1,0 +1,27 @@
+import json,uuid
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+report={}
+def observe(client):
+ name='rename_'+uuid.uuid4().hex
+ result={}
+ try:
+  for route in ('source','admin'):
+   db=client[name];db.source.insert_one({'_id':route})
+   command_db=db if route=='source' else client['admin']
+   try:
+    command_db.command({'renameCollection':f'{name}.source','to':f'{name}.target'})
+    result[route]={'ok':True}
+   except Exception as error:result[route]={'error':type(error).__name__,'code':getattr(error,'code',None)}
+   result[route]['source']=list(db.source.find({}))
+   result[route]['target']=list(db.target.find({}))
+   client.drop_database(name)
+  return result
+ finally:client.drop_database(name)
+for version,port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+ with NativeClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as client:report['native-'+version]=observe(client)
+for version in ('7.0','8.0','9.0'):
+ for backend in (MemoryEngine,SQLiteEngine):
+  with MongoClient(backend(),mongodb_dialect=version) as client:report[backend.__name__+'-'+version]=observe(client)
+print(json.dumps(report,indent=2))

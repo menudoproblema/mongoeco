@@ -4051,18 +4051,17 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
     def test_drop_collection_resolves_collection_id_once(self):
         engine = SQLiteEngine()
-        fake_connection = Mock()
-        fake_connection.execute.return_value = None
-        engine._require_connection = Mock(return_value=fake_connection)
-        engine._load_indexes = Mock(return_value=[])
-        engine._load_search_index_rows = Mock(return_value=[])
-        engine._lookup_collection_id = Mock(return_value=7)
-
-        engine._drop_collection_sync("db", "coll")
-
-        engine._lookup_collection_id.assert_called_once_with(
-            fake_connection, "db", "coll"
-        )
+        engine._connect_sync()
+        try:
+            connection = engine._require_connection()
+            engine._create_collection_sync("db", "coll")
+            with patch.object(
+                engine, "_lookup_collection_id", wraps=engine._lookup_collection_id
+            ) as lookup:
+                engine._drop_collection_sync("db", "coll")
+            lookup.assert_called_once_with(connection, "db", "coll")
+        finally:
+            engine._disconnect_sync()
 
     def test_delete_matching_document_sync_skips_non_matching_fallback_rows(self):
         engine = SQLiteEngine()

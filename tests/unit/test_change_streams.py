@@ -1017,7 +1017,9 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_cursor_closes_after_invalidate_event(self):
         hub = ChangeStreamHub()
-        cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
+        cursor = AsyncChangeStreamCursor(
+            hub, scope=ChangeStreamScope(db_name="alpha", coll_name="users")
+        )
 
         hub.publish(
             operation_type="invalidate",
@@ -1026,7 +1028,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
             document_key={"_id": "users"},
         )
 
-        event = await cursor.try_next()
+        event = await asyncio.wait_for(cursor.try_next(), timeout=0.1)
 
         self.assertEqual(event["operationType"], "invalidate")
         self.assertFalse(cursor.alive)
@@ -1035,7 +1037,9 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_cursor_next_closes_after_invalidate_event(self):
         hub = ChangeStreamHub()
-        cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
+        cursor = AsyncChangeStreamCursor(
+            hub, scope=ChangeStreamScope(db_name="alpha", coll_name="users")
+        )
 
         hub.publish(
             operation_type="invalidate",
@@ -1044,7 +1048,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
             document_key={"_id": "users"},
         )
 
-        event = await cursor.next()
+        event = await asyncio.wait_for(cursor.next(), timeout=0.1)
 
         self.assertEqual(event["operationType"], "invalidate")
         self.assertFalse(cursor.alive)

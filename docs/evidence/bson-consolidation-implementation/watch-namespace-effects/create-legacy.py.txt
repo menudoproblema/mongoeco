@@ -1,0 +1,18 @@
+import json,sqlite3
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path('/tmp/mongoeco-ddl-compat')
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ source=client.compat.source
+ source.create_index('v')
+ stream=client.watch(max_await_time_ms=1)
+ source.insert_one({'_id':1,'v':0})
+ token=stream.try_next()['_id']
+ source.update_one({}, {'$set':{'v':1}})
+ stream.close()
+with sqlite3.connect(root/'db.sqlite') as conn:
+ result={'producer':mongoeco.__file__,'token':token,'schema':conn.execute('SELECT name,sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY name').fetchall(),'keys':conn.execute('SELECT storage_key FROM documents ORDER BY storage_key').fetchall()}
+(root/'before.json').write_text(json.dumps(result,indent=2))
+print(result['producer'])

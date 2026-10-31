@@ -7,6 +7,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from mongoeco.api._change_delivery import change_delivery_scope
 from mongoeco.api._async._collection_watch import lookup_change_document
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
@@ -324,6 +325,25 @@ class AsyncDatabase:
         session: ClientSession | None = None,
     ) -> None:
         await self._admin.drop_collection(name, session=session)
+
+    async def _drop_database(self, *, session=None):
+        _ensure_session_active(session)
+        adapter = self._validated_engine_spi
+        if adapter is None:
+            adapter = self._validated_engine_spi = EngineSpiAdapter(self._engine)
+        with change_delivery_scope(adapter, self._change_hub, session=session):
+            fast_drop = getattr(self._engine, "drop_database", None)
+            if callable(fast_drop):
+                await fast_drop(self._db_name, context=session)
+                return
+            while True:
+                names = await self._engine.list_collections(
+                    self._db_name, context=session
+                )
+                if not names:
+                    return
+                for name in names:
+                    await self.drop_collection(name, session=session)
 
     async def validate_collection(
         self,
@@ -776,20 +796,7 @@ class AsyncMongoClient:
         *,
         session: ClientSession | None = None,
     ) -> None:
-        _ensure_session_active(session)
-        fast_drop = getattr(self._engine, "drop_database", None)
-        if callable(fast_drop):
-            await fast_drop(name, context=session)
-            return
-        database = self.get_database(name)
-        while True:
-            collection_names = await self._engine.list_collections(
-                name, context=session
-            )
-            if not collection_names:
-                return
-            for collection_name in collection_names:
-                await database.drop_collection(collection_name, session=session)
+        await self.get_database(name)._drop_database(session=session)
 
     async def server_info(self) -> BuildInfoDocument:
         return build_info_document(self._mongodb_dialect)

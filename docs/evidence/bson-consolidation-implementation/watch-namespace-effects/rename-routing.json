@@ -1,0 +1,191 @@
+{
+  "native-7.0": {
+    "source": {
+      "error": "OperationFailure",
+      "code": 13,
+      "source": [
+        {
+          "_id": "source"
+        }
+      ],
+      "target": []
+    },
+    "admin": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "admin"
+        }
+      ]
+    }
+  },
+  "native-8.0": {
+    "source": {
+      "error": "OperationFailure",
+      "code": 13,
+      "source": [
+        {
+          "_id": "source"
+        }
+      ],
+      "target": []
+    },
+    "admin": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "admin"
+        }
+      ]
+    }
+  },
+  "native-9.0": {
+    "source": {
+      "error": "OperationFailure",
+      "code": 13,
+      "source": [
+        {
+          "_id": "source"
+        }
+      ],
+      "target": []
+    },
+    "admin": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "admin"
+        }
+      ]
+    }
+  },
+  "MemoryEngine-7.0": {
+    "source": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "source"
+        }
+      ]
+    },
+    "admin": {
+      "error": "OperationFailure",
+      "code": null,
+      "source": [
+        {
+          "_id": "admin"
+        }
+      ],
+      "target": []
+    }
+  },
+  "SQLiteEngine-7.0": {
+    "source": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "source"
+        }
+      ]
+    },
+    "admin": {
+      "error": "OperationFailure",
+      "code": null,
+      "source": [
+        {
+          "_id": "admin"
+        }
+      ],
+      "target": []
+    }
+  },
+  "MemoryEngine-8.0": {
+    "source": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "source"
+        }
+      ]
+    },
+    "admin": {
+      "error": "OperationFailure",
+      "code": null,
+      "source": [
+        {
+          "_id": "admin"
+        }
+      ],
+      "target": []
+    }
+  },
+  "SQLiteEngine-8.0": {
+    "source": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "source"
+        }
+      ]
+    },
+    "admin": {
+      "error": "OperationFailure",
+      "code": null,
+      "source": [
+        {
+          "_id": "admin"
+        }
+      ],
+      "target": []
+    }
+  },
+  "MemoryEngine-9.0": {
+    "source": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "source"
+        }
+      ]
+    },
+    "admin": {
+      "error": "OperationFailure",
+      "code": null,
+      "source": [
+        {
+          "_id": "admin"
+        }
+      ],
+      "target": []
+    }
+  },
+  "SQLiteEngine-9.0": {
+    "source": {
+      "ok": true,
+      "source": [],
+      "target": [
+        {
+          "_id": "source"
+        }
+      ]
+    },
+    "admin": {
+      "error": "OperationFailure",
+      "code": null,
+      "source": [
+        {
+          "_id": "admin"
+        }
+      ],
+      "target": []
+    }
+  }
+}
