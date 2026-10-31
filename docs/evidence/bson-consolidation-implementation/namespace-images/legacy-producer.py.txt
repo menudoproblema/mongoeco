@@ -1,0 +1,24 @@
+import json, sys
+from pathlib import Path
+from bson import Binary
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+assert '/tmp/mongoeco-namespace-base/src/' in mongoeco.__file__, mongoeco.__file__
+root=Path(sys.argv[1]);root.mkdir()
+engine=SQLiteEngine(str(root/'db.sqlite'))
+with MongoClient(engine,change_stream_journal_path=str(root/'journal.json')) as client:
+    c=client.legacy.binary
+    c.insert_many([{'_id':Binary(b'\xff',0),'v':Binary(b'\xff',0)},{'_id':Binary(b'\0\0',0),'v':Binary(b'\0\0',0)}])
+    c.create_index('v')
+    keys=engine._connection.execute("SELECT storage_key FROM documents WHERE coll_name='binary' ORDER BY storage_key").fetchall()
+    subject=client.legacy.create_collection('source',changeStreamPreAndPostImages={'enabled':True})
+    subject.insert_one({'_id':1,'v':0,'b':Binary(b'old',0)})
+    stream=subject.watch(full_document='required',max_await_time_ms=0)
+    subject.update_one({}, {'$set':{'v':1}});token=next(stream)['_id']
+    subject.update_one({}, {'$set':{'v':2}})
+    subject.drop();subject.insert_one({'_id':1,'v':9,'b':Binary(b'new',0)})
+    stream.close()
+    (root/'expected.json').write_text(json.dumps({'token':token,'keys':keys}))
+print('Actual producer:',mongoeco.__file__)
+print('a981610 SQLite, Binary-only indexed IDs and pending captured image v2 followed by drop/recreate')

@@ -1,0 +1,29 @@
+{
+  "status": "static impact inventory only; fixture not implemented or accepted",
+  "workflow": ".github/workflows/mongodb-differential.yml",
+  "current_topology": "standalone service on 27017; existing pinned image matrix and immutable wheel branch",
+  "registered_watch_consumers": [
+    "watch",
+    "watch_image",
+    "watch_lifecycle",
+    "watch_rename",
+    "watch_token",
+    "watch_protocol",
+    "watch_checkpoint",
+    "watch_batch",
+    "watch_namespace_image",
+    "update_entrypoint",
+    "update_event",
+    "ttl_publication"
+  ],
+  "selection_owners": [
+    "tests/differential/semantic_corpora.py SemanticCorpus",
+    "tests/differential/cases.py RealParityCase propagation",
+    "tests/differential/runner.py canonical applicable/filter selection",
+    "scripts/run_mongodb_real_differential.py list/run/report"
+  ],
+  "compatibility": "keep historical RealParityCase.to_manifest unchanged; topology metadata must not rewrite historical captures",
+  "execution": "separate RS-required cases by explicit capability; no prefix-only split, missing union or zero-test pass; reuse existing suite/capture/replay",
+  "fixture_lifecycle": "owned UUID resource; primary/buildInfo/FCV; deadlines; cleanup on startup, payload failure and cancellation; no borrowed services killed",
+  "scope": "D04 required remaining work; not closure of RS CI or D05"
+}

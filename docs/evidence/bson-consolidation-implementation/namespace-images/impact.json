@@ -1,0 +1,20 @@
+{
+  "base": "a981610",
+  "contract": "docs/bson-semantics-consolidation-plan.md revision 12",
+  "mechanisms": {
+    "public_response_materialization": "reuse document materializer plus one scalar response adapter; normalize engine-owned wrappers and decode subtype zero only on reply paths; assigned IDs preserved",
+    "sqlite_binary_sort": "compose existing feature scan across bytes/binary/uuid; reuse canonical fallback before sort/window",
+    "merge_validation": "one structural mode-pair validator reused by preparation and execution; existing stage parsing before expression optimization",
+    "watch_namespace_images": "reuse existing hub/context/lookup/captured images; no incarnation identity or new outbox/SPI"
+  },
+  "entrypoints": [
+    "sync/async collection/database/client watch",
+    "sync/async and wire read/insert/upsert/bulk/error/metadata/index listing",
+    "aggregate $merge preparation/execution",
+    "SQLite query/sort fast paths",
+    "raw update/findAndModify operator and replacement command replies"
+  ],
+  "storage": "no stored key, index, schema or journal format change",
+  "tests": "existing native capturer and replay; new three corpora; protected observers unchanged",
+  "remaining": "D04 replica-set CI; D06/H53/conversion/D07 disposition/D05 and B07 remain"
+}

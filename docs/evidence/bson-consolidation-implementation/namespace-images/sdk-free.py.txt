@@ -1,0 +1,64 @@
+import asyncio
+from mongoeco import MongoClient, AsyncMongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.types import Binary
+try:
+    import bson
+except ImportError:
+    pass
+else:
+    raise AssertionError('SDK must be absent')
+
+async def run():
+    for dialect in ('7.0','8.0','9.0'):
+        for factory in (MemoryEngine, SQLiteEngine):
+            with MongoClient(factory(), mongodb_dialect=dialect) as client:
+                c=client.binary.c
+                c.insert_many([{'_id':1,'v':Binary(b'\xff',0)},{'_id':2,'v':Binary(b'\0\0',0)}])
+                c.create_index('v')
+                assert [d['_id'] for d in c.find({}).sort('v')]==[1,2]
+                for scope in ('collection','database','client'):
+                    db=client['sync_'+scope]
+                    c=db.create_collection('c',changeStreamPreAndPostImages={'enabled':True})
+                    c.insert_one({'_id':1,'v':0,'b':Binary(b'old',0)})
+                    owner={'collection':c,'database':db,'client':client}[scope]
+                    stream=owner.watch(full_document='required',max_await_time_ms=0)
+                    c.update_one({}, {'$set':{'v':1}})
+                    c.drop();c.insert_one({'_id':1,'v':9})
+                    event=next(stream)
+                    assert event['fullDocument']['v']==1 and bytes(event['fullDocument']['b'])==b'old'
+                    assert next(stream)['operationType']=='drop'
+                    if scope=='collection':
+                        assert next(stream)['operationType']=='invalidate'
+                        assert not stream.alive
+                        resumed=owner.watch(start_after=stream.resume_token,max_await_time_ms=0)
+                        assert next(resumed)['fullDocument']['v']==9
+                        resumed.close()
+                    else:
+                        assert next(stream)['fullDocument']['v']==9 and stream.alive
+                    stream.close()
+                assert client._async_client._change_hub.watcher_count==0
+            async with AsyncMongoClient(factory(), mongodb_dialect=dialect) as client:
+                for scope in ('collection','database','client'):
+                    db=client['async_'+scope]
+                    c=await db.create_collection('c',changeStreamPreAndPostImages={'enabled':True})
+                    await c.insert_one({'_id':1,'v':0,'b':Binary(b'old',0)})
+                    owner={'collection':c,'database':db,'client':client}[scope]
+                    stream=await owner.watch(full_document='required',max_await_time_ms=0)
+                    await c.update_one({}, {'$set':{'v':1}})
+                    await c.drop();await c.insert_one({'_id':1,'v':9})
+                    event=await stream.next()
+                    assert event['fullDocument']['v']==1 and bytes(event['fullDocument']['b'])==b'old'
+                    assert (await stream.next())['operationType']=='drop'
+                    if scope=='collection':
+                        assert (await stream.next())['operationType']=='invalidate'
+                        assert not stream.alive
+                        resumed=await owner.watch(start_after=stream.resume_token,max_await_time_ms=0)
+                        assert (await resumed.next())['fullDocument']['v']==9
+                        await resumed.close()
+                    else:
+                        assert (await stream.next())['fullDocument']['v']==9 and stream.alive
+                    await stream.close()
+                assert client._change_hub.watcher_count==0
+    print('SDK absent: six engine/dialect pairs; sync/async all actual scopes; retained images, DDL/recreate/startAfter, binary sort and released watchers')
+asyncio.run(run())

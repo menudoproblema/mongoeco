@@ -1,0 +1,2 @@
+updated /tmp/mongoeco-namespace-final-check-watch_namespace_image-8.0.json
+verified 3 native cases against tests/fixtures/semantic_watch_namespace_image_8_0.json

@@ -1,0 +1,35 @@
+{
+  "7.0": {
+    "port": 49973,
+    "setName": "mongoeco_d01b7",
+    "isWritablePrimary": true,
+    "hosts": [
+      "localhost:27017"
+    ],
+    "version": "7.0.43",
+    "fcv": "7.0",
+    "lifecycle": "preexisting owned disposable RS; no service lifecycle changes in this cut"
+  },
+  "8.0": {
+    "port": 49974,
+    "setName": "mongoeco_d01b8",
+    "isWritablePrimary": true,
+    "hosts": [
+      "localhost:27017"
+    ],
+    "version": "8.0.32",
+    "fcv": "8.0",
+    "lifecycle": "preexisting owned disposable RS; no service lifecycle changes in this cut"
+  },
+  "9.0": {
+    "port": 49975,
+    "setName": "mongoeco_d01b9",
+    "isWritablePrimary": true,
+    "hosts": [
+      "127.0.0.1:49975"
+    ],
+    "version": "9.0.2",
+    "fcv": "9.0",
+    "lifecycle": "preexisting owned disposable RS; no service lifecycle changes in this cut"
+  }
+}

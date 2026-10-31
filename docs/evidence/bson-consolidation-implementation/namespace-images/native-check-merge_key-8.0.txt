@@ -1,0 +1,2 @@
+updated /tmp/mongoeco-namespace-final-check-merge_key-8.0.json
+verified 2 native cases against tests/fixtures/semantic_merge_key_8_0.json

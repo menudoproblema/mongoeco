@@ -1,0 +1,62 @@
+import asyncio,json,time
+import mongoeco
+from mongoeco import AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+
+async def run():
+ results={}
+ for factory in (MemoryEngine,SQLiteEngine):
+  for scope in ('collection','database','client','unwatched'):
+   for mode in (('default',) if scope=='unwatched' else ('default','updateLookup')):
+    times=[];checksums=[]
+    async with AsyncMongoClient(factory(),mongodb_dialect='9.0') as client:
+     c=client.bench.c;await c.insert_one({'_id':0,'v':0})
+     owner={'collection':c,'database':c.database,'client':client,'unwatched':None}[scope]
+     for sample in range(5):
+      stream=await owner.watch(max_await_time_ms=0,full_document=mode) if owner is not None else None
+      checksum=0;start=time.perf_counter()
+      for value in range(1,301):
+       expected=sample*300+value
+       assert (await c.update_one({'_id':0},{'$set':{'v':expected}})).modified_count==1
+       if stream is not None:
+        event=await stream.next();assert event['operationType']=='update'
+        checksum+=event['updateDescription']['updatedFields']['v']
+        if mode=='updateLookup':assert event['fullDocument']['v']==expected
+       else:checksum+=expected
+      times.append(time.perf_counter()-start);checksums.append(checksum)
+      assert (await c.find_one({'_id':0}))['v']==sample*300+300
+      if stream is not None:await stream.close()
+    results[f'{factory.__name__}/{scope}/{mode}']={'seconds':times,'checksums':checksums,'updates_per_sample':300}
+  for mode in ('default','updateLookup'):
+   times=[];checksums=[]
+   for sample in range(5):
+    async with AsyncMongoClient(factory(),mongodb_dialect='9.0') as client:
+     c=client.bench.c;keeper=await c.watch(max_await_time_ms=0)
+     await c.insert_one({'_id':0,'v':0});token=(await keeper.next())['_id']
+     for value in range(1,102):await c.update_one({'_id':0},{'$set':{'v':value}})
+     start=time.perf_counter();stream=await c.watch(resume_after=token,max_await_time_ms=0,full_document=mode)
+     checksum=0
+     for value in range(1,102):
+      event=await stream.next();assert event['updateDescription']['updatedFields']['v']==value
+      if mode=='updateLookup':assert event['fullDocument']['v']==101
+      checksum+=value
+     times.append(time.perf_counter()-start);checksums.append(checksum)
+     await stream.close();await keeper.close()
+   results[f'{factory.__name__}/backlog/{mode}']={'seconds':times,'checksums':checksums,'reads_per_sample':101}
+ # Ordinary SQL sort does not require binary fallback; check its overhead separately.
+ for dialect in ('7.0','8.0','9.0'):
+  times=[];checksums=[]
+  async with AsyncMongoClient(SQLiteEngine(),mongodb_dialect=dialect) as client:
+   c=client.bench.c
+   await c.insert_many([{'_id':i,'v':1024-i} for i in range(1024)])
+   await c.create_index('v')
+   for sample in range(5):
+    start=time.perf_counter();checksum=0
+    for repeat in range(40):
+     rows=await c.find({}).sort('v').skip(5).limit(10).to_list()
+     assert [r['v'] for r in rows]==list(range(6,16))
+     checksum+=sum(r['_id'] for r in rows)
+    times.append(time.perf_counter()-start);checksums.append(checksum)
+  results[f'SQLiteEngine/numeric-sort/{dialect}']={'seconds':times,'checksums':checksums,'queries_per_sample':40}
+ print(json.dumps({"runtime":mongoeco.__file__,"cases":results}))
+asyncio.run(run())

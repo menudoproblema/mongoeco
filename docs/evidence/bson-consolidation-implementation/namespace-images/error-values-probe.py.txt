@@ -1,0 +1,21 @@
+from bson import Binary
+from pymongo import MongoClient as Native
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+import json,uuid
+
+def probe(client):
+ name='binary_errors_'+uuid.uuid4().hex
+ try:
+  c=client[name].c
+  c.insert_one({'_id':Binary(b'same',0)})
+  try:c.insert_one({'_id':Binary(b'same',0)})
+  except Exception as e:
+   return {'error':type(e).__name__,'code':e.code,'keyValue':{'class':type(e.details['keyValue']['_id']).__module__+'.'+type(e.details['keyValue']['_id']).__qualname__,'subtype':getattr(e.details['keyValue']['_id'],'subtype',0)}}
+ finally:client.drop_database(name)
+out={}
+for major,port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+ with Native(f'mongodb://127.0.0.1:{port}/?directConnection=true',serverSelectionTimeoutMS=3000) as client:out['native-'+major]=probe(client)
+ for label,factory in [('memory',MemoryEngine),('sqlite',SQLiteEngine)]:
+  with MongoClient(factory(),mongodb_dialect=major) as client:out[label+'-'+major]=probe(client)
+print(json.dumps(out,indent=2))

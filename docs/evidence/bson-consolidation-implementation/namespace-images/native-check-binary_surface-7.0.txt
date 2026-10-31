@@ -1,0 +1,2 @@
+updated /tmp/mongoeco-namespace-binary-check-7.0.json
+verified 6 native cases against tests/fixtures/semantic_binary_surface_7_0.json

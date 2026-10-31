@@ -1,0 +1,33 @@
+import json,sys
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path(sys.argv[1]);record=json.loads((root/'expected.json').read_text())
+engine=SQLiteEngine(str(root/'db.sqlite'))
+with MongoClient(engine,change_stream_journal_path=str(root/'journal.json')) as client:
+    c=client.legacy.binary
+    assert [d['_id'] for d in c.find({}).sort('v')]==[b'\xff',b'\0\0']
+    assert all(type(d['_id']) is bytes for d in c.find({}))
+    assert 'v_1' in c.index_information()
+    assert c.update_one({'_id':b'\xff'},{'$set':{'seen':True}}).modified_count==1
+    keys=engine._connection.execute("SELECT storage_key FROM documents WHERE coll_name='binary' ORDER BY storage_key").fetchall()
+    assert [list(row) for row in keys]==record['keys']
+    subject=client.legacy.source
+    with subject.watch(resume_after=record['token'],full_document='required',max_await_time_ms=0) as stream:
+        event=next(stream)
+        assert event['fullDocument']=={'_id':1,'v':2,'b':b'old'}
+        assert type(event['fullDocument']['b']) is bytes
+        assert next(stream)['operationType']=='drop'
+        assert next(stream)['operationType']=='invalidate'
+        token=stream.resume_token
+        assert not stream.alive
+    with subject.watch(start_after=token,max_await_time_ms=0) as stream:
+        assert next(stream)['fullDocument']=={'_id':1,'v':9,'b':b'new'}
+        assert stream.try_next() is None
+        token=stream.resume_token
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+    with client.legacy.source.watch(resume_after=token,max_await_time_ms=0) as stream:
+        client.legacy.source.insert_one({'_id':2,'v':10})
+        assert next(stream)['documentKey']=={'_id':2}
+    assert 'v_1' in client.legacy.binary.index_information()
+print('Old storage keys/index unchanged; bytes aliases write; sorted reads fixed; pending v2 image and startAfter retain actual legacy journal; second reopen resumes')

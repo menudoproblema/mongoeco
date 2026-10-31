@@ -1,0 +1,17 @@
+{
+  "native9": {
+    "upserted": "builtins.bytes",
+    "value": "builtins.bytes",
+    "update": "builtins.bytes"
+  },
+  "memory": {
+    "upserted": "mongoeco.core.codec._InternalBsonBinary",
+    "value": "builtins.bytes",
+    "update": "mongoeco.core.codec._InternalBsonBinary"
+  },
+  "sqlite": {
+    "upserted": "mongoeco.core.codec._InternalBsonBinary",
+    "value": "builtins.bytes",
+    "update": "mongoeco.core.codec._InternalBsonBinary"
+  }
+}

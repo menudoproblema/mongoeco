@@ -1,0 +1,18 @@
+import json,os,statistics,subprocess,sys
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/namespace-images');runs={};origins={}
+for label,source in [('before0','/tmp/mongoeco-namespace-base/src'),('after0','src'),('after1','src'),('before1','/tmp/mongoeco-namespace-base/src')]:
+ completed=subprocess.run([sys.executable,'/tmp/mongoeco-namespace-benchmark.py'],env=dict(os.environ,PYTHONPATH=source),check=True,capture_output=True,text=True,timeout=180)
+ payload=json.loads(completed.stdout);data=payload['cases'];runs[label]=data
+ assert Path(payload['runtime']).resolve().is_relative_to(Path(source).resolve()),payload['runtime']
+ origins[label]=payload['runtime']
+ (root/f'benchmark-{label}.json').write_text(json.dumps(payload,indent=2)+'\n')
+ print('completed',label,flush=True)
+summary={}
+for case in runs['before0']:
+ before=[x for label,data in runs.items() if label.startswith('before') for x in data[case]['seconds']]
+ after=[x for label,data in runs.items() if label.startswith('after') for x in data[case]['seconds']]
+ assert len({tuple(data[case]['checksums']) for data in runs.values()})==1,case
+ summary[case]={'before_samples':len(before),'after_samples':len(after),'before_median_seconds':statistics.median(before),'after_median_seconds':statistics.median(after),'ratio':statistics.median(after)/statistics.median(before),'checksums_equal':True}
+(root/'benchmark-paired-summary.json').write_text(json.dumps({'order':['before0','after0','after1','before1'],'runtime_origins':origins,'cases':summary},indent=2)+'\n')
+print(json.dumps(summary,indent=2))

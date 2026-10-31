@@ -1,0 +1,74 @@
+{
+  "native-7.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "builtins.bytes",
+      "subtype": 0
+    }
+  },
+  "memory-7.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "bson.binary.Binary",
+      "subtype": 0
+    }
+  },
+  "sqlite-7.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "bson.binary.Binary",
+      "subtype": 0
+    }
+  },
+  "native-8.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "builtins.bytes",
+      "subtype": 0
+    }
+  },
+  "memory-8.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "bson.binary.Binary",
+      "subtype": 0
+    }
+  },
+  "sqlite-8.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "bson.binary.Binary",
+      "subtype": 0
+    }
+  },
+  "native-9.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "builtins.bytes",
+      "subtype": 0
+    }
+  },
+  "memory-9.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "bson.binary.Binary",
+      "subtype": 0
+    }
+  },
+  "sqlite-9.0": {
+    "error": "DuplicateKeyError",
+    "code": 11000,
+    "keyValue": {
+      "class": "bson.binary.Binary",
+      "subtype": 0
+    }
+  }
+}

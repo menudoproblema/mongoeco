@@ -1,0 +1,28 @@
+{
+  "scope": "reviewed decoded-response/assigned-input boundary; not general BSON admission or D06 closure",
+  "decoded_documents": [
+    "collection._apply_codec_options_to_document",
+    "client/database watch materializer; retained compiled/context behavior",
+    "list_indexes via collection document materializer"
+  ],
+  "decoded_values": [
+    "collection options and database collection listing",
+    "update/bulk upsert result IDs",
+    "update/findAndModify command upsert IDs including replacement",
+    "duplicate keyValue and partial bulk upsert IDs"
+  ],
+  "assigned_inputs_preserved": [
+    "insert_one.inserted_id",
+    "insert_many.inserted_ids",
+    "bulk writeErrors.op original document ID",
+    "generated ObjectId assignment to caller documents"
+  ],
+  "diagnostic_only": [
+    "duplicate_keys diagnosticKey keeps existing rendering",
+    "semantic_core validation diagnostic context; H53 owner unchanged"
+  ],
+  "low_level_adapter": [
+    "AsyncChangeStreamCursor default converter; public watch factories pass their explicit materializer"
+  ],
+  "policy": "materialize_public_value decodes engine-owned response values; materialize_public_document retains codec effects/two phases; DocumentCodec.to_pymongo preserving default remains for assigned IDs"
+}

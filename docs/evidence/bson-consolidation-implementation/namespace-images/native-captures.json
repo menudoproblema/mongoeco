@@ -1,0 +1,152 @@
+{
+  "7.0": {
+    "binary_surface": {
+      "fixture": "tests/fixtures/semantic_binary_surface_7_0.json",
+      "sha256": "88935d7b070a1084be439f738b8763170c4ca7bb9b384ccae413d51d009a898d",
+      "corpus": {
+        "path": "tests/differential/semantic_binary_surface_cases.py",
+        "sha256": "c12ddd1b70323dbd116a78016270c2332061445e8e55a6c5f3367f8ce8c472e0"
+      },
+      "case_count": 6,
+      "check_log": "native-check-binary_surface-7.0.txt",
+      "build_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    },
+    "merge_key": {
+      "fixture": "tests/fixtures/semantic_merge_key_7_0.json",
+      "sha256": "5f0c73d5bc421a35d8eb2f96335b80561f7c99ffb6547b3d71155bf6e7038292",
+      "corpus": {
+        "path": "tests/differential/semantic_merge_key_cases.py",
+        "sha256": "4e05e555e5e6306fe73c7ef932542c48bba571bffbc6fb455986226f33d982c5"
+      },
+      "case_count": 2,
+      "check_log": "native-check-merge_key-7.0.txt",
+      "build_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    },
+    "watch_namespace_image": {
+      "fixture": "tests/fixtures/semantic_watch_namespace_image_7_0.json",
+      "sha256": "a296b1e0189dcd56e1f62790e8718ccb6585334b506cbc84b282d455cdb75fe2",
+      "corpus": {
+        "path": "tests/differential/semantic_watch_namespace_image_cases.py",
+        "sha256": "3bab8880f47f6e3713a81c15b296d2b3a45ebf5c529f7c883eadcf7185240c6a"
+      },
+      "case_count": 3,
+      "check_log": "native-check-watch_namespace_image-7.0.txt",
+      "build_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    }
+  },
+  "8.0": {
+    "binary_surface": {
+      "fixture": "tests/fixtures/semantic_binary_surface_8_0.json",
+      "sha256": "76e5b1c182e4f96df1e2a0bebfdd8ac5a2510a3b370019979b37813c4084497a",
+      "corpus": {
+        "path": "tests/differential/semantic_binary_surface_cases.py",
+        "sha256": "c12ddd1b70323dbd116a78016270c2332061445e8e55a6c5f3367f8ce8c472e0"
+      },
+      "case_count": 6,
+      "check_log": "native-check-binary_surface-8.0.txt",
+      "build_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    },
+    "merge_key": {
+      "fixture": "tests/fixtures/semantic_merge_key_8_0.json",
+      "sha256": "fed3d463ec156260d1be9c0d4ab1bd0d0ab094400e4d9fe3e55eeb249252e5c2",
+      "corpus": {
+        "path": "tests/differential/semantic_merge_key_cases.py",
+        "sha256": "4e05e555e5e6306fe73c7ef932542c48bba571bffbc6fb455986226f33d982c5"
+      },
+      "case_count": 2,
+      "check_log": "native-check-merge_key-8.0.txt",
+      "build_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    },
+    "watch_namespace_image": {
+      "fixture": "tests/fixtures/semantic_watch_namespace_image_8_0.json",
+      "sha256": "62f715208023d5f4556de438ed30623f3af35a0cb2facce6eb01c3d15f3c1b99",
+      "corpus": {
+        "path": "tests/differential/semantic_watch_namespace_image_cases.py",
+        "sha256": "3bab8880f47f6e3713a81c15b296d2b3a45ebf5c529f7c883eadcf7185240c6a"
+      },
+      "case_count": 3,
+      "check_log": "native-check-watch_namespace_image-8.0.txt",
+      "build_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    }
+  },
+  "9.0": {
+    "binary_surface": {
+      "fixture": "tests/fixtures/semantic_binary_surface_9_0.json",
+      "sha256": "aa623c402e58da0b4faa2899d27a035fd2033bca06bc4b186ab04ba2ed105741",
+      "corpus": {
+        "path": "tests/differential/semantic_binary_surface_cases.py",
+        "sha256": "c12ddd1b70323dbd116a78016270c2332061445e8e55a6c5f3367f8ce8c472e0"
+      },
+      "case_count": 6,
+      "check_log": "native-check-binary_surface-9.0.txt",
+      "build_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    },
+    "merge_key": {
+      "fixture": "tests/fixtures/semantic_merge_key_9_0.json",
+      "sha256": "50b4a34d0c482b55f27242f8e1804c1a0ae77ee5ed9ea36244e8016cc023a970",
+      "corpus": {
+        "path": "tests/differential/semantic_merge_key_cases.py",
+        "sha256": "4e05e555e5e6306fe73c7ef932542c48bba571bffbc6fb455986226f33d982c5"
+      },
+      "case_count": 2,
+      "check_log": "native-check-merge_key-9.0.txt",
+      "build_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    },
+    "watch_namespace_image": {
+      "fixture": "tests/fixtures/semantic_watch_namespace_image_9_0.json",
+      "sha256": "42e9ae84c7a27f7a05a2b5760052a86795b08ccee537fd177d3a19a12b1bf96d",
+      "corpus": {
+        "path": "tests/differential/semantic_watch_namespace_image_cases.py",
+        "sha256": "3bab8880f47f6e3713a81c15b296d2b3a45ebf5c529f7c883eadcf7185240c6a"
+      },
+      "case_count": 3,
+      "check_log": "native-check-watch_namespace_image-9.0.txt",
+      "build_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "python": "3.14.5",
+      "pymongo": "4.19.0"
+    }
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "status": "D04 namespace/image integration and reached BSON/SQL/merge fixes accepted; replica-set CI remains open",
+  "runtime_base": "a981610a47ee57039367dbbf746e27c1bc25b66a",
+  "contract_revision": "9eea45c",
+  "runtime_commits": [
+    "eb0074e700e3222ab18b5ef7b283169dda0c3be9",
+    "7dd54abfd0f470f53241b8b931d38c844f9db3ae"
+  ],
+  "runtime_manifest": "runtime-sources.json",
+  "workset_manifest": "workset.json",
+  "native": {
+    "captures": "native-captures.json",
+    "topology": "native-topology.json",
+    "case_families_per_major": 11,
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "capture_and_check": "existing scripts/capture_differential_replay_golden.py; binary-surface/merge-key/watch-namespace-image; each --target and --output, fresh distinct output plus --check",
+    "all_capture_exit_codes": 0,
+    "all_check_exit_codes": 0,
+    "cleanup": "UUID databases dropped in finally; preexisting owned RS services remain; habitual 27017 untouched"
+  },
+  "checks": {
+    "integrated": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "log": "acceptance-integrated.txt.gz",
+      "passed": 6616,
+      "seconds": 302.32,
+      "exit_code": 0
+    },
+    "core": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/unit/api tests/property tests/unit/test_change_streams.py tests/unit/test_differential.py tests/integration/api/test_watch_batch_contract.py tests/integration/api/test_watch_checkpoint_contract.py tests/integration/api/test_watch_protocol_contract.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_watch_image_contract.py tests/integration/api/test_watch_namespace_contract.py tests/contracts/engines/test_spi_v2_only.py --tb=short",
+      "log": "acceptance-core.txt.gz",
+      "passed": 3238,
+      "skipped": 315,
+      "subtests_passed": 1008,
+      "seconds": 32.11,
+      "exit_code": 0
+    },
+    "focal": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'watch_namespace_image or binary_surface or merge_key' --tb=short",
+      "log": "acceptance-focus.txt.gz",
+      "passed": 237,
+      "seconds": 11.39,
+      "exit_code": 0
+    },
+    "wheel": {
+      "command": "PYTHONPATH=/tmp/mongoeco-namespace-final-wheel-v4/site-packages:. MONGOECO_TEST_INSTALLED_ARTIFACT=1 .venv/bin/python -m pytest -q -o pythonpath= tests/integration/api/test_semantic_group_regressions.py -k 'watch_namespace_image or binary_surface or merge_key' --tb=short",
+      "log": "acceptance-wheel.txt.gz",
+      "passed": 237,
+      "seconds": 13.27,
+      "exit_code": 0
+    },
+    "orjson": {
+      "command": "MONGOECO_JSON_BACKEND=orjson .venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'watch_namespace_image or binary_surface or merge_key' --tb=short",
+      "log": "acceptance-orjson.txt.gz",
+      "passed": 237,
+      "seconds": 13.13,
+      "exit_code": 0
+    },
+    "baseline": {
+      "command": "actual a981610 source imported before pytest; same final focal selection, pythonpath overridden to isolated baseline source",
+      "log": "before-regression.txt.gz",
+      "exit_code": 1,
+      "failed": 160,
+      "passed": 77,
+      "seconds": 16.69
+    },
+    "binary-sort-baseline": {
+      "command": "actual a981610 isolated source; test_binary_sort_fallback_precedes_skip_limit_and_tracks_changed_tags",
+      "log": "before-binary-sort.txt.gz",
+      "exit_code": 1,
+      "failed": 8,
+      "passed": 4
+    },
+    "typing": {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "log": "acceptance-typing.txt.gz",
+      "positive": {
+        "public": 1,
+        "engine_boundary": 1
+      },
+      "negative_errors": {
+        "public": 20,
+        "engine_boundary": 25
+      },
+      "exit_code": 0
+    },
+    "lint": {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref a981610",
+      "log": "acceptance-lint.txt.gz",
+      "changed_python_files": 31,
+      "exit_code": 0
+    },
+    "sdk-free": {
+      "command": "PYTHONPATH=src /tmp/mongoeco-predicate-c06/minimal313/bin/python /tmp/mongoeco-namespace-sdk-free.py",
+      "log": "acceptance-sdk-free.txt.gz",
+      "python": "3.13.15",
+      "bson_absent": true,
+      "exit_code": 0
+    },
+    "legacy-producer": {
+      "command": "PYTHONPATH=/tmp/mongoeco-namespace-base/src .venv/bin/python /tmp/mongoeco-namespace-legacy-producer.py /tmp/mongoeco-namespace-legacy-20261031-scalar-final",
+      "log": "acceptance-legacy-producer.txt.gz",
+      "exit_code": 0
+    },
+    "legacy-reader": {
+      "command": "PYTHONPATH=src .venv/bin/python /tmp/mongoeco-namespace-legacy-reader.py /tmp/mongoeco-namespace-legacy-20261031-scalar-final",
+      "log": "acceptance-legacy-reader.txt.gz",
+      "exit_code": 0
+    },
+    "benchmark": {
+      "command": ".venv/bin/python /tmp/mongoeco-namespace-paired-benchmark.py",
+      "log": "acceptance-benchmark.txt.gz",
+      "exit_code": 0
+    }
+  },
+  "review": {
+    "base_fixed": true,
+    "final_diff_reviewed": true,
+    "workset_fixed": true,
+    "unrelated_changes_found": false,
+    "resolved": [
+      "decoded subtype-zero response versus caller-assigned ID provenance",
+      "client/database stream materialization delegates to common document converter",
+      "metadata options/listings and partial index response values",
+      "partial bulk original op versus decoded upsert/keyValue",
+      "engine-owned IDs leaked through update and findAndModify commands",
+      "SQL binary/uuid tags bypassing canonical sort before skip/limit",
+      "merge invalid mode pair parsing before expression optimization",
+      "array merge key server code 51185",
+      "five stale API test failures reproduced on the actual baseline"
+    ],
+    "boundaries": [
+      "two-phase document codec effects retained",
+      "SDK-free profile retained",
+      "SPI v2 and stored formats unchanged",
+      "protected observers/historical goldens unchanged"
+    ],
+    "baseline_verification": "baseline-source-verification.json",
+    "protected": "protected-sources.json",
+    "response_consumer_census": "response-consumers.json"
+  },
+  "persistence": {
+    "producer": "actual a981610 archive, 303 Git blobs verified",
+    "format_changes": false,
+    "storage_keys_indexes_preserved": true,
+    "binary_alias_write": true,
+    "pending_image_replayed_after_ddl": true,
+    "start_after_and_second_reopen": true,
+    "downgrade_acceptance": false
+  },
+  "wheel": {
+    "wheel": "mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "2464c7794ec3e9a1ba7318040d8de60d4a62e3f0615dccb03dcbaf210b11e0eb",
+    "modules_verified": 283,
+    "runtime_manifest": "runtime-sources.json"
+  },
+  "performance": {
+    "order": [
+      "before0",
+      "after0",
+      "after1",
+      "before1"
+    ],
+    "cases": 21,
+    "samples_per_runtime_case": 10,
+    "checksums_equal": true,
+    "ratio_range": [
+      0.9625818786178084,
+      1.0364505369036467
+    ],
+    "summary": "benchmark-paired-summary.json",
+    "scope": "live collection/database/client streams, unwatched updates, 101-event backlog, numeric indexed SQLite sorts; ABBA sequential after terminal own gates",
+    "limits": "incremental cost versus a981610; no incorrect binary-sort baseline used as equivalent; no global D05 performance closure"
+  },
+  "diagnostic_attempts": {
+    "interrupted_replays": [
+      "superseded-integrated.txt.gz",
+      "superseded-command-integrated.txt.gz"
+    ],
+    "feedback": [
+      "feedback-metadata-keyword.txt.gz",
+      "feedback-sdk-free-attribute.txt.gz",
+      "feedback-benchmark-path.txt.gz"
+    ],
+    "reason": "inputs changed after new response holes; stop old replay before restarting. Test adapters use supported createIndexes and actual sync client hub; benchmark compares resolved paths."
+  },
+  "limits": [
+    "D04 remains open for the replica-set CI fixture; remaining-ci-inventory.json is static evidence only.",
+    "No positive watch wire, distributed/concurrent native writes, native sessions or transaction acceptance.",
+    "Local skips are not native execution.",
+    "No complete Python/SDK/pytest/coverage/global D05 matrix or B07 general admission closure.",
+    "D06a/b/c, H53, sNaN conversion and optional D07 disposition retain their obligations."
+  ],
+  "document_checks": {
+    "relative_links_checked": 89,
+    "missing": [],
+    "dedicated_document_checker": "none found in project scripts",
+    "git_diff_check": 0
+  },
+  "artifacts": {
+    "README.md": "e1aa98b1b9a5b68e91c109706b626f2ab34ff559457d8ad47cc707a10218314d",
+    "acceptance-benchmark.txt.gz": "cd7cf7b8f635de5e32a10a5c1a13f89e79a63fd630046f412ff1759abdf184ab",
+    "acceptance-core.txt.gz": "0de3e24c7fd494e6866d825b372fa4417ed33cd1c760464a5118c4fc80c2491e",
+    "acceptance-focus.txt.gz": "7f791f1bdd2c747c05b636cfd385ae9a9167a729c8be2b951e4250fda16a7bfb",
+    "acceptance-integrated.txt.gz": "7bfd1e6cf7e9c2e9704f64ce321275fee93eaac2d4b3f9dd8afa43c1344927bd",
+    "acceptance-legacy-producer.txt.gz": "a44b2d826641ebf70ee977ebaa59cdba85d3be5488e669d109aaec5734c62fc3",
+    "acceptance-legacy-reader.txt.gz": "bb22abf189cc9ac50efd3853414c830d1b1383c201eeaa56c558b938ef21a791",
+    "acceptance-lint.txt.gz": "1196af463d6dbf71cccb31c92603eda310af4b43d49368c636a6e1f56d07b5c2",
+    "acceptance-orjson.txt.gz": "8686ae0956a80638a302b18613978ed184cbf62b598b479afd0a5206b92883e9",
+    "acceptance-sdk-free.txt.gz": "887863f8f57d6709cd49c06a55539d3faa6460497f73a07ba239862ad6b3bb65",
+    "acceptance-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "acceptance-wheel.txt.gz": "4c7a2b39bf53372c8d3980ca7f06a75d8439d00fed7e06e8e97c7dbcf3979c8d",
+    "baseline-source-verification.json": "9cd73e2dd4e028b37d27afc07c5c09eb40190a3e035a9cb305c45faa3db1c99d",
+    "before-binary-sort.txt.gz": "4ea03e2c0cdc7469dea8122e1c526908da705e72912d17872654261b6130f2b3",
+    "before-regression.txt.gz": "a064fb7f89ef0544b0d6349f2ce9e7fd5280cd6f906cd04db8e2798a9d65719f",
+    "benchmark-after0.json": "d9f91d5eea59a70d830c3dd6703ccbe23be1caac8492ed145801c520205c1f94",
+    "benchmark-after1.json": "3b1fe1527718b699af92f57c0329ab12009442634e16113dadafc61f5550c6f1",
+    "benchmark-before0.json": "1c77247cac342df05e8983be2e097fcbe3e880a1c7e0481c4eac746826e71e0a",
+    "benchmark-before1.json": "d71f80bf5b42b14fd782cc05f90dddf528abc85cea37fdb0224ebb5ac73a4edc",
+    "benchmark-paired-summary.json": "bd9810301bb9df15a4002f25782c038e8cd969cf2e04e2640d61d3e71d877e65",
+    "benchmark.py.txt": "ccfe5ddef8ec6022468c85502ce767c6ad0c1967e9d4f9a0638fc926680cb354",
+    "command-values-before.json": "0dbe0832cda67a9c5955bbe2e01a04e83f5ea483fc7973cb3c6bee98ed4a2dff",
+    "command-values-probe.py.txt": "09dd39fd827a63a90b90921b21786098420c2a8426fb2651f9b140559abf89c1",
+    "error-values-before.json": "7960d1b98e72335569423926ebce98dda5fc578046b47d5f58c28f4a14bc6f82",
+    "error-values-probe.py.txt": "bf7293f11378ae5b5e44aceadec131e51bb90997e281327816b44a42e2048082",
+    "feedback-benchmark-path.txt.gz": "4e6450b7d35b2910f0a4327e4beeffea049910e3323a00414666fadeffe12ac3",
+    "feedback-metadata-keyword.txt.gz": "aa1050f5cd2020941f6e9bddd06063c4fd2e8925176486963df62ef87e3d2eb3",
+    "feedback-sdk-free-attribute.txt.gz": "237c8f4fcc347b7237329abf859cca5e7010db3e8f873b36769ce8bf8f020ae6",
+    "impact.json": "5c0279490a223fe108f67d500e60c696480e5b38fea3813b567f4222237bcb9b",
+    "legacy-producer.py.txt": "04470f7e7d81b4d3989d3a681a58eb4bcef9003318de7ce8a89c98f2f77fdb18",
+    "legacy-reader.py.txt": "7450187b76d32822af4b099dfc78cba815ed2fb9b2fda79661e44406775f3c3f",
+    "native-captures.json": "26f4050eb5adbce6de453abbbf173ebfc73078f836398fa9a386b583d4f01dd2",
+    "native-check-binary_surface-7.0.txt": "521f9fe2c84eae0cee355cdb676c20e461f8cb840f32db0014e38158f6a95504",
+    "native-check-binary_surface-8.0.txt": "3fa97d2e589c2cfa1c7d6925679e250215dfe97b2bb1962601170d4bbb702ae5",
+    "native-check-binary_surface-9.0.txt": "dedf692b897046985688bc9d806024b8b1fc638adc99442095802412c39e9d65",
+    "native-check-merge_key-7.0.txt": "b6772b6f23cf4dd07d36e668864ab7b27b45e6fb6ff1675552d0fe707a0b575b",
+    "native-check-merge_key-8.0.txt": "d0b7a2bdeac0abdf8c1356b791ba05a4d1e4b825906263ba1b65f5bd4ded2557",
+    "native-check-merge_key-9.0.txt": "bdfa9b09e100cd93efccc0f7db45970f810d97e03a0472c979f2855f71c7f35e",
+    "native-check-watch_namespace_image-7.0.txt": "e0951862e7a6ccd3633e0ed5c0621611fb898326e3fb9ea2d6786168bc936653",
+    "native-check-watch_namespace_image-8.0.txt": "e79bcfc6b872cce2962164892e537f85ea8f7aa75c4854500a2b877ed00555de",
+    "native-check-watch_namespace_image-9.0.txt": "dc1dd22ae07cb553530cea0d2bef4d4cd07158379df25b57a79b0685205f5d6f",
+    "native-topology.json": "f1d69b22b94ac114c31acec8f8f15728af91cd21bd9a1517dd039b5f0756caf0",
+    "paired-benchmark.py.txt": "911f8f61f04f3446423b50d2d1e02da37ef9be70791d495333cf96cb8b57358c",
+    "preexisting-api-test-baseline.txt.gz": "96f45b0efa00d0d0e60acb1e806e64b6fdcf16125986579874d1fe2cf0df122f",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "remaining-ci-inventory.json": "2fd27f51a33b09d1c59610b7173c5cf83f603bb11a9a52f0b49954f0b283be3f",
+    "response-consumers.json": "2f431a378ef6dd64aa103f38df0b49161c9a27b6ee2ebdd391322ee4a46c1b37",
+    "runtime-sources.json": "f6be9e3080c04061054f78fd6adfe755c27d0e8a4d695ea9bea5aa5969ef834b",
+    "sdk-free.py.txt": "283b1fabc620657f11a38e34043e4ce180759bbf84e4387ccf542b69c940e544",
+    "superseded-command-integrated.txt.gz": "dc71d6be2d2499504f01fd0396e5dff3d776e151491a9e71f93fd72f4cfa948e",
+    "superseded-integrated.txt.gz": "5fb6763ed23a6a7feb4039a234a478205f00916175c29774145fb03a5f853d88",
+    "wheel-build.txt.gz": "304b0ace1b863c7e70dec0ef0cfcd6bc7ceecf39dbc2ef46ba6c74074127dabf",
+    "wheel-identity.txt.gz": "808a884312406f548a75105f67cdf5424ddd874cb4f1ae83b08e5510cc43ccf4",
+    "wheel-install.txt.gz": "166f9790a3e74243d2deece5384ff7ad714a351ffe03a5ec766cfdfea3284bf5",
+    "wheel-source-verification.json": "8160103a3053b5f11f404f4dfd4d1a8e2f672fc5a9aa337d4ea6e7ed79573319",
+    "workset.json": "6cb3ce0533d876d4036c983e6f78b44d01a34ce8d5408b4553a59f9da9ad9337"
+  }
+}

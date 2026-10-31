@@ -1,0 +1,22 @@
+import json,uuid
+from bson import Binary
+from pymongo import MongoClient as Native
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+
+def probe(client):
+ name='binary_command_'+uuid.uuid4().hex
+ try:
+  db=client[name]
+  out={}
+  r=db.command({'findAndModify':'c','query':{'_id':Binary(b'one',0)},'update':{'$set':{'v':1}},'upsert':True,'new':True})
+  for label,v in [('upserted',r['lastErrorObject']['upserted']),('value',r['value']['_id'])]:out[label]=type(v).__module__+'.'+type(v).__qualname__
+  r=db.command({'update':'c','updates':[{'q':{'_id':Binary(b'two',0)},'u':{'$set':{'v':1}},'upsert':True}]})
+  out['update']=type(r['upserted'][0]['_id']).__module__+'.'+type(r['upserted'][0]['_id']).__qualname__
+  return out
+ finally:client.drop_database(name)
+out={}
+with Native('mongodb://127.0.0.1:49975/?directConnection=true',serverSelectionTimeoutMS=3000) as c:out['native9']=probe(c)
+for label,factory in [('memory',MemoryEngine),('sqlite',SQLiteEngine)]:
+ with MongoClient(factory(),mongodb_dialect='9.0') as c:out[label]=probe(c)
+print(json.dumps(out,indent=2))

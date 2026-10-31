@@ -1,0 +1,184 @@
+{
+  "order": [
+    "before0",
+    "after0",
+    "after1",
+    "before1"
+  ],
+  "runtime_origins": {
+    "before0": "/tmp/mongoeco-namespace-base/src/mongoeco/__init__.py",
+    "after0": "/Users/uve/Proyectos/mongoeco/src/mongoeco/__init__.py",
+    "after1": "/Users/uve/Proyectos/mongoeco/src/mongoeco/__init__.py",
+    "before1": "/tmp/mongoeco-namespace-base/src/mongoeco/__init__.py"
+  },
+  "cases": {
+    "MemoryEngine/collection/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.06946904148207977,
+      "after_median_seconds": 0.06952627102145925,
+      "ratio": 1.000823813574486,
+      "checksums_equal": true
+    },
+    "MemoryEngine/collection/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.09220306249335408,
+      "after_median_seconds": 0.09247825056081638,
+      "ratio": 1.0029845870627359,
+      "checksums_equal": true
+    },
+    "MemoryEngine/database/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.07151249941671267,
+      "after_median_seconds": 0.06975581252481788,
+      "ratio": 0.9754352468977717,
+      "checksums_equal": true
+    },
+    "MemoryEngine/database/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.09757804143009707,
+      "after_median_seconds": 0.09392685443162918,
+      "ratio": 0.9625818786178084,
+      "checksums_equal": true
+    },
+    "MemoryEngine/client/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.07150249998085201,
+      "after_median_seconds": 0.07087322894949466,
+      "ratio": 0.9911993142683702,
+      "checksums_equal": true
+    },
+    "MemoryEngine/client/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.09698587498860434,
+      "after_median_seconds": 0.09372691652970389,
+      "ratio": 0.9663975969770509,
+      "checksums_equal": true
+    },
+    "MemoryEngine/unwatched/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.04398514551576227,
+      "after_median_seconds": 0.0438558334717527,
+      "ratio": 0.9970600973921246,
+      "checksums_equal": true
+    },
+    "MemoryEngine/backlog/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.00279089598916471,
+      "after_median_seconds": 0.0027027500327676535,
+      "ratio": 0.9684166100280083,
+      "checksums_equal": true
+    },
+    "MemoryEngine/backlog/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.010482104495167732,
+      "after_median_seconds": 0.010167479049414396,
+      "ratio": 0.9699845154283304,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/collection/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.15667912497883663,
+      "after_median_seconds": 0.15217256249161437,
+      "ratio": 0.9712369947953757,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/collection/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.23372756299795583,
+      "after_median_seconds": 0.22802535450318828,
+      "ratio": 0.9756031833745795,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/database/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.15103912499034777,
+      "after_median_seconds": 0.14738618698902428,
+      "ratio": 0.9758146241806093,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/database/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.23616564605617896,
+      "after_median_seconds": 0.24012810399290174,
+      "ratio": 1.0167782994812895,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/client/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.15015252097509801,
+      "after_median_seconds": 0.14785604196367785,
+      "ratio": 0.9847056912763987,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/client/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.2379475210327655,
+      "after_median_seconds": 0.2300723750377074,
+      "ratio": 0.9669038535855403,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/unwatched/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.12136927101528272,
+      "after_median_seconds": 0.12020764598855749,
+      "ratio": 0.9904290021929937,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/backlog/default": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.0027496875263750553,
+      "after_median_seconds": 0.002749729494098574,
+      "ratio": 1.0000152627246246,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/backlog/updateLookup": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.030909271037671715,
+      "after_median_seconds": 0.030368812556844205,
+      "ratio": 0.9825146804604739,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/numeric-sort/7.0": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.028151686943601817,
+      "after_median_seconds": 0.02817833301378414,
+      "ratio": 1.0009465177072943,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/numeric-sort/8.0": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.028532812546472996,
+      "after_median_seconds": 0.02813774993410334,
+      "ratio": 0.9861540949835844,
+      "checksums_equal": true
+    },
+    "SQLiteEngine/numeric-sort/9.0": {
+      "before_samples": 10,
+      "after_samples": 10,
+      "before_median_seconds": 0.2505598745192401,
+      "after_median_seconds": 0.2596929164719768,
+      "ratio": 1.0364505369036467,
+      "checksums_equal": true
+    }
+  }
+}

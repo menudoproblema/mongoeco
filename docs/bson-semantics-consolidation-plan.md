@@ -153,7 +153,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
 | H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
 | H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
-| H52 y H53 | D04 sigue abierto: preparación/contexto, imágenes CRUD, efectos de namespace por ámbito, H56, decoder, protocolo y checkpoint tienen cortes aceptados en el registro. Primera tanda/opciones, integración adicional con imágenes y fixture RS conservan su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
+| H52 y H53 | D04 sigue abierto: preparación/contexto, imágenes CRUD, efectos de namespace por ámbito, H56, decoder, protocolo y checkpoint tienen cortes aceptados en el registro. Primera tanda/opciones e integración de imágenes/DDL tienen aceptación propia en el registro; fixture RS conserva su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 

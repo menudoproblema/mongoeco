@@ -697,14 +697,13 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
-- D04: integración de imágenes con DDL/recreación y fixture replica set de CI.
+- D04: fixture replica set de CI.
   H56/dropTarget conservan su subset de una base. Decoder, protocolo, checkpoint,
   primera tanda/opciones y los modos CRUD ya tienen sus cortes propios abajo;
-  no repetir esas extracciones ni confundirlas con cierre de la integración.
-  La revisión 12 del plan precisa el orden y los testigos restantes. El candidato
-  de integración incluye cambios BSON/SQL/preparación todavía sin aceptación;
-  la sonda de esa revisión reproduce además materialización incorrecta de
-  Binary 0 en `collection.options()`, pendiente de corrección y regresión.
+  no repetir esas extracciones. El corte de integración de imágenes/DDL y
+  respuestas BSON registrado al final completa su aceptación funcional,
+  incluidos options, errores e IDs de comandos. El fixture RS conserva su
+  pendiente conforme a la revisión 12 del plan.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -896,3 +895,79 @@ declara rendimiento equivalente ni se omite la contabilidad BSON para reducirlo.
 D04 permanece abierto para integración de imágenes con DDL/recreación y fixture
 replica set de CI. D06, H53, conversión, piloto D07 opcional y D05 mantienen sus
 obligaciones; este corte no acepta watch wire positivo ni cierra B07 general.
+
+## D04 — Integración de namespaces/imágenes y respuestas BSON
+
+Corte funcional sobre `a981610`, contrato refinado en `9eea45c`. El código queda
+commiteado en `eb0074e` (respuestas BSON/ordenación) y `7dd54ab` (preparación de
+merge). El [receipt del corte](evidence/bson-consolidation-implementation/namespace-images/receipt.json)
+identifica runtime, corpus, wheel, comandos y límites. D04 conserva pendiente
+el fixture replica set de CI; no se declara terminado el programa completo.
+
+El corpus watch_namespace_image integra drop, rename y dropDatabase con modos
+full_document, imágenes habilitadas/deshabilitadas, recreación y ámbitos de
+colección/base/cliente. Cada acción recorre 48 escenarios. La barrera posterior
+observa continuidad y la reanudación conserva eventos de recreación pendientes
+tras invalidate. updateLookup lee el documento nuevo del namespace recreado;
+las imágenes capturadas conservan el anterior. Se mantiene el hub/contexto y
+el recurso de lookup existentes, sin identidad de encarnación ni otro outbox.
+El código 47 se materializa como NoMatchingDocument, según los tres servidores.
+
+La integración expuso otras salidas de la misma frontera. El materializador de
+documentos ahora sirve también a streams de base/cliente. Un adaptador escalar
+`materialize_public_value` normaliza wrappers propiedad del engine y decodifica
+respuestas sin callbacks de documento. Lo comparten metadatos de colección,
+IDs de upsert de APIs y comandos, y detalles de errores. BinData 0 sale como
+bytes con SDK; los demás subtipos conservan Binary. Los IDs asignados de insert
+y los documentos originales `writeErrors.op` mantienen su representación.
+options, list_collections, índices parciales, duplicados y bulk parcialmente
+fallido tienen testigos explícitos. Las clases se observan antes de serializar
+el resultado, pues Extended JSON puede ocultar Binary 0 frente a bytes.
+
+SQLite comparte una sola detección de la familia binaria para tags históricos
+bytes/binary/uuid. Las guardas de query y sort la usan antes de ordenar y aplicar
+skip/limit; no ordenan payloads JSON como si fueran valores BSON. La regresión
+incluye rutas, índices y caché negativa antes de cambiar el tipo. No cambian
+claves persistidas, índices, esquema, journal ni SPI v2.
+
+El corpus merge_key detectó dos reglas adicionales: claves array fallan con
+51185; ciertas combinaciones de modos se rechazan con 51181 aun sin documentos.
+Una regla compartida valida los modos en preparación y ejecución. El preparador
+analiza estructura/placement antes de optimizar expresiones y conserva dirección,
+scopes y registro de extensiones. Se contrastan división constante, expresión
+desconocida, aridad y variable indefinida anteriores al modo inválido. Esa
+precedencia está caracterizada; no se afirma una ley universal para todos los
+errores documentales. El destino permanece intacto tras los rechazos probados.
+
+Los tres corpus aportan 11 familias con captura y --check en 7.0.43/8.0.32/9.0.2,
+FCV correspondiente y replica sets propios de un miembro. Se usan el registro,
+capturador, replay y observadores existentes. Watch se prueba por APIs locales
+sync/async; las familias BSON/merge incluyen wire sync/async. No se añade watch
+wire positivo. Las bases UUID se eliminan; los servicios prestados permanecen.
+
+Pasan 6.616 pruebas del replay semántico completo y 3.238 del gate ampliado de
+core/APIs/propiedades/contratos, con 1.008 subtests y 315 skips separados. Estos
+skips no acreditan ejecución física. Las 237 regresiones del corte pasan también
+con orjson y wheel instalado. El wheel coincide byte a byte con los 283 módulos
+del manifiesto. Typing público/boundary y lint pasan. La base aislada real,
+verificada en sus 303 blobs, reproduce 160 fallos y conserva 77 controles; la
+regresión de sort binario reproduce ocho fallos y conserva cuatro controles.
+
+El gate ampliado identificó además cinco fallos de tests ya presentes en la
+base: clase/código de merge, fase de opción negativa de watch y un objeto usado
+como sesión. Se corrigen las expectativas conforme al nativo y se usa una sesión
+real, conservando los controles de corrupción/estado. El receipt separa esos
+antecedentes y los intentos interrumpidos de la aceptación final.
+
+Python 3.13 sin SDK comprueba los seis pares motor/dialecto y los tres ámbitos
+sync/async, imágenes, recreación/startAfter y liberación de watchers. Un SQLite
+y journal producidos por a981610 conservan claves e índices; el candidato escribe
+mediante alias bytes, entrega la imagen v2 pendiente, reanuda tras invalidate y
+continúa tras una segunda reapertura. No se acredita downgrade.
+
+El ABBA secuencial mide 21 casos y diez muestras por runtime/caso, con checksums
+idénticos y lecturas finales verificadas. Frente a a981610, los ratios de medianas
+van de 0,963 a 1,036: streams de colección/base/cliente, sin watchers, backlog e
+índices numéricos SQLite. El receipt conserva los tiempos absolutos. Es coste de
+este incremento; no elimina el coste histórico de batching ni cierra D05 global.
+D06, H53, conversión, decisión del piloto D07, D05 y B07 conservan sus pendientes.
