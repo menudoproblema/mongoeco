@@ -79,10 +79,14 @@ from mongoeco.compat import (
 from mongoeco.conformance import conformance_report_schema
 from mongoeco.core.collation import compare_with_collation, normalize_collation, unicode_collation_available
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.types import Decimal128
 
 async def main() -> None:
     package_root = files("mongoeco")
     assert package_root.joinpath("py.typed").is_file()
+    assert package_root.joinpath(
+        "core/resources/Intel-Decimal-Math-LICENSE.txt"
+    ).is_file()
     assert package_root.joinpath("compat/resources/deprecations-v1.json").is_file()
     assert package_root.joinpath("compat/schemas/deprecations-v1.schema.json").is_file()
     assert package_root.joinpath("conformance/schemas/conformance-report-v1.json").is_file()
@@ -100,6 +104,12 @@ async def main() -> None:
         await collection.insert_one({"_id": "1", "kind": "view", "count": 1})
         found = await collection.find_one({"$jsonSchema": {"required": ["kind"]}})
         docs = await collection.find({}, sort=[("count", 1)]).to_list()
+        cursor = await collection.aggregate([
+            {"$project": {"root": {"$sqrt": {"$literal": Decimal128("2")}}}},
+        ])
+        decimal_result = (await cursor.to_list())[0]["root"].to_decimal()
+        assert 1 < decimal_result < 2
+        assert len(decimal_result.as_tuple().digits) == 34
         spec = normalize_collation({
             "locale": "en",
             "strength": 1,
