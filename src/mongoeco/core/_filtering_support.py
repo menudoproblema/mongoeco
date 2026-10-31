@@ -9,6 +9,7 @@ from functools import lru_cache
 from typing import Any
 
 from mongoeco.core.aggregation.expression_values import MISSING
+from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
@@ -68,8 +69,9 @@ def hashable_in_lookup_key(value: Any) -> tuple[str, Any] | None:
         return ("none", None)
     if isinstance(value, bool):
         return ("bool", value)
-    if isinstance(value, bytes):
-        return ("bytes", value)
+    binary = binary_parts(value)
+    if binary is not None:
+        return ("bytes", binary[1]) if binary[0] == 0 else ("binary", binary)
     if isinstance(value, datetime.datetime):
         return ("date", value)
     if isinstance(value, uuid.UUID):

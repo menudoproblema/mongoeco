@@ -1,0 +1,432 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_binary_assignments": {
+      "classic": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "subtype": {
+          "$numberInt": "5"
+        },
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      },
+      "pipeline": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "subtype": {
+          "$numberInt": "5"
+        },
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      }
+    },
+    "semantic_binary_distinct": [
+      [
+        {
+          "$numberInt": "0"
+        },
+        "6162636465666768696a6b6c6d6e6f70"
+      ],
+      [
+        {
+          "$numberInt": "5"
+        },
+        "6162636465666768696a6b6c6d6e6f70"
+      ]
+    ],
+    "semantic_binary_selection": {
+      "bytes_$eq": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "bytes_$ne": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "bytes_$in": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "bytes_$nin": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "bytes_$gt": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "bytes_$gte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "bytes_$lt": [],
+      "bytes_$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "bytes_expr": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype0_$eq": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype0_$ne": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype0_$in": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype0_$nin": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype0_$gt": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype0_$gte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype0_$lt": [],
+      "subtype0_$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype0_expr": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype5_$eq": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype5_$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype5_$in": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype5_$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype5_$gt": [],
+      "subtype5_$gte": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype5_$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "subtype5_$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "subtype5_expr": [
+        {
+          "$numberInt": "3"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_binary_cases.py",
+    "sha256": "03dd58b31105fd82e04974dd06f59ac80c2985e21dea18fcdbb2ad1953273654"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_binary_selection",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "00"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "00"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "05"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_binary_selection"
+    },
+    {
+      "name": "semantic_binary_distinct",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "00"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "00"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "05"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_binary_distinct"
+    },
+    {
+      "name": "semantic_binary_assignments",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "00"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "00"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$binary": {
+              "base64": "YWJjZGVmZ2hpamtsbW5vcA==",
+              "subType": "05"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_binary_assignments"
+    }
+  ]
+}

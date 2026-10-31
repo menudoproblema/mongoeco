@@ -12,8 +12,9 @@ los IDs y garantías de revisión 2; añade parser de literales DBRef, orden en
 wire y selección SQL de bytes. No reinterpreta el retraimiento de una crítica
 como corrección de runtime ni como motivo para retirar testigos válidos.
 
-**Estado: propuesta; ninguna corrección de runtime de este incremento está
-implementada.** Este documento posee H48–H54 y su integración con B00–B10 y
+**Estado: contrato autorizado; implementación en curso.** Los cortes y gates
+aceptados se registran en el documento de implementación; no se acredita aquí
+el cierre completo del incremento. Este documento posee H48–H54 y su integración con B00–B10 y
 C00–C06. No reabre H37–H47 ni sustituye sus receipts. La implementación y los
 gates históricos siguen en el [registro vigente](semantic-parity-implementation.md).
 El [plan histórico](plan-semantic-parity-refactor.md) conserva las obligaciones

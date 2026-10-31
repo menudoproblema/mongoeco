@@ -14,6 +14,7 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
     wrap_bson_numeric,
 )
+from mongoeco.core.bson_values import binary_parts
 
 
 try:
@@ -48,10 +49,14 @@ def bson_type_rank(value: Any, type_order: Mapping[type, int]) -> int:
         return rank
     # Internal ownership markers are transparent BSON containers. An explicit
     # dialect rank for a subclass still takes precedence above.
-    if isinstance(comparable, dict):
-        return type_order.get(dict, 100)
-    if isinstance(comparable, list):
-        return type_order.get(list, 100)
+    if isinstance(comparable, (bytes, dict, list)):
+        if isinstance(comparable, bytes):
+            canonical_type = Binary
+            fallback = type_order.get(bytes, 100)
+        else:
+            canonical_type = dict if isinstance(comparable, dict) else list
+            fallback = 100
+        return type_order.get(canonical_type, fallback)
     numeric = wrap_bson_numeric(value)
     return type_order.get(type(numeric), 100) if numeric is not None else 100
 
@@ -194,8 +199,9 @@ def bson_equality_key(value: Any) -> Any:
         # Decimal equality and hashing already ignore scale and signed zero;
         # normalize() would unnecessarily round under the ambient context.
         return ("number", _numeric_equality_decimal(numeric))
-    if isinstance(value, (Binary, bytes)):
-        return ("binary", getattr(value, "subtype", 0), bytes(value))
+    binary = binary_parts(value)
+    if binary is not None:
+        return ("binary", *binary)
     if isinstance(value, dict):
         return (
             "dict",

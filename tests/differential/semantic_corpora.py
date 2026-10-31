@@ -10,6 +10,10 @@ from tests.differential.semantic_average_route_cases import (
     SEED as AVERAGE_ROUTE_SEED,
     SEMANTIC_AVERAGE_ROUTE_CASES,
 )
+from tests.differential.semantic_binary_cases import (
+    SEED as BINARY_SEED,
+    SEMANTIC_BINARY_CASES,
+)
 from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
@@ -99,6 +103,9 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "binary": SemanticCorpus(
+        "binary", "semantic_binary_cases", BINARY_SEED, SEMANTIC_BINARY_CASES,
+    ),
     "mod": SemanticCorpus(
         "mod",
         "semantic_mod_cases",

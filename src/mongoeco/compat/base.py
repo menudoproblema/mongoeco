@@ -30,13 +30,13 @@ from mongoeco.compat.catalog import (
     MongoBehaviorPolicySpec,
 )
 from mongoeco.core.bson_ordering import bson_type_rank, compare_bson_documents
+from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.bson_scalars import (
     compare_bson_numeric,
     unwrap_bson_numeric,
     wrap_bson_numeric,
 )
 from mongoeco.types import (
-    Binary,
     Timestamp,
     UndefinedType,
     normalize_object_id,
@@ -184,14 +184,14 @@ def _compare_values_default(
             return 0
         return -1 if len(normalized_left) < len(normalized_right) else 1
 
-    if isinstance(normalized_left, Binary) and isinstance(normalized_right, Binary):
-        if normalized_left.subtype != normalized_right.subtype:
-            return -1 if normalized_left.subtype < normalized_right.subtype else 1
-        left_bytes = bytes(normalized_left)
-        right_bytes = bytes(normalized_right)
-        if left_bytes == right_bytes:
-            return 0
-        return -1 if left_bytes < right_bytes else 1
+    left_binary = binary_parts(normalized_left)
+    right_binary = binary_parts(normalized_right)
+    if left_binary is not None and right_binary is not None:
+        left_subtype, left_bytes = left_binary
+        right_subtype, right_bytes = right_binary
+        left_key = (len(left_bytes), left_subtype, left_bytes)
+        right_key = (len(right_bytes), right_subtype, right_bytes)
+        return (left_key > right_key) - (left_key < right_key)
 
     if isinstance(normalized_left, Timestamp) and isinstance(
         normalized_right, Timestamp

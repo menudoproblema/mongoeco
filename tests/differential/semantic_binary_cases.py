@@ -12,16 +12,24 @@ SEED = [
 
 def selection(collection):
     output = {}
-    for label, value in (("bytes", b"abcdefghijklmnop"), ("subtype0", Binary(b"abcdefghijklmnop", 0)), ("subtype5", Binary(b"abcdefghijklmnop", 5))):
+    for label, value in (
+        ("bytes", b"abcdefghijklmnop"),
+        ("subtype0", Binary(b"abcdefghijklmnop", 0)),
+        ("subtype5", Binary(b"abcdefghijklmnop", 5)),
+    ):
         for operator in ("$eq", "$ne", "$in", "$nin", "$gt", "$gte", "$lt", "$lte"):
             operand = [value] if operator in {"$in", "$nin"} else value
             output[f"{label}_{operator}"] = [
                 row["_id"]
-                for row in collection.find({"v": {operator: operand}}, sort=[("_id", 1)])
+                for row in collection.find(
+                    {"v": {operator: operand}}, sort=[("_id", 1)]
+                )
             ]
         output[f"{label}_expr"] = [
             row["_id"]
-            for row in collection.find({"$expr": {"$eq": ["$v", value]}}, sort=[("_id", 1)])
+            for row in collection.find(
+                {"$expr": {"$eq": ["$v", value]}}, sort=[("_id", 1)]
+            )
         ]
     return output
 

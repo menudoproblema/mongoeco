@@ -1,0 +1,81 @@
+{
+  "status": "D00 Binary integrated; first D03a/assignment cut, full blocks remain open",
+  "base": "d3547d239dd165d76f5c8364df4bef0aed837ee2",
+  "candidate_files_sha256": {
+    "src/mongoeco/compat/base.py": "4ba8061075cd83bce81bee300e3beacb1bb208ae4b929db264ca653c296bdda2",
+    "src/mongoeco/core/_filtering_support.py": "20a1ea841509517f3c68fb6b9cb1a67bc8a713711579b344143b2f20690d2124",
+    "src/mongoeco/core/bson_ordering.py": "c49458e5e4bba166e8f86a171bab4faddb4ad775eb75add1ce89e8427bb5d0d0",
+    "src/mongoeco/core/bson_values.py": "dddfb289c752b91603782a7412ef6b3d40d4a0df7a408568cdbb7e341a9105da",
+    "src/mongoeco/core/paths.py": "425709ec5463be83f938da184aabe401dc66d8a6a933bfac03b985c6f0879dd2",
+    "src/mongoeco/engines/sqlite_query.py": "e6643042c38980dc08f52310a6bd08bd187b855c8b2583bb0be53f023967a4ed",
+    "tests/differential/semantic_binary_cases.py": "03dd58b31105fd82e04974dd06f59ac80c2985e21dea18fcdbb2ad1953273654",
+    "tests/differential/semantic_corpora.py": "c27e9376ecfe9576e393833122c73ffe061c47390631132a46b35d34c603053d",
+    "tests/fixtures/semantic_binary_7_0.json": "8c5196c61901ec9d75fe946fd03e595e95fcc5fd37ed06f34159e8d2706e21fe",
+    "tests/fixtures/semantic_binary_8_0.json": "f32dc15935e9f1b437e03d77dc2088931d68cd62938a9f198ab29462919ba744",
+    "tests/fixtures/semantic_binary_9_0.json": "3e62a52135bc6841adf73d25d350da5707677643cec0d53e830fd52624ff3d28",
+    "tests/property/test_bson_binary_coherence.py": "3bf7350060eaa4a9a858caa285ed1264f7694feebb518ee3ee583c9a51014617"
+  },
+  "native": {
+    "7_0": {
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "sha256": "8c5196c61901ec9d75fe946fd03e595e95fcc5fd37ed06f34159e8d2706e21fe",
+      "native_check_cases": 3
+    },
+    "8_0": {
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "sha256": "f32dc15935e9f1b437e03d77dc2088931d68cd62938a9f198ab29462919ba744",
+      "native_check_cases": 3
+    },
+    "9_0": {
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "sha256": "3e62a52135bc6841adf73d25d350da5707677643cec0d53e830fd52624ff3d28",
+      "native_check_cases": 3
+    }
+  },
+  "before": {
+    "runtime": "d3547d2 src archived under /tmp/mongoeco-bson-d00/before; preloaded package path logged",
+    "replay_failed": 60,
+    "replay_passed": 15,
+    "properties_failed": 3,
+    "excluded_diagnostic": "Initial replay without escalation mixed semantic failures and socket PermissionErrors; not accepted as before evidence."
+  },
+  "after": {
+    "replay_passed": 75,
+    "properties_passed": 3,
+    "integrated_semantic_regression_passed": 4964,
+    "integrated_seconds": 220.51,
+    "final_focused_after_dispatch_cleanup_passed": 145,
+    "lint_ratchet": "passed for 9 changed Python files"
+  },
+  "review": [
+    "All public replay axes: sync/async and wire sync/async, both engines, three dialects.",
+    "Exact dialect type overrides retain precedence before ownership aliases.",
+    "Physical storage keys/tags remain unchanged.",
+    "Binary SQL equality/membership fallback preserves candidates.",
+    "No-op assignment uses BSON subtype and bytes, independently of Python ownership class."
+  ],
+  "pending": [
+    "D03a general classification extraction and expanded length/array/grammar/trace corpus.",
+    "D01a helper relocation and Code identity; D01b effects.",
+    "All other plan blocks, final distributions/matrices/coverage/global tests and benchmarks."
+  ],
+  "artifacts": {
+    "cleanup.json": "672c674f1b600845160dd0b43235cd7bd49f941508c571a0b63848665ec34af1",
+    "final-focused.txt.gz": "f9015ceef949677b2710fc2cf80ef131a354928dd192db3485e1e81dd0e32f17",
+    "integrated-after.txt.gz": "78882abc36a142b1efa36fe6de85d8e6aedeb22fa3acc19e5c80655480d79dd0",
+    "lint-ratchet.txt.gz": "9691c97cc4be88b40fa85a1ca8e75f2a8b801d4faf3cf575e3029c40051fd520",
+    "properties-after.txt.gz": "bf0f921252eaaa5966c3f9f964e2c760fad45f135a8e49f744a9e0a180b51f86",
+    "properties-before.txt.gz": "f75a6083dd84295858ab3dd521a7c642b3d33a86bdacf8e849fd5a3243a8fde9",
+    "replay-after.txt.gz": "d6ba7adf0a51bfc6a3d64aaf45abb400d18d116a9842baf9ab26bfc5afbbd40c",
+    "replay-before-verified.txt.gz": "7d1a75059ede1e34a77dd1d3515766c1f3b274c25a25bea36a055f8c6a04b926"
+  }
+}

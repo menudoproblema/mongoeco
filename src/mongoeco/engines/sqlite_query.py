@@ -210,6 +210,10 @@ def _is_codec_aware_value(value: object) -> bool:
 
 
 def _is_translatable_equality_value(value: object) -> bool:
+    # bytes and Binary(…, 0) have different historical storage tags. Tag-only
+    # predicates omit equal BSON values; retain canonical Python evaluation.
+    if isinstance(value, bytes):
+        return False
     encoded = DocumentCodec.encode(value)
     if DocumentCodec._is_tagged_value(encoded):
         payload = encoded[DocumentCodec._MARKER]
@@ -765,6 +769,9 @@ def _translate_membership(
     negated: bool,
     null_matches_undefined: bool = False,
 ) -> SqlFragment:
+    if any(isinstance(value, bytes) for value in values):
+        message = 'Binary membership requires semantic fallback'
+        raise NotImplementedError(message)
     if values and all(_is_codec_aware_value(value) for value in values):
         path = _path_literal(field)
         params: list[object] = []

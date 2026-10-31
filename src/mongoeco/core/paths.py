@@ -8,6 +8,7 @@ from mongoeco.core.bson_scalars import (
     bson_numeric_alias,
     wrap_bson_numeric,
 )
+from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.runtime_metadata import (
     RuntimeDocumentState,
 )
@@ -42,6 +43,9 @@ def _path_mapping(value: Any) -> dict[str, Any] | None:
 
 def same_bson_update_value(left: Any, right: Any) -> bool:
     """BSON identity for assignment, distinct from query/arithmetic equality."""
+    left_binary, right_binary = binary_parts(left), binary_parts(right)
+    if left_binary is not None or right_binary is not None:
+        return left_binary is not None and left_binary == right_binary
     left_kind, right_kind = bson_numeric_alias(left), bson_numeric_alias(right)
     if left_kind is not None or right_kind is not None:
         numeric_left, numeric_right = wrap_bson_numeric(left), wrap_bson_numeric(right)

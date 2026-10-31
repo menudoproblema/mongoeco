@@ -1,0 +1,8 @@
+{
+  "ports_closed": {
+    "49955": true,
+    "49956": true,
+    "49957": true
+  },
+  "owned_containers_removed": true
+}
