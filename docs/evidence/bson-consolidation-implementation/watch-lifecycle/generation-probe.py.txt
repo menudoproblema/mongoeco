@@ -1,0 +1,45 @@
+import json,time,uuid
+from pathlib import Path
+from pymongo import MongoClient as Native
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+
+def next_event(s):
+ deadline=time.monotonic()+1
+ while time.monotonic()<deadline:
+  event=s.try_next()
+  if event is not None:return event
+ raise TimeoutError('No event')
+
+def run(client):
+ db=client['namespace_'+uuid.uuid4().hex];out={}
+ try:
+  for enabled in (False,True):
+   for mode in ('updateLookup','whenAvailable','required'):
+    name='c_'+str(enabled)+mode
+    c=db.create_collection(name,changeStreamPreAndPostImages={'enabled':enabled})
+    c.insert_one({'_id':1,'v':0,'pad':'x'*1000})
+    s=c.watch(full_document=mode,max_await_time_ms=20)
+    try:
+     c.update_one({}, {'$set':{'v':1}})
+     c.drop();db.create_collection(name).insert_one({'_id':1,'v':999})
+     try:
+      event=next_event(s)
+      out[name]={'type':event['operationType'],'image':None if event.get('fullDocument') is None else event['fullDocument'].get('v'),'alive':s.alive}
+     except Exception as e:out[name]={'error':type(e).__name__,'code':getattr(e,'code',None),'alive':s.alive}
+    finally:s.close()
+  c=db['missing'];s=c.watch(max_await_time_ms=20)
+  try:
+   c.drop()
+   try:out['missing_drop']={'empty':s.try_next() is None,'alive':s.alive}
+   except Exception as e:out['missing_drop']={'error':type(e).__name__,'code':getattr(e,'code',None),'alive':s.alive}
+  finally:s.close()
+  return out
+ finally:client.drop_database(db.name)
+r={'native':{},'local':{}}
+for version,port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+ with Native(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as c:r['native'][version]=run(c)
+ for name,factory in [('memory',MemoryEngine),('sqlite',SQLiteEngine)]:
+  with MongoClient(factory(),mongodb_dialect=version) as c:r['local'][name+'-'+version]=run(c)
+Path('docs/evidence/bson-consolidation-implementation/watch-lifecycle/generation.json').write_text(json.dumps(r,indent=2)+'\n')
+print(r['native']['9.0']);print(r['local']['memory-9.0'])

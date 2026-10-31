@@ -1,0 +1,38 @@
+{
+  "status": "D04 continuity/no-op DDL characterization only",
+  "base": "f16ffb288cfd9a4e03df2bb7e5e21175eefb4d73",
+  "production_and_tests_changed": false,
+  "native_versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "fcv": [
+    "7.0",
+    "8.0",
+    "9.0"
+  ],
+  "ports": [
+    49973,
+    49974,
+    49975
+  ],
+  "topology": "preexisting owned single-member replica sets",
+  "observations": {
+    "native": 21,
+    "local": 42
+  },
+  "native_versions_agree": true,
+  "service_lifecycle": "unchanged; UUID DBs dropped in finally",
+  "limits": [
+    "sync diagnostic only, not permanent capture/replay acceptance",
+    "no rename/distribution or value-level token/clusterTime acceptance",
+    "lookup generation behavior agrees; missing drop remains a confirmed local divergence"
+  ],
+  "artifacts": {
+    "generation-probe.py.txt": "f9a0e791813d1f54bb7af2817779d6dac20225b935d0a7a74c98a084d67a5db6",
+    "generation.txt.gz": "ae03d4cb4c79409b1f417a8621c9f80ff511352f52dc0bf389d7c5d08bbad2c5",
+    "README.md": "17eead69a683bf30681fa80e3cc52bb92d8f62d8f076a60202db340cb396e7b4",
+    "generation.json": "5329850e21a7a4484bcaa1d32e1871c3db08b2298a08a210b6c2e9c9de76a7e8"
+  }
+}

@@ -580,6 +580,16 @@ variable en preparación/runtime, también en agregación ordinaria. La sonda
 nativa/local es caracterización; D06a conserva arreglo y regresión permanente.
 No se cierra mediante la guarda de imágenes ni se pierde del trabajo restante.
 
+## D04 — Inicio de revisión de ciclo de vida
+
+La [caracterización de continuidad](evidence/bson-consolidation-implementation/watch-lifecycle/receipt.json)
+sobre f16ffb2 añade 21 observaciones nativas y 42 locales. Lookup tras recrear
+el namespace ya coincide (documento nuevo); conservarlo sin un metadato nuevo
+de encarnación. Drop inexistente publica/invalida localmente, frente a batch
+vacío y cursor vivo nativo. Estos testigos se unen al protocolo y bypass de
+secuencia ya identificados. Es diagnóstico sync, sin producción ni cierre D04;
+siguen pendientes regresiones permanentes, corrección y aceptación del bloque.
+
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.

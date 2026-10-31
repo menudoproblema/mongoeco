@@ -1,0 +1,330 @@
+{
+  "native": {
+    "7.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": true,
+        "alive": true
+      }
+    },
+    "8.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": true,
+        "alive": true
+      }
+    },
+    "9.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": true,
+        "alive": true
+      }
+    }
+  },
+  "local": {
+    "memory-7.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": false,
+        "alive": false
+      }
+    },
+    "sqlite-7.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": false,
+        "alive": false
+      }
+    },
+    "memory-8.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": false,
+        "alive": false
+      }
+    },
+    "sqlite-8.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": false,
+        "alive": false
+      }
+    },
+    "memory-9.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": false,
+        "alive": false
+      }
+    },
+    "sqlite-9.0": {
+      "c_FalseupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_FalsewhenAvailable": {
+        "type": "update",
+        "image": null,
+        "alive": true
+      },
+      "c_Falserequired": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "c_TrueupdateLookup": {
+        "type": "update",
+        "image": 999,
+        "alive": true
+      },
+      "c_TruewhenAvailable": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "c_Truerequired": {
+        "type": "update",
+        "image": 1,
+        "alive": true
+      },
+      "missing_drop": {
+        "empty": false,
+        "alive": false
+      }
+    }
+  }
+}

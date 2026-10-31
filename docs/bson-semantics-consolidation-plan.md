@@ -694,6 +694,14 @@ abrir con 260, mientras startAfter permite la inserción posterior. Localmente
 faltan protocolos, fallan clase/código/cierre y no llega la inserción posterior.
 La alteración anidada del token ya coincide (280 y cierre): conservar ese control.
 
+La [sonda posterior de continuidad](evidence/bson-consolidation-implementation/watch-lifecycle/receipt.json)
+confirma una simplificación: updateLookup lee el documento nuevo tras drop y
+recreate, también en los tres servidores; el local ya coincide. No introducir
+una identidad de encarnación para cambiar esa conducta. La imagen capturada
+conserva v1 cuando estaba disponible. Drop inexistente, en cambio, debe mantener
+vivo el cursor y no emitir invalidate; la API local lo cierra indebidamente.
+El efecto real debe determinarse dentro de la mutación/catálogo existente.
+
 La causa de la pérdida posterior se deduce del camino actual: drop publica al
 hub directamente, adelantando su token sin incrementar la secuencia del engine;
 publish_committed descarta entonces el siguiente commit como ya entregado.
