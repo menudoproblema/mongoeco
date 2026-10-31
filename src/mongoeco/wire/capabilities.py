@@ -84,34 +84,65 @@ LOGOUT_CAPABILITY = WireCommandCapability(
 
 _ADMIN_CAPABILITIES: dict[str, WireCommandCapability] = {
     "aggregate": WireCommandCapability(name="aggregate", family="admin_read"),
-    "buildInfo": WireCommandCapability(name="buildInfo", family="admin_introspection", binds_session=False),
+    "buildInfo": WireCommandCapability(
+        name="buildInfo", family="admin_introspection", binds_session=False
+    ),
+    "collMod": WireCommandCapability(name="collMod", family="admin_write"),
     "collStats": WireCommandCapability(name="collStats", family="admin_stats"),
-    "configureFailPoint": WireCommandCapability(name="configureFailPoint", family="admin_control"),
-    "connectionStatus": WireCommandCapability(name="connectionStatus", family="admin_status", binds_session=False),
+    "configureFailPoint": WireCommandCapability(
+        name="configureFailPoint", family="admin_control"
+    ),
+    "connectionStatus": WireCommandCapability(
+        name="connectionStatus", family="admin_status", binds_session=False
+    ),
     "count": WireCommandCapability(name="count", family="admin_read"),
     "create": WireCommandCapability(name="create", family="admin_namespace"),
     "createIndexes": WireCommandCapability(name="createIndexes", family="admin_index"),
-    "currentOp": WireCommandCapability(name="currentOp", family="admin_control", binds_session=False),
-    "dbHash": WireCommandCapability(name="dbHash", family="admin_introspection", binds_session=False),
+    "currentOp": WireCommandCapability(
+        name="currentOp", family="admin_control", binds_session=False
+    ),
+    "dbHash": WireCommandCapability(
+        name="dbHash", family="admin_introspection", binds_session=False
+    ),
     "dbStats": WireCommandCapability(name="dbStats", family="admin_stats"),
     "delete": WireCommandCapability(name="delete", family="admin_write"),
     "distinct": WireCommandCapability(name="distinct", family="admin_read"),
     "drop": WireCommandCapability(name="drop", family="admin_namespace"),
-    "dropDatabase": WireCommandCapability(name="dropDatabase", family="admin_namespace"),
+    "dropDatabase": WireCommandCapability(
+        name="dropDatabase", family="admin_namespace"
+    ),
     "dropIndexes": WireCommandCapability(name="dropIndexes", family="admin_index"),
     "explain": WireCommandCapability(name="explain", family="admin_explain"),
     "find": WireCommandCapability(name="find", family="admin_read"),
-    "findAndModify": WireCommandCapability(name="findAndModify", family="admin_find_and_modify"),
-    "getCmdLineOpts": WireCommandCapability(name="getCmdLineOpts", family="admin_introspection", binds_session=False),
-    "hello": WireCommandCapability(name="hello", family="admin_status", binds_session=False),
-    "hostInfo": WireCommandCapability(name="hostInfo", family="admin_introspection", binds_session=False),
+    "findAndModify": WireCommandCapability(
+        name="findAndModify", family="admin_find_and_modify"
+    ),
+    "getCmdLineOpts": WireCommandCapability(
+        name="getCmdLineOpts", family="admin_introspection", binds_session=False
+    ),
+    "hello": WireCommandCapability(
+        name="hello", family="admin_status", binds_session=False
+    ),
+    "hostInfo": WireCommandCapability(
+        name="hostInfo", family="admin_introspection", binds_session=False
+    ),
     "insert": WireCommandCapability(name="insert", family="admin_write"),
-    "listCommands": WireCommandCapability(name="listCommands", family="admin_introspection", binds_session=False),
-    "listCollections": WireCommandCapability(name="listCollections", family="admin_namespace"),
-    "listDatabases": WireCommandCapability(name="listDatabases", family="admin_namespace", binds_session=False),
+    "listCommands": WireCommandCapability(
+        name="listCommands", family="admin_introspection", binds_session=False
+    ),
+    "listCollections": WireCommandCapability(
+        name="listCollections", family="admin_namespace"
+    ),
+    "listDatabases": WireCommandCapability(
+        name="listDatabases", family="admin_namespace", binds_session=False
+    ),
     "listIndexes": WireCommandCapability(name="listIndexes", family="admin_index"),
-    "killOp": WireCommandCapability(name="killOp", family="admin_control", binds_session=False),
-    "ping": WireCommandCapability(name="ping", family="admin_status", binds_session=False),
+    "killOp": WireCommandCapability(
+        name="killOp", family="admin_control", binds_session=False
+    ),
+    "ping": WireCommandCapability(
+        name="ping", family="admin_status", binds_session=False
+    ),
     "profile": WireCommandCapability(name="profile", family="admin_control"),
     "renameCollection": WireCommandCapability(
         name="renameCollection", family="admin_namespace"

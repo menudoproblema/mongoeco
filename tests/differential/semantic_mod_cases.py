@@ -65,6 +65,9 @@ ARGUMENTS = {
     "impossible_remainder": [2, 5],
 }
 INVALID = {
+    "type_before_coercion": [float("nan"), True],
+    "remainder_before_zero": [0, True],
+    "divisor_coercion_first": [float("nan"), float("inf")],
     "not_array": None,
     "empty": [],
     "short": [1],

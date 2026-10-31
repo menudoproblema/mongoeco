@@ -948,7 +948,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             "saslStart": "auth",
         }
         self.assertEqual(set(commands), set(WireSurface().supported_commands))
-        self.assertEqual(len(commands), 46)
+        self.assertEqual(len(commands), 47)
         for name, family in wire_only.items():
             with self.subTest(command=name):
                 self.assertEqual(commands[name]["adminFamily"], family)

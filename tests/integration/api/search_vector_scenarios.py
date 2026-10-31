@@ -12,9 +12,9 @@ def assert_compound_should_near_explanation(
     details = explanation["engine_plan"]["details"]
     case.assertEqual(details["compound"]["shouldOperators"], ["exists", "near"])
     if engine_name == "sqlite":
-        case.assertEqual(details["compoundPrefilter"]["requiredCandidateableShould"], 1)
+        case.assertEqual(details["compoundPrefilter"]["requiredCandidateableShould"], 0)
         case.assertEqual(
-            details["compoundPrefilter"]["candidateableShouldOperators"], ["exists"]
+            details["compoundPrefilter"]["candidateableShouldOperators"], []
         )
     case.assertEqual(
         details["ranking"],
@@ -37,16 +37,16 @@ def assert_compound_candidateable_should_explanation(
     if engine_name != "sqlite":
         return
     details = explanation["engine_plan"]["details"]
-    case.assertEqual(details["compoundPrefilter"]["candidateableShouldCount"], 3)
+    case.assertEqual(details["compoundPrefilter"]["candidateableShouldCount"], 2)
     case.assertEqual(
         details["compoundPrefilter"]["clauseClasses"]["should"],
-        ["candidateable-exact", "candidateable-exact", "candidateable-exact"],
+        ["post-match-only", "candidateable-exact", "candidateable-exact"],
     )
     case.assertEqual(
         details["compoundPrefilter"]["candidateableShouldOperators"],
-        ["exists", "wildcard", "autocomplete"],
+        ["wildcard", "autocomplete"],
     )
-    case.assertEqual(details["rankingSource"], "fts-materialized-entries")
+    case.assertIsNone(details["rankingSource"])
 
 
 def assert_compound_candidateable_should_limited_explanation(
@@ -62,19 +62,10 @@ def assert_compound_candidateable_should_limited_explanation(
     case.assertEqual(details["topKLimitHint"], 1)
     if engine_name != "sqlite":
         return
-    case.assertTrue(details["topKPrefilter"]["applied"])
-    case.assertEqual(details["topKPrefilter"]["strategy"], "exact-should-score-tier")
-    case.assertGreaterEqual(details["topKPrefilter"]["cutoffTier"]["matchedShould"], 2)
-    case.assertEqual(
-        details["topKPrefilter"]["partialRanking"]["strategy"],
-        "matched-should-prefilter+exact-should-score-tier",
-    )
-    case.assertGreaterEqual(
-        details["topKPrefilter"]["candidateCountBeforePartialRanking"],
-        details["topKPrefilter"]["candidateCountAfterPartialRanking"],
-    )
-    case.assertLess(details["candidateCount"], details["candidateCountBeforeTopK"])
-    case.assertEqual(details["rankingSource"], "fts-materialized-entries")
+    case.assertIsNone(details["topKPrefilter"])
+    case.assertFalse(details["compoundPrefilter"]["should"][0]["exact"])
+    case.assertEqual(details["candidateCount"], details["candidateCountBeforeTopK"])
+    case.assertIsNone(details["rankingSource"])
 
 
 def assert_compound_candidateable_should_matched_limited_explanation(

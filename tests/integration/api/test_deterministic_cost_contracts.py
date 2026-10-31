@@ -134,16 +134,9 @@ class DeterministicCostContractTests(unittest.IsolatedAsyncioTestCase):
                 )
                 if engine_name == "SQLiteEngine":
                     self.assertLessEqual(fingerprint["candidates"]["value"], 3)
-                    self.assertEqual(
-                        fingerprint["topK"],
-                        {
-                            "applied": True,
-                            "strategy": "stable-prefix",
-                            "beforeCount": 3,
-                            "afterCount": 2,
-                            "cutoffMatchedShould": None,
-                        },
-                    )
+                    # Downstream string postings are a conservative superset;
+                    # the residual runs before the result window.
+                    self.assertIsNone(fingerprint["topK"])
                 else:
                     self.assertEqual(
                         fingerprint["candidates"]["availability"],

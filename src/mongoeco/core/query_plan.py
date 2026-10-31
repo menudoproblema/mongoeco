@@ -627,6 +627,12 @@ def _compile_field_condition(
                     else "malformed mod, too many elements"
                 )
                 raise server_error(message, code=2)
+            # Native parsing checks both BSON numeric types before coercing
+            # either value, so a malformed remainder wins over NaN divisor.
+            for operand, role in zip(value, ("divisor", "remainder"), strict=True):
+                if wrap_bson_numeric(operand) is None:
+                    message = f"malformed mod, {role} not a number"
+                    raise server_error(message, code=2)
             divisor = _prepare_mod_operand(value[0], "divisor")
             remainder = _prepare_mod_operand(value[1], "remainder")
             if divisor == 0:

@@ -123,6 +123,14 @@
 - `supported_options`: _empty_
 - `note`: `Static local metadata sourced from the dialect/runtime descriptor.`
 
+### `collMod`
+- `family`: `admin_write`
+- `supports_wire`: `True`
+- `supports_explain`: `False`
+- `supports_comment`: `False`
+- `supported_options`: _empty_
+- `note`: `Validation options only; other collMod features are unsupported.`
+
 ### `collStats`
 - `family`: `admin_stats`
 - `supports_wire`: `True`

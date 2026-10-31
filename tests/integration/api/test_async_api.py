@@ -687,13 +687,12 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     if engine_name == "sqlite":
                         self.assertEqual(
                             exists_explanation["engine_plan"]["details"]["backend"],
-                            "fts5-path",
+                            "python",
                         )
-                        self.assertEqual(
+                        self.assertIsNone(
                             exists_explanation["engine_plan"]["details"][
                                 "candidateCount"
-                            ],
-                            2,
+                            ]
                         )
                     else:
                         self.assertEqual(

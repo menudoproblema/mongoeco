@@ -919,3 +919,25 @@ como semilla y no se debilita esa comprobación para incluirlo.
 Receipt: `evidence/predicate-authorities/mod-validation.json`. C01–C05 quedan
 corregidos focalmente; sigue C06 sobre el candidato integrado. B00–B10 no se
 cierran automáticamente.
+
+### C06: integración en curso
+
+El primer cierre global detectó contratos transversales que la regresión focal
+no incluía: familia wire de collMod, inventario de comandos, delta declarado del
+catálogo vigente, hooks de dialecto que asumían comparación entre familias en
+MQL y pruebas de explain que exigían poda textual exacta para exists. Se alinean
+con las garantías nativas y la degradación residual, conservando sus aserciones
+de resultados y equivalencia sync/async. Los snapshots históricos no se editan.
+
+Un testigo adicional de errores simultáneos de `$mod` prueba que ambos tipos se
+validan antes de convertir el divisor; un resto no numérico tiene precedencia
+sobre un divisor NaN. Se incorpora al corpus y sus capturas 7/8/9. El wheel C05
+queda rojo frente a ese testigo; los 680 controles focales y 88 subtests de la
+integración corregida pasan, además de los controles completos Search sync/async.
+
+Las suites completas del primer wheel se interrumpen al cambiar sus entradas;
+no cuentan como aceptación. El siguiente candidato fijo repetirá los gates
+propietarios y la matriz instalada. La resolución del SDK histórico requiere
+plugins oficiales de build desde wheels con SHA verificado cuando el índice
+simple de PyPI devuelve Content-Type inválido; esto es infraestructura de prueba,
+no un cambio de runtime ni una relajación de la matriz.

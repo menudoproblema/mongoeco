@@ -353,6 +353,14 @@
       "supports_explain": false,
       "supports_wire": true
     },
+    "collMod": {
+      "family": "admin_write",
+      "note": "Validation options only; other collMod features are unsupported.",
+      "supported_options": [],
+      "supports_comment": false,
+      "supports_explain": false,
+      "supports_wire": true
+    },
     "collStats": {
       "family": "admin_stats",
       "note": "Served from local collection stats snapshots.",

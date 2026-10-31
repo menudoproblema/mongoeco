@@ -49,9 +49,17 @@ class DialectAndProfileContractTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match(document, {'value': None}, dialect=true_dialect))
         self.assertFalse(QueryEngine.match(document, {'value': None}, dialect=false_dialect))
         self.assertFalse(QueryEngine.match(missing_document, {'value': {'$ne': None}}, dialect=true_dialect))
-        self.assertTrue(QueryEngine.match(missing_document, {'value': {'$ne': None}}, dialect=false_dialect))
+        self.assertFalse(
+            QueryEngine.match(
+                missing_document, {"value": {"$ne": None}}, dialect=false_dialect
+            )
+        )
         self.assertFalse(QueryEngine.match(missing_document, {'value': {'$nin': [None]}}, dialect=true_dialect))
-        self.assertTrue(QueryEngine.match(missing_document, {'value': {'$nin': [None]}}, dialect=false_dialect))
+        self.assertFalse(
+            QueryEngine.match(
+                missing_document, {"value": {"$nin": [None]}}, dialect=false_dialect
+            )
+        )
 
     def test_query_engine_respects_declarative_policy_spec_override(self):
         class _CatalogLikeDialect(MongoDialect70):
@@ -85,9 +93,20 @@ class DialectAndProfileContractTests(unittest.TestCase):
 
         document = {'value': 'Ada'}
 
-        self.assertTrue(QueryEngine.match(document, {'value': {'$gt': 1}}, dialect=MongoDialect70()))
         self.assertFalse(
-            QueryEngine.match(document, {'value': {'$gt': 1}}, dialect=_SwappedStringOrderDialect())
+            QueryEngine.match(document, {"value": {"$gt": 1}}, dialect=MongoDialect70())
+        )
+        self.assertTrue(
+            QueryEngine.match(
+                document, {"$expr": {"$gt": ["$value", 1]}}, dialect=MongoDialect70()
+            )
+        )
+        self.assertFalse(
+            QueryEngine.match(
+                document,
+                {"$expr": {"$gt": ["$value", 1]}},
+                dialect=_SwappedStringOrderDialect(),
+            )
         )
 
     def test_async_collection_respects_supports_update_one_sort_profile_hook(self):
