@@ -1,0 +1,43 @@
+{
+  "scope": "Plan refinement only; no implementation acceptance",
+  "head": "7f8110a3aeebd2268e63a91b6d59b635e54113ad",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_through_13": true,
+  "preexisting_unaccepted_workset_sha256": {
+    "tests/differential/semantic_raw_response_cases.py": "e3c1f999d66f909228531b01fbefe952e88a9fb4603d81d480f639ed2d50ed91",
+    "tests/fixtures/semantic_raw_response_7_0.json": "37757963fc0fa96ebd4b76c242a310c47e25d061a4eef640124981f90e36865d",
+    "tests/fixtures/semantic_raw_response_8_0.json": "66b2509c789f018b795bd4a7f3e5a5427001d35b97e4e0cb47a610e58a9e50a4",
+    "tests/fixtures/semantic_raw_response_9_0.json": "8a8a3c224f94e686b2d5ebd55ffcdfeaf9a71d9eedf1fc4ca8957a3a60a3c7b9",
+    "src/mongoeco/api/_async/collection.py": "6ca3586867d9f6da23f7abd1546b01c8fc40418030aa282f43863138f1c9e12c",
+    "src/mongoeco/api/_async/raw_batch_cursor.py": "f68cb2af9e35308e2aee83ba2f4ee287685c400bbe69d4bd73085533934a6fe8",
+    "src/mongoeco/api/_sync/collection.py": "a813842d921a5738b0ab52b72b9341579a380952e1ce6398bed9412661c3a7e0",
+    "tests/differential/semantic_corpora.py": "d81bfdecc8988ce192aca75cf28b36390841de2bbc773334fc188d322637bf0f",
+    "tests/integration/api/test_semantic_group_regressions.py": "adea282137053b69e2c4b4deca05da1e976b46c63ef08f01b688ac88b00d1c42"
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/unit/core/test_query_operators.py tests/unit/core/test_sqlite_query.py tests/integration/api/test_ttl_exact_millisecond_migration.py tests/integration/api/test_watch_context_contract.py --tb=short",
+      "exit_code": 0,
+      "passed": 78,
+      "seconds": 1.44
+    },
+    {
+      "scope": "Downloaded 16 pinned official r8.0.0 source URLs and compared SHA-256 with historical expected hashes",
+      "checked": 16,
+      "matched": 16,
+      "results": "sources-check.json"
+    }
+  ],
+  "network_note": "Sandbox DNS unavailable in first attempt; authorized network execution completed all 16 checks.",
+  "limits": [
+    "No new MongoDB execution or captures in this review.",
+    "Preexisting raw candidate and fixtures are not accepted.",
+    "No global suite, wheel, remote CI, performance or D05 acceptance.",
+    "Historical receipts, sources manifests and protected observers unchanged."
+  ],
+  "document_checks": {
+    "relative_links_missing": [],
+    "preexisting_runtime_tests_unchanged": true,
+    "diff_whitespace": "passes"
+  }
+}

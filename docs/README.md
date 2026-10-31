@@ -58,7 +58,7 @@ Python/PyMongo versions.
 - [Query, validation and prefilter analysis and plan](predicate-authorities-analysis-and-plan.md):
   root causes, native counterexamples and the H37–H47 implementation increment.
 - [BSON consolidation review and plan](bson-semantics-consolidation-plan.md):
-  native characterization, H48–H55 obligations and implementation progress by block.
+  native characterization, H48–H56 obligations and implementation progress by block.
 - [Architecture index](architecture/index.md) and
   [testing policy](architecture/testing-and-compatibility.md).
 - [CXP exchange](cxp-exchange.md): inspect the declared compatibility subset.

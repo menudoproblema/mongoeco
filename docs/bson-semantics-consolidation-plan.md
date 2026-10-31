@@ -89,9 +89,10 @@ no se convierten en aceptación de runtime por esa autorización.
 
 La relectura del adjunto del 31 de octubre conserva el mismo SHA-256
 `a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`.
-Su disposición frente a HEAD `e0a0ca9` y el candidato sin commitear está en
-«Contraste del adjunto con el candidato en curso», dentro del orden activo de
-la sección 5. Las bases y resultados de las revisiones anteriores son históricos.
+Su disposición actual frente a HEAD `7f8110a` y el candidato raw sin commitear
+está en «Contraste actual y orden mínimo de ejecución», dentro de la sección 5.
+La [evidencia de esta relectura](evidence/bson-consolidation-review/response-frontier-plan/receipt.json)
+identifica los inputs, las verificaciones y el trabajo preexistente sin aceptarlo. Las bases y resultados de las revisiones anteriores son históricos.
 
 ## 1. Evidencia y alcance del contraste
 
@@ -1083,9 +1084,10 @@ Son diagnósticos locales actuales, no otra captura física ni cierre global.
 La evidencia nativa versionada y la aceptación de los cortes conservan sus
 receipts propios; este contraste no vuelve a ejecutarlas ni cambia sus hashes.
 
-H55 sigue reproducible: `Code("$v")` produce el valor del campo y
-`Code("$$missing")` lanza 17276 tanto en preparación como en ejecución; `$literal`
-conserva Code. Es un error compartido de clasificación gramatical: que ambas
+**Diagnóstico histórico de revisión 13, anterior a los cortes D06 actuales.**
+H55 seguía reproducible: `Code("$v")` producía el valor del campo y
+`Code("$$missing")` lanzaba 17276 tanto en preparación como en ejecución; `$literal`
+conservaba Code. Era un error compartido de clasificación gramatical: que ambas
 rutas coincidan no las convierte en oráculo. El diagnóstico usa los tres
 dialectos; las referencias nativas previas mantienen su alcance.
 
@@ -1094,81 +1096,85 @@ Los estados de entrega y gates siguen perteneciendo al registro de implementaci�
 D04 ya tiene cierre funcional registrado con el fixture `0b5ac53`; conservar
 sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
-**Contraste del adjunto con el candidato en curso (31 de octubre).** No abrir
-otro bloque por recibir de nuevo el mismo informe. Su autocrítica corrige la
-atribución de causas y el alcance de pruebas; no demuestra defectos nuevos en
-el runtime actual. El checkpoint D06 del registro de implementación conserva
-su candidato y sus resultados propios, anteriores a los últimos cambios wire.
+### Contraste actual y orden mínimo de ejecución
 
-| Afirmación o sugerencia | Contraste y disposición |
+Relectura sobre HEAD `7f8110a` y nueve archivos preexistentes de producción,
+tests y referencias raw sin commitear, identificados por hash en el
+[receipt](evidence/bson-consolidation-review/response-frontier-plan/receipt.json).
+El adjunto conserva el SHA-256 de revisiones 3–13: no añade siete defectos
+actuales ni justifica volver a ejecutar sus correcciones. Este apartado sustituye
+las instrucciones de ejecución anteriores; el registro de implementación sigue
+poseyendo el estado y aceptación de cada corte.
+
+| Afirmación del informe | Contraste actual y decisión |
 | --- | --- |
-| H48 cruza decode, normalización y valores públicos; rangos internos y Binary SDK son problemas distintos. | La clasificación actual reconoce wrappers de bytes y el comparador usa `binary_order_key` para ambas clases. Mantener testigos separados de rango y comparación, subtipo 0/5 con idéntico payload y trazas de documento/operando. La propiedad de coherencia ya existe en `test_bson_binary_coherence.py`; no extraer otra tabla de tipos ni volver a implementar D03a. |
-| Eq/in SQL por tag omite bytes equivalentes a Binary 0. | `_is_translatable_equality_value` y `_translate_membership` ya declinan operandos binarios mediante `binary_parts`. Preservar esa renuncia explícita y sus controles de ruta. Un fallback correcto no acredita otro pushdown; no reconstruir equivalencia BSON a partir del tag almacenado. |
-| El parser rechaza el literal DBRef y wire puede ocultarlo. | `is_query_expression_document` ya distingue literales según primer campo/contexto y presencia de campos DBRef; no lo decide el decoder SDK. Conservar los controles básicos y completar D06 por contexto y transporte. El parser nativo comprueba nombres de campos, no exige el mismo criterio de tipos que la decodificación SDK. |
-| Distinct necesita dos Binary SDK de subtipos distintos. | Mantener ese testigo ya aceptado. El candidato D06 añade un caso diferente: BSON distintos que decodifican al mismo DBRef. Deduplicar antes de materializar, reutilizando el colector de distinct entre API y comando. No usar igualdad pública como oráculo de preservación BSON. |
-| TTL solo puede retrasarse un milisegundo y eso es irrelevante. | Esa cota no se deduce de una fórmula flotante sin acotar fechas ni frecuencia del purgado. El código actual calcula enteros tanto para auxiliares/cutoff SQLite como para el residual; D02 conserva reapertura/migración y fronteras temporales. No convertir la antigua observación en tolerancia contractual. |
-| H52 requiere clase, código y fase, además del contexto. | Ya es condición de aceptación de Watch. Mantener preparación compartida y contexto del cursor aceptados; no reabrirlos por el informe histórico. Extender la misma observación a aggregate/getMore alcanzados por D06, incluidos efectos y recursos tras error. |
-| H53 y hashes estaban menos verificados de lo afirmado. | Separar inspección, replay y ejecución nativa. H53 conserva disposición pendiente en C03/B08. Los 16 hashes oficiales tienen verificación en el receipt de revisión 13; esta relectura consulta parser/comparador oficiales, pero no vuelve a acreditar sus hashes ni ejecuta nuevos servidores. |
+| H48 cruza decodificación, normalización y materialización; interno/local y SDK son mecanismos diferentes. | Correcto como diagnóstico histórico. `binary_parts` reconoce bytes y sus wrappers, y comparación/orden usan `binary_order_key`, incluida la longitud física del subtipo 2. Conservar pruebas separadas de rango, igualdad, subtipo y contenido público; no añadir otra tabla de clases. |
+| Distinct necesita dos Binary SDK de subtipos distintos, y eq/in ya figuraban en el plan. | Adoptado en D03a. Conservar payload idéntico con subtipos 0/5 y bytes, variando orden y representaciones. No deducir corrección por cardinalidad. Los DBRef que colapsan al decodificar son otro testigo: comparar/deduplicar antes de materializar cuando lo exija el contrato del consumidor. |
+| Eq/in SQL por tag omite Binary 0 equivalente a bytes. | La guarda de igualdad y `_translate_membership` ya declinan formas binarias mediante `binary_parts`. Conservar controles de SQL realmente ejecutado frente a matcher y fallback. El comentario de sort no era garantía de igualdad; tampoco hay motivo para reintroducir pushdown ahora. |
+| El literal DBRef se rechaza y el decoder wire puede ocultarlo. | El parser común actual reconoce el literal por primer campo/contexto y presencia de campos. El parser oficial r8.0.0 comprueba nombres, no tipos. Conservar controles de orden, extras, incompletos y tipos de `$ref`/`$db`; no sustituir gramática por el predicado del decoder SDK ni aceptar todos los documentos con claves `$`. |
+| La frontera del matcher necesita observar ambas representaciones. | Mantener trazas separadas de documento y operando, además del resultado público. Las propiedades de `test_bson_binary_coherence.py` ya cubren igualdad⇒clave entre formas. D00 sigue acompañando cada corte; las clases privadas observadas no se convierten en contrato público. |
+| TTL solo puede retrasarse un milisegundo y es irrelevante. | No adoptar esa cota ni esa tolerancia. SQLite actual calcula auxiliares/cutoff con milisegundos enteros y conserva residual exacto; D02 prueba migración/reapertura. El residual impide ciertos borrados indebidos, pero nunca recupera un candidato omitido. Separar inclusión de candidatos, decisión de expiración y cadencia del monitor. |
+| Watch exige clase/código/fase; H53 y fuentes no estaban totalmente verificados. | Clase/código/fase y contexto ya forman parte de la aceptación D04. H53 mantiene disposición pendiente C03/B08. Se han descargado nuevamente las 16 fuentes oficiales fijadas a r8.0.0: coinciden todos sus hashes, sin modificar manifiestos ni receipts históricos. Eso explica mecanismos; no sustituye diferenciales 7/8/9. |
 
-**Secuencia mínima dentro de D06a/b.** Mantiene el orden entre bloques de la
-tabla siguiente y evita que el trabajo de cursores se convierta en otro motor:
+**Resultado de esta relectura.** Pasan 78 pruebas focales de coherencia Binary,
+gramática auxiliar, traductor SQL, migración TTL y contexto watch. Se inspeccionan
+además las rutas de respuesta/raw y sus codecs. No se ejecutan servidores MongoDB
+ni nuevas capturas en esta revisión. Las 167 pruebas citadas por el informe son
+históricas. El candidato raw preexistente sigue sin aceptación: ni su presencia
+ni sus referencias nuevas acreditan que el replay final pase. El corte de sufijos
+por cantidad ya aceptado conserva su receipt y no acredita bytes/callbacks.
 
-1. Completar clasificación gramatical String/Code y casos DBRef sobre parser,
-   preparación/runtime y vistas actuales. Conservar la distinción entre la
-   sintaxis aceptada por el servidor y las formas que decodifica el SDK.
-2. Mantener valores BSON sin codecs de usuario hasta la frontera de respuesta.
-   Directa y wire comparten evaluación; wire codifica antes de la conversión
-   SDK. Probar orden, extras y `$db: null` con bytes BSON independientes, y
-   callbacks de hijos/contenedor exactamente una vez, sin mutación del input.
-3. Conectar respuestas parciales al almacén de cursores existente conservando
-   la ejecución de comandos y sus validaciones/contexto. Contrastar primera
-   tanda y getMore por cantidad y bytes, etapas materializantes y extensiones
-   que sobrescriben built-ins; el nombre de la etapa no garantiza cardinalidad.
-   Comprobar sesión/principal/namespace, consumo concurrente y cierre en
-   EOF/error/kill/cancelación/teardown. No cambiar la política de ownership por
-   extraer un helper de lectura de tandas.
-4. Congelar el candidato y repetir diferenciales y gates alcanzados. Una mejora
-   local del corpus no modifica el receipt de un checkpoint anterior ni cierra
-   raw, bytes, callbacks, D06c o D05 por asociación.
+**Causa conjunta y refactorización.** Los defectos comparten pérdida de información
+antes de que su consumidor decida: subtipo al comparar, orden al decodificar,
+precisión al convertir o fase/contexto al ejecutar. La solución común consiste
+en conservar la representación hasta la frontera que posee la decisión. Reusar
+vistas BSON, identidad física, gramática y contexto existentes; cada consumidor
+conserva su equivalencia. No crear un comparador universal ni un `mode` que mezcle
+consulta, grupo, Search e identidad de modificación.
 
-Esta relectura ejecuta 38 pruebas de coherencia binaria/traducción SQL y 122 de
-materialización, almacenamiento binario y migración TTL. Ambas ejecuciones
-terminan con código 0; la segunda emite un `PytestUnraisableExceptionWarning`
-en el destructor del event loop de asyncio. No se presenta como gate limpio de
-recursos ni se atribuye su causa a este cambio documental. El resto de los
-resultados conserva su procedencia en el registro de implementación. No modifica
-producción, tests o fixtures, ni acepta los cambios preexistentes.
+La oportunidad adicional está en la respuesta del cursor. El coordinador actual
+limita por cantidad, pero las fuentes aún materializan documentos antes de que
+`_fill_response` complete la tanda y esa ruta no aplica un límite por bytes.
+Reutilizar ese coordinador y el cálculo BSON existente, separando evaluación,
+formación de respuesta y decodificación pública. Raw y wire deben poder consumir
+BSON sin pasar por codecs del usuario. Los adaptadores de API mantienen sus
+reglas de apertura/getMore; no duplicar el evaluador, el contexto ni el almacén
+de cursores. La forma concreta del helper depende de los testigos siguientes,
+no obliga a una nueva jerarquía de clases.
 
-| Prioridad / bloque | Trabajo y dependencia | Evidencia de salida |
+| Orden / prioridad | Trabajo, dependencia y simplificación | Aceptación necesaria |
 | --- | --- | --- |
-| P1, D06a/b | Un corte de gramática y preservación raw: completar contextos DBRef pendientes y H55 usando `bson_values`, `query_operators`, preparador/runtime y `bson_raw` existentes. Puede avanzar sin esperar al fixture RS. | Testigos String frente a Code con/sin scope, `$`/`$$`/literal y anidamiento; DBRef orden/extras/incompletos por contexto, vacío/poblado. Nativo 7/8/9, directa/wire y sync/async alcanzados; clase/código/fase y estado tras error. No ampliar reglas de literal a todos los contextos. |
-| P1, D06c | Tras D06a y las vistas disponibles, consolidar consumidores DBRef y claves de group/sets/lookup/spill/Search según su equivalencia. | Igual resultado con/sin hash/spill, collation y persistencia; candidatos completos antes del residual. Retirar duplicación solo al sustituir también guardas de admisión. No cambiar storage_key ni desempates persistidos. |
-| P2, H53 y conversión | Disponer H53 en C03/B08; contrastar string sNaN en 7/8/9 e incorporar regresión de conversión. Independientes de D06c. | Separar permiso, evaluación y diagnóstico; observar candidato/antiguo y error/warn/bypass. No deducir un rechazo de una ausencia de warning ni crear logging nuevo implícito. Conversión conserva clase/código/fase y controles válidos. |
-| D07 / D05 / B07 | Resolver continuar/descartar piloto opcional antes del cierre; ejecutar integración sobre candidato congelado. La frontera BSON general B07 conserva su obligación propia. | D05 mantiene matrices, SDK/pytest, wheel, SPI, cobertura, persistencia y coste del contrato vigente. D07 puede descartarse sin bloquear fixes. Ninguna normalización parcial declara resuelta admisión arbitraria o Decimal crudo. Commits semánticos no sustituyen gates. |
+| 1 / P1 — D06a/b, raw y representación | Terminar el candidato sobre cursor/materializador/bridge actuales. Conservar los cortes de gramática y sufijos aceptados; completar los contextos String/Code/DBRef que falten. No llamar a la apertura normal de aggregate y asumir que raw tiene la misma primera tanda. | Diferenciales 7/8/9 de find/aggregate raw y decodificado, sync/async y wire soportado. BSON exacto independiente del decoder productivo; orden/extras/`$db:null`, Binary 0/5 y Code scope anidados. Codec mutante con control decodificado activo y cero callbacks en raw. Batch ausente/0/1/2, fase de error y ejecución de `$merge` al abrir observadas por superficie. Fuente final congelada y `--check` de las referencias nuevas; no regenerar goldens para ocultar fallos. |
+| 2 / P1 — D06a/b, bytes y callbacks | Sobre la misma formación de respuesta, incorporar límites por bytes y conservar salida pendiente sin reevaluar. Reusar `bson_size`; distinguir límite de documento, tanda y mensaje. Caracterizar antes de fijar constantes, lookahead o prioridad de errores. | Casos alrededor de cada frontera de tamaño, con cantidad simultánea, documento grande y expansión/materialización. Error antes/en/después del corte: documentos/tandas entregados, fase/clase/código, orden y ausencia de pérdida/duplicación. Contrastar find y aggregate por separado. Un fallo del servidor que invalida una respuesta no debe activar decoders de esa respuesta; si falla un decoder del cliente, observar lo que hizo el SDK sin prometer rollback de efectos externos de callbacks anteriores. |
+| 3 / P1 — D06c, consumidores y claves | Después de las vistas disponibles y preservación necesarias, revisar group/sets/lookup/spill/Search según equivalencia propia. Compartir átomos, retirar duplicación junto con sus guardas; no cambiar storage keys ni desempates persistidos. | Mismo resultado BSON con/sin hash/spill y bajo collation. Clave exclusiva: equivalencia en ambos sentidos; hash: colisiones permitidas solo con comparación posterior. Prefiltros Search conservan candidatos antes de residual y ventana. Contextos de subpipeline y persistencia tienen testigos propios. |
+| 4 / P2 — H53, conversión y D07 | H53 permanece en C03/B08, sin logging nuevo implícito. String sNaN conserva su owner de conversión. Resolver continuar/descartar el piloto schema con hipótesis medible; D07 puede descartarse. | Separar evaluación, permiso y warning en strict/moderate/off × error/warn/bypass, antiguo/candidato. Captura/regresión sNaN 7/8/9 con clase/código/fase y controles válidos. No deducir rechazo de escrituras por ausencia de warning. |
+| 5 — D05 integrado y B07 por su owner | Congelar el candidato después de revisión/focales, ejecutar gates alcanzados y cerrar commits semánticos por bloque. La admisión BSON general conserva su obligación independiente: no depende de adoptar otro normalizador ni queda resuelta por raw. | Matrices Python/SDK/pytest del contrato, wheel instalado, SPI/typing, cobertura, persistencia y coste; recursos sin fugas. B07 prueba tipos arbitrarios/Decimal crudo y clases/fases de rechazo en filtros y escrituras. Evidencia de fuente exacta, baseline que falla y candidato que pasa; no presentar un gate previo al último cambio como aceptación final. |
 
-**Simplificación conjunta, con garantías explícitas.** No crear otro componente
-universal: vistas BSON reconocen representaciones; identidad conserva cambios
-físicos; gramática decide literal/operador/ruta; preparación/contexto gobierna
-cuándo se evalúa; materialización posee la procedencia de la respuesta. Reusar
-esas autoridades exige que cada caller declare su contrato, no un `mode`
-genérico que mezcle igualdad MQL, equivalencia de grupo e identidad de escritura.
+Los pasos 1 y 2 comparten mecanismo y pueden entregarse juntos si simplifica el
+cambio, pero conservan testigos y aceptación separados. H53/conversión pueden
+avanzar de forma independiente de D06c. No hace falta esperar un fixture RS ya
+aceptado ni repetir D01/D02/D03/D04 para empezar estos pendientes.
 
-La aceptación usa el registro/capturador/replay existentes. Por cada frontera
-modificada basta un testigo que active su camino y un control que lo distinga
-del vecino: SDK/local/owned, SQL/fallback, raw/decodificado, preparación/runtime,
-asignado/recibido. Ampliar pruebas parametrizadas existentes en lugar de añadir
-runners o matrices paralelas. No recortar ejes donde cambian dialecto, motor,
-superficie o política. El caso mínimo del helper no sustituye al caller público.
+**Garantías transversales del cursor.** Mantener reloj/bindings/dialecto por
+operación, ownership de sesión/principal/namespace, exclusión de getMore y cierre
+idempotente en EOF/error/kill/cancelación/teardown. Probar el documento pendiente
+al cerrar, la precedencia de error original frente a cleanup y las extensiones
+que sustituyen built-ins: el nombre de una etapa no garantiza cardinalidad.
+Reutilizar el ciclo de vida existente; no otro journal ni otra política de dueño.
+No ampliar soporte wire no implementado para completar artificialmente la matriz.
 
-Para claves exclusivas exigir equivalencia en ambos sentidos con la política;
-para hashes permitir colisiones solo con comparación posterior. En prefiltros,
-exigir conservación de candidatos **antes** de filtro residual y paginación:
-la igualdad final no detecta los descartes previos. En errores observar clase,
-código, fase y ausencia de efectos además del mensaje. Estos testigos previenen
-los errores espejo sin convertir nombres privados en contrato público.
+**Detección y mantenimiento.** Ampliar registro/capturador/replay y propiedades
+existentes, sin otro runner. Por frontera modificada, un testigo que active el
+camino y un control que lo distinga del vecino: local/SDK/interno,
+SQL/fallback, raw/decodificado, apertura/iteración, error servidor/codec cliente.
+La coincidencia Memory/SQLite o interpretado/compilado no es oráculo cuando
+comparten helper. Mantener oráculo nativo e inspección independiente de BSON;
+ningún roundtrip que use el mismo helper a ambos lados acredita preservación.
+Los ejes solo se reducen si no cambia el contrato y se documenta esa equivalencia.
 
-Esta revisión solo actualiza plan y evidencia. No acepta el trabajo de CI
-preexistente, no reabre D01/D02/D03 ni promete soporte distribuido adicional.
+Esta relectura modifica solo plan/evidencia. No acepta el candidato preexistente,
+no altera referencias históricas ni declara cierre D06/D05. La documentación
+histórica permanece como trazabilidad; solo esta secuencia dirige lo pendiente.
 
 ## 6. Pruebas y aceptación por garantía
 
