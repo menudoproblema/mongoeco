@@ -2014,6 +2014,248 @@
       "code_scope_$lt": [],
       "code_scope_$lte": []
     },
+    "semantic_query_matching_bson_representations": {
+      "string": {
+        "find": [
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      "object": {
+        "find": [
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          }
+        ],
+        "count": {
+          "$numberInt": "6"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          }
+        ]
+      },
+      "object_code": {
+        "find": [
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          }
+        ],
+        "count": {
+          "$numberInt": "6"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          }
+        ]
+      },
+      "code": {
+        "find": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "5"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "5"
+          }
+        ]
+      },
+      "scoped": {
+        "find": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "regex": {
+        "find": [
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      "membership": {
+        "find": [
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      "negated_membership": {
+        "find": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ],
+        "count": {
+          "$numberInt": "9"
+        },
+        "aggregate": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      }
+    },
     "semantic_query_matching_expression_control": [
       {
         "$numberInt": "2"
@@ -5704,9 +5946,425 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_query_matching_cases.py",
-    "sha256": "c4c9fd619ca24fdfcc944a21513e53d0695ac613d9f6431e57504e95fdfdc8f6"
+    "sha256": "61262d99ed1e3f565cdc3cb1d68e8ce6e82b79bcb3fce119d555f8405ad69480"
   },
   "case_manifests": [
+    {
+      "name": "semantic_query_matching_bson_representations",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_bson_representations"
+    },
     {
       "name": "semantic_query_matching_a_find",
       "min_version": [

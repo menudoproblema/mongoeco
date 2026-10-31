@@ -395,7 +395,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                 validator = (
                     compiled_schema
                     if compiled_schema is not None
-                    else CompiledJsonSchema(schema)
+                    else CompiledJsonSchema(schema, dialect=dialect)
                 )
                 return validator.validate(document).valid
             case AndCondition(clauses=clauses):

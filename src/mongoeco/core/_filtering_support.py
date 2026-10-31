@@ -20,6 +20,12 @@ from mongoeco.types import (
 )
 
 
+try:
+    from bson.dbref import DBRef as DriverDBRef
+except ImportError:
+    DriverDBRef = ()
+
+
 @lru_cache(maxsize=4096)
 def split_path(path: str) -> tuple[str, ...]:
     if not path:
@@ -78,6 +84,8 @@ def hashable_in_lookup_key(value: Any) -> tuple[str, Any] | None:
 def path_mapping(value: Any) -> Mapping[str, Any] | None:
     if isinstance(value, DBRef):
         return value.as_document()
+    if isinstance(value, DriverDBRef):
+        return value.as_doc()
     if isinstance(value, Mapping):
         return value
     return None

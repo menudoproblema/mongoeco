@@ -849,11 +849,14 @@ def _translate_type_condition(plan: TypeCondition) -> SqlFragment:
                 )
             elif spec == 3:
                 scalar_clauses.append(
-                    f"(json_type(document, {path}) = 'object' AND {tagged_type_sql} = '')"
+                    f"(json_type(document, {path}) = 'object' "
+                f"AND {tagged_type_sql} IN ('', 'dbref', 'son', 'dict'))"
                 )
                 array_clauses.append(
                     f'EXISTS (SELECT 1 FROM json_each(document, {path}) '
-                    f"WHERE json_each.type = 'object' AND COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') = '')"
+                    f"WHERE json_each.type = 'object' AND "
+                "COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') "
+                    "IN ('', 'dbref', 'son', 'dict'))"
                 )
             elif spec == 4:
                 scalar_clauses.append(f"json_type(document, {path}) = 'array'")
@@ -927,11 +930,14 @@ def _translate_type_condition(plan: TypeCondition) -> SqlFragment:
             )
         elif normalized == 'object':
             scalar_clauses.append(
-                f"(json_type(document, {path}) = 'object' AND {tagged_type_sql} = '')"
+                f"(json_type(document, {path}) = 'object' "
+                f"AND {tagged_type_sql} IN ('', 'dbref', 'son', 'dict'))"
             )
             array_clauses.append(
                 f'EXISTS (SELECT 1 FROM json_each(document, {path}) '
-                f"WHERE json_each.type = 'object' AND COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') = '')"
+                f"WHERE json_each.type = 'object' AND "
+                "COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') "
+                "IN ('', 'dbref', 'son', 'dict'))"
             )
         elif normalized == 'array':
             scalar_clauses.append(f"json_type(document, {path}) = 'array'")

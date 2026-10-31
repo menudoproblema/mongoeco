@@ -3,7 +3,7 @@
 from copy import deepcopy
 from functools import partial
 
-from bson import BSON, Decimal128
+from bson import BSON, Code, DBRef, Decimal128, Int64
 from bson.raw_bson import RawBSONDocument
 from pymongo import InsertOne, UpdateOne
 from pymongo.errors import OperationFailure
@@ -347,7 +347,128 @@ def configuration(collection):
     return output
 
 
+REPRESENTATION_VALUES = [
+    Code("abc"),
+    Code("abc", {"x": 1}),
+    DBRef("items", 1),
+    {"$ref": "items", "$id": 1},
+    "abc",
+    {"x": 1},
+    Code("abc", {"a": 1, "b": 2}),
+    Code("abc", {"b": 2, "a": 1}),
+    [Code("abc", {"a": 1, "b": 2}), Code("abc", {"b": 2, "a": 1})],
+    [DBRef("items", 1), {"$ref": "items", "$id": 1}],
+    Code("abc", {}),
+]
+REPRESENTATION_RULES = {
+    "string": {"bsonType": "string"},
+    "string_length": {"minLength": 4},
+    "pattern": {"pattern": "z"},
+    "object": {"bsonType": "object", "required": ["x"]},
+    "reference_property": {"properties": {"$id": {"minimum": 2}}},
+    "reference_enum": {"enum": [{"$ref": "items", "$id": 1}]},
+    "code_enum": {"enum": [Code("abc", {"a": 1, "b": 2})]},
+    "plain_code_enum": {"enum": [Code("abc")]},
+    "empty_scope_enum": {"enum": [Code("abc", {})]},
+    "unique": {"uniqueItems": True},
+    "additional": {"additionalProperties": False},
+}
+
+
+def representation_decisions(collection):
+    collection.delete_many({})
+    collection.insert_many(
+        [
+            {"_id": i, "a": deepcopy(value)}
+            for i, value in enumerate(REPRESENTATION_VALUES)
+        ]
+    )
+    return {
+        label: [
+            r["_id"]
+            for r in collection.find(
+                {"$jsonSchema": {"properties": {"a": rule}}}, sort=[("_id", 1)]
+            )
+        ]
+        for label, rule in REPRESENTATION_RULES.items()
+    }
+
+
+def representation_writes(collection):
+    # Keep the strict state observer on the canonical SDK DBRef representation;
+    # the decision case also tests the BSON-equivalent plain document.
+    values = deepcopy(REPRESENTATION_VALUES)
+    values[3] = DBRef("items", 1)
+    values[9] = [DBRef("items", 1), DBRef("items", 1)]
+    rules = deepcopy(REPRESENTATION_RULES)
+    rules["reference_enum"] = {"enum": [DBRef("items", 1)]}
+    return {
+        label: observe_write_case(
+            collection.database,
+            collection.name + "_" + label,
+            WriteCase(
+                label,
+                [],
+                [
+                    WriteRequest("insert_one", [{"_id": i, "a": deepcopy(value)}])
+                    for i, value in enumerate(values)
+                ],
+                options={"validator": {"$jsonSchema": {"properties": {"a": rule}}}},
+            ),
+            error_contract=True,
+        )
+        for label, rule in rules.items()
+    }
+
+
+def bson_preparation(collection):
+    output = {}
+    rules = {
+        "code_type": {"type": Code("string")},
+        "code_bson_type": {"bsonType": [Code("string")]},
+        "code_title": {"title": Code("title")},
+        "code_description": {"description": Code("description")},
+        "code_pattern": {"pattern": Code("abc")},
+        "code_required": {"required": [Code("a")]},
+    }
+    for keyword in ("minLength", "maxLength", "minItems", "maxItems"):
+        for label, bound in (
+            ("int64", Int64(2**63 - 1)),
+            ("double_inside", float(2**63) - 1024),
+            ("double_outside", float(2**63)),
+            ("decimal_outside", Decimal128("9223372036854775808")),
+            ("fraction", 0.5),
+            ("decimal_fraction", Decimal128("0.5")),
+            ("negative", -1),
+            ("bool", True),
+            ("null", None),
+            ("string", "one"),
+            ("nan", float("nan")),
+            ("infinite", float("inf")),
+        ):
+            rules[keyword + "_" + label] = {keyword: bound}
+    for populated in (False, True):
+        collection.delete_many({})
+        if populated:
+            collection.insert_one({"_id": 1, "a": 1})
+        for label, schema in rules.items():
+            try:
+                list(collection.aggregate([{"$match": {"$jsonSchema": schema}}]))
+                result = {"ok": True}
+            except OperationFailure as error:
+                result = {
+                    "ok": False,
+                    "code": error.code,
+                    "message": error.details.get("errmsg"),
+                }
+            output[f"{populated}_{label}"] = result
+    return output
+
+
 SEMANTIC_SCHEMA_CASES = (
+    ("semantic_schema_bson_preparation", bson_preparation),
+    ("semantic_schema_bson_representations", representation_decisions),
+    ("semantic_schema_bson_representation_writes", representation_writes),
     ("semantic_schema_configuration", configuration),
     ("semantic_schema_writeback", writeback),
     ("semantic_schema_moderate_undefined", moderate_undefined),

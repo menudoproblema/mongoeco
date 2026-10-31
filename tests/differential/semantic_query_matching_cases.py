@@ -4,7 +4,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import partial
 
-from bson import Code, Decimal128, Int64, MaxKey, MinKey
+from bson import SON, Code, DBRef, Decimal128, Int64, MaxKey, MinKey, Regex
 
 from tests.differential.semantic_expression_grammar_cases import _reset
 
@@ -202,7 +202,50 @@ def partial_index_routes(collection):
     return result
 
 
+BSON_REPRESENTATION_SEED = [
+    {"_id": 0, "a": Code("abc")},
+    {"_id": 1, "a": Code("abc", {"x": 1})},
+    {"_id": 2, "a": DBRef("items", 1)},
+    {"_id": 3, "a": "abc"},
+    {"_id": 4, "a": {"$ref": "items", "$id": 1}},
+    {"_id": 5, "a": [Code("abc"), DBRef("items", 1)]},
+    {"_id": 6, "a": SON([("x", 1)])},
+    {"_id": 7, "a": {"$mongoeco": {"type": "literal", "value": 1}}},
+    {"_id": 8, "a": [SON([("x", 1)])]},
+    {"_id": 9, "a": Code("abc", {})},
+]
+BSON_REPRESENTATION_CONDITIONS = {
+    "string": {"$type": "string"},
+    "object": {"$type": "object"},
+    "object_code": {"$type": 3},
+    "code": {"$type": "javascript"},
+    "scoped": {"$type": "javascriptWithScope"},
+    "regex": {"$regex": "abc"},
+    "membership": {"$in": [Regex("abc")]},
+    "negated_membership": {"$nin": [Regex("abc")]},
+}
+
+
+def bson_representations(collection):
+    _reset(collection, BSON_REPRESENTATION_SEED)
+    output = {}
+    for label, condition in BSON_REPRESENTATION_CONDITIONS.items():
+        query = {"a": condition}
+        output[label] = {
+            "find": [r["_id"] for r in collection.find(query, sort=[("_id", 1)])],
+            "count": collection.count_documents(query),
+            "aggregate": [
+                r["_id"]
+                for r in collection.aggregate(
+                    [{"$match": query}, {"$sort": {"_id": 1}}]
+                )
+            ],
+        }
+    return output
+
+
 SEMANTIC_QUERY_MATCHING_CASES = (
+    ("semantic_query_matching_bson_representations", bson_representations),
     *(
         (
             f"semantic_query_matching_{path.replace('.', '_')}_{surface}",

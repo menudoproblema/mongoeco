@@ -131,11 +131,11 @@ def wrap_bson_numeric(value: object) -> BsonNumeric | None:
     return None
 
 
-def query_mod_integer(value: object) -> int | None:
-    """Truncate a numeric BSON operand to the query-mod int64 domain.
+def truncate_bson_int64(value: object) -> int | None:
+    """Truncate a BSON number to int64, returning None outside that domain.
 
-    Invalid arguments and ineligible document values use the same coercion;
-    their callers own the distinct error-versus-no-match behavior.
+    Callers own argument errors versus ineligible candidates and, where needed,
+    reject fractional values by comparing the original number to this integer.
     """
     numeric = wrap_bson_numeric(value)
     if numeric is None:

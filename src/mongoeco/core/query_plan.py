@@ -14,7 +14,7 @@ from mongoeco.core.bson_scalars import (
     INT32_MAX,
     _is_infinite_numeric_value,
     _is_nan_numeric_value,
-    query_mod_integer,
+    truncate_bson_int64,
     unwrap_bson_numeric,
     wrap_bson_numeric,
 )
@@ -39,7 +39,7 @@ from mongoeco.types import (
 
 
 def _prepare_mod_operand(value: object, role: str) -> int:
-    integer = query_mod_integer(value)
+    integer = truncate_bson_int64(value)
     if integer is not None:
         return integer
     numeric = wrap_bson_numeric(value)
@@ -910,9 +910,10 @@ def _compile_filter_strict(
                 raise OperationFailure("$jsonSchema validator must be a document")
             from mongoeco.core.schema_validation import CompiledJsonSchema
 
-            CompiledJsonSchema(value)
             clauses.append(
-                JsonSchemaCondition(value, compiled_schema=CompiledJsonSchema(value))
+                JsonSchemaCondition(
+                    value, compiled_schema=CompiledJsonSchema(value, dialect=dialect)
+                )
             )
             continue
         if key == "$and":

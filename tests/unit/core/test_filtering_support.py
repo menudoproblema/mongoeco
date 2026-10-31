@@ -1,6 +1,12 @@
 import datetime
+import importlib.util
+import sys
 import unittest
 import uuid
+
+from unittest.mock import patch
+
+import mongoeco.core._filtering_support as support
 
 from mongoeco.core._filtering_support import (
     compile_regex,
@@ -15,6 +21,18 @@ from mongoeco.types import DBRef, ObjectId, Timestamp
 
 
 class FilteringSupportTests(unittest.TestCase):
+    def test_native_dbref_adapter_keeps_local_mapping_without_optional_driver(self):
+        spec = importlib.util.spec_from_file_location(
+            "filtering_without_driver", support.__file__
+        )
+        module = importlib.util.module_from_spec(spec)
+        with patch.dict(sys.modules, {"bson.dbref": None}):
+            spec.loader.exec_module(module)
+        reference = DBRef("items", 7)
+        self.assertEqual(module.path_mapping(reference), {"$ref": "items", "$id": 7})
+        self.assertEqual(module.query_values({"a": reference}, "a.$id"), [7])
+        self.assertIsNone(module.path_mapping("ordinary scalar"))
+
     def test_split_path_and_compile_regex_validate_inputs(self):
         self.assertEqual(split_path("a.b.0"), ("a", "b", "0"))
         self.assertEqual(split_path(""), ())
@@ -32,7 +50,7 @@ class FilteringSupportTests(unittest.TestCase):
         object_id = ObjectId("000000000000000000000123")
         stamp = Timestamp(5, 7)
         token = uuid.uuid4()
-        moment = datetime.datetime(2026, 4, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        moment = datetime.datetime(2026, 4, 1, 12, 0, tzinfo=datetime.UTC)
 
         self.assertEqual(hashable_in_lookup_key(None), ("none", None))
         self.assertEqual(hashable_in_lookup_key(True), ("bool", True))
@@ -62,14 +80,17 @@ class FilteringSupportTests(unittest.TestCase):
         self.assertEqual(extract_values(document, "author.$db"), ["observe"])
         self.assertEqual(extract_values(document, "author.meta.region"), ["eu"])
         self.assertEqual(extract_values(document, "authors.$id"), ["ada", "grace"])
-        self.assertEqual(extract_values(document, "items.tags"), [["a", "b"], "a", "b", ["c"], "c"])
+        self.assertEqual(
+            extract_values(document, "items.tags"), [["a", "b"], "a", "b", ["c"], "c"]
+        )
 
         self.assertEqual(get_field_value(document, "author.$ref"), (True, "users"))
         self.assertEqual(get_field_value(document, "items.1.tags.0"), (True, "c"))
         self.assertEqual(get_field_value(document, "items.tags"), (False, None))
 
-
-    def test_filtering_support_helpers_cover_mapping_redirect_and_array_candidate_paths(self):
+    def test_filtering_support_helpers_cover_mapping_redirect_and_array_candidate_paths(
+        self,
+    ):
         ref = DBRef("users", "ada", extras={"tags": ["eu", "admin"]})
         self.assertEqual(extract_values(ref, "tags"), [["eu", "admin"], "eu", "admin"])
         self.assertEqual(get_field_value(ref, "$id"), (True, "ada"))

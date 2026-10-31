@@ -17,6 +17,10 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.types import SearchIndexDefinition
 
+from tests.differential.semantic_query_matching_cases import (
+    BSON_REPRESENTATION_CONDITIONS,
+    BSON_REPRESENTATION_SEED,
+)
 from tests.differential.semantic_search_eligibility_cases import (
     FILTERS,
     SEED,
@@ -702,3 +706,54 @@ def test_nonfinite_query_vectors_fail_before_empty_search(engine_factory, coordi
                 )
             )
         assert collection.count_documents({}) == 0
+
+
+@pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("route", ["vector", "text"])
+def test_search_bson_classification_uses_native_eligibility(
+    engine_factory, dialect, route
+):
+    native = _capture(dialect, "query_matching")["cases"][
+        "semantic_query_matching_bson_representations"
+    ]
+    documents = deepcopy(BSON_REPRESENTATION_SEED)
+    for document in documents:
+        document.update(title="Ada", embedding=[1.0, 0.0])
+    with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+        collection = client.bson_search.records
+        collection.insert_many(documents)
+        collection.create_search_index(
+            SearchIndexModel(VECTOR_DEFINITION, name="vectors", type="vectorSearch")
+        )
+        collection.create_search_index(SearchIndexModel(TEXT_DEFINITION, name="text"))
+        for label, condition in BSON_REPRESENTATION_CONDITIONS.items():
+            query = {"a": condition}
+            pipeline = (
+                [
+                    {
+                        "$vectorSearch": {
+                            "index": "vectors",
+                            "path": "embedding",
+                            "queryVector": [1.0, 0.0],
+                            "limit": 100,
+                            "numCandidates": 100,
+                            "filter": query,
+                        }
+                    }
+                ]
+                if route == "vector"
+                else [
+                    {
+                        "$search": {
+                            "index": "text",
+                            "text": {"query": "ada", "path": "title"},
+                        }
+                    },
+                    {"$match": query},
+                ]
+            )
+            assert [
+                row["_id"]
+                for row in collection.aggregate([*pipeline, {"$sort": {"_id": 1}}])
+            ] == native[label]["find"]

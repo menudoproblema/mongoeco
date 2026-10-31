@@ -36,7 +36,10 @@ class FilteringMatchingMixin:
     def _regex_item_matches_candidate(
         cls, candidate: Any, pattern: re.Pattern[str]
     ) -> bool:
-        return isinstance(candidate, str) and pattern.search(candidate) is not None
+        return (
+            cls._matches_bson_type(candidate, "string")
+            and pattern.search(candidate) is not None
+        )
 
     @classmethod
     def _in_item_matches_candidate(

@@ -1,49 +1,29 @@
 from __future__ import annotations
 
-import datetime
-import decimal
-import re
-import uuid
 
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core._filtering_support import compile_regex
-from mongoeco.core.bson_ordering import bson_equality_key
+from mongoeco.core._filtering_support import compile_regex, path_mapping
+from mongoeco.core.bson_ordering import Code, bson_equality_key
 from mongoeco.core.bson_scalars import (
     _is_nan_numeric_value,
     _numeric_to_decimal,
-    bson_numeric_alias,
     compare_bson_numeric,
+    bson_numeric_alias,
+    truncate_bson_int64,
     wrap_bson_numeric,
 )
 from mongoeco.core.collation import CollationSpec, normalize_collation
+from mongoeco.core.error_documents import render_bson_diagnostic
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
-from mongoeco.types import (
-    SON,
-    Binary,
-    DBRef,
-    Decimal128,
-    Document,
-    ObjectId,
-    Regex,
-    Timestamp,
-)
 
 
-_JSON_TYPE_MAP = {
-    "object": (dict,),
-    "array": (list,),
-    "string": (str,),
-    "bool": (bool,),
-    "boolean": (bool,),
-    "null": (type(None),),
-}
 _BSON_TYPE_ALIASES = frozenset(
     {
         "double",
@@ -112,15 +92,89 @@ def schema_equal(left: object, right: object) -> bool:
             and rnum is not None
             and compare_bson_numeric(left, right) == 0
         )
-    if isinstance(left, dict) and isinstance(right, dict):
-        return left.keys() == right.keys() and all(
-            schema_equal(v, right[k]) for k, v in left.items()
+    lobject, robject = path_mapping(left), path_mapping(right)
+    if lobject is not None or robject is not None:
+        return (
+            lobject is not None
+            and robject is not None
+            and lobject.keys() == robject.keys()
+            and all(schema_equal(v, robject[k]) for k, v in lobject.items())
+        )
+    if isinstance(left, Code) or isinstance(right, Code):
+        return (
+            isinstance(left, Code)
+            and isinstance(right, Code)
+            and str(left) == str(right)
+            and (
+                (left.scope is None and right.scope is None)
+                or (
+                    left.scope is not None
+                    and right.scope is not None
+                    and schema_equal(left.scope, right.scope)
+                )
+            )
         )
     if isinstance(left, list) and isinstance(right, list):
         return len(left) == len(right) and all(
             schema_equal(a, b) for a, b in zip(left, right, strict=True)
         )
     return bson_equality_key(left) == bson_equality_key(right)
+
+
+def _validate_schema_count(key: str, value: object, *, dialect: MongoDialect) -> None:
+    number = wrap_bson_numeric(value)
+    integer = truncate_bson_int64(value)
+    if number is None:
+        reason = "Expected a number in"
+        rendered = render_bson_diagnostic(value)
+    else:
+        is_decimal = bson_numeric_alias(value) == "decimal"
+        rendered = (
+            render_bson_diagnostic(number.value)
+            if not is_decimal and dialect.key != "9.0"
+            else str(number.value)
+        )
+        if not is_decimal and _is_nan_numeric_value(number.value):
+            reason = "Expected an integer, but found NaN in"
+        elif integer is None:
+            reason = "Cannot represent as a 64-bit integer"
+        elif compare_bson_numeric(value, integer):
+            reason = (
+                "Cannot represent as a 64-bit integer"
+                if is_decimal
+                else "Expected an integer"
+            )
+        elif integer < 0:
+            reason = "Expected a non-negative number in"
+        else:
+            return
+    msg = f"{reason}: {key}: {rendered}"
+    raise server_error(msg, code=9)
+
+
+def _schema_type_name(value: object) -> str:
+    candidates = (
+        "bool",
+        "int",
+        "long",
+        "double",
+        "decimal",
+        "string",
+        "array",
+        "object",
+        "null",
+        "binData",
+        "date",
+        "objectId",
+        "regex",
+        "timestamp",
+        "javascript",
+        "javascriptWithScope",
+    )
+    return next(
+        (name for name in candidates if QueryEngine._matches_bson_type(value, name)),
+        type(value).__name__,
+    )
 
 
 def _json_path(path: tuple[str, ...]) -> str:
@@ -177,6 +231,7 @@ def _group(issues, detail):
 @dataclass(frozen=True, slots=True)
 class CompiledJsonSchema:
     raw_schema: Document
+    dialect: MongoDialect = field(default=MONGODB_DIALECT_70, repr=False)
     _patterns: dict[str, re.Pattern[str]] = field(
         default_factory=dict, init=False, repr=False, compare=False
     )
@@ -206,8 +261,15 @@ class CompiledJsonSchema:
             else {"object", "array", "string", "number", "boolean", "null"}
         )
         for candidate in candidates:
-            if not isinstance(candidate, str):
-                msg = f"$jsonSchema {field_name} entries must be strings"
+            if not QueryEngine._matches_bson_type(candidate, "string"):
+                msg = (
+                    f"$jsonSchema keyword '{field_name}' array elements must be strings"
+                    if isinstance(value, list)
+                    else (
+                        f"$jsonSchema keyword '{field_name}' must be either "
+                        "a string or an array of strings"
+                    )
+                )
                 raise server_error(msg, code=14)
             if candidate == "integer" and field_name == "type":
                 msg = "$jsonSchema type 'integer' is not currently supported."
@@ -251,8 +313,16 @@ class CompiledJsonSchema:
             if not values:
                 msg = f"$jsonSchema keyword '{key}' cannot be an empty array"
                 raise server_error(msg, code=9)
-            if key == "required" and any(not isinstance(v, str) for v in values):
-                msg = "$jsonSchema required must be a list of strings"
+            if key == "required" and any(
+                not QueryEngine._matches_bson_type(v, "string") for v in values
+            ):
+                invalid = next(
+                    v for v in values if not QueryEngine._matches_bson_type(v, "string")
+                )
+                msg = (
+                    "$jsonSchema keyword 'required' must be an array of strings, "
+                    f"but found an element of type: {_schema_type_name(invalid)}"
+                )
                 raise server_error(msg, code=14)
             if any(
                 schema_equal(value, earlier)
@@ -274,8 +344,14 @@ class CompiledJsonSchema:
 
     def _validate_string_definition(self, schema):
         for key in ("title", "description", "pattern"):
-            if key in schema and not isinstance(schema[key], str):
-                msg = f"$jsonSchema keyword '{key}' must be of type string"
+            if key in schema and not QueryEngine._matches_bson_type(
+                schema[key], "string"
+            ):
+                msg = (
+                    f"$jsonSchema keyword '{key}' must be a string"
+                    if key == "pattern"
+                    else f"$jsonSchema keyword '{key}' must be of type string"
+                )
                 raise server_error(msg, code=14)
         if "pattern" in schema:
             try:
@@ -325,16 +401,9 @@ class CompiledJsonSchema:
                 msg = f"$jsonSchema keyword '{key}' must be a boolean"
                 raise server_error(msg, code=14)
         for key in ("minItems", "maxItems", "minLength", "maxLength"):
-            if key in schema:
-                number = wrap_bson_numeric(schema[key])
-                if (
-                    number is None
-                    or not decimal.Decimal(str(number.value)).is_finite()
-                    or number.value < 0
-                    or number.value != int(number.value)
-                ):
-                    msg = f"$jsonSchema {key} must be a non-negative integer"
-                    raise server_error(msg, code=9)
+            if key not in schema:
+                continue
+            _validate_schema_count(key, schema[key], dialect=self.dialect)
 
     def _validate_children_definition(self, schema):
         properties = schema.get("properties", {})
@@ -370,41 +439,22 @@ class CompiledJsonSchema:
             if key in schema and not self._matches_any_type(
                 value, self._normalize_type_names(schema[key], field_name=key)
             ):
-                candidates = (
-                    "bool",
-                    "int",
-                    "long",
-                    "double",
-                    "decimal",
-                    "string",
-                    "array",
-                    "object",
-                    "null",
-                    "binData",
-                    "date",
-                    "objectId",
-                    "regex",
-                    "timestamp",
-                )
-                actual = next(
-                    (name for name in candidates if self._matches_type(value, name)),
-                    type(value).__name__,
-                )
                 fail(
                     key,
                     f"type mismatch; expected {schema[key]}",
                     "type did not match",
-                    consideredType=actual,
+                    consideredType=_schema_type_name(value),
                 )
                 type_issues.extend(issues)
                 issues.clear()
         if "enum" in schema and not any(schema_equal(value, v) for v in schema["enum"]):
             fail("enum", "value is not in enum", "value was not found in enum")
-        if isinstance(value, dict):
-            issues.extend(self._validate_object(schema, value, path))
+        object_value = path_mapping(value)
+        if object_value is not None:
+            issues.extend(self._validate_object(schema, object_value, path))
         elif isinstance(value, list):
             issues.extend(self._validate_array(schema, value, path))
-        elif isinstance(value, str):
+        elif self._matches_type(value, "string"):
             issues.extend(self._validate_string(schema, value, path))
         elif wrap_bson_numeric(value) is not None:
             issues.extend(self._validate_numeric(schema, value, path))
@@ -658,38 +708,13 @@ class CompiledJsonSchema:
 
     @staticmethod
     def _matches_type(value: object, type_name: str) -> bool:
-        if type_name == "number":
-            return bson_numeric_alias(value) is not None and not isinstance(value, bool)
-        if type_name == "int":
-            return bson_numeric_alias(value) == "int"
-        if type_name == "long":
-            return bson_numeric_alias(value) == "long"
-        if type_name == "double":
-            return bson_numeric_alias(value) == "double"
-        if type_name == "decimal":
-            return bson_numeric_alias(value) == "decimal" or isinstance(
-                value, Decimal128
-            )
-        if type_name == "objectId":
-            return isinstance(value, ObjectId)
-        if type_name == "date":
-            return isinstance(value, datetime.datetime)
-        if type_name == "timestamp":
-            return isinstance(value, Timestamp)
-        if type_name == "binData":
-            return isinstance(value, (bytes, bytearray, uuid.UUID, Binary))
-        if type_name == "regex":
-            return isinstance(value, (re.Pattern, Regex))
-        expected = _JSON_TYPE_MAP.get(type_name)
-        if expected is None:
-            return False
-        if type_name in {"object", "array"}:
-            if type_name == "object":
-                return isinstance(value, (dict, SON, DBRef))
-            return isinstance(value, expected)
-        return isinstance(value, expected) and not (
-            type_name in {"bool", "boolean"} and isinstance(value, bool) is False
-        )
+        # Classification is atomic in both contracts. MQL's array traversal is
+        # owned by its caller, not by this shared BSON predicate.
+        if type_name == "boolean":
+            type_name = "bool"
+        if type_name == "binData" and isinstance(value, bytearray):
+            return True
+        return QueryEngine._matches_bson_type(value, type_name)
 
 
 @dataclass(frozen=True, slots=True)
@@ -787,7 +812,9 @@ def compile_collection_validator(
         if not isinstance(json_schema_spec, dict):
             msg = "$jsonSchema validator must be a document"
             raise server_error(msg, code=14)
-        json_schema = CompiledJsonSchema(deepcopy(json_schema_spec))
+        json_schema = CompiledJsonSchema(
+            deepcopy(json_schema_spec), dialect=dialect or MONGODB_DIALECT_70
+        )
 
     query_validator = None
     if validator_document:
@@ -813,4 +840,8 @@ def schema_failure_details(result: SchemaValidationResult) -> list[Document]:
 
 
 if TYPE_CHECKING:
+    import re
+
     from collections.abc import Mapping
+
+    from mongoeco.types import Document

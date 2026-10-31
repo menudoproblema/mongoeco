@@ -10,6 +10,8 @@ from bson import BSON, Code, Decimal128
 from mongoeco import UNDEFINED
 from mongoeco.compat import resolve_mongodb_dialect
 from mongoeco.core.bson_raw import decode_bson_document
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.schema_validation import (
     CompiledJsonSchema,
     compile_collection_validator,
@@ -134,3 +136,20 @@ def test_raw_bson_preserves_null_and_undefined_in_nested_shapes():
     assert decoded["items"][1]["a"] is UNDEFINED
     assert decoded["code"].scope["a"] is UNDEFINED
     assert decoded["null"] is None
+
+
+@pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+def test_filter_prepares_schema_once_and_preserves_its_dialect(dialect):
+    effective = resolve_mongodb_dialect(dialect)
+    with patch(
+        "mongoeco.core.schema_validation.CompiledJsonSchema", wraps=CompiledJsonSchema
+    ) as prepare:
+        plan = compile_filter(
+            {"$jsonSchema": {"properties": {"a": {"bsonType": "string"}}}},
+            dialect=effective,
+        )
+        assert prepare.call_count == 1
+        assert prepare.call_args.kwargs["dialect"] is effective
+        assert QueryEngine.match_plan({"a": "abc"}, plan, dialect=effective)
+        assert not QueryEngine.match_plan({"a": Code("abc")}, plan, dialect=effective)
+        assert prepare.call_count == 1

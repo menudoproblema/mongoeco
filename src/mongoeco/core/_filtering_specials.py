@@ -23,12 +23,13 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_support import (
     ArrayElementDocument,
     compile_regex as _compile_regex,
+    path_mapping,
     query_field_values,
 )
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_scalars import (
     bson_numeric_alias,
-    query_mod_integer,
+    truncate_bson_int64,
     unwrap_bson_numeric,
 )
 from mongoeco.core.query_operators import query_operator_keys
@@ -131,9 +132,11 @@ class FilteringSpecialOperatorsMixin:
         if alias in {"int", "long"}:
             return isinstance(candidate, int) and not isinstance(candidate, bool)
         if alias == "string":
-            return isinstance(candidate, str)
+            return isinstance(candidate, str) and not (
+                BsonCode is not None and isinstance(candidate, BsonCode)
+            )
         if alias == "object":
-            return isinstance(candidate, dict)
+            return path_mapping(candidate) is not None
         if alias == "array":
             return isinstance(candidate, list)
         if alias == "binData":
@@ -345,7 +348,7 @@ class FilteringSpecialOperatorsMixin:
         cls, doc: dict[str, Any], field: str, divisor: int, remainder: int
     ) -> bool:
         return any(
-            (integer := query_mod_integer(value)) is not None
+            (integer := truncate_bson_int64(value)) is not None
             and cls._mongo_remainder(integer, divisor) == remainder
             for value in cls._extract_values(doc, field)
         )
@@ -361,7 +364,7 @@ class FilteringSpecialOperatorsMixin:
     ) -> bool:
         regex = _compile_regex(pattern, options)
         return any(
-            isinstance(value, str) and regex.search(value) is not None
+            cls._regex_item_matches_candidate(value, regex)
             for value in cls._extract_values(doc, field)
         )
 
