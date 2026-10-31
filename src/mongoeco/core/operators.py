@@ -15,6 +15,7 @@ from mongoeco.core.aggregation import (
     compile_pipeline,
 )
 from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
+from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.expression_context import ensure_expression_context
@@ -24,7 +25,6 @@ from mongoeco.core.identity import (
     assert_valid_root_document_id,
     preserve_and_validate_pipeline_id,
 )
-from mongoeco.core.paths import same_bson_update_value
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.update_array_operators import (

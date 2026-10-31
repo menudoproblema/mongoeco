@@ -6,10 +6,10 @@ from copy import deepcopy
 from functools import cmp_to_key
 from typing import TYPE_CHECKING, Any
 
+from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import (
     get_document_value,
-    same_bson_update_value,
     set_document_value,
 )
 from mongoeco.core.query_operators import (

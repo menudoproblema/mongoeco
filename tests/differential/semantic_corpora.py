@@ -91,6 +91,10 @@ from tests.differential.semantic_sum_cases import (
     SEMANTIC_SUM_STREAM_CASES,
     STREAM_SEED as SUM_STREAM_SEED,
 )
+from tests.differential.semantic_update_identity_cases import (
+    SEED as UPDATE_IDENTITY_SEED,
+    SEMANTIC_UPDATE_IDENTITY_CASES,
+)
 
 
 @dataclass(frozen=True)
@@ -103,6 +107,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "update_identity": SemanticCorpus(
+        "update-identity", "semantic_update_identity_cases",
+        UPDATE_IDENTITY_SEED, SEMANTIC_UPDATE_IDENTITY_CASES,
+    ),
     "binary": SemanticCorpus(
         "binary", "semantic_binary_cases", BINARY_SEED, SEMANTIC_BINARY_CASES,
     ),

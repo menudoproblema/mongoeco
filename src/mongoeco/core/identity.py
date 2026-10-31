@@ -3,9 +3,9 @@ from copy import deepcopy
 from re import Pattern
 from typing import Any
 
+from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.bson_scalars import bson_numeric_alias, is_bson_numeric
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.paths import same_bson_update_value
 from mongoeco.errors import WriteError
 from mongoeco.types import Regex
 

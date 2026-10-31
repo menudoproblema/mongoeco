@@ -7,6 +7,7 @@ from copy import deepcopy
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_scalars import _is_nan_numeric_value, unwrap_bson_numeric
+from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.collation import (
     CollationSpec,
     compare_with_collation,
@@ -373,12 +374,12 @@ def _same_field_type_implies(query_plan: QueryNode, field: str, type_spec: objec
         aliases.update(QueryEngine._normalize_type_specifier(type_spec))
     if isinstance(query_plan, EqualsCondition):
         return query_plan.field == field and any(
-            QueryEngine._matches_bson_type(query_plan.value, alias)
+            matches_bson_type(query_plan.value, alias)
             for alias in aliases
         )
     if isinstance(query_plan, InCondition):
         return query_plan.field == field and bool(query_plan.values) and all(
-            any(QueryEngine._matches_bson_type(value, alias) for alias in aliases)
+            any(matches_bson_type(value, alias) for alias in aliases)
             for value in query_plan.values
         )
     if isinstance(query_plan, TypeCondition):

@@ -1,0 +1,591 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_update_identity_classic": {
+      "scope_order": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "3a000000025f6964000c00000073636f70655f6f72646572000f76001d0000000200000078001300000010620002000000106100010000000000"
+      },
+      "scope_numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "3e000000025f6964001300000073636f70655f6e756d657269635f74797065000f76001a00000002000000780010000000017600000000000000f03f0000"
+      },
+      "scope_nested": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "4b000000025f6964000d00000073636f70655f6e6573746564000f76002d000000020000007800230000000476001b00000003300013000000106200020000001061000100000000000000"
+      },
+      "scope_none_empty": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "31000000025f6964001100000073636f70655f6e6f6e655f656d707479000f76000f000000020000007800050000000000"
+      },
+      "scope_empty_none": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "28000000025f6964001100000073636f70655f656d7074795f6e6f6e65000d760002000000780000"
+      },
+      "scope_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "3e000000025f6964000b00000073636f70655f6e6f6f70000f7600220000000200000078001800000004760010000000013000000000000000f03f000000"
+      },
+      "binary_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "32000000025f6964000c00000062696e6172795f6e6f6f700005760010000000056162636465666768696a6b6c6d6e6f7000"
+      },
+      "binary_zero_alias": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "38000000025f6964001200000062696e6172795f7a65726f5f616c6961730005760010000000006162636465666768696a6b6c6d6e6f7000"
+      },
+      "numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "26000000025f6964000d0000006e756d657269635f7479706500017600000000000000f03f00"
+      },
+      "numeric_width": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "27000000025f6964000e0000006e756d657269635f776964746800127600010000000000000000"
+      },
+      "signed_zero": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "25000000025f6964000c0000007369676e65645f7a65726f00017600000000000000008000"
+      },
+      "float_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "24000000025f6964000b000000666c6f61745f6e6f6f7000017600000000000000f03f00"
+      },
+      "nan_payload": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "25000000025f6964000c0000006e616e5f7061796c6f616400017600010000000000f87f00"
+      },
+      "decimal_cohort": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "30000000025f6964000f000000646563696d616c5f636f686f72740013760064000000000000000000000000003c3000"
+      },
+      "decimal_signed_zero": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "35000000025f69640014000000646563696d616c5f7369676e65645f7a65726f00137600000000000000000000000000000040b000"
+      },
+      "dbref_alias": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "37000000025f6964000c00000064627265665f616c696173000376001a0000000224726566000200000063001024696400010000000000"
+      },
+      "dbref_numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "42000000025f6964001300000064627265665f6e756d657269635f74797065000376001e0000000224726566000200000063000124696400000000000000f03f0000"
+      }
+    },
+    "semantic_update_identity_pipeline": {
+      "scope_order": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "3a000000025f6964000c00000073636f70655f6f72646572000f76001d0000000200000078001300000010620002000000106100010000000000"
+      },
+      "scope_numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "3e000000025f6964001300000073636f70655f6e756d657269635f74797065000f76001a00000002000000780010000000017600000000000000f03f0000"
+      },
+      "scope_nested": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "4b000000025f6964000d00000073636f70655f6e6573746564000f76002d000000020000007800230000000476001b00000003300013000000106200020000001061000100000000000000"
+      },
+      "scope_none_empty": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "31000000025f6964001100000073636f70655f6e6f6e655f656d707479000f76000f000000020000007800050000000000"
+      },
+      "scope_empty_none": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "28000000025f6964001100000073636f70655f656d7074795f6e6f6e65000d760002000000780000"
+      },
+      "scope_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "3e000000025f6964000b00000073636f70655f6e6f6f70000f7600220000000200000078001800000004760010000000013000000000000000f03f000000"
+      },
+      "binary_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "32000000025f6964000c00000062696e6172795f6e6f6f700005760010000000056162636465666768696a6b6c6d6e6f7000"
+      },
+      "binary_zero_alias": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "38000000025f6964001200000062696e6172795f7a65726f5f616c6961730005760010000000006162636465666768696a6b6c6d6e6f7000"
+      },
+      "numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "26000000025f6964000d0000006e756d657269635f7479706500017600000000000000f03f00"
+      },
+      "numeric_width": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "27000000025f6964000e0000006e756d657269635f776964746800127600010000000000000000"
+      },
+      "signed_zero": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "25000000025f6964000c0000007369676e65645f7a65726f00017600000000000000008000"
+      },
+      "float_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "24000000025f6964000b000000666c6f61745f6e6f6f7000017600000000000000f03f00"
+      },
+      "nan_payload": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "25000000025f6964000c0000006e616e5f7061796c6f616400017600010000000000f87f00"
+      },
+      "decimal_cohort": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "30000000025f6964000f000000646563696d616c5f636f686f72740013760064000000000000000000000000003c3000"
+      },
+      "decimal_signed_zero": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "35000000025f69640014000000646563696d616c5f7369676e65645f7a65726f00137600000000000000000000000000000040b000"
+      },
+      "dbref_alias": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "37000000025f6964000c00000064627265665f616c696173000376001a0000000224726566000200000063001024696400010000000000"
+      },
+      "dbref_numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "42000000025f6964001300000064627265665f6e756d657269635f74797065000376001e0000000224726566000200000063000124696400000000000000f03f0000"
+      }
+    },
+    "semantic_update_identity_replacement": {
+      "scope_order": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "3a000000025f6964000c00000073636f70655f6f72646572000f76001d0000000200000078001300000010620002000000106100010000000000"
+      },
+      "scope_numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "3e000000025f6964001300000073636f70655f6e756d657269635f74797065000f76001a00000002000000780010000000017600000000000000f03f0000"
+      },
+      "scope_nested": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "4b000000025f6964000d00000073636f70655f6e6573746564000f76002d000000020000007800230000000476001b00000003300013000000106200020000001061000100000000000000"
+      },
+      "scope_none_empty": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "31000000025f6964001100000073636f70655f6e6f6e655f656d707479000f76000f000000020000007800050000000000"
+      },
+      "scope_empty_none": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "28000000025f6964001100000073636f70655f656d7074795f6e6f6e65000d760002000000780000"
+      },
+      "scope_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "3e000000025f6964000b00000073636f70655f6e6f6f70000f7600220000000200000078001800000004760010000000013000000000000000f03f000000"
+      },
+      "binary_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "32000000025f6964000c00000062696e6172795f6e6f6f700005760010000000056162636465666768696a6b6c6d6e6f7000"
+      },
+      "binary_zero_alias": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "38000000025f6964001200000062696e6172795f7a65726f5f616c6961730005760010000000006162636465666768696a6b6c6d6e6f7000"
+      },
+      "numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "26000000025f6964000d0000006e756d657269635f7479706500017600000000000000f03f00"
+      },
+      "numeric_width": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "27000000025f6964000e0000006e756d657269635f776964746800127600010000000000000000"
+      },
+      "signed_zero": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "25000000025f6964000c0000007369676e65645f7a65726f00017600000000000000008000"
+      },
+      "float_noop": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "24000000025f6964000b000000666c6f61745f6e6f6f7000017600000000000000f03f00"
+      },
+      "nan_payload": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "25000000025f6964000c0000006e616e5f7061796c6f616400017600010000000000f87f00"
+      },
+      "decimal_cohort": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "30000000025f6964000f000000646563696d616c5f636f686f72740013760064000000000000000000000000003c3000"
+      },
+      "decimal_signed_zero": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "35000000025f69640014000000646563696d616c5f7369676e65645f7a65726f00137600000000000000000000000000000040b000"
+      },
+      "dbref_alias": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        },
+        "document_bson": "37000000025f6964000c00000064627265665f616c696173000376001a0000000224726566000200000063001024696400010000000000"
+      },
+      "dbref_numeric_type": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        },
+        "document_bson": "42000000025f6964001300000064627265665f6e756d657269635f74797065000376001e0000000224726566000200000063000124696400000000000000f03f0000"
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_update_identity_cases.py",
+    "sha256": "30f8c44a356b70e238ce8c569dcade5f9ac550c9cd8b31c57af041ec072c0eae"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_update_identity_classic",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_update_identity_classic"
+    },
+    {
+      "name": "semantic_update_identity_pipeline",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_update_identity_pipeline"
+    },
+    {
+      "name": "semantic_update_identity_replacement",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_update_identity_replacement"
+    }
+  ]
+}

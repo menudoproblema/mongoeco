@@ -1,48 +1,26 @@
 from __future__ import annotations
 
-import datetime
-import decimal
 import math
-import re
 import uuid
 
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-
-try:
-    from bson.code import Code as BsonCode
-    from bson.max_key import MaxKey as BsonMaxKey
-    from bson.min_key import MinKey as BsonMinKey
-except Exception:  # pragma: no cover - optional dependency
-    BsonCode = None
-    BsonMaxKey = None
-    BsonMinKey = None
-
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_support import (
     ArrayElementDocument,
     compile_regex as _compile_regex,
-    path_mapping,
     query_field_values,
 )
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_scalars import (
-    bson_numeric_alias,
     truncate_bson_int64,
     unwrap_bson_numeric,
 )
+from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.query_operators import query_operator_keys
 from mongoeco.core.query_plan import _normalize_type_specifier
 from mongoeco.errors import OperationFailure
-from mongoeco.types import (
-    Binary,
-    Decimal128,
-    ObjectId,
-    Regex,
-    Timestamp,
-    UndefinedType,
-)
 
 
 if TYPE_CHECKING:
@@ -62,58 +40,7 @@ class FilteringSpecialOperatorsMixin:
 
     @classmethod
     def _matches_bson_type(cls, candidate: Any, alias: str) -> bool:
-        numeric_alias = bson_numeric_alias(candidate)
-        if numeric_alias is not None:
-            if alias == "number":
-                return True
-            return numeric_alias == alias
-        if alias == "double":
-            return isinstance(candidate, float) and not isinstance(candidate, bool)
-        if alias == "decimal":
-            return isinstance(candidate, (decimal.Decimal, Decimal128))
-        if alias in {"int", "long"}:
-            return isinstance(candidate, int) and not isinstance(candidate, bool)
-        if alias == "string":
-            return isinstance(candidate, str) and not (
-                BsonCode is not None and isinstance(candidate, BsonCode)
-            )
-        if alias == "object":
-            return path_mapping(candidate) is not None
-        if alias == "array":
-            return isinstance(candidate, list)
-        if alias == "binData":
-            return isinstance(candidate, (bytes, Binary, uuid.UUID))
-        if alias == "objectId":
-            return isinstance(candidate, ObjectId)
-        if alias == "bool":
-            return isinstance(candidate, bool)
-        if alias == "date":
-            return isinstance(candidate, datetime.datetime)
-        if alias == "timestamp":
-            return isinstance(candidate, Timestamp)
-        if alias == "null":
-            return candidate is None
-        if alias == "regex":
-            return isinstance(candidate, (re.Pattern, Regex))
-        if alias == "javascript":
-            return (
-                BsonCode is not None
-                and isinstance(candidate, BsonCode)
-                and candidate.scope is None
-            )
-        if alias == "javascriptWithScope":
-            return (
-                BsonCode is not None
-                and isinstance(candidate, BsonCode)
-                and candidate.scope is not None
-            )
-        if alias == "minKey":
-            return BsonMinKey is not None and isinstance(candidate, BsonMinKey)
-        if alias == "maxKey":
-            return BsonMaxKey is not None and isinstance(candidate, BsonMaxKey)
-        if alias == "undefined":
-            return isinstance(candidate, UndefinedType)
-        return False
+        return matches_bson_type(candidate, alias)
 
     @classmethod
     def _evaluate_type(

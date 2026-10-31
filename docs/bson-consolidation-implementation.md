@@ -58,10 +58,53 @@ del matcher, los testigos ampliados de longitudes/arrays/gramática y observaci�
 de caminos SQL y storage/cache. Tampoco cierra D01a: Code y la reubicación del
 helper físico siguen pendientes. D05 aún exige matrices, coste y paquete final.
 
+### D01a y clasificación común — implementación y validación focal
+
+La clasificación atómica y la vista documental se extraen a `bson_values`;
+matcher conserva una delegación y schema/virtual_indexes consumen directamente
+el owner neutral. La gramática de aliases sigue en query_plan: no se fusionan
+traversal MQL, schema y reglas físicas. No cambian hooks de dialecto.
+
+`bson_identity.same_bson_update_value` es ahora la única implementación de
+identidad física, consumida por paths, arrays, pipelines y reemplazos. Code
+compara cuerpo y scope recursivo con orden/tipos; DBRef usa su vista documental
+ordenada. Se preserva distinción scope ausente/vacío y la identidad numérica.
+La guardia del observador independiente se amplía al módulo nuevo, sin cambiar
+las reglas de los observers protegidos.
+
+El corpus update_identity registra 17 escenarios por classic/pipeline/replacement:
+scope reordenado, cambio numérico/nesting, scope ausente/vacío/no-op, Binary,
+ancho/tipo numérico, signed zero, payload NaN, cohortes/signo Decimal128 y DBRef.
+Observa contadores y bytes BSON producidos por el SDK, no igualdad de clases
+Python ni comparadores de producción. Las tres referencias nativas 7/8/9 se
+verificaron nuevamente con `--check`. El runtime archivado b661e7a falla los
+72 casos públicos del replay; el candidato pasa sus cuatro superficies.
+
+La ampliación descubrió pérdida de payload NaN en JSON SQLite. El commit
+`19ed3fa` la corrige independientemente del helper: conserva el tag double con
+payload de bits para no finitos y distingue ownership raw/wrapped, sin cambiar
+la representación usada por las claves físicas. Soporta lectura del payload
+double anterior y float legacy; no reconstruye bits perdidos anteriormente.
+La extensión se verifica con 22 casos stdlib/orjson y 67 controles del codec
+sobre b661e7a aislado con solo codec.py sustituido. No cierra B07 general.
+
+La [evidencia del corte](evidence/bson-consolidation-implementation/identity-and-classification/receipt.json)
+registra 4.969 checks de regresión semántica verdes, 193 controles de unidad/propiedades,
+150 checks Binary/identidad con orjson, typing público/boundary, ejecución sin
+SDK y lint sin deuda nueva. Las ejecuciones con seed vacío y la comparación
+inicial por clase SDK no son gates: el primero no llegaba al fallo semántico y
+la segunda distinguía bytes/Binary 0 con idéntico BSON.
+
+Revisión D01a: no quedan cuerpos duplicados ni llamadas de producción al helper
+antiguo; paths importa el owner nuevo porque lo usa. D01b sigue abierto para
+eventos/outbox/índices y operaciones múltiples. D03a aún necesita los testigos
+ampliados de longitudes/arrays/gramática y de caminos físicos; la extracción ya
+está hecha. La aceptación global de paquete/matrices permanece en D05.
+
 ## Trabajo restante
 
-- D03a: clasificación/vistas Binary, comparación, claves y guarda SQL.
-- D01a/D01b: identidad BSON y consecuencias públicas.
+- D03a: completar testigos de longitudes/arrays/gramática y caminos físicos.
+- D01b: consecuencias públicas de modificación, eventos, índices y operaciones múltiples.
 - D02: milisegundos exactos, ventanas y TTL compatible.
 - D03b: tipos/SQL bajo prueba de equivalencia.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
@@ -70,4 +113,4 @@ helper físico siguen pendientes. D05 aún exige matrices, coste y paquete final
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre.
 
-Ningún bloque funcional se declara cerrado todavía.
+Los cortes focales no acreditan el cierre integrado del programa ni D05.

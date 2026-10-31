@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -11,11 +10,12 @@ from mongoeco.core.bson_ordering import Code, bson_equality_key
 from mongoeco.core.bson_scalars import (
     _is_nan_numeric_value,
     _numeric_to_decimal,
-    compare_bson_numeric,
     bson_numeric_alias,
+    compare_bson_numeric,
     truncate_bson_int64,
     wrap_bson_numeric,
 )
+from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.error_documents import render_bson_diagnostic
 from mongoeco.core.filtering import QueryEngine
@@ -172,7 +172,7 @@ def _schema_type_name(value: object) -> str:
         "javascriptWithScope",
     )
     return next(
-        (name for name in candidates if QueryEngine._matches_bson_type(value, name)),
+        (name for name in candidates if matches_bson_type(value, name)),
         type(value).__name__,
     )
 
@@ -261,7 +261,7 @@ class CompiledJsonSchema:
             else {"object", "array", "string", "number", "boolean", "null"}
         )
         for candidate in candidates:
-            if not QueryEngine._matches_bson_type(candidate, "string"):
+            if not matches_bson_type(candidate, "string"):
                 msg = (
                     f"$jsonSchema keyword '{field_name}' array elements must be strings"
                     if isinstance(value, list)
@@ -314,10 +314,10 @@ class CompiledJsonSchema:
                 msg = f"$jsonSchema keyword '{key}' cannot be an empty array"
                 raise server_error(msg, code=9)
             if key == "required" and any(
-                not QueryEngine._matches_bson_type(v, "string") for v in values
+                not matches_bson_type(v, "string") for v in values
             ):
                 invalid = next(
-                    v for v in values if not QueryEngine._matches_bson_type(v, "string")
+                    v for v in values if not matches_bson_type(v, "string")
                 )
                 msg = (
                     "$jsonSchema keyword 'required' must be an array of strings, "
@@ -344,7 +344,7 @@ class CompiledJsonSchema:
 
     def _validate_string_definition(self, schema):
         for key in ("title", "description", "pattern"):
-            if key in schema and not QueryEngine._matches_bson_type(
+            if key in schema and not matches_bson_type(
                 schema[key], "string"
             ):
                 msg = (
@@ -714,7 +714,7 @@ class CompiledJsonSchema:
             type_name = "bool"
         if type_name == "binData" and isinstance(value, bytearray):
             return True
-        return QueryEngine._matches_bson_type(value, type_name)
+        return matches_bson_type(value, type_name)
 
 
 @dataclass(frozen=True, slots=True)

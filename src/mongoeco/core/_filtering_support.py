@@ -4,27 +4,22 @@ import datetime
 import re
 import uuid
 
-from collections.abc import Mapping
 from functools import lru_cache
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.core.aggregation.expression_values import MISSING
-from mongoeco.core.bson_values import binary_parts
+from mongoeco.core.bson_values import binary_parts, document_mapping as path_mapping
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
-    DBRef,
     Regex,
     Timestamp,
     is_object_id_like,
     normalize_object_id,
 )
 
-
-try:
-    from bson.dbref import DBRef as DriverDBRef
-except ImportError:
-    DriverDBRef = ()
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 @lru_cache(maxsize=4096)
@@ -80,16 +75,6 @@ def hashable_in_lookup_key(value: Any) -> tuple[str, Any] | None:
         return ("objectid", normalize_object_id(value))
     if isinstance(value, Timestamp):
         return ("timestamp", value)
-    return None
-
-
-def path_mapping(value: Any) -> Mapping[str, Any] | None:
-    if isinstance(value, DBRef):
-        return value.as_document()
-    if isinstance(value, DriverDBRef):
-        return value.as_doc()
-    if isinstance(value, Mapping):
-        return value
     return None
 
 

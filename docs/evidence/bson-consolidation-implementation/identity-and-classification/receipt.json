@@ -1,0 +1,96 @@
+{
+  "status": "D01a implementation and focal validation; overall plan remains in progress",
+  "candidate_base": "19ed3fa254ef45f2ffb7bb3738cfcfaf1e8425a5",
+  "before_runtime": "b661e7a source archived under /tmp/mongoeco-identity/before and preloaded; package path logged",
+  "candidate_files_sha256": {
+    "src/mongoeco/core/_filtering_specials.py": "123ab626dfc11e0959fe1c3c20a769e8f7eb96b74528e79f0e2043d0f9b49f85",
+    "src/mongoeco/core/_filtering_support.py": "80cdca34e2d2fb55f3408b1434532b1639a10f9a0deb762a9cdc4f55b4f41918",
+    "src/mongoeco/core/bson_identity.py": "5a2929dbe5720e59ab49078d7ad39e9bfe042f8d7b6fcea1fae3343ebfc166a2",
+    "src/mongoeco/core/bson_values.py": "990e848853100714c1a06041606eac144437424d3c0e22c5a26f87508a2cd665",
+    "src/mongoeco/core/identity.py": "e49cf447add5d5566f98c7166f6741262a89e6db30be4dc8dcb959be1606e193",
+    "src/mongoeco/core/operators.py": "5f40b098b1f81cd74090a43a4ff458d8027899168372ba2a2a4279ade131ffa6",
+    "src/mongoeco/core/paths.py": "a60d86609a269535b4ac9fe3578e7e5b96e9d5962119a67d2381928d3140067f",
+    "src/mongoeco/core/schema_validation.py": "0df59b7baf65eee05e95d0781331ecbecc5a80238a0bc22d21573a0bf9107e7e",
+    "src/mongoeco/core/update_array_operators.py": "c1183ec67aeba2eb6c949b4361d507c1113523cd90a8d507119a461eb74dae76",
+    "src/mongoeco/engines/virtual_indexes.py": "64851b4996901e2b69356710ecd413dfff7e344e8e897880e02485e4cf4d1e6a",
+    "tests/differential/semantic_corpora.py": "cae4996d63666fc0c4cf7222a5a5f5c755886751f2574eb4cd78ecad16b5baf8",
+    "tests/differential/semantic_update_identity_cases.py": "30f8c44a356b70e238ce8c569dcade5f9ac550c9cd8b31c57af041ec072c0eae",
+    "tests/fixtures/semantic_update_identity_7_0.json": "c85bfe7df2c2f40dbea7d29d7b799fe3a13c0f2ef5aaab0cdc8e9fda3f52eb36",
+    "tests/fixtures/semantic_update_identity_8_0.json": "cd69c28ae755c0604ca44b8b31f61ffa773012b756fcc89f4c6a9ff91e10afee",
+    "tests/fixtures/semantic_update_identity_9_0.json": "8090db86e0a6027adb003edeedc4b8a26f7df149428fe227e762ed5ad1b11d8f",
+    "tests/unit/test_native_capture_comparison.py": "c92087d587bcf2559cbf3d8d840a9c8bc95dbcb4e9da2bf973a4d2a2a1570467"
+  },
+  "native": {
+    "7_0": {
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "sha256": "c85bfe7df2c2f40dbea7d29d7b799fe3a13c0f2ef5aaab0cdc8e9fda3f52eb36",
+      "checked_cases": 3,
+      "scenarios_per_case": 17
+    },
+    "8_0": {
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "sha256": "cd69c28ae755c0604ca44b8b31f61ffa773012b756fcc89f4c6a9ff91e10afee",
+      "checked_cases": 3,
+      "scenarios_per_case": 17
+    },
+    "9_0": {
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "sha256": "8090db86e0a6027adb003edeedc4b8a26f7df149428fe227e762ed5ad1b11d8f",
+      "checked_cases": 3,
+      "scenarios_per_case": 17
+    }
+  },
+  "before_replay": {
+    "failed": 72,
+    "passed": 3
+  },
+  "after": {
+    "identity_replay_with_final_codec_passed": 75,
+    "full_semantic_checks_passed": 4969,
+    "full_semantic_seconds": 223.17,
+    "units_and_properties_passed": 193,
+    "orjson_binary_and_identity_checks_passed": 150,
+    "typing": "public and engine-boundary contracts passed",
+    "no_sdk": "3.13 source views and physical identity passed",
+    "lint": "ratchet passed for 15 changed Python files relative to b661e7a"
+  },
+  "review": [
+    "Single physical identity implementation, all production callers migrated.",
+    "Code scopes retain order, physical numeric types and absent versus empty distinction.",
+    "DBRef document views preserve ordered physical structure.",
+    "Semantic equality remains separate from physical identity.",
+    "Atomic classification no longer depends on QueryEngine in schema and virtual index consumers.",
+    "Independent observation guard extended to new identity module; frozen observer rules unchanged.",
+    "Nonfinite JSON persistence fix committed separately as 19ed3fa and independently tested."
+  ],
+  "excluded_diagnostics": [
+    "Initial empty corpus seed prevented replay insert_many; not evidence of semantic failures.",
+    "Raw SDK class comparison falsely distinguished bytes and Binary subtype zero; final action observes BSON bytes.",
+    "Pre-codec failures in SQLite exposed actual NaN payload loss; final replay includes codec correction."
+  ],
+  "pending": [
+    "D01b events, indices, outbox and multiple writes.",
+    "D03a extended binary length/array/grammar and physical path witnesses.",
+    "D02, D03b, D04, D06, optional D07 assessment and final D05 gates."
+  ],
+  "artifacts": {
+    "before-complete.txt.gz": "b6a59b12ad4970d9141bdbf979f97a93449c2fd205ca7e3c280f6c2fcf96d376",
+    "cleanup.json": "a5859d27a2e38094299762d44d2456ebf882a51a813c44f41979669f83419157",
+    "full-semantic.txt.gz": "289374625c15a09a2b2d98158a6a4aef16ec518f151cf0d45530f3a459acbdcd",
+    "identity-codec.txt.gz": "ed3b6b2d3993dad5b4bfc4ce908d4e8f0f75f36e53f1b184c27ee9ef6e870c2a",
+    "lint.txt.gz": "81f3a46cf2de2702446dd9308057225b17339bf7d38456e141bca2aa84c94a5b",
+    "no-sdk.txt.gz": "9890ed0f33a516b8a72641f299ba90e2d6cad71618a82735a614c76dcf3a6216",
+    "orjson.txt.gz": "b3c01efa6e13d50ba378f1f5e9d1322736c3ef273ef4cac4173da9690d060dd7",
+    "typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "units-final-all.txt.gz": "61f7ba4c816f2c9b212c297f6c13513ac1505c46c2f5c266eb5ea464fcccdb7a"
+  }
+}

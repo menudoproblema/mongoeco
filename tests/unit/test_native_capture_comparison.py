@@ -14,7 +14,7 @@ from bson.errors import InvalidDocument
 from pymongo.errors import OperationFailure
 from scripts.capture_differential_replay_golden import _capture_expectation
 
-from mongoeco.core import bson_scalars, identity, paths
+from mongoeco.core import bson_identity, bson_scalars, identity, paths
 
 from tests.differential._real_parity_base import _decode_capture, _normalize
 from tests.differential.semantic_expression_grammar_cases import _observe
@@ -174,6 +174,7 @@ def test_result_comparison_is_independent_of_production_value_rules(monkeypatch)
     monkeypatch.setattr(identity, "canonical_document_id", forbidden)
     monkeypatch.setattr(bson_scalars, "compare_bson_numeric", forbidden)
     monkeypatch.setattr(paths, "same_bson_update_value", forbidden)
+    monkeypatch.setattr(bson_identity, "same_bson_update_value", forbidden)
     assert _normalize({"a": [Int64(1), -0.0]}) != _normalize({"a": [1, 0.0]})
 
 
