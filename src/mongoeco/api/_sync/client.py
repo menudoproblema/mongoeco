@@ -544,7 +544,7 @@ class Database:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        full_document: str = "default",
+        full_document: str | None = "default",
         session: ClientSession | None = None,
     ) -> ChangeStreamCursor:
         return ChangeStreamCursor(
@@ -881,7 +881,7 @@ class MongoClient:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        full_document: str = "default",
+        full_document: str | None = "default",
         session: ClientSession | None = None,
     ) -> ChangeStreamCursor:
         self._ensure_connected()

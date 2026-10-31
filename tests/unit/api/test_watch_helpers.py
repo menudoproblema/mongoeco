@@ -308,14 +308,17 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client._engine.list_calls, [("alpha", None), ("alpha", None)])
         self.assertEqual(client._engine.drop_calls, [("alpha", "users", None)])
 
-    def test_async_client_and_database_watch_validate_timeouts_and_expose_runtime_properties(self):
+    async def test_async_client_and_database_watch_validate_timeouts_and_expose_runtime_properties(self):
         client = AsyncMongoClient(MemoryEngine(), uri="mongodb://localhost:27017/")
         database = client.get_database("db")
 
-        with self.assertRaisesRegex(TypeError, "max_await_time_ms must be a non-negative integer"):
-            client.watch(max_await_time_ms=-1)
-        with self.assertRaisesRegex(TypeError, "max_await_time_ms must be a non-negative integer"):
-            database.watch(max_await_time_ms="bad")  # type: ignore[arg-type]
+        stream = await client.watch(max_await_time_ms=-1)
+        with self.assertRaises(OperationFailure) as error:
+            await stream.try_next()
+        self.assertEqual(error.exception.code, 2)
+        self.assertFalse(stream.alive)
+        with self.assertRaisesRegex(TypeError, "max_await_time_ms must be an integer"):
+            await database.watch(max_await_time_ms="bad")  # type: ignore[arg-type]
 
         self.assertIsNotNone(client.client_uri)
         self.assertIsNotNone(client.topology_description)

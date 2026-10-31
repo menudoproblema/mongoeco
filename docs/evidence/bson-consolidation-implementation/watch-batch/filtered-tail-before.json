@@ -1,0 +1,11 @@
+{
+  "phase": "read",
+  "error": "OperationFailure",
+  "code": 2,
+  "code_name": "BadValue",
+  "alive": false,
+  "read_sizes": [
+    8388608,
+    8388552
+  ]
+}

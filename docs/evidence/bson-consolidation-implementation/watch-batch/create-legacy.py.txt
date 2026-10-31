@@ -1,0 +1,15 @@
+import json,sys
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path(sys.argv[1]);root.mkdir()
+print('producer:',mongoeco.__file__)
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c;c.create_index('v')
+ keeper=c.watch(max_await_time_ms=0)
+ c.insert_one({'_id':1,'v':1});anchor=next(keeper)
+ c.update_one({'_id':1},{'$set':{'v':2}});update=next(keeper)
+ (root/'expected.json').write_text(json.dumps({'anchor':anchor['_id'],'update':update['_id'],'position':update['clusterTime']}))
+ keeper.close()
+print('actual f0a14fb SQLite/journal, v index, ordinary anchor and update tokens created')

@@ -1,0 +1,36 @@
+import json,uuid
+from bson import BSON
+from pymongo import MongoClient
+report={}
+LIMIT=16*1024*1024
+for major,port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+ with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000&socketTimeoutMS=3000') as client:
+  name='watch_exact_bytes_'+uuid.uuid4().hex;c=client[name].c
+  try:
+   out={}
+   for delta in [-1,0,1]:
+    c.delete_many({})
+    keeper=c.watch([{'$project':{'_id':1}}],max_await_time_ms=5)
+    c.insert_one({'_id':0});anchor=keeper.next()['_id']
+    tokens=[]
+    for index in [1,2]:
+     c.insert_one({'_id':index});tokens.append(keeper.next()['_id'])
+    targets=[LIMIT//2,LIMIT//2+delta]
+    sizes=[target-len(BSON.encode({'_id':token,'p':''})) for target,token in zip(targets,tokens)]
+    text='x'*max(sizes)
+    pipeline=[{'$project':{'_id':1,'p':{'$substrBytes':[{'$literal':text},0,{'$cond':[{'$eq':['$documentKey._id',1]},sizes[0],sizes[1]]}]}}}]
+    s=None;reads=[]
+    try:
+     s=c.watch(pipeline,resume_after=anchor,max_await_time_ms=-1)
+     while len(reads)<2:reads.append(len(BSON.encode(s.next())))
+     try:s.try_next()
+     except Exception as e:err={'class':type(e).__name__,'code':getattr(e,'code',None)}
+     else:err='unexpected empty read'
+    except Exception as e:err={'class':type(e).__name__,'code':getattr(e,'code',None)}
+    finally:
+     if s is not None:s.close()
+     keeper.close()
+    out[str(delta)]={'read_sizes':reads,'expected_sizes':targets,'error':err}
+   report[major]=out
+  finally:client.drop_database(name)
+print(json.dumps(report,indent=2))

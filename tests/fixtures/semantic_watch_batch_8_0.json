@@ -1,0 +1,1019 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "8.0",
+  "cases": {
+    "semantic_watch_backlog": {
+      "collection/divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "collection/float_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "collection/token_removed": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "collection/negative": {
+        "phase": "read",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "collection/bool": {
+        "phase": "read",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "database/divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "database/float_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "database/token_removed": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "database/negative": {
+        "phase": "read",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "database/bool": {
+        "phase": "read",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "client/divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "client/float_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "client/token_removed": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "client/negative": {
+        "phase": "read",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "client/bool": {
+        "phase": "read",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      }
+    },
+    "semantic_watch_batch_boundaries": {
+      "count_inside": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null,
+        "read": {
+          "$numberInt": "0"
+        }
+      },
+      "count_outside": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read": {
+          "$numberInt": "101"
+        }
+      },
+      "count_live": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read": {
+          "$numberInt": "0"
+        }
+      },
+      "byte_limit": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read": {
+          "$numberInt": "2"
+        }
+      },
+      "byte_evaluation": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null,
+        "read": {
+          "$numberInt": "0"
+        }
+      }
+    },
+    "semantic_watch_exact_batch_bytes": {
+      "True/-57": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read_sizes": [
+          {
+            "$numberInt": "8388608"
+          },
+          {
+            "$numberInt": "8388551"
+          }
+        ]
+      },
+      "True/-56": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read_sizes": [
+          {
+            "$numberInt": "8388608"
+          },
+          {
+            "$numberInt": "8388552"
+          }
+        ]
+      },
+      "True/-55": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read_sizes": [
+          {
+            "$numberInt": "8388608"
+          }
+        ]
+      },
+      "True/-56/filtered_tail": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null,
+        "read_sizes": []
+      },
+      "False/-56": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read_sizes": []
+      },
+      "False/-55": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read_sizes": []
+      },
+      "False/-54": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false,
+        "read_sizes": [
+          {
+            "$numberInt": "8388608"
+          }
+        ]
+      }
+    },
+    "semantic_watch_initial_invalidation": {
+      "visible": {
+        "alive_open": true,
+        "events": [
+          "drop",
+          "invalidate"
+        ],
+        "alive_after": false
+      },
+      "hidden": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "260"
+        },
+        "code_name": "InvalidResumeToken",
+        "alive": true
+      },
+      "drop_only": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      }
+    },
+    "semantic_watch_options": {
+      "collection/none": {
+        "phase": "read",
+        "empty": true,
+        "alive": true
+      },
+      "collection/empty_mode": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "collection/bad_mode_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "collection/bad_mode_token": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "collection/integer_mode": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "collection/code_mode": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "collection/pipeline_shape": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "collection/last_scalar": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "collection/earlier_scalar": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "collection/string_stage": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "collection/float_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31325"
+        },
+        "code_name": "Location31325",
+        "alive": null
+      },
+      "collection/float": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "collection/token_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        },
+        "code_name": "Location40647",
+        "alive": null
+      },
+      "collection/negative": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false
+      },
+      "collection/bool": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": false
+      },
+      "collection/zero": {
+        "phase": "read",
+        "empty": true,
+        "alive": true
+      },
+      "database/none": {
+        "phase": "read",
+        "empty": true,
+        "alive": true
+      },
+      "database/empty_mode": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "database/bad_mode_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "database/bad_mode_token": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "database/integer_mode": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "database/code_mode": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "database/pipeline_shape": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "database/last_scalar": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "database/earlier_scalar": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "database/string_stage": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "database/float_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31325"
+        },
+        "code_name": "Location31325",
+        "alive": null
+      },
+      "database/float": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "database/token_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        },
+        "code_name": "Location40647",
+        "alive": null
+      },
+      "database/negative": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false
+      },
+      "database/bool": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": false
+      },
+      "database/zero": {
+        "phase": "read",
+        "empty": true,
+        "alive": true
+      },
+      "client/none": {
+        "phase": "read",
+        "empty": true,
+        "alive": true
+      },
+      "client/empty_mode": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "client/bad_mode_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "client/bad_mode_token": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "client/integer_mode": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "client/code_mode": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "client/pipeline_shape": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "client/last_scalar": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "client/earlier_scalar": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "client/string_stage": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": null
+      },
+      "client/float_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31325"
+        },
+        "code_name": "Location31325",
+        "alive": null
+      },
+      "client/float": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null,
+        "code_name": null,
+        "alive": null
+      },
+      "client/token_pipe": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        },
+        "code_name": "Location40647",
+        "alive": null
+      },
+      "client/negative": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": false
+      },
+      "client/bool": {
+        "phase": "read",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "alive": false
+      },
+      "client/zero": {
+        "phase": "read",
+        "empty": true,
+        "alive": true
+      }
+    },
+    "semantic_watch_prefetched_lookup": {
+      "image": {
+        "$numberInt": "2"
+      },
+      "change": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_watch_resume_anchor": {
+      "collection/excluded_type": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "collection/excluded_field": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "collection/anchor_error": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "collection/not_yet_surpassed": {
+        "empty": true,
+        "alive": true
+      },
+      "database/excluded_type": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "database/excluded_field": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "database/anchor_error": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "database/not_yet_surpassed": {
+        "empty": true,
+        "alive": true
+      },
+      "client/excluded_type": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "client/excluded_field": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "code_name": "ChangeStreamFatalError",
+        "alive": null
+      },
+      "client/anchor_error": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "alive": null
+      },
+      "client/not_yet_surpassed": {
+        "empty": true,
+        "alive": true
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "8.0.32",
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "modules": [],
+      "allocator": "tcmalloc-google",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "32"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.13 30 Jan 2024",
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2404",
+        "distarch": "aarch64",
+        "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793473066,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793473066,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_watch_batch_cases.py",
+    "sha256": "36053a2dca58b036ab68928126e982c6946208d59bcce1cfdd156ba5d4b71e70"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_watch_options",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_options"
+    },
+    {
+      "name": "semantic_watch_backlog",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_backlog"
+    },
+    {
+      "name": "semantic_watch_batch_boundaries",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_batch_boundaries"
+    },
+    {
+      "name": "semantic_watch_exact_batch_bytes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_exact_batch_bytes"
+    },
+    {
+      "name": "semantic_watch_prefetched_lookup",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_prefetched_lookup"
+    },
+    {
+      "name": "semantic_watch_initial_invalidation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_initial_invalidation"
+    },
+    {
+      "name": "semantic_watch_resume_anchor",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_resume_anchor"
+    }
+  ]
+}

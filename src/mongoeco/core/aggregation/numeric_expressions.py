@@ -161,10 +161,12 @@ def evaluate_numeric_expression(
         right = _require_numeric(operator, right_raw, position=1)
         if operator == "$divide":
             if unwrap_bson_numeric(right) == 0:
-                raise OperationFailure("can't $divide by zero", code=2)
+                message = "can't $divide by zero"
+                raise server_error(message, code=2)
             return bson_divide(left, right)
         if unwrap_bson_numeric(right) == 0:
-            raise OperationFailure("can't $mod by zero", code=16610)
+            message = "can't $mod by zero"
+            raise server_error(message, code=16610)
         return bson_mod(
             left, right, integral_double_divisor=dialect.server_version == "7.0"
         )

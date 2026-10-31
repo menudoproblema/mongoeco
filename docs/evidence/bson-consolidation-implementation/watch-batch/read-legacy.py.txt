@@ -1,0 +1,27 @@
+import json,sys
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+from mongoeco.types import encode_change_stream_token
+root=Path(sys.argv[1]);record=json.loads((root/'expected.json').read_text())
+assert encode_change_stream_token(record['position'])==record['update']['_data']
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c
+ assert c.find_one({'_id':1})=={'_id':1,'v':2}
+ assert 'v_1' in c.index_information()
+ with c.watch(resume_after=record['anchor'],full_document='updateLookup',max_await_time_ms=0) as stream:
+  c.update_one({'_id':1},{'$set':{'v':3}})
+  first=next(stream)
+  assert first['_id']==record['update']
+  assert first['fullDocument']=={'_id':1,'v':2}
+  assert first['updateDescription']['updatedFields']=={'v':2}
+  assert next(stream)['fullDocument']=={'_id':1,'v':3}
+  checkpoint=stream.resume_token
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c
+ with c.watch(resume_after=checkpoint,full_document='updateLookup',max_await_time_ms=0) as stream:
+  assert stream.try_next() is None
+  c.update_one({'_id':1},{'$set':{'v':4}})
+  assert next(stream)['fullDocument']=={'_id':1,'v':4}
+ assert 'v_1' in c.index_information()
+print('old SQLite/journal/index retained; ordinary token bytes identical; opening prefetch is v2 despite later v3; checkpoint resumes after second reopen')

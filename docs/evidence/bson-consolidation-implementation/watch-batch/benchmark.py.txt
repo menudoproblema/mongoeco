@@ -1,0 +1,45 @@
+import asyncio,json,time
+from mongoeco import AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+async def run():
+ results={}
+ for factory in [MemoryEngine,SQLiteEngine]:
+  for mode in ['default','updateLookup','unwatched']:
+   times=[];checksums=[]
+   async with AsyncMongoClient(factory(),mongodb_dialect='9.0') as client:
+    c=client.bench.c;await c.insert_one({'_id':0,'v':0})
+    for sample in range(5):
+     s=None if mode=='unwatched' else await c.watch(max_await_time_ms=1,full_document=mode)
+     checksum=0;start=time.perf_counter()
+     for value in range(1,401):
+      expected=sample*400+value
+      result=await c.update_one({'_id':0},{'$set':{'v':expected}});assert result.modified_count==1
+      if s is not None:
+       event=await s.try_next();assert event['operationType']=='update'
+       checksum+=event['updateDescription']['updatedFields']['v']
+       if mode=='updateLookup':assert event['fullDocument']['v']==expected
+      else:checksum+=expected
+     times.append(time.perf_counter()-start);checksums.append(checksum)
+     assert (await c.find_one({'_id':0}))['v']==sample*400+400
+     if s is not None:s.close()
+   results[factory.__name__+'/'+mode]={'seconds':times,'checksums':checksums,'updates_per_sample':400}
+  for mode in ['default','updateLookup']:
+   times=[];checksums=[]
+   for sample in range(5):
+    async with AsyncMongoClient(factory(),mongodb_dialect='9.0') as client:
+     c=client.bench.c;keeper=await c.watch(max_await_time_ms=0)
+     await c.insert_one({'_id':0,'v':0});token=(await keeper.next())['_id']
+     for value in range(1,102):await c.update_one({'_id':0},{'$set':{'v':value}})
+     start=time.perf_counter()
+     s=await c.watch(resume_after=token,max_await_time_ms=0,full_document=mode)
+     checksum=0
+     for value in range(1,102):
+      event=await s.next();assert event['updateDescription']['updatedFields']['v']==value
+      if mode=='updateLookup':assert event['fullDocument']['v']==101
+      checksum+=value
+     times.append(time.perf_counter()-start);checksums.append(checksum)
+     assert (await c.find_one({'_id':0}))['v']==101
+     s.close();keeper.close()
+   results[factory.__name__+'/backlog-'+mode]={'seconds':times,'checksums':checksums,'reads_per_sample':101}
+ print(json.dumps(results))
+asyncio.run(run())

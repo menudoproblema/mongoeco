@@ -1,0 +1,125 @@
+{
+  "7.0": {
+    "-1": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388607
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    },
+    "0": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388608
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    },
+    "1": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388609
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    }
+  },
+  "8.0": {
+    "-1": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388607
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    },
+    "0": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388608
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    },
+    "1": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388609
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    }
+  },
+  "9.0": {
+    "-1": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388607
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    },
+    "0": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388608
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    },
+    "1": {
+      "read_sizes": [
+        8388608
+      ],
+      "expected_sizes": [
+        8388608,
+        8388609
+      ],
+      "error": {
+        "class": "OperationFailure",
+        "code": 2
+      }
+    }
+  }
+}

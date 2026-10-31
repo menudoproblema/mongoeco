@@ -1,0 +1,44 @@
+import asyncio
+from mongoeco import AsyncMongoClient,MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.errors import OperationFailure
+try:import bson
+except ImportError:pass
+else:raise AssertionError('SDK must be absent')
+PIPE=[{'$set':{'ratio':{'$divide':[1,'$fullDocument.v']}}}]
+async def run():
+ for dialect in ['7.0','8.0','9.0']:
+  for factory in [MemoryEngine,SQLiteEngine]:
+   with MongoClient(factory(),mongodb_dialect=dialect) as client:
+    c=client.db.c;c.insert_one({'_id':0,'v':1})
+    for owner in (c,c.database,client):
+     keeper=owner.watch(max_await_time_ms=0,full_document=None)
+     c.insert_one({'_id':'anchor','v':1});token=next(keeper)['_id']
+     c.insert_one({'_id':'zero','v':0})
+     try:owner.watch(PIPE,resume_after=token)
+     except OperationFailure as error:assert error.code==2 and error.details['codeName']=='BadValue'
+     else:raise AssertionError('must evaluate backlog when opening')
+     with owner.watch(resume_after=token,max_await_time_ms=-1) as stream:
+      assert next(stream)['documentKey']=={'_id':'zero'}
+      try:stream.try_next()
+      except OperationFailure as error:assert error.code==2 and not stream.alive
+      else:raise AssertionError('must validate negative at getMore')
+     keeper.close();c.delete_many({})
+   async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+    c=client.db.c
+    for owner in (c,c.database,client):
+     keeper=await owner.watch(max_await_time_ms=0,full_document=None)
+     await c.insert_one({'_id':'anchor','v':1});token=(await keeper.next())['_id']
+     await c.insert_one({'_id':'zero','v':0})
+     try:await owner.watch(PIPE,resume_after=token)
+     except OperationFailure as error:assert error.code==2
+     else:raise AssertionError('must evaluate async opening')
+     stream=await owner.watch(resume_after=token,max_await_time_ms=True)
+     assert (await stream.next())['documentKey']=={'_id':'zero'}
+     try:await stream.try_next()
+     except OperationFailure as error:assert error.code==14 and not stream.alive
+     else:raise AssertionError('must validate bool at getMore')
+     await keeper.close();await c.delete_many({})
+    assert client._change_hub.watcher_count==0
+ print('six engine/dialect pairs; all three actual scopes; sync/async initial backlog and getMore phases without SDK')
+asyncio.run(run())

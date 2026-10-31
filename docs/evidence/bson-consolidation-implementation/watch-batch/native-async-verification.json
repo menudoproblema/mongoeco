@@ -1,0 +1,12 @@
+{
+  "opening": {
+    "majors": 3,
+    "scopes": 3,
+    "matches_local_assertions": true
+  },
+  "cancellation": {
+    "majors": 3,
+    "scopes": 3,
+    "matches_local_assertions": true
+  }
+}

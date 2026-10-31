@@ -1,0 +1,22 @@
+import json,uuid
+from bson import BSON
+from pymongo import MongoClient,monitoring
+class Listener(monitoring.CommandListener):
+ def __init__(self):self.rows=[]
+ def started(self,event):pass
+ def failed(self,event):pass
+ def succeeded(self,event):
+  if event.command_name in ['aggregate','getMore'] and 'cursor' in event.reply:
+   batch=next((k for k in ['firstBatch','nextBatch'] if k in event.reply['cursor']),None)
+   if batch:
+    raw=BSON.encode(event.reply);marker=b'\x04'+batch.encode()+b'\0'
+    self.rows.append({'command':event.command_name,'body_keys':list(event.reply),'cursor_keys':list(event.reply['cursor']),'prefix_bytes':21+raw.index(marker)+len(marker)+4})
+out={}
+for major,port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+ listener=Listener()
+ with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000&socketTimeoutMS=3000',event_listeners=[listener]) as client:
+  name='watch_prefix_'+uuid.uuid4().hex
+  try:
+   c=client[name].c;s=c.watch(max_await_time_ms=0);c.insert_one({'_id':0});s.next();s.close();out[major]=listener.rows
+  finally:client.drop_database(name)
+print(json.dumps(out,indent=2))

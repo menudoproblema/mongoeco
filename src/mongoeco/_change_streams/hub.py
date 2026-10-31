@@ -7,6 +7,7 @@ import threading
 import time
 
 from bisect import bisect_right
+from typing import NamedTuple
 
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
@@ -28,6 +29,14 @@ from .models import (
 
 _HUB_CLOSED_MESSAGE = "change stream hub is closed"
 _HISTORY_UNAVAILABLE_MESSAGE = "change stream history is no longer available"
+
+
+class _CursorStart(NamedTuple):
+    offset: int
+    position: int
+    checkpoint: int | None
+    available_end: int
+    resume_event: ChangeEventSnapshot | None
 
 
 class ChangeStreamHub:
@@ -170,18 +179,21 @@ class ChangeStreamHub:
         self, *, after: tuple[int, bool | None] | None = None,
         operation_time: int | None = None, start_after: bool = False,
         register: bool = False,
-    ) -> tuple[int, int, int | None]:
+    ) -> _CursorStart:
         """Resolve offset/checkpoint and acquire the watcher under one guard."""
         with self._condition:
             self._raise_if_closed_locked()
             self._raise_if_degraded_locked()
+            anchor = None
             if after is not None:
                 position, invalidate = after
-                is_invalidate = invalidate is True or (
-                    invalidate is None and any(
-                        event.token == position and event.operation_type == "invalidate"
-                        for event in self._events
+                if invalidate is None:
+                    anchor = next(
+                        (event for event in self._events if event.token == position),
+                        None,
                     )
+                is_invalidate = invalidate is True or (
+                    anchor is not None and anchor.operation_type == "invalidate"
                 )
                 if is_invalidate and not start_after:
                     message = (
@@ -217,7 +229,15 @@ class ChangeStreamHub:
             )
             if register:
                 self.register_watcher()
-            return offset, position, checkpoint
+            return _CursorStart(
+                offset, position, checkpoint, self._end_offset_locked(), anchor,
+            )
+
+    def retained_event(self, offset: int) -> tuple[int, ChangeEventSnapshot | None]:
+        """Read an available frame without waiting, with the usual retention guard."""
+        with self._condition:
+            self._raise_if_closed_locked()
+            return self._event_at_offset_locked(offset) or (offset, None)
 
     def validate_cursor_advance(self, position: int, next_token: int) -> None:
         with self._condition:
@@ -245,7 +265,7 @@ class ChangeStreamHub:
         index = bisect_right(self._gaps, (next_token + 1,)) - 1
         if index >= 0 and self._gaps[index][1] > position:
             message = "change stream history is unavailable across an omitted event"
-            raise server_error(message, code=286)
+            raise server_error(message, code=286, reason="change-stream-gap")
 
     def register_watcher(self) -> None:
         with self._condition:

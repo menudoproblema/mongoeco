@@ -697,17 +697,11 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
-- D04: primera tanda, opciones, interacción con imágenes, continuidad/
-  reanudación y fixtures replica set de jobs nativos. H56 y dropTarget quedan
-  aceptados en su subset de una base, sin extender rename entre bases.
-  La dependencia del decoder de tokens tiene entrega propia; quedan el
-  checkpoint público y apertura/avance atómicos tienen el corte descrito abajo;
-  quedan primera tanda y precedencias restantes de opciones.
-  Iteración/context manager, lectura terminal y cancelación tienen el corte
-  de protocolo descrito abajo; no repetir su implementación al añadir checkpoint.
-  Preparación/contexto, modos CRUD de imágenes y efectos de namespace tienen
-  aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
-  están en el refinamiento de revisión 10 del plan; ni publicación TTL ni D01b los cierran.
+- D04: integración de imágenes con DDL/recreación y fixture replica set de CI.
+  H56/dropTarget conservan su subset de una base. Decoder, protocolo, checkpoint,
+  primera tanda/opciones y los modos CRUD ya tienen sus cortes propios abajo;
+  no repetir esas extracciones ni confundirlas con cierre de la integración.
+  La revisión 11 del plan precisa el orden y los testigos restantes.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -844,3 +838,58 @@ Pasan 6.292 de replay integrado, 2.764 de core/contratos (936 subtests, un skip)
 100 con orjson, seis de API (doce subtests), typing, lint y smoke sin SDK.
 El ABBA secuencial con default/updateLookup y sin watchers conserva checksums
 y lectura final, con ratios de medianas entre 0,97 y 1,03 en los seis casos.
+
+## D04 — Primera respuesta, batches y fases de opciones
+
+El [receipt de batches](evidence/bson-consolidation-implementation/watch-batch/receipt.json)
+registra el corte sobre f0a14fb y el contrato de revisión 11. El cursor existente
+inicializa la respuesta una vez: sync al abrir, async al esperar watch o leer.
+Evalúa backlog antes de devolver esa respuesta y materializa solo sus filas
+admitidas. Se conserva un único pipeline/contexto, decoder y bucle de lectura.
+El hub captura anchor y límite inicial junto con offset/checkpoint/watcher bajo
+su guard; no hay otro formato, journal, secuencia, esquema SQL ni SPI.
+
+La validación común reproduce fases y precedencia observadas: entrada,
+aggregate inicial y getMore. full_document None equivale a default; cero no se
+convierte en un segundo. Opciones negativas/bool dejan consumir filas ya
+admitidas antes de fallar al pedir getMore. Un anchor retenido atraviesa el mismo
+pipeline al reanudar, incluso sin cambio posterior. La invalidación filtrada
+en primera tanda vacía conserva 260/alive=True según PyMongo, separada de la
+invalidación recibida después. División/módulo por cero usan los diagnósticos
+tipados comunes del evaluador aritmético, sin un traductor especial de watch.
+
+La revisión corrigió errores que el testigo inicial de 6 MiB no detectaba:
+prefijos y claves BSON del array, reserva del siguiente PBRT en getMore, evento
+filtrado que cortaba la tanda en la frontera, y el límite 101 aplicado también
+a getMore. Ese límite pertenece solo a la apertura. Se añade la frontera exacta
+con el token propio de cada backend y el encoder BSON independiente; no se
+comparan bytes de tokens opacos. Un error posterior dentro de una respuesta
+descarta sus filas; overflow evaluado no se decodifica anticipadamente.
+
+Los tests deterministas cubren apertura concurrente, cancelación/cierre durante
+lookup, liberación del anchor al cerrar antes de inicializar, limpieza de
+filas/overflow y entrega del prefijo válido antes de un gap al final del historial.
+El helper suplementario async pasa el cliente real explícitamente: la antigua
+resolución por collection.database.client probaba una colección llamada client.
+Los escenarios corregidos se repiten localmente y en nativos para los tres ámbitos;
+no se cambia la API ni se reescriben receipts anteriores para ocultar el error.
+
+Siete familias permanentes suman 91 escenarios por major, con capturas y --check
+7.0.43/8.0.32/9.0.2 y FCV correspondiente. El archive f0a14fb verifica sus 303
+blobs y falla los 84 checks públicos nuevos; tres checks de metadata pasan.
+El candidato pasa 6.379 checks de replay integrado y 2.783 de core/contratos
+(936 subtests, un skip), 106 con orjson, seis de API (doce subtests), typing,
+lint y el smoke sin SDK. Un SQLite/journal realmente anterior conserva datos,
+índice y bytes ordinarios; la imagen prefetched sigue en v2 pese a escribir v3
+antes de leer, y el checkpoint continúa tras otra reapertura.
+
+La evidencia conserva feedback e interrupciones como diagnóstico, no aceptación.
+El ABBA añade apertura/consumo de 101 updates de backlog a los caminos
+default/updateLookup/unwatched; resultados y límites están en el receipt.
+La lectura continua tiene ratios de medianas 1,03–1,14; sin watchers 0,99–1,01.
+El backlog default de 101 eventos pasa de unos 1,1 ms a 2,8 ms (2,49–2,54×),
+y updateLookup tiene ratios 1,05–1,25. Se registra el coste adicional; no se
+declara rendimiento equivalente ni se omite la contabilidad BSON para reducirlo.
+D04 permanece abierto para integración de imágenes con DDL/recreación y fixture
+replica set de CI. D06, H53, conversión, piloto D07 opcional y D05 mantienen sus
+obligaciones; este corte no acepta watch wire positivo ni cierra B07 general.

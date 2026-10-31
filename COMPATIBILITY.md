@@ -970,6 +970,20 @@ lectura pendiente propaga la cancelación y cierra el cursor, liberando sus
 recursos. Sin `max_await_time_ms`, la espera de `try_next()` usa un timeout de
 un segundo; un resultado vacío mantiene vivo el stream salvo invalidación.
 
+La apertura sync y `await watch()` async evalúan la primera respuesta, incluido
+el backlog al reanudar. Sus errores pueden aparecer al abrir. Las filas ya
+admitidas conservan su imagen hasta ser leídas; los errores en esa misma
+respuesta impiden entregarla. El límite inicial es de 101 documentos; getMore
+usa su presupuesto BSON, incluida la reserva del token de reanudación.
+`full_document=None` usa default y `max_await_time_ms=0` no espera. Las opciones
+negativas o booleanas pueden dejar consumir la primera respuesta y fallar al
+pedir getMore, según la fase observada con PyMongo.
+
+Una invalidación filtrada en una primera tanda vacía tiene un caso distinto:
+PyMongo 4.19 puede lanzar código 260 en la lectura y conservar `alive=True`.
+El cursor local conserva ese comportamiento; no se aplica indiscriminadamente
+la regla de cierre del invalidate recibido durante una lectura posterior.
+
 `resume_token` devuelve una copia independiente del checkpoint local. Los
 filtros pueden avanzar ese checkpoint aunque no entreguen documentos; nunca
 avanza por encima de cambios pendientes de leer. Tras una invalidación,

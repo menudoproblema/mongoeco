@@ -12,13 +12,15 @@ from mongoeco.change_streams import (
 )
 from mongoeco.engines import MemoryEngine, SQLiteEngine
 
-from tests.differential.semantic_watch_protocol_cases import _owners
 
-
-async def async_lifecycle(collection):
+async def async_lifecycle(collection, client):
     """Unchanged async scenario also executed against native PyMongo replica sets."""
     output = {}
-    for scope, owner in _owners(collection):
+    for scope, owner in (
+        ("collection", collection),
+        ("database", collection.database),
+        ("client", client),
+    ):
         stream = await owner.watch(max_await_time_ms=20)
         task = asyncio.create_task(stream.next())
         try:
@@ -58,7 +60,7 @@ def test_public_async_cancellation_and_context_lifecycle(factory, dialect):
     async def exercise():
         async with AsyncMongoClient(factory(), mongodb_dialect=dialect) as client:
             await client.protocol.c.insert_one({"_id": 1})
-            actual = await async_lifecycle(client.protocol.c)
+            actual = await async_lifecycle(client.protocol.c, client)
             for result in actual.values():
                 assert result == {
                     "pending": True,

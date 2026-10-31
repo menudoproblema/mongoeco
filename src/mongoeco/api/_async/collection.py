@@ -1978,7 +1978,7 @@ class AsyncCollection:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        full_document: str = "default",
+        full_document: str | None = "default",
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         return open_collection_change_stream(

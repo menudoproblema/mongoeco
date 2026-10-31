@@ -47,17 +47,11 @@ def open_collection_change_stream(
     resume_after: dict[str, object] | None,
     start_after: dict[str, object] | None,
     start_at_operation_time: int | None,
-    full_document: str,
+    full_document: str | None,
     session: object | None,
 ) -> AsyncChangeStreamCursor:
     if session is not None:
         raise InvalidOperation("watch does not support explicit sessions")
-    if max_await_time_ms is not None and (
-        not isinstance(max_await_time_ms, int)
-        or isinstance(max_await_time_ms, bool)
-        or max_await_time_ms < 0
-    ):
-        raise TypeError("max_await_time_ms must be a non-negative integer")
     return AsyncChangeStreamCursor(
         collection._change_hub,
         scope=ChangeStreamScope(db_name=collection._db_name, coll_name=collection._collection_name),

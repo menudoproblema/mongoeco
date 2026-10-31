@@ -1,0 +1,8 @@
+{
+  "phase": "read",
+  "error": "OperationFailure",
+  "code": 2,
+  "code_name": "BadValue",
+  "alive": false,
+  "read": 101
+}

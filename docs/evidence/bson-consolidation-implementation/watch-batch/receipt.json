@@ -1,0 +1,228 @@
+{
+  "status": "D04 initial response/options/batches accepted; images/DDL integration and CI replica set remain open",
+  "base": "f0a14fb",
+  "contract_revision": "9b40c97",
+  "runtime_manifest": "runtime-sources.json",
+  "workset_manifest": "workset.json",
+  "native": {
+    "captures": "native-captures.json",
+    "cases_per_major": 7,
+    "scenarios_per_major": 91,
+    "topology": "preexisting owned single-member replica sets; ports 49973/49974/49975; FCV corresponding to each major",
+    "capture_command": "MONGOECO_REAL_MONGODB_URI=<owned URI> .venv/bin/python scripts/capture_differential_replay_golden.py --target <major> --case-set watch-batch --output <new fixture>",
+    "check_command": "same capture to distinct /tmp output plus --check <new fixture>",
+    "capture_exit_codes": [
+      0,
+      0,
+      0
+    ],
+    "check_exit_codes": [
+      0,
+      0,
+      0
+    ],
+    "cleanup": "UUID databases dropped in finally; services and habitual instance lifecycle unchanged"
+  },
+  "checks": {
+    "integrated": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "exit_code": 0,
+      "log": "acceptance-integrated.txt.gz",
+      "passed": 6379,
+      "seconds": 303.62
+    },
+    "core": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/property tests/unit/test_change_streams.py tests/unit/api/test_watch_helpers.py tests/integration/api/test_watch_batch_contract.py tests/integration/api/test_watch_checkpoint_contract.py tests/integration/api/test_watch_protocol_contract.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_watch_image_contract.py tests/integration/api/test_watch_namespace_contract.py tests/contracts/engines/test_spi_v2_only.py --tb=short",
+      "exit_code": 0,
+      "log": "acceptance-core.txt.gz",
+      "passed": 2783,
+      "seconds": 29.25,
+      "skipped": 1,
+      "subtests_passed": 936
+    },
+    "baseline": {
+      "command": "PYTHONPATH=/tmp/mongoeco-watch-batch-base/src:. .venv/bin/python -m pytest -q -o pythonpath=/tmp/mongoeco-watch-batch-base/src tests/integration/api/test_semantic_group_regressions.py -k watch_batch --tb=short",
+      "exit_code": 1,
+      "log": "before-regression.txt.gz",
+      "passed": 3,
+      "seconds": 14.28,
+      "failed": 84,
+      "runtime": "actual f0a14fb Git archive; all 303 blobs verified"
+    },
+    "orjson": {
+      "command": "MONGOECO_JSON_BACKEND=orjson .venv/bin/python -m pytest -q tests/integration/api/test_watch_batch_contract.py tests/integration/api/test_semantic_group_regressions.py -k watch_batch --tb=short",
+      "exit_code": 0,
+      "log": "acceptance-orjson.txt.gz",
+      "passed": 106,
+      "seconds": 9.1
+    },
+    "typing": {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "exit_code": 0,
+      "log": "acceptance-typing.txt.gz"
+    },
+    "api": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_sync_api.py tests/integration/api/test_async_api.py -k \"watch or change_stream\" --tb=short",
+      "exit_code": 0,
+      "log": "acceptance-api.txt.gz",
+      "passed": 6,
+      "seconds": 0.53,
+      "subtests_passed": 12
+    },
+    "sdk-free": {
+      "command": "PYTHONPATH=src /tmp/mongoeco-predicate-c06/minimal313/bin/python /tmp/mongoeco-watch-batch-sdk-free.py",
+      "exit_code": 0,
+      "log": "acceptance-sdk-free.txt.gz"
+    },
+    "legacy-producer": {
+      "command": "PYTHONPATH=/tmp/mongoeco-watch-batch-base/src .venv/bin/python /tmp/mongoeco-watch-batch-legacy-producer.py /tmp/mongoeco-watch-batch-legacy-20261031-d",
+      "exit_code": 0,
+      "log": "acceptance-legacy-producer.txt.gz"
+    },
+    "legacy-reader": {
+      "command": "PYTHONPATH=src .venv/bin/python /tmp/mongoeco-watch-batch-legacy-reader.py /tmp/mongoeco-watch-batch-legacy-20261031-d",
+      "exit_code": 0,
+      "log": "acceptance-legacy-reader.txt.gz"
+    },
+    "lint": {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref f0a14fb",
+      "exit_code": 0,
+      "log": "acceptance-lint.txt.gz"
+    }
+  },
+  "review": {
+    "resolved": [
+      "sync/async first-response evaluation and error phase",
+      "argument precedence split between input/initial response/getMore",
+      "initial-only 101-row limit; default getMore not capped at 101",
+      "BSON response prefix and array-entry bytes; candidate PBRT reserved only in getMore",
+      "filtered frame cannot truncate a batch at the byte boundary",
+      "whole-response errors versus admitted rows and prepared overflow",
+      "resume anchor transformation and filtered/not-yet-surpassed distinction",
+      "initial hidden invalidation 260/alive True distinct from live invalidation",
+      "atomic capture of anchor and initial end under hub guard",
+      "cancel/close during opening and release of retained anchor before initialization",
+      "available prefix survives a local gap at EOF without advancing across it",
+      "async helper now receives actual client, not a collection named client",
+      "divide/modulo zero use shared typed diagnostics, not a watch error wrapper"
+    ],
+    "feedback_not_acceptance": [
+      "early six-case integrated run invalidated by added corpus source and three metadata failures",
+      "own integrated gates explicitly interrupted after demonstrated boundary/count findings",
+      "boundary nine-byte-only hypothesis rejected by actual prefix/PBRT observations",
+      "async scope-helper hang and old early-negative-timeout unit expectation",
+      "one focal attempt used old captures after a canonical BSON/Python-int assertion prevented installation; fixed before acceptance"
+    ],
+    "unchanged_owners": [
+      "pipeline preparation and expression context",
+      "physical identity and BSON framing sizes",
+      "single resume-token decoder and hub sequence",
+      "publication/outbox/journal/SQL schema/SPI v2",
+      "protected observers and historical golden/catalog/error baselines"
+    ]
+  },
+  "compatibility": {
+    "old_archive": "base-archive.json",
+    "producer": "create-legacy.py.txt",
+    "reader": "read-legacy.py.txt",
+    "verified": [
+      "SQLite data and v index",
+      "ordinary token bytes",
+      "old journal without migration",
+      "opening image stays v2 despite subsequent v3",
+      "new checkpoint after second reopen"
+    ],
+    "sdk_free": "Python 3.13 genuinely without bson; six engine/dialect pairs, three scopes, sync/async"
+  },
+  "performance": {
+    "command": ".venv/bin/python /tmp/mongoeco-watch-batch-paired.py",
+    "order": "before/candidate/candidate/before, sequential after all other owned gates terminated",
+    "cases": [
+      "MemoryEngine/default",
+      "MemoryEngine/updateLookup",
+      "MemoryEngine/unwatched",
+      "MemoryEngine/backlog-default",
+      "MemoryEngine/backlog-updateLookup",
+      "SQLiteEngine/default",
+      "SQLiteEngine/updateLookup",
+      "SQLiteEngine/unwatched",
+      "SQLiteEngine/backlog-default",
+      "SQLiteEngine/backlog-updateLookup"
+    ],
+    "samples_per_runtime_case": 10,
+    "checksums_equal": true,
+    "final_reads_equal": true,
+    "ratio_range": [
+      0.9919915744209896,
+      2.535917277848865
+    ],
+    "summary": "benchmark-paired-summary.json",
+    "disposition": "Measured additional cost retained for exact batching guarantees: live watched ratios 1.03\u20131.14; default backlog about 1.1ms to 2.8ms per 101 events (2.49\u20132.54x); no-watch about unchanged. Global D05 assessment remains open; no throughput-equivalence claim."
+  },
+  "limits": [
+    "D04 remains open for images/DDL/recreation integration and replica-set CI job.",
+    "No positive watch wire, explicit sessions, transactions, distributed or concurrent native write semantics acceptance.",
+    "No full D05 wheel/environment/SDK/pytest/coverage or global performance closure.",
+    "D06a/b/c, H53, sNaN conversion and optional D07 retain their owners and obligations; B07 general admission remains open."
+  ],
+  "document_checks": {
+    "relative_links_checked": 70,
+    "missing": [],
+    "git_diff_check": 0,
+    "dedicated_document_checker": "none found in project scripts"
+  },
+  "artifacts": {
+    "README.md": "7e65e1c5f2f265a0e81bb1ae9b040d63de9c462cf644912a8a96bb1a8c2143c9",
+    "acceptance-api.txt.gz": "347b3841533e4887a87ccb5dfda08226c367c2fde1022827df1a9f35eb61b720",
+    "acceptance-benchmark.txt.gz": "be6ef08c941062db70ec4f679bcff06f483e272a1384411cb9c8fc523498de66",
+    "acceptance-core.txt.gz": "1ccaaa052f217da71fd712f771778836d82d4036d69d39278fab0b81c0f8ecd4",
+    "acceptance-integrated.txt.gz": "b96caf26d4d9aa84afd00c79b074d38b99203101174cc2258dae3dbd7200b79a",
+    "acceptance-legacy-producer.txt.gz": "c497bbcc39c59c4508901cdfec666a18fed242e7eead240825cace41c4972610",
+    "acceptance-legacy-reader.txt.gz": "f1e2f676c2a3414a899cd7dbc65db770dd13993a344b5a24f4fef4039a64fc44",
+    "acceptance-lint.txt.gz": "60ddc209d2567df05a9bcc541f4dad1ff20ac5b17128045e80f69f8d7c2b9931",
+    "acceptance-orjson.txt.gz": "90b766f57ede7717f45a8202d07e155ecb04382fa54605cf2c7fc13aa79b7827",
+    "acceptance-sdk-free.txt.gz": "ab283ebf80a2f0bbc3a3a62d61cd6a5a58eb1c2bcd44cc4d4b66d0288748222d",
+    "acceptance-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "base-archive.json": "1b6088b7d59535515491a62088dbaf72f16c7c813f3b7b0bd6d38c4528fd15a1",
+    "batch-size-source.json": "f9c6d2e41b0e7c52b780befd9e9308cfdfd21f56db1ebae2c2b4c2bcd7309c26",
+    "before-regression.txt.gz": "b1db51e5838219c1e5f6caff3e81b6e59bd945689b09ea8b47b93bd2fe912a09",
+    "benchmark-after0.json": "1f01ad2e0aa76a109dbe99a37f22a81922b5a52e293ad6c658ca6585951317d8",
+    "benchmark-after1.json": "91624860c2459aec5a9a4f59baa44d5f07cad407a08e3d56c5f10fa1006adde6",
+    "benchmark-before0.json": "a7df65c71b3f2e1d95fea8bdfb848e6ab890cedb1f0fab1357b3ba87605579c9",
+    "benchmark-before1.json": "b29fc253d216f8429a1671bc2eb17db1ad08aaf2643a179025f4db91e6ee1930",
+    "benchmark-paired-summary.json": "35d863a8f6b6f11f3998b44c71993458f8051665fe7153b48d6e2892aca6edc7",
+    "benchmark.py.txt": "18ca2f3c1f33fd8c41db5ad04c135fedb94ee6388dbae3e1ef762a5396fd87f9",
+    "count-live-before.json": "0fc03e267564855c046e581f69856740f3206964662488719b921046096f0190",
+    "create-legacy.py.txt": "521d469e0ed91e320926566a0a567b172f8abedff1ef6c6cb929f2ee263c56e1",
+    "feedback-async-scope-hang.txt.gz": "3c58d312636b26331c3c5bfefe1b3c89595b086d9b3ec7a9749a6a1292e54c89",
+    "feedback-boundary-replay-interrupted.txt.gz": "fd1a6a6d7fe8ae4b480bbc126084b87043824b1b8adefa295578fc71088508d6",
+    "feedback-capture-installation.txt.gz": "31000a8c9eeecdbde9973f83872aaeb638be94afce1c2918b8b2547cca6cdb70",
+    "feedback-integrated-before-count.txt.gz": "5134a96e160e3bb5ae65222d79f1fc3e0b4d9570db2834cff22a08e7186091e5",
+    "feedback-integrated-interrupted.txt.gz": "e7334f97035a3317c4b5fcc9dc47536ab2c556caad79a645dfd64509299ca299",
+    "feedback-integrated-stale.txt.gz": "9183c23ffb1b20dffbd65452af251d8e881f26175c9ee8b9e284363284ed052f",
+    "feedback-old-unit.txt.gz": "9daf7ff5c13a9e7b02431855596f67f128283675f653eafbd78cd442e024e950",
+    "filtered-tail-before.json": "07ab1275c3258e029367c589260a28a0c63a724de4c2b266994a2bee99c83549",
+    "initial-byte-probe.json": "39e30090d6b75ca6a970735e0edbcc84918b7af97ff9ada88e1e2e61f8a2e220",
+    "initial-byte-probe.py.txt": "f3329a60cc6f7cf7b3e9acf25d2a58125ada9351e9c1db8a504498ffd4f89f61",
+    "native-async-verification.json": "26a87fae594be1754de357aa8bd87f68d511dda71481bf7d1ff4c52d92b5f1b9",
+    "native-async.json": "987e641473fb452e910a36dd1c33fdd929e3c47efd14b644b813c0a4cca05b29",
+    "native-async.py.txt": "fbafe052d0ae862d9afca53e28a347601af79d26363bfbbe8acfd5ace7d3c694",
+    "native-cancel.json": "a37dab9f143d1ee18c7104d67eb41b4d14cd8eb042efac73719424285c5dc69e",
+    "native-cancel.py.txt": "68258be4d44f8f9d7734ac461f796ba61fd1644d7f8b66c0c2d93222b97a31cc",
+    "native-capture-7.0.txt.gz": "7432dce75d167009f5a9637eab31efa789d7633c9290b0248d629d98837f4360",
+    "native-capture-8.0.txt.gz": "8fb6137f31afa5a70fa78a25722e70cc1647b26473e22212c646c89c284e0e3a",
+    "native-capture-9.0.txt.gz": "62a049d297611698342b7af0068c213cd97670f8d7a58f29ac362040eb4466c1",
+    "native-captures.json": "9a0c9316263ef43ceb1c12603cc0f7ca60d24191dd2f0fa4181d1a441f0db4c0",
+    "native-check-7.0.txt.gz": "9f63df553897a48025bfb16356e190cc85547a660b7013b5280a8cedfab10a6b",
+    "native-check-8.0.txt.gz": "ce6a7649578dcea95fef53ffa909ae8671719a99991e5a22d3e208cfef1bc3b9",
+    "native-check-9.0.txt.gz": "bb0b6885d25a490fd350d2dc45b430fc61d45daf5370bed67eca63e76523e7d8",
+    "no-sdk.py.txt": "5655cd281f95261973494a56b7b02dc449f3e55e9aeb3d9729911cec9e4c2a2c",
+    "paired-benchmark.py.txt": "7b3b712cb4603a973b201167a4bd1e1d84a1f3f06b36a13b61ff6b3552770f2f",
+    "prefix-probe.json": "721b01006e6e1c5750a4951b2cb35778c44dcc8450e50307471c528f0872b7b3",
+    "prefix-probe.py.txt": "f44030ac2a5cacbc8ec529f7690fa248ef04f225c039fc0fc267bfe75663b716",
+    "protected-inputs.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "read-legacy.py.txt": "269adfd80cf1e80ffceaac1b7069dd691590e638c245c473522059decc0a0d9d",
+    "runtime-sources.json": "a64f0aa636550a28b78542517093205b93bc35344e61f5f89a08d24c5a67f1f0",
+    "workset.json": "d9024fd4cc80d8cc6037dd408992d6a3104e6fde03c280ffb5d30c26de39aca5"
+  }
+}

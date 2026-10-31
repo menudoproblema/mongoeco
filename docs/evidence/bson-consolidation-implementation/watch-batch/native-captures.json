@@ -1,0 +1,327 @@
+[
+  {
+    "target": "7.0",
+    "port": 49973,
+    "fixture": "tests/fixtures/semantic_watch_batch_7_0.json",
+    "sha256": "cffad675c613ac6280efb30e18c38f0968b6e18ec8712b55cddbb14fa4ab3a80",
+    "runtime": {
+      "build_info": {
+        "version": "7.0.43",
+        "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+        "modules": [],
+        "allocator": "tcmalloc",
+        "javascriptEngine": "mozjs",
+        "sysInfo": "deprecated",
+        "versionArray": [
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "43"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "openssl": {
+          "running": "OpenSSL 3.0.2 15 Mar 2022",
+          "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+        },
+        "buildEnvironment": {
+          "distmod": "ubuntu2204",
+          "distarch": "aarch64",
+          "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+          "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+          "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+          "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+          "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+          "target_arch": "aarch64",
+          "target_os": "linux",
+          "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+        },
+        "bits": {
+          "$numberInt": "64"
+        },
+        "debug": false,
+        "maxBsonObjectSize": {
+          "$numberInt": "16777216"
+        },
+        "storageEngines": [
+          "devnull",
+          "wiredTiger"
+        ],
+        "ok": {
+          "$numberDouble": "1.0"
+        },
+        "$clusterTime": {
+          "clusterTime": {
+            "$timestamp": {
+              "t": 1793473066,
+              "i": 1
+            }
+          },
+          "signature": {
+            "hash": {
+              "$binary": {
+                "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                "subType": "00"
+              }
+            },
+            "keyId": {
+              "$numberLong": "0"
+            }
+          }
+        },
+        "operationTime": {
+          "$timestamp": {
+            "t": 1793473066,
+            "i": 1
+          }
+        }
+      },
+      "fcv": {
+        "version": "7.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    },
+    "corpus": {
+      "path": "tests/differential/semantic_watch_batch_cases.py",
+      "sha256": "36053a2dca58b036ab68928126e982c6946208d59bcce1cfdd156ba5d4b71e70"
+    },
+    "cases": 7,
+    "scenarios": 91,
+    "scenario_counts": {
+      "semantic_watch_backlog": 15,
+      "semantic_watch_batch_boundaries": 5,
+      "semantic_watch_exact_batch_bytes": 7,
+      "semantic_watch_initial_invalidation": 3,
+      "semantic_watch_options": 48,
+      "semantic_watch_prefetched_lookup": 1,
+      "semantic_watch_resume_anchor": 12
+    },
+    "capture_exit_code": 0,
+    "check_exit_code": 0
+  },
+  {
+    "target": "8.0",
+    "port": 49974,
+    "fixture": "tests/fixtures/semantic_watch_batch_8_0.json",
+    "sha256": "11c844c8879d16b4b0a9b049b0169330fb02be16a1cecc519e7b42b361818f06",
+    "runtime": {
+      "build_info": {
+        "version": "8.0.32",
+        "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+        "modules": [],
+        "allocator": "tcmalloc-google",
+        "javascriptEngine": "mozjs",
+        "sysInfo": "deprecated",
+        "versionArray": [
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "32"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "openssl": {
+          "running": "OpenSSL 3.0.13 30 Jan 2024",
+          "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+        },
+        "buildEnvironment": {
+          "distmod": "ubuntu2404",
+          "distarch": "aarch64",
+          "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+          "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+          "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+          "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+          "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+          "target_arch": "aarch64",
+          "target_os": "linux",
+          "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+        },
+        "bits": {
+          "$numberInt": "64"
+        },
+        "debug": false,
+        "maxBsonObjectSize": {
+          "$numberInt": "16777216"
+        },
+        "storageEngines": [
+          "devnull",
+          "wiredTiger"
+        ],
+        "ok": {
+          "$numberDouble": "1.0"
+        },
+        "$clusterTime": {
+          "clusterTime": {
+            "$timestamp": {
+              "t": 1793473066,
+              "i": 1
+            }
+          },
+          "signature": {
+            "hash": {
+              "$binary": {
+                "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                "subType": "00"
+              }
+            },
+            "keyId": {
+              "$numberLong": "0"
+            }
+          }
+        },
+        "operationTime": {
+          "$timestamp": {
+            "t": 1793473066,
+            "i": 1
+          }
+        }
+      },
+      "fcv": {
+        "version": "8.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    },
+    "corpus": {
+      "path": "tests/differential/semantic_watch_batch_cases.py",
+      "sha256": "36053a2dca58b036ab68928126e982c6946208d59bcce1cfdd156ba5d4b71e70"
+    },
+    "cases": 7,
+    "scenarios": 91,
+    "scenario_counts": {
+      "semantic_watch_backlog": 15,
+      "semantic_watch_batch_boundaries": 5,
+      "semantic_watch_exact_batch_bytes": 7,
+      "semantic_watch_initial_invalidation": 3,
+      "semantic_watch_options": 48,
+      "semantic_watch_prefetched_lookup": 1,
+      "semantic_watch_resume_anchor": 12
+    },
+    "capture_exit_code": 0,
+    "check_exit_code": 0
+  },
+  {
+    "target": "9.0",
+    "port": 49975,
+    "fixture": "tests/fixtures/semantic_watch_batch_9_0.json",
+    "sha256": "a4db002bf78224e5539db115606772e1108db8673952d63de5da30a42d83b5e6",
+    "runtime": {
+      "build_info": {
+        "version": "9.0.2",
+        "versionArray": [
+          {
+            "$numberInt": "9"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+        "modules": [],
+        "allocator": "system",
+        "javascriptEngine": "mozjs-wasm",
+        "sysinfo": "deprecated",
+        "openssl": {
+          "running": "Apple Secure Transport"
+        },
+        "buildEnvironment": {
+          "distmod": "",
+          "distarch": "arm64",
+          "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+          "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+          "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+          "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+          "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+          "target_arch": "arm64",
+          "target_os": "macOS",
+          "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+        },
+        "bits": {
+          "$numberInt": "64"
+        },
+        "debug": false,
+        "maxBsonObjectSize": {
+          "$numberLong": "16777216"
+        },
+        "macOS": {
+          "osProductVersion": "15.6",
+          "osRelease": "24.6.0",
+          "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+        },
+        "storageEngines": [
+          "devnull",
+          "wiredTiger"
+        ],
+        "ok": {
+          "$numberDouble": "1.0"
+        },
+        "$clusterTime": {
+          "clusterTime": {
+            "$timestamp": {
+              "t": 1793473068,
+              "i": 1
+            }
+          },
+          "signature": {
+            "hash": {
+              "$binary": {
+                "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                "subType": "00"
+              }
+            },
+            "keyId": {
+              "$numberLong": "0"
+            }
+          }
+        },
+        "operationTime": {
+          "$timestamp": {
+            "t": 1793473068,
+            "i": 1
+          }
+        }
+      },
+      "fcv": {
+        "version": "9.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    },
+    "corpus": {
+      "path": "tests/differential/semantic_watch_batch_cases.py",
+      "sha256": "36053a2dca58b036ab68928126e982c6946208d59bcce1cfdd156ba5d4b71e70"
+    },
+    "cases": 7,
+    "scenarios": 91,
+    "scenario_counts": {
+      "semantic_watch_backlog": 15,
+      "semantic_watch_batch_boundaries": 5,
+      "semantic_watch_exact_batch_bytes": 7,
+      "semantic_watch_initial_invalidation": 3,
+      "semantic_watch_options": 48,
+      "semantic_watch_prefetched_lookup": 1,
+      "semantic_watch_resume_anchor": 12
+    },
+    "capture_exit_code": 0,
+    "check_exit_code": 0
+  }
+]

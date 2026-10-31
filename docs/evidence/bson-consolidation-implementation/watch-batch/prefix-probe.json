@@ -1,0 +1,104 @@
+{
+  "7.0": [
+    {
+      "command": "aggregate",
+      "body_keys": [
+        "cursor",
+        "ok",
+        "$clusterTime",
+        "operationTime"
+      ],
+      "cursor_keys": [
+        "firstBatch",
+        "postBatchResumeToken",
+        "id",
+        "ns"
+      ],
+      "prefix_bytes": 53
+    },
+    {
+      "command": "getMore",
+      "body_keys": [
+        "cursor",
+        "ok",
+        "$clusterTime",
+        "operationTime"
+      ],
+      "cursor_keys": [
+        "nextBatch",
+        "postBatchResumeToken",
+        "id",
+        "ns"
+      ],
+      "prefix_bytes": 52
+    }
+  ],
+  "8.0": [
+    {
+      "command": "aggregate",
+      "body_keys": [
+        "cursor",
+        "ok",
+        "$clusterTime",
+        "operationTime"
+      ],
+      "cursor_keys": [
+        "firstBatch",
+        "postBatchResumeToken",
+        "id",
+        "ns"
+      ],
+      "prefix_bytes": 53
+    },
+    {
+      "command": "getMore",
+      "body_keys": [
+        "cursor",
+        "ok",
+        "$clusterTime",
+        "operationTime"
+      ],
+      "cursor_keys": [
+        "nextBatch",
+        "postBatchResumeToken",
+        "id",
+        "ns"
+      ],
+      "prefix_bytes": 52
+    }
+  ],
+  "9.0": [
+    {
+      "command": "aggregate",
+      "body_keys": [
+        "cursor",
+        "ok",
+        "$clusterTime",
+        "operationTime"
+      ],
+      "cursor_keys": [
+        "firstBatch",
+        "postBatchResumeToken",
+        "id",
+        "ns"
+      ],
+      "prefix_bytes": 53
+    },
+    {
+      "command": "getMore",
+      "body_keys": [
+        "cursor",
+        "ok",
+        "$clusterTime",
+        "operationTime"
+      ],
+      "cursor_keys": [
+        "nextBatch",
+        "postBatchResumeToken",
+        "id",
+        "ns"
+      ],
+      "prefix_bytes": 52
+    }
+  ]
+}

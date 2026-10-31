@@ -131,6 +131,10 @@ from tests.differential.semantic_update_identity_cases import (
     SEED as UPDATE_IDENTITY_SEED,
     SEMANTIC_UPDATE_IDENTITY_CASES,
 )
+from tests.differential.semantic_watch_batch_cases import (
+    SEED as WATCH_BATCH_SEED,
+    SEMANTIC_WATCH_BATCH_CASES,
+)
 from tests.differential.semantic_watch_cases import (
     SEED as WATCH_SEED,
     SEMANTIC_WATCH_CASES,
@@ -176,6 +180,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "watch_batch": SemanticCorpus(
+        "watch-batch", "semantic_watch_batch_cases", WATCH_BATCH_SEED,
+        SEMANTIC_WATCH_BATCH_CASES, surfaces=("sync", "async"),
+    ),
     "watch_checkpoint": SemanticCorpus(
         "watch-checkpoint", "semantic_watch_checkpoint_cases", WATCH_CHECKPOINT_SEED,
         SEMANTIC_WATCH_CHECKPOINT_CASES, surfaces=("sync", "async"),

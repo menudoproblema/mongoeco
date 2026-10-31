@@ -19,7 +19,6 @@ from mongoeco.core.query_plan import (
     compile_filter,
 )
 from mongoeco.core.server_errors import server_error
-from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     ChangeEventDocument,  # noqa: TC001 - introspectable helper signature
 )
@@ -41,6 +40,22 @@ ALLOWED_FULL_DOCUMENT_MODES = frozenset(
 )
 
 
+def validate_change_stream_pipeline_container(pipeline, full_document=None):
+    if pipeline is not None and not isinstance(pipeline, list):
+        message = "pipeline must be a list of stages"
+        raise TypeError(message)
+    if full_document is not None and not isinstance(full_document, str):
+        message = "full_document must be a string or None"
+        raise TypeError(message)
+    if pipeline:
+        # PyMongo inspects the last stage for a write stage before dispatch.
+        iter(pipeline[-1])
+    for stage in pipeline or ():
+        if not isinstance(stage, dict):
+            message = "pipeline stages must be documents"
+            raise server_error(message, code=14)
+
+
 def compile_change_stream_pipeline(
     pipeline: object | None,
     *,
@@ -49,12 +64,7 @@ def compile_change_stream_pipeline(
 ) -> PreparedPipeline | None:
     if pipeline is None:
         return None
-    if not isinstance(pipeline, list):
-        raise TypeError("pipeline must be a list of stages")
-    for stage in pipeline:
-        if not isinstance(stage, dict):
-            message = "pipeline stages must be documents"
-            raise TypeError(message)
+    validate_change_stream_pipeline_container(pipeline)
     prepared = prepare_pipeline(
         DocumentCodec.to_internal(pipeline),
         dialect=dialect,
@@ -69,13 +79,17 @@ def compile_change_stream_pipeline(
     return prepared
 
 
-def normalize_full_document_mode(mode: str) -> str:
+def normalize_full_document_mode(mode: str | None) -> str:
+    if mode is None:
+        return "default"
     if not isinstance(mode, str):
         raise TypeError("full_document must be a string")
+    if not matches_bson_type(mode, "string"):
+        message = "full_document must be a BSON string"
+        raise server_error(message, code=14)
     if mode not in ALLOWED_FULL_DOCUMENT_MODES:
-        raise OperationFailure(
-            "full_document must be one of default, updateLookup, whenAvailable, or required"
-        )
+        message = "full_document must be default, updateLookup, whenAvailable, or required"
+        raise server_error(message, code=2)
     return mode
 
 

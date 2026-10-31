@@ -381,16 +381,10 @@ class AsyncDatabase:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        full_document: str = "default",
+        full_document: str | None = "default",
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         _validate_watch_session(session)
-        if max_await_time_ms is not None and (
-            not isinstance(max_await_time_ms, int)
-            or isinstance(max_await_time_ms, bool)
-            or max_await_time_ms < 0
-        ):
-            raise TypeError("max_await_time_ms must be a non-negative integer")
         return AsyncChangeStreamCursor(
             self._change_hub,
             scope=ChangeStreamScope(db_name=self._db_name),
@@ -912,16 +906,10 @@ class AsyncMongoClient:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        full_document: str = "default",
+        full_document: str | None = "default",
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         _validate_watch_session(session)
-        if max_await_time_ms is not None and (
-            not isinstance(max_await_time_ms, int)
-            or isinstance(max_await_time_ms, bool)
-            or max_await_time_ms < 0
-        ):
-            raise TypeError("max_await_time_ms must be a non-negative integer")
         return AsyncChangeStreamCursor(
             self._change_hub,
             scope=ChangeStreamScope(),

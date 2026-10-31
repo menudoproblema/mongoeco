@@ -1,0 +1,82 @@
+{
+  "MemoryEngine/default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.08284093748079613,
+    "after_median_seconds": 0.09418102097697556,
+    "ratio": 1.136889849886214,
+    "checksums_equal": true
+  },
+  "MemoryEngine/updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.11250175052555278,
+    "after_median_seconds": 0.1256714790361002,
+    "ratio": 1.1170624319090587,
+    "checksums_equal": true
+  },
+  "MemoryEngine/unwatched": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.05893758294405416,
+    "after_median_seconds": 0.059397208446171135,
+    "ratio": 1.0077985129209197,
+    "checksums_equal": true
+  },
+  "MemoryEngine/backlog-default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.0010913540027104318,
+    "after_median_seconds": 0.002767583471722901,
+    "ratio": 2.535917277848865,
+    "checksums_equal": true
+  },
+  "MemoryEngine/backlog-updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.008240416995249689,
+    "after_median_seconds": 0.010312020545825362,
+    "ratio": 1.2513954757107413,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.18662810395471752,
+    "after_median_seconds": 0.2037325000273995,
+    "ratio": 1.0916496267723543,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.30216660402948037,
+    "after_median_seconds": 0.31131593749159947,
+    "ratio": 1.0302791021248214,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/unwatched": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.1631302500027232,
+    "after_median_seconds": 0.16182383353589103,
+    "ratio": 0.9919915744209896,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/backlog-default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.0011070625041611493,
+    "after_median_seconds": 0.0027551670209504664,
+    "ratio": 2.4887185778531355,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/backlog-updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.028784749913029373,
+    "after_median_seconds": 0.03030143753858283,
+    "ratio": 1.0526906653744084,
+    "checksums_equal": true
+  }
+}
