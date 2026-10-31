@@ -1,0 +1,528 @@
+{
+  "native": {
+    "7.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    },
+    "8.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    },
+    "9.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    }
+  },
+  "local": {
+    "memory-7.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    },
+    "sqlite-7.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    },
+    "memory-8.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    },
+    "sqlite-8.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    },
+    "memory-9.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    },
+    "sqlite-9.0": {
+      "constant_divide/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/False": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "constant_divide/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "unknown_expression/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "wrong_arity/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      },
+      "undefined_variable/True": {
+        "phase": "open",
+        "class": "OperationFailure",
+        "code": 51181,
+        "codeName": "Location51181",
+        "target_count": 0
+      }
+    }
+  }
+}

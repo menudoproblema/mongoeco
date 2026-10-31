@@ -61,6 +61,12 @@ identifica ambos estados. El orden activo y las precisiones de aceptación está
 en «Refinamiento de la revisión 11»; sustituyen instrucciones anteriores solo
 donde se indica, sin cambiar receipts ni aceptar el candidato por inspección.
 
+Revisión 12 sobre `a981610` y candidato sin commitear: el adjunto mantiene
+el mismo SHA-256. La [evidencia de revisión 12](evidence/bson-consolidation-review/review12/receipt.json)
+separa regresiones repetidas, dos sondas físicas nuevas y aceptación pendiente.
+El orden activo queda en «Refinamiento de la revisión 12». No acepta el candidato
+ni vuelve a abrir cortes cerrados por una ampliación de sus consumidores.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H56 y su integración con B00–B10 y
@@ -982,6 +988,69 @@ referencias nativas y verifica fuentes; no realiza nuevas sondas físicas,
 no modifica producción/tests ni cierra D04/D05/B07. La aceptación del trabajo
 en curso requiere sus gates y commit propios, incluido el lint pendiente
 observado en `hub.py`; documentación verde no lo subsana.
+
+### Refinamiento de la revisión 12: procedencia de resultados y cierre del candidato
+
+**El informe no es evidencia de un defecto todavía presente.** Es el mismo
+adjunto de revisiones 3–11. Sus retractaciones sobre H48, `$in`, distinct,
+D00 y TTL se conservan. Parser DBRef básico, reconocimiento Binary y eq/in SQL
+ya tienen correcciones aceptadas; no repetirlas. D06 conserva contextos y
+consumidores pendientes. Las 18 trazas nuevas del matcher en seis pares locales
+confirman eq/in/subtipos; son diagnóstico de representación, sin convertir
+nombres internos en API. Los 16 hashes oficiales r8.0.0 vuelven a coincidir.
+TTL/H53 no se han vuelto a sondear: no reinterpretar «retraso irrelevante» ni
+167 pruebas históricas como garantías nuevas.
+
+**Causa común, precisada.** Reconocer una familia BSON, conservar identidad de
+escritura y materializar una respuesta son tres decisiones distintas. La
+materialización también necesita conocer la procedencia: PyMongo conserva el
+`Binary(..., 0)` asignado a `inserted_id`, mientras una lectura o un ID de upsert
+recibido del servidor se decodifica como `bytes`. Ambos codifican el mismo BSON;
+la igualdad semántica, un JSON Extended decodificado o la coincidencia entre
+motores pueden ocultar la diferencia pública.
+
+| Contraste actual | Decisión y garantía pendiente |
+| --- | --- |
+| El candidato comparte materialización de lecturas/streams y convierte Binary 0 a bytes. El corpus nuevo separa IDs asignados y devueltos por el servidor. | Completar el censo de salidas, incluido metadatos y errores. Reutilizar el materializador de respuestas existente; preservar las conversiones de IDs asignados. No activar un booleano global en todos los callers de `to_pymongo`, ni introducir otra jerarquía de tipos. Conservar dos fases frente a decoders del usuario, opciones UUID y perfil sin SDK. |
+| **Hueco reproducido:** `collection.options()` devuelve SDK Binary 0 en ambos motores/dialectos 7/8/9; los tres servidores devuelven bytes para el mismo validator. | Incluir esta salida antes de aceptar el corte de materialización. Añadir testigo permanente sync/async y wire en las superficies soportadas, y control Binary 5. Verificar por separado codec_options antes de extender esa política a metadatos. La sonda física actual es sync: no acredita esas otras superficies. |
+| El caller de `BulkWriteError` parece usar conversión de IDs asignados, pero el ID de upsert ya llega convertido. | La sonda pública nativa/local coincide: ID de upsert es bytes y el ID del `op` original conserva Binary. Mantener ambos como controles en error parcial ordered/unordered; no corregir un caller basándose solo en su texto. |
+| La guarda SQL histórica reconocía tag bytes, mientras sort podía seguir usando payload JSON para tag binary. El candidato amplía una detección compartida a bytes/binary/uuid. | Verificar todas las entradas de ordenación antes de skip/limit, índice, ruta punteada, caché negativa antes de mutar y reapertura antigua. Un filtro canónico correcto no acredita el orden/window del fast path. No reintroducir pushdown por tag; mantener una consulta de detección y la invalidación de caché actuales. Es ampliación con aceptación propia, no retirada del cierre D03a/D03b. |
+| El candidato valida combinaciones `$merge` en preparación y ejecución mediante una regla compartida; analiza contenedores antes de optimizar expresiones. | Incorporar sus códigos 51181/51185 y estado tras error al mismo corte de preparación. La sonda nueva contrasta 8 escenarios por servidor: modo inválido prevalece frente a división constante, expresión desconocida, aridad y variable indefinida, vacío/poblado; local coincide. No inferir toda precedencia de errores ni mover cada validación a una pasada global. Conservar placement, registro de extensiones, dirección lógica y scopes anidados. |
+
+Las dos sondas físicas usan bases UUID con limpieza en `finally`, MongoDB
+7.0.43/8.0.32/9.0.2 y FCV correspondiente. Observan clases Python antes de su
+serialización y bytes BSON con el encoder SDK independiente. El replay verde
+no subsana el hueco de options: ninguno de sus testigos nuevos lo ejercita.
+Las sondas deben incorporarse al capturador/replay existentes antes de aceptar
+sus correcciones; scripts de diagnóstico no son otro runner permanente.
+
+**Orden activo, con dependencias explícitas.** Sustituye la tabla activa de
+revisión 11; las garantías no repetidas allí ni aquí conservan sus owners.
+
+| Prioridad / bloque | Entrega mínima y dependencia | Condición de salida |
+| --- | --- | --- |
+| P1, candidato actual de D04 e integración BSON alcanzada | Cerrar imágenes × drop/rename/dropDatabase × recreación × ámbitos, materialización de respuestas (incluido options), orden SQL y preparación `$merge`. Usar los owners existentes; revisar los cambios ya escritos antes de añadir abstracciones. | Capturas y `--check` 7/8/9 sobre corpus definitivo; controles de ausencia/null, imagen capturada frente a updateLookup y continuidad tras resume/start. Identidad pública y BSON de lecturas/IDs/metadatos/errores; sort antes de ventana; precedencia y destino intacto. Baseline aislada, revisión, persistencia previa, perfil sin SDK, coste medido, wheel y gates del corte. No aceptar todo el candidato porque un subconjunto pase. |
+| P1, fixture RS de D04 | Integrar la topología necesaria en el job existente, reutilizando matriz de imágenes fijadas, runner y capturador. Expresar capacidades requeridas en el registro de casos; hay consumidores de watch fuera del prefijo watch. | Selección canónica compartida entre listado, suite y reporte; ningún caso perdido entre particiones standalone/RS, ningún run vacío presentado como éxito físico. Verificar primary/buildInfo/FCV y wheel real; timeout y cleanup de recursos propios ante fallo/cancelación. Si se conservan dos fixtures, no duplicar matriz ni runner. El workflow actual sigue siendo standalone y no acredita esta garantía. |
+| P1, D06a/b y D06c | Completar contextos DBRef/raw y H55 String/Code; después consumidores group/sets/lookup/spill/Search según política. No depende de cerrar el fixture de D04. | Diferenciales por contexto/superficie y con/sin hash/spill; igualdad/claves y candidatos Search, sin cambiar formatos persistidos. Mantener literales/parser básicos como controles. |
+| P2, H53 y conversión | Disposición explícita C03/B08 y regresión sNaN 7/8/9. | Separar evaluación, permiso y warning; ningún canal nuevo de logging por implicación. Conservar límites de lo observado. |
+| D07 y D05 | Decidir continuar/descartar piloto opcional; aceptación integrada sobre candidato congelado. | Matrices, wheel, SPI, cobertura, persistencia y costes del owner D05. Reutilizar evidencia con inputs idénticos; repetir gates alcanzados y global final. Commits semánticos y árbol revisado, sin confundir commit con aceptación. |
+
+**Simplificaciones aplicables sin perder garantías.** Una sola frontera de
+materialización para respuestas, con adaptadores pequeños para resultados
+escalares solo donde hagan falta; una sola detección de familia binaria para
+las guardas SQL; una regla de modos `$merge` compartida por preparación y
+entrada directa. Mantener la política propia de cada consumidor y el reloj de
+ejecución existente. El estado de los bloques pertenece al registro de
+implementación; esta tabla posee prioridades y dependencias. Los receipts
+poseen comandos/resultados y los corpus poseen regresiones: no copiar una
+segunda matriz de aceptación en cada documento ni crear otro ID por cada
+relectura del mismo informe.
+
+Esta revisión no cambia producción/tests ni acepta el candidato sin commitear.
+Pasan 172 pruebas focales y 486 de replay, y el lint del candidato pasa ahora;
+no se repite la suite global ni se acredita CI, wheel o rendimiento. Los hashes
+del candidato constan en el receipt. El hueco de options permanece reproducido
+y debe corregirse durante la implementación, antes de aceptar su corte.
 
 ## 6. Pruebas y aceptación por garantía
 

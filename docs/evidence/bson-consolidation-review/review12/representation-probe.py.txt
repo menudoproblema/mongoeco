@@ -1,0 +1,57 @@
+import json
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import patch
+
+from bson import Binary as SDKBinary
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.compat import MONGODB_DIALECT_90 as DIALECT
+from mongoeco.core.bson_ordering import bson_equality_key, bson_type_rank
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.query_plan import compile_filter
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.types import Binary as LocalBinary
+
+ROOT = Path('docs/evidence/bson-consolidation-review/review12')
+report = {'runtime_base': 'a981610; uncommitted runtime and tests, see receipt', 'scope': 'local representation diagnostics, not native acceptance', 'local': {}}
+
+
+def describe(value):
+    return {'class': type(value).__module__ + '.' + type(value).__qualname__, 'subtype': getattr(value, 'subtype', 0) if isinstance(value, bytes) else None, 'bytes': bytes(value).hex() if isinstance(value, bytes) else None, 'rank': bson_type_rank(value, DIALECT.bson_type_order)}
+
+
+seed = [{'_id': 1, 'v': b'ab'}, {'_id': 2, 'v': SDKBinary(b'ab', 0)}, {'_id': 3, 'v': SDKBinary(b'ab', 5)}]
+for dialect in ['7.0', '8.0', '9.0']:
+    for backend, engine in [('memory', MemoryEngine()), ('sqlite', SQLiteEngine())]:
+        with MongoClient(engine, mongodb_dialect=dialect) as client:
+            coll = client.refinement.c
+            coll.insert_many(seed)
+            result = {}
+            original = QueryEngine.match_plan
+            traces = []
+            def traced(document, plan, **kwargs):
+                if hasattr(plan, 'value') and 'v' in document:
+                    traces.append({'document': describe(document['v']), 'operand': describe(plan.value)})
+                return original(document, plan, **kwargs)
+            with patch.object(QueryEngine, 'match_plan', side_effect=traced):
+                result['eq5'] = sorted(doc['_id'] for doc in coll.find({'v': SDKBinary(b'ab', 5)}))
+            result['match_trace'] = traces
+            for label, operand in [('sdk0', SDKBinary(b'ab', 0)), ('sdk5', SDKBinary(b'ab', 5)), ('bytes', b'ab')]:
+                result['eq_' + label] = sorted(doc['_id'] for doc in coll.find({'v': {'$eq': operand}}))
+                result['in_' + label] = sorted(doc['_id'] for doc in coll.find({'v': {'$in': [operand]}}))
+            result['materialized_find'] = [describe(doc['v']) for doc in coll.find({})]
+            result['distinct'] = [describe(value) for value in coll.distinct('v')]
+            report['local'][backend + '-' + dialect] = result
+
+report['direct'] = {}
+raw, internal, stored = SDKBinary(b'ab', 5), DocumentCodec.to_internal({'v': SDKBinary(b'ab', 5)})['v'], LocalBinary(b'ab', 5)
+for name, document, operand in [('sdk_both', raw, raw), ('internal_both', internal, internal), ('decoded_vs_internal', stored, internal), ('decoded_vs_sdk', stored, raw)]:
+    report['direct'][name] = {'document': describe(document), 'operand': describe(operand), 'matches': QueryEngine.match_plan({'v': document}, compile_filter({'v': operand}), dialect=DIALECT)}
+left, right = SDKBinary(b'ab', 0), SDKBinary(b'ab', 5)
+report['law_counterexample'] = {'left': describe(left), 'right': describe(right), 'compare': DIALECT.compare_values(left, right), 'equal': DIALECT.values_equal(left, right), 'same_key': bson_equality_key(left) == bson_equality_key(right)}
+
+(ROOT / 'representations.json').write_text(json.dumps(report, indent=2) + '\n')
+print({'pairs': len(report['local']), 'trace_rows': sum(len(x['match_trace']) for x in report['local'].values())})

@@ -1,0 +1,123 @@
+{
+  "status": "review 12; plan refinement and characterization only; candidate not accepted",
+  "runtime_head": "a981610a47ee57039367dbbf746e27c1bc25b66a",
+  "runtime_tests_clean_at_start": false,
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_through_11": true,
+  "checks": [
+    {
+      "log": "focal.txt",
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/property/test_sqlite_type_predicates.py tests/unit/core/test_binary_storage_paths.py tests/unit/core/test_public_materialization.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_watch_batch_contract.py tests/integration/api/test_watch_checkpoint_contract.py tests/integration/api/test_watch_protocol_contract.py --tb=short",
+      "exit_code": 0,
+      "passed": 172
+    },
+    {
+      "log": "replay.txt",
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'binary_edges or dbref_grammar or type_query or watch_namespace_image or binary_surface or merge_key' --tb=short",
+      "exit_code": 0,
+      "passed": 486,
+      "deselected": 6034
+    },
+    {
+      "log": "candidate-lint.txt",
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref a981610",
+      "exit_code": 0,
+      "changed_python_files": 26
+    }
+  ],
+  "representation": {
+    "pairs": 6,
+    "trace_rows": 18,
+    "script": "representation-probe.py.txt"
+  },
+  "native_characterization": {
+    "versions": {
+      "7.0": {
+        "build": "7.0.43",
+        "fcv": {
+          "version": "7.0"
+        }
+      },
+      "8.0": {
+        "build": "8.0.32",
+        "fcv": {
+          "version": "8.0"
+        }
+      },
+      "9.0": {
+        "build": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        }
+      }
+    },
+    "driver": "4.19.0",
+    "surface": "sync",
+    "namespace_cleanup": "UUID database per probe; drop_database in finally",
+    "public_boundary_scenarios_per_server": 5,
+    "competing_error_scenarios_per_server": 8,
+    "public_probe": "public-boundary-probe.py.txt",
+    "preparation_probe": "preparation-order-probe.py.txt",
+    "options_mismatch": "SDK Binary 0 local versus bytes on native; BSON bytes equal",
+    "bulk_failure_control": "decoded upsert ID bytes and original op ID SDK Binary 0 agree",
+    "phase_control": "invalid merge modes return OperationFailure 51181 at open before each tested preceding expression error"
+  },
+  "external_sources": {
+    "downloaded": 16,
+    "matched": 16,
+    "manifest": "sources-check.json",
+    "version": "r8.0.0"
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": {
+      "sha256": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+      "matches_head": true
+    },
+    "tests/support_bson_observation.py": {
+      "sha256": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+      "matches_head": true
+    },
+    "tests/fixtures/compat_catalog_snapshot.json": {
+      "sha256": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+      "matches_head": true
+    },
+    "tests/fixtures/compat_catalog_snapshot.md": {
+      "sha256": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329",
+      "matches_head": true
+    },
+    "tests/fixtures/legacy_error_emitters.json": {
+      "sha256": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14",
+      "matches_head": true
+    }
+  },
+  "limits": [
+    "No production/test changes by this review; pre-existing candidate remains uncommitted.",
+    "New probes characterize sync only; no new native corpus capture or --check. Existing replay references reused.",
+    "No TTL/H53, global, wheel, SDK/environment matrix, performance or CI gate.",
+    "No historical receipts, goldens or source manifests modified; no D04/D05/B07 closure."
+  ],
+  "document_checks": {
+    "relative_links_checked": 61,
+    "missing": [],
+    "dedicated_document_checker": "none found in project scripts"
+  },
+  "artifacts": {
+    "README.md": "61969d2fceac0fc5ff78cdb32ea79325f7f9fa68ac8df88b2b3d74a886528ffe",
+    "candidate-lint.txt": "648536fa8474f7cc0d8ca70bf59b397daf762cec82a10fd31da6942333c520a5",
+    "candidate-workset.json": "0e931c4e346eb00e92e38e82a0b60c9415736f4fbcc0b07d0d248cfb4eb916fc",
+    "check-sources.py.txt": "170382f706a02aee78be7e09abdbc453bd773e505f9f63e2f79f3608d254a960",
+    "focal.txt": "6ee2c12ac8d6530046f47dda05c842decd5eb05846d708cab1fd40733434b78a",
+    "preparation-order-probe.py.txt": "fd9cee8d6e8da33fb554051da285f9d2f65ae0282511f7369d26f70f17f0568c",
+    "preparation-order.json": "6d5054d070fcd026bd404d7731c9b9a7e0b18514920577a56d683e64c1459f09",
+    "preparation-order.txt": "6d5054d070fcd026bd404d7731c9b9a7e0b18514920577a56d683e64c1459f09",
+    "public-boundaries.json": "25f44d576718358e0bb0bc68e169a765eaa12645ee4d9a0982da0163da33d49f",
+    "public-boundary-probe.py.txt": "8cd3b88fc22ee3ade061f99264c82289d0affaf15007f0607c014dfdfe8b68e1",
+    "public-boundary.txt": "25f44d576718358e0bb0bc68e169a765eaa12645ee4d9a0982da0163da33d49f",
+    "replay.txt": "7536889122371529e4f5058367f388197178b9e396c4fde3518d0f5486d39f08",
+    "representation-probe.py.txt": "780265ac4a306deeae0884c2b0ba06bc9bc5f8510043c41c2e7f083ab2fc909f",
+    "representations.json": "44818f2665f12877306024812b0c7eea5a26b2ee5d3970e36bb5897e5923d0a7",
+    "runtime-sources.json": "1fba44100eda2c959d99abeaeb4fbadf5301dd52498d2ee3d185d57506e47aa8",
+    "source-check.txt": "44295e68dbcde0d024292d4a4bfdd692e6fbd578b8b65499a776d871a072bd8d",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e"
+  }
+}

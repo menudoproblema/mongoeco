@@ -1,0 +1,222 @@
+{
+  "native": {
+    "7.0": {
+      "build": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "results": {
+        "options": {
+          "class": "builtins.bytes",
+          "bson": "1d00000005760010000000003031323334353637383961626364656600"
+        },
+        "assigned_insert_id": {
+          "class": "bson.binary.Binary",
+          "bson": "15000000057600080000000061737369676e656400"
+        },
+        "decoded_find_id": {
+          "class": "builtins.bytes",
+          "bson": "15000000057600080000000061737369676e656400"
+        },
+        "bulk_error_upsert_id": {
+          "class": "builtins.bytes",
+          "bson": "150000000576000800000000757073657274656400"
+        },
+        "bulk_error_input_id": {
+          "class": "bson.binary.Binary",
+          "bson": "15000000057600080000000061737369676e656400"
+        }
+      }
+    },
+    "8.0": {
+      "build": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "results": {
+        "options": {
+          "class": "builtins.bytes",
+          "bson": "1d00000005760010000000003031323334353637383961626364656600"
+        },
+        "assigned_insert_id": {
+          "class": "bson.binary.Binary",
+          "bson": "15000000057600080000000061737369676e656400"
+        },
+        "decoded_find_id": {
+          "class": "builtins.bytes",
+          "bson": "15000000057600080000000061737369676e656400"
+        },
+        "bulk_error_upsert_id": {
+          "class": "builtins.bytes",
+          "bson": "150000000576000800000000757073657274656400"
+        },
+        "bulk_error_input_id": {
+          "class": "bson.binary.Binary",
+          "bson": "15000000057600080000000061737369676e656400"
+        }
+      }
+    },
+    "9.0": {
+      "build": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "results": {
+        "options": {
+          "class": "builtins.bytes",
+          "bson": "1d00000005760010000000003031323334353637383961626364656600"
+        },
+        "assigned_insert_id": {
+          "class": "bson.binary.Binary",
+          "bson": "15000000057600080000000061737369676e656400"
+        },
+        "decoded_find_id": {
+          "class": "builtins.bytes",
+          "bson": "15000000057600080000000061737369676e656400"
+        },
+        "bulk_error_upsert_id": {
+          "class": "builtins.bytes",
+          "bson": "150000000576000800000000757073657274656400"
+        },
+        "bulk_error_input_id": {
+          "class": "bson.binary.Binary",
+          "bson": "15000000057600080000000061737369676e656400"
+        }
+      }
+    }
+  },
+  "local": {
+    "memory-7.0": {
+      "options": {
+        "class": "bson.binary.Binary",
+        "bson": "1d00000005760010000000003031323334353637383961626364656600"
+      },
+      "assigned_insert_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "decoded_find_id": {
+        "class": "builtins.bytes",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "bulk_error_upsert_id": {
+        "class": "builtins.bytes",
+        "bson": "150000000576000800000000757073657274656400"
+      },
+      "bulk_error_input_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      }
+    },
+    "sqlite-7.0": {
+      "options": {
+        "class": "bson.binary.Binary",
+        "bson": "1d00000005760010000000003031323334353637383961626364656600"
+      },
+      "assigned_insert_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "decoded_find_id": {
+        "class": "builtins.bytes",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "bulk_error_upsert_id": {
+        "class": "builtins.bytes",
+        "bson": "150000000576000800000000757073657274656400"
+      },
+      "bulk_error_input_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      }
+    },
+    "memory-8.0": {
+      "options": {
+        "class": "bson.binary.Binary",
+        "bson": "1d00000005760010000000003031323334353637383961626364656600"
+      },
+      "assigned_insert_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "decoded_find_id": {
+        "class": "builtins.bytes",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "bulk_error_upsert_id": {
+        "class": "builtins.bytes",
+        "bson": "150000000576000800000000757073657274656400"
+      },
+      "bulk_error_input_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      }
+    },
+    "sqlite-8.0": {
+      "options": {
+        "class": "bson.binary.Binary",
+        "bson": "1d00000005760010000000003031323334353637383961626364656600"
+      },
+      "assigned_insert_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "decoded_find_id": {
+        "class": "builtins.bytes",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "bulk_error_upsert_id": {
+        "class": "builtins.bytes",
+        "bson": "150000000576000800000000757073657274656400"
+      },
+      "bulk_error_input_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      }
+    },
+    "memory-9.0": {
+      "options": {
+        "class": "bson.binary.Binary",
+        "bson": "1d00000005760010000000003031323334353637383961626364656600"
+      },
+      "assigned_insert_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "decoded_find_id": {
+        "class": "builtins.bytes",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "bulk_error_upsert_id": {
+        "class": "builtins.bytes",
+        "bson": "150000000576000800000000757073657274656400"
+      },
+      "bulk_error_input_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      }
+    },
+    "sqlite-9.0": {
+      "options": {
+        "class": "bson.binary.Binary",
+        "bson": "1d00000005760010000000003031323334353637383961626364656600"
+      },
+      "assigned_insert_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "decoded_find_id": {
+        "class": "builtins.bytes",
+        "bson": "15000000057600080000000061737369676e656400"
+      },
+      "bulk_error_upsert_id": {
+        "class": "builtins.bytes",
+        "bson": "150000000576000800000000757073657274656400"
+      },
+      "bulk_error_input_id": {
+        "class": "bson.binary.Binary",
+        "bson": "15000000057600080000000061737369676e656400"
+      }
+    }
+  }
+}

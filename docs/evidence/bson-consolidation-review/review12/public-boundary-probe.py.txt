@@ -1,0 +1,55 @@
+"""Public result provenance: assigned IDs versus decoded reads/error replies."""
+import json
+from pathlib import Path
+from uuid import uuid4
+
+from bson import BSON, Binary
+from pymongo import InsertOne, UpdateOne, MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+ROOT = Path('docs/evidence/bson-consolidation-review/review12')
+
+
+def observe(value):
+    return {'class': type(value).__module__ + '.' + type(value).__qualname__,
+            'bson': BSON.encode({'v': value}).hex()}
+
+
+def probe(client):
+    name = 'review12_' + uuid4().hex
+    db = client[name]
+    try:
+        value = Binary(b'0123456789abcdef', 0)
+        subject = db.create_collection('subject', validator={'v': {'$eq': value}})
+        result = {'options': observe(subject.options()['validator']['v']['$eq'])}
+        upserts = db.upserts
+        assigned = upserts.insert_one({'_id': Binary(b'assigned', 0)})
+        result['assigned_insert_id'] = observe(assigned.inserted_id)
+        result['decoded_find_id'] = observe(upserts.find_one({})['_id'])
+        try:
+            upserts.bulk_write([
+                UpdateOne({'_id': Binary(b'upserted', 0)}, {'$set': {'v': 1}}, upsert=True),
+                InsertOne({'_id': Binary(b'assigned', 0)}),
+            ], ordered=False)
+        except Exception as error:
+            if type(error).__name__ != 'BulkWriteError':
+                raise
+            result['bulk_error_upsert_id'] = observe(error.details['upserted'][0]['_id'])
+            result['bulk_error_input_id'] = observe(error.details['writeErrors'][0]['op']['_id'])
+        else:
+            raise AssertionError('Expected duplicate-key bulk failure')
+        return result
+    finally:
+        client.drop_database(name)
+
+
+report = {'native': {}, 'local': {}}
+for dialect, port in [('7.0', 49973), ('8.0', 49974), ('9.0', 49975)]:
+    with NativeClient(f'mongodb://127.0.0.1:{port}/?directConnection=true', serverSelectionTimeoutMS=3000, socketTimeoutMS=3000) as client:
+        report['native'][dialect] = {'build': client.admin.command('buildInfo')['version'], 'fcv': client.admin.command({'getParameter': 1, 'featureCompatibilityVersion': 1})['featureCompatibilityVersion'], 'results': probe(client)}
+    for name, engine in [('memory', MemoryEngine()), ('sqlite', SQLiteEngine())]:
+        with MongoClient(engine, mongodb_dialect=dialect) as client:
+            report['local'][name + '-' + dialect] = probe(client)
+(ROOT / 'public-boundaries.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report, indent=2))

@@ -701,7 +701,10 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
   H56/dropTarget conservan su subset de una base. Decoder, protocolo, checkpoint,
   primera tanda/opciones y los modos CRUD ya tienen sus cortes propios abajo;
   no repetir esas extracciones ni confundirlas con cierre de la integración.
-  La revisión 11 del plan precisa el orden y los testigos restantes.
+  La revisión 12 del plan precisa el orden y los testigos restantes. El candidato
+  de integración incluye cambios BSON/SQL/preparación todavía sin aceptación;
+  la sonda de esa revisión reproduce además materialización incorrecta de
+  Binary 0 en `collection.options()`, pendiente de corrección y regresión.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.

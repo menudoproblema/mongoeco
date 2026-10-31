@@ -1,0 +1,53 @@
+"""Competing syntax versus optimization failures, not a universal precedence law."""
+import json
+from pathlib import Path
+from uuid import uuid4
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+ROOT = Path('docs/evidence/bson-consolidation-review/review12')
+invalid = {'$merge': {'into': 'target', 'whenMatched': 'fail', 'whenNotMatched': 'fail'}}
+expressions = {
+    'constant_divide': {'$divide': [1, 0]},
+    'unknown_expression': {'$review12Unknown': 1},
+    'wrong_arity': {'$divide': [1]},
+    'undefined_variable': '$$review12Undefined',
+}
+
+
+def probe(client):
+    name = 'review12_phase_' + uuid4().hex
+    db = client[name]
+    result = {}
+    try:
+        for populated in (False, True):
+            subject = db.subject
+            subject.delete_many({})
+            if populated:
+                subject.insert_one({'_id': 1})
+            for label, expression in expressions.items():
+                phase = 'open'
+                try:
+                    cursor = subject.aggregate([{'$set': {'bad': expression}}, invalid])
+                    phase = 'read'
+                    list(cursor)
+                    observation = {'ok': True}
+                except Exception as error:
+                    observation = {'phase': phase, 'class': type(error).__name__, 'code': getattr(error, 'code', None), 'codeName': (getattr(error, 'details', None) or {}).get('codeName')}
+                observation['target_count'] = db.target.count_documents({})
+                result[f'{label}/{populated}'] = observation
+        return result
+    finally:
+        client.drop_database(name)
+
+
+report = {'native': {}, 'local': {}}
+for dialect, port in [('7.0', 49973), ('8.0', 49974), ('9.0', 49975)]:
+    with NativeClient(f'mongodb://127.0.0.1:{port}/?directConnection=true', serverSelectionTimeoutMS=3000, socketTimeoutMS=3000) as client:
+        report['native'][dialect] = probe(client)
+    for label, engine in [('memory', MemoryEngine()), ('sqlite', SQLiteEngine())]:
+        with MongoClient(engine, mongodb_dialect=dialect) as client:
+            report['local'][label + '-' + dialect] = probe(client)
+(ROOT/'preparation-order.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report, indent=2))
