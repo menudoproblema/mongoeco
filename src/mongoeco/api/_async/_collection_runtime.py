@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 
+from contextlib import contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, cast
 
@@ -34,7 +35,7 @@ from mongoeco.types import (
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from typing import TypedDict
 
     from mongoeco.api._async.collection import AsyncCollection
@@ -45,6 +46,7 @@ if TYPE_CHECKING:
         MergeOutcome,
         MutationOutcome,
     )
+    from mongoeco.engines.semantic_core import EngineFindSemantics
     from mongoeco.engines.snapshots import ReadSnapshot
 
     class _ChangePayload(TypedDict):
@@ -84,14 +86,17 @@ class CollectionRuntimeCoordinator:
     def _prepare_engine_change_delivery(
         self,
         operation_context: OperationContext | None,
+        *,
+        session: ClientSession | None = None,
     ) -> None:
         change_hub = self._collection._change_hub
         self._engine_spi.prepare_change_delivery(change_hub)
+        if operation_context is not None:
+            session = operation_context.session
         if (
             change_hub is None
-            or operation_context is None
-            or operation_context.session is None
-            or not operation_context.session.in_transaction
+            or session is None
+            or not session.in_transaction
             or self._engine_spi.capabilities.change_delivery
             not in {
                 "commit-sequence",
@@ -99,7 +104,6 @@ class CollectionRuntimeCoordinator:
             }
         ):
             return
-        session = operation_context.session
         hook_key = (
             f"change_outbox_dispatch:{id(self._collection._engine)}:{id(change_hub)}"
         )
@@ -107,6 +111,23 @@ class CollectionRuntimeCoordinator:
             hook_key,
             commit=lambda _session: self._dispatch_engine_changes(),
         )
+
+    @contextmanager
+    def _engine_change_delivery_scope(
+        self,
+        operation_context: OperationContext | None = None,
+        *,
+        session: ClientSession | None = None,
+    ) -> Iterator[None]:
+        """Deliver committed request and maintenance effects, including on errors."""
+        if operation_context is not None:
+            session = operation_context.session
+        self._prepare_engine_change_delivery(operation_context, session=session)
+        try:
+            yield
+        finally:
+            if session is None or not session.in_transaction:
+                self._dispatch_engine_changes(operation_context)
 
     def _dispatch_engine_changes(
         self,
@@ -469,7 +490,6 @@ class CollectionRuntimeCoordinator:
         publish_operation_type: str | None = None,
     ) -> MutationOutcome:
         self.ensure_operation_executable(operation)
-        self._prepare_engine_change_delivery(operation.context)
         started_at = time.perf_counter_ns()
         try:
             on_commit = lambda captured: (
@@ -481,18 +501,21 @@ class CollectionRuntimeCoordinator:
                 if publish_operation_type is not None
                 else None
             )
-            result = await self._engine_spi.update_outcome(
-                self._collection._db_name,
-                self._collection._collection_name,
-                operation,
-                upsert=upsert,
-                upsert_seed=upsert_seed,
-                selector_filter=selector_filter,
-                operation_context=operation.context,
-                bypass_document_validation=bypass_document_validation,
-                replacement_document=replacement_document,
-                on_commit=(on_commit if publish_operation_type is not None else None),
-            )
+            with self._engine_change_delivery_scope(operation.context):
+                result = await self._engine_spi.update_outcome(
+                    self._collection._db_name,
+                    self._collection._collection_name,
+                    operation,
+                    upsert=upsert,
+                    upsert_seed=upsert_seed,
+                    selector_filter=selector_filter,
+                    operation_context=operation.context,
+                    bypass_document_validation=bypass_document_validation,
+                    replacement_document=replacement_document,
+                    on_commit=(
+                        on_commit if publish_operation_type is not None else None
+                    ),
+                )
         except Exception as exc:
             await self._collection._profile_operation(
                 op="update",
@@ -507,7 +530,6 @@ class CollectionRuntimeCoordinator:
                 errmsg=error_message(exc),
             )
             raise
-        self._dispatch_engine_changes(operation.context)
         await self._collection._profile_operation(
             op="update",
             command={
@@ -531,18 +553,16 @@ class CollectionRuntimeCoordinator:
         on_commit: Callable[[InsertOutcome], None] | None,
         operation_context: OperationContext | None = None,
     ) -> InsertOutcome:
-        self._prepare_engine_change_delivery(operation_context)
-        outcome = await self._engine_spi.insert_outcome(
-            self._collection._db_name,
-            self._collection._collection_name,
-            document,
-            overwrite=overwrite,
-            operation_context=operation_context,
-            bypass_document_validation=bypass_document_validation,
-            on_commit=on_commit,
-        )
-        self._dispatch_engine_changes(operation_context)
-        return outcome
+        with self._engine_change_delivery_scope(operation_context):
+            return await self._engine_spi.insert_outcome(
+                self._collection._db_name,
+                self._collection._collection_name,
+                document,
+                overwrite=overwrite,
+                operation_context=operation_context,
+                bypass_document_validation=bypass_document_validation,
+                on_commit=on_commit,
+            )
 
     async def engine_insert_documents(
         self,
@@ -553,17 +573,15 @@ class CollectionRuntimeCoordinator:
         on_commit: Callable[[InsertOutcome], None] | None,
         operation_context: OperationContext | None = None,
     ) -> tuple[InsertOutcome, ...]:
-        self._prepare_engine_change_delivery(operation_context)
-        outcomes = await self._engine_spi.insert_many_outcomes(
-            self._collection._db_name,
-            self._collection._collection_name,
-            documents,
-            operation_context=operation_context,
-            bypass_document_validation=bypass_document_validation,
-            on_commit=on_commit,
-        )
-        self._dispatch_engine_changes(operation_context)
-        return outcomes
+        with self._engine_change_delivery_scope(operation_context):
+            return await self._engine_spi.insert_many_outcomes(
+                self._collection._db_name,
+                self._collection._collection_name,
+                documents,
+                operation_context=operation_context,
+                bypass_document_validation=bypass_document_validation,
+                on_commit=on_commit,
+            )
 
     async def engine_merge_document(
         self,
@@ -573,21 +591,19 @@ class CollectionRuntimeCoordinator:
         when_not_matched: str,
         operation_context: OperationContext,
     ) -> MergeOutcome:
-        self._prepare_engine_change_delivery(operation_context)
-        outcome = await self._engine_spi.merge_outcome(
-            self._collection._db_name,
-            self._collection._collection_name,
-            document,
-            when_matched=when_matched,
-            when_not_matched=when_not_matched,
-            operation_context=operation_context,
-            on_commit=lambda committed: self._publish_merge_event(
-                committed,
-                session=operation_context.session,
-            ),
-        )
-        self._dispatch_engine_changes(operation_context)
-        return outcome
+        with self._engine_change_delivery_scope(operation_context):
+            return await self._engine_spi.merge_outcome(
+                self._collection._db_name,
+                self._collection._collection_name,
+                document,
+                when_matched=when_matched,
+                when_not_matched=when_not_matched,
+                operation_context=operation_context,
+                on_commit=lambda committed: self._publish_merge_event(
+                    committed,
+                    session=operation_context.session,
+                ),
+            )
 
     def engine_scan_with_operation(
         self,
@@ -606,12 +622,28 @@ class CollectionRuntimeCoordinator:
         )
         if operation.context is None:
             raise TypeError("find operation is missing OperationContext")
-        return self._engine_spi.open_read_snapshot(
-            self._collection._db_name,
-            self._collection._collection_name,
-            semantics,
-            operation_context=operation.context,
+        return self._open_change_delivering_snapshot(
+            self._collection._collection_name, semantics, operation.context
         )
+
+    def _open_change_delivering_snapshot(
+        self,
+        collection_name: str,
+        semantics: EngineFindSemantics,
+        operation_context: OperationContext,
+    ) -> ReadSnapshot:
+        """One lazy read boundary, including foreign aggregation collections."""
+        self._prepare_engine_change_delivery(operation_context)
+        snapshot = self._engine_spi.open_read_snapshot(
+            self._collection._db_name,
+            collection_name,
+            semantics,
+            operation_context=operation_context,
+        )
+        snapshot._set_first_read_callback(
+            lambda: self._dispatch_engine_changes(operation_context)
+        )
+        return snapshot
 
     async def engine_get_document(
         self,
@@ -620,13 +652,14 @@ class CollectionRuntimeCoordinator:
         projection: Projection | None,
         operation_context: OperationContext,
     ) -> Document | None:
-        return await self._engine_spi.get_document(
-            self._collection._db_name,
-            self._collection._collection_name,
-            document_id,
-            projection=projection,
-            operation_context=operation_context,
-        )
+        with self._engine_change_delivery_scope(operation_context):
+            return await self._engine_spi.get_document(
+                self._collection._db_name,
+                self._collection._collection_name,
+                document_id,
+                projection=projection,
+                operation_context=operation_context,
+            )
 
     async def engine_delete_with_operation(
         self,
@@ -637,26 +670,26 @@ class CollectionRuntimeCoordinator:
         publish_change_event: bool = False,
     ) -> DeleteOutcome:
         self.ensure_operation_executable(operation)
-        self._prepare_engine_change_delivery(operation.context)
         started_at = time.perf_counter_ns()
         try:
-            result = await self._engine_spi.delete_outcome(
-                self._collection._db_name,
-                self._collection._collection_name,
-                operation,
-                selector_filter=selector_filter,
-                operation_context=operation.context,
-                on_commit=(
-                    lambda captured: (
-                        self._publish_captured_delete_event(
-                            captured,
-                            session=session,
+            with self._engine_change_delivery_scope(operation.context):
+                result = await self._engine_spi.delete_outcome(
+                    self._collection._db_name,
+                    self._collection._collection_name,
+                    operation,
+                    selector_filter=selector_filter,
+                    operation_context=operation.context,
+                    on_commit=(
+                        lambda captured: (
+                            self._publish_captured_delete_event(
+                                captured,
+                                session=session,
+                            )
+                            if publish_change_event
+                            else None
                         )
-                        if publish_change_event
-                        else None
-                    )
-                ),
-            )
+                    ),
+                )
         except Exception as exc:
             await self._collection._profile_operation(
                 op="remove",
@@ -668,7 +701,6 @@ class CollectionRuntimeCoordinator:
                 errmsg=error_message(exc),
             )
             raise
-        self._dispatch_engine_changes(operation.context)
         await self._collection._profile_operation(
             op="remove",
             command={
@@ -706,12 +738,13 @@ class CollectionRuntimeCoordinator:
             operation,
             dialect=self._collection._mongodb_dialect,
         )
-        count = await self._engine_spi.count_documents(
-            self._collection._db_name,
-            self._collection._collection_name,
-            semantics,
-            operation_context=operation.context,
-        )
+        with self._engine_change_delivery_scope(operation.context):
+            count = await self._engine_spi.count_documents(
+                self._collection._db_name,
+                self._collection._collection_name,
+                semantics,
+                operation_context=operation.context,
+            )
         await self._collection._profile_operation(
             op="command",
             command={

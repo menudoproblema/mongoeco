@@ -200,6 +200,13 @@ Runtime behavior highlights:
 * local change streams can also persist that retained history to a journal file
   with `change_stream_journal_path`, allowing `resume_after` / `start_after`
   to survive client recreation inside the same local environment
+* local `watch()` is available through the direct APIs; the wire proxy does not
+  implement the `$changeStream` aggregation stage
+* local TTL cleanup runs when an operation visits the collection. Committed TTL
+  deletions enter the same change-delivery outbox as explicit deletes; they do
+  not require a subsequent write to reach local watchers. Inside a local
+  transaction, delivery follows commit and abort discards the pending effects.
+  This does not reproduce MongoDB's background TTL monitor scheduling.
 * the journal can also be hardened with `change_stream_journal_fsync=True`
   and bounded by size with `change_stream_journal_max_bytes`
 * when journaling is enabled, `mongoeco` keeps an incremental event log and

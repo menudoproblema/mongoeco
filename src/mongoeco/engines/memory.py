@@ -938,6 +938,15 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_source,
                 )
                 self._delete_storage_document_locked(coll, storage_key)
+                self._record_committed_payload(
+                    context,
+                    self._change_payload(
+                        operation_type="delete",
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        document_key={"_id": document["_id"]},
+                    ) if "_id" in document else None,
+                )
         return len(expired_storage_keys)
 
     def _assert_expired_documents_have_stable_identity_locked(
@@ -1401,12 +1410,20 @@ class MemoryEngine(AsyncStorageEngine):
             if context.publication is ChangePublicationPolicy.RECORD_GAP
             else deepcopy(payload)
         )
+        return self._record_committed_payload(context.session, committed_payload)
+
+    def _record_committed_payload(
+        self,
+        session: ClientSession | None,
+        committed_payload: Document | None,
+    ) -> int | None:
+        """Record request or maintenance effects inside the same atomic scope."""
         with self._meta_lock:
             if not self._publication_stack:
                 message = "change recording requires an active publication scope"
                 raise InvalidOperation(message)
             publication = self._publication_stack[-1]
-            if publication.state is not self._active_mvcc_state(context.session):
+            if publication.state is not self._active_mvcc_state(session):
                 message = "change publication belongs to another storage view"
                 raise InvalidOperation(message)
             publication.changes.append(committed_payload)

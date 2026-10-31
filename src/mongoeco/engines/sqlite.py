@@ -158,6 +158,7 @@ from mongoeco.engines._sqlite_namespace_admin import (
     rename_collection as _sqlite_rename_collection,
 )
 from mongoeco.engines._sqlite_outbox import (
+    _max_sequence as _sqlite_newest_change_sequence,
     acquire_consumer_lease as _sqlite_acquire_consumer_lease,
     append_change as _sqlite_append_change,
     checkpoint_consumer as _sqlite_checkpoint_consumer,
@@ -1231,6 +1232,18 @@ class SQLiteEngine(AsyncStorageEngine):
                     db_name,
                     coll_name,
                     storage_key,
+                )
+                _sqlite_append_change(
+                    conn,
+                    context=None,
+                    maintenance_operation_id=uuid.uuid4().hex,
+                    operation_type="delete",
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    document_key={"_id": document["_id"]},
+                    full_document=None,
+                    serialize_document=self._serialize_document,
+                    max_entries=self._change_outbox_max_entries,
                 )
                 removed += 1
         if removed:
@@ -4968,6 +4981,13 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         dispatch_key = f"{self._change_dispatch_scope}\0{consumer_id}"
         with _SQLITE_CHANGE_DISPATCH.hold(dispatch_key):
+            # Idle reads need neither a dispatch lease nor its heartbeat. Read
+            # persisted state on every call: another connection can append work,
+            # retire this consumer or prune its history between operations.
+            with self._change_delivery_storage() as conn:
+                checkpoint = _sqlite_consumer_checkpoint(conn, consumer_id)
+                if checkpoint >= _sqlite_newest_change_sequence(conn):
+                    return
             generation = self._acquire_change_dispatch_lease(consumer_id)
             heartbeat_state = _ChangeDispatchHeartbeat()
             heartbeat = threading.Thread(

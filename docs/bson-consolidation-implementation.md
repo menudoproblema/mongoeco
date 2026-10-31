@@ -101,7 +101,7 @@ eventos/outbox/índices y operaciones múltiples. D03a aún necesita los testigo
 ampliados de longitudes/arrays/gramática y de caminos físicos; la extracción ya
 está hecha. La aceptación global de paquete/matrices permanece en D05.
 
-## D02 — Coordenadas exactas y consumidores tipados; publicación aún abierta
+## D02 — Coordenadas exactas, consumidores y publicación TTL
 
 El corte reemplaza timestamp/total_seconds flotantes por coordenadas enteras
 UTC/BSON e inversa común en bson_scalars. Conversión, resta, dateDiff, ventanas
@@ -120,7 +120,7 @@ int frente a double nativo; se corrige en el owner que comparte con group y
 se contrasta el BSON físico de ambos consumidores. No se declara completa la
 paridad de todos los operadores de ventanas por arreglar estos testigos.
 
-El corpus datetime incorpora seis acciones al registro/runner existentes.
+En `0979fd8`, el corpus datetime incorpora seis acciones al registro/runner existentes.
 Capturas 7.0.43, 8.0.32 y 9.0.2, con sus FCV, verificadas mediante --check.
 El runtime archivado 93b9b34 reproduce 144 fallos públicos y tres checks de
 metadata verdes. El candidato pasa los 147 checks focales, también con orjson;
@@ -138,22 +138,59 @@ reapertura, rollback/reintento ante fallo y rechazo de versión futura sin
 reconstrucción. Los controles previos de almacenamiento/publicación transaccional
 no se reinterpretan como entrega a watch.
 
-**D02 sigue abierto para publicación.** La sonda pública local encuentra que
-TTL elimina el documento pero no entrega un evento delete en ninguno de los
-motores. No se ha repetido aún ese testigo contra un replica set nativo ni se
-ha corregido el efecto. El próximo paso es obtener esa referencia y recorrer
-el owner de cambios/outbox, coordinado con D01b/D04. El cálculo correcto y sus
-checks no cierran esa obligación ni D05.
+### Publicación TTL y cierre funcional
+
+La sonda de `0979fd8` encontraba eliminación sin evento delete. La nueva
+[evidencia](evidence/bson-consolidation-implementation/ttl-change-delivery/receipt.json)
+la contrasta con replica sets desechables de MongoDB 7.0.43, 8.0.32 y 9.0.2,
+FCV de su major y monitor TTL configurado a un segundo. Los tres entregan
+exactamente los borrados de IDs 1/2 y conservan ID 3. Se reutilizan el registro,
+capturador y replay; el corpus declara superficies directas sync/async. Wire
+rechaza actualmente $changeStream: se documenta y se comprueba en ambos motores
+y dialectos 7/8/9; no se cuentan doce omisiones wire como ejecución nativa.
+Los jobs nativos que ejecuten este caso necesitan replica set y monitor rápido;
+su incorporación general a los fixtures de D04/D05 queda explícita, sin imponer
+ese límite de espera al monitor de una instancia arbitraria.
+
+La causa estaba en el registro y en la frontera de entrega. Memory incorpora
+los payloads TTL a su scope atómico de publicación. SQLite usa su mismo outbox,
+con identidad de mantenimiento independiente y mutuamente excluyente de la
+identidad de petición; conserva deduplicación/checkpoints y esquema persistido.
+No se fabrica un OperationContext ni otro sistema de contexto para un borrado
+interno. El coordinador posee un scope común de entrega para lecturas,
+escrituras y DDL, también ante errores, y usa el hook transaccional ya existente.
+
+El snapshot notifica una sola vez tras su primera lectura efectiva, incluyendo
+vacío, fallo y cancelación, y libera el callback al cerrar sin leer. La revisión
+reprodujo seis omisiones adicionales de eventos en lookup/union sobre colecciones
+extranjeras: ahora comparten el mismo owner de apertura que las lecturas normales.
+Se comprueban cursores poblados aún abiertos, observadores esperando, rollback
+tras registrar el segundo efecto, reintento y commit/abort del contrato local.
+No se extrapola ese último control a aislamiento o temporización TTL nativos.
+
+La primera medición detectó leases/heartbeat innecesarios en SQLite sin trabajo
+pendiente. El camino vacío consulta checkpoint y secuencia persistidos antes del
+lease; no crea una caché que pueda ocultar cambios externos o reintentos. Las
+cinco muestras secuenciales del benchmark pequeño conservan checksum y muestran
+medianas aproximadamente +3 % Memory/+2 % SQLite frente a la base, frente al
++34 % SQLite inicial. Esto no sustituye cargas ni matrices de D05.
+
+El replay focal pasa 15 checks; la regresión integrada pasa 5.131. Pasan 2.932
+controles de core/APIs/TTL, con 1.005 subtests y un skip local ajeno a ejecución
+física. También pasan orjson focal, typing público/boundary, uso sin SDK y lint
+sin deuda nueva. Las capturas nativas se verificaron con --check; sus timestamps
+de cluster/operación en buildInfo varían, sin cambiar resultados ni manifiestos.
+El receipt distingue candidatos intermedios y gates finales. D02 queda cerrado
+funcionalmente con esta evidencia; D05 conserva el cierre integrado completo.
 
 ## Trabajo restante
 
 - D03a: completar testigos de longitudes/arrays/gramática y caminos físicos.
 - D01b: consecuencias públicas de modificación, eventos, índices y operaciones múltiples.
-- D02: completar referencia física y publicación de borrados TTL; el corte de
-  coordenadas, consumidores y auxiliares compatibles está implementado.
 - D03b: tipos/SQL bajo prueba de equivalencia.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
-- D04: preparación/contexto de watch, referencia con replica set.
+- D04: preparación/contexto de watch y fixtures de replica set para los jobs
+  nativos que alcanzan watch/TTL; la entrega TTL no cierra esos errores de entrada.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre.

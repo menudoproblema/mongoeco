@@ -1,0 +1,11 @@
+{
+  "owned_ports_closed": {
+    "49964": true,
+    "49965": true,
+    "49966": true
+  },
+  "removed_containers": [
+    "mongoeco-ttl-events-7",
+    "mongoeco-ttl-events-8"
+  ]
+}

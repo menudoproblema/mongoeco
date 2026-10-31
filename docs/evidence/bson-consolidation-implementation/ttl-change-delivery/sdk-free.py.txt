@@ -1,0 +1,22 @@
+import asyncio
+from datetime import datetime,timedelta,UTC
+from importlib.util import find_spec
+assert find_spec('bson') is None
+from mongoeco import AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+async def run():
+ for factory in (MemoryEngine,SQLiteEngine):
+  now=[datetime(1970,1,1,tzinfo=UTC)];expiry=now[0]+timedelta(milliseconds=1001)
+  async with AsyncMongoClient(factory(),now_factory=lambda:now[0]) as client:
+   c=client.test.a
+   await c.insert_one({'_id':1,'d':expiry});await c.create_index('d',expire_after_seconds=0)
+   stream=c.watch(max_await_time_ms=1)
+   try:
+    now[0]=expiry
+    assert await c.find_one({}) is None
+    event=await stream.try_next()
+    assert event['operationType']=='delete' and event['documentKey']=={'_id':1}
+    assert await stream.try_next() is None
+   finally:stream.close()
+  print(factory.__name__,'SDK-free TTL event delivery passed')
+asyncio.run(run())

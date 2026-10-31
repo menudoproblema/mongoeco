@@ -95,6 +95,10 @@ from tests.differential.semantic_sum_cases import (
     SEMANTIC_SUM_STREAM_CASES,
     STREAM_SEED as SUM_STREAM_SEED,
 )
+from tests.differential.semantic_ttl_publication_cases import (
+    SEED as TTL_PUBLICATION_SEED,
+    SEMANTIC_TTL_PUBLICATION_CASES,
+)
 from tests.differential.semantic_update_identity_cases import (
     SEED as UPDATE_IDENTITY_SEED,
     SEMANTIC_UPDATE_IDENTITY_CASES,
@@ -108,9 +112,15 @@ class SemanticCorpus:
     seed: list
     cases: tuple
     observation_encoding: str = "bson"
+    surfaces: tuple[str, ...] = ("sync", "async", "wire-sync", "wire-async")
 
 
 SEMANTIC_CORPORA = {
+    "ttl_publication": SemanticCorpus(
+        "ttl-publication", "semantic_ttl_publication_cases",
+        TTL_PUBLICATION_SEED, SEMANTIC_TTL_PUBLICATION_CASES,
+        surfaces=("sync", "async"),
+    ),
     "datetime": SemanticCorpus(
         "datetime", "semantic_datetime_cases", DATETIME_SEED, SEMANTIC_DATETIME_CASES,
     ),

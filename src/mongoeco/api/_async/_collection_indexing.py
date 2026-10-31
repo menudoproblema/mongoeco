@@ -120,7 +120,10 @@ async def create_index(
             )
             raise OperationFailure(message, code=code, details={"codeName": code_name})
     requested_name = name or default_index_name(normalized_keys)
-    with execution_now_scope(collection._resolve_now()):
+    with (
+        collection._runtime._engine_change_delivery_scope(session=session),
+        execution_now_scope(collection._resolve_now()),
+    ):
         created_name = await collection._engine.create_index(
             collection._db_name,
             collection._collection_name,
@@ -178,7 +181,10 @@ async def create_indexes(
                 if index.partial_filter_expression is None
                 else collection._normalize_filter(index.partial_filter_expression)
             )
-            with execution_now_scope(execution_now):
+            with (
+                collection._runtime._engine_change_delivery_scope(session=session),
+                execution_now_scope(execution_now),
+            ):
                 collation = await _index_collation_for_create(
                     collection, index.keys, index.collation, session
                 )

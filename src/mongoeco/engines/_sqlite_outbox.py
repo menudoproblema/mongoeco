@@ -720,11 +720,26 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
     full_document: Document | None,
     serialize_document: Callable[[Document], str],
     max_entries: int = 10_000,
+    maintenance_operation_id: str | None = None,
 ) -> int | None:
-    if context is None or context.publication is ChangePublicationPolicy.DISABLED:
+    if context is not None and maintenance_operation_id is not None:
+        message = "request and maintenance identities are mutually exclusive"
+        raise ValueError(message)
+    if context is None and maintenance_operation_id is None:
         return None
+    if context is not None and context.publication is ChangePublicationPolicy.DISABLED:
+        return None
+    operation_id = (
+        context.operation_id if context is not None else maintenance_operation_id
+    )
+    if not isinstance(operation_id, str) or not operation_id:
+        message = "change operation identity must be a non-empty string"
+        raise ValueError(message)
     kind = (
-        "gap" if context.publication is ChangePublicationPolicy.RECORD_GAP else "event"
+        "gap"
+        if context is not None
+        and context.publication is ChangePublicationPolicy.RECORD_GAP
+        else "event"
     )
     effect = serialize_document(
         {
@@ -738,7 +753,9 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
     )
     payload = effect if kind == "event" else None
     effective_event_index = (
-        context.change_event_index if event_index is None else event_index
+        (context.change_event_index if context is not None else 0)
+        if event_index is None
+        else event_index
     )
     if (
         not isinstance(effective_event_index, int)
@@ -753,7 +770,7 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
         FROM change_outbox_identities
         WHERE operation_id = ? AND event_index = ?
         """,
-        (context.operation_id, effective_event_index),
+        (operation_id, effective_event_index),
     ).fetchone()
     if existing is not None:
         expected_hash = _change_fingerprint(kind, effect)
@@ -770,7 +787,7 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
             operation_id, event_index, kind, payload
         ) VALUES (?, ?, ?, ?)
         """,
-        (context.operation_id, effective_event_index, kind, payload),
+        (operation_id, effective_event_index, kind, payload),
     )
     if cursor.lastrowid is None:  # pragma: no cover - sqlite insert invariant
         message = "change outbox row was not persisted"
@@ -782,7 +799,7 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
         ) VALUES (?, ?, ?, ?, ?)
         """,
         (
-            context.operation_id,
+            operation_id,
             effective_event_index,
             cursor.lastrowid,
             kind,

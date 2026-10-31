@@ -76,6 +76,12 @@ class _AsyncCursorView:
         self._invoke("rewind")
         return self
 
+    def try_next(self):
+        return self._invoke("try_next")
+
+    def close(self):
+        return self._invoke("close")
+
 
 class _AsyncView:
     """Run the unchanged synchronous witness against an async collection."""
@@ -144,6 +150,9 @@ class _AsyncView:
     def count_documents(self, *args, **kwargs):
         return self._call("count_documents", *args, **kwargs)
 
+    def watch(self, *args, **kwargs):
+        return _AsyncCursorView(self._call("watch", *args, **kwargs), self.loop)
+
     def find_one(self, *args, **kwargs):
         return self._call("find_one", *args, **kwargs)
 
@@ -169,10 +178,14 @@ class _AsyncView:
 @pytest.mark.parametrize("dialect", DIALECTS)
 @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
 @pytest.mark.parametrize(
-    ["corpus", "name", "action"],
-    [(corpus, n, a) for corpus, cases in CORPORA.items() for n, a in cases],
+    ["corpus", "name", "action", "surface"],
+    [
+        (corpus, name, action, surface)
+        for corpus, spec in SEMANTIC_CORPORA.items()
+        for name, action in spec.cases
+        for surface in spec.surfaces
+    ],
 )
-@pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
 def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
     engine_factory, dialect, corpus, name, action, *, surface
 ):

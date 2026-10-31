@@ -4,7 +4,7 @@ import asyncio
 import math
 import uuid
 
-from collections.abc import AsyncIterable, AsyncIterator
+from collections.abc import AsyncIterable, AsyncIterator, Callable
 from contextlib import suppress
 from copy import deepcopy
 from dataclasses import dataclass
@@ -73,6 +73,11 @@ class ReadSnapshot(AsyncIterator[Document]):
         self._lifecycle = SnapshotLifecycle.OPEN
         self._close_error: BaseException | None = None
         self._close_task: asyncio.Task[None] | None = None
+        self._first_read_callback: Callable[[], None] | None = None
+
+    def _set_first_read_callback(self, callback: Callable[[], None]) -> None:
+        """Notify the operation owner after lazy initial maintenance has run."""
+        self._first_read_callback = callback
 
     def __aiter__(self) -> Self:
         return self
@@ -95,6 +100,7 @@ class ReadSnapshot(AsyncIterator[Document]):
     async def __anext__(self) -> Document:
         if self._lifecycle is not SnapshotLifecycle.OPEN:
             raise StopAsyncIteration
+        callback, self._first_read_callback = self._first_read_callback, None
         try:
             if self._iterator is None:
                 self._iterator = self._source.__aiter__()
@@ -109,6 +115,9 @@ class ReadSnapshot(AsyncIterator[Document]):
             with suppress(BaseException):
                 await self.aclose()
             raise
+        finally:
+            if callback is not None:
+                callback()
 
     def _own_document(self, document: Document) -> Document:
         return deepcopy(document)
@@ -215,6 +224,7 @@ class ReadSnapshot(AsyncIterator[Document]):
         }:
             return
         self._lifecycle = SnapshotLifecycle.CLOSING
+        self._first_read_callback = None
         iterator = self._iterator
         self._iterator = None
         first_error: BaseException | None = None

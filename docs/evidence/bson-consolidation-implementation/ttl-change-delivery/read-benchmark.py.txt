@@ -1,0 +1,21 @@
+import asyncio,json,time,statistics
+from mongoeco import AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+async def run():
+ results={}
+ for factory in (MemoryEngine,SQLiteEngine):
+  async with AsyncMongoClient(factory()) as client:
+   c=client.bench.a
+   await c.insert_many([{'_id':i,'v':i} for i in range(100)])
+   samples=[];checks=[]
+   for _ in range(5):
+    start=time.perf_counter();checksum=0
+    for i in range(100):
+     checksum+=(await c.find_one({'_id':1}))['v']
+     checksum+=await c.count_documents({'v':{'$gte':50}})
+     checksum+=sum(d['v'] for d in await c.find({'v':{'$gte':95}}).to_list())
+    samples.append(time.perf_counter()-start);checks.append(checksum)
+   assert checks==[53600]*5,checks
+   results[factory.__name__]={'seconds_per_300_requests':samples,'median':statistics.median(samples),'checksum':checks[0]}
+ return results
+print(json.dumps(asyncio.run(run())))

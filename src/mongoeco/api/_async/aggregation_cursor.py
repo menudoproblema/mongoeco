@@ -1230,6 +1230,11 @@ class AsyncAggregationCursor:
             dialect=dialect,
             variables=self._execution_variables(),
         )
+        runtime = getattr(self._collection, "_runtime", None)
+        if runtime is not None and self._operation_context is not None:
+            return runtime._open_change_delivering_snapshot(
+                collection_name, semantics, self._operation_context
+            )
         return EngineSpiAdapter(engine).open_read_snapshot(
             self._collection._db_name,
             collection_name,

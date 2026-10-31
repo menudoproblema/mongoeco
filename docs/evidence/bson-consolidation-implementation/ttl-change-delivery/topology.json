@@ -1,0 +1,41 @@
+{
+  "7.0": {
+    "port": 49965,
+    "version": "7.0.43",
+    "fcv": {
+      "version": "7.0"
+    },
+    "replica_set": "mongoeco_ttl_events_7",
+    "writable_primary": true,
+    "members": [
+      "PRIMARY"
+    ],
+    "ttlMonitorSleepSecs": 1
+  },
+  "8.0": {
+    "port": 49966,
+    "version": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "replica_set": "mongoeco_ttl_events_8",
+    "writable_primary": true,
+    "members": [
+      "PRIMARY"
+    ],
+    "ttlMonitorSleepSecs": 1
+  },
+  "9.0": {
+    "port": 49964,
+    "version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "replica_set": "mongoeco_ttl_events",
+    "writable_primary": true,
+    "members": [
+      "PRIMARY"
+    ],
+    "ttlMonitorSleepSecs": 1
+  }
+}

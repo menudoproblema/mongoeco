@@ -1,0 +1,11 @@
+Final source checks:
+.venv/bin/python scripts/check_public_typing.py
+public typing contract passed: positive=1, negative-errors=20
+engine boundary typing contract passed: positive=1, negative-errors=25
+.venv/bin/python scripts/check_lint_ratchet.py --base-ref 0979fd8
+lint ratchet passed for 15 changed Python files
+git diff --check: passed
+Three native --check executions: verified 1 native case for each 7.0/8.0/9.0.
+Native observations/manifests/corpus and stable runtime fields match; advancing
+buildInfo cluster/operation timestamps are incidental metadata, not case values.
+SDK-free Python 3.13: Memory and SQLite TTL delivery passed.

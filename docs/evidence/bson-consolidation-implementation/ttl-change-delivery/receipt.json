@@ -1,0 +1,144 @@
+{
+  "status": "D02 functional closure: exact dates and native-referenced transactional TTL change delivery; D05 remains open",
+  "base": "0979fd8c9bcecd6fb8dff78e45bd4066b1c9b850",
+  "before_runtime": "0979fd8c9bcecd6fb8dff78e45bd4066b1c9b850",
+  "python": "3.14.5",
+  "pymongo": "4.19.0",
+  "runtime_source_manifest_sha256": "f9dd0db4078d96d7c6a8369e6fc82bb51dc4d46e4cca39eff33db4242c42aa55",
+  "native_corpus_sha256": "9a58e0b603396a062631bf6b26a2c14b20dd6d77d416f2a704e0ad83207a5c87",
+  "fixtures": {
+    "tests/fixtures/semantic_ttl_publication_7_0.json": {
+      "sha256": "015764c45a3b0c68ec4286f85208c502a88fc33556af93fff6f488a1e7592d64",
+      "checked_case_count": 1,
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "matching_observations_manifests_and_corpus": true,
+      "build_info_volatile_fields": [
+        "operationTime",
+        "$clusterTime"
+      ]
+    },
+    "tests/fixtures/semantic_ttl_publication_8_0.json": {
+      "sha256": "bd522b29e1418b7e2e8d3137d639c3b834101806d535fe90132eb9aa2328c9b4",
+      "checked_case_count": 1,
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "matching_observations_manifests_and_corpus": true,
+      "build_info_volatile_fields": [
+        "operationTime",
+        "$clusterTime"
+      ]
+    },
+    "tests/fixtures/semantic_ttl_publication_9_0.json": {
+      "sha256": "0bba936b05edd713683b7446999253897e6874da44da9e10bd77051ffcfdeb97",
+      "checked_case_count": 1,
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "matching_observations_manifests_and_corpus": true,
+      "build_info_volatile_fields": [
+        "operationTime",
+        "$clusterTime"
+      ]
+    }
+  },
+  "gates": {
+    "before_archived_final_supported_surfaces": {
+      "failed": 12,
+      "passed": 3,
+      "seconds": 61.84,
+      "scope": "semantic failures across direct sync/async, two engines and three dialects; metadata passes"
+    },
+    "foreign_route_before": {
+      "failed": 6,
+      "scope": "lookup/union missing delivery across Memory, SQLite memory/file before common snapshot owner"
+    },
+    "focal_after": {
+      "passed": 15,
+      "scope": "first implementation; all 15 are also included in final integrated run"
+    },
+    "final_integrated_semantic": {
+      "passed": 5131,
+      "seconds": 218.23,
+      "frozen_source_and_corpus": true
+    },
+    "final_core_api_ttl_outbox": {
+      "passed": 2932,
+      "skipped": 1,
+      "subtests_passed": 1005,
+      "seconds": 15.65
+    },
+    "ownership_snapshots_atomic_mutations": {
+      "passed": 130,
+      "subtests_passed": 45,
+      "seconds": 1.55
+    },
+    "orjson_focal": {
+      "passed": 15,
+      "seconds": 1.16
+    },
+    "public_boundary_typing": "passed",
+    "lint_ratchet": "passed for 15 changed Python files against 0979fd8",
+    "sdk_free_python313": "Memory/SQLite direct TTL events passed",
+    "documentation_links_and_diff": "relative links passed; git diff --check passed"
+  },
+  "public_scope": {
+    "ttl_publication": [
+      "sync",
+      "async"
+    ],
+    "wire_changeStream": "unsupported; six explicit rejection checks, not native parity or skips",
+    "prior_corpora_surfaces": "all four surfaces retained"
+  },
+  "performance": {
+    "initial_sqlite_median_ratio": 1.3446364986890103,
+    "final_median_ratios": {
+      "MemoryEngine": 1.0295044153523492,
+      "SQLiteEngine": 1.0212637597647871
+    },
+    "scope": "five sequential samples, 300 mixed direct async requests each, same 100 rows and checksum; not D05 workload acceptance",
+    "optimization": "read persisted checkpoint/high-water mark before taking an idle dispatch lease; no checkpoint cache"
+  },
+  "remaining": [
+    "D03a/D03b, D01b, D06a/b/c, D04 context/preparation, H53 and optional D07 disposition",
+    "D04/D05 native job fixture integration: replica sets and controlled fast TTL monitor for cases that require them",
+    "D05 whole-suite, coverage, package, Python/SDK matrices and representative workloads"
+  ],
+  "excluded_diagnostics": [
+    "wrong create_index option spelling and initially absent fixtures",
+    "wire watch execution outside its existing supported subset",
+    "an open-cursor test captured the clock before advancing it; fixed test preserves stable NOW",
+    "an invalid full-JSON equality assertion on advancing native replica-set buildInfo timestamps; case/static metadata checks and original --check outputs pass",
+    "intermediate candidates and integrated run before the foreign loader wiring are not final acceptance"
+  ],
+  "artifacts": {
+    "lifecycle-all.txt.gz": "5ee4b463e9453635d934646717d2392dd202ea49ba964eee47e0c07aac131fd1",
+    "ownership-accepted.txt.gz": "1cef37a3d0f7608797b125a7cf75e28ef78745f9a618fd1ee4f16c25d11edef4",
+    "read-benchmark.py.txt": "36babc3ddc1be5b2bc79731107bf99763456dad94cd23c40b78ba88ec3f1d6b8",
+    "sdk-free.txt": "c10f7987a1731ec1d38e045ed59591728941776e36e7bd59edcb262b6b785cce",
+    "check_8_0.json.gz": "fabc19b906d1424da74bb52e55686bf20301523e5672c59f7e4db9dc11e85490",
+    "runtime-sources.json": "f9dd0db4078d96d7c6a8369e6fc82bb51dc4d46e4cca39eff33db4242c42aa55",
+    "read-benchmark.json": "d6aade319d891bc15e2a4e987def6e7f63a398d26f8ad147ac6f0aaa1b3b73a2",
+    "sdk-free.py.txt": "e74e5d1c09a88d6f8b9db55d7428b0bdc0830e0cbdb44052a86719693d94f3c3",
+    "foreign-before.txt.gz": "b84dabc1f892586a0472450f8ee80f4320201e825f816311538fbb0501f83854",
+    "check_9_0.json.gz": "e596083ac960645521127157a9f77153ae1c7e437ed3c5d8025c26371433ff92",
+    "semantic-accepted.txt.gz": "3d3bb8eacf718c36a988e9f14ca843ee96e23592a2b6ab9d6d5d89dfdea15c99",
+    "validation.txt": "f17b12cd4fe972d4bfe743ac35d1da744bee70e7650828db12ca2de78eab6f39",
+    "README.md": "3baaf82791d43f15cd50ca8a5d225ff0b8f44ac7bc1e4f58d37b9208ba03aef7",
+    "cleanup.json": "dec7902e770fd001c0219f33bc08014bd01f0c63d6103a408bca8df4c3f7c46e",
+    "check_7_0.json.gz": "51e6885508f3432211a7924028301c3eb95f59809efc82e59d228a2817046e1a",
+    "replay-final.txt.gz": "92c9e7ac94de6b49ca8440c16d29d940dc4b7b45ab4f9d276fc00ac1c321e2f8",
+    "identity.txt.gz": "62916dffa9735154e16c1a6bb9a4d2da38340cebf1a4558922fea267f6af2aaa",
+    "read-benchmark-final.json": "66ebed393485ca06ef56c04733b47bebc8a54015360e8d0ebc4db37bf98ad10b",
+    "regression-accepted.txt.gz": "3f40c7c1736cc143120d119f31adba41f2308d5bc2055169950d4d739373fcd8",
+    "topology.json": "2ccbc385abcf9cbe6b25a1e55d4cb1b890fdddabcb48735c81b7f11028ed589c",
+    "before-final.txt.gz": "3e1546721f94b85a9fcc113c42ff6839096e094f5541d85ed9f5e942b5d9db20",
+    "orjson-accepted.txt.gz": "652e365b2f970e1922f34d2ff4478031ad670f7b2a111f502001e01ad832766d",
+    "idle-dispatch.txt.gz": "4aaef1067938a3bb4113e6e19d59a90d693dd25315a01756afdda791ee3ed0f8"
+  }
+}
