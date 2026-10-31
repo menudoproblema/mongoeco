@@ -93,3 +93,28 @@ def test_option_changes_follow_local_transaction_ownership(engine_factory, commi
             else:
                 session.abort_transaction()
         assert collection.options()["validator"] == {"a": 2 if commit else 1}
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_coll_mod_optional_engine_capability_fails_without_changing_validation(
+    engine_factory,
+):
+    engine = engine_factory()
+    with MongoClient(engine) as client:
+        collection = client.validators.create_collection(
+            "optional", validator={"a": {"$gte": 0}}
+        )
+        collection.insert_one({"_id": 1, "a": 1})
+        before = collection.options()
+        # An SPI v2 consumer need not implement this builtin-only capability.
+        with (
+            patch.object(engine, "_modify_collection_options", None),
+            pytest.raises(OperationFailure) as error,
+        ):
+            client.validators.command({"collMod": "optional", "validationLevel": "off"})
+        assert error.value.code == 59  # noqa: PLR2004 - command capability diagnostic
+        assert collection.options() == before
+        with pytest.raises(OperationFailure) as error:
+            collection.insert_one({"_id": 2, "a": -1})
+        assert error.value.code == 121  # noqa: PLR2004 - document validation diagnostic
+        assert list(collection.find()) == [{"_id": 1, "a": 1}]

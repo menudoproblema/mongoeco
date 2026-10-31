@@ -118,6 +118,7 @@ jobs:
           python scripts/normalize_sdist.py dist-second/mongoeco-*.tar.gz
           cmp dist-first/mongoeco-*.tar.gz dist-second/mongoeco-*.tar.gz
           cmp dist-first/mongoeco-*.whl dist-second/mongoeco-*.whl
+          python scripts/check_distribution_sources.py dist-first/* dist-second/*
           mkdir dist
           cp dist-first/* dist/
           python -m twine check dist/*

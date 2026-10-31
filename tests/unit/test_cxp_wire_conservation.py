@@ -19,7 +19,7 @@ HELLO_MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-hello-field-conservation.csv"
 STATIC_ADMIN_MATRIX = (
     PROJECT_ROOT / "docs" / "cxp-wire-static-admin-field-conservation.csv"
 )
-EXPECTED_COMMAND_COUNT = 46
+EXPECTED_COMMAND_COUNT = 47
 EXPECTED_CURSOR_FIELDS = frozenset(
     {
         "/firstBatch/response/cursor/id",

@@ -941,3 +941,29 @@ propietarios y la matriz instalada. La resolución del SDK histórico requiere
 plugins oficiales de build desde wheels con SHA verificado cuando el índice
 simple de PyPI devuelve Content-Type inválido; esto es infraestructura de prueba,
 no un cambio de runtime ni una relajación de la matriz.
+
+C06 amplía el corpus Search con collation/cache binaria y cuatro intersecciones
+de filtro interno/downstream: exacta, residual en cada lado y vacía. Las capturas
+7/8/9 mantienen su independencia MQL; execution/explain verifican el dominio de
+cada conteo. Se añade un fallo SQL real en el collector para comprobar savepoint,
+temporales y recuperación, y una prueba de capacidad opcional collMod en SPI.
+
+Los controles públicos con vectores inválidos encontraron dos defectos C04:
+validadores de coordenadas duplicados y slots USearch originales frente a un mapa
+compacto. Se comparte la coerción vectorial finita, se generan slots densos sobre
+filas válidas y se prueban reparación de embeddings y cambios de dimensiones.
+La propiedad de conservación se extiende a SQLite/USearch con el mismo oráculo.
+La cuantización y las fórmulas de score no se sustituyen por reglas BSON.
+
+El primer wheel reproducido incluía un módulo eliminado, heredado de build/lib:
+la identidad repetida de dos builds no demostraba correspondencia con el source.
+El gate nuevo de distribución verifica inventario y bytes de los 298 archivos
+tracked del paquete en wheel y sdist. El wheel anterior queda rojo. Se construye
+el siguiente candidato desde un archive limpio; no se reduce el umbral 99%.
+
+Los tres pendientes de inventario detectados por las suites completas se cierran
+actualizando hashes de fuente, la fila collMod y sus controles wire positivos/
+negativos. Los tests de conservación mantienen sus comparaciones exactas; no se
+derivan los campos ni los comportamientos de la implementación que comprueban.
+Las suites previas (50.129 passed, 212 skipped, tres fallos documentales) y la
+cobertura 98,41% del wheel contaminado son diagnósticos, no aceptación final.

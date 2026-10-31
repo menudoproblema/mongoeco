@@ -4,16 +4,84 @@ import unittest
 try:
     from pymongo import MongoClient as PyMongoClient
     from pymongo import ReturnDocument as PyMongoReturnDocument
+    from pymongo.errors import OperationFailure as PyMongoOperationFailure
 except Exception:  # pragma: no cover
     PyMongoClient = None
     PyMongoReturnDocument = None
 
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
 
 @unittest.skipIf(PyMongoClient is None, "pymongo is required for wire proxy tests")
 class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_proxy_coll_mod_changes_validation_and_retains_connection(self):
+        for factory in (MemoryEngine, SQLiteEngine):
+            with self.subTest(engine=factory.__name__):
+                async with AsyncMongoEcoProxyServer(engine=factory()) as proxy:
+
+                    def exercise():
+                        with PyMongoClient(proxy.address.uri) as client:
+                            collection = client.alpha.create_collection(
+                                "items", validator={"a": {"$gte": 0}}
+                            )
+                            collection.insert_one({"_id": 1, "a": 1})
+                            result = client.alpha.command(
+                                {"collMod": "items", "validator": {"a": {"$gte": 2}}}
+                            )
+                            self.assertEqual(result["ok"], 1.0)
+                            with self.assertRaises(PyMongoOperationFailure) as error:
+                                collection.update_one({"_id": 1}, {"$set": {"a": 0}})
+                            self.assertEqual(error.exception.code, 121)
+                            self.assertEqual(collection.find_one({"_id": 1})["a"], 1)
+                            client.alpha.command(
+                                {"collMod": "items", "validationLevel": "moderate"}
+                            )
+                            collection.update_one({"_id": 1}, {"$set": {"a": 0}})
+                            self.assertEqual(collection.find_one({"_id": 1})["a"], 0)
+                            self.assertEqual(
+                                collection.options()["validationLevel"], "moderate"
+                            )
+                            self.assertEqual(client.admin.command("ping")["ok"], 1.0)
+
+                    await asyncio.to_thread(exercise)
+
+    async def test_proxy_coll_mod_rejects_invalid_options_without_effects(self):
+        for factory in (MemoryEngine, SQLiteEngine):
+            with self.subTest(engine=factory.__name__):
+                async with AsyncMongoEcoProxyServer(engine=factory()) as proxy:
+
+                    def exercise():
+                        with PyMongoClient(proxy.address.uri) as client:
+                            collection = client.alpha.create_collection(
+                                "items", validator={"a": {"$gte": 0}}
+                            )
+                            collection.insert_one({"_id": 1, "a": 1})
+                            before = collection.options()
+                            for spec, code in (
+                                ({"collMod": "items", "validationLevel": "invalid"}, 2),
+                                ({"collMod": "items", "unsupported": True}, 40415),
+                                ({"collMod": "absent", "validationLevel": "off"}, 26),
+                            ):
+                                with self.assertRaises(
+                                    PyMongoOperationFailure
+                                ) as error:
+                                    client.alpha.command(spec)
+                                self.assertEqual(error.exception.code, code)
+                                self.assertEqual(collection.options(), before)
+                            with self.assertRaises(PyMongoOperationFailure) as error:
+                                collection.insert_one({"_id": 2, "a": -1})
+                            self.assertEqual(error.exception.code, 121)
+                            self.assertEqual(
+                                list(collection.find()), [{"_id": 1, "a": 1}]
+                            )
+                            self.assertNotIn(
+                                "absent", client.alpha.list_collection_names()
+                            )
+
+                    await asyncio.to_thread(exercise)
+
     async def test_proxy_does_not_negotiate_unsupported_wire_compression(self):
         async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
             uri = proxy.address.uri
