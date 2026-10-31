@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from mongoeco.api import AsyncMongoClient
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.core.expression_context import current_execution_now
+from mongoeco.core.bson_scalars import BsonInt64
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._executor_handlers import WireSpecialCommandHandlers
 from mongoeco.wire._executor_passthrough import _materialize_passthrough_result, execute_passthrough_command
@@ -38,6 +39,34 @@ class _FakeClient:
 
 
 class WireExecutorHelperCoverageTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cursor_control_ids_normalize_without_changing_bson_documents(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            executor = WireCommandExecutor(
+                client, WireCursorStore(), WireSessionStore()
+            )
+            connection = WireConnectionContext(connection_id=1)
+            for command in (
+                {"getMore": BsonInt64(1), "collection": "events", "$db": "db"},
+                {"killCursors": "events", "cursors": [BsonInt64(1)], "$db": "db"},
+            ):
+                with self.subTest(command=next(iter(command))):
+                    context = executor._build_request_context(
+                        command, connection=connection
+                    )
+                    if "getMore" in command:
+                        self.assertIs(type(context.command_document["getMore"]), int)
+                        self.assertIsInstance(command["getMore"], BsonInt64)
+                    else:
+                        self.assertIs(type(context.command_document["cursors"][0]), int)
+                        self.assertIsInstance(command["cursors"][0], BsonInt64)
+            value = {"getMore": BsonInt64(2)}
+            context = executor._build_request_context(
+                {"find": "events", "filter": value, "$db": "db"}, connection=connection
+            )
+            self.assertIsInstance(
+                context.command_document["filter"]["getMore"], BsonInt64
+            )
+
     async def test_wire_execution_scopes_and_restores_the_captured_clock(self):
         fixed = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
         client = AsyncMongoClient(MemoryEngine(), now_factory=lambda: fixed)

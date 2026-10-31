@@ -2,6 +2,7 @@ import struct
 import unittest
 
 from bson import BSON
+from bson.int64 import Int64
 
 from mongoeco.types import ObjectId
 from mongoeco.wire._framing import crc32c
@@ -24,6 +25,28 @@ from mongoeco.wire.protocol import (
 
 
 class WireProtocolTests(unittest.TestCase):
+    def test_cursor_metadata_is_int64_without_changing_documents_or_input(self):
+        for cursor_id in (0, 4):
+            with self.subTest(cursor_id=cursor_id):
+                document = {
+                    "ok": 1.0,
+                    "cursor": {
+                        "id": cursor_id,
+                        "ns": "db.rows",
+                        "firstBatch": [{"cursor": {"id": 3}}],
+                    },
+                }
+                responses = (
+                    encode_op_msg_response(document, request_id=2, response_to=1)[21:],
+                    encode_op_reply([document], request_id=2, response_to=1)[36:],
+                )
+                for raw in responses:
+                    decoded = BSON(raw).decode()
+                    self.assertIs(type(decoded["cursor"]["id"]), Int64)
+                    row = decoded["cursor"]["firstBatch"][0]
+                    self.assertIs(type(row["cursor"]["id"]), int)
+                self.assertIs(type(document["cursor"]["id"]), int)
+
     def test_parse_message_header_requires_exact_size(self):
         with self.assertRaisesRegex(ValueError, "16 bytes"):
             parse_message_header(b"short")

@@ -178,6 +178,25 @@ class _AsyncView:
     def aggregate(self, pipeline, **kwargs):
         return _AsyncCursorView(self._call("aggregate", pipeline, **kwargs), self.loop)
 
+    def aggregate_raw_batches(self, pipeline, **kwargs):
+        return _AsyncCursorView(
+            self._call("aggregate_raw_batches", pipeline, **kwargs), self.loop
+        )
+
+    def find_raw_batches(self, *args, **kwargs):
+        return _AsyncCursorView(
+            self._call("find_raw_batches", *args, **kwargs), self.loop
+        )
+
+    def with_options(self, **kwargs):
+        return _AsyncView(
+            self._call("with_options", **kwargs), self.loop, self._session_client
+        )
+
+    @property
+    def codec_options(self):
+        return self.collection.codec_options
+
     def _call(self, method, *args, **kwargs):
         async def execute():
             result = getattr(self.collection, method)(*args, **kwargs)

@@ -463,20 +463,19 @@ class Collection:
             extra_kwargs=kwargs,
             profile=self._client.pymongo_profile,
         )
-        return RawBatchCursor(
-            self._client,
-            self._async_collection().aggregate_raw_batches(
-                options["pipeline"],
-                collation=options.get("collation"),
-                hint=options.get("hint"),
-                comment=options.get("comment"),
-                max_time_ms=options.get("max_time_ms"),
-                batch_size=options.get("batch_size"),
-                allow_disk_use=options.get("allow_disk_use"),
-                let=options.get("let"),
-                session=options.get("session"),
-            ),
+        cursor = self._async_collection().aggregate_raw_batches(
+            options["pipeline"],
+            collation=options.get("collation"),
+            hint=options.get("hint"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            batch_size=options.get("batch_size"),
+            allow_disk_use=options.get("allow_disk_use"),
+            let=options.get("let"),
+            session=options.get("session"),
         )
+        self._client._run(cursor._initialize())
+        return RawBatchCursor(self._client, cursor)
 
     def update_one(
         self,

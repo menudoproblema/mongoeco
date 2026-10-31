@@ -1150,7 +1150,9 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         find_count, aggregate_count = asyncio.run(_exercise())
 
         self.assertEqual(find_count, 2)
-        self.assertEqual(aggregate_count, 2)
+        # Raw aggregate opens with an empty firstBatch; PyMongo promotes its
+        # requested getMore size 1 to 2 (native raw_response corpus, 7/8/9).
+        self.assertEqual(aggregate_count, 1)
 
     def test_search_index_helpers_rename_watch_and_options_delegate_correctly(
         self,

@@ -109,6 +109,10 @@ from tests.differential.semantic_query_matching_cases import (
     SEED as QUERY_MATCHING_SEED,
     SEMANTIC_QUERY_MATCHING_CASES,
 )
+from tests.differential.semantic_raw_response_cases import (
+    SEED as RAW_RESPONSE_SEED,
+    SEMANTIC_RAW_RESPONSE_CASES,
+)
 from tests.differential.semantic_rename_command_cases import (
     SEED as RENAME_COMMAND_SEED,
     SEMANTIC_RENAME_COMMAND_CASES,
@@ -201,6 +205,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "raw_response": SemanticCorpus(
+        "raw-response", "semantic_raw_response_cases",
+        RAW_RESPONSE_SEED, SEMANTIC_RAW_RESPONSE_CASES,
+    ),
     "aggregation_response": SemanticCorpus(
         "aggregation-response", "semantic_aggregation_response_cases",
         AGGREGATION_RESPONSE_SEED, SEMANTIC_AGGREGATION_RESPONSE_CASES,

@@ -1216,17 +1216,14 @@ class AsyncCollection:
             batch_size=options.get("batch_size"),
             session=options.get("session"),
         )
-        offset = 0
+        cursor._apply_codec_options = False
 
-        async def _fetch(size: int) -> list[Document]:
-            nonlocal offset
-            page = await cursor._fetch_batch(offset, size)
-            offset += len(page)
-            return page
+        async def _fetch(size: int | None) -> list[Document]:
+            return await cursor.to_list(length=size)
 
         return AsyncRawBatchCursor(
             _fetch,
-            batch_size=batch_size,
+            batch_size=options.get("batch_size"),
             close=cursor.close,
         )
 
@@ -1269,21 +1266,26 @@ class AsyncCollection:
             let=options.get("let"),
             session=options.get("session"),
         )
-        iterator = cursor.__aiter__()
+        cursor._apply_codec_options = False
+        maximum = options.get("batch_size") or None
+        if maximum == 1:
+            maximum = 2
 
-        async def _fetch(size: int) -> list[Document]:
-            documents: list[Document] = []
-            for _ in range(size):
-                try:
-                    documents.append(await iterator.__anext__())
-                except StopAsyncIteration:
-                    break
-            return documents
+        async def _initialize():
+            if cursor._split_terminal_writeback_stage(cursor._pipeline)[1]:
+                await cursor._initialize()
+            else:
+                await cursor._read_response(0, initial=True)
+
+        async def _fetch(_size: int | None) -> list[Document]:
+            return await cursor._read_response(maximum)
 
         return AsyncRawBatchCursor(
             _fetch,
-            batch_size=batch_size,
+            batch_size=maximum,
             close=cursor.close,
+            initialize=_initialize,
+            alive=lambda: not cursor._closed or bool(cursor._response_buffer),
         )
 
     def _build_aggregation_cursor(
@@ -1973,7 +1975,6 @@ class AsyncCollection:
             self._db_name, self._collection_name, context=session
         )
         return materialize_public_value(options)
-
 
     def watch(
         self,

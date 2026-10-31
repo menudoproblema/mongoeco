@@ -10,6 +10,74 @@ from mongoeco.api._sync.raw_batch_cursor import RawBatchCursor
 
 
 class AsyncRawBatchCursorTests(unittest.TestCase):
+    def test_default_batch_only_bounds_first_find_response(self):
+        requests = []
+        nonempty_batches = 2
+
+        async def fetch_batch(maximum):
+            requests.append(maximum)
+            return [{"_id": len(requests)}] if len(requests) <= nonempty_batches else []
+
+        cursor = AsyncRawBatchCursor(fetch_batch)
+        self.assertEqual(len(asyncio.run(cursor.to_list())), 2)
+        self.assertEqual(requests, [101, None, None])
+
+    def test_initialization_error_closes_once_and_survives_cleanup_error(self):
+        closed = []
+
+        async def initialize():
+            message = "opening failed"
+            raise ValueError(message)
+
+        async def fetch_batch(_maximum):
+            self.fail("a failed opening must not fetch documents")
+
+        async def close():
+            closed.append(True)
+            message = "cleanup failed"
+            raise RuntimeError(message)
+
+        cursor = AsyncRawBatchCursor(
+            fetch_batch, initialize=initialize, close=close
+        )
+        with self.assertRaisesRegex(ValueError, "opening failed") as error:
+            asyncio.run(cursor.first())
+        self.assertEqual(closed, [True])
+        self.assertIn("cleanup failed", error.exception.__notes__[0])
+        self.assertFalse(cursor.alive)
+        self.assertIsNone(asyncio.run(cursor.first()))
+
+    def test_repeated_cancellation_finishes_owned_cleanup(self):
+        async def exercise():
+            fetching = asyncio.Event()
+            closing = asyncio.Event()
+            release_close = asyncio.Event()
+            closed = []
+
+            async def fetch_batch(_maximum):
+                fetching.set()
+                await asyncio.Future()
+
+            async def close():
+                closed.append(True)
+                closing.set()
+                await release_close.wait()
+
+            cursor = AsyncRawBatchCursor(fetch_batch, close=close)
+            task = asyncio.create_task(cursor.first())
+            await fetching.wait()
+            task.cancel()
+            await closing.wait()
+            task.cancel()
+            release_close.set()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            self.assertFalse(cursor.alive)
+            await cursor.close()
+            self.assertEqual(closed, [True])
+
+        asyncio.run(exercise())
+
     def test_async_raw_batch_cursor_first_to_list_and_stop_iteration(self):
         batches = [
             [{"_id": 1, "name": "Ada"}],

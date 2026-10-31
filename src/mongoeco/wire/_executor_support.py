@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.api import AsyncMongoClient
+from mongoeco.core.bson_scalars import BsonInt64
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
@@ -58,6 +59,18 @@ def build_request_context(
         raise OperationFailure("wire command name must be a non-empty string")
     if not surface.supports_command(command_name):
         raise OperationFailure(f"unsupported wire command: {command_name}")
+
+    # Cursor ids are BSON int64 on the wire. Normalize only protocol control
+    # fields; integer widths inside filters and documents must be preserved.
+    if command_name == "getMore" and isinstance(command_document["getMore"], BsonInt64):
+        command_document["getMore"] = command_document["getMore"].value
+    elif command_name == "killCursors" and isinstance(
+        command_document.get("cursors"), list
+    ):
+        command_document["cursors"] = [
+            value.value if isinstance(value, BsonInt64) else value
+            for value in command_document["cursors"]
+        ]
 
     if on_normalized is not None:
         on_normalized(command_name, body)

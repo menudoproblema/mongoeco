@@ -10,6 +10,7 @@ except Exception:  # pragma: no cover - bson is optional
     BSON = None
 
 from mongoeco.core.bson_raw import decode_bson_document
+from mongoeco.core.bson_scalars import BsonInt64
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._framing import WireProtocolError, crc32c, op_msg_flags
 from mongoeco.wire.bson_bridge import decode_wire_value, encode_wire_value
@@ -209,6 +210,17 @@ def decode_op_query(header: MessageHeader, payload: bytes) -> OpQueryRequest:
     )
 
 
+def _encode_response_document(document: dict[str, Any]) -> bytes:
+    # A command cursor id is always BSON int64, including zero. Encoding a
+    # small Python int as int32 invokes user int decoders on server metadata.
+    cursor = document.get("cursor")
+    if isinstance(cursor, dict):
+        cursor_id = cursor.get("id")
+        if isinstance(cursor_id, int) and not isinstance(cursor_id, bool):
+            document = {**document, "cursor": {**cursor, "id": BsonInt64(cursor_id)}}
+    return BSON.encode(encode_wire_value(document))
+
+
 def encode_op_msg_response(
     document: dict[str, Any],
     *,
@@ -216,7 +228,7 @@ def encode_op_msg_response(
     response_to: int,
 ) -> bytes:
     _require_bson()
-    encoded_body = BSON.encode(encode_wire_value(document))
+    encoded_body = _encode_response_document(document)
     payload = struct.pack("<i", 0) + b"\x00" + encoded_body
     header = struct.pack("<iiii", 16 + len(payload), request_id, response_to, OP_MSG)
     return header + payload
@@ -242,7 +254,7 @@ def encode_op_reply(
     response_flags: int = 0,
 ) -> bytes:
     _require_bson()
-    encoded_documents = b"".join(BSON.encode(encode_wire_value(document)) for document in documents)
+    encoded_documents = b"".join(_encode_response_document(document) for document in documents)
     payload = (
         struct.pack("<iqii", response_flags, 0, 0, len(documents)) + encoded_documents
     )
