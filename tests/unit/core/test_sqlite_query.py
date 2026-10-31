@@ -4,6 +4,7 @@ import sqlite3
 import unittest
 import uuid
 
+from contextlib import closing
 from pathlib import Path
 from unittest import mock
 from unittest.mock import patch
@@ -473,7 +474,7 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         capture = loads((Path(__file__).parents[2] / 'fixtures' /
                          'semantic_query_matching_8_0.json').read_text())
         expected = capture['cases']['semantic_query_matching_sql_routes']
-        with sqlite3.connect(':memory:') as connection:
+        with closing(sqlite3.connect(':memory:')) as connection, connection:
             connection.execute('CREATE TABLE documents (document TEXT)')
             connection.executemany('INSERT INTO documents VALUES (?)',
                                    [(json.dumps(DocumentCodec.encode(doc)),) for doc in SQL_SEED])
