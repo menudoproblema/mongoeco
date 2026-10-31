@@ -1,0 +1,76 @@
+{
+  "status": "review 13; plan refinement and local verification only",
+  "runtime_head": "e8abf99df174c66fd1c0c09be9aa3673aec44f86",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_through_12": true,
+  "runtime_modules_unchanged": 283,
+  "preexisting_workset": "preexisting-workset.json; no acceptance by this review",
+  "checks": [
+    {
+      "log": "focal.txt",
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/property/test_sqlite_type_predicates.py tests/unit/core/test_binary_storage_paths.py tests/unit/core/test_public_materialization.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_watch_batch_contract.py tests/integration/api/test_watch_checkpoint_contract.py tests/integration/api/test_watch_protocol_contract.py --tb=short",
+      "exit_code": 0,
+      "passed": 172
+    },
+    {
+      "log": "replay.txt",
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'binary_edges or dbref_grammar or type_query or binary_surface or merge_key' --tb=short",
+      "exit_code": 0,
+      "passed": 543,
+      "deselected": 6073,
+      "loopback_enabled": true
+    },
+    {
+      "log": "source-check.txt",
+      "command": "python3 -c \"exec(compile(open('docs/evidence/bson-consolidation-review/review13/check-sources.py.txt').read(), 'check-sources.py.txt', 'exec'))\"",
+      "exit_code": 0,
+      "downloaded": 16,
+      "hashes_matched": 16
+    }
+  ],
+  "representation": {
+    "pairs": 6,
+    "matcher_trace_rows": 18,
+    "script": "representation-probe.py.txt"
+  },
+  "grammar": {
+    "dialects": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "engines": [
+      "MemoryEngine",
+      "SQLiteEngine"
+    ],
+    "script": "context-probe.py.txt",
+    "h55_still_present": true
+  },
+  "document_checks": {
+    "relative_links_checked": 24,
+    "missing": [],
+    "diff_whitespace": "git diff --check passes"
+  },
+  "limits": [
+    "No new native captures or native execution; replay uses existing versioned references.",
+    "No TTL/H53/global/environment/performance/remote CI acceptance.",
+    "Production and tests unchanged by review; pre-existing CI candidate not accepted.",
+    "Historical sources, receipts, fixtures and protected observers unchanged."
+  ],
+  "artifacts": {
+    "README.md": "8d0d35703ebb609ca51a12ffa1a294e7460733906a45ec6a3ce2ace34dd60275",
+    "check-sources.py.txt": "0abbab08ab5e158048148d766538294387688ff1a4d54b6945847a8b249a4366",
+    "context-probe.json": "cb92cedeedd35062ea82cb5232e53337e699276daf3940023fb9f6b39762c92b",
+    "context-probe.py.txt": "647452cd8ec416ac6eb9a0dcb4f91004f5219138907b2e4a558903e637012d93",
+    "context-probe.txt": "cb92cedeedd35062ea82cb5232e53337e699276daf3940023fb9f6b39762c92b",
+    "focal.txt": "5c36cdeccfa07af5b9542f2f9d5f46c11191e7e0b50110560097d50558eac2f7",
+    "preexisting-workset.json": "9d91bf67c53b3a3b6a196ea405519d0f748066a4e2b5bb69b34e4ea54283d1fb",
+    "replay-sandbox.txt": "f83971f3254bef33b4d39b2058dd4c6edd53ff13d6cba9b76cc08bcf6ce89c1f",
+    "replay.txt": "4fc9df151e58e47cceb2733e4d910b571bfb092f96689d60e04031f01f8c6d72",
+    "representation-probe.py.txt": "1a461afee2fdcb52c39a8fafa0376a95b010384b74ba10ac963cc0bf70301dd5",
+    "representations.json": "111d5da9949cdd300181727d2311bfb3a663e92e6095158d1902a4fa573f0343",
+    "runtime-verification.json": "cdf0deeb9cafede0a2f34523a923549bc68bceab0b93987bfa8d288c1bd5cdf2",
+    "source-check.txt": "44295e68dbcde0d024292d4a4bfdd692e6fbd578b8b65499a776d871a072bd8d",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e"
+  }
+}

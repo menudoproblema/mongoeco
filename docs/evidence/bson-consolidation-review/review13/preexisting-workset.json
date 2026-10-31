@@ -1,0 +1,14 @@
+{
+  ".github/workflows/mongodb-differential.yml": "0429a58a91f4db1a0146dbfe17846238d847c238379bab08ce2ca9d6e17623cc",
+  "docs/architecture/testing-and-compatibility.md": "bbc7cf1cf304027c0493708925cfed79a013847443db323fe8096ea407f01b68",
+  "docs/mongodb9-pymongo418.md": "e498e770d7289c4360c50cb893681f6b8aa6765a27e9ed2f5d7a379c95fbf618",
+  "docs/positional-update-validation.md": "2e511a860bb4f32aa5e8e131419aef4e406f4ec468e77591099a169578fb8b4c",
+  "docs/testing-real-mongodb.md": "d8b71a9f062cfe9bb01ef6899e4509dcfec1fb61a1bba89caaa88c4884d03228",
+  "scripts/capture_differential_replay_golden.py": "09cff94504775edab4a59461844f2dfa8c6d3b345a452b387e5006318303496e",
+  "scripts/run_mongodb_real_differential.py": "32b34f029a4a4a8f1dbd0c4672a3d09dc454ac9bb57fcbf664736322f426c344",
+  "tests/differential/cases.py": "3112c925b6f2b5c414e4ae7a3e7bd9387ed09b1d0888e7fe3c805a22efc21f19",
+  "tests/differential/runner.py": "80a64d3f39f47176f01f2184d845d3c912d5db90cb5dbacdff03812105181bf2",
+  "tests/differential/semantic_corpora.py": "46e7756a12918f60eccb5573c56715acd4e669a2f6e478a103d85933c389f6c3",
+  "scripts/with_mongodb_replica_set.py": "cd0592b0af0553ea642363def4d90726652d13f6303e65fe54d7f5a6421cedae",
+  "tests/unit/test_mongodb_replica_set_fixture.py": "2221278360064e6fa76fe762a0e76038c6091f0596bc84cc8546c68c3c9a85ae"
+}

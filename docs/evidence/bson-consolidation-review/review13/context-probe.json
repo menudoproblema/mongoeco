@@ -1,0 +1,92 @@
+{
+  "7.0": {
+    "memory": {
+      "implicit_dbref": [
+        1
+      ]
+    },
+    "sqlite": {
+      "implicit_dbref": [
+        1
+      ]
+    },
+    "field": {
+      "class": "builtins.int",
+      "value": "42",
+      "prepare": "ok"
+    },
+    "variable": {
+      "exception": "OperationFailure",
+      "code": 17276,
+      "prepare": {
+        "exception": "OperationFailure",
+        "code": 17276
+      }
+    },
+    "literal": {
+      "class": "bson.code.Code",
+      "value": "Code('$v', None)",
+      "prepare": "ok"
+    }
+  },
+  "8.0": {
+    "memory": {
+      "implicit_dbref": [
+        1
+      ]
+    },
+    "sqlite": {
+      "implicit_dbref": [
+        1
+      ]
+    },
+    "field": {
+      "class": "builtins.int",
+      "value": "42",
+      "prepare": "ok"
+    },
+    "variable": {
+      "exception": "OperationFailure",
+      "code": 17276,
+      "prepare": {
+        "exception": "OperationFailure",
+        "code": 17276
+      }
+    },
+    "literal": {
+      "class": "bson.code.Code",
+      "value": "Code('$v', None)",
+      "prepare": "ok"
+    }
+  },
+  "9.0": {
+    "memory": {
+      "implicit_dbref": [
+        1
+      ]
+    },
+    "sqlite": {
+      "implicit_dbref": [
+        1
+      ]
+    },
+    "field": {
+      "class": "builtins.int",
+      "value": "42",
+      "prepare": "ok"
+    },
+    "variable": {
+      "exception": "OperationFailure",
+      "code": 17276,
+      "prepare": {
+        "exception": "OperationFailure",
+        "code": 17276
+      }
+    },
+    "literal": {
+      "class": "bson.code.Code",
+      "value": "Code('$v', None)",
+      "prepare": "ok"
+    }
+  }
+}

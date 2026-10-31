@@ -1,0 +1,715 @@
+{
+  "runtime_base": "e8abf99; runtime unchanged, CI worktree identified separately",
+  "scope": "local representation diagnostics, not native acceptance",
+  "local": {
+    "memory-7.0": {
+      "eq5": [
+        3
+      ],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        }
+      ],
+      "eq_sdk0": [
+        1,
+        2
+      ],
+      "in_sdk0": [
+        1,
+        2
+      ],
+      "eq_sdk5": [
+        3
+      ],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2
+      ],
+      "in_bytes": [
+        1,
+        2
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ]
+    },
+    "sqlite-7.0": {
+      "eq5": [
+        3
+      ],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        }
+      ],
+      "eq_sdk0": [
+        1,
+        2
+      ],
+      "in_sdk0": [
+        1,
+        2
+      ],
+      "eq_sdk5": [
+        3
+      ],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2
+      ],
+      "in_bytes": [
+        1,
+        2
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ]
+    },
+    "memory-8.0": {
+      "eq5": [
+        3
+      ],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        }
+      ],
+      "eq_sdk0": [
+        1,
+        2
+      ],
+      "in_sdk0": [
+        1,
+        2
+      ],
+      "eq_sdk5": [
+        3
+      ],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2
+      ],
+      "in_bytes": [
+        1,
+        2
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ]
+    },
+    "sqlite-8.0": {
+      "eq5": [
+        3
+      ],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        }
+      ],
+      "eq_sdk0": [
+        1,
+        2
+      ],
+      "in_sdk0": [
+        1,
+        2
+      ],
+      "eq_sdk5": [
+        3
+      ],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2
+      ],
+      "in_bytes": [
+        1,
+        2
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ]
+    },
+    "memory-9.0": {
+      "eq5": [
+        3
+      ],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        }
+      ],
+      "eq_sdk0": [
+        1,
+        2
+      ],
+      "in_sdk0": [
+        1,
+        2
+      ],
+      "eq_sdk5": [
+        3
+      ],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2
+      ],
+      "in_bytes": [
+        1,
+        2
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ]
+    },
+    "sqlite-9.0": {
+      "eq5": [
+        3
+      ],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          }
+        }
+      ],
+      "eq_sdk0": [
+        1,
+        2
+      ],
+      "in_sdk0": [
+        1,
+        2
+      ],
+      "eq_sdk5": [
+        3
+      ],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2
+      ],
+      "in_bytes": [
+        1,
+        2
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 6
+        }
+      ]
+    }
+  },
+  "direct": {
+    "sdk_both": {
+      "document": {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "operand": {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "matches": true
+    },
+    "internal_both": {
+      "document": {
+        "class": "mongoeco.core.codec._InternalBsonBinary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "operand": {
+        "class": "mongoeco.core.codec._InternalBsonBinary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "matches": true
+    },
+    "decoded_vs_internal": {
+      "document": {
+        "class": "mongoeco._types._bson_values.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "operand": {
+        "class": "mongoeco.core.codec._InternalBsonBinary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "matches": true
+    },
+    "decoded_vs_sdk": {
+      "document": {
+        "class": "mongoeco._types._bson_values.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "operand": {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "matches": true
+    }
+  },
+  "law_counterexample": {
+    "left": {
+      "class": "bson.binary.Binary",
+      "subtype": 0,
+      "bytes": "6162",
+      "rank": 6
+    },
+    "right": {
+      "class": "bson.binary.Binary",
+      "subtype": 5,
+      "bytes": "6162",
+      "rank": 6
+    },
+    "compare": -1,
+    "equal": false,
+    "same_key": false
+  }
+}

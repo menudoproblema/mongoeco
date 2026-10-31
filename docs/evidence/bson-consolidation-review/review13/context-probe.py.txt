@@ -1,0 +1,31 @@
+import json
+from pathlib import Path
+from bson import Code
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MONGODB_DIALECT_90
+from mongoeco.core.aggregation.runtime import evaluate_expression
+from mongoeco.core.aggregation.preparation import prepare_pipeline
+out={}
+for d in [MONGODB_DIALECT_70,MONGODB_DIALECT_80,MONGODB_DIALECT_90]:
+    key=d.key
+    result={}
+    for name,e in [('memory', MemoryEngine()),('sqlite', SQLiteEngine())]:
+        with MongoClient(e,mongodb_dialect=d) as c:
+            col=c.review13.c
+            col.insert_many([{'_id':1,'v':{'$ref':'c','$id':1}},{'_id':2,'v':{'$id':1,'$ref':'c'}}])
+            result[name]={'implicit_dbref':[x['_id'] for x in col.find({'v':{'$ref':'c','$id':1}})]}
+    for label,x in [('field',Code('$v')),('variable',Code('$$missing')),('literal',{'$literal':Code('$v')})]:
+        try:
+            v=evaluate_expression({'v':42},x,dialect=d)
+            result[label]={'class':type(v).__module__+'.'+type(v).__name__,'value':repr(v)}
+        except Exception as exc:
+            result[label]={'exception':type(exc).__name__,'code':getattr(exc,'code',None)}
+        try:
+            prepare_pipeline([{'$project':{'value':x}}],dialect=d)
+            result[label]['prepare']='ok'
+        except Exception as exc:
+            result[label]['prepare']={'exception':type(exc).__name__,'code':getattr(exc,'code',None)}
+    out[key]=result
+Path('docs/evidence/bson-consolidation-review/review13/context-probe.json').write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps(out,indent=2))

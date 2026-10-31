@@ -67,6 +67,12 @@ separa regresiones repetidas, dos sondas físicas nuevas y aceptación pendiente
 El orden activo queda en «Refinamiento de la revisión 12». No acepta el candidato
 ni vuelve a abrir cortes cerrados por una ampliación de sus consumidores.
 
+Revisión 13 sobre `e8abf99`: el nuevo adjunto tiene el mismo SHA-256 que
+las revisiones 3–12. El [contraste actual](evidence/bson-consolidation-review/review13/receipt.json)
+identifica runtime y trabajo de CI preexistente. La ruta activa está en
+«Refinamiento de la revisión 13»; las tablas de revisiones anteriores conservan
+su alcance histórico. No se acepta el fixture en curso por esta revisión.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H56 y su integración con B00–B10 y
@@ -1051,6 +1057,66 @@ Pasan 172 pruebas focales y 486 de replay, y el lint del candidato pasa ahora;
 no se repite la suite global ni se acredita CI, wheel o rendimiento. Los hashes
 del candidato constan en el receipt. El hueco de options permanece reproducido
 y debe corregirse durante la implementación, antes de aceptar su corte.
+
+### Refinamiento de la revisión 13: un solo orden activo y aceptación por frontera
+
+La autocrítica no añade un informe distinto. Sus retractaciones son correctas:
+H48 ya describía el operando normalizado, `$in` y distinct ya estaban en las
+familias, y las 167 pruebas eran regresión histórica. La observación TTL no
+acredita un retraso universal de un milisegundo: había preselección y residual
+diferentes; D02 ya entrega cálculo entero y migración de auxiliares. Conservar
+sus controles, sin reabrirlo ni retirar la obligación de reapertura antigua.
+
+**Contraste actual.** Las 18 trazas nuevas en seis pares motor/dialecto observan
+por separado documento y operando: Binary local, SDK e interno tienen rango 6;
+bytes/Binary 0 seleccionan 1/2 y Binary 5 selecciona 3. Distinct conserva los dos
+subtipos, y comparación/clave distinguen 0 de 5. La API directa acepta el literal
+DBRef ordenado y no selecciona el documento invertido. La guarda SQL rechaza
+la traducción binaria por tags; no se propone sustituirla por otro pushdown.
+Son diagnósticos locales actuales, no otra captura física ni cierre global.
+La evidencia nativa versionada y la aceptación de los cortes conservan sus
+receipts propios; este contraste no vuelve a ejecutarlas ni cambia sus hashes.
+
+H55 sigue reproducible: `Code("$v")` produce el valor del campo y
+`Code("$$missing")` lanza 17276 tanto en preparación como en ejecución; `$literal`
+conserva Code. Es un error compartido de clasificación gramatical: que ambas
+rutas coincidan no las convierte en oráculo. El diagnóstico usa los tres
+dialectos; las referencias nativas previas mantienen su alcance.
+
+**Orden activo.** Sustituye las instrucciones de ejecución de revisión 12.
+Los estados de entrega y gates siguen perteneciendo al registro de implementación.
+
+| Prioridad / bloque | Trabajo y dependencia | Evidencia de salida |
+| --- | --- | --- |
+| P1, D04 restante | Revisar y aceptar el fixture RS ya escrito. Materialización, options, sort binario y precedencia merge tienen aceptación posterior a revisión 12; conservarlos como controles. | Selección canónica y particiones sin pérdida/duplicado, ejecución física no vacía 7/8/9, primary/FCV/build, wheel real y cleanup propio ante fallo/timeout/cancelación. Un workflow editado o un test de helper no acredita su ejecución ni un run remoto. |
+| P1, D06a/b | Un corte de gramática y preservación raw: completar contextos DBRef pendientes y H55 usando `bson_values`, `query_operators`, preparador/runtime y `bson_raw` existentes. Puede avanzar sin esperar al fixture RS. | Testigos String frente a Code con/sin scope, `$`/`$$`/literal y anidamiento; DBRef orden/extras/incompletos por contexto, vacío/poblado. Nativo 7/8/9, directa/wire y sync/async alcanzados; clase/código/fase y estado tras error. No ampliar reglas de literal a todos los contextos. |
+| P1, D06c | Tras D06a y las vistas disponibles, consolidar consumidores DBRef y claves de group/sets/lookup/spill/Search según su equivalencia. | Igual resultado con/sin hash/spill, collation y persistencia; candidatos completos antes del residual. Retirar duplicación solo al sustituir también guardas de admisión. No cambiar storage_key ni desempates persistidos. |
+| P2, H53 y conversión | Disponer H53 en C03/B08; contrastar string sNaN en 7/8/9 e incorporar regresión de conversión. Independientes de D06c. | Separar permiso, evaluación y diagnóstico; observar candidato/antiguo y error/warn/bypass. No deducir un rechazo de una ausencia de warning ni crear logging nuevo implícito. Conversión conserva clase/código/fase y controles válidos. |
+| D07 / D05 / B07 | Resolver continuar/descartar piloto opcional antes del cierre; ejecutar integración sobre candidato congelado. La frontera BSON general B07 conserva su obligación propia. | D05 mantiene matrices, SDK/pytest, wheel, SPI, cobertura, persistencia y coste del contrato vigente. D07 puede descartarse sin bloquear fixes. Ninguna normalización parcial declara resuelta admisión arbitraria o Decimal crudo. Commits semánticos no sustituyen gates. |
+
+**Simplificación conjunta, con garantías explícitas.** No crear otro componente
+universal: vistas BSON reconocen representaciones; identidad conserva cambios
+físicos; gramática decide literal/operador/ruta; preparación/contexto gobierna
+cuándo se evalúa; materialización posee la procedencia de la respuesta. Reusar
+esas autoridades exige que cada caller declare su contrato, no un `mode`
+genérico que mezcle igualdad MQL, equivalencia de grupo e identidad de escritura.
+
+La aceptación usa el registro/capturador/replay existentes. Por cada frontera
+modificada basta un testigo que active su camino y un control que lo distinga
+del vecino: SDK/local/owned, SQL/fallback, raw/decodificado, preparación/runtime,
+asignado/recibido. Ampliar pruebas parametrizadas existentes en lugar de añadir
+runners o matrices paralelas. No recortar ejes donde cambian dialecto, motor,
+superficie o política. El caso mínimo del helper no sustituye al caller público.
+
+Para claves exclusivas exigir equivalencia en ambos sentidos con la política;
+para hashes permitir colisiones solo con comparación posterior. En prefiltros,
+exigir conservación de candidatos **antes** de filtro residual y paginación:
+la igualdad final no detecta los descartes previos. En errores observar clase,
+código, fase y ausencia de efectos además del mensaje. Estos testigos previenen
+los errores espejo sin convertir nombres privados en contrato público.
+
+Esta revisión solo actualiza plan y evidencia. No acepta el trabajo de CI
+preexistente, no reabre D01/D02/D03 ni promete soporte distribuido adicional.
 
 ## 6. Pruebas y aceptación por garantía
 
