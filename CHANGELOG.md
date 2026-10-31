@@ -10,6 +10,13 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Share JSON Schema equality, numeric bounds and collection validation decisions;
+  enforce enum/uniqueItems, exclusivity, multipleOf and additional-property schemas.
+  Validate schema definitions before rows and render failures from recorded issues.
+  Preserve moderate validation dialect, collection collation, BSON validator options
+  and physical undefined across wire. Add atomic collMod validation-option changes
+  and retain the MongoDB 7/8 versus 9 unchanged-$merge validation distinction.
+
 - Apply MQL type bracketing in interpreted, generated and SQLite query paths;
   preserve native missing/null inclusive bounds, NaN ranges and Code scopes.
   Keep generated queries as boolean composition of the common matcher, without

@@ -55,15 +55,19 @@ class _AsyncCursorView:
         self.cursor = cursor
         self.loop = loop
 
-    def _invoke(self, method):
+    def _invoke(self, method, *args, **kwargs):
         async def execute():
-            result = getattr(self.cursor, method)()
+            result = getattr(self.cursor, method)(*args, **kwargs)
             return await result if inspect.isawaitable(result) else result
 
         return asyncio.run_coroutine_threadsafe(execute(), self.loop).result(timeout=10)
 
     def __iter__(self):
         return iter(self._invoke("to_list"))
+
+    def sort(self, *args, **kwargs):
+        self._invoke("sort", *args, **kwargs)
+        return self
 
     def clone(self):
         return _AsyncCursorView(self._invoke("clone"), self.loop)
@@ -79,6 +83,18 @@ class _AsyncView:
     def __init__(self, collection, loop):
         self.collection = collection
         self.loop = loop
+
+    def __getitem__(self, name):
+        return _AsyncView(self.collection[name], self.loop)
+
+    def create_collection(self, name, **kwargs):
+        return _AsyncView(self._call("create_collection", name, **kwargs), self.loop)
+
+    def options(self, *args, **kwargs):
+        return self._call("options", *args, **kwargs)
+
+    def insert_many(self, *args, **kwargs):
+        return self._call("insert_many", *args, **kwargs)
 
     def aggregate(self, pipeline, **kwargs):
         async def execute():
@@ -219,8 +235,10 @@ def test_numeric_group_identity_encodes_one_partition_per_equal_key(
     ]
     original = AggregationGroupSpool._open_temporary_partition
     with patch.object(
-        AggregationGroupSpool, "_open_temporary_partition",
-        autospec=True, side_effect=original,
+        AggregationGroupSpool,
+        "_open_temporary_partition",
+        autospec=True,
+        side_effect=original,
     ) as opened:
         if surface == "sync":
             with MongoClient(
@@ -231,6 +249,7 @@ def test_numeric_group_identity_encodes_one_partition_per_equal_key(
                     client.spill.records, allow_disk_use=True, batch_size=1
                 )
         else:
+
             async def run():
                 async with AsyncMongoClient(
                     engine_factory(aggregation_spill_threshold=1),
@@ -239,8 +258,10 @@ def test_numeric_group_identity_encodes_one_partition_per_equal_key(
                     return await asyncio.to_thread(
                         numeric_group_identity,
                         _AsyncView(client.spill.records, asyncio.get_running_loop()),
-                        allow_disk_use=True, batch_size=1,
+                        allow_disk_use=True,
+                        batch_size=1,
                     )
+
             actual = asyncio.run(run())
         assert _normalize(actual) == _normalize(expected)
         assert opened.call_count > 0
@@ -282,9 +303,7 @@ def test_direct_cursor_clone_retains_program_against_fresh_native_request(
     # PyMongo 4.19 clone drops let. The direct API promises to preserve options;
     # its reference is an equivalent fresh native find, not that SDK omission.
     seed = SEMANTIC_CORPORA["command_let"].seed
-    expected = _capture(dialect, "command_let")["cases"][
-        "semantic_command_let_cursors"
-    ]
+    expected = _capture(dialect, "command_let")["cases"]["semantic_command_let_cursors"]
 
     def exercise(collection):
         for name in ("literal_string", "literal_operator", "literal_ejson"):

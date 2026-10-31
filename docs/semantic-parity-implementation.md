@@ -822,3 +822,36 @@ H37–H39 quedan corregidos en el alcance C01 capturado; los gates globales de
 C06 siguen pendientes. **H40–H47 / C02–C05 siguen abiertos.** El siguiente
 incremento es igualdad/preparación de schema y su integración de escritura
 C02/C03, conservando la aceptación específica del dialecto de `moderate`.
+
+
+### C02/C03: schema preparado y validación de escritura coherente
+
+Base: `4bad1b7`. H40–H44 corregidos en el corpus focal, con preparación,
+decisión y diagnóstico compartidos por `$jsonSchema` y validator de colección.
+Enum y uniqueItems comparten igualdad recursiva propia de schema. Los límites
+usan comparación exacta; multipleOf mantiene su conversión aritmética decimal.
+Se ejecutan exclusividad y additionalProperties como schema; las restricciones
+fuera del subset dejan de aceptarse silenciosamente. Los patrones se preparan
+antes de filas. El resultado conserva detalles, sin reconstrucción ni segunda
+validación al rechazar una escritura.
+
+`moderate` conserva el dialecto del original y del candidato. El testigo físico
+BSON undefined pasa por las cuatro superficies; el puente wire ya no lo colapsa
+a null antes de aplicar la política. El validator MQL usa la collation de la
+colección y enum sigue siendo binario. La preparación por lote se reutiliza sin
+una caché global. Las opciones SQLite conservan BSON y orden de objetos; collMod
+cambia únicamente validator/nivel/acción bajo el ownership existente del motor.
+Se prueban reapertura, cambios rechazados sin efectos y rollback/commit locales.
+
+La prueba nativa de `$merge` descubre un delta adicional: un resultado idéntico
+se valida en 9.0.2 y se omite en 7.0.43/8.0.32; ambos modos merge/replace quedan
+capturados. `$out` no tiene caller productivo en esta base. El requisito de
+integración por callers reales conserva su rechazo explícito y sin efectos;
+no se implementa un stage nuevo ni se declara paridad inexistente.
+
+El [receipt C02/C03](evidence/predicate-authorities/schema-validation.json)
+conserva las diez acciones por versión, el contraste previo y las identidades.
+Regresión: 2.814 pruebas, 936 subpruebas, un skip opcional de ICU. La matriz
+schema cubre sync/async y wire-sync/wire-async en Memory/SQLite y dialectos 7/8/9.
+C01 y C02/C03 quedan corregidos focalmente. H45–H47 / C04–C05 y los gates globales
+C06 siguen pendientes; no se cierran B00–B10 por esta ampliación.

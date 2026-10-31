@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.json_compat import json_loads
 from mongoeco.types import SearchIndexDefinition
 
@@ -63,7 +64,7 @@ def load_collection_options(
     ).fetchone()
     if row is None:
         return None
-    return json_loads(row[0] or "{}")
+    return DocumentCodec.decode(json_loads(row[0] or "{}"))
 
 
 def list_database_names(conn: sqlite3.Connection) -> list[str]:

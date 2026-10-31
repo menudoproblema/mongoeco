@@ -135,10 +135,12 @@ class EngineUpdateSemantics:
 
 
 def compile_collection_validation_semantics(
-    options: dict[str, object] | None,
+    options: dict[str, object] | CompiledCollectionValidator | None,
     *,
     dialect: MongoDialect | None = None,
 ) -> CompiledCollectionValidator | None:
+    if isinstance(options, CompiledCollectionValidator):
+        return options
     return compile_collection_validator(options, dialect=dialect)
 
 
@@ -164,7 +166,7 @@ def validate_collection_document(
 def enforce_collection_document_validation(
     document: Document,
     *,
-    options: dict[str, object] | None,
+    options: dict[str, object] | CompiledCollectionValidator | None,
     original_document: Document | None = None,
     is_upsert_insert: bool = False,
     dialect: MongoDialect | None = None,
@@ -187,13 +189,17 @@ def enforce_collection_document_validation(
             "failingDocumentId": document.get("_id"),
             "details": {
                 "operatorName": "$jsonSchema" if schema is not None else "$and",
-                "schemaRulesNotSatisfied": schema_failure_details(schema, document)
+                "schemaRulesNotSatisfied": schema_failure_details(result)
                 if schema is not None
                 else [{"reason": issue.message} for issue in result.issues],
             },
         }
     }
-    diagnostic = ServerDiagnostic(121, "Document failed validation", context=context)
+    diagnostic = ServerDiagnostic(
+        121,
+        "Document failed validation",
+        context=DocumentCodec.to_pymongo(DocumentCodec.to_public(context)),
+    )
     error = DocumentValidationFailure._from_server_document(
         diagnostic.message, code=121, details=diagnostic.item_document()
     )

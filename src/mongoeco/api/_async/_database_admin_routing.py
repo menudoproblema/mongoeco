@@ -279,6 +279,9 @@ class DatabaseAdminRoutingService:
     async def _command_list_databases(self, spec: dict[str, object], *, session: "ClientSession | None" = None) -> object:
         return await self.command_list_databases(spec, session=session)
 
+    async def _command_coll_mod(self, spec, *, session=None):
+        return await self._admin._command_coll_mod(spec, session=session)
+
     async def _command_create(self, spec: dict[str, object], *, session: "ClientSession | None" = None) -> object:
         return await self.command_create(spec, session=session)
 

@@ -1,3 +1,4 @@
+from mongoeco.core.bson_raw import decode_bson_document
 from dataclasses import dataclass
 from types import MappingProxyType
 
@@ -346,9 +347,19 @@ def normalize_namespace(value: object, field_name: str) -> tuple[str, str]:
 def normalize_insert_documents(spec: object) -> list[Document]:
     if not isinstance(spec, list) or not spec:
         raise TypeError("documents must be a non-empty list of documents")
-    if not all(isinstance(item, dict) for item in spec):
+    if all(isinstance(item, dict) for item in spec):
+        return spec
+    try:
+        from bson.raw_bson import RawBSONDocument  # noqa: PLC0415 - optional SDK
+    except ImportError:
+        message = "documents must be a non-empty list of documents"
+        raise TypeError(message) from None
+    if not all(isinstance(item, (dict, RawBSONDocument)) for item in spec):
         raise TypeError("documents must be a non-empty list of documents")
-    return spec
+    return [
+        decode_bson_document(item.raw) if isinstance(item, RawBSONDocument) else item
+        for item in spec
+    ]
 
 
 def normalize_update_specs(spec: object) -> list[dict[str, object]]:

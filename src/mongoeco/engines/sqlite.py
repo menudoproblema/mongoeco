@@ -257,6 +257,7 @@ from mongoeco.engines.semantic_core import (
     compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
+    compile_collection_validation_semantics,
     finalize_documents,
     iter_filtered_documents,
     stream_finalize_documents,
@@ -287,6 +288,7 @@ from mongoeco.engines.virtual_indexes import (
     normalize_partial_filter_expression,
     query_can_use_index,
 )
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import (
     DuplicateKeyError,
     ExecutionTimeout,
@@ -5163,7 +5165,7 @@ class SQLiteEngine(AsyncStorageEngine):
             (
                 db_name,
                 coll_name,
-                json_dumps_compact(options or {}, sort_keys=True),
+                json_dumps_compact(DocumentCodec.encode(options or {})),
             ),
         )
         self._lookup_collection_id(conn, db_name, coll_name, create=True)
@@ -5573,6 +5575,15 @@ class SQLiteEngine(AsyncStorageEngine):
                             next_document,
                             original_document,
                         ):
+                            if effective_dialect.key == "9.0":
+                                enforce_collection_document_validation(
+                                    next_document,
+                                    options=self._collection_options_or_empty_sync(
+                                        conn, db_name, coll_name
+                                    ),
+                                    original_document=original_document,
+                                    dialect=effective_dialect,
+                                )
                             return MergeOutcome(
                                 matched=True,
                                 applied=False,
@@ -6989,6 +7000,38 @@ class SQLiteEngine(AsyncStorageEngine):
                 ensure_collection_row=self._ensure_collection_row,
             )
 
+    async def _modify_collection_options(
+        self, db_name, coll_name, *, options, context=None, dialect=None
+    ):
+        def modify():
+            with self._lock:
+                conn = self._require_connection(context)
+                self._begin_write(conn, context)
+                try:
+                    if not self._collection_exists_sync(conn, db_name, coll_name):
+                        message = "ns does not exist"
+                        raise server_error(message, code=26)
+                    updated = self._collection_options_or_empty_sync(
+                        conn, db_name, coll_name
+                    )
+                    updated.update(deepcopy(options))
+                    compile_collection_validation_semantics(updated, dialect=dialect)
+                    conn.execute(
+                        "UPDATE collections SET options_json = ? "
+                        "WHERE db_name = ? AND coll_name = ?",
+                        (
+                            json_dumps_compact(DocumentCodec.encode(updated)),
+                            db_name,
+                            coll_name,
+                        ),
+                    )
+                    self._commit_write(conn, context)
+                except BaseException:
+                    self._rollback_write(conn, context)
+                    raise
+
+        await self._run_blocking(modify)
+
     def _rename_collection_sync(
         self,
         db_name: str,
@@ -7208,7 +7251,9 @@ class SQLiteEngine(AsyncStorageEngine):
         ):
             validator = partial(
                 enforce_collection_document_validation,
-                options=snapshot_options,
+                options=compile_collection_validation_semantics(
+                    snapshot_options, dialect=effective_dialect
+                ),
                 original_document=None,
                 dialect=effective_dialect,
             )

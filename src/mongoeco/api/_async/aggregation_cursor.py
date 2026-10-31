@@ -82,10 +82,10 @@ from mongoeco.core.search_planning import (
     search_prefix_output_limit,
     search_result_limit_hint,
 )
-from mongoeco.core.server_errors import operation_error
+from mongoeco.core.server_errors import operation_error, retain_diagnostic
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import DocumentValidationFailure, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
@@ -595,12 +595,21 @@ class AsyncAggregationCursor:
                     else ChangePublicationPolicy.RECORD_GAP
                 ),
             )
-            outcome = await target_collection._runtime.engine_merge_document(
-                internal_candidate,
-                when_matched=when_matched,
-                when_not_matched=when_not_matched,
-                operation_context=operation_context,
-            )
+            try:
+                outcome = await target_collection._runtime.engine_merge_document(
+                    internal_candidate,
+                    when_matched=when_matched,
+                    when_not_matched=when_not_matched,
+                    operation_context=operation_context,
+                )
+            except DocumentValidationFailure as error:
+                # Aggregation reports a command failure, not an individual write.
+                raise retain_diagnostic(
+                    error,
+                    OperationFailure(
+                        error_message(error), code=error.code, details=error.details
+                    ),
+                ) from error
             if outcome.matched and when_matched == "fail":
                 raise OperationFailure(
                     "$merge whenMatched=fail found an existing target document "

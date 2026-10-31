@@ -1388,3 +1388,20 @@ evitando que errores de shape atraviesen varias capas antes de materializarse.
   `pymongo`
 * acepta silenciosamente majors nuevas de `pymongo`
 * mezcla dialecto de servidor y perfil de driver en una sola opción
+
+## Subset de validación de documentos
+
+JSON Schema distingue `type` de `bsonType`; soporta enum, required, properties,
+additionalProperties booleano o schema, items como schema, allOf/anyOf/oneOf/not,
+límites de longitud/tamaño, pattern, minimum/maximum con exclusividad,
+multipleOf y uniqueItems. title/description son anotaciones. Las restricciones
+conocidas fuera del subset (dependencies, patternProperties, additionalItems,
+minProperties/maxProperties) se rechazan explícitamente. No se promete todo
+JSON Schema ni toda la sintaxis PCRE de MongoDB.
+
+`collMod` admite cambios de validator, validationLevel y validationAction en los
+motores incluidos; otras opciones siguen fuera del subset. Los validators MQL
+usan la collation de colección, mientras enum es binario. `$merge` valida un
+reemplazo sin cambios en dialecto 9 y lo omite en 7/8, según las capturas nativas.
+`$out` no tiene implementación local y se rechaza sin escribir; este incremento
+no introduce una implementación parcial del stage.

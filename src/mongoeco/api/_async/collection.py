@@ -1961,11 +1961,11 @@ class AsyncCollection:
         self, *, session: ClientSession | None = None
     ) -> dict[str, object]:
         self._ensure_session_active(session)
-        return await self._engine.collection_options(
-            self._db_name,
-            self._collection_name,
-            context=session,
+        options = await self._engine.collection_options(
+            self._db_name, self._collection_name, context=session
         )
+        return DocumentCodec.to_pymongo(DocumentCodec.to_public(options))
+
 
     def watch(
         self,

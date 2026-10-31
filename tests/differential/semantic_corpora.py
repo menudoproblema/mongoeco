@@ -69,6 +69,10 @@ from tests.differential.semantic_query_matching_cases import (
     SEED as QUERY_MATCHING_SEED,
     SEMANTIC_QUERY_MATCHING_CASES,
 )
+from tests.differential.semantic_schema_cases import (
+    SEED as SCHEMA_SEED,
+    SEMANTIC_SCHEMA_CASES,
+)
 from tests.differential.semantic_sum_cases import (
     SEED as SUM_SEED,
     SEMANTIC_SUM_CASES,
@@ -87,6 +91,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "schema": SemanticCorpus(
+        "schema",
+        "semantic_schema_cases",
+        SCHEMA_SEED,
+        SEMANTIC_SCHEMA_CASES,
+        observation_encoding="canonical-json",
+    ),
     "query_matching": SemanticCorpus(
         "query-matching",
         "semantic_query_matching_cases",

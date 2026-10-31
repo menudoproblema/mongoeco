@@ -9,6 +9,7 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - bson is optional
     BSON = None
 
+from mongoeco.core.bson_raw import decode_bson_document
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._framing import WireProtocolError, crc32c, op_msg_flags
 from mongoeco.wire.bson_bridge import decode_wire_value, encode_wire_value
@@ -118,7 +119,7 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
             if document_size <= 0 or position + document_size > len(payload):
                 raise WireProtocolError("OP_MSG body document has invalid size")
             raw_document = payload[position : position + document_size]
-            body = decode_wire_value(BSON(raw_document).decode())
+            body = decode_wire_value(decode_bson_document(raw_document))
             for identifier, sequence in pending_sequences.items():
                 if identifier in body:
                     raise ValueError("OP_MSG document sequence identifier must not duplicate a body field")
@@ -146,7 +147,7 @@ def decode_op_msg(header: MessageHeader, payload: bytes) -> OpMsgRequest:
                 if document_size <= 0 or position + document_size > section_end:
                     raise ValueError("OP_MSG document sequence entry has invalid size")
                 raw_document = payload[position : position + document_size]
-                sequence.append(decode_wire_value(BSON(raw_document).decode()))
+                sequence.append(decode_wire_value(decode_bson_document(raw_document)))
                 position += document_size
             if body is None:
                 if identifier in pending_sequences:
@@ -195,7 +196,9 @@ def decode_op_query(header: MessageHeader, payload: bytes) -> OpQueryRequest:
     query_size = struct.unpack("<i", payload[position : position + 4])[0]
     if query_size <= 0 or position + query_size > len(payload):
         raise ValueError("OP_QUERY document has invalid size")
-    query = decode_wire_value(BSON(payload[position : position + query_size]).decode())
+    query = decode_wire_value(
+        decode_bson_document(payload[position : position + query_size])
+    )
     return OpQueryRequest(
         header=header,
         flags=flags,
@@ -262,7 +265,11 @@ def decode_op_reply(header: MessageHeader, payload: bytes) -> OpReplyResponse:
         document_size = struct.unpack("<i", payload[position : position + 4])[0]
         if document_size <= 0 or position + document_size > len(payload):
             raise ValueError("OP_REPLY document has invalid size")
-        documents.append(decode_wire_value(BSON(payload[position : position + document_size]).decode()))
+        documents.append(
+            decode_wire_value(
+                decode_bson_document(payload[position : position + document_size])
+            )
+        )
         position += document_size
     return OpReplyResponse(
         header=header,

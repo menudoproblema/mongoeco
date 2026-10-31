@@ -148,6 +148,7 @@ from mongoeco.engines.semantic_core import (
     compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
+    compile_collection_validation_semantics,
     filter_documents,
     finalize_documents,
     iter_filtered_documents,
@@ -3236,11 +3237,18 @@ class MemoryEngine(AsyncStorageEngine):
                 bulk_insert_prevalidated = (
                     not bypass_document_validation and not overwrite
                 )
+                collection_validation = (
+                    compile_collection_validation_semantics(
+                        collection_options, dialect=effective_dialect
+                    )
+                    if not bypass_document_validation
+                    else None
+                )
                 if bulk_insert_prevalidated:
                     for document in documents:
                         enforce_collection_document_validation(
                             document,
-                            options=collection_options,
+                            options=collection_validation,
                             original_document=None,
                             dialect=effective_dialect,
                         )
@@ -3272,7 +3280,7 @@ class MemoryEngine(AsyncStorageEngine):
                     if not bypass_document_validation and not bulk_insert_prevalidated:
                         enforce_collection_document_validation(
                             document,
-                            options=collection_options,
+                            options=collection_validation,
                             original_document=original_document,
                             dialect=effective_dialect,
                         )
@@ -3477,6 +3485,13 @@ class MemoryEngine(AsyncStorageEngine):
                     original_document,
                 )
                 if not modified:
+                    if effective_dialect.key == "9.0":
+                        enforce_collection_document_validation(
+                            next_document,
+                            options=collection_options,
+                            original_document=original_document,
+                            dialect=effective_dialect,
+                        )
                     return MergeOutcome(
                         matched=True,
                         applied=False,
@@ -5746,6 +5761,22 @@ class MemoryEngine(AsyncStorageEngine):
                     collections=collections,
                     collection_options=option_store,
                 )
+
+    async def _modify_collection_options(
+        self, db_name, coll_name, *, options, context=None, dialect=None
+    ):
+        async with self._get_lock(db_name, coll_name):
+            with self._publication_scope(
+                self._storage_view(context), touched_namespaces={(db_name, coll_name)}
+            ):
+                store = self._collection_options_view(context)
+                if coll_name not in self._collections_view(context).get(db_name, set()):
+                    message = "ns does not exist"
+                    raise server_error(message, code=26)
+                updated = deepcopy(store.get(db_name, {}).get(coll_name, {}))
+                updated.update(deepcopy(options))
+                compile_collection_validation_semantics(updated, dialect=dialect)
+                store.setdefault(db_name, {})[coll_name] = updated
 
     @override
     async def rename_collection(

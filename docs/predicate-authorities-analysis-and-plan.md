@@ -374,7 +374,9 @@ rechaza la escritura. Se conserva el catálogo explícito de capacidades.
    caché global por schema ni otro contenedor de lifetime: usar la preparación
    de operación existente y el mismo `CompiledCollectionValidator`.
 3. Integrar insert, replace, update clásico/pipeline, upsert, findAndModify,
-   bulk y writeback de `$merge`/`$out` por sus callers reales de Memory/SQLite.
+   bulk y writeback por sus callers reales de Memory/SQLite. El censo de C03
+   ha confirmado que `$merge` tiene caller productivo y `$out` no; se conserva
+   el rechazo explícito y sin efectos de `$out`, sin abrir un stage nuevo.
    Conservar `off/strict/moderate`, `warn/error` y bypass según su contrato.
 4. Validar antes de persistir o actualizar índices/outbox del documento
    rechazado. Probar atomicidad por documento, efectos previos permitidos en

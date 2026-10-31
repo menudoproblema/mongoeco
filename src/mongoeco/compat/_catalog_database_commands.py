@@ -20,6 +20,10 @@ DATABASE_COMMAND_SUPPORT_CATALOG = MappingProxyType(
             family="admin_introspection",
             note="Static local metadata sourced from the dialect/runtime descriptor.",
         ),
+        "collMod": DatabaseCommandSupport(
+            family="admin_write",
+            note="Validation options only; other collMod features are unsupported.",
+        ),
         "collStats": DatabaseCommandSupport(
             family="admin_stats",
             note="Served from local collection stats snapshots.",

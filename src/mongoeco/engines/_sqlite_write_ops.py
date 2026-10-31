@@ -10,7 +10,10 @@ from mongoeco.core.identity import (
     id_contains_numeric_value,
 )
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
-from mongoeco.engines.semantic_core import enforce_collection_document_validation
+from mongoeco.engines.semantic_core import (
+    enforce_collection_document_validation,
+    compile_collection_validation_semantics,
+)
 from mongoeco.errors import DuplicateKeyError
 
 
@@ -240,10 +243,13 @@ def insert_document_batch(  # noqa: PLR0912, PLR0913, PLR0915 - SQLite batch tra
         and snapshot_options is not None
         and collection_options != snapshot_options
     ):
+        collection_validation = compile_collection_validation_semantics(
+            collection_options, dialect=dialect
+        )
         for document in documents:
             enforce_collection_document_validation(
                 document,
-                options=collection_options,
+                options=collection_validation,
                 original_document=None,
                 dialect=dialect,
             )

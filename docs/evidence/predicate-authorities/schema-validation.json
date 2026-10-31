@@ -1,0 +1,127 @@
+{
+  "base": "4bad1b72134860ae3e0ac3c7ec7ab83e77807aba",
+  "baseline_source_base": "c835181d83f3f35ef22b5334c75f6e16d8181015",
+  "status": "C02_C03_focally_corrected_C04_C06_pending",
+  "findings": [
+    "H40",
+    "H41",
+    "H42",
+    "H43",
+    "H44"
+  ],
+  "mechanism": "Reuse prepared schema and issue/result diagnostics; recursive schema equality and existing numeric primitives with distinct arithmetic multipleOf conversion. Collection policy preserves captured dialect/collation. Batch preparation is operation-local; no global schema cache. Atomic validator-option collMod uses existing engine publication/transaction ownership. BSON raw bridge preserves physical undefined without global SDK mutation.",
+  "source_count": 277,
+  "all_source_fingerprint": "b2168208053746acd48cca85ec3f3fce1964412a58a6eef941b873a0eef5524f",
+  "source_sha256": {
+    "src/mongoeco/api/_async/_database_admin_routing.py": "7228aa154476c430707ab1fcf19b09c9385083e307df38fe1b63bb462203439b",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "681470ed35b2a51b8da9b8880e5e15aeeaf31b2b99e7473f2e1354ae61980bab",
+    "src/mongoeco/api/_async/collection.py": "e033367bcdcb3b8adfa87e60afe56d29fafbb32378832b552d2978f5cea95819",
+    "src/mongoeco/api/_async/database_admin.py": "f23fc635e6d45ed027cd000a914220a2a0f0d06b51bc0d68b71cad246d68d687",
+    "src/mongoeco/api/_async/database_commands.py": "d210f079215e0d0f5e9ee45a04d5b3d167106d14cb67a454a2cced012741cd91",
+    "src/mongoeco/api/admin_parsing.py": "7f86824d79d81dec6a10ed96a7298d43353c7f988e6c89ca6854404dbee05a9a",
+    "src/mongoeco/compat/_catalog_database_commands.py": "2512a2a5a987ead10ac5b507b7e0a63c2b2c8fe08ccef16137f26b54106f5bfe",
+    "src/mongoeco/core/bson_raw.py": "213e37f04d48cadcd058498f72d2c0cc071ecee45dd2b7cd58024cba461cab40",
+    "src/mongoeco/core/schema_validation.py": "81559a55a3a9199c2e4fae11c6f287778757327f97259cd564d01f9dce3d8717",
+    "src/mongoeco/engines/_sqlite_catalog.py": "aa18b979e70c940171478d43b07a423c69b55892d3170b31ab8717cfeb3ad3f4",
+    "src/mongoeco/engines/_sqlite_write_ops.py": "70c4ae92fb75eb9eda5ef770fd7290e10c04afa97dd06ce73dfd532d369dbb57",
+    "src/mongoeco/engines/memory.py": "9a1fef683ce1e2e546ec9d735b4d80adacd81d759fbaadfdf05c4433f1eedd7b",
+    "src/mongoeco/engines/semantic_core.py": "863631d3749fb19950e6f9acf3dce5b909ac23f007570c9b8247aa52e6af48ce",
+    "src/mongoeco/engines/sqlite.py": "0006587b77b722b0fbee85d4e7ace9163e81023686413b819c5121ed365e5a7f",
+    "src/mongoeco/wire/protocol.py": "df30fc7f7ddd3b680df1d1894c9263aa79495dba6512f49f297e52e99eaaf9dc"
+  },
+  "support_sha256": {
+    "tests/differential/semantic_corpora.py": "4e962c041d81ca2ff33b4f9208e0a749c6192dc6a7f5d690406aade8e0bbd50c",
+    "tests/differential/semantic_schema_cases.py": "0487ef329b113a181011489bdf35411b5a155f49e094570f5e125750614e3c67",
+    "tests/integration/api/test_semantic_group_regressions.py": "3219359ef3ae2174be8b556784985ae72b4f56fb63f91cc57d5f3481105f124a",
+    "tests/integration/api/test_validator_configuration.py": "2967c42e0c8d40075c2f4a053a3f112acbf60267e4dbbf20d1d9f0ceccede9ed",
+    "tests/unit/core/test_schema_authorities.py": "6b707d20ca64d48e4f7a692035378e38bc6513bee32c5b10c02af68116e8fc62",
+    "tests/unit/core/test_schema_validation.py": "c32bbea2cd7aae6cb8cec34335cfc3d06ef34545d37d2e56f4a49c233ebef004"
+  },
+  "fixtures_sha256": {
+    "tests/fixtures/semantic_schema_7_0.json": "38602a51993743c224e2a944d66b33074ef0958800010ed49b45b183d0e78902",
+    "tests/fixtures/semantic_schema_8_0.json": "445039bb7242d196454174f6ea94009521d23d395629d98efcecb2b015635db3",
+    "tests/fixtures/semantic_schema_9_0.json": "15d87e6c726b150a442c9705be3fe372070153e8888495c5cfc447c2cc9a8d47"
+  },
+  "native": [
+    {
+      "path": "docs/evidence/predicate-authorities/schema-native-7.json",
+      "sha256": "53b6731af668586bc90870b505f532bb2b7448127e310029bd4e84f517ce1421",
+      "server": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "tests_run": 10,
+      "engine_checks_per_action": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "path": "docs/evidence/predicate-authorities/schema-native-8.json",
+      "sha256": "4e8e128d050a7c08dc51c6d511e598134f2ae5b46259c8a6256de0c21b3fcfd7",
+      "server": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "tests_run": 10,
+      "engine_checks_per_action": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "path": "docs/evidence/predicate-authorities/schema-native-9.json",
+      "sha256": "1acb97d69b8e83f803d8cd98258f24611ac255ab6d8e56985b9517b0938f287d",
+      "server": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "tests_run": 10,
+      "engine_checks_per_action": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "before": {
+    "path": "docs/evidence/predicate-authorities/schema-before-9-final-corpus.json",
+    "sha256": "533e2560b1683379f48b12ef58e946750368122ca4af618e60dcdcdf652544f6",
+    "tests_run": 10,
+    "engine_failures": 8,
+    "engine_errors": 12,
+    "note": "Final independent corpus with pre-C01 source snapshot; original raw BSON/collMod capability absence is observed as an error, separately from the direct moderate-dialect witness in the analysis. Snapshot verified byte-for-byte against its Git base in C01 receipt."
+  },
+  "regression": {
+    "command": ".venv/bin/python -m pytest tests/unit/core tests/integration/api/test_validator_configuration.py tests/integration/api/test_semantic_group_regressions.py -k 'not expression_matches_native_capture or schema' -q --maxfail=2",
+    "path": "docs/evidence/predicate-authorities/schema-regression.txt",
+    "sha256": "d1b2aa9ad43595964c2d907dd999a032244d5ab17a8019dbf53be10744efcf86",
+    "passed": 2814,
+    "subtests_passed": 936,
+    "skipped": 1,
+    "skip_reason": "optional ICU collation dependency"
+  },
+  "checks": {
+    "lint_ratchet": {
+      "base": "4bad1b72134860ae3e0ac3c7ec7ab83e77807aba",
+      "changed_python_files": 21,
+      "passed": true
+    },
+    "public_manifest_check": true,
+    "public_typing": {
+      "positive": 1,
+      "negative_errors": 20,
+      "engine_positive": 1,
+      "engine_negative_errors": 25
+    }
+  },
+  "controls": [
+    "Exact double/Decimal128 bounds; NaN/infinity bracket; arithmetic multipleOf; bool/numeric and recursive enum/uniqueItems; binary enum versus collection MQL collation; malformed schema before rows; original/new moderate dialect; physical BSON undefined in 7/8/9; insert/replace/classic and pipeline update/upsert/findAndModify/bulk/multi and bypass; collMod recovery, rollback/commit, SQLite reopen preserving types/key order; native unchanged-merge version delta; no revalidation to format rejection."
+  ],
+  "scope_limits": [
+    "$out has no productive caller or local implementation. It remains explicitly rejected with no effects; implementing a new stage is outside the existing-callers integration requirement.",
+    "Known unsupported JSON Schema constraints are explicit errors; no full JSON Schema or PCRE parity claim.",
+    "Raw bridge relies on PyMongo element-decoder offsets; SDK extremes are checked in C06.",
+    "C06 full integrated gates, supported Python/SDK matrix and installed artifacts remain pending.",
+    "No native transaction/concurrency/change-stream guarantee inferred from standalone validator probes."
+  ]
+}

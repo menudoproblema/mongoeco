@@ -533,3 +533,21 @@ En esta fase, `vectorSearch` soporta:
 La decision sigue siendo consciente: no hay Atlas Search remoto, ANN
 distribuido ni embeddings automaticos. La compatibilidad se modela como subset
 local defendible, no como equivalencia con Atlas Search.
+
+### Validadores de schema y de colección
+
+`CompiledJsonSchema` prepara una copia del schema y los patrones antes de filas.
+La igualdad de schema es recursiva, con campos de objeto sin orden, arrays
+atómicos y strings binarios; comparte comparación numérica exacta, no traversal
+MQL. `multipleOf` usa conversión aritmética decimal de doubles, separada de los
+límites. Keywords desconocidas o restricciones fuera del subset se rechazan.
+`SchemaValidationIssue` conserva el detalle de la decisión: el enforcer no
+revalida para construir `errInfo`. Las inserciones por lote reutilizan el
+validator preparado. `moderate` evalúa original y candidato con el mismo dialecto
+y la collation de colección para MQL; enum permanece binario.
+Las opciones de validator SQLite usan DocumentCodec y conservan orden y tipos.
+`collMod` cambia únicamente validator/nivel/acción bajo el ownership de escritura
+del motor; no añade un nuevo contrato obligatorio al SPI v2.
+El puente BSON opcional conserva undefined físico en entrada, incluyendo arrays
+y scopes de Code, sin modificar las tablas globales del SDK. Sus offsets usan el
+decoder de elementos de PyMongo y quedan sujetos a su matriz SDK.

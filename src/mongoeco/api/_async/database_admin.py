@@ -53,6 +53,7 @@ from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.semantic_core import compile_collection_validation_semantics
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import BulkWriteError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -589,6 +590,39 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
     ) -> object:
         return await self._write_commands.command_create(spec, session=session)
+
+    async def _command_coll_mod(self, spec, *, session=None):
+        self._ensure_session_active(session)
+        name = self._require_collection_name(spec.get("collMod"), "collMod")
+        allowed = {
+            "collMod",
+            "$db",
+            "validator",
+            "validationLevel",
+            "validationAction",
+            "comment",
+            "writeConcern",
+        }
+        if spec.keys() - allowed:
+            message = "Unsupported collMod option"
+            raise server_error(message, code=40415)
+        changes = {
+            key: value
+            for key, value in spec.items()
+            if key in {"validator", "validationLevel", "validationAction"}
+        }
+        modifier = getattr(self._engine, "_modify_collection_options", None)
+        if modifier is None:
+            message = "collMod validation options require engine support"
+            raise server_error(message, code=59)
+        await modifier(
+            self._db_name,
+            name,
+            options=changes,
+            context=session,
+            dialect=self._mongodb_dialect,
+        )
+        return {"ok": 1.0}
 
     async def _command_drop(
         self,
