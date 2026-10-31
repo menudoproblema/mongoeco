@@ -26,6 +26,7 @@ from mongoeco.compat import (
 )
 from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.driver import (
     AsyncCommandTransport,
     AuthPolicy,
@@ -180,8 +181,6 @@ class AsyncDatabase:
         self._validated_engine_spi = None
 
     def _new_execution_context(self):
-        from mongoeco.core.expression_context import ExpressionExecutionContext
-
         return ExpressionExecutionContext(now=_resolve_now(self._now_factory))
 
     @property
@@ -374,6 +373,8 @@ class AsyncDatabase:
         return AsyncChangeStreamCursor(
             self._change_hub,
             scope=ChangeStreamScope(db_name=self._db_name),
+            dialect=self._mongodb_dialect,
+            execution_context=self._new_execution_context(),
             pipeline=pipeline,
             max_await_time_ms=max_await_time_ms,
             resume_after=resume_after,
@@ -913,6 +914,8 @@ class AsyncMongoClient:
         return AsyncChangeStreamCursor(
             self._change_hub,
             scope=ChangeStreamScope(),
+            dialect=self._mongodb_dialect,
+            execution_context=ExpressionExecutionContext(now=self._resolve_now()),
             pipeline=pipeline,
             max_await_time_ms=max_await_time_ms,
             resume_after=resume_after,

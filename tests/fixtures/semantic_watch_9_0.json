@@ -1,0 +1,751 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_watch_clocks": {
+      "collection": {
+        "date": true,
+        "kind": "date",
+        "same_within": true,
+        "same_between_batches": true,
+        "empty_batch": true,
+        "reopened_later": true,
+        "replayed_id": {
+          "$numberInt": "2"
+        }
+      },
+      "database": {
+        "date": true,
+        "kind": "date",
+        "same_within": true,
+        "same_between_batches": true,
+        "empty_batch": true,
+        "reopened_later": true,
+        "replayed_id": {
+          "$numberInt": "2"
+        }
+      },
+      "client": {
+        "date": true,
+        "kind": "date",
+        "same_within": true,
+        "same_between_batches": true,
+        "empty_batch": true,
+        "reopened_later": true,
+        "replayed_id": {
+          "$numberInt": "2"
+        }
+      }
+    },
+    "semantic_watch_evaluation": {
+      "replace_identity": {
+        "phase": "event",
+        "value": "5d000000026f7065726174696f6e547970650007000000696e736572740003646f63756d656e744b6579000e000000105f69640001000000000366756c6c446f63756d656e740015000000105f69640001000000107600000000000000",
+        "alive": true
+      },
+      "replace_subject": {
+        "phase": "event",
+        "value": "6a000000026f7065726174696f6e547970650007000000696e736572740003646f63756d656e744b6579000e000000105f69640001000000000366756c6c446f63756d656e740015000000105f696400010000001076000000000000107375626a656374000000000000",
+        "alive": true
+      },
+      "replace_path": {
+        "phase": "event",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "alive": false
+      },
+      "replace_constant": {
+        "phase": "event",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40228"
+        },
+        "alive": false
+      },
+      "remove_token": {
+        "phase": "event",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "alive": false
+      },
+      "alter_token": {
+        "phase": "event",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "280"
+        },
+        "alive": false
+      },
+      "runtime_divide": {
+        "phase": "event",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "alive": false
+      }
+    },
+    "semantic_watch_preparation": {
+      "not_list": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null
+      },
+      "tuple": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null
+      },
+      "empty_stage": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40323"
+        }
+      },
+      "scalar_stage": {
+        "phase": "open",
+        "error": "TypeError",
+        "code": null
+      },
+      "multiple_keys": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40323"
+        }
+      },
+      "unknown_stage": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40324"
+        }
+      },
+      "stage_without_dollar": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40324"
+        }
+      },
+      "empty_stage_name": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40324"
+        }
+      },
+      "group": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "20"
+        }
+      },
+      "invalid_group": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15955"
+        }
+      },
+      "group_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15947"
+        }
+      },
+      "limit": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "20"
+        }
+      },
+      "match_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15959"
+        }
+      },
+      "match_unknown": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "expr_exists": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "168"
+        }
+      },
+      "project_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15969"
+        }
+      },
+      "project_empty": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51272"
+        }
+      },
+      "unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31325"
+        }
+      },
+      "collision": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "mixed_collision": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "unknown_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "17276"
+        }
+      },
+      "constant_division": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "replace_path": {
+        "phase": "open",
+        "ok": true
+      },
+      "replace_constant": {
+        "phase": "open",
+        "ok": true
+      },
+      "invalid_replace_root": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "missing_replace_root": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "replace_root_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40229"
+        }
+      },
+      "unset_empty": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31119"
+        }
+      }
+    },
+    "semantic_watch_shared_validation": {
+      "aggregate-project_empty-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51272"
+        }
+      },
+      "update-project_empty-False": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "51272"
+        }
+      },
+      "aggregate-project_array-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15969"
+        }
+      },
+      "update-project_array-False": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "15969"
+        }
+      },
+      "aggregate-collision-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "update-collision-False": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "aggregate-mixed_collision-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "update-mixed_collision-False": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "aggregate-replace_unknown-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "update-replace_unknown-False": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "aggregate-replace_missing-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "update-replace_missing-False": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "aggregate-replace_array-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40229"
+        }
+      },
+      "update-replace_array-False": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "40229"
+        }
+      },
+      "aggregate-replace_constant-False": {
+        "rows": []
+      },
+      "update-replace_constant-False": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "aggregate-group_empty-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15955"
+        }
+      },
+      "aggregate-group_array-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15947"
+        }
+      },
+      "aggregate-match_array-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15959"
+        }
+      },
+      "aggregate-unknown_stage-False": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40324"
+        }
+      },
+      "aggregate-project_empty-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51272"
+        }
+      },
+      "update-project_empty-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "51272"
+        }
+      },
+      "aggregate-project_array-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15969"
+        }
+      },
+      "update-project_array-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "15969"
+        }
+      },
+      "aggregate-collision-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "update-collision-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "aggregate-mixed_collision-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "update-mixed_collision-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "31249"
+        }
+      },
+      "aggregate-replace_unknown-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "update-replace_unknown-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "aggregate-replace_missing-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "update-replace_missing-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "aggregate-replace_array-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40229"
+        }
+      },
+      "update-replace_array-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "40229"
+        }
+      },
+      "aggregate-replace_constant-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40228"
+        }
+      },
+      "update-replace_constant-True": {
+        "phase": "update",
+        "error": "WriteError",
+        "code": {
+          "$numberInt": "40228"
+        }
+      },
+      "aggregate-group_empty-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15955"
+        }
+      },
+      "aggregate-group_array-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15947"
+        }
+      },
+      "aggregate-match_array-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "15959"
+        }
+      },
+      "aggregate-unknown_stage-True": {
+        "phase": "aggregate",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40324"
+        }
+      }
+    },
+    "semantic_watch_typed_match": [
+      {
+        "id": {
+          "$numberInt": "1"
+        },
+        "kind": "null"
+      },
+      {
+        "id": {
+          "$numberInt": "3"
+        },
+        "kind": "missing"
+      }
+    ]
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793459763,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793459763,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_watch_cases.py",
+    "sha256": "67fbe0b897b5a647bfea8a2890b582ac3ebcb58e51944954cfe789457621846f"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_watch_preparation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_preparation"
+    },
+    {
+      "name": "semantic_watch_evaluation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_evaluation"
+    },
+    {
+      "name": "semantic_watch_typed_match",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_typed_match"
+    },
+    {
+      "name": "semantic_watch_clocks",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_clocks"
+    },
+    {
+      "name": "semantic_watch_shared_validation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_shared_validation"
+    }
+  ]
+}

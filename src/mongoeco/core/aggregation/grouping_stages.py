@@ -28,7 +28,7 @@ from mongoeco.core.aggregation.date_expressions import _require_date_unit
 from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
 from mongoeco.core.aggregation.numeric_accumulation import RemovableNumericSum
 from mongoeco.core.aggregation.numeric_expressions import _require_integral_numeric
-from mongoeco.core.aggregation.planning import _require_sort
+from mongoeco.core.aggregation.planning import _require_group_spec, _require_sort
 from mongoeco.core.aggregation.runtime import (
     _MISSING,
     _append_unique_values,
@@ -625,8 +625,7 @@ def _apply_group(  # noqa: PLR0913
     deadline: float | None = None,
     group_average_uses_sum: bool = False,
 ) -> list[Document]:
-    if not isinstance(spec, dict) or "_id" not in spec:
-        raise OperationFailure("$group requires a document specification with _id")
+    spec = _require_group_spec(spec)
 
     _validate_empty_group_fields(spec, dialect=dialect)
 
@@ -655,9 +654,7 @@ class _IncrementalGroup:
         deadline: float | None = None,
         group_average_uses_sum: bool = False,
     ) -> None:
-        if not isinstance(spec, dict) or "_id" not in spec:
-            message = "$group requires a document specification with _id"
-            raise OperationFailure(message)
+        spec = _require_group_spec(spec)
         self._id_expression = spec["_id"]
         _validate_empty_group_fields(spec, dialect=dialect)
         self._variables = aggregation_environment(variables, collation)

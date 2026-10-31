@@ -2023,6 +2023,7 @@ class AsyncCollection:
             change_stream_journal_path=self._change_stream_journal_path,
             change_stream_journal_fsync=self._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
+            now_factory=self._now_factory,
         )
         database._validated_engine_spi = getattr(
             self,

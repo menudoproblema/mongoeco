@@ -9,14 +9,18 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_scalars import bson_numeric_alias
+from mongoeco.core.paths import validate_projection_paths
+from mongoeco.core.server_errors import server_error
 from mongoeco.error_catalog import (
     DENSIFY_FIELD_PREFIX_ERROR,
     DENSIFY_PARTITION_PREFIX_ERROR,
 )
-from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (  # noqa: TC001 - public runtime annotations
-    Document, Filter, Projection, SortSpec,
+    Document,
+    Filter,
+    Projection,
+    SortSpec,
 )
 
 
@@ -115,10 +119,13 @@ def _validate_densify_partition_paths(spec: object, *, dialect: MongoDialect) ->
 
 def _require_stage(stage: object) -> tuple[str, object]:
     if not isinstance(stage, dict) or len(stage) != 1:
-        raise OperationFailure("Each pipeline stage must be a single-key document")
+        raise server_error(
+            "Each pipeline stage must be a single-key document", code=40323
+        )
     operator, spec = next(iter(stage.items()))
     if not isinstance(operator, str) or not operator.startswith("$"):
-        raise OperationFailure("Pipeline stage operator must start with '$'")
+        message = f"Unrecognized pipeline stage name: {operator!r}"
+        raise server_error(message, code=40324)
     return operator, spec
 
 
@@ -132,7 +139,12 @@ def _require_projection_for_dialect(
     dialect: MongoDialect,
 ) -> Projection:
     if not isinstance(spec, dict):
-        raise OperationFailure("$project requires a document specification")
+        raise server_error("$project requires a document specification", code=15969)
+    if not spec:
+        message = "$project requires at least one output field"
+        raise server_error(message, code=51272)
+    if all(isinstance(key, str) for key in spec):
+        validate_projection_paths(set(spec))
     mode = None
     for key, value in spec.items():
         if not isinstance(key, str):
@@ -152,6 +164,29 @@ def _require_projection_for_dialect(
                 raise server_error(message, code=31254)
             mode = "exclude" if current == "exclude" else "include"
     return spec
+
+
+def _require_group_spec(spec: object) -> dict[str, Any]:
+    message = "$group requires a document specification with _id"
+    if not isinstance(spec, dict):
+        raise server_error(message, code=15947)
+    if "_id" not in spec:
+        raise server_error(message, code=15955)
+    return spec
+
+
+def _require_replace_root_spec(spec: object) -> Any:
+    if not isinstance(spec, dict):
+        message = "$replaceRoot requires a document with newRoot"
+        raise server_error(message, code=40229)
+    for key in spec:
+        if key != "newRoot":
+            message = f"$replaceRoot has unknown field {key!r}"
+            raise server_error(message, code=40415)
+    if "newRoot" not in spec:
+        message = "$replaceRoot requires newRoot"
+        raise server_error(message, code=40414)
+    return spec["newRoot"]
 
 
 def _require_sort(spec: object) -> SortSpec:

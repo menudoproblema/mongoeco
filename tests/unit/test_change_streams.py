@@ -82,14 +82,17 @@ class ChangeStreamPipelineTests(unittest.TestCase):
         self.assertEqual(pipeline, [{"$replaceWith": {"operationType": "$operationType"}}])
 
     def test_compile_change_stream_pipeline_rejects_invalid_stage_shape(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure) as caught:
             compile_change_stream_pipeline([{"$match": {}, "$project": {}}])
+        self.assertEqual(caught.exception.code, 40323)
         with self.assertRaises(TypeError):
             compile_change_stream_pipeline({"$match": {}})
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure) as caught:
             compile_change_stream_pipeline([{"$match": []}])
-        with self.assertRaises(TypeError):
+        self.assertEqual(caught.exception.code, 15959)
+        with self.assertRaises(OperationFailure) as caught:
             compile_change_stream_pipeline([{"$project": []}])
+        self.assertEqual(caught.exception.code, 15969)
 
     def test_change_stream_pipeline_helpers_cover_full_document_modes(self):
         with self.assertRaises(TypeError):

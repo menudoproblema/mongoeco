@@ -1,0 +1,24 @@
+from datetime import UTC,datetime
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.errors import OperationFailure
+try:
+    import bson
+except ModuleNotFoundError:
+    pass
+else:
+    raise AssertionError('Expected a genuinely SDK-free environment')
+for engine in (MemoryEngine,SQLiteEngine):
+    for version in ('7.0','8.0','9.0'):
+        with MongoClient(engine(),mongodb_dialect=version,now_factory=lambda:datetime(2001,1,1,tzinfo=UTC)) as client:
+            c=client.probe.c;c.insert_one({'_id':0})
+            s=c.watch([{'$set':{'seen':'$$NOW'}}],max_await_time_ms=1)
+            try:
+                c.insert_one({'_id':1})
+                event=s.try_next()
+                assert event['seen']==datetime(2001,1,1),event
+            finally:s.close()
+            try:c.watch([{'$project':{'x':{'$unknown':1}}}])
+            except OperationFailure as exc:assert exc.code==31325
+            else:raise AssertionError('Invalid watch opened')
+print('SDK-free watch: six engine/dialect pairs passed')

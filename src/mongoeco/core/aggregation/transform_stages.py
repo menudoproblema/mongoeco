@@ -1,8 +1,22 @@
-from copy import deepcopy
 import random
+
+from copy import deepcopy
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.planning import (
+    _match_spec_contains_expr,
+    _projection_flag,
+    _require_projection_for_dialect,
+    _require_replace_root_spec,
+    _require_sample_spec,
+    _require_unset_spec,
+)
+from mongoeco.core.aggregation.runtime import (
+    _evaluate_expression_with_missing,
+    _expression_truthy,
+    evaluate_expression,
+)
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, set_document_value
@@ -11,23 +25,11 @@ from mongoeco.core.query_operators import (
     require_non_empty_document_clause_list,
 )
 from mongoeco.core.query_plan import compile_filter
-from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.core.server_errors import server_error
+from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
-from mongoeco.core.aggregation.runtime import (
-    _expression_truthy,
-    _evaluate_expression_with_missing,
-    evaluate_expression,
-)
-from mongoeco.core.aggregation.planning import (
-    _match_spec_contains_expr,
-    _projection_flag,
-    _require_projection_for_dialect,
-    _require_sample_spec,
-    _require_unset_spec,
-)
 
 _NO_EXPR = object()
 
@@ -227,9 +229,7 @@ def _apply_replace_root(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     deadline: float | None = None,
 ) -> list[Document]:
-    if not isinstance(spec, dict) or "newRoot" not in spec:
-        raise OperationFailure("$replaceRoot requires a document with newRoot")
-    new_root_spec = spec["newRoot"]
+    new_root_spec = _require_replace_root_spec(spec)
     result: list[Document] = []
     for document in iter_with_deadline(documents, deadline):
         new_root = evaluate_expression(

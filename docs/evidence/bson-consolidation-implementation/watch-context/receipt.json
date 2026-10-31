@@ -1,0 +1,179 @@
+{
+  "status": "D04 preparation/context guarantee implemented and reviewed; D04 parent remains open",
+  "base_runtime": "bc8fb1c",
+  "base_documentary_head": "63e38794323f6a8f5d14d4f296ff426bb889623c",
+  "runtime_manifest": {
+    "file": "runtime-sources.json",
+    "sha256": "de210db2268a73b54e2e8cec32cfc958720efee65a14e8e6a1df6d92c821e8d9",
+    "files": 281
+  },
+  "workset": {
+    "file": "workset.json",
+    "sha256": "3373bf19cef315a13200c4b502cb6f7584522489421c3a7f700ca00177353da2",
+    "paths": [
+      "src/mongoeco/_change_streams/cursor.py",
+      "src/mongoeco/_change_streams/pipeline.py",
+      "src/mongoeco/api/_async/_collection_watch.py",
+      "src/mongoeco/api/_async/client.py",
+      "src/mongoeco/api/_async/collection.py",
+      "src/mongoeco/core/aggregation/grouping_stages.py",
+      "src/mongoeco/core/aggregation/planning.py",
+      "src/mongoeco/core/aggregation/preparation.py",
+      "src/mongoeco/core/aggregation/transform_stages.py",
+      "src/mongoeco/core/paths.py",
+      "src/mongoeco/core/projections.py",
+      "tests/differential/semantic_corpora.py",
+      "tests/integration/api/test_semantic_group_regressions.py",
+      "tests/unit/test_change_streams.py",
+      "tests/differential/semantic_watch_cases.py",
+      "tests/integration/api/test_watch_context_contract.py",
+      "tests/fixtures/semantic_watch_8_0.json",
+      "tests/fixtures/semantic_watch_9_0.json",
+      "tests/fixtures/semantic_watch_7_0.json"
+    ]
+  },
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "topology": "owned single-member replica sets",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "actions": 5,
+    "new_captures_checked": true,
+    "logs": [
+      "native-accepted-7.0.txt.gz",
+      "native-accepted-8.0.txt.gz",
+      "native-accepted-9.0.txt.gz"
+    ],
+    "scope": "sync native reference; sync/async local replay; UUID disposable DBs cleaned"
+  },
+  "checks": {
+    "integrated": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py",
+      "passed": 6019,
+      "seconds": 326.72,
+      "log": "final-semantic.txt.gz"
+    },
+    "core": {
+      "passed": 2676,
+      "subtests_passed": 936,
+      "skipped": 1,
+      "seconds": 28.03,
+      "scope": "core/property/change-streams plus context/delivery",
+      "log": "final-core.txt.gz"
+    },
+    "components": {
+      "passed": 146,
+      "log": "components3.txt.gz"
+    },
+    "context_and_architecture": {
+      "passed": 24,
+      "log": "context-final.txt.gz"
+    },
+    "orjson": {
+      "passed": 82,
+      "deselected": 5956,
+      "seconds": 3.94,
+      "env": "MONGOECO_JSON_BACKEND=orjson",
+      "scope": "watch replay plus deterministic context tests",
+      "log": "orjson.txt.gz"
+    },
+    "typing": {
+      "status": "passed public and engine boundary",
+      "log": "final-typing.txt.gz"
+    },
+    "lint": {
+      "status": "passed",
+      "changed_python_files": 16,
+      "log": "accepted-lint.txt.gz"
+    },
+    "sdk_free": {
+      "interpreter": "genuinely SDK-free Python 3.13",
+      "import_tests_passed": 2,
+      "watch_pairs_passed": 6,
+      "logs": [
+        "sdk-free.txt.gz",
+        "no-sdk-watch.txt.gz"
+      ],
+      "script": "no-sdk-watch.py.txt"
+    },
+    "baseline": {
+      "runtime": "bc8fb1c archive, preload before pytest",
+      "failed": 56,
+      "passed": 7,
+      "log": "before-final.txt.gz"
+    }
+  },
+  "review": {
+    "skill": "gdx-revisar-cambio",
+    "base_and_workset_fixed": true,
+    "demonstrated_findings_remaining_in_preparation_context_scope": 0,
+    "scope_limit": "not absence claim over all MongoDB behavior; known image/DDL differences remain in parent D04"
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "remaining": [
+    "D04 fullDocument modes, DDL/invalidation/close by scope, replay persistence and replica-set CI fixture",
+    "D06 remaining contextual/consumer acceptance",
+    "H53/scalar sNaN disposition, optional D07 decision",
+    "D05 all matrices/wheel/global/coverage/performance and integrated closure",
+    "B07 general BSON boundary not closed"
+  ],
+  "artifacts": {
+    "README.md": "f8eccc61b86180d88263489ca958a9c1ca80a74920f20b7794267260320490f3",
+    "accepted-lint.txt.gz": "1278041cd6fece63ac28d7c781610091f9f4d5717b2eece67ac9ff62bbb982d3",
+    "before-final.txt.gz": "4a6609e709e5fd86f41352781451c039624859896ce84d505f1c76cf4091530c",
+    "before.txt.gz": "45e7dbd8a121278a81bfac1a075c0de4d39e6faad079ba0d9b33ea6f33201486",
+    "components1.txt.gz": "147726e097b8c976856a7c1385068f303fa56af0637e87634f77e992dae27370",
+    "components2.txt.gz": "9b2933215bbd633dff7f547c8ca2ea58ef6655bd97a034a003bb44a41ccde530",
+    "components3.txt.gz": "56ac2771646bf012fb9cf37b8216bfded284ad2c2abfc64c3607db9c4e69c563",
+    "context-final.txt.gz": "816198c798cbc64d0b14080922a56d38187d4752cb564e994d18a67e63ef7281",
+    "context-unit.txt.gz": "0ced4d06b62a46de61cfaa61f193a93334c6246d1c8bb7441ed337e38e7de561",
+    "context-unit2.txt.gz": "3fa91073d96c6f5f5c6b5076df9798eaee63fad85190ae98e725d22c5682a2e8",
+    "core-feedback.txt.gz": "4d29e2f3d03dac6065a747f0a34d2ca28cd49d911885fc137b70635f76398fce",
+    "final-core.txt.gz": "7e0dde5ca5dc82b2fced71f388cbdafe6f60f207187b19578d938197188768d4",
+    "final-lint.txt.gz": "19151b5481ae0a63d181d0333eb5da73c873affc020dbe67699e4fdc6452aad0",
+    "final-semantic.txt.gz": "5b65be54ffcff20197a28d2cfcad69185082b2a1b2af9eb871844daa8f3f5091",
+    "final-typing.txt.gz": "2619185ec2218c8f3f440118f3077466a3da68b64d53c9eacf0cfb12def81ebf",
+    "focal-shared.txt.gz": "8385545b1d9540a7bb3b78771c35cf7d6721a721727c262f0fda1dcb2f5bf1b0",
+    "focal1.txt.gz": "8d4403b187d232176b2f7e0e351f5250e80b262594e29d480257bcf7231b3836",
+    "focal2.txt.gz": "550eaccd8b94aea8c6e3a5113d2a498fe72ae94eb9b8024ef47f8eae7260c258",
+    "focal3.txt.gz": "e45cf3518e6e6d64e8072d14b23b025ebeb5bdfca589dcf15d11807bf411f715",
+    "full-document-probe.json": "74b0e3b3e37e4017ad75f0be709b9ae44d126b3b64165f9bc67e509a5aef7e22",
+    "full-document-probe.py.txt": "92e3db2aec1a59732718af7d0d18b603cf47c23f9a74cc2fa61a28d3372c197e",
+    "full-document-probe.txt.gz": "379027c5a21c6df1ab641707f56b7d5d1e8be9c65ea9c56d3f67e580751e98cf",
+    "integrated-feedback.txt.gz": "3e02b4708ff01f85f50ff1f5c2375d3d224f3712211f855679c7ff4e27a9dc20",
+    "native-accepted-7.0.txt.gz": "d98ec8911de77061255e9ea27be9019fc42fb168c9f9924182f67848d094317a",
+    "native-accepted-8.0.txt.gz": "309af21c7145f735f2308e9b78297b39aa6717e008abe3ab60348c4b89ef2ccf",
+    "native-accepted-9.0.txt.gz": "0165bf93184655905a8dcfda11350325c735e785b1355f51166b6398349df6b6",
+    "native-initial-7.0.txt.gz": "bec6d2ce68807995935e883649b6016b5b689b0de36ff42f93a9086966a37917",
+    "native-initial-8.0.txt.gz": "ea22650934fecbcb665daca2e533be3aad1a250a3c8e4ce1dc18e60ef70cc523",
+    "native-initial-9.0.txt.gz": "6b164c11fe482ac74a97dad94f671d365aaaa9a04be010b6cd5576e68608b44f",
+    "native-shared-7.0.txt.gz": "87837f093bba9b7b1a9255db378e73f573636675c78d86cc9b16fc71a6372b32",
+    "native-shared-8.0.txt.gz": "dd54bdca9c00e9736ff1444f2b2f0cfa5ffb2d570d86057924ec432c8d421aa2",
+    "native-shared-9.0.txt.gz": "dc379c58e95c764cad92dd7cecfcdf7b401e141784c19097024948c7a2a6c10c",
+    "no-sdk-watch.py.txt": "e1abd3feca621699ddda89936536965b296cb7045a3c2f55dbe5a450eecc061b",
+    "no-sdk-watch.txt.gz": "298d8895b987429b2962c24d98d2b6ca08d1df536f3859ed4113b4a11e1537ad",
+    "orjson.txt.gz": "0f6fb18ec96aaaf53a512c2a3bc91d8508c3180244765f4acbe53403cd8058bf",
+    "runtime-sources.json": "de210db2268a73b54e2e8cec32cfc958720efee65a14e8e6a1df6d92c821e8d9",
+    "sdk-free.txt.gz": "444a2f43a4fffaf898fcc3265642b6cba6b995f9ac7d08c6dd4b6ddecfd68b0c",
+    "shared-review-feedback.txt.gz": "f01c5d5385f13d53f701c6584927fb41581f66fb495325668820d8d4be8ed0c2",
+    "typing-feedback.txt.gz": "0513fa7e643bb838196a3695d2b6cbb14fc703121044422d1e20cec99d72cbf4",
+    "workset.json": "3373bf19cef315a13200c4b502cb6f7584522489421c3a7f700ca00177353da2"
+  }
+}

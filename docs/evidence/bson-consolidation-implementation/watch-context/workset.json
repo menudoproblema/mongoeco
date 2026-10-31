@@ -1,0 +1,21 @@
+{
+  "src/mongoeco/_change_streams/cursor.py": "40d047a6d613aef46e33d6597fe537da5c3f9a531bf8551a313cdbf1365190b6",
+  "src/mongoeco/_change_streams/pipeline.py": "b4f410478704e5e8247a92a900d7f9bd7e52909d3a6b8ce17d2f69cc9aeda0f9",
+  "src/mongoeco/api/_async/_collection_watch.py": "8c22bafbd43b2711839bc69834c7e883c78f35789390c75f3bd98b33df22bdec",
+  "src/mongoeco/api/_async/client.py": "f6bebda24798655bb650c66904fec526f0f2fcb33ef4fd4b4f9e2c0bc72d4af7",
+  "src/mongoeco/api/_async/collection.py": "77f7b40c1e5b03011cd96069ee9993f2975175be17b4da5ec13e35f576c26442",
+  "src/mongoeco/core/aggregation/grouping_stages.py": "31d664a197e44420ccac3b93fb1d516ad3bcf8fa50bc5db8d494d77f93058a41",
+  "src/mongoeco/core/aggregation/planning.py": "40dc484801ca50d5e0aa15805e8ce62198df1d66fed1a2845d8eee42d77e2dbf",
+  "src/mongoeco/core/aggregation/preparation.py": "327cd471992326243b0cc9cce680cf4a97f202d2ab897fd1007a6b289cfb9d30",
+  "src/mongoeco/core/aggregation/transform_stages.py": "5314ae2ebf2e56dd24fcca2f1e7cd18d58305dfbd1efb29912222c7684c59e90",
+  "src/mongoeco/core/paths.py": "1ac1ed6368ed47341e9c293cd4b32d57b92646fb749429af9810b3c4f50d479f",
+  "src/mongoeco/core/projections.py": "200df34aa84856966a9ac34be6a60a650f8f101a2a260731d5e47f3431f138c5",
+  "tests/differential/semantic_corpora.py": "bccc3a362af1f4fe7a8b32237927380532b6b57091af4f4ee1ffe3c30bc8878d",
+  "tests/differential/semantic_watch_cases.py": "67fbe0b897b5a647bfea8a2890b582ac3ebcb58e51944954cfe789457621846f",
+  "tests/fixtures/semantic_watch_7_0.json": "c75f7c14795ffe5f65f6dd02eace1124c7e792a13a73e390bcca65be86f939fa",
+  "tests/fixtures/semantic_watch_8_0.json": "ffcd4c78018a2a973cb300303a7be3df7aafcd0706641b25793aba9219e0c487",
+  "tests/fixtures/semantic_watch_9_0.json": "b0d77f41cd6da52f1047e0d765dc0c67ab8c15d7b5b720e3aeba91fece3d4d19",
+  "tests/integration/api/test_semantic_group_regressions.py": "521ee67251993efbb811d7dc3b76a05a84751816de935d0b7f9d711a1502e287",
+  "tests/integration/api/test_watch_context_contract.py": "223a9fa5d3fac9199d014f86d52171899f4b4759ad44c283b01968c24c8ff4ad",
+  "tests/unit/test_change_streams.py": "95553e54639fc3700e22cd395e5cf8ad9ccf274a53c2436306b273dd97caf41e"
+}

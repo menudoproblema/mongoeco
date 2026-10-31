@@ -1,0 +1,944 @@
+{
+  "native": {
+    "7.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 2,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-required-False": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "False-required-True": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 2,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    },
+    "8.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 2,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-required-False": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "False-required-True": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 2,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    },
+    "9.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 2,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "False-required-False": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "False-required-True": {
+        "error": "OperationFailure",
+        "code": 47,
+        "alive": false
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 2,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": null,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    }
+  },
+  "local": {
+    "memory-7.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    },
+    "sqlite-7.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    },
+    "memory-8.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    },
+    "sqlite-8.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    },
+    "memory-9.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    },
+    "sqlite-9.0": {
+      "False-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "False-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "False-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-default-False": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-default-True": {
+        "kind": "update",
+        "present": false,
+        "v": null,
+        "alive": true
+      },
+      "True-updateLookup-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-updateLookup-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-whenAvailable-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-False": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      },
+      "True-required-True": {
+        "kind": "update",
+        "present": true,
+        "v": 1,
+        "alive": true
+      }
+    }
+  },
+  "differences": {
+    "memory-7.0": [
+      "False-updateLookup-False",
+      "False-updateLookup-True",
+      "False-whenAvailable-False",
+      "False-whenAvailable-True",
+      "False-required-False",
+      "False-required-True",
+      "True-updateLookup-False",
+      "True-updateLookup-True"
+    ],
+    "sqlite-7.0": [
+      "False-updateLookup-False",
+      "False-updateLookup-True",
+      "False-whenAvailable-False",
+      "False-whenAvailable-True",
+      "False-required-False",
+      "False-required-True",
+      "True-updateLookup-False",
+      "True-updateLookup-True"
+    ],
+    "memory-8.0": [
+      "False-updateLookup-False",
+      "False-updateLookup-True",
+      "False-whenAvailable-False",
+      "False-whenAvailable-True",
+      "False-required-False",
+      "False-required-True",
+      "True-updateLookup-False",
+      "True-updateLookup-True"
+    ],
+    "sqlite-8.0": [
+      "False-updateLookup-False",
+      "False-updateLookup-True",
+      "False-whenAvailable-False",
+      "False-whenAvailable-True",
+      "False-required-False",
+      "False-required-True",
+      "True-updateLookup-False",
+      "True-updateLookup-True"
+    ],
+    "memory-9.0": [
+      "False-updateLookup-False",
+      "False-updateLookup-True",
+      "False-whenAvailable-False",
+      "False-whenAvailable-True",
+      "False-required-False",
+      "False-required-True",
+      "True-updateLookup-False",
+      "True-updateLookup-True"
+    ],
+    "sqlite-9.0": [
+      "False-updateLookup-False",
+      "False-updateLookup-True",
+      "False-whenAvailable-False",
+      "False-whenAvailable-True",
+      "False-required-False",
+      "False-required-True",
+      "True-updateLookup-False",
+      "True-updateLookup-True"
+    ]
+  }
+}

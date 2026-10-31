@@ -4,6 +4,7 @@ from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.runtime_metadata import (
     RuntimeDocumentState,
 )
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import DBRef
 
@@ -169,3 +170,15 @@ def delete_document_value(doc: dict[str, Any] | list[Any], path: str) -> bool:
     if first in doc and isinstance(doc[first], (dict, list)):
         return delete_document_value(doc[first], rest)
     return False
+
+
+def validate_projection_paths(paths: set[str]) -> None:
+    ordered_paths = sorted(paths)
+    for index, left in enumerate(ordered_paths):
+        for right in ordered_paths[index + 1 :]:
+            if right.startswith(left + ".") or left.startswith(right + "."):
+                message = f"Path collision in projection between {left!r} and {right!r}"
+                raise server_error(
+                    message,
+                    code=31249,
+                )

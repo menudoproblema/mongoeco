@@ -4,7 +4,11 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.paths import get_document_value, set_document_value
+from mongoeco.core.paths import (
+    get_document_value,
+    set_document_value,
+    validate_projection_paths,
+)
 from mongoeco.core.search import (
     SEARCH_HIGHLIGHTS_METADATA_FIELD,
     TEXT_SCORE_FIELD,
@@ -290,7 +294,7 @@ def _parse_projection_spec(
     ):
         message = "only one positional projection is supported"
         raise server_error(message, code=31276)
-    _validate_projection_operator_path_collisions(
+    validate_projection_paths(
         {*regular_fields, *operator_fields},
     )
     is_inclusion = has_regular_inclusion or has_elem_match or has_positional or has_meta
@@ -388,17 +392,6 @@ def _validate_projection_slice_operand(value: object) -> None:
         else 28667,
     )
 
-
-def _validate_projection_operator_path_collisions(paths: set[str]) -> None:
-    ordered_paths = sorted(paths)
-    for index, left in enumerate(ordered_paths):
-        for right in ordered_paths[index + 1 :]:
-            if right.startswith(left + ".") or left.startswith(right + "."):
-                message = f"Path collision in projection between {left!r} and {right!r}"
-                raise server_error(
-                    message,
-                    code=31249,
-                )
 
 
 def _apply_slice_projection(

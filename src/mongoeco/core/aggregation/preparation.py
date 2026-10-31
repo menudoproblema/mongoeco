@@ -10,7 +10,9 @@ from mongoeco.compat._catalog_operators import (
     ARRAY_ACCESS_EXPRESSION_ARGUMENTS,
     CONTROL_EXPRESSION_ARGUMENTS,
     SCALAR_EXPRESSION_ARGUMENTS,
+    SUPPORTED_AGGREGATION_STAGES,
 )
+from mongoeco.core._search_contract import SEARCH_STAGE_OPERATORS
 from mongoeco.core.aggregation.accumulators import (
     _prepare_accumulator_specs,
     _validate_empty_group_fields,
@@ -39,6 +41,9 @@ from mongoeco.core.aggregation.information_stages import (
     parse_information_spec,
 )
 from mongoeco.core.aggregation.planning import (
+    _require_group_spec,
+    _require_projection_for_dialect,
+    _require_replace_root_spec,
     _require_stage,
     _validate_densify_partition_paths,
     _validate_densify_range,
@@ -505,7 +510,26 @@ def _validate_stage_expression_roots(operator, spec, dialect):
         raise server_error(message, code=code, reason="expression_unknown")
 
 
+def _validate_stage_structure(operator, spec, dialect):
+    # Recognition is distinct from a physical dialect's capabilities. Search
+    # stages are parsed by their existing local planner, not Community Server.
+    if (
+        operator not in SUPPORTED_AGGREGATION_STAGES
+        and operator not in SEARCH_STAGE_OPERATORS
+    ):
+        message = f"Unrecognized pipeline stage name: '{operator}'"
+        raise server_error(message, code=40324)
+    if operator == "$match" and not isinstance(spec, dict):
+        message = "$match requires an expression object"
+        raise server_error(message, code=15959)
+    if operator == "$project":
+        _require_projection_for_dialect(spec, dialect=dialect)
+    elif operator == "$replaceRoot":
+        _require_replace_root_spec(spec)
+
+
 def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
+    _validate_stage_structure(operator, spec, dialect)
     _validate_placement(operator, address, context.scopes)
     if operator in {"$lookup", "$unionWith"}:
         spec = _prepare_join(
@@ -516,6 +540,7 @@ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
     elif operator in INFORMATION_STAGES:
         parse_information_spec(operator, spec)
     elif operator == "$group":
+        _require_group_spec(spec)
         _validate_empty_group_fields(spec, dialect=dialect)
         if isinstance(spec, dict):
             _prepare_accumulator_specs(
@@ -540,10 +565,16 @@ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
     _validate_stage_expression_variables(operator, spec, dialect, context.variables)
     if dialect.behavior_flag(
         "validates_aggregation_syntax_early", default=True
-    ) and operator in {"$set", "$addFields", "$project"}:
+    ) and operator in {
+        "$set",
+        "$addFields",
+        "$project",
+        "$replaceRoot",
+        "$replaceWith",
+    }:
         _validate_stage_expression_roots(operator, spec, dialect)
         prepare_expression(
-            spec,
+            spec["newRoot"] if operator == "$replaceRoot" else spec,
             dialect=dialect,
             variables=context.variables,
             fold_constants="update" not in context.scopes,

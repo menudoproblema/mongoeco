@@ -8,12 +8,22 @@ import weakref
 
 from collections.abc import Callable
 
+from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation import apply_pipeline, compile_pipeline
+from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.expression_context import (
+    ExpressionExecutionContext,
+    ensure_expression_context,
+)
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventDocument
 
-from .hub import ChangeStreamHub
-from .models import ChangeStreamScope  # noqa: TC001 - cursor signature is introspectable
+from .hub import ChangeStreamHub  # noqa: TC001 - introspectable cursor signature
+from .models import (
+    ChangeStreamScope,  # noqa: TC001 - cursor signature is introspectable
+)
 from .pipeline import (
     apply_full_document_mode,
     compile_change_stream_pipeline,
@@ -33,7 +43,10 @@ class AsyncChangeStreamCursor:
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
         full_document: str = "default",
-        materialize_document: Callable[[dict[str, object]], dict[str, object]] | None = None,
+        materialize_document: Callable[[dict[str, object]], dict[str, object]]
+        | None = None,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        execution_context: ExpressionExecutionContext | None = None,
     ) -> None:
         self._hub = hub
         self._scope = scope
@@ -44,8 +57,15 @@ class AsyncChangeStreamCursor:
             start_at_operation_time=start_at_operation_time,
         )
         self._pipeline = compile_change_stream_pipeline(
-            DocumentCodec.to_internal(pipeline)
-            if pipeline is not None
+            pipeline,
+            dialect=dialect,
+            collection=scope.coll_name,
+        )
+        self._dialect = dialect
+        self._execution_context = ensure_expression_context(execution_context)
+        self._compiled_pipeline = (
+            compile_pipeline(self._pipeline, dialect=dialect)
+            if self._pipeline is not None
             else None
         )
         self._max_await_time_ms = max_await_time_ms
@@ -72,12 +92,34 @@ class AsyncChangeStreamCursor:
         document = event.to_document()
         document = apply_full_document_mode(document, self._full_document)
         if self._pipeline is not None:
-            from mongoeco.core.aggregation import apply_pipeline
-
-            transformed = apply_pipeline([document], self._pipeline)
-            if not transformed:
-                return None
-            return self._materialize_document(transformed[0])
+            token = document["_id"]
+            try:
+                transformed = (
+                    self._compiled_pipeline.execute(
+                        [document],
+                        variables=self._execution_context,
+                    )
+                    if self._compiled_pipeline is not None
+                    else apply_pipeline(
+                        [document],
+                        self._pipeline,
+                        dialect=self._dialect,
+                        variables=self._execution_context,
+                    )
+                )
+                if not transformed:
+                    return None
+                document = transformed[0]
+                if "_id" not in document or not same_bson_update_value(
+                    document["_id"], token
+                ):
+                    message = (
+                        "Change stream pipeline must preserve the event resume token"
+                    )
+                    raise server_error(message, code=280)
+            except OperationFailure:
+                self.close()
+                raise
         return self._materialize_document(document)
 
     async def try_next(self) -> ChangeEventDocument | None:
@@ -174,7 +216,11 @@ def parse_resume_token(token: dict[str, object]) -> int:
     except Exception as exc:
         raise OperationFailure("resume token must contain a valid _data field") from exc
     token_value = document.get("t")
-    if document.get("v") != 1 or not isinstance(token_value, int) or isinstance(token_value, bool):
+    if (
+        document.get("v") != 1
+        or not isinstance(token_value, int)
+        or isinstance(token_value, bool)
+    ):
         raise OperationFailure("resume token must contain a valid _data field")
     return token_value
 
@@ -199,7 +245,11 @@ def resolve_change_stream_offset(
     if start_after is not None:
         return hub.offset_after_token(parse_resume_token(start_after))
     if start_at_operation_time is not None:
-        if not isinstance(start_at_operation_time, int) or isinstance(start_at_operation_time, bool) or start_at_operation_time < 0:
+        if (
+            not isinstance(start_at_operation_time, int)
+            or isinstance(start_at_operation_time, bool)
+            or start_at_operation_time < 0
+        ):
             raise TypeError("start_at_operation_time must be a non-negative integer")
         return hub.offset_at_or_after_cluster_time(start_at_operation_time)
     return hub.current_offset()

@@ -516,6 +516,33 @@ El plan posee dependencias/testigos de corrección; este registro conserva esos
 pendientes. Los gates del candidato de preparación en curso no los cierran.
 No se acepta distribución, retención nativa ni watch wire por asociación.
 
+## D04 — Preparación y contexto del stream
+
+La [evidencia del corte](evidence/bson-consolidation-implementation/watch-context/receipt.json)
+acepta la garantía de preparación/contexto; D04 sigue abierto para imágenes,
+DDL/cierre por ámbito y el fixture replica set de CI. Se reutilizan preparador,
+compilación y contexto existentes; se retira la validación superficial propia
+de watch y se comparten checks estructurales con aggregate/update. El stream
+captura dialecto/reloj/codec al abrir y conserva el token al transformar; errores
+de evento cierran cuando corresponde. El handle collection.database mantiene
+now_factory también para agregación ordinaria. No cambia SPI v2 ni se añaden
+allowlists arquitectónicas.
+
+Cinco acciones permanentes tienen capturas nativas 7.0.43/8.0.32/9.0.2 verificadas
+con --check. Cubren errores eager sin eventos, evaluación/token, matching tipado,
+reloj entre eventos/getMore/reanudación y validación compartida vacía/poblada.
+La base bc8fb1c falla 56 checks y pasa siete controles; el candidato pasa 6.019
+integrados, 2.676 de core/propiedades/contexto/entrega (936 subtests, un skip
+local), 146 de componentes y 82 watch/contexto con orjson. Pasan typing/lint y
+smokes sin SDK real 3.13, incluidos seis pares motor/dialecto de watch.
+
+La revisión distingue reconocimiento gramatical de capacidad de ejecución,
+conservando Search/extensiones; no convierte una restricción de watch en regla
+de aggregate/update. Los observers y goldens históricos quedan idénticos.
+No quedan findings demostrados abiertos de preparación/contexto dentro de lo
+ejercido; los defectos de imágenes/DDL de revisión 8 mantienen sus testigos y
+no quedan aceptados por estos gates. D05 conserva matrices/costes y cierre final.
+
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
