@@ -1,0 +1,86 @@
+{
+  "status": "plan revision 6; characterization only, no runtime acceptance",
+  "runtime_head": "ef604c74c0513125c102204527221ed9e74478e1",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_4_5": true,
+  "runtime_diff_empty": true,
+  "preexisting_work_unaccepted": {
+    "tests/differential/semantic_corpora.py": "8449f54abb2e0aa834212a09bf9ada17cf9402c05d5a543f5f43e7db0c410141",
+    "tests/differential/semantic_write_effect_cases.py": "923c675bc00e3f72707788d168539cc5afdf272051493471dc1714ad69982860"
+  },
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "topology": "preexisting owned single-member replica sets",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "identity_cases_per_version": 15,
+    "event_cases_per_version": 2,
+    "databases": "UUID disposable, dropped in finally",
+    "service_lifecycle": "unchanged"
+  },
+  "local": {
+    "pairs": 6,
+    "identity_cases_per_pair": 15,
+    "event_cases_per_pair": 2,
+    "representation_trace_rows": 18
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/property/test_sqlite_type_predicates.py tests/unit/core/test_binary_storage_paths.py",
+      "passed": 69,
+      "seconds": 1.36
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'binary_edges or dbref_grammar or type_query'",
+      "passed": 345,
+      "deselected": 5302,
+      "seconds": 15.63,
+      "reference": "existing native captures, not recaptured this review"
+    }
+  ],
+  "source_hashes": {
+    "reference_tag": "r8.0.0",
+    "historical_verified": 14,
+    "historical_matched": 14,
+    "additional_versioned": 2
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "document_checks": {
+    "relative_links_checked": 25,
+    "git_diff_check": "passed"
+  },
+  "limits": [
+    "No production/test edits in this review; preexisting WIP retained.",
+    "No acceptance of D01b/D04/D05, nor B07 general.",
+    "Event observer captures first event kind/presence, not complete content or absence/count guarantee.",
+    "No new native captures for Binary/DBRef/type corpora; replay uses their accepted fixtures.",
+    "No global, wheel, environment matrix, transformed watch, TTL or new performance gates.",
+    "First probe attempt used unsupported local cursor context manager; discarded, corrected and fully rerun.",
+    "Expanded NaN probe initially hit local delete/storage guard; final full run isolates collection per identity case. The failure is retained as a D01b counterexample, not a successful check."
+  ],
+  "artifacts": {
+    "README.md": "1abf9d095dca2a31f39c583e0d6574dd3be0d047523f22ef86b43f38190ca485",
+    "observations.json": "6d233e264d14b0b298a9fb542fe3c61d7af73303d851eae1fc6ecd54723816c0",
+    "probe.py.txt": "3e1e85678ddd92a9e85b1e3a8fbbcf3136af757909a31d03381e7214041e5f68",
+    "representation-probe.py.txt": "845ac68aaf28349ba771d8e8ae0525a222c282ef9a942f2ab468fc0f19c7724d",
+    "representations.json": "a7b18bf76ac8c47cda4d8457b8b7659edc2adb681ec640f4cfded9b80a0e592f",
+    "sources-check.json": "b76bf29e5239c121776bf878fabe01313d844abb974c15d94cf15d88d69bfada"
+  }
+}

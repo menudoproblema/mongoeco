@@ -1,0 +1,88 @@
+"""Disposable diagnostic; does not import production comparison helpers."""
+import json
+import struct
+import time
+import uuid
+from pathlib import Path
+
+from bson import BSON, Code
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+
+def observe(collection, before, after, mode):
+    collection.delete_many({})
+    collection.insert_one({'_id': before, 'v': 0})
+    try:
+        if mode == 'classic':
+            result = collection.update_one({}, {'$set': {'_id': after}})
+        elif mode == 'pipeline':
+            result = collection.update_one({}, [{'$set': {'_id': {'$literal': after}}}])
+        else:
+            result = collection.replace_one({}, {'_id': after, 'v': 0})
+        outcome = {'matched': result.matched_count, 'modified': result.modified_count}
+    except Exception as exc:
+        outcome = {'error': type(exc).__name__, 'code': getattr(exc, 'code', None)}
+    outcome['bson'] = BSON.encode(collection.find_one({})).hex()
+    return outcome
+
+
+def run(collection):
+    return {
+        f'{name}-{mode}': observe(collection.database[f'{collection.name}_{name}_{mode}'], before, after, mode)
+        for name, before, after in [
+            ('number', 1, 1.0),
+            ('scope', Code('x', {'v': 1}), Code('x', {'v': 1.0})),
+            ('zero', 0.0, -0.0),
+            ('nan', struct.unpack('!d', bytes.fromhex('7ff8000000000001'))[0], struct.unpack('!d', bytes.fromhex('7ff8000000000002'))[0]),
+            ('scope_order', Code('x', {'a': 1, 'b': 2}), Code('x', {'b': 2, 'a': 1})),
+        ]
+        for mode in ('classic', 'pipeline', 'replacement')
+    }
+
+
+def events(collection):
+    result = {}
+    for size in (0, 1000):
+        collection.delete_many({})
+        collection.insert_one({'_id': 1, 'v': 1, 'pad': 'x' * size})
+        stream = collection.watch(max_await_time_ms=50)
+        try:
+            collection.update_one({}, [{'$set': {'v': 1.0}}])
+            deadline = time.monotonic() + 5
+            event = None
+            while event is None and time.monotonic() < deadline:
+                event = stream.try_next()
+            result[str(size)] = None if event is None else {
+                'operationType': event['operationType'],
+                'hasFullDocument': 'fullDocument' in event,
+                'hasUpdateDescription': 'updateDescription' in event,
+            }
+        finally:
+            stream.close()
+    return result
+
+
+report = {'native': {}, 'local': {}, 'scope': 'diagnostic, not acceptance corpus'}
+for dialect, port in [('7.0', 49973), ('8.0', 49974), ('9.0', 49975)]:
+    client = NativeClient(f'mongodb://127.0.0.1:{port}/?directConnection=true', serverSelectionTimeoutMS=2000)
+    db = client['review6_' + uuid.uuid4().hex]
+    try:
+        report['native'][dialect] = {
+            'version': client.server_info()['version'],
+            'fcv': client.admin.command({'getParameter': 1, 'featureCompatibilityVersion': 1})['featureCompatibilityVersion'],
+            'identity': run(db.records),
+            'events': events(db.records),
+        }
+    finally:
+        client.drop_database(db.name)
+        client.close()
+    for name, engine in [('memory', MemoryEngine), ('sqlite', SQLiteEngine)]:
+        with MongoClient(engine(), mongodb_dialect=dialect) as local:
+            report['local'][f'{name}-{dialect}'] = {
+                'identity': run(local.review6.records),
+                'events': events(local.review6.records),
+            }
+Path('docs/evidence/bson-consolidation-review/review6/observations.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps({k: {n: v['events'] for n, v in values.items()} for k, values in report.items() if isinstance(values, dict)}, indent=2))

@@ -23,6 +23,11 @@ sin commitear, identificados en el receipt. La identidad del texto coincide con
 las revisiones 3/4; no se abren hallazgos nuevos por repetirlo. Se actualizan el
 estado de fechas y las dependencias entre Binary, gramática y transporte.
 
+Revisión 6: mismo adjunto (SHA-256 verificado), contrastado con HEAD
+`ef604c7`. D03a/D03b ya tienen aceptación funcional propia; la descripción
+histórica no vuelve a abrirlos. Esta revisión actualiza el orden restante y
+precisa las obligaciones de D01b con sondas nuevas contra MongoDB 7/8/9.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H54 y su integración con B00–B10 y
@@ -104,11 +109,12 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 
 | Obligación | Disposición al revisar el informe |
 | --- | --- |
-| H48 rango/partes Binary, SDK y eq/in SQL | Primer arreglo commiteado en `b661e7a`; clasificación neutral ampliada en `93b9b34`. Las trazas de revisiones 4/5 acreditan fallback, no pushdown exacto. Los cambios Binary actuales sin commitear no son una entrega aceptada; D03a sigue abierto por sus testigos ampliados. |
-| H54 identidad física y Code | Helper común en `93b9b34`, con corrección separada del codec en `19ed3fa`. D01b conserva efectos públicos pendientes; no repetir la extracción del helper. |
-| H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con evidencia de coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices; no repetir la extracción ni reabrir el defecto a partir de la descripción histórica. |
-| H50 parser/vistas/wire/claves | Pendiente. La sonda directa actual conserva los fallos; la ruta wire se sustenta en la caracterización de revisión 3, no en una repetición actual. |
-| H51, H52 y H53 | Mantienen sus obligaciones SQL/tipos, watch y observabilidad. Lectura de código y resultados históricos no equivalen a nuevos diferenciales. |
+| H48 rango/partes Binary, SDK y eq/in SQL | D03a cerrado funcionalmente en `542bce9`; vistas SDK/local/owned, distinct, longitudes y fallback binario tienen evidencia en el registro. La sonda de revisión 6 conserva IDs/subtipos y observa ambos lados del matcher. No reintroducir pushdown por simplificación. |
+| H54 identidad física y Code | D01a entregado en `93b9b34`, con codec corregido en `19ed3fa`. D01b permanece abierto: nueva sonda confirma una guarda clásica incompleta de `_id` Code y diferencias en eventos. No repetir la extracción del helper. |
+| H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
+| H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
+| H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
+| H52 y H53 | Watch/contexto y disposición de observabilidad siguen abiertos. La corrección de publicación TTL no cierra preparación ni contenido de eventos de actualización. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 
@@ -441,7 +447,7 @@ primitivas de clasificación ya entregadas, no el cierre de D03a. Así se evita
 una dependencia circular y se conserva un solo owner raw. D06c y la optimización
 SQL siguen siendo entregas separadas; no retienen fixes focales verdes.
 
-Orden restante: (1) ampliar D00 y completar D03a con esa dependencia raw/gramática;
+Orden propuesto en revisión 5 (sustituido por revisión 6): (1) ampliar D00 y completar D03a con esa dependencia raw/gramática;
 (2) cerrar D01b, D03b y D06c sobre sus primitivas disponibles; D04 puede avanzar
 con fixtures físicos propios; (3) disposición de H53, decisión explícita de
 continuar o descartar D07, y D05 sobre el candidato integrado. D02 y D01a no se
@@ -454,6 +460,88 @@ servidor: matcher compilado/interpretado, sort rápido, hash, SQL y selección p
 clases internas exactas ni del número de llamadas un contrato público o una
 telemetría permanente. Las trazas conservan valor diagnóstico. Las tres
 propiedades actuales son regresión focal, no prueba de todos esos caminos.
+
+### Refinamiento vigente de la revisión 6
+
+La [evidencia de revisión 6](evidence/bson-consolidation-review/review6/receipt.json)
+verifica que el texto es idéntico al de revisiones 3–5. Las catorce fuentes
+históricas r8.0.0 vuelven a coincidir por hash; parser y ejecutor de updates por
+pipeline se registran separadamente. No se sustituyen sus receipts ni las
+167 pruebas históricas por resultados actuales. El replay focal actual pasa
+345 checks sobre capturas existentes; 69 checks de propiedades/fronteras pasan.
+No equivale a ejecutar otra vez la suite global ni a recapturar esos corpora.
+
+**Disposición de la autocrítica.** Conservar sus correcciones sobre H48, `$in`,
+distinct, representación y propiedades. Parser DBRef, eq/in SQL, SDK Binary y
+traza del matcher ya tienen implementación/testigos: mantenerlos como regresión,
+no abrir nuevas fases. Fase/familia/código de watch siguen siendo aceptación
+obligatoria D04. Retirar «solo retraso irrelevante» como conclusión contractual:
+la selección conservadora y migración TTL ya poseen pruebas D02. El número de
+resultados de distinct nunca sustituye a observar payload y subtipo.
+
+**D01b: separar tres decisiones, con un único helper físico disponible.**
+
+1. Detectar si cambió el documento por identidad BSON, conservando tipo, orden,
+   signed zero, NaN y scopes; no por igualdad de consulta.
+2. Validar la inmutabilidad de `_id` según el tipo de escritura. La nueva sonda
+   confirma que classic rechaza int→double, también dentro de Code scope, con
+   WriteError 66; pipeline y replacement aceptan esos cambios semánticamente
+   equivalentes y conservan el tipo nuevo. Memory admite indebidamente el caso
+   Code clásico y el cambio +0.0→−0.0, mientras SQLite los rechaza por otra
+   guarda de almacenamiento. Cambiar payload NaN presenta el error espejo:
+   SQLite permite classic (nativo 66), pero Memory rechaza pipeline/replacement
+   (nativo modifica). Reordenar Code scope en `_id` se rechaza con 66 en las tres
+   formas de escritura y es un control positivo, distinto de un campo ordinario.
+   Reutilizar `same_bson_update_value` en la guarda clásica y retirar su detector
+   numérico parcial si ya no tiene callers, preservando precedencia de errores.
+   No extender esa restricción física a pipeline/replacement ni confundirla con
+   selección/unicidad semánticas de `_id` o con reescribir storage keys.
+3. Publicar los efectos confirmados. El tipo de llamada no determina por sí
+   solo operationType: en los tres servidores, el mismo pipeline int→double
+   sobre un documento pequeño produce replace/fullDocument; con padding de
+   1.000 caracteres produce update/updateDescription. Ambos motores locales
+   publican update y omiten updateDescription. El [ejecutor r8.0.0](https://github.com/mongodb/mongo/blob/r8.0.0/src/mongo/db/update/pipeline_executor.cpp) calcula diff
+   y puede emitir reemplazo; no inferir un umbral universal de estos dos casos.
+
+El punto 2 combina política incompleta en un caller con verificación de storage
+no reflexiva para NaN en Memory: su `bson_engine_key` conserva el float en
+una tupla, mientras SQLite compara el repr persistido de `canonical_document_id`. Tras decode, otro NaN no
+es igual por Python; la guarda rechaza incluso la selección del documento antes
+de ejecutar la mutación. La sonda ampliada lo expuso durante delete de limpieza;
+por eso la ejecución final usa colección aislada por caso. Añadir delete/update
+sin tocar `_id`, selección semántica, duplicados y reapertura como controles del
+arreglo. Contrastar el origen/fase del error además del código 66: el mismo
+código puede ocultar otra guarda incorrecta. No modificar canonical_document_id
+ni claves persistidas para arreglar la guarda sin una decisión de compatibilidad.
+El helper físico no necesita otra implementación para estos contraejemplos.
+El punto 3 cruza el productor de eventos y su entrega; corregir solo watch no
+lo resuelve. Mantener ambos dentro de D01b, con D04 para preparación/contexto:
+son obligaciones separadas y no exigen una dependencia circular ni reabrir D02.
+
+**Refactorización acotada de efectos.** Contrastar primero el outcome existente
+de mutación. Si no basta, ampliarlo con el cambio efectivo confirmado y los
+datos de evento que deban compartir Memory y SQLite; la construcción semántica
+del evento tiene un owner, mientras journal/outbox/rollback conservan sus owners.
+No introducir otro contexto de ejecución, otro decoder ni un emulador general
+del oplog. Si se necesita tamaño BSON, demostrar primero exactitud del helper
+reutilizado para Binary 2, Code scope y anchos numéricos; no basarse en repr,
+tamaño JSON ni un estimador no contrastado. Ninguna de estas extracciones se
+acepta por reducir nombres: debe retirar decisiones duplicadas y pasar sus
+pruebas nativas de contenido y publicación.
+
+| Prioridad / corte restante | Dependencia y aceptación específica |
+| --- | --- |
+| P1 D01b: guarda clásica y efectos | D01a disponible. Primero regresión del rechazo 66 y estado intacto, controles pipeline/replacement y ambos motores; después update_many/bulk/command/findAndModify, índices, contadores y rollback. Eventos: no-op sin evento, publicación una vez tras commit, operationType, documentKey, fullDocument/updateDescription y valores físicos. Usar barrera para comprobar ausencias; no contar un timeout aislado como prueba. No normalizar update/replace ni ignorar campos para hacer pasar el replay. |
+| P1 D06a/D06b restantes, luego D06c | Clasificación/gramática/raw disponibles. Completar contextos/subpipelines y preservación física; reutilizar referencias ya aceptadas para sus regresiones. Claves/group/lookup/sets/spill/Search conservan políticas y guardas, sin alterar claves persistidas. |
+| P1 D04 en paralelo lógico | Replica set para pruebas nativas y fixtures de jobs. Preparación eager sin eventos, fase/familia/código y dialecto/reloj de stream capturados. La sonda de publicación D01b usa pipeline watch vacío para aislar al productor; no acepta D04 por accidente. |
+| P2 H53 y decisión D07 | Disposición de observabilidad en C03/B08 sin cambiar aceptación de escrituras por sorpresa. D07 es opcional: decidir continuar o descartar con hipótesis medible; no bloquea los fixes. |
+| P1 D05 final | Integrar entregas obligatorias y matrices de la sección 6 sobre candidato congelado. Los checks focales de esta revisión no lo cierran. |
+
+Este orden sustituye el orden restante de revisión 5. El registro de
+implementación sigue siendo el único owner de estado/gates: las tablas del
+plan expresan obligaciones y apuntan a él. No se crean IDs para los
+contraejemplos adicionales, ya incluidos en identidad y eventos de D01b. El trabajo
+de tests sin commitear preexistente no se considera aceptado por esta revisión.
 
 ## 6. Pruebas y aceptación por garantía
 

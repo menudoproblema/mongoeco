@@ -1,0 +1,838 @@
+{
+  "native": {
+    "7.0": {
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "270000000f5f696400160000000200000078000c00000010760001000000001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f69640000000000000000001076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "replace",
+          "hasFullDocument": true,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": true
+        }
+      }
+    },
+    "8.0": {
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "270000000f5f696400160000000200000078000c00000010760001000000001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f69640000000000000000001076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "replace",
+          "hasFullDocument": true,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": true
+        }
+      }
+    },
+    "9.0": {
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "270000000f5f696400160000000200000078000c00000010760001000000001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f69640000000000000000001076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "replace",
+          "hasFullDocument": true,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": true
+        }
+      }
+    }
+  },
+  "local": {
+    "memory-7.0": {
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        }
+      }
+    },
+    "sqlite-7.0": {
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "270000000f5f696400160000000200000078000c00000010760001000000001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f69640000000000000000001076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        }
+      }
+    },
+    "memory-8.0": {
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        }
+      }
+    },
+    "sqlite-8.0": {
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "270000000f5f696400160000000200000078000c00000010760001000000001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f69640000000000000000001076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        }
+      }
+    },
+    "memory-9.0": {
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f696400010000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        }
+      }
+    },
+    "sqlite-9.0": {
+      "identity": {
+        "number-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "15000000105f696400010000001076000000000000"
+        },
+        "number-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "number-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400000000000000f03f1076000000000000"
+        },
+        "scope-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "270000000f5f696400160000000200000078000c00000010760001000000001076000000000000"
+        },
+        "scope-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "scope-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "2b0000000f5f6964001a00000002000000780010000000017600000000000000f03f001076000000000000"
+        },
+        "zero-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "19000000015f69640000000000000000001076000000000000"
+        },
+        "zero-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "zero-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f69640000000000000000801076000000000000"
+        },
+        "nan-classic": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-pipeline": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "nan-replacement": {
+          "matched": 1,
+          "modified": 1,
+          "bson": "19000000015f696400020000000000f87f1076000000000000"
+        },
+        "scope_order-classic": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-pipeline": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        },
+        "scope_order-replacement": {
+          "error": "WriteError",
+          "code": 66,
+          "bson": "2e0000000f5f6964001d000000020000007800130000001061000100000010620002000000001076000000000000"
+        }
+      },
+      "events": {
+        "0": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        },
+        "1000": {
+          "operationType": "update",
+          "hasFullDocument": false,
+          "hasUpdateDescription": false
+        }
+      }
+    }
+  },
+  "scope": "diagnostic, not acceptance corpus"
+}

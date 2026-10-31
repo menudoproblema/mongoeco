@@ -331,6 +331,26 @@ D03a/D03b están cerrados funcionalmente; D05 conserva sus matrices y cierre de
 paquete/integración. Los pendientes siguientes mantienen sus owners y no se
 cierran por este incremento.
 
+## Revisión documental 6 y precisiones pendientes
+
+La [revisión 6 del plan](bson-semantics-consolidation-plan.md) contrasta el mismo
+adjunto sobre `ef604c7`, reconoce D03a/D03b entregados y conserva todos los gates
+anteriores. La [evidencia nueva](evidence/bson-consolidation-review/review6/receipt.json)
+pasa 345 checks focales de replay y 69 de propiedades/fronteras; añade sondas
+desechables en MongoDB 7.0.43/8.0.32/9.0.2, FCV correspondiente. No es cierre de
+D01b, D04 ni D05, ni aceptación del corpus write_effect preexistente sin commit.
+
+D01b conserva contraejemplos concretos: la guarda clásica de `_id` Code
+scope permite un cambio físico en Memory que los tres nativos rechazan con 66;
+pipeline/replacement sí lo aceptan nativamente. El cambio +0→−0 clásico falla
+por el mismo hueco en Memory; payload NaN produce falsos rechazos en Memory y
+falsa aceptación clásica en SQLite. La guarda de storage basada en igualdad
+Python necesita controles propios sin cambiar las claves persistidas. Además la publicación local
+fija update donde el nativo puede emitir replace y omite updateDescription.
+El plan precisa reutilización de identidad física en el caller clásico y
+construcción compartida de efectos confirmados, con pruebas de commit/ausencia
+separadas de preparación/contexto watch. Esta revisión no modifica runtime.
+
 ## Trabajo restante
 
 - D01b: consecuencias públicas de modificación, eventos, índices y operaciones múltiples.
