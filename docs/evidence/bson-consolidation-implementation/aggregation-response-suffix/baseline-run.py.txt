@@ -1,0 +1,9 @@
+from pathlib import Path
+import hashlib,json,sys
+root=Path(Path('/tmp/mongoeco-suffix-base-location.txt').read_text().strip()).resolve()
+for path,sha in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((root/path).read_bytes()).hexdigest()==sha,path
+sys.path.insert(0,str(root/'src'))
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(root),mongoeco.__file__
+print('verified 7328feb baseline import',mongoeco.__file__,flush=True)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/integration/api/test_semantic_group_regressions.py','-k','aggregation_response','--tb=short']))

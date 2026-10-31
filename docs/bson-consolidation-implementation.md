@@ -696,7 +696,7 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 
 ## Trabajo restante
 
-- D06a/D06b/D06c: completar gramática/String tipado, raw y consumidores DBRef. El checkpoint de cursores vivos conserva pendientes de bytes, callbacks y sufijos materializantes; no acredita cierre de D06.
+- D06a/D06b/D06c: completar gramática/String tipado, raw y consumidores DBRef. El corte de sufijos entrega demanda por número de documentos y conservación de tipos internos; quedan bytes/callbacks, raw y el resto de contextos/consumidores. No acredita cierre de D06.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1173,3 +1173,73 @@ Un commit y un replay verde no cierran los pendientes siguientes.
   asociación con el store wire.
 - Consumidores String restantes y D06c; después revisión, costes y matrices
   integradas de D05. H53, sNaN, D07 y B07 conservan sus obligaciones.
+
+## D06a/b — Sufijos por respuesta y conservación de tipos
+
+Base `7328feb`. La [evidencia del corte](evidence/bson-consolidation-implementation/aggregation-response-suffix/README.md)
+identifica las siete acciones nativas, la baseline y el candidato. No reescribe
+el diagnóstico del checkpoint anterior ni acepta todo D06 por asociación.
+
+Group, salida de group ordenada, sort incremental y pipeline windowed usan
+ahora el mismo planificador de demanda por número de documentos. Continúa
+llamando a `apply_pipeline`; no introduce otro evaluador de operadores. Las
+fronteras entre prefijo materializante y sufijo streamable conservan slices
+preparados con sus direcciones lógicas, dialecto, bindings y reloj originales.
+El presupuesto/deadline del prefijo se transmite desde la ejecución que lo abre.
+
+Una expansión no permite evaluar todo su sufijo antes de devolver la primera
+tanda. El planificador mantiene iteradores de salida pendientes y aplica los
+bloques siguientes según la demanda, incluso si un documento genera 226 filas.
+La pila es explícita: el test de 995 etapas evita introducir un límite nuevo
+por recursión Python. Las guardas de extensiones sustituidas se conservan.
+
+La ejecución del prefijo devuelve valores BSON internos. `_materialize` sigue
+siendo el adaptador para salidas públicas completas; `_materialize_pipeline`
+posee la ejecución reutilizada, sin convertir valores antes de otro stage.
+Un intento anterior convertía un Long pequeño a int en el perfil sin SDK y
+alteraba `$type` en el sufijo. El testigo nativo de tipos y la regresión con
+SDK ausente cubren esa diferencia; no se corrige envolviendo todos los enteros.
+
+Los recursos del programa se cargan una vez por ejecución y se comparten entre
+prefijo/sufijo. Se liberan de la referencia del cursor al cerrar. Las pruebas
+comprueban el reloj y let estables, una carga de la colección extranjera y
+ausencia de archivos de sort/group tras error, también forzando spill a dos
+documentos en ambos motores.
+
+Las siete acciones se capturan y comprueban en 7.0.43/8.0.32/9.0.2 con FCV
+correspondiente. Tienen orden de entrada explícito. El replay focal pasa 171
+checks; la baseline aislada falla 120 y pasa 51 controles. Los fallos iniciales
+de semilla vacía y la suposición de orden natural de SQLite se conservan como
+feedback, no como defectos del runtime. Las referencias históricas y los
+observadores protegidos no se modifican.
+
+El wheel final comprueba sus 283 módulos contra el candidato. El perfil real
+Python 3.13 sin SDK ejecuta 72 escenarios de respuesta/spill y 24 de tipos,
+incluidos ambos modos de disco y sync/async. Las cuatro mutaciones detectan
+la retirada del bound, evaluación completa de la expansión, materialización
+del sufijo entero y conversión pública prematura del prefijo.
+
+El replay previo de 7.030 checks pasó antes de detectar la conversión prematura;
+su input queda identificado y no sustituye al gate final del código corregido.
+El código corregido queda commiteado en `d9e9579`: pasan 7.054 checks del replay
+completo, 3.188 de core/API/wire y 1.128 subtests, con un skip separado. El wheel
+instalado pasa los 171 checks finales. Typing público y canario SPI v2 pasan;
+el manifiesto público efectivo coincide con la baseline. El drift histórico de
+su snapshot y el resto de matrices siguen perteneciendo a D05.
+
+La medición sin otros gates activos usa 48 muestras ABBAABBA, 1.500 documentos
+de entrada, spill local a ocho documentos y hashes BSON completos idénticos.
+Razones de medianas candidato/base:
+
+| Carga | Memory | SQLite |
+| --- | --- | --- |
+| Sort y sufijo | 0,998 | 1,027 |
+| Group/sort y sufijo | 1,021 | 1,027 |
+| Unwind y sufijo | 1,169 | 1,166 |
+
+El aumento de unwind se registra como coste de esta muestra; no se presenta
+como mejora de rendimiento ni como presupuesto global de D05. El corte cierra
+la demanda por número de documentos de estos siete testigos y la conservación
+del tipo interno entre prefijo/sufijo, manteniendo las regresiones anteriores.
+Bytes/callbacks por respuesta, raw y los demás contextos/consumidores de D06,
+H53, sNaN, D07, D05 y B07 conservan sus pendientes y sus owners.

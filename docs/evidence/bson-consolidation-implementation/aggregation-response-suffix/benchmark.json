@@ -1,0 +1,434 @@
+[
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.23977787501644343,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.22978662501554936,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.23884899995755404,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.22966950002592057,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.2361724169459194,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.2306269999826327,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.2401304169325158,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "sort",
+    "seconds": 0.23411874996963888,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.14483204192947596,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.13916387502104044,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.1437413749517873,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.13721216702833772,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.13055574998725206,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.1441358330193907,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.132095041917637,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "group",
+    "seconds": 0.13983270793687552,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.10335566592402756,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.120996082900092,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.12124825001228601,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.10352083307225257,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.10611212498042732,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.12113791599404067,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.12033720908220857,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "MemoryEngine",
+    "workload": "unwind",
+    "seconds": 0.10361450002528727,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.23097608296666294,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.2481183330528438,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.22154562501236796,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.2382182499859482,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.24440325004979968,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.7976964170811698,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.2375622499966994,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "sort",
+    "seconds": 0.2345607919851318,
+    "rows": 1500,
+    "bson_sha256": "9eede9757ca5b707ec2177de354eeec2f911a7258eb4c4a710b60bf7a56516b1",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.14831270894501358,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.14356904197484255,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.14461170800495893,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.14085112500470132,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.1365278750890866,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.14542716706637293,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.1451026670401916,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "group",
+    "seconds": 0.1411172499647364,
+    "rows": 50,
+    "bson_sha256": "215f1cd84f935e0b80e42521a65b83992e63876ce821c5d1df448d1bc9d371ab",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.10716870799660683,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.12554400006774813,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.12509670795407146,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.10738970898091793,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.1069949580123648,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.12450333300512284,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.1245803339406848,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "B"
+  },
+  {
+    "source": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-suffix-base-wrs7a8vv/src",
+    "engine": "SQLiteEngine",
+    "workload": "unwind",
+    "seconds": 0.10628762503620237,
+    "rows": 3000,
+    "bson_sha256": "ad1bdd32b7840e4aa2a85782f3c921b2aff3c9677a317e5cf32a8b80df8fff49",
+    "variant": "A"
+  }
+]

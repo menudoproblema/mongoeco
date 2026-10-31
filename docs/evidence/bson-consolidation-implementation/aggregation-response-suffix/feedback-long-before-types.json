@@ -1,0 +1,58 @@
+{
+  "MemoryEngine-False": [
+    {
+      "_id": 1,
+      "kind": "int"
+    },
+    {
+      "_id": 2,
+      "kind": "int"
+    },
+    {
+      "_id": 3,
+      "kind": "int"
+    }
+  ],
+  "MemoryEngine-True": [
+    {
+      "_id": 1,
+      "kind": "long"
+    },
+    {
+      "_id": 2,
+      "kind": "long"
+    },
+    {
+      "_id": 3,
+      "kind": "long"
+    }
+  ],
+  "SQLiteEngine-False": [
+    {
+      "_id": 1,
+      "kind": "int"
+    },
+    {
+      "_id": 2,
+      "kind": "int"
+    },
+    {
+      "_id": 3,
+      "kind": "int"
+    }
+  ],
+  "SQLiteEngine-True": [
+    {
+      "_id": 1,
+      "kind": "long"
+    },
+    {
+      "_id": 2,
+      "kind": "long"
+    },
+    {
+      "_id": 3,
+      "kind": "long"
+    }
+  ]
+}

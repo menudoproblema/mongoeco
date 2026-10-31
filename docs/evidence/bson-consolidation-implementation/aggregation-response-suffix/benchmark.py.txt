@@ -1,0 +1,23 @@
+import hashlib,json,sys,time
+from pathlib import Path
+root=Path(sys.argv[1]).resolve();sys.path.insert(0,str(root))
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from bson import BSON
+assert Path(mongoeco.__file__).resolve().is_relative_to(root),mongoeco.__file__
+factory={'MemoryEngine':MemoryEngine,'SQLiteEngine':SQLiteEngine}[sys.argv[2]]
+kind=sys.argv[3];size=1500
+seed=[{'_id':i,'v':i%10,'items':[0,1]} for i in range(size)]
+pipelines={
+ 'sort':[{'$set':{'pre':{'$add':['$_id',0]}}},{'$sort':{'pre':1}},{'$project':{'v':{'$add':['$v',1]}}}],
+ 'group':[{'$group':{'_id':{'$mod':['$_id',50]},'v':{'$sum':'$v'}}},{'$sort':{'_id':1}},{'$project':{'v':1}}],
+ 'unwind':[{'$sort':{'_id':1}},{'$unwind':{'path':'$items','includeArrayIndex':'copy'}},{'$project':{'v':1,'copy':1}}],
+}
+with MongoClient(factory(aggregation_spill_threshold=8)) as client:
+ c=client.bench.rows;c.insert_many(seed)
+ list(c.aggregate(pipelines[kind],allowDiskUse=True))
+ started=time.perf_counter();rows=list(c.aggregate(pipelines[kind],allowDiskUse=True));elapsed=time.perf_counter()-started
+ expected={'sort':size,'group':50,'unwind':size*2}[kind]
+ assert len(rows)==expected,(kind,len(rows))
+ print(json.dumps({'source':str(root),'engine':factory.__name__,'workload':kind,'seconds':elapsed,'rows':len(rows),'bson_sha256':hashlib.sha256(b''.join(BSON.encode(row) for row in rows)).hexdigest()}))

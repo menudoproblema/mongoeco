@@ -1,0 +1,347 @@
+{
+  "/tmp/mongoeco-response-suffix-native/7.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "0fd870ebbbe6581eb409b39908058e1e2966a9e023fcc0ce055259638d91ea58",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-fa7478f08b9d4f898edbab8c0f5287bc": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:ab8063bede2a2215216e4debdd961b92078b788d2f3ca0300e48eb55e8aff628": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:ea9a1cb1f66ccaaab7f854700258858c1c89db91ce6460ef5ba48a6d4109c360": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native/8.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "8a6be8ff05a45565a683feb03e7177c759cc89a033b97965c769553a7edefc00",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-d84dc8b9f3e24f69b79196a0148dea6e": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:785445b9e6fb53c30107ba8eafb5741f012930d8e5c60443c5fe69354c884a6f": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:6f949ae968231c75698a3bbd90878c0703dc82e13751d239b78db43dcdb29a52": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native/9.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "bbaee28081f03312191b2262d6d5b0e99002d6c22c2022292f4a56dcee61a250",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-bdc181b8cdab4620a2e24dd2a706cfa6": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:91dcb575760d16bd0dd53a1ace7c25aab326aa3e6f947c4e31ce28218be64375": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:2f054ca121f0b1629a6bb9479bbc450f945e7b7a4c101f8e28ad82fa0e5b0a7d": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v2/7.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "b5f369ff334ddae8bb384dfa2e9872ae8836ebbc595eceecc26d42fb8aeabfbd",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-11ed4e057539477a9c71d2bcad779d65": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:cc7d2aa117b3e3bd36a0d23632d1bf8a8670f6995719cd031e1a66bbd1764162": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:45be91f8f06dfee7a95c1a82e0b7b1cebe166ee7ea61d7b4415eca252bc4514b": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v2/8.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "a3d5edd70e3069ecded6d227f43bbd0f31019074643b647f06719b6a85ee372a",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-496d87cf46314c1e8d5f2b2c8d67711e": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:c922423304643b4c12c792026e80c3ac1b5aa705d8a21c1bae17b8406bcbaac1": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:39fcf67a6cd6f6a4afe67529fcf8b5ea30d0bac8071c5a856bbd39ddc8a9aa41": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v2/9.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "3f0208e9aaf6e7d2e1db050940b1bdcee6cbe7e5b81b2674ace790bbe3fd7d9e",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-4076d4e655ea413eb3634019ae110db9": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:24d2ea756bd7da42080eed6cbb4ac36ebc99f56cf30ba22dbc65431a36795d1a": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:5795fef9e305de32074aafbe9a2879233c502751a2f94feb82b36f2942430f9c": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v3/7.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "ab642d0d038d181ee8963a36c10fc32c9f39c62f8f439d1b2cacc63f05535f23",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-f20b5fdf96d24b3ab57afbb6b91dcf44": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:c07e02dc2d78fe653f89b89f75c7285137e1b9de612e018a85256a28b8be4018": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:e5e9767f09d13e2e60c3d5fad9541b6e487ea5ca4dca9f482606ca99b63a883e": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v3/8.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "64f63f7d188718d3e68eb80c46f1cae6e98ed66b993b7745fc414bd1149c293c",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-471092a1c11d4a51b6888ac40cadd00c": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:61b09cf094e5c6bc788c3a5fd96e2c9ba7aa5c75520e04c66226b1096a2dd837": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:0ae264e4afce44471a840d5a99414e675263a9b01f373ffec475fc8323bcb13b": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v3/9.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "f03ad6f18f0e7871868ae48d4e44240ed339d3f0745e52f025da4d54a88c17e4",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-8b5c9ca04211426daf3eb85f64ace22f": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:53c452960069e1799cd72b4b1798cf8875d965db8392f2adffeea0574c3b5d2c": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:48e617d815af14695a496ef57e5bc661e16bbabee8e30d455cbc156d48580a47": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v4/7.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "64d5c8681667924800333c0eaaec9d6475324b682edbcf5589f71157cb8f16be",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-2a0f5242c0414ee49ec0ea88a373411e": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:6d8a639e23219d70ea4a190a0a94a8d5a422afaf2360a4dc2cb5d0c1c3e3c6c4": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:399d4957fe3f0af1a579535136df3519be9eaa36d2f66f69158403c56d57c00a": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v4/8.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "c143f71e225d1d3f461b1d53b6a9e39c9c8b2c9756d8b982e9e1070718dbff76",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-548d5c8daf974d6e9050fce8b1a1ca60": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:7ef2eab32200af3ba806458b566fde8bac02b92539580b232b383a9fe6eda272": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:11d083169353e809ff09f902a8ef07f7391505a2ea60348dcd62e61ddce004db": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v4/9.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "7e2fc0377f2c596c7e6d5ac1304c84ed53a5f5c55c88d1e3269e9d457dd3dfa8",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-a159faff51194dfb888fb9163c167165": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:8734c84dc26a143d9aea6cd1f5321bffcaa8306cec67b310f8f26f45c0cdc25a": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:ee2da3e08e65c9f687e571248233f6a56b8c7dcd5ffcf8326dd412832956b25e": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v5/7.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "229f7bc9595e82471e3d21c0889d6e7ffd4cb0e66a653a1a290c68868c1ea064",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-1e4f2865c79a4045868ae3a92bf2c63b": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:0bf89ba713f0972a1a9334be6a3a1d214b619e69b88621c9243997b2dc01512a": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:38c9c74cc600f8d8bdea33635ae31878758cfdc4cc9a9e26537f947c259679c8": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v5/8.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "895a81eaa6daae2d8fdfcde5eb311d9d4e6edd318bc0908e1934d8b966510044",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-f9142adb9b414e15bea73810bf7f304e": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:4fd72dd42b99fc4fff5a6bb6d8e0978d00164544b9b67e651f63f3c89a084caf": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:feae675dfc46a38f05e66e59e189b9db4f16a54abb3fba5524c8ab594327e988": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-response-suffix-native-v5/9.0/fixture.json": {
+    "status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "1b49f79b8da9c4a995bf60678e014dd1b72aedd8d5e86be402addc4ace3befc9",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-5425d2c2eb9642e6ab11208797e1234c": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:34bd846a8f8bfc831a49c3d521a66bd144f33c7e6bb4cfd01f11d06e89cd9f52": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:5e6fb1289606c9760e5e0b10bcab950ff392c4c39893f1612f484deec4d45082": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  }
+}

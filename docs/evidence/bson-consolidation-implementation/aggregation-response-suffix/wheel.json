@@ -1,0 +1,7 @@
+{
+  "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-v5-wheel-yrp9_xwl/mongoeco-4.11.0-py3-none-any.whl",
+  "sha256": "b24fdc165e09d88c67cee123c96a0493594a8cfcdca9e2e49eb82cd6b31e5b42",
+  "site_packages": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-v5-wheel-yrp9_xwl/installed/site-packages",
+  "runtime_modules_matched": 283,
+  "installation": "pip --no-deps --no-index --target"
+}

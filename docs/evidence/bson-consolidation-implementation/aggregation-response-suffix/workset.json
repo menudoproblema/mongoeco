@@ -1,0 +1,9 @@
+{
+  "src/mongoeco/api/_async/aggregation_cursor.py": "9b3d7105ee19f56c6d1141b9b706d712e5019a283d22f1ba603d549d9bcbf214",
+  "tests/differential/semantic_aggregation_response_cases.py": "a120a7cf052f1de3c4f29736e3e42b8564e09bd11b525b4d1fa757ef7bb6eac6",
+  "tests/differential/semantic_corpora.py": "ccd2ee8f29adbeb386aacd4a9dbc9d20fc0a9b8d181e71ab3c0a7d43e48f184c",
+  "tests/fixtures/semantic_aggregation_response_7_0.json": "a8807a91151802429e4869243dd970b1668157d4b7cc418d03dbaa5ee2f0b658",
+  "tests/fixtures/semantic_aggregation_response_8_0.json": "4d0a759025894496134b397f09591b6bd763cf69bc903c3fe519c1ac69d58842",
+  "tests/fixtures/semantic_aggregation_response_9_0.json": "8ccd69e44b3116b1901c8fe035dc90f91c2cffb3397bde776866a5f71372af97",
+  "tests/unit/api/test_aggregation_cursor.py": "647a3d5181a0b3fb016c5af39a068013b85b0334a2262b0d6c4a9f647fa05163"
+}

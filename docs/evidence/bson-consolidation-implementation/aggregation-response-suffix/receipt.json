@@ -1,0 +1,228 @@
+{
+  "status": "bounded functional slice delivered; full plan and D06 still implementation_in_progress",
+  "base": "7328feb",
+  "production_commit": "d9e9579",
+  "runtime": "runtime-sources.json",
+  "workset": "workset.json",
+  "baseline": "baseline.json",
+  "wheel": "wheel.json",
+  "native": {
+    "archive": "native-final.tar.gz",
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "captured_and_checked_actions_per_version": 7,
+    "native_surface": "sync PyMongo; other surfaces are replay",
+    "explicit_order": true,
+    "observations": [
+      "exception class",
+      "code",
+      "codeName",
+      "phase",
+      "typed received rows",
+      "prefix type"
+    ]
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "exit_code": 0,
+      "passed": 7054,
+      "log": "full-replay.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/unit/api tests/unit/wire tests/integration/api/test_pymongo_bson_boundary.py tests/integration/api/test_api_option_conservation.py --tb=short",
+      "exit_code": 0,
+      "passed": 3188,
+      "skipped": 1,
+      "subtests_passed": 1128,
+      "log": "core-api-wire.txt.gz"
+    },
+    {
+      "command": "verified isolated 7328feb import and 283 source hashes; pytest -q -o pythonpath= tests/integration/api/test_semantic_group_regressions.py -k aggregation_response --tb=short",
+      "exit_code": 1,
+      "failed_expected": 120,
+      "passed": 51,
+      "log": "baseline.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k aggregation_response --tb=short",
+      "exit_code": 0,
+      "passed": 171,
+      "deselected": 6883,
+      "log": "focal.txt.gz"
+    },
+    {
+      "command": "verified pip-installed wheel; pytest -q -o pythonpath= tests/integration/api/test_semantic_group_regressions.py -k aggregation_response --tb=short",
+      "exit_code": 0,
+      "passed": 171,
+      "log": "wheel-replay.txt.gz"
+    },
+    {
+      "command": "Python 3.13.15, SDK absent, verified installed wheel import; sdk-free.py.txt",
+      "exit_code": 0,
+      "phase_and_spill_scenarios": 72,
+      "type_scenarios": 24,
+      "total_scenarios": 96,
+      "log": "wheel-sdk-free.txt.gz"
+    },
+    {
+      "command": "mutations.py.txt",
+      "expected_child_exit_codes": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "log": "mutations.txt.gz",
+      "cases": [
+        "unbounded_response",
+        "whole_expansion_tail",
+        "whole_materialized_suffix",
+        "public_prefix"
+      ]
+    },
+    {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "exit_code": 0,
+      "log": "typing.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/smoke_external_engine.py",
+      "exit_code": 0,
+      "passed": 5,
+      "not_applicable": 5,
+      "log": "spi.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref 7328feb",
+      "exit_code": 0,
+      "changed_python_files": 4,
+      "log": "lint.txt.gz"
+    }
+  ],
+  "public_manifest": {
+    "changes_vs_baseline": 0,
+    "artifact": "public-manifest-vs-base.json",
+    "canonical_snapshot_drift": "preexisting, retained by D05; not waived or regenerated here"
+  },
+  "benchmark": {
+    "sequence": "ABBAABBA per engine/workload",
+    "samples": 48,
+    "input_rows": 1500,
+    "forced_spill_threshold": 8,
+    "bson_output_hashes_identical": true,
+    "no_other_repository_gate_active": true,
+    "candidate_over_base_median": {
+      "MemoryEngine": {
+        "sort": 0.9982666759813545,
+        "group": 1.0211531615892564,
+        "unwind": 1.168965213579047
+      },
+      "SQLiteEngine": {
+        "sort": 1.027288733072166,
+        "group": 1.027471166142488,
+        "unwind": 1.1658235336908032
+      }
+    },
+    "raw": "benchmark.json",
+    "script": "benchmark.py.txt",
+    "scope": "sort/group/unwind output scheduling; not whole D05 performance acceptance",
+    "unwind_cost_increase_recorded": true
+  },
+  "cleanup": {
+    "owned_containers_independently_absent": 15,
+    "owned_volumes_independently_absent": 30,
+    "artifact": "native-cleanup.json"
+  },
+  "protected_sources": "protected-sources.json",
+  "historical_fixtures_modified": false,
+  "feedback": {
+    "invalid_empty_seed": "feedback-invalid-empty-seed.txt.gz",
+    "unstable_natural_order": "feedback-natural-order.txt.gz",
+    "interrupted_earlier_corpus": "feedback-interrupted-replay.txt.gz",
+    "full_replay_before_long_fix": {
+      "log": "feedback-full-before-types.txt.gz",
+      "passed": 7030,
+      "source": "feedback-cursor-before-types.py.txt",
+      "runtime": "feedback-runtime-before-types.json",
+      "not_final_acceptance": true
+    },
+    "long_reproduction": "feedback-long-before-types.json",
+    "earlier_native_six_action_archive": "feedback-native-six-actions.tar.gz"
+  },
+  "slice_guarantees": [
+    "Count-driven responses after materialized prefixes and expanding stages",
+    "Typed internal prefix values before suffix evaluation, including SDK-free Long",
+    "Prepared logical addresses, dialect, command bindings and clock retained",
+    "Single resource snapshot and released cursor reference at close",
+    "No new Python recursion limit from the scheduler; 995-stage local witness",
+    "Forced sort/group spill cleanup after deferred response error"
+  ],
+  "remaining": [
+    "Byte-bounded responses and application-codec ordering/atomicity",
+    "Direct raw batches and all raw wire representation boundaries",
+    "Other D06a/b String/Code and grammar contexts",
+    "D06c comparison/key consumers: group/sets/lookup/spill/Search",
+    "H53 disposition, sNaN conversion, optional D07 decision, D05 integrated matrices and general BSON admission B07"
+  ],
+  "limits": [
+    "No full goal or D06 completion.",
+    "Native captures are sync only; no new physical async/authenticated multiuser/concurrent-writing claim.",
+    "Benchmark cost is bounded to three workloads and includes approximately 17 percent unwind slowdown.",
+    "No remote CI, push, deployment or publication."
+  ],
+  "document_checks": {
+    "local_links_checked": 38,
+    "missing": []
+  },
+  "artifacts": {
+    "README.md": "fa75ed19c9f79ee658708f29091b2fed00a932dda0cd179c0b3fe4bc4e1e374a",
+    "baseline-run.py.txt": "8e902337a800888494f885eadb1dacc273b29b994ab7c748fcd32ef53e40ee50",
+    "baseline-runtime.json": "851c7f4a5a73bf668fe6d4301b8447a412847e63c12c2814ace98f5e3b3dbc20",
+    "baseline.json": "e1627061558220a3d8bd8d1ada00ad3fcfa9643746535d419084eb5dc3dc1600",
+    "baseline.txt.gz": "c4f5f6921d813f14860b561d67140c50283a89b2e2319b4d1161fc5ca93562d2",
+    "benchmark.json": "a5622bd5bde93fb7c0d633c2f138e673fd97f0d6aaca5fb09c7bcfd50faedebe",
+    "benchmark.py.txt": "1db5969ed30b99a1de0cebf44b88011ad39f05bba443d63edea15564c092faf9",
+    "benchmark.txt.gz": "375a2f13ae6a53193971425149497d913b3acf20c72f0c4b732baa1a7153153d",
+    "core-api-wire.txt.gz": "c5884d8ec5439168eb3e9bb8067b96f53c895a77593193786feb3611ff2cb95f",
+    "cursor-unit.txt.gz": "ba09c4b233a51b1bf96c5a50949dca262da68dfadfeea2e748407cfe8109344a",
+    "environment.json": "865d072c8609b86e4b097b39c3481ba9c88e75075683c56735d132255a572141",
+    "feedback-baseline-invalid-seed.txt.gz": "a98a911e4cbc8ef07d1ed8f580e49b3b79893a402d0b87cad089cbed909230ef",
+    "feedback-cursor-before-types.py.txt": "e1a88fba87bf303526f63b87a6b5389601c57d3dc6c61e4fac9b6cb20c70ea74",
+    "feedback-full-before-types.txt.gz": "785e59b1e92815a869f70f8c3911a636ef4a8dc36c36b48d11cb7ef3e7bc8a38",
+    "feedback-interrupted-replay.txt.gz": "9fe3d00b10ca8e304a239d6495133c2bc25d1b2629818ea228947d3ada94be9b",
+    "feedback-invalid-empty-seed.txt.gz": "f3f17a8d85185b70514588dfc54c574101d5712f001b1d74cfc20380e35f36dd",
+    "feedback-long-before-types.json": "ea52d1b5d6a6c28d7f22006f6a09c50a4e401d2bd4ab99952700d56f1b4b746d",
+    "feedback-native-six-actions.tar.gz": "1b451147a379509ab08cbb7c097253d190dddafb91289c2f9ab9c8912de8ca8d",
+    "feedback-natural-order.txt.gz": "751899f38b5eecd680576791b4d004ab9f777631972d80b1bb27a360a4fbe884",
+    "feedback-runtime-before-types.json": "6e4f41554e3ae6a620d6690d091a68978032f5bfc7bcc3825033539454929eae",
+    "focal.txt.gz": "e543d2443b2be3d5426b3e06af65ec7b61dff74a908af8dcfb7c2035ef16a333",
+    "full-replay.txt.gz": "642b5c51661ce4c187d34169c3ea793619f7f8175eb956558c9c6e51977ab942",
+    "lint.txt.gz": "43274d07d9d680bd1cf1ed12bcc3b036062dac8fc0bfe3de2338f6af40f6494a",
+    "mutant-public_prefix.txt.gz": "977b7197525ea4c9c0c0a10beceabb8b486ea61d012f97c427ef28b2a89aa6f1",
+    "mutant-unbounded_response.txt.gz": "693148605e5f1d291e160988e814989d2399b26ae8df1c629cb28c9098885b1b",
+    "mutant-whole_expansion_tail.txt.gz": "7478658ea1cd203e5b539f30bc02c49be4365103686e406a2da5fe67d9a8851f",
+    "mutant-whole_materialized_suffix.txt.gz": "86b5a215e2b9db6145a04a3cde85f1c51fb3bf7ddf650910b648dd6becc4260f",
+    "mutations.py.txt": "279be1c851a312cef5beff9df6afed27b366bcb38c51351711cb94c875fefe20",
+    "mutations.txt.gz": "55095ee713f662feab1ae70007c48e73e7fbef24be898de08d3d98e7e044b20c",
+    "native-cleanup.json": "47d30e8420fed02ff2ec09ec8d5e05acd56f2dbc57c3ff44cbea96e810c8ae24",
+    "native-final.tar.gz": "e3dc5e89e15f567da0383a850c895615292ccb70d68a8c863b334857e62719f3",
+    "native-matrix.py.txt": "f74cfbb67eeae883664fab016c15b958fe151ff936738e8a6d3db1b73430d92b",
+    "native-matrix.txt": "d4097bc061fc9ae49a7f0e4c973bb103f3f18c12e154a3a39e98ac33c86c717b",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "public-manifest-vs-base.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "runtime-sources.json": "b1023b46603422006206a7d3e46cc8f56a8d6bee211f382e700487c118c8cad7",
+    "sdk-free.py.txt": "b3c042d650c0b235a069848b1d485e3c9e24acf7731f14e1c95713ca8c8e7414",
+    "spi.txt.gz": "a256763b2c1afab4ee6ea0ea3e3d9fb0ae48f877753ec7e3d965d691632c2c79",
+    "typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "wheel-build.txt": "5723aa7eb080316ee663a1ba785e666ad0adc7905307f5e542f6ec9549547577",
+    "wheel-install.txt": "578bb1b0c13d7437849c2be6079ab363b1f54e3ebe9738697392bf105f365b6e",
+    "wheel-replay.txt.gz": "7792b82afc96ebbd7529d365f41b2af5780848b1d3ddf9d702c549a2957810b0",
+    "wheel-sdk-free.txt.gz": "0825450857c41b74b662cf155910f78bc06971dfca3bda7841766d0f93a053f0",
+    "wheel.json": "fc8921cb2025f64769182b6101accfb80af75eff4a5aebe59e87526341d33a71",
+    "workset.json": "f3ca42a02b53c47f964da77be30acab4abd47522e82451ec0ca74289eef9764d"
+  }
+}

@@ -1,0 +1,2655 @@
+import datetime
+import math
+import time
+
+from collections import deque
+from collections.abc import AsyncIterator, Iterable
+from copy import deepcopy
+from dataclasses import dataclass
+from itertools import islice
+
+from mongoeco.api._async._active_operations import track_active_operation
+from mongoeco.api._async.cursor import (
+    HintSpec,
+    _engine_spi,
+    _ensure_operation_executable,
+    _operation_issue_message,
+    _resolve_planning_mode,
+)
+from mongoeco.api.operations import (
+    AggregateOperation,
+    FindOperation,
+    compile_aggregate_operation,
+    compile_find_operation,
+)
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core._search_contract import TEXT_SEARCH_OPERATOR_NAMES
+from mongoeco.core.aggregation import (
+    _CURRENT_COLLECTION_RESOLVER_KEY,
+    AggregationCostPolicy,
+    AggregationSpillPolicy,
+    Pipeline,
+    apply_pipeline,
+    has_materializing_aggregation_stage,
+    is_streamable_aggregation_stage,
+    split_pushdown_pipeline,
+)
+from mongoeco.core.aggregation.grouping_stages import _IncrementalGroup
+from mongoeco.core.aggregation.extensions import (
+    get_registered_aggregation_stage_registration,
+)
+from mongoeco.core.aggregation.lookup_physical import (
+    explain_lookup_physical_plans,
+)
+from mongoeco.core.aggregation.planning import _require_sort
+from mongoeco.core.aggregation.preparation import prepare_pipeline
+from mongoeco.core.aggregation.resources import AggregationResources
+from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
+from mongoeco.core.aggregation.spill import _AggregationGroupStateSerializationError
+from mongoeco.core.aggregation.write_validation import validate_merge_mode_pair
+from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.collation import normalize_collation
+from mongoeco.core.error_documents import command_errors, error_message
+from mongoeco.core.expression_context import (
+    ExpressionExecutionContext,
+)
+from mongoeco.core.identity import (
+    assert_valid_root_document_id,
+)
+from mongoeco.core.operation_context import (
+    ChangePublicationPolicy,
+    OperationContext,
+    resolve_operation_session,
+)
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+    prepare_persistence_document,
+    prepare_public_document,
+)
+from mongoeco.core.search import (
+    compile_search_stage,
+    serialize_search_metadata,
+    strip_search_result_metadata,
+)
+from mongoeco.core.search_execution import SearchRequest
+from mongoeco.core.search_models import (
+    SearchExecutionMode,
+    SearchExplainVerbosity,
+)
+from mongoeco.core.search_planning import (
+    SearchPipelinePlan,
+    SearchPipelineStrategy,
+    SearchPlanningMode,
+    compile_search_pipeline_plan,
+    leading_search_downstream_filter_spec,
+    search_prefix_output_limit,
+    search_result_limit_hint,
+)
+from mongoeco.core.server_errors import operation_error, retain_diagnostic, server_error
+from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
+from mongoeco.engines.adapter import EngineSpiAdapter
+from mongoeco.errors import DuplicateKeyError, OperationFailure, WriteError
+from mongoeco.session import ClientSession
+from mongoeco.session_guards import ensure_session_can_use_engine
+from mongoeco.types import (
+    AggregateExplanation,
+    Document,
+    ObjectId,
+    QueryPlanExplanation,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class _StreamWindow:
+    start: int = 0
+    end: int | None = None
+
+    def skip(self, count: int) -> "_StreamWindow":
+        next_start = self.start + count
+        if self.end is not None:
+            next_start = min(next_start, self.end)
+        return _StreamWindow(next_start, self.end)
+
+    def limit(self, count: int) -> "_StreamWindow":
+        next_end = self.start + count
+        if self.end is not None:
+            next_end = min(next_end, self.end)
+        return _StreamWindow(self.start, next_end)
+
+    def as_skip_limit(self) -> tuple[int, int | None]:
+        if self.end is None:
+            return self.start, None
+        return self.start, max(self.end - self.start, 0)
+
+
+@dataclass(frozen=True, slots=True)
+class _IncrementalGroupPlan:
+    prefix: Pipeline
+    prefix_skip: int
+    prefix_limit: int | None
+    group_spec: object
+    suffix: Pipeline
+    group_average_uses_sum: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class _StreamingSortPlan:
+    sort_spec: object
+    suffix: Pipeline
+    suffix_skip: int
+    suffix_limit: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class _IncrementalSortPlan:
+    prefix: Pipeline
+    prefix_skip: int
+    prefix_limit: int | None
+    sort_spec: object
+    suffix: Pipeline
+    suffix_skip: int
+    suffix_limit: int | None
+
+
+@dataclass(slots=True)
+class _RemainingWindow:
+    skip: int
+    limit: int | None
+
+    @property
+    def open(self) -> bool:
+        return self.limit != 0
+
+    def apply(self, documents: list[Document]) -> list[Document]:
+        if self.skip:
+            if len(documents) <= self.skip:
+                self.skip -= len(documents)
+                return []
+            documents = documents[self.skip :]
+            self.skip = 0
+        if self.limit is not None:
+            documents = documents[: self.limit]
+            self.limit -= len(documents)
+        return documents
+
+
+class _CursorPageSource:
+    """Own a cursor iterator and expose one finite pull operation at a time."""
+
+    def __init__(self, cursor) -> None:
+        self._cursor = cursor
+        iterator_factory = getattr(cursor, "__aiter__", None)
+        self._iterator = iterator_factory() if callable(iterator_factory) else None
+        self._pull_chunk = getattr(self._iterator, "pull_chunk", None)
+        self._materialized: list[Document] | None = None
+        self._offset = 0
+
+    async def prepare(self) -> None:
+        if not callable(self._pull_chunk):
+            self._materialized = list(await self._cursor.to_list())
+
+    async def pull(self, maximum: int) -> list[Document]:
+        if callable(self._pull_chunk):
+            return list(await self._pull_chunk(maximum))
+        materialized = self._materialized or []
+        page = materialized[self._offset : self._offset + maximum]
+        self._offset += len(page)
+        return page
+
+    async def aclose(self) -> None:
+        close_cursor = getattr(self._cursor, "close", None)
+        if callable(close_cursor):
+            await close_cursor()
+            return
+        close_iterator = getattr(self._iterator, "aclose", None)
+        if callable(close_iterator):
+            await close_iterator()
+
+
+class _DeferredAggregationStream:
+    """Select one physical stream without nesting async-generator owners."""
+
+    def __init__(self, cursor: "AsyncAggregationCursor") -> None:
+        self._cursor = cursor
+        self._delegate: AsyncIterator[Document] | None = None
+        self._opening = False
+        self._closed = False
+
+    def __aiter__(self) -> AsyncIterator[Document]:
+        return self
+
+    async def __anext__(self) -> Document:
+        if self._closed:
+            raise StopAsyncIteration
+        if self._delegate is None:
+            if self._opening:
+                message = "aggregation stream cannot be opened concurrently"
+                raise RuntimeError(message)
+            self._opening = True
+            try:
+                delegate = await self._cursor._open_batch_stream()
+            except BaseException:
+                self._closed = True
+                raise
+            finally:
+                self._opening = False
+            if self._closed:
+                close = getattr(delegate, "aclose", None)
+                if callable(close):
+                    await close()
+                raise StopAsyncIteration
+            self._delegate = delegate
+        try:
+            return await self._delegate.__anext__()
+        except StopAsyncIteration:
+            await self.aclose()
+            raise
+        except BaseException:
+            await self.aclose()
+            raise
+
+    async def aclose(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        delegate = self._delegate
+        self._delegate = None
+        if delegate is None:
+            return
+        close = getattr(delegate, "aclose", None)
+        if callable(close):
+            await close()
+
+
+_SearchOptimizationStrategy = SearchPipelineStrategy
+_SearchOptimizationPlan = SearchPipelinePlan
+_LOCAL_STREAM_PREFIX_OPERATORS = frozenset(
+    {
+        "$match",
+        "$project",
+        "$unset",
+        "$addFields",
+        "$set",
+        "$unwind",
+        "$replaceRoot",
+        "$replaceWith",
+        "$redact",
+        "$skip",
+        "$limit",
+    }
+)
+_GROUP_OUTPUT_ORDER_FIELD = "__mongoeco_internal_group_order__"
+_GROUP_OUTPUT_DOCUMENT_FIELD = "__mongoeco_internal_group_document__"
+_NONEXPANDING_STREAM_STAGES = frozenset(
+    {
+        "$match",
+        "$project",
+        "$set",
+        "$addFields",
+        "$unset",
+        "$replaceRoot",
+        "$replaceWith",
+        "$lookup",
+    }
+)
+
+
+class AsyncAggregationCursor:
+    """Cursor async mínimo para resultados de aggregate()."""
+
+    def __await__(self):
+        return self._initialize().__await__()
+
+    async def _initialize(self):
+        if not self._initialized and not self._closed:
+            self._initialized = True
+            maximum = 101 if self._batch_size is None else self._batch_size
+            # PyMongo omits the initial batchSize for a write pipeline. Raw
+            # aggregate commands keep their requested size via _read_response.
+            if maximum == 0 and self._split_terminal_writeback_stage(self._pipeline)[1]:
+                maximum = 101
+            await self._fill_response(maximum)
+        return self
+
+    async def _read_response(self, maximum, *, initial=False):
+        """One server response, without the driver's getMore size promotion."""
+        if initial:
+            self._initialized = True
+        await self._fill_response(maximum)
+        batch = list(self._response_buffer)
+        self._response_buffer.clear()
+        return batch
+
+    async def _fill_response(self, maximum):
+        if self._closed or maximum == 0:
+            return
+        batch = []
+        self._response_remaining = maximum
+        try:
+            while maximum is None or len(batch) < maximum:
+                try:
+                    batch.append(await self._next_source_document())
+                except StopAsyncIteration:
+                    break
+                if self._response_remaining is not None:
+                    self._response_remaining -= 1
+        except BaseException:
+            await self.close()
+            raise
+        self._response_buffer.extend(batch)
+
+    _force_full_search_execution = False
+
+    def __init__(
+        self,
+        collection,
+        operation: AggregateOperation | Pipeline,
+        *,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        batch_size: int | None = None,
+        allow_disk_use: bool | None = None,
+        collation: dict[str, object] | None = None,
+        let: dict[str, object] | None = None,
+        session: ClientSession | None = None,
+        apply_codec_options: bool = True,
+    ):
+        self._collection = collection
+        self._apply_codec_options = apply_codec_options
+        if not isinstance(operation, AggregateOperation):
+            operation = compile_aggregate_operation(
+                operation,
+                collection=getattr(collection, "_collection_name", None),
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                allow_disk_use=allow_disk_use,
+                collation=collation,
+                let=let,
+                dialect=getattr(
+                    collection,
+                    "mongodb_dialect",
+                    MONGODB_DIALECT_70,
+                ),
+                planning_mode=_resolve_planning_mode(collection),
+            )
+        self._operation = operation
+        self._pipeline = operation.pipeline
+        self._hint = operation.hint
+        self._comment = operation.comment
+        self._max_time_ms = operation.max_time_ms
+        self._batch_size = operation.batch_size
+        self._allow_disk_use = operation.allow_disk_use
+        self._collation = normalize_collation(operation.collation)
+        self._let = operation.let
+        create_context = getattr(
+            self._collection,
+            "_new_operation_context",
+            None,
+        )
+        if operation.context is not None:
+            self._operation_context = operation.context
+            self._execution_context = operation.context.expressions
+        else:
+            context = (
+                create_context(
+                    session=session,
+                    collation=self._collation,
+                    bindings=self._let,
+                )
+                if callable(create_context)
+                else None
+            )
+            if context is None:
+                context = OperationContext.create(
+                    dialect=getattr(
+                        collection,
+                        "mongodb_dialect",
+                        MONGODB_DIALECT_70,
+                    ),
+                    codec_options=getattr(collection, "_codec_options", None),
+                    session=session,
+                    collation=self._collation,
+                    expressions=ExpressionExecutionContext(
+                        now=utc_bson_now(),
+                    ).with_command_let(
+                        self._let,
+                        dialect=getattr(
+                            collection, "mongodb_dialect", MONGODB_DIALECT_70
+                        ),
+                    ),
+                )
+            self._operation_context = context
+            self._execution_context = context.expressions
+            self._operation = operation.bind(context)
+        self._session = resolve_operation_session(
+            self._operation_context,
+            session,
+        )
+        self._active_async_iterator: AsyncIterator[Document] | None = None
+        self._response_buffer = deque()
+        self._initialized = False
+        self._response_remaining = None
+        self._pipeline_resources = None
+        self._closed = False
+
+    def _execution_variables(self) -> ExpressionExecutionContext:
+        return self._execution_context
+
+    def _ensure_session_can_use_engine(self) -> None:
+        ensure_session_can_use_engine(self._collection._engine, self._session)
+
+    def _leading_search_stage(self) -> tuple[str, object] | None:
+        if not self._pipeline:
+            return None
+        stage = self._pipeline[0]
+        if not isinstance(stage, dict) or len(stage) != 1:
+            return None
+        operator, spec = next(iter(stage.items()))
+        if operator not in {"$search", "$searchMeta", "$vectorSearch"}:
+            return None
+        return operator, spec
+
+    def _effective_pipeline(self) -> Pipeline:
+        self._pipeline = prepare_pipeline(
+            self._pipeline,
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+            collection=getattr(self._collection, "_collection_name", None),
+            variables=frozenset(self._execution_context.bindings),
+        )
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            return self._pipeline
+        return self._pipeline[1:]
+
+    def _cxp_explain_projection(self) -> dict[str, object]:
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            return build_mongodb_exchange_explain_projection(capability="aggregation")
+        operator, _spec = leading_search
+        if operator == "$vectorSearch":
+            return build_mongodb_exchange_explain_projection(
+                capability="aggregation",
+                additional_capabilities=("vector_search",),
+            )
+        return build_mongodb_exchange_explain_projection(
+            capability="aggregation",
+            additional_capabilities=("search",),
+        )
+
+    @classmethod
+    def _search_result_limit_hint(cls, pipeline: Pipeline) -> int | None:
+        return search_result_limit_hint(pipeline)
+
+    @classmethod
+    def _search_prefix_output_limit(cls, pipeline: Pipeline) -> int | None:
+        return search_prefix_output_limit(pipeline)
+
+    @staticmethod
+    def _leading_search_downstream_filter_spec(
+        pipeline: Pipeline,
+    ) -> dict[str, object] | None:
+        return leading_search_downstream_filter_spec(pipeline)
+
+    def _search_optimization_plan(
+        self,
+        operator: str,
+        spec: object,
+        pipeline: Pipeline,
+        *,
+        writeback: bool,
+    ) -> _SearchOptimizationPlan:
+        return compile_search_pipeline_plan(
+            operator,
+            spec,
+            pipeline,
+            writeback=writeback,
+            mode=(
+                SearchPlanningMode.REFERENCE
+                if self._force_full_search_execution
+                else SearchPlanningMode.OPTIMIZED
+            ),
+        )
+
+    @staticmethod
+    def _next_search_prefix_fetch_limit(
+        current_fetch_limit: int,
+        fetched_count: int,
+        transformed_count: int,
+        output_limit: int,
+    ) -> int:
+        if transformed_count <= 0:
+            return max(current_fetch_limit + 1, current_fetch_limit * 4)
+        estimated = math.ceil(
+            (fetched_count * output_limit) / transformed_count,
+        )
+        safety_margin = max(1, output_limit - transformed_count)
+        return max(current_fetch_limit + 1, estimated + safety_margin)
+
+    @staticmethod
+    def _split_terminal_writeback_stage(
+        pipeline: Pipeline,
+    ) -> tuple[Pipeline, tuple[str, object] | None]:
+        if not pipeline:
+            return pipeline, None
+        terminal = pipeline[-1]
+        if not isinstance(terminal, dict) or len(terminal) != 1:
+            return pipeline, None
+        operator, spec = next(iter(terminal.items()))
+        if (
+            operator != "$merge"
+            or get_registered_aggregation_stage_registration(operator) is not None
+        ):
+            return pipeline, None
+        for stage in pipeline[:-1]:
+            if isinstance(stage, dict) and "$merge" in stage:
+                raise OperationFailure(
+                    "$merge is only supported as the final aggregation stage",
+                )
+        return pipeline[:-1], (operator, spec)
+
+    def _target_database(self, db_name: str):
+        database = self._collection.database
+        if db_name == database.name:
+            return database
+        return type(database)(
+            self._collection._engine,
+            db_name,
+            mongodb_dialect=self._collection._mongodb_dialect,
+            mongodb_dialect_resolution=self._collection._mongodb_dialect_resolution,
+            pymongo_profile=self._collection._pymongo_profile,
+            pymongo_profile_resolution=self._collection._pymongo_profile_resolution,
+            write_concern=self._collection._write_concern,
+            read_concern=self._collection._read_concern,
+            read_preference=self._collection._read_preference,
+            codec_options=self._collection._codec_options,
+            change_hub=self._collection._change_hub,
+            change_stream_history_size=self._collection._change_stream_history_size,
+            change_stream_journal_path=self._collection._change_stream_journal_path,
+            change_stream_journal_fsync=self._collection._change_stream_journal_fsync,
+            change_stream_journal_max_bytes=self._collection._change_stream_journal_max_bytes,
+            now_factory=self._collection._now_factory,
+        )
+
+    async def _apply_merge_stage(
+        self,
+        documents: list[Document] | list[RuntimeDocumentState],
+        spec: object,
+    ) -> None:
+        if not isinstance(spec, dict):
+            raise OperationFailure("$merge requires a document specification")
+        into = spec.get("into")
+        if isinstance(into, str):
+            target_db_name = self._collection._db_name
+            target_coll_name = into
+        elif isinstance(into, dict):
+            target_db_name = spec_db = into.get(
+                "db",
+                self._collection._db_name,
+            )
+            target_coll_name = into.get("coll")
+            if not isinstance(spec_db, str) or not spec_db:
+                raise OperationFailure(
+                    "$merge.into.db must be a non-empty string",
+                )
+        else:
+            raise OperationFailure(
+                "$merge.into must be a collection name or {db, coll}",
+            )
+        if not isinstance(target_coll_name, str) or not target_coll_name:
+            raise OperationFailure(
+                "$merge.into.coll must be a non-empty string",
+            )
+        on = spec.get("on", "_id")
+        if on not in (None, "_id"):
+            raise OperationFailure(
+                "$merge currently supports only omitted on or on: '_id'",
+            )
+        when_matched = spec.get("whenMatched", "merge")
+        if isinstance(when_matched, list):
+            raise OperationFailure(
+                "$merge whenMatched pipelines are not supported in the local runtime",
+            )
+        if when_matched not in {"replace", "merge", "keepExisting", "fail"}:
+            raise OperationFailure(
+                "$merge whenMatched currently supports replace, merge, keepExisting or fail",
+            )
+        when_not_matched = spec.get("whenNotMatched", "insert")
+        if when_not_matched not in {"insert", "discard", "fail"}:
+            raise OperationFailure(
+                "$merge whenNotMatched currently supports insert, discard or fail",
+            )
+        validate_merge_mode_pair(spec)
+
+        target_collection = self._target_database(
+            target_db_name,
+        ).get_collection(target_coll_name)
+
+        for source_document in documents:
+            candidate = (
+                prepare_persistence_document(source_document)
+                if isinstance(source_document, RuntimeDocumentState)
+                else strip_search_result_metadata(
+                    deepcopy(source_document),
+                    for_persistence=True,
+                )
+            )
+            if "_id" not in candidate:
+                candidate["_id"] = ObjectId()
+            operation_context = target_collection._new_operation_context(
+                session=self._session,
+                expressions=self._execution_context,
+                publication=(
+                    ChangePublicationPolicy.EMIT
+                    if target_collection._should_publish_change_events(
+                        session=self._session,
+                    )
+                    else ChangePublicationPolicy.RECORD_GAP
+                ),
+            )
+            try:
+                if isinstance(candidate["_id"], (list, tuple)):
+                    message = "$merge write error: 'on' field '_id' is an array"
+                    raise server_error(message, code=51185)
+                assert_valid_root_document_id(candidate["_id"])
+                internal_candidate = DocumentCodec.to_internal(candidate)
+                outcome = await target_collection._runtime.engine_merge_document(
+                    internal_candidate,
+                    when_matched=when_matched,
+                    when_not_matched=when_not_matched,
+                    operation_context=operation_context,
+                )
+            except DuplicateKeyError:
+                # Command replies with 11000 retain PyMongo's specialized
+                # duplicate-key family; other per-item write errors do not.
+                raise
+            except WriteError as error:
+                # Aggregation reports a command failure, not an individual write.
+                raise retain_diagnostic(
+                    error,
+                    OperationFailure(
+                        error_message(error), code=error.code, details=error.details
+                    ),
+                ) from error
+            if outcome.matched and when_matched == "fail":
+                raise OperationFailure(
+                    "$merge whenMatched=fail found an existing target document "
+                    f"for _id={candidate['_id']!r}",
+                )
+            if not outcome.matched and when_not_matched == "fail":
+                raise OperationFailure(
+                    "$merge whenNotMatched=fail found no target document "
+                    f"for _id={candidate['_id']!r}",
+                )
+
+    async def _search_states(
+        self,
+        optimization: _SearchOptimizationPlan | None = None,
+    ) -> list[RuntimeDocumentState]:
+        if optimization is None:
+            optimization = _SearchOptimizationPlan()
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            message = "search stage was not present"
+            raise OperationFailure(message)
+        operator, spec = leading_search
+        _query, outcome = await self._execute_search(
+            operator,
+            spec,
+            result_limit_hint=optimization.result_limit_hint,
+            downstream_filter_spec=optimization.downstream_filter_spec,
+            pipeline_plan=optimization,
+        )
+        documents = outcome.runtime_states
+        if operator != "$searchMeta":
+            return documents
+        return [RuntimeDocumentState(serialize_search_metadata(outcome.metadata))]
+
+    async def _search_documents(
+        self,
+        optimization: _SearchOptimizationPlan | None = None,
+    ) -> list[Document]:
+        """Compatibility view for callers of the pre-4.6 private helper."""
+        return [
+            state.public_document() for state in await self._search_states(optimization)
+        ]
+
+    async def _execute_search(
+        self,
+        operator: str,
+        spec: object,
+        *,
+        result_limit_hint: int | None,
+        downstream_filter_spec: dict[str, object] | None,
+        pipeline_plan: SearchPipelinePlan | None = None,
+    ):
+        query, request = self._build_search_request(
+            operator,
+            spec,
+            result_limit_hint=result_limit_hint,
+            downstream_filter_spec=downstream_filter_spec,
+            pipeline_plan=pipeline_plan,
+        )
+        outcome = await EngineSpiAdapter(
+            self._collection._engine,
+        ).execute_search(
+            self._collection._db_name,
+            self._collection._collection_name,
+            request,
+        )
+        return query, outcome
+
+    def _build_search_request(
+        self,
+        operator: str,
+        spec: object,
+        *,
+        result_limit_hint: int | None,
+        downstream_filter_spec: dict[str, object] | None,
+        pipeline_plan: SearchPipelinePlan | None = None,
+    ):
+        if self._operation_context is None:
+            message = "Search execution requires OperationContext"
+            raise RuntimeError(message)
+        query = compile_search_stage(operator, spec)
+        request = SearchRequest(
+            operator=operator,
+            specification=spec,
+            query=query,
+            mode=(
+                SearchExecutionMode.METADATA
+                if operator == "$searchMeta"
+                else SearchExecutionMode.HITS
+            ),
+            operation_context=self._operation_context,
+            runtime_operator=("$search" if operator == "$searchMeta" else None),
+            runtime_specification=(
+                self._search_runtime_spec_for_stage(operator, spec)
+                if operator == "$searchMeta"
+                else None
+            ),
+            max_time_ms=self._max_time_ms,
+            result_limit_hint=result_limit_hint,
+            downstream_filter_spec=downstream_filter_spec,
+            pipeline_plan=pipeline_plan,
+        )
+        return query, request
+
+    @staticmethod
+    def _search_runtime_spec_for_stage(operator: str, spec: object) -> object:
+        if operator != "$searchMeta" or not isinstance(spec, dict):
+            return spec
+        facet_spec = spec.get("facet")
+        if not isinstance(facet_spec, dict):
+            return spec
+        operator_spec = facet_spec.get("operator")
+        if not isinstance(operator_spec, dict):
+            return spec
+        clause_names = [
+            name for name in TEXT_SEARCH_OPERATOR_NAMES if name in operator_spec
+        ]
+        if len(clause_names) != 1:
+            return spec
+        clause_name = clause_names[0]
+        normalized = dict(spec)
+        normalized_facet = dict(facet_spec)
+        normalized_facet.pop("operator", None)
+        normalized["facet"] = normalized_facet
+        normalized[clause_name] = operator_spec[clause_name]
+        return normalized
+
+    async def _materialize_leading_search_pipeline(
+        self,
+        pipeline: Pipeline,
+        *,
+        dialect,
+        deadline: float | None = None,
+        writeback: bool = False,
+    ) -> tuple[list[RuntimeDocumentState], Pipeline]:
+        leading_search = self._leading_search_stage()
+        if leading_search is None:
+            raise OperationFailure("search stage was not present")
+        operator, spec = leading_search
+        optimization = self._search_optimization_plan(
+            operator,
+            spec,
+            pipeline,
+            writeback=writeback,
+        )
+        if optimization.strategy in {
+            _SearchOptimizationStrategy.DIRECT_WINDOW,
+            _SearchOptimizationStrategy.EMPTY,
+        }:
+            return await self._search_states(optimization), pipeline
+
+        output_limit = optimization.prefix_output_limit
+        if output_limit is None:
+            return await self._search_states(optimization), pipeline
+
+        fetch_limit = max(output_limit, 1)
+        previous_count = -1
+        while True:
+            _query, outcome = await self._execute_search(
+                operator,
+                spec,
+                result_limit_hint=fetch_limit,
+                downstream_filter_spec=optimization.downstream_filter_spec,
+                pipeline_plan=optimization,
+            )
+            documents = outcome.runtime_states
+            transformed = apply_pipeline_states(
+                documents,
+                pipeline,
+                variables=self._execution_variables(),
+                dialect=dialect,
+                collation=self._collation,
+                spill_policy=self._spill_policy(),
+                lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                deadline=deadline,
+            )
+            if len(transformed) >= output_limit:
+                return transformed, []
+            if len(documents) == previous_count or len(documents) < fetch_limit:
+                return transformed, []
+            previous_count = len(documents)
+            fetch_limit = self._next_search_prefix_fetch_limit(
+                fetch_limit,
+                len(documents),
+                len(transformed),
+                output_limit,
+            )
+
+    @staticmethod
+    def _split_streamable_pipeline(
+        pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+    ) -> tuple[Pipeline, int, int | None] | None:
+        streamable_pipeline: Pipeline = []
+        trailing_window = _StreamWindow()
+        seen_trailing_window = False
+
+        for stage in pipeline:
+            operator, spec = next(iter(stage.items()))
+            if (
+                operator in {"$skip", "$limit"}
+                and get_registered_aggregation_stage_registration(operator) is None
+            ):
+                seen_trailing_window = True
+                if operator == "$skip":
+                    trailing_window = trailing_window.skip(int(spec))
+                else:
+                    trailing_window = trailing_window.limit(int(spec))
+                continue
+            if seen_trailing_window:
+                return None
+            if not is_streamable_aggregation_stage(operator, dialect=dialect):
+                return None
+            streamable_pipeline.append(stage)
+
+        trailing_skip, trailing_limit = trailing_window.as_skip_limit()
+        return streamable_pipeline, trailing_skip, trailing_limit
+
+    @classmethod
+    def _split_incremental_group_pipeline(
+        cls,
+        pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+    ) -> _IncrementalGroupPlan | None:
+        for index, stage in enumerate(pipeline):
+            if not isinstance(stage, dict) or len(stage) != 1:
+                return None
+            operator, spec = next(iter(stage.items()))
+            if operator == "$group":
+                prefix_split = cls._split_streamable_pipeline(
+                    pipeline[:index],
+                    dialect=dialect,
+                )
+                if prefix_split is None:
+                    return None
+                prefix, prefix_skip, prefix_limit = prefix_split
+                return _IncrementalGroupPlan(
+                    prefix=prefix,
+                    prefix_skip=prefix_skip,
+                    prefix_limit=prefix_limit,
+                    group_spec=spec,
+                    suffix=pipeline[index + 1 :],
+                    group_average_uses_sum=getattr(
+                        stage, "group_average_uses_sum", False
+                    ),
+                )
+            if operator not in _LOCAL_STREAM_PREFIX_OPERATORS:
+                return None
+        return None
+
+    @classmethod
+    def _split_materialized_suffix(cls, pipeline, *, dialect):
+        for index in range(1, len(pipeline)):
+            suffix = cls._split_streamable_pipeline(pipeline[index:], dialect=dialect)
+            if suffix is not None:
+                return pipeline[:index], suffix
+        return None
+
+    @classmethod
+    def _split_streaming_sort_suffix(
+        cls,
+        pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+    ) -> _StreamingSortPlan | None:
+        if not pipeline:
+            return None
+        first = pipeline[0]
+        if not isinstance(first, dict) or len(first) != 1 or "$sort" not in first:
+            return None
+        suffix_split = cls._split_streamable_pipeline(
+            pipeline[1:],
+            dialect=dialect,
+        )
+        if suffix_split is None:
+            return None
+        suffix, suffix_skip, suffix_limit = suffix_split
+        return _StreamingSortPlan(
+            sort_spec=first["$sort"],
+            suffix=suffix,
+            suffix_skip=suffix_skip,
+            suffix_limit=suffix_limit,
+        )
+
+    @classmethod
+    def _split_incremental_sort_pipeline(
+        cls,
+        pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+    ) -> _IncrementalSortPlan | None:
+        for index, stage in enumerate(pipeline):
+            if not isinstance(stage, dict) or len(stage) != 1:
+                return None
+            operator, spec = next(iter(stage.items()))
+            if operator == "$sort":
+                prefix_split = cls._split_streamable_pipeline(
+                    pipeline[:index],
+                    dialect=dialect,
+                )
+                suffix_split = cls._split_streamable_pipeline(
+                    pipeline[index + 1 :],
+                    dialect=dialect,
+                )
+                if prefix_split is None or suffix_split is None:
+                    return None
+                prefix, prefix_skip, prefix_limit = prefix_split
+                suffix, suffix_skip, suffix_limit = suffix_split
+                return _IncrementalSortPlan(
+                    prefix=prefix,
+                    prefix_skip=prefix_skip,
+                    prefix_limit=prefix_limit,
+                    sort_spec=spec,
+                    suffix=suffix,
+                    suffix_skip=suffix_skip,
+                    suffix_limit=suffix_limit,
+                )
+            if operator not in _LOCAL_STREAM_PREFIX_OPERATORS:
+                return None
+        return None
+
+    def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
+        names: set[str] = set()
+        for stage in pipeline:
+            if not isinstance(stage, dict) or len(stage) != 1:
+                continue
+            if "$facet" in stage:
+                spec = stage["$facet"]
+                if isinstance(spec, dict):
+                    for subpipeline in spec.values():
+                        if isinstance(subpipeline, list):
+                            names.update(
+                                self._collect_collection_names(subpipeline),
+                            )
+                continue
+            if "$lookup" in stage:
+                spec = stage["$lookup"]
+                if not isinstance(spec, dict):
+                    continue
+                from_collection = spec.get("from")
+                if isinstance(from_collection, str):
+                    names.add(from_collection)
+                pipeline_spec = spec.get("pipeline")
+                if isinstance(pipeline_spec, list):
+                    names.update(self._collect_collection_names(pipeline_spec))
+                continue
+            if "$unionWith" in stage:
+                spec = stage["$unionWith"]
+                if isinstance(spec, str):
+                    if spec:
+                        names.add(spec)
+                    continue
+                if not isinstance(spec, dict):
+                    continue
+                coll = spec.get("coll")
+                if isinstance(coll, str):
+                    names.add(coll)
+                elif "pipeline" in spec:
+                    names.add(_CURRENT_COLLECTION_RESOLVER_KEY)
+                pipeline_spec = spec.get("pipeline")
+                if isinstance(pipeline_spec, list):
+                    names.update(self._collect_collection_names(pipeline_spec))
+        return names
+
+    def _collect_lookup_names(self, pipeline: Pipeline) -> set[str]:
+        # Compatibilidad interna con tests y callers existentes; ahora recoge
+        # también colecciones referenciadas por $unionWith.
+        return {
+            name
+            for name in self._collect_collection_names(pipeline)
+            if name != _CURRENT_COLLECTION_RESOLVER_KEY
+        }
+
+    async def _load_referenced_collections(self) -> dict[str, list[Document]]:
+        names = self._collect_collection_names(self._effective_pipeline())
+        loaded: dict[str, list[Document]] = {}
+        if _CURRENT_COLLECTION_RESOLVER_KEY in names:
+            collection_name = getattr(
+                self._collection,
+                "_collection_name",
+                None,
+            )
+            if isinstance(collection_name, str):
+                loaded[
+                    _CURRENT_COLLECTION_RESOLVER_KEY
+                ] = await self._load_collection_documents(
+                    collection_name,
+                )
+        for name in names:
+            if name == _CURRENT_COLLECTION_RESOLVER_KEY:
+                continue
+            loaded[name] = await self._load_collection_documents(name)
+        return loaded
+
+    async def _load_pipeline_resources(self) -> AggregationResources:
+        """Bind the prepared dependency graph, retaining namespace ownership."""
+        if self._pipeline_resources is not None:
+            return self._pipeline_resources
+        self._effective_pipeline()
+        program = self._pipeline
+        loaded = {}
+        root = getattr(self._collection, "_collection_name", None)
+        snapshots = {}
+        for request in program.requests:
+            if request.operator == "documents":
+                if request.collection is not None and request.collection not in loaded:
+                    loaded[request.collection] = await self._load_collection_documents(
+                        request.collection
+                    )
+                continue
+            key = (request.collection, request.operator, request.scale)
+            if key in snapshots:
+                continue
+            pipeline = [{request.operator: {}}]
+            if request.operator == "$collStats":
+                pipeline = [{"$collStats": {"storageStats": {"scale": request.scale}}}]
+                stats = await self._load_collstats_snapshots(
+                    pipeline, request.collection
+                )
+                snapshots[key] = stats[request.scale]
+            elif request.operator == "$indexStats":
+                snapshots[key] = await self._load_index_stats_snapshot(
+                    pipeline, request.collection
+                )
+            elif request.operator == "$planCacheStats":
+                snapshots[key] = self._load_plan_cache_stats_snapshot(
+                    pipeline, request.collection
+                )
+            elif request.operator == "$listSessions":
+                snapshots[key] = self._load_list_sessions_snapshot(pipeline)
+            elif request.operator == "$currentOp":
+                snapshot = getattr(
+                    self._collection._engine, "_snapshot_active_operations", None
+                )
+                snapshots[key] = snapshot() if callable(snapshot) else []
+        self._pipeline_resources = AggregationResources(loaded, root, snapshots)
+        return self._pipeline_resources
+
+    def _collect_collstats_scales(self, pipeline: Pipeline) -> set[int]:
+        scales: set[int] = set()
+        for stage in pipeline:
+            if (
+                not isinstance(stage, dict)
+                or len(stage) != 1
+                or "$collStats" not in stage
+            ):
+                continue
+            spec = stage["$collStats"]
+            if not isinstance(spec, dict):
+                continue
+            storage_spec = spec.get("storageStats")
+            if isinstance(storage_spec, dict):
+                scale = storage_spec.get("scale", 1)
+                if isinstance(scale, int) and not isinstance(scale, bool) and scale > 0:
+                    scales.add(scale)
+            else:
+                scales.add(1)
+        return scales
+
+    def _collect_current_op_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$currentOp" in stage
+            for stage in pipeline
+        )
+
+    def _collect_plan_cache_stats_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$planCacheStats" in stage
+            for stage in pipeline
+        )
+
+    def _collect_list_sessions_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$listSessions" in stage
+            for stage in pipeline
+        )
+
+    async def _load_collstats_snapshots(
+        self,
+        pipeline: Pipeline,
+        collection_name: str | None = None,
+    ) -> dict[int, Document]:
+        snapshots: dict[int, Document] = {}
+        scales = self._collect_collstats_scales(pipeline)
+        if not scales:
+            return snapshots
+        database = self._collection.database
+        for scale in sorted(scales):
+            snapshot = await database._admin._collection_stats(
+                collection_name or self._collection._collection_name,
+                scale=scale,
+                session=self._session,
+            )
+            snapshots[scale] = snapshot.to_document()
+        return snapshots
+
+    def _collect_index_stats_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$indexStats" in stage
+            for stage in pipeline
+        )
+
+    async def _load_index_stats_snapshot(
+        self,
+        pipeline: Pipeline,
+        collection_name: str | None = None,
+    ) -> list[Document]:
+        if not self._collect_index_stats_requested(pipeline):
+            return []
+        target = (
+            self._collection
+            if collection_name is None
+            or collection_name == self._collection._collection_name
+            else self._collection.database.get_collection(collection_name)
+        )
+        index_documents = await target.list_indexes(
+            session=self._session,
+        ).to_list()
+        captured_at = datetime.datetime.now(datetime.UTC)
+        snapshot: list[Document] = []
+        for index_document in index_documents:
+            snapshot.append(
+                {
+                    "name": index_document.get("name"),
+                    "key": deepcopy(index_document.get("key")),
+                    "spec": deepcopy(index_document),
+                    "accesses": {
+                        "ops": 0,
+                        "since": captured_at,
+                    },
+                },
+            )
+        return snapshot
+
+    def _load_plan_cache_stats_snapshot(
+        self,
+        pipeline: Pipeline,
+        collection_name: str | None = None,
+    ) -> list[Document]:
+        if not self._collect_plan_cache_stats_requested(pipeline):
+            return []
+        runtime_diagnostics = getattr(
+            self._collection._engine,
+            "_runtime_diagnostics_info",
+            None,
+        )
+        diagnostics = runtime_diagnostics() if callable(runtime_diagnostics) else {}
+        if not isinstance(diagnostics, dict):
+            diagnostics = {}
+        captured_at = datetime.datetime.now(datetime.UTC)
+        return [
+            {
+                "ns": f"{self._collection._db_name}.{collection_name or self._collection._collection_name}",
+                "isActive": True,
+                "isPinned": False,
+                "works": 0,
+                "timeOfCreation": captured_at,
+                "createdFromQuery": {
+                    "stage": "$planCacheStats",
+                    "runtime": "mongoeco-local",
+                },
+                "cachedPlan": deepcopy(diagnostics),
+            },
+        ]
+
+    def _load_list_sessions_snapshot(
+        self,
+        pipeline: Pipeline,
+    ) -> list[Document]:
+        if not self._collect_list_sessions_requested(pipeline):
+            return []
+        captured_at = datetime.datetime.now(datetime.UTC)
+        snapshot_by_id: dict[str, Document] = {}
+        if self._session is not None:
+            snapshot_by_id[self._session.session_id] = {
+                "_id": {"id": self._session.session_id},
+                "lastUse": captured_at,
+                "causalConsistency": self._session.causal_consistency,
+                "inTransaction": self._session.in_transaction,
+                "transactionNumber": self._session.transaction_number,
+                "engineState": deepcopy(self._session.engine_state),
+            }
+        snapshot_active_operations = getattr(
+            self._collection._engine,
+            "_snapshot_active_operations",
+            None,
+        )
+        operation_snapshot = (
+            snapshot_active_operations() if callable(snapshot_active_operations) else []
+        )
+        if isinstance(operation_snapshot, list):
+            for operation in operation_snapshot:
+                if not isinstance(operation, dict):
+                    continue
+                session_id = operation.get("sessionId")
+                if not isinstance(session_id, str) or not session_id:
+                    continue
+                snapshot_by_id.setdefault(
+                    session_id,
+                    {
+                        "_id": {"id": session_id},
+                        "lastUse": captured_at,
+                        "fromCurrentOp": True,
+                    },
+                )
+        return list(snapshot_by_id.values())
+
+    def _scan_collection_with_operation(
+        self,
+        collection_name: str,
+        operation: FindOperation,
+    ):
+        engine = self._collection._engine
+        dialect = getattr(
+            self._collection,
+            "mongodb_dialect",
+            MONGODB_DIALECT_70,
+        )
+        from mongoeco.engines.semantic_core import (  # noqa: PLC0415
+            compile_find_semantics_from_operation,
+        )
+
+        bound_operation = (
+            operation
+            if self._operation_context is None
+            else operation.bind(self._operation_context)
+        )
+        semantics = compile_find_semantics_from_operation(
+            bound_operation,
+            dialect=dialect,
+            variables=self._execution_variables(),
+        )
+        runtime = getattr(self._collection, "_runtime", None)
+        if runtime is not None and self._operation_context is not None:
+            return runtime._open_change_delivering_snapshot(
+                collection_name, semantics, self._operation_context
+            )
+        return EngineSpiAdapter(engine).open_read_snapshot(
+            self._collection._db_name,
+            collection_name,
+            semantics,
+            operation_context=self._operation_context,
+        )
+
+    async def _load_collection_documents(
+        self,
+        collection_name: str,
+    ) -> list[Document]:
+        operation = compile_find_operation(
+            {},
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            dialect=getattr(
+                self._collection,
+                "mongodb_dialect",
+                MONGODB_DIALECT_70,
+            ),
+        )
+        return [
+            document
+            async for document in self._scan_collection_with_operation(
+                collection_name,
+                operation,
+            )
+        ]
+
+    def _build_pushdown_cursor(self, operation: FindOperation):
+        build_cursor = getattr(self._collection, "_build_cursor", None)
+        if callable(build_cursor):
+            try:
+                return build_cursor(
+                    operation,
+                    session=self._session,
+                    apply_codec_options=False,
+                    execution_variables=self._execution_variables(),
+                )
+            except TypeError as exc:
+                if "apply_codec_options" not in str(exc):
+                    raise
+                return build_cursor(
+                    operation,
+                    session=self._session,
+                )
+        options = {
+            "collation": operation.collation,
+            "sort": operation.sort,
+            "skip": operation.skip,
+            "limit": operation.limit,
+            "hint": operation.hint,
+            "comment": operation.comment,
+            "max_time_ms": operation.max_time_ms,
+            "batch_size": operation.batch_size,
+            "let": operation.let,
+            "session": self._session,
+        }
+        try:
+            return self._collection.find(
+                operation.filter_spec,
+                operation.projection,
+                **options,
+            )
+        except TypeError as exc:
+            if "let" not in str(exc):
+                raise
+            options.pop("let")
+            return self._collection.find(
+                operation.filter_spec,
+                operation.projection,
+                **options,
+            )
+
+    def _source_materialization_probe(
+        self,
+        pipeline: Pipeline,
+        *,
+        dialect,
+    ) -> tuple[AggregationCostPolicy, int] | None:
+        policy = self._cost_policy()
+        if (
+            policy is None
+            or self._spill_policy() is not None
+            or not has_materializing_aggregation_stage(
+                pipeline,
+                dialect=dialect,
+            )
+        ):
+            return None
+        return policy, policy.max_materialized_documents + 1
+
+    async def _load_pushdown_source_documents(
+        self,
+        pipeline: Pipeline,
+        *,
+        dialect,
+    ) -> list[Document]:
+        source_cursor = self._build_pushdown_cursor(
+            self._pushdown_find_operation(),
+        )
+        probe = self._source_materialization_probe(
+            pipeline,
+            dialect=dialect,
+        )
+        try:
+            if probe is None:
+                return await source_cursor.to_list()
+            policy, read_limit = probe
+            documents = await source_cursor.to_list(length=read_limit)
+            if len(documents) >= read_limit:
+                policy.enforce_budget(
+                    document_count=len(documents),
+                    has_materializing_stage=True,
+                    spill_available=False,
+                )
+            return documents
+        except BaseException as primary_error:
+            close = getattr(source_cursor, "close", None)
+            if callable(close):
+                try:
+                    await close()
+                except BaseException as close_error:
+                    primary_error.add_note(
+                        f"source cursor cleanup failed: {close_error}",
+                    )
+            raise
+
+    async def _materialize(
+        self,
+        pipeline: Pipeline | None = None,
+        *,
+        deadline: float | None = None,
+    ) -> list[Document]:
+        _ensure_operation_executable(self._collection, self._operation)
+        self._ensure_session_can_use_engine()
+        if deadline is None:
+            deadline = operation_deadline(self._max_time_ms)
+        dialect = getattr(
+            self._collection,
+            "mongodb_dialect",
+            MONGODB_DIALECT_70,
+        )
+        effective_pipeline = self._effective_pipeline()
+        pipeline = effective_pipeline if pipeline is None else pipeline
+        pipeline, writeback_stage = self._split_terminal_writeback_stage(
+            pipeline,
+        )
+        with track_active_operation(
+            self._collection._engine,
+            command_name="aggregate",
+            operation_type="aggregate",
+            namespace=f"{self._collection._db_name}.{self._collection._collection_name}",
+            session=self._session,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+        ):
+            enforce_deadline(deadline)
+            if self._leading_search_stage() is not None:
+                (
+                    documents,
+                    remaining_pipeline,
+                ) = await self._materialize_leading_search_pipeline(
+                    pipeline,
+                    dialect=dialect,
+                    deadline=deadline,
+                    writeback=writeback_stage is not None,
+                )
+            else:
+                pushdown = split_pushdown_pipeline(
+                    pipeline,
+                    dialect=dialect,
+                )
+                remaining_pipeline = pushdown.remaining_pipeline
+                if (
+                    remaining_pipeline
+                    and isinstance(remaining_pipeline[0], dict)
+                    and (
+                        "$collStats" in remaining_pipeline[0]
+                        or "$indexStats" in remaining_pipeline[0]
+                        or "$currentOp" in remaining_pipeline[0]
+                        or "$planCacheStats" in remaining_pipeline[0]
+                        or "$listSessions" in remaining_pipeline[0]
+                    )
+                ):
+                    documents = []
+                else:
+                    documents = await self._load_pushdown_source_documents(
+                        remaining_pipeline,
+                        dialect=dialect,
+                    )
+            self._enforce_materialization_budget(
+                len(documents),
+                remaining_pipeline,
+                dialect=dialect,
+            )
+            referenced_collections = await self._load_pipeline_resources()
+            pipeline_kwargs = {
+                **referenced_collections.resolver_kwargs(),
+                "variables": self._execution_variables(),
+                "dialect": dialect,
+                "collation": self._collation,
+                "spill_policy": self._spill_policy(),
+                "lookup_hash_max_associations": (self._lookup_hash_max_associations()),
+                "deadline": deadline,
+            }
+            result = (
+                apply_pipeline_states(
+                    documents,
+                    remaining_pipeline,
+                    **pipeline_kwargs,
+                )
+                if self._leading_search_stage() is not None
+                else apply_pipeline(
+                    documents,
+                    remaining_pipeline,
+                    **pipeline_kwargs,
+                )
+            )
+            enforce_deadline(deadline)
+            if writeback_stage is not None:
+                _operator, spec = writeback_stage
+                await self._apply_merge_stage(result, spec)
+                return []
+            return [
+                DocumentCodec.to_public(
+                    prepare_public_document(document)
+                    if isinstance(document, RuntimeDocumentState)
+                    else strip_search_result_metadata(document)
+                )
+                for document in result
+            ]
+
+    def _cost_policy(self) -> AggregationCostPolicy | None:
+        policy = getattr(
+            self._collection._engine,
+            "aggregation_cost_policy",
+            None,
+        )
+        if isinstance(policy, AggregationCostPolicy):
+            return policy
+        return None
+
+    def _lookup_hash_max_associations(self) -> int | None:
+        """Bound lookup acceleration without changing admission semantics."""
+        policy = self._cost_policy()
+        if policy is None:
+            return None
+        maximum = policy.max_materialized_documents
+        spill_policy = self._spill_policy()
+        if spill_policy is not None:
+            maximum = min(maximum, spill_policy.threshold)
+        return maximum
+
+    def _enforce_materialization_budget(
+        self,
+        document_count: int,
+        pipeline: Pipeline,
+        *,
+        dialect,
+    ) -> None:
+        policy = self._cost_policy()
+        if policy is None:
+            return
+        policy.enforce_budget(
+            document_count=document_count,
+            has_materializing_stage=has_materializing_aggregation_stage(
+                pipeline,
+                dialect=dialect,
+            ),
+            spill_available=self._spill_policy() is not None,
+        )
+
+    def _pushdown_find_operation(
+        self,
+        *,
+        batch_size: int | None = None,
+    ) -> FindOperation:
+        dialect = getattr(
+            self._collection,
+            "mongodb_dialect",
+            MONGODB_DIALECT_70,
+        )
+        pushdown = split_pushdown_pipeline(
+            self._effective_pipeline(),
+            dialect=dialect,
+        )
+        return compile_find_operation(
+            pushdown.filter_spec,
+            projection=pushdown.projection,
+            sort=pushdown.sort,
+            skip=pushdown.skip,
+            limit=pushdown.limit,
+            collation=self._operation.collation,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=batch_size if batch_size is not None else self._batch_size,
+            variables=self._let,
+            dialect=dialect,
+        ).with_overrides(
+            context=self._operation_context,
+            let=self._execution_context,
+        )
+
+    def _materialize_document(self, document: Document) -> Document:
+        if not self._apply_codec_options:
+            return DocumentCodec.to_public(document)
+        applier = getattr(
+            self._collection,
+            "_apply_codec_options_to_document",
+            None,
+        )
+        if callable(applier):
+            return applier(document)
+        return document
+
+    async def _accumulate_group_source(
+        self,
+        plan: _IncrementalGroupPlan,
+        *,
+        spill_policy: AggregationSpillPolicy | None,
+        cost_policy: AggregationCostPolicy | None,
+        dialect,
+        deadline: float | None,
+    ) -> Iterable[Document]:
+        probe_maximum = (
+            cost_policy.max_materialized_documents
+            if cost_policy is not None and spill_policy is None
+            else None
+        )
+        page_size = self._batch_size or 256
+        accumulator = _IncrementalGroup(
+            plan.group_spec,
+            self._execution_variables(),
+            dialect=dialect,
+            collation=self._collation,
+            deadline=deadline,
+            group_average_uses_sum=plan.group_average_uses_sum,
+        )
+        group_spool = None
+        try:
+            group_spool = await self._consume_incremental_group_pages(
+                plan,
+                accumulator=accumulator,
+                page_size=page_size,
+                probe_maximum=probe_maximum,
+                cost_policy=cost_policy,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+            if group_spool is None:
+                return accumulator.finish()
+            return self._iter_partitioned_group_output(
+                group_spool,
+                plan,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        except BaseException:
+            if group_spool is not None:
+                group_spool.close()
+            raise
+
+    async def _consume_incremental_group_pages(  # noqa: PLR0913
+        self,
+        plan: _IncrementalGroupPlan,
+        *,
+        accumulator,
+        page_size: int,
+        probe_maximum: int | None,
+        cost_policy: AggregationCostPolicy | None,
+        spill_policy: AggregationSpillPolicy | None,
+        dialect,
+        deadline: float | None,
+    ):
+        remaining_skip = plan.prefix_skip
+        remaining_limit = plan.prefix_limit
+        if remaining_limit == 0:
+            return None
+        source_batch_size = (
+            page_size if probe_maximum is None else min(page_size, probe_maximum + 1)
+        )
+        source = _CursorPageSource(
+            self._build_pushdown_cursor(
+                self._pushdown_find_operation(batch_size=source_batch_size),
+            )
+        )
+        source_count = 0
+        group_position = 0
+        group_spool = None
+        spill_allowed = spill_policy is not None
+        try:
+            await source.prepare()
+            while remaining_limit != 0:
+                requested = page_size
+                if probe_maximum is not None:
+                    requested = min(
+                        requested,
+                        probe_maximum + 1 - source_count,
+                    )
+                page = await source.pull(requested)
+                if not page:
+                    break
+                source_count += len(page)
+                if (
+                    cost_policy is not None
+                    and probe_maximum is not None
+                    and source_count > probe_maximum
+                ):
+                    cost_policy.enforce_budget(
+                        document_count=source_count,
+                        has_materializing_stage=True,
+                        spill_available=False,
+                    )
+                enforce_deadline(deadline)
+                transformed = apply_pipeline(
+                    page,
+                    plan.prefix,
+                    variables=self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    spill_policy=spill_policy,
+                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                    deadline=deadline,
+                )
+                if remaining_skip:
+                    if len(transformed) <= remaining_skip:
+                        remaining_skip -= len(transformed)
+                        continue
+                    transformed = transformed[remaining_skip:]
+                    remaining_skip = 0
+                if remaining_limit is not None:
+                    transformed = transformed[:remaining_limit]
+                    remaining_limit -= len(transformed)
+                group_spool, spill_allowed, group_position = (
+                    self._accumulate_or_spill_group_page(
+                        transformed,
+                        accumulator=accumulator,
+                        group_spool=group_spool,
+                        spill_allowed=spill_allowed,
+                        spill_policy=spill_policy,
+                        group_position=group_position,
+                        deadline=deadline,
+                    )
+                )
+        except BaseException:
+            if group_spool is not None:
+                group_spool.close()
+            raise
+        finally:
+            await source.aclose()
+        return group_spool
+
+    def _accumulate_or_spill_group_page(  # noqa: PLR0913
+        self,
+        documents: list[Document],
+        *,
+        accumulator,
+        group_spool,
+        spill_allowed: bool,
+        spill_policy: AggregationSpillPolicy | None,
+        group_position: int,
+        deadline: float | None,
+    ):
+        if group_spool is not None:
+            group_spool.add(documents)
+            return group_spool, spill_allowed, group_position
+        for index, document in enumerate(documents):
+            accumulator.consume_document(document, position=group_position)
+            group_position += 1
+            if (
+                not spill_allowed
+                or spill_policy is None
+                or accumulator.group_count <= spill_policy.threshold
+            ):
+                continue
+            group_spool = spill_policy.open_group_spool(
+                group_id_for_document=accumulator.group_id,
+                group_key_for_id=accumulator.group_key,
+                deadline=deadline,
+            )
+            buckets = accumulator.release_buckets()
+            try:
+                group_spool.seed(
+                    buckets,
+                    next_sequence=group_position,
+                )
+            except _AggregationGroupStateSerializationError:
+                group_spool = None
+                spill_allowed = False
+                for group_key, bucket, first_position in buckets:
+                    accumulator.adopt_bucket(
+                        group_key,
+                        bucket,
+                        first_position=first_position,
+                    )
+                continue
+            group_spool.add(documents[index + 1 :])
+            break
+        return group_spool, spill_allowed, group_position
+
+    def _iter_partitioned_group_output(
+        self,
+        group_spool,
+        plan: _IncrementalGroupPlan,
+        *,
+        spill_policy: AggregationSpillPolicy,
+        dialect,
+        deadline: float | None,
+    ) -> Iterable[Document]:
+        output_spool = spill_policy.open_sort_spool(
+            [(_GROUP_OUTPUT_ORDER_FIELD, 1)],
+            dialect=dialect,
+            deadline=deadline,
+        )
+        partitions = group_spool.iter_partitions()
+        sorted_output = None
+        try:
+            for partition in partitions:
+                accumulator = _IncrementalGroup(
+                    plan.group_spec,
+                    self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    deadline=deadline,
+                    group_average_uses_sum=plan.group_average_uses_sum,
+                )
+                for record in partition:
+                    if record[0] == "state":
+                        _kind, group_key, bucket, first_position, _digest = record
+                        accumulator.adopt_bucket(
+                            group_key,
+                            bucket,
+                            first_position=first_position,
+                        )
+                        continue
+                    _kind, sequence, group_id, document, _digest = record
+                    accumulator.consume_document(
+                        document,
+                        group_id=group_id,
+                        position=sequence,
+                    )
+                output_spool.add(
+                    {
+                        _GROUP_OUTPUT_ORDER_FIELD: first_position,
+                        _GROUP_OUTPUT_DOCUMENT_FIELD: document,
+                    }
+                    for first_position, _group_key, document in (
+                        accumulator.finish_positioned_items()
+                    )
+                )
+            sorted_output = output_spool.finish()
+            for wrapped in sorted_output:
+                yield wrapped[_GROUP_OUTPUT_DOCUMENT_FIELD]
+        finally:
+            close_output = getattr(sorted_output, "close", None)
+            if callable(close_output):
+                close_output()
+            close_partitions = getattr(partitions, "close", None)
+            if callable(close_partitions):
+                close_partitions()
+            output_spool.close()
+            group_spool.close()
+
+    async def _open_incremental_group_stream(
+        self,
+        plan: _IncrementalGroupPlan,
+        *,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        spill_policy = self._spill_policy()
+        result = await self._accumulate_group_source(
+            plan,
+            spill_policy=spill_policy,
+            cost_policy=self._cost_policy(),
+            dialect=dialect,
+            deadline=deadline,
+        )
+        streaming_sort = (
+            self._split_streaming_sort_suffix(plan.suffix, dialect=dialect)
+            if spill_policy is not None
+            else None
+        )
+        streaming_suffix = (
+            self._split_streamable_pipeline(plan.suffix, dialect=dialect)
+            if streaming_sort is None
+            else None
+        )
+        if streaming_sort is not None:
+            return self._stream_sorted_group_result(
+                result,
+                streaming_sort,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        if streaming_suffix is not None:
+            return self._stream_group_result(
+                result,
+                streaming_suffix,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        if plan.suffix:
+            referenced_collections = await self._load_pipeline_resources()
+            split = self._split_materialized_suffix(plan.suffix, dialect=dialect)
+            prefix, suffix = (plan.suffix, None) if split is None else split
+            result = apply_pipeline(
+                result,
+                prefix,
+                collection_resolver=referenced_collections,
+                variables=self._execution_variables(),
+                dialect=dialect,
+                collation=self._collation,
+                spill_policy=spill_policy,
+                lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                deadline=deadline,
+            )
+            if suffix is not None:
+                return self._stream_group_result(
+                    result,
+                    suffix,
+                    spill_policy=spill_policy,
+                    dialect=dialect,
+                    deadline=deadline,
+                )
+        return self._stream_group_documents(result)
+
+    async def _stream_group_documents(
+        self,
+        documents: Iterable[Document],
+    ) -> AsyncIterator[Document]:
+        source = iter(documents)
+        try:
+            for document in source:
+                yield self._materialize_document(
+                    DocumentCodec.to_public(
+                        strip_search_result_metadata(document),
+                    ),
+                )
+        finally:
+            close_source = getattr(source, "close", None)
+            if callable(close_source):
+                close_source()
+
+    async def _stream_group_result(
+        self,
+        documents: Iterable[Document],
+        stream_plan: tuple[Pipeline, int, int | None],
+        *,
+        spill_policy: AggregationSpillPolicy | None,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        pipeline, skip, limit = stream_plan
+        source = iter(documents)
+        try:
+            if limit == 0:
+                return
+            referenced_collections = (
+                await self._load_pipeline_resources() if pipeline else {}
+            )
+            options = self._pipeline_runtime_options(
+                referenced_collections, dialect, spill_policy, deadline
+            )
+            for document in self._iter_response_rows(
+                source, pipeline, _RemainingWindow(skip, limit), runtime_options=options
+            ):
+                yield self._materialize_document(
+                    DocumentCodec.to_public(strip_search_result_metadata(document))
+                )
+        finally:
+            close_source = getattr(source, "close", None)
+            if callable(close_source):
+                close_source()
+
+    @staticmethod
+    def _first_expanding_stage(pipeline):
+        return next(
+            (
+                index
+                for index, stage in enumerate(pipeline)
+                if next(iter(stage)) not in _NONEXPANDING_STREAM_STAGES
+                or get_registered_aggregation_stage_registration(next(iter(stage)))
+                is not None
+            ),
+            None,
+        )
+
+    def _response_input_size(self, pipeline, window):
+        maximum = (
+            1
+            if self._first_expanding_stage(pipeline) is not None
+            else (self._batch_size or 256)
+        )
+        if self._response_remaining is not None:
+            maximum = min(maximum, max(1, self._response_remaining))
+        if window.limit is not None:
+            maximum = min(maximum, max(1, window.skip + window.limit))
+        return maximum
+
+    def _pipeline_runtime_options(self, resources, dialect, spill_policy, deadline):
+        return {
+            "collection_resolver": resources,
+            "variables": self._execution_variables(),
+            "dialect": dialect,
+            "collation": self._collation,
+            "spill_policy": spill_policy,
+            "lookup_hash_max_associations": self._lookup_hash_max_associations(),
+            "deadline": deadline,
+        }
+
+    def _iter_response_rows(self, documents, pipeline, window, *, runtime_options):
+        """Schedule a streamable suffix within the response's document-count demand.
+
+        An expanding stage may produce a whole array from one source row. Its
+        downstream stages run on demand too, rather than evaluating the rest of
+        that array before the first response can be returned.
+        """
+        pending = [(iter(documents), pipeline)]
+        while pending and window.open:
+            source, current = pending[-1]
+            page = list(islice(source, self._response_input_size(current, window)))
+            if not page:
+                pending.pop()
+                continue
+            expanding = self._first_expanding_stage(current)
+            prefix = current if expanding is None else current[: expanding + 1]
+            transformed = (
+                apply_pipeline(page, prefix, **runtime_options) if prefix else page
+            )
+            if expanding is not None:
+                pending.append((iter(transformed), current[expanding + 1 :]))
+            else:
+                yield from window.apply(transformed)
+
+    async def _stream_sorted_group_result(
+        self,
+        documents: Iterable[Document],
+        plan: _StreamingSortPlan,
+        *,
+        spill_policy: AggregationSpillPolicy,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        if plan.suffix_limit == 0:
+            return
+        referenced_collections = (
+            await self._load_pipeline_resources() if plan.suffix else {}
+        )
+        window = _RemainingWindow(plan.suffix_skip, plan.suffix_limit)
+        sorted_documents = spill_policy.iter_sort_with_spill(
+            documents,
+            _require_sort(plan.sort_spec),
+            dialect=dialect,
+            collation=self._collation,
+            deadline=deadline,
+        )
+        try:
+            options = self._pipeline_runtime_options(
+                referenced_collections, dialect, spill_policy, deadline
+            )
+            for document in self._iter_response_rows(
+                sorted_documents, plan.suffix, window, runtime_options=options
+            ):
+                yield self._materialize_document(
+                    DocumentCodec.to_public(strip_search_result_metadata(document))
+                )
+        finally:
+            sorted_documents.close()
+
+    async def _stream_incremental_sort(
+        self,
+        plan: _IncrementalSortPlan,
+        *,
+        spill_policy: AggregationSpillPolicy,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        page_size = self._batch_size or 256
+        input_window = _RemainingWindow(plan.prefix_skip, plan.prefix_limit)
+        output_window = _RemainingWindow(plan.suffix_skip, plan.suffix_limit)
+        spool = spill_policy.open_sort_spool(
+            _require_sort(plan.sort_spec),
+            dialect=dialect,
+            collation=self._collation,
+            deadline=deadline,
+        )
+        sorted_documents = None
+        try:
+            if input_window.open:
+                source = _CursorPageSource(
+                    self._build_pushdown_cursor(
+                        self._pushdown_find_operation(batch_size=page_size),
+                    )
+                )
+                try:
+                    await source.prepare()
+                    while input_window.open:
+                        page = await source.pull(page_size)
+                        if not page:
+                            break
+                        transformed = apply_pipeline(
+                            page,
+                            plan.prefix,
+                            variables=self._execution_variables(),
+                            dialect=dialect,
+                            collation=self._collation,
+                            spill_policy=spill_policy,
+                            lookup_hash_max_associations=(
+                                self._lookup_hash_max_associations()
+                            ),
+                            deadline=deadline,
+                        )
+                        spool.add(input_window.apply(transformed))
+                finally:
+                    await source.aclose()
+
+            sorted_documents = spool.finish()
+            referenced_collections = (
+                await self._load_pipeline_resources() if plan.suffix else {}
+            )
+            options = self._pipeline_runtime_options(
+                referenced_collections, dialect, spill_policy, deadline
+            )
+            for document in self._iter_response_rows(
+                sorted_documents, plan.suffix, output_window, runtime_options=options
+            ):
+                yield self._materialize_document(
+                    DocumentCodec.to_public(strip_search_result_metadata(document))
+                )
+        finally:
+            close_output = getattr(sorted_documents, "close", None)
+            if callable(close_output):
+                close_output()
+            spool.close()
+
+    async def _stream_windowed_pipeline(
+        self,
+        stream_plan: tuple[Pipeline, int, int | None],
+        *,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        streamable_pipeline, skip, limit = stream_plan
+        if limit == 0:
+            return
+        page_size = self._batch_size or 256
+        window = _RemainingWindow(skip, limit)
+        referenced_collections = await self._load_pipeline_resources()
+        options = self._pipeline_runtime_options(
+            referenced_collections, dialect, self._spill_policy(), deadline
+        )
+        source = _CursorPageSource(
+            self._build_pushdown_cursor(
+                self._pushdown_find_operation(batch_size=page_size),
+            )
+        )
+        try:
+            await source.prepare()
+            while window.open:
+                requested = self._response_input_size(streamable_pipeline, window)
+                page = await source.pull(requested)
+                if not page:
+                    break
+                enforce_deadline(deadline)
+                for document in self._iter_response_rows(
+                    page, streamable_pipeline, window, runtime_options=options
+                ):
+                    yield self._materialize_document(
+                        DocumentCodec.to_public(
+                            strip_search_result_metadata(document),
+                        ),
+                    )
+        finally:
+            await source.aclose()
+
+    async def _stream_materialized_documents(
+        self,
+        documents: Iterable[Document],
+    ) -> AsyncIterator[Document]:
+        for document in documents:
+            yield self._materialize_document(document)
+
+    def _stream_batches(self) -> AsyncIterator[Document]:
+        return _DeferredAggregationStream(self)
+
+    async def _open_batch_stream(self) -> AsyncIterator[Document]:
+        _ensure_operation_executable(self._collection, self._operation)
+        self._ensure_session_can_use_engine()
+        leading_search = self._leading_search_stage() is not None
+        if leading_search:
+            effective_pipeline = []
+            writeback_stage = None
+        else:
+            effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(
+                self._effective_pipeline(),
+            )
+        if leading_search or writeback_stage is not None:
+            return self._stream_materialized_documents(await self._materialize())
+
+        deadline = operation_deadline(self._max_time_ms)
+        dialect = getattr(
+            self._collection,
+            "mongodb_dialect",
+            MONGODB_DIALECT_70,
+        )
+        pushdown = split_pushdown_pipeline(effective_pipeline, dialect=dialect)
+        registered_stages = any(
+            get_registered_aggregation_stage_registration(next(iter(stage))) is not None
+            for stage in pushdown.remaining_pipeline
+        )
+        incremental_group = (
+            self._split_incremental_group_pipeline(
+                pushdown.remaining_pipeline,
+                dialect=dialect,
+            )
+            if not registered_stages
+            else None
+        )
+        if incremental_group is not None:
+            return await self._open_incremental_group_stream(
+                incremental_group,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        spill_policy = self._spill_policy()
+        incremental_sort = (
+            self._split_incremental_sort_pipeline(
+                pushdown.remaining_pipeline,
+                dialect=dialect,
+            )
+            if spill_policy is not None and not registered_stages
+            else None
+        )
+        if incremental_sort is not None:
+            return self._stream_incremental_sort(
+                incremental_sort,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        stream_plan = self._split_streamable_pipeline(
+            pushdown.remaining_pipeline,
+            dialect=dialect,
+        )
+        if stream_plan is None:
+            split = self._split_materialized_suffix(effective_pipeline, dialect=dialect)
+            if split is not None:
+                prefix, suffix = split
+                documents = await self._materialize(prefix, deadline=deadline)
+                return self._stream_group_result(
+                    documents,
+                    suffix,
+                    spill_policy=spill_policy,
+                    dialect=dialect,
+                    deadline=deadline,
+                )
+            return self._stream_materialized_documents(await self._materialize())
+        return self._stream_windowed_pipeline(
+            stream_plan,
+            dialect=dialect,
+            deadline=deadline,
+        )
+
+    async def to_list(
+        self,
+        length: int | None = None,
+    ) -> list[Document]:
+        if length is not None and length < 0:
+            raise ValueError("length must be non-negative or None")
+        if length == 0 or (self._closed and not self._response_buffer):
+            return []
+        started_at = time.perf_counter_ns()
+        try:
+            documents: list[Document] = []
+            while length is None or len(documents) < length:
+                try:
+                    documents.append(await self.__anext__())
+                except StopAsyncIteration:
+                    break
+        except Exception as exc:
+            profiler = getattr(self._collection, "_profile_operation", None)
+            if callable(profiler):
+                await profiler(
+                    op="command",
+                    command={
+                        "aggregate": self._collection._collection_name,
+                        "pipeline": list(self._pipeline),
+                    },
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    errmsg=error_message(exc),
+                )
+            raise
+        profiler = getattr(self._collection, "_profile_operation", None)
+        if callable(profiler):
+            await profiler(
+                op="command",
+                command={
+                    "aggregate": self._collection._collection_name,
+                    "pipeline": list(self._pipeline),
+                },
+                duration_ns=time.perf_counter_ns() - started_at,
+            )
+        return documents
+
+    async def close(self) -> None:
+        self._response_buffer.clear()
+        self._pipeline_resources = None
+        if self._closed:
+            return
+        active = self._active_async_iterator
+        if active is not None:
+            close = getattr(active, "aclose", None)
+            if callable(close):
+                await close()
+        self._active_async_iterator = None
+        self._closed = True
+
+    async def first(self) -> Document | None:
+        started_at = time.perf_counter_ns()
+        async for document in self:
+            profiler = getattr(self._collection, "_profile_operation", None)
+            if callable(profiler):
+                await profiler(
+                    op="command",
+                    command={
+                        "aggregate": self._collection._collection_name,
+                        "pipeline": list(self._pipeline),
+                    },
+                    duration_ns=time.perf_counter_ns() - started_at,
+                )
+            return document
+        profiler = getattr(self._collection, "_profile_operation", None)
+        if callable(profiler):
+            await profiler(
+                op="command",
+                command={
+                    "aggregate": self._collection._collection_name,
+                    "pipeline": list(self._pipeline),
+                },
+                duration_ns=time.perf_counter_ns() - started_at,
+            )
+        return None
+
+    async def explain(
+        self,
+        verbosity: str = SearchExplainVerbosity.EXECUTION_STATS.value,
+    ) -> dict[str, object]:
+        self._ensure_session_can_use_engine()
+        deadline = operation_deadline(self._max_time_ms)
+        enforce_deadline(deadline)
+        try:
+            search_verbosity = SearchExplainVerbosity(verbosity)
+        except (TypeError, ValueError) as error:
+            message = "verbosity must be queryPlanner or executionStats"
+            raise ValueError(message) from error
+        if self._operation.planning_issues:
+            explanation = AggregateExplanation(
+                engine_plan=QueryPlanExplanation(
+                    engine="planner",
+                    strategy="deferred",
+                    plan="planning-issues",
+                    sort=None,
+                    skip=0,
+                    limit=None,
+                    hint=self._hint,
+                    hinted_index=None,
+                    comment=self._comment,
+                    max_time_ms=self._max_time_ms,
+                    details={
+                        "reason": _operation_issue_message(self._operation),
+                    },
+                    planning_mode=self._operation.planning_mode,
+                    planning_issues=self._operation.planning_issues,
+                ),
+                remaining_pipeline=list(self._pipeline),
+                pushdown={
+                    "mode": "deferred",
+                    "totalStages": len(self._pipeline),
+                    "pushedDownStages": 0,
+                    "remainingStages": len(self._pipeline),
+                    "streamingEligible": False,
+                    "streamableStageCount": 0,
+                },
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
+                allow_disk_use=self._allow_disk_use,
+                let=self._let,
+                streaming_batch_execution=False,
+                planning_mode=self._operation.planning_mode,
+                planning_issues=self._operation.planning_issues,
+            ).to_document()
+            explanation["cxp"] = self._cxp_explain_projection()
+            enforce_deadline(deadline)
+            return explanation
+        dialect = getattr(
+            self._collection,
+            "mongodb_dialect",
+            MONGODB_DIALECT_70,
+        )
+        streamable_pipeline: list[object] = []
+        pushdown_summary: dict[str, object]
+        if self._leading_search_stage() is not None:
+            operator, spec = self._leading_search_stage()
+            remaining_pipeline = self._effective_pipeline()
+            planning_pipeline, writeback_stage = self._split_terminal_writeback_stage(
+                remaining_pipeline,
+            )
+            optimization = self._search_optimization_plan(
+                operator,
+                spec,
+                planning_pipeline,
+                writeback=writeback_stage is not None,
+            )
+            streamable_pipeline = planning_pipeline
+            pushdown_summary = {
+                "mode": "search",
+                "totalStages": len(self._pipeline),
+                "pushedDownStages": 1,
+                "remainingStages": len(remaining_pipeline),
+                "leadingSearchOperator": operator,
+                "searchResultLimitHint": optimization.explain_limit_hint,
+                "searchTopKStrategy": (
+                    None
+                    if optimization.strategy is _SearchOptimizationStrategy.FULL
+                    else optimization.strategy.value
+                ),
+                "searchTopKGrowthStrategy": (
+                    "adaptive-retention"
+                    if optimization.strategy
+                    is _SearchOptimizationStrategy.PREFIX_ITERATIVE
+                    else None
+                ),
+                "searchDownstreamFilterPrefilter": (
+                    optimization.downstream_filter_spec is not None
+                ),
+                "searchWriteback": writeback_stage is not None,
+                "searchPlan": optimization.to_document(),
+            }
+            _query, request = self._build_search_request(
+                operator,
+                spec,
+                result_limit_hint=optimization.explain_limit_hint,
+                downstream_filter_spec=optimization.downstream_filter_spec,
+                pipeline_plan=optimization,
+            )
+            engine_plan = await EngineSpiAdapter(
+                self._collection._engine,
+            ).explain_search(
+                self._collection._db_name,
+                self._collection._collection_name,
+                request,
+                search_verbosity,
+            )
+        else:
+            pushdown = split_pushdown_pipeline(
+                self._effective_pipeline(),
+                dialect=dialect,
+            )
+            remaining_pipeline = pushdown.remaining_pipeline
+            streamable_pipeline = pushdown.remaining_pipeline
+            pushdown_summary = {
+                "mode": "pipeline-prefix",
+                "totalStages": len(self._pipeline),
+                "pushedDownStages": len(self._effective_pipeline())
+                - len(remaining_pipeline),
+                "remainingStages": len(remaining_pipeline),
+            }
+            operation = self._pushdown_find_operation()
+            from mongoeco.engines.semantic_core import (  # noqa: PLC0415
+                compile_find_semantics_from_operation,
+            )
+
+            semantics = compile_find_semantics_from_operation(
+                operation,
+                dialect=dialect,
+            )
+            engine_plan = await _engine_spi(self._collection).explain_find_semantics(
+                self._collection._db_name,
+                self._collection._collection_name,
+                semantics,
+                context=self._session,
+            )
+        streaming_split = self._split_streamable_pipeline(
+            streamable_pipeline,
+            dialect=getattr(
+                self._collection,
+                "mongodb_dialect",
+                MONGODB_DIALECT_70,
+            ),
+        )
+        pushdown_summary["streamingEligible"] = (
+            self._batch_size not in (None, 0) and streaming_split is not None
+        )
+        incremental_group_plan = (
+            None
+            if self._leading_search_stage() is not None
+            else self._split_incremental_group_pipeline(
+                streamable_pipeline,
+                dialect=dialect,
+            )
+        )
+        spill_policy = self._spill_policy()
+        incremental_sort_plan = (
+            None
+            if self._leading_search_stage() is not None or spill_policy is None
+            else self._split_incremental_sort_pipeline(
+                streamable_pipeline,
+                dialect=dialect,
+            )
+        )
+        pushdown_summary["incrementalGroupInput"] = incremental_group_plan is not None
+        pushdown_summary["partitionedGroupStateCandidate"] = bool(
+            incremental_group_plan is not None and spill_policy is not None
+        )
+        pushdown_summary["streamingGroupOutputCandidate"] = bool(
+            incremental_group_plan is not None
+            and (
+                self._split_streamable_pipeline(
+                    incremental_group_plan.suffix,
+                    dialect=dialect,
+                )
+                is not None
+                or (
+                    spill_policy is not None
+                    and self._split_streaming_sort_suffix(
+                        incremental_group_plan.suffix,
+                        dialect=dialect,
+                    )
+                    is not None
+                )
+            )
+        )
+        pushdown_summary["incrementalSortInput"] = incremental_sort_plan is not None
+        pushdown_summary["streamingSortOutput"] = bool(
+            incremental_sort_plan is not None
+            or (
+                incremental_group_plan is not None
+                and spill_policy is not None
+                and self._split_streaming_sort_suffix(
+                    incremental_group_plan.suffix,
+                    dialect=dialect,
+                )
+                is not None
+            )
+        )
+        pushdown_summary["sourceBatchExecution"] = bool(
+            pushdown_summary["streamingEligible"]
+            or pushdown_summary["incrementalGroupInput"]
+            or pushdown_summary["incrementalSortInput"]
+        )
+        pushdown_summary["streamableStageCount"] = (
+            len(streaming_split[0]) if streaming_split is not None else 0
+        )
+        pushdown_summary["lookupPlans"] = explain_lookup_physical_plans(
+            self._effective_pipeline(),
+            dialect=dialect,
+            collation=self._collation,
+            max_associations=self._lookup_hash_max_associations(),
+        )
+        explanation = AggregateExplanation(
+            engine_plan=engine_plan,
+            remaining_pipeline=remaining_pipeline,
+            pushdown=pushdown_summary,
+            hint=self._hint,
+            comment=self._comment,
+            max_time_ms=self._max_time_ms,
+            batch_size=self._batch_size,
+            allow_disk_use=self._allow_disk_use,
+            let=self._let,
+            streaming_batch_execution=bool(
+                pushdown_summary["streamingEligible"],
+            ),
+        ).to_document()
+        explanation["cxp"] = self._cxp_explain_projection()
+        enforce_deadline(deadline)
+        return explanation
+
+    def __aiter__(self) -> AsyncIterator[Document]:
+        return self
+
+    @command_errors
+    async def __anext__(self) -> Document:
+        if not self._response_buffer and not self._closed:
+            await self._initialize()
+            if not self._response_buffer and not self._closed:
+                # PyMongo command cursors promote a requested getMore size 1
+                # to 2; aggregate's firstBatch retains the requested size.
+                await self._fill_response(
+                    max(2, self._batch_size) if self._batch_size else None
+                )
+        if self._response_buffer:
+            return self._response_buffer.popleft()
+        raise StopAsyncIteration
+
+    @command_errors
+    async def _next_source_document(self) -> Document:
+        if self._active_async_iterator is None:
+            self._active_async_iterator = self._stream_batches()
+        try:
+            return await self._active_async_iterator.__anext__()
+        except StopAsyncIteration:
+            await self.close()
+            raise
+
+        except OperationFailure as error:
+            diagnostic = getattr(error, "_server_diagnostic", None)
+            if diagnostic is None or diagnostic.reason != "expression_type":
+                raise
+            raise operation_error(
+                error,
+                "aggregate_runtime",
+                self._collection.mongodb_dialect.key,
+                namespace=self._collection.full_name,
+            ) from error
+
+    def _spill_policy(self) -> AggregationSpillPolicy | None:
+        if self._allow_disk_use is False:
+            return None
+        policy = getattr(
+            self._collection._engine,
+            "aggregation_spill_policy",
+            None,
+        )
+        if isinstance(policy, AggregationSpillPolicy):
+            return policy
+        if callable(policy):
+            resolved = policy()
+            if isinstance(resolved, AggregationSpillPolicy):
+                return resolved
+        return None

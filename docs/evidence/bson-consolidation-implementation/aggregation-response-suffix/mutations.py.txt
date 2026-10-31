@@ -1,0 +1,44 @@
+import subprocess,sys,re
+from pathlib import Path
+bootstrap='''import pytest
+from itertools import islice
+from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor as Cursor
+from mongoeco.core.aggregation import apply_pipeline
+from mongoeco.core.codec import DocumentCodec
+'''
+mutants={
+ 'unbounded_response': '''def size(self,pipeline,window):
+ maximum=1 if self._first_expanding_stage(pipeline) is not None else (self._batch_size or 256)
+ if window.limit is not None:maximum=min(maximum,max(1,window.skip+window.limit))
+ return maximum
+Cursor._response_input_size=size
+''',
+ 'whole_expansion_tail': '''def rows(self,documents,pipeline,window,*,runtime_options):
+ source=iter(documents)
+ while window.open:
+  page=list(islice(source,self._response_input_size(pipeline,window)))
+  if not page:break
+  yield from window.apply(apply_pipeline(page,pipeline,**runtime_options))
+Cursor._iter_response_rows=rows
+''',
+ 'whole_materialized_suffix': '''Cursor._split_materialized_suffix=classmethod(lambda cls,pipeline,*,dialect:None)
+''',
+}
+mutants['public_prefix']="""original=Cursor._materialize_pipeline
+async def public_prefix(self,pipeline=None,*,deadline=None):
+ result=await original(self,pipeline,deadline=deadline)
+ return DocumentCodec.to_public(result) if pipeline is not None else result
+Cursor._materialize_pipeline=public_prefix
+"""
+for name,mutation in mutants.items():
+ kind='sort' if name=='whole_materialized_suffix' else 'single_unwind'
+ selector=f'aggregation_response and {kind} and MemoryEngine and 9.0 and not async and not wire'
+ if kind=='sort':selector+=' and not sorted_unwind'
+ target='tests/unit/api/test_aggregation_cursor.py' if name=='public_prefix' else 'tests/integration/api/test_semantic_group_regressions.py'
+ if name=='public_prefix':selector='prefix_does_not_materialize_long'
+ code=bootstrap+mutation+f"raise SystemExit(pytest.main(['-q',{target!r},'-k',{selector!r},'--tb=short']))\n"
+ result=subprocess.run([sys.executable,'-c',code],capture_output=True,text=True)
+ output=result.stdout+result.stderr
+ Path(f'/tmp/mongoeco-response-mutant-{name}.txt').write_text(output)
+ print(name,result.returncode,flush=True)
+ assert result.returncode==1 and re.search(r'[1-9][0-9]* failed',output),(name,output[-2000:])
