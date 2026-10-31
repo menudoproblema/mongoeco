@@ -85,7 +85,7 @@ from mongoeco.core.search_planning import (
 from mongoeco.core.server_errors import operation_error, retain_diagnostic
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
-from mongoeco.errors import DocumentValidationFailure, OperationFailure
+from mongoeco.errors import DuplicateKeyError, OperationFailure, WriteError
 from mongoeco.session import ClientSession
 from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
@@ -582,8 +582,6 @@ class AsyncAggregationCursor:
             )
             if "_id" not in candidate:
                 candidate["_id"] = ObjectId()
-            assert_valid_root_document_id(candidate["_id"])
-            internal_candidate = DocumentCodec.to_internal(candidate)
             operation_context = target_collection._new_operation_context(
                 session=self._session,
                 expressions=self._execution_context,
@@ -596,13 +594,19 @@ class AsyncAggregationCursor:
                 ),
             )
             try:
+                assert_valid_root_document_id(candidate["_id"])
+                internal_candidate = DocumentCodec.to_internal(candidate)
                 outcome = await target_collection._runtime.engine_merge_document(
                     internal_candidate,
                     when_matched=when_matched,
                     when_not_matched=when_not_matched,
                     operation_context=operation_context,
                 )
-            except DocumentValidationFailure as error:
+            except DuplicateKeyError:
+                # Command replies with 11000 retain PyMongo's specialized
+                # duplicate-key family; other per-item write errors do not.
+                raise
+            except WriteError as error:
                 # Aggregation reports a command failure, not an individual write.
                 raise retain_diagnostic(
                     error,

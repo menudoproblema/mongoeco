@@ -17,6 +17,7 @@ from mongoeco.core.aggregation import (
 from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
 from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
+from mongoeco.core.change_events import classic_update_description, make_mutation_change
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.filtering import QueryEngine
@@ -115,6 +116,11 @@ class UpdateExecutionContext:
     )
     is_upsert_insert: bool = False
     resolved_update_targets: Mapping[str, tuple[ResolvedUpdatePath, ...]] | None = None
+    applied_paths: set[str] | None = field(default=None, compare=False, repr=False)
+
+    def record_change(self, path: str) -> None:
+        if self.applied_paths is not None:
+            self.applied_paths.add(path)
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,6 +135,7 @@ class CompiledUpdatePlan:
         doc: dict[str, Any],
         *,
         variables: Mapping[str, Any] | None = None,
+        change: dict[str, Any] | None = None,
     ) -> bool:
         variables = ensure_expression_context(variables)
         if "_id" in doc:
@@ -138,6 +145,8 @@ class CompiledUpdatePlan:
         context = UpdateEngine._prepare_positional_update_context(
             original, self.compiled_operators, self.context
         )
+        if change is not None:
+            context = replace(context, applied_paths=set())
         modified = False
         for compiled_operator in self.compiled_operators:
             if compiled_operator.apply(
@@ -150,6 +159,28 @@ class CompiledUpdatePlan:
             assert_classic_update_preserves_id(
                 original,
                 working,
+            )
+        if modified and change is not None:
+            assert context.applied_paths is not None  # noqa: S101 - allocated with capture
+            applications = UpdateEngine._resolve_instruction_applications(
+                original,
+                tuple(
+                    instruction
+                    for operator in self.compiled_operators
+                    for instruction in operator.instructions
+                ),
+                context=context,
+                allow_positional=True,
+            )
+            description = classic_update_description(
+                original,
+                working,
+                applications,
+                dialect=context.dialect,
+                applied_paths=context.applied_paths,
+            )
+            change.update(
+                make_mutation_change(original, working, "update", description)
             )
         if modified:
             doc.clear()
@@ -168,6 +199,7 @@ class CompiledUpdatePipelinePlan:
         doc: dict[str, Any],
         *,
         variables: Mapping[str, Any] | None = None,
+        change: dict[str, Any] | None = None,
     ) -> bool:
         variables = aggregation_environment(ensure_expression_context(variables))
         variables.preserve_numeric_conversion_types = True
@@ -191,12 +223,19 @@ class CompiledUpdatePipelinePlan:
                 "Update pipeline must produce a single document",
             )
         replacement = result[0]
+        calculated = dict(replacement) if change is not None else None
         modified = not same_bson_update_value(original, replacement)
         preserve_and_validate_pipeline_id(
             original,
             replacement,
             dialect=self.context.dialect,
         )
+        if modified and change is not None:
+            change.update(
+                make_mutation_change(
+                    original, replacement, "update", calculated=calculated
+                )
+            )
         if modified:
             doc.clear()
             doc.update(replacement)
@@ -211,6 +250,36 @@ class ResolvedInstructionApplication:
     instruction: CompiledUpdateInstruction
     targets: tuple[ResolvedUpdatePath, ...]
 
+
+def apply_update_with_change(
+    plan: CompiledExecutableUpdatePlan, document: dict, *, variables=None, capture=False
+) -> tuple[bool, dict | None]:
+    if capture:
+        change = {}
+        modified = plan.apply(document, variables=variables, change=change)
+        return modified, change if modified else None
+    return plan.apply(document, variables=variables), None
+
+
+def apply_matched_merge(
+    before: dict[str, Any],
+    incoming: dict[str, Any],
+    *,
+    replace_document: bool,
+    dialect: MongoDialect,
+    capture: bool,
+) -> tuple[dict[str, Any], bool, dict[str, Any] | None]:
+    """Use the existing replacement or classic update policy for matched merge."""
+    if replace_document:
+        # Prepared input can have an immutable owned root. ID preservation
+        # operates on a working document, never on that borrowed root.
+        after = dict(deepcopy(incoming))
+        preserve_and_validate_pipeline_id(before, after, dialect=dialect)
+        return after, not same_bson_update_value(before, after), None
+    after = deepcopy(before)
+    plan = UpdateEngine.compile_update_plan({"$set": incoming}, dialect=dialect)
+    modified, change = apply_update_with_change(plan, after, capture=capture)
+    return after, modified, change
 
 class UpdateEngine:
     """Motor central para aplicar operadores de actualización de MongoDB."""

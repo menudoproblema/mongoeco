@@ -1,0 +1,27 @@
+[
+  {
+    "file": "db/update/document_diff_calculator.cpp",
+    "local_copy": "/tmp/mongoeco-d01b-current/document_diff_calculator.cpp",
+    "matches": true
+  },
+  {
+    "file": "db/update/document_diff_serialization.h",
+    "local_copy": "/tmp/mongoeco-d01b-current/document_diff_serialization.h",
+    "matches": true
+  },
+  {
+    "file": "db/update/document_diff_serialization.cpp",
+    "local_copy": "/tmp/mongoeco-d01b-current/document_diff_serialization.cpp",
+    "matches": true
+  },
+  {
+    "file": "db/update/update_oplog_entry_serialization.h",
+    "local_copy": "/tmp/mongoeco-d01b-current/update_oplog_entry_serialization.h",
+    "matches": true
+  },
+  {
+    "file": "db/update/v2_log_builder.cpp",
+    "local_copy": "/tmp/mongoeco-d01b-current/v2_log_builder.cpp",
+    "matches": true
+  }
+]

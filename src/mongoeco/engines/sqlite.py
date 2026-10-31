@@ -47,6 +47,7 @@ from mongoeco.core.bson_scalars import (
     is_bson_numeric,
     utc_bson_now,
 )
+from mongoeco.core.change_events import captures_changes, committed_change_content
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
     normalize_collation,
@@ -59,19 +60,18 @@ from mongoeco.core.expression_context import (
 )
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import (
-    assert_document_kept_storage_key,
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
     canonical_document_id,
     document_matches_root_id_lookup,
-    root_id_needs_semantic_lookup,
     materialize_merge_insert_document,
-    materialize_merge_update_document,
+    root_id_needs_semantic_lookup,
+    updated_document_storage_key,
 )
 from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
-from mongoeco.core.operators import CompiledUpdatePlan
+from mongoeco.core.operators import CompiledUpdatePlan, apply_matched_merge
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import _ProjectionExecutor, apply_projection
 from mongoeco.core.query_plan import (
@@ -5578,6 +5578,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 original_document = candidate_document
                                 storage_key = candidate_key
                                 break
+                    change = None
                     if original_document is not None:
                         assert_document_matches_storage_key(
                             original_document,
@@ -5591,24 +5592,17 @@ class SQLiteEngine(AsyncStorageEngine):
                                 before_document=deepcopy(original_document),
                                 after_document=deepcopy(original_document),
                             )
-                        if when_matched == "replace":
-                            next_document = deepcopy(document)
-                            operation_type = "replace"
-                        else:
-                            next_document = materialize_merge_update_document(
-                                original_document,
-                                document,
-                            )
-                            operation_type = "update"
-                        assert_document_kept_storage_key(
-                            next_document,
-                            storage_key,
-                            storage_key_for_id=self._storage_key,
-                        )
-                        if effective_dialect.values_equal(
-                            next_document,
+                        next_document, modified, change = apply_matched_merge(
                             original_document,
-                        ):
+                            document,
+                            replace_document=when_matched == "replace",
+                            dialect=effective_dialect,
+                            capture=captures_changes(operation_context),
+                        )
+                        operation_type = (
+                            "replace" if when_matched == "replace" else "update"
+                        )
+                        if not modified:
                             if effective_dialect.key == "9.0":
                                 enforce_collection_document_validation(
                                     next_document,
@@ -5667,27 +5661,51 @@ class SQLiteEngine(AsyncStorageEngine):
                         skip_id_check=False,
                         scan_payload_id=True,
                     )
-                    conn.execute(
-                        """
-                        INSERT INTO documents (db_name, coll_name, storage_key, document)
-                        VALUES (?, ?, ?, ?)
-                        ON CONFLICT(db_name, coll_name, storage_key)
-                        DO UPDATE SET document = excluded.document
-                        """,
-                        (
-                            db_name,
-                            coll_name,
+                    updated_storage_key = (
+                        storage_key
+                        if original_document is None
+                        else updated_document_storage_key(
+                            original_document,
+                            next_document,
                             storage_key,
-                            self._serialize_document(next_document),
-                        ),
+                            storage_key_for_id=self._storage_key,
+                        )
                     )
+                    serialized = self._serialize_document(next_document)
+                    if original_document is None:
+                        conn.execute(
+                            "INSERT INTO documents (db_name, coll_name, storage_key, document) VALUES (?, ?, ?, ?)",
+                            (db_name, coll_name, updated_storage_key, serialized),
+                        )
+                    else:
+                        conn.execute(
+                            "UPDATE documents SET storage_key = ?, document = ? "
+                            "WHERE db_name = ? AND coll_name = ? AND storage_key = ?",
+                            (
+                                updated_storage_key,
+                                serialized,
+                                db_name,
+                                coll_name,
+                                storage_key,
+                            ),
+                        )
+                    if updated_storage_key != storage_key:
+                        self._delete_multikey_entries_for_storage_key(
+                            conn, db_name, coll_name, storage_key
+                        )
+                        self._delete_scalar_entries_for_storage_key(
+                            conn, db_name, coll_name, storage_key
+                        )
+                        self._delete_search_entries_for_storage_key(
+                            conn, db_name, coll_name, storage_key
+                        )
                     indexes = self._load_indexes(db_name, coll_name)
                     if any(index.get("multikey") for index in indexes):
                         self._rebuild_multikey_entries_for_document(
                             conn,
                             db_name,
                             coll_name,
-                            storage_key,
+                            updated_storage_key,
                             next_document,
                             indexes,
                         )
@@ -5696,7 +5714,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             conn,
                             db_name,
                             coll_name,
-                            storage_key,
+                            updated_storage_key,
                             next_document,
                             indexes,
                         )
@@ -5709,7 +5727,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             conn,
                             db_name,
                             coll_name,
-                            storage_key,
+                            updated_storage_key,
                             next_document,
                             search_indexes=search_indexes,
                         )
@@ -5728,11 +5746,15 @@ class SQLiteEngine(AsyncStorageEngine):
                     commit_sequence = _sqlite_append_change(
                         conn,
                         context=operation_context,
-                        operation_type=operation_type,
                         db_name=db_name,
                         coll_name=coll_name,
-                        document_key={"_id": deepcopy(next_document["_id"])},
-                        full_document=deepcopy(next_document),
+                        **committed_change_content(
+                            operation_context,
+                            original_document,
+                            next_document,
+                            operation_type,
+                            change,
+                        ),
                         serialize_document=self._serialize_document,
                         max_entries=self._change_outbox_max_entries,
                     )
@@ -7652,38 +7674,33 @@ class SQLiteEngine(AsyncStorageEngine):
                             and "_id" not in result.after_document
                         ):
                             change_context = change_context.for_unpublishable_change()
+                        content = committed_change_content(
+                            change_context,
+                            result.before_document,
+                            result.after_document,
+                            (
+                                operation_context.change_operation_type
+                                if operation_context is not None
+                                else None
+                            )
+                            or "update",
+                            result.change,
+                        )
                         commit_sequence = _sqlite_append_change(
                             conn,
                             context=change_context,
-                            operation_type=(
-                                "insert"
-                                if result.result.did_upsert
-                                else (
-                                    operation_context.change_operation_type
-                                    if operation_context is not None
-                                    and operation_context.change_operation_type
-                                    is not None
-                                    else "update"
-                                )
-                            ),
                             db_name=db_name,
                             coll_name=coll_name,
-                            document_key=(
-                                {
-                                    "_id": deepcopy(
-                                        result.after_document["_id"],
-                                    ),
-                                }
-                                if "_id" in result.after_document
-                                else {}
-                            ),
-                            full_document=deepcopy(result.after_document),
+                            **content,
                             serialize_document=self._serialize_document,
                             max_entries=self._change_outbox_max_entries,
                         )
                         result = replace(
                             result,
                             commit_sequence=commit_sequence,
+                            change=content
+                            if captures_changes(change_context)
+                            else None,
                         )
                     enforce_deadline(deadline)
                 if result.after_document is not None and on_commit is not None:

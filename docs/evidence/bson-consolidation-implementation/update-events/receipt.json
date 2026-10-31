@@ -1,0 +1,281 @@
+{
+  "status": "D01b producer/content and delivery increment; parent remains open for permanent entrypoint coverage and final review",
+  "runtime_base": "375382a",
+  "documentary_head_before_increment": "369c407",
+  "candidate": {
+    "production_manifest": "runtime-sources.json",
+    "sha256": "b81689891e3c722954207a39924bc99fb8d3b9b6984056c90294a3c40f61e290",
+    "source_files": 281,
+    "scope": "final sources for final-semantic2, final-core3, final-write-consumers, final-wire, final-orjson and final-typing2"
+  },
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "topology": "owned single-member replica sets retained from prior increment",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "event_actions": 9,
+    "size_actions": 4,
+    "captures_checked": true,
+    "logs": [
+      "native-final-7.0.txt.gz",
+      "native-final-8.0.txt.gz",
+      "native-final-9.0.txt.gz"
+    ],
+    "fixtures": {
+      "tests/fixtures/semantic_update_event_8_0.json": "7ac4e8eae0cfba86638363543e8fa6c3f29b680df16386203b3284e0740716ec",
+      "tests/fixtures/semantic_update_event_9_0.json": "8326073e620d4f959a69c92e88ff83114c3493ed73dd4d00dd1bcc179fa05345",
+      "tests/fixtures/semantic_update_event_7_0.json": "9dfe70c01768ede2637216517fb2b428528906c3fbc26b370263a4198299b5fa",
+      "tests/fixtures/semantic_bson_size_8_0.json": "ddb332e7eef18aead91315c340f0d0219ec6a400a6544c6ffb4e34179f6f4efb",
+      "tests/fixtures/semantic_bson_size_9_0.json": "2c5c3c84cc3a17584c90cd4dbca8221f545dc46422ec23d7cf48edd63bf1eb75",
+      "tests/fixtures/semantic_bson_size_7_0.json": "d883c06e4e05a50285469c9270ea50a0b921df0c3b4d4b31fbc6d0be5e1e0824"
+    }
+  },
+  "baseline": {
+    "archived_package": "/tmp/mongoeco-event-base/src",
+    "source_commit": "375382a",
+    "final_corpus": {
+      "failed": 192,
+      "passed": 18,
+      "log": "before-final-corpus2.txt.gz"
+    },
+    "size_property": "before-size-property.txt.gz records initial SDK-independent property failure"
+  },
+  "gates": {
+    "new_corpora": {
+      "passed": 210,
+      "included_in": "final-semantic2.txt.gz",
+      "event_surfaces": [
+        "sync",
+        "async"
+      ],
+      "size_surfaces": [
+        "sync",
+        "async",
+        "wire-sync",
+        "wire-async"
+      ],
+      "limits": "wire watch explicitly unsupported, not omitted successes"
+    },
+    "integrated_semantic": {
+      "passed": 5905,
+      "seconds": 287.91,
+      "log": "final-semantic2.txt.gz"
+    },
+    "core_properties_delivery": {
+      "passed": 2660,
+      "skipped": 1,
+      "subtests": 942,
+      "seconds": 28.96,
+      "log": "final-core3.txt.gz"
+    },
+    "write_consumers": {
+      "passed": 12155,
+      "subtests": 1478,
+      "seconds": 88.97,
+      "log": "final-write-consumers.txt.gz"
+    },
+    "wire": {
+      "passed": 2746,
+      "subtests": 92,
+      "seconds": 32.87,
+      "log": "final-wire.txt.gz"
+    },
+    "orjson": {
+      "passed": 253,
+      "seconds": 11.22,
+      "env": "MONGOECO_JSON_BACKEND=orjson",
+      "log": "final-orjson.txt.gz"
+    },
+    "typing": {
+      "status": "passed public and engine boundary",
+      "log": "final-typing2.txt.gz"
+    },
+    "without_sdk": {
+      "version": "3.13",
+      "status": "passed",
+      "logs": [
+        "final-no-sdk.txt.gz",
+        "final-no-sdk-events2.txt.gz"
+      ]
+    },
+    "lint": {
+      "status": "passed no new debt",
+      "log": "final-lint3.txt.gz"
+    },
+    "legacy_storage": {
+      "status": "passed archived-runtime SQLite creation, candidate update/reopen; keys/schema/integrity retained",
+      "before": "legacy-before.json",
+      "after": "legacy-after.json"
+    },
+    "legacy_journal": {
+      "status": "passed actual V1 file + V2 append/reopen with physical contents and tokens",
+      "before": "legacy-journal-before.json",
+      "after": "legacy-journal-after.json"
+    },
+    "committed_size_dependency": {
+      "source_commit": "e00e8ac",
+      "archived_package": "/tmp/mongoeco-size-committed/src",
+      "passed": 164,
+      "seconds": 2.6,
+      "scope": "SDK size property, private runtime/core helpers and 99 size replay checks; no dependency on uncommitted production effects",
+      "log": "size-committed-tree.txt.gz"
+    }
+  },
+  "entrypoint_diagnostic": {
+    "native_cases": 108,
+    "local_cases": 216,
+    "differences": 0,
+    "surfaces": [
+      "sync"
+    ],
+    "result": "entrypoints.json.gz",
+    "script": "entrypoints-probe.py.txt",
+    "limit": "Not permanent corpus coverage; async command/findAndModify remaining in D01b."
+  },
+  "benchmark": {
+    "samples_per_workload": 5,
+    "execution": "base then candidate sequentially, after all gates terminal",
+    "checksums_equal": true,
+    "median_ratios": {
+      "MemoryEngine": 1.010035857701247,
+      "SQLiteEngine": 0.9908154662918743,
+      "MemoryEngine-watched-noop": 1.0118259953413904,
+      "SQLiteEngine-watched-noop": 1.0307489683566384
+    },
+    "limits": "small normal writes without observer and watched no-op writes, not complete D05 cost acceptance"
+  },
+  "protected_files": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "historical_fixtures_unchanged": true,
+  "source_references": {
+    "tag": "r8.0.0",
+    "files": 5,
+    "local_copies_sha256_match": 5,
+    "manifest": "sources.json",
+    "check": "sources-check.json",
+    "limits": "mechanism references, not substitute for per-major native observation"
+  },
+  "review_fixes": [
+    "Classic operators record actual applied paths, including physical-equality effects; no later diff can recover those alone.",
+    "Existing destination order preserved by rename; slice/no-op and empty-created arrays match native captures.",
+    "Matched merge reuses classic/replacement policies and preserves rekey natural order.",
+    "DuplicateKeyError remains specialized when adapting other write failures to command errors.",
+    "Neutral BSON size helper uses encoding TypeError/ValueError for impossible inputs; public nonobject bsonSize remains 31393, no legacy emitter allowlist change.",
+    "Journal V2 authenticates BSON document order; V1 readable; snapshot keeps format and now preserves order; decoder retains widths."
+  ],
+  "intermediate_runs": [
+    "Preexisting early size/event feedback logs belong to earlier candidates and corpus versions; not final acceptance.",
+    "Some intermediate fixture source metadata mismatches followed witness edits and were resolved by native recapture.",
+    "events-and-size-focal4 encountered sandbox socket bind denial plus test session adaptation errors.",
+    "final-core found uncoded neutral size helper failures and lost DuplicateKeyError family; fixed before final gates.",
+    "final-core2 retained a private NUL-size error expectation; updated to ValueError, final-core3 passed.",
+    "final-semantic was explicitly interrupted after independent review failures; final-semantic2 is the completed integrated gate.",
+    "atomic-feedback used unsupported merge shorthand in a test; changed test to supported document spec.",
+    "atomic-feedback2 exposed real journal order loss; journal-feedback exposed width loss; both corrected and covered permanently.",
+    "entrypoints-import-attempt missed testkit in PYTHONPATH; final explicit-path script passed."
+  ],
+  "documentation_checks": {
+    "relative_links": 18,
+    "git_diff_check": "passed"
+  },
+  "remaining": [
+    "D01b permanent command/findAndModify sync/async regressions and final block review",
+    "D06a/D06b remaining contexts/subpipeline and physical acceptance",
+    "D06c group/lookup/sets/spill/Search",
+    "D04 watch preparation/context/native RS job fixtures and supported fullDocument behavior",
+    "H53 disposition",
+    "scalar sNaN conversion differential",
+    "D07 optional decision",
+    "D05 matrices/package/global/coverage/performance"
+  ],
+  "lifecycle": "No service start/stop/reconfiguration; disposable native databases cleaned, owned RS services retained for ongoing goal, habitual instance untouched",
+  "artifacts": {
+    "README.md": "5dfd5477eb7ec5fd5a141d64601af439feb5a24781c93a897f46795fc3ea4499",
+    "atomic-feedback.txt.gz": "e59e024f137a44bdf8c988297e1d55fd34dfad37991a37799ecb9e5e036360a1",
+    "atomic-feedback2.txt.gz": "5527faf13bde8051b9eb95dd6beae401a77ecf8c07fa414e6193e97d4c749f97",
+    "before-events.txt.gz": "11a9d3486c015d4407d6e16f9ead780ce586d92be5c372754f37e1d49a2986cc",
+    "before-final-corpus.txt.gz": "c50c6536e0164ddbe1ebddfb3757cd6ed3e550b48a71f405385aad50cd05d20f",
+    "before-final-corpus2.txt.gz": "91964760fc75fef2364be8c4c0dbb830123eef7f3ac58682e7b20e6f02d0e0c4",
+    "before-size-property.txt.gz": "af7a3a0eb1cd18e9a9318650e46d7ac61c40bc89340a74ef037ef5a730e71f12",
+    "before-size.txt.gz": "8f7cfbc86290be808edc4fba5b873ca195150e3d587c1356aed279894c72067b",
+    "benchmark-after.json": "74b15f04edd31a325690463b63d2139913d84f65188137019d54d836552bc6bc",
+    "benchmark-before.json": "280c4b3c82b09566f345bdaa0ea4493ced888b39b4b061d20a35de1056743244",
+    "benchmark.py.txt": "079863e1838ed1ad8c80ac9a5a6c50ed608b7dd753d052dfaa7454db30bd3491",
+    "capture-events7-final.txt.gz": "434d2d0d1efa8a7288363706f6d977348ebef37ab4d1a3f4436d59e4a45709dd",
+    "capture-events7.txt.gz": "434d2d0d1efa8a7288363706f6d977348ebef37ab4d1a3f4436d59e4a45709dd",
+    "capture-events8-final.txt.gz": "7f61bb67a31211a6f4f4f5a32f752fc9a9a2804b411df5ba7c95fac62ac6df1d",
+    "capture-events8.txt.gz": "7f61bb67a31211a6f4f4f5a32f752fc9a9a2804b411df5ba7c95fac62ac6df1d",
+    "capture-events9-final.txt.gz": "fef9e7cfea22031ff6b3f03973b81889c04d74b2db4976b6ef7b9b63a38d349a",
+    "capture-events9.txt.gz": "fef9e7cfea22031ff6b3f03973b81889c04d74b2db4976b6ef7b9b63a38d349a",
+    "component-feedback3.txt.gz": "c1819ca2cd8cba19f32183f3e8c9ac4bdea23d675234e45a73f13e3ee8f4e251",
+    "delivery-feedback3.txt.gz": "f3f4b4c2489f1687b6723ea00f444fe49316c7e1c00d5b9369e8f4fa6b902b0c",
+    "entrypoints-import-attempt.txt.gz": "d5894e43d1832f349b664c49e5c4f7375f829dbec45d7e7ebc0a2db988935613",
+    "entrypoints-probe.py.txt": "4103e5d8025bc776ece0cdb8ca93d34d907805e38a806437188080a4d50cb0c5",
+    "entrypoints.json.gz": "fb8598d8e85f44fcb0a7505d79a41ce3566beae140581f83fe56364319bba682",
+    "entrypoints.txt.gz": "7b5b39311d73c1d59cbc5399b617001b24807eed17fd4aa041cc2cef160bb6fd",
+    "events-and-size-focal4.txt.gz": "57f4577ce60db91ffd377b38eaa64f04ffa83842913818904a27c2239d914e0b",
+    "events-and-size-focal5.txt.gz": "1af61c17fd9429b0552cebdec1c70423a3b4841b1bc2a8dca29e7d210a87b29d",
+    "events-feedback-trace.txt.gz": "6f94e9ac800c2575ab44f796e1a08a3621842c7ebfc8d0d3744ac3c97424aa44",
+    "events-focal.txt.gz": "73be5e1adab25a3eaaa31a52414d1d6094e60cc61f9cac77617690fa3c098664",
+    "events-focal2.txt.gz": "70a15e5ae4618f27e4568d9893fe7482d6de5fd049bd2f5b85179cdf02d4fa0f",
+    "events-focal3.txt.gz": "7c65c059a8136b8ed0cf9f9a010c128277dd59b55d266a684fdda26a6adb4675",
+    "final-core.txt.gz": "7a32c5d50bf543ea0b51c4a8a420a0b0d078de81bce016392c171f1b4dd7abd9",
+    "final-core2.txt.gz": "727b283a5e8872c7d34a051b1567e37f48eb82dcb160a5fb4420dbc7e14da8d2",
+    "final-core3.txt.gz": "d58da7a9006d75972075de4627e47188e7b43bdf452532ccd9cea70b2300444b",
+    "final-delivery.txt.gz": "eae43936abb4eff0387208462d204b15c531ce4a75183ee1a8cdb2da42be9c13",
+    "final-focal.txt.gz": "d03f0693e8afa49970bcccb0708928f376f626ced1e3f95511408a394a7b959b",
+    "final-lint.txt.gz": "01f6d6a01299d2b2d4b77c9e14d76ce57e20860f845050db44e04783b283742c",
+    "final-lint2.txt.gz": "01f6d6a01299d2b2d4b77c9e14d76ce57e20860f845050db44e04783b283742c",
+    "final-lint3.txt.gz": "00d85768217242cb18100cb0ba0c6ebf04dac9c4c5fc266555139af3294a48c1",
+    "final-no-sdk-events.txt.gz": "c5b8b828b52c8e68c3569c7bcc856bf1655547a53a17a5ea76e7d356027b58c7",
+    "final-no-sdk-events2.txt.gz": "c5b8b828b52c8e68c3569c7bcc856bf1655547a53a17a5ea76e7d356027b58c7",
+    "final-no-sdk.txt.gz": "b886db67597c8c8b5adeea245b7fb52620bab8d86bb7aeb8e21ba4aa09e42dc8",
+    "final-orjson.txt.gz": "51eff3e74e6d3daff5f3c836ab4da550e06464138601d47e05fbfbeebcb0b099",
+    "final-semantic.txt.gz": "9158a1fdd071be4affc442808fb273016af96feb5327a7cd37a4ac56bd85ae04",
+    "final-semantic2.txt.gz": "15bd95d5520013e1ebfaadde7254e9d537876e3dc1aba4dd6c60544b53c3e321",
+    "final-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "final-typing2.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "final-wire.txt.gz": "4fb74f4cc270131abd5d04cb1817158e672283ec08175fa1fb4994ff56ec6dbd",
+    "final-write-consumers.txt.gz": "4d736a6088fda0699cbd6a8961df30746f8d7f6fa53ba800b93dc1698c4a798e",
+    "journal-feedback.txt.gz": "8b290c94cba50b039822c4fd9a7114dff2f8a9744a53f05064cda561f73f09ff",
+    "legacy-after.json": "343d196870aed1be57fe7c38e966ebd1727b9e903b496e5e5d3c03c1fefd4b2f",
+    "legacy-before.json": "c5e69ff10f9a3db6bebbfd251462bbccc589e1e23c680d2147b7e908808ec949",
+    "legacy-journal-after.json": "724533ee67f4dc2feaa195c1f53c40ff71f21a8fc142593dc3358b496e45d98b",
+    "legacy-journal-before.json": "eeee734411e905820899f7c98ae5817f49283527d15808679fa32cc6dafcf277",
+    "legacy-journal-probe.py.txt": "7879a59649ca7f2b830625890d83f742227771073b65266e490f67167eac2e8c",
+    "lint-feedback.txt.gz": "402f9ba5629f247d567bbdcbbd405e706f04f6bfa222e499582ce6571e8fc4af",
+    "lint-final.txt.gz": "089d289873717d5a10db92f7637a9188fd516ea7d55537fa61083c5510ff8aac",
+    "native-final-7.0.txt.gz": "e581a1dcef716bc3833d5210aac13614188bbfa5ad86b82f472783461c341c27",
+    "native-final-8.0.txt.gz": "07d29f31ef27636236829676d406649cab4385830d9be55569311c81ee4b3589",
+    "native-final-9.0.txt.gz": "21acddc578014353e6b063d473ff8580f14dc56143dbe688d9185e5e0d824333",
+    "no-sdk-probe.py.txt": "6e3529d33126855f39787943c1db01f072807e23fd325c619c49304e9864079f",
+    "review-feedback.txt.gz": "42cef1bf05bd091dfbb0ea6207241b1dcd3908a42102935b2d5008fa9d843187",
+    "runtime-sources.json": "b81689891e3c722954207a39924bc99fb8d3b9b6984056c90294a3c40f61e290",
+    "size-committed-tree.txt.gz": "5edc894469d171e003a31d98fd947f9310abe2535ad9601a70c9a673832abe00",
+    "size-components.txt.gz": "5bd5562b0bf1d1d4169de1f0464ff8d8d25b4f4f3647813e73e39c153ec6bf62",
+    "size-components2.txt.gz": "d7a8cd534e285552ee01367d3e15a9874306a1a6ba3e5a4284640eaa546cecb6",
+    "size-focal.txt.gz": "e11d14b08f74bed225b8359209952078cf5e35f6cd2ae60b353b7aec2dd5e644",
+    "size-focal2.txt.gz": "8c176e8a511cc566f472b96098ff8a6c60ed81413c2803edf060214c62535e75",
+    "sources-check.json": "ab5bb0af8546c4bbb99e7ec300e51c09c4f6906c12e873ef6e8b0e66364c1c16",
+    "sources.json": "2f854e4b7bb893ca619b1fdd933caeddc7ac8f8e91ee3ea76eda7667b5010b0b",
+    "transaction-feedback.txt.gz": "2f685e8dce3681015244486aaf9b7bfd10b01075a933945a93a8cd07abf4fb58",
+    "typing-feedback.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90"
+  },
+  "dependency_commit": "e00e8ac"
+}

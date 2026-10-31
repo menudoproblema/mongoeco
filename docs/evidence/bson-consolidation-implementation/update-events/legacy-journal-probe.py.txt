@@ -1,0 +1,31 @@
+"""Write V1 with archived runtime; append/read V2 with candidate runtime."""
+import argparse
+import json
+from pathlib import Path
+
+from bson import BSON, Code, Int64
+
+from mongoeco.change_streams import ChangeStreamHub
+from mongoeco.core.codec import DocumentCodec
+
+parser = argparse.ArgumentParser()
+parser.add_argument("mode", choices=("write", "check"))
+parser.add_argument("path")
+args = parser.parse_args()
+hub = ChangeStreamHub(journal_path=args.path, journal_max_log_bytes=None)
+if args.mode == "write":
+    hub.publish(operation_type="insert", db_name="d", coll_name="c", document_key={"_id": "legacy"}, full_document={"_id": "legacy", "a": 1, "z": 2})
+    print(json.dumps({"runtime": __import__("mongoeco").__file__, "next_token": hub.state.next_token, "version": json.loads(Path(hub.state.journal_event_log_path).read_text())["version"]}))
+else:
+    assert hub.state.next_token == 2
+    _, legacy = hub.wait_for_event(0, timeout_seconds=0)
+    assert legacy.document_key == {"_id": "legacy"}
+    content = {"updatedFields": {"z": Code("x", {"z": Int64(1), "a": 2}), "a": Int64(1)}, "removedFields": [], "truncatedArrays": []}
+    hub.publish(operation_type="update", db_name="d", coll_name="c", document_key={"_id": 1}, update_description=content)
+    versions = [json.loads(line)["version"] for line in Path(hub.state.journal_event_log_path).read_text().splitlines()]
+    assert versions == [1, 2]
+    reopened = ChangeStreamHub(journal_path=args.path, journal_max_log_bytes=None)
+    assert reopened.state.next_token == 3
+    _, event = reopened.wait_for_event(1, timeout_seconds=0)
+    assert BSON.encode(DocumentCodec.to_pymongo(event.update_description)) == BSON.encode(content)
+    print(json.dumps({"runtime": __import__("mongoeco").__file__, "versions": versions, "next_token": reopened.state.next_token, "physical_contents_preserved": True, "legacy_token_unchanged": legacy.token == 1}))

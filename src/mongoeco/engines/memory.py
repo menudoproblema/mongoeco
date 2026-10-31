@@ -21,9 +21,13 @@ import numpy as np
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import AggregationSpillPolicy
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
-from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.bson_ordering import bson_engine_key, bson_equality_key
 from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.change_events import (
+    build_change_payload,
+    captures_changes,
+    committed_change_content,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
     normalize_collation,
@@ -45,18 +49,22 @@ from mongoeco.core.identity import (
     assert_valid_upsert_document_id,
     document_matches_root_id_lookup,
     materialize_merge_insert_document,
-    materialize_merge_update_document,
     materialize_replacement_document,
     preserve_and_validate_pipeline_id,
     replacement_document_changed,
     root_id_needs_semantic_lookup,
+    updated_document_storage_key,
 )
 from mongoeco.core.operation_context import (
     ChangePublicationPolicy,
     OperationContext,
 )
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
-from mongoeco.core.operators import CompiledUpdatePlan
+from mongoeco.core.operators import (
+    CompiledUpdatePlan,
+    apply_matched_merge,
+    apply_update_with_change,
+)
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import (
     AndCondition,
@@ -1465,23 +1473,7 @@ class MemoryEngine(AsyncStorageEngine):
             floor,
         )
 
-    @staticmethod
-    def _change_payload(
-        *,
-        operation_type: str,
-        db_name: str,
-        coll_name: str,
-        document_key: Document,
-        full_document: Document | None = None,
-    ) -> Document:
-        return {
-            "operation_type": operation_type,
-            "db_name": db_name,
-            "coll_name": coll_name,
-            "document_key": deepcopy(document_key),
-            "full_document": deepcopy(full_document),
-            "update_description": None,
-        }
+    _change_payload = staticmethod(build_change_payload)
 
     def _abort_session_transaction(self, session: ClientSession) -> None:
         with self._meta_lock:
@@ -3464,6 +3456,7 @@ class MemoryEngine(AsyncStorageEngine):
                         original_document = deepcopy(candidate_document)
                         storage_key = candidate_key
                         break
+            change = None
             if original_document is not None:
                 assert_document_matches_storage_key(
                     original_document,
@@ -3477,24 +3470,14 @@ class MemoryEngine(AsyncStorageEngine):
                         before_document=deepcopy(original_document),
                         after_document=deepcopy(original_document),
                     )
-                if when_matched == "replace":
-                    next_document = deepcopy(document)
-                    operation_type = "replace"
-                else:
-                    next_document = materialize_merge_update_document(
-                        original_document,
-                        document,
-                    )
-                    operation_type = "update"
-                assert_document_kept_storage_key(
-                    next_document,
-                    storage_key,
-                    storage_key_for_id=self._storage_key,
-                )
-                modified = not effective_dialect.values_equal(
-                    next_document,
+                next_document, modified, change = apply_matched_merge(
                     original_document,
+                    document,
+                    replace_document=when_matched == "replace",
+                    dialect=effective_dialect,
+                    capture=captures_changes(operation_context),
                 )
+                operation_type = "replace" if when_matched == "replace" else "update"
                 if not modified:
                     if effective_dialect.key == "9.0":
                         enforce_collection_document_validation(
@@ -3521,6 +3504,17 @@ class MemoryEngine(AsyncStorageEngine):
                     else deepcopy(document)
                 )
                 operation_type = "insert"
+
+            updated_storage_key = (
+                storage_key
+                if original_document is None
+                else updated_document_storage_key(
+                    original_document,
+                    next_document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
+            )
 
             enforce_collection_document_validation(
                 next_document,
@@ -3573,15 +3567,17 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
+                if updated_storage_key != storage_key:
+                    coll.replace_key(storage_key, updated_storage_key)
                 self._set_storage_document_locked(
                     coll,
-                    storage_key,
+                    updated_storage_key,
                     self._encode_storage_document(next_document),
                 )
                 self._update_indexes_locked(
                     db_name,
                     coll_name,
-                    storage_key,
+                    updated_storage_key,
                     next_document,
                     action="insert",
                     index_data_view=index_data_view,
@@ -3598,11 +3594,12 @@ class MemoryEngine(AsyncStorageEngine):
                 commit_sequence = self._record_committed_change(
                     operation_context,
                     self._change_payload(
-                        operation_type=operation_type,
                         db_name=db_name,
                         coll_name=coll_name,
-                        document_key={"_id": next_document["_id"]},
-                        full_document=next_document,
+                        **committed_change_content(
+                            operation_context, original_document, next_document,
+                            operation_type, change,
+                        ),
                     ),
                 )
                 outcome = replace(outcome, commit_sequence=commit_sequence)
@@ -4077,25 +4074,24 @@ class MemoryEngine(AsyncStorageEngine):
                     preserve_and_validate_pipeline_id(
                         original_document, document, dialect=semantics.dialect
                     )
-                modified = (
-                    replacement_document_changed(
+                change = None
+                if replacement_document is not None:
+                    modified = replacement_document_changed(
                         original_document, document, replacement_document
                     )
-                    if replacement_document is not None
-                    else semantics.compiled_update_plan.apply(
+                else:
+                    modified, change = apply_update_with_change(
+                        semantics.compiled_update_plan,
                         document,
                         variables=semantics.variables,
+                        capture=captures_changes(operation_context),
                     )
+                updated_storage_key = updated_document_storage_key(
+                    original_document,
+                    document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
                 )
-                updated_storage_key = self._storage_key(document.get("_id"))
-                if (
-                    "_id" in original_document
-                    and "_id" in document
-                    and same_bson_update_value(
-                        original_document["_id"], document["_id"]
-                    )
-                ):
-                    updated_storage_key = storage_key
                 if modified and (
                     "_id" not in original_document
                     or (
@@ -4176,34 +4172,36 @@ class MemoryEngine(AsyncStorageEngine):
                         result=result,
                         before_document=original_document,
                         after_document=deepcopy(document),
+                        change=change,
                     )
                     if modified:
                         change_context = operation_context
                         if change_context is not None and "_id" not in document:
                             change_context = change_context.for_unpublishable_change()
+                        content = committed_change_content(
+                            change_context,
+                            original_document,
+                            document,
+                            (
+                                operation_context.change_operation_type
+                                if operation_context is not None
+                                else None
+                            )
+                            or "update",
+                            change,
+                        )
                         commit_sequence = self._record_committed_change(
                             change_context,
                             self._change_payload(
-                                operation_type=(
-                                    operation_context.change_operation_type
-                                    if operation_context is not None
-                                    and operation_context.change_operation_type
-                                    is not None
-                                    else "update"
-                                ),
-                                db_name=db_name,
-                                coll_name=coll_name,
-                                document_key=(
-                                    {"_id": document["_id"]}
-                                    if "_id" in document
-                                    else {}
-                                ),
-                                full_document=document,
+                                db_name=db_name, coll_name=coll_name, **content
                             ),
                         )
                         captured = replace(
                             captured,
                             commit_sequence=commit_sequence,
+                            change=content
+                            if captures_changes(change_context)
+                            else None,
                         )
                 if on_commit is not None:
                     on_commit(captured)

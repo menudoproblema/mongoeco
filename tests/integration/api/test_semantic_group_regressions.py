@@ -86,15 +86,20 @@ class _AsyncCursorView:
 class _AsyncView:
     """Run the unchanged synchronous witness against an async collection."""
 
-    def __init__(self, collection, loop):
+    def __init__(self, collection, loop, client=None):
         self.collection = collection
         self.loop = loop
+        self._session_client = client
 
     def __getitem__(self, name):
-        return _AsyncView(self.collection[name], self.loop)
+        return _AsyncView(self.collection[name], self.loop, self._session_client)
 
     def create_collection(self, name, **kwargs):
-        return _AsyncView(self._call("create_collection", name, **kwargs), self.loop)
+        return _AsyncView(
+            self._call("create_collection", name, **kwargs),
+            self.loop,
+            self._session_client,
+        )
 
     def options(self, *args, **kwargs):
         return self._call("options", *args, **kwargs)
@@ -111,13 +116,21 @@ class _AsyncView:
 
     def _call(self, method, *args, **kwargs):
         async def execute():
-            return await getattr(self.collection, method)(*args, **kwargs)
+            result = getattr(self.collection, method)(*args, **kwargs)
+            return await result if inspect.isawaitable(result) else result
 
         return asyncio.run_coroutine_threadsafe(execute(), self.loop).result(timeout=10)
 
     @property
     def database(self):
-        return _AsyncView(self.collection.database, self.loop)
+        return _AsyncView(self.collection.database, self.loop, self._session_client)
+
+    @property
+    def client(self):
+        return _AsyncView(self._session_client, self.loop, self._session_client)
+
+    def start_session(self):
+        return self._call("start_session")
 
     @property
     def name(self):
@@ -206,7 +219,7 @@ def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest a
         collection = client.semantic_group.records
         await collection.insert_many(seed)
         result = await asyncio.to_thread(
-            action, _AsyncView(collection, asyncio.get_running_loop())
+            action, _AsyncView(collection, asyncio.get_running_loop(), client)
         )
         assert _normalize(result) == _normalize(expected)
 

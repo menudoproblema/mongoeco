@@ -140,11 +140,15 @@ def apply_push_values(
             )
 
     if slice_value is not None:
+        old_length = len(current)
         current[:] = (
             current[:slice_value] if slice_value >= 0 else current[slice_value:]
         )
+        sliced = len(current) != old_length
+    else:
+        sliced = False
 
-    return bool(values) or sort_spec is not None or slice_value is not None
+    return bool(values) or sort_spec is not None or sliced
 
 
 def resolve_array_instruction_applications(
@@ -235,20 +239,22 @@ def apply_push(
             application.instruction.value
         )
         for target in application.targets:
-            current, _created = get_or_create_array_target(
+            current, created = get_or_create_array_target(
                 doc,
                 target.concrete_path,
                 operator_name="$push",
             )
-            if apply_push_values(
+            applied = apply_push_values(
                 current,
                 values,
                 position=position,
                 slice_value=slice_value,
                 sort_spec=sort_spec,
                 dialect=context.dialect,
-            ):
+            )
+            if created or applied:
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 
@@ -290,8 +296,9 @@ def apply_add_to_set(
                     ):
                         continue
                     unique_values.append(candidate)
-                if set_document_value(doc, target.concrete_path, unique_values):
-                    modified = True
+                set_document_value(doc, target.concrete_path, unique_values)
+                modified = True
+                context.record_change(target.concrete_path)
                 continue
             for candidate in values:
                 if any(
@@ -306,6 +313,7 @@ def apply_add_to_set(
                     continue
                 current.append(candidate)
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 
@@ -339,6 +347,7 @@ def apply_pull(
             if not same_bson_update_value(filtered, current):
                 if set_document_value(doc, target.concrete_path, filtered):
                     modified = True
+                    context.record_change(target.concrete_path)
     return modified
 
 
@@ -383,6 +392,7 @@ def apply_pull_all(
             if not same_bson_update_value(filtered, current):
                 if set_document_value(doc, target.concrete_path, filtered):
                     modified = True
+                    context.record_change(target.concrete_path)
     return modified
 
 
@@ -416,6 +426,7 @@ def apply_pop(
             updated = current[1:] if direction == -1 else current[:-1]
             if set_document_value(doc, target.concrete_path, updated):
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 

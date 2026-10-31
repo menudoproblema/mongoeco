@@ -6,7 +6,7 @@ from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from mongoeco.core.bson_identity import same_bson_update_value
+from mongoeco.core.change_events import captures_changes
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
@@ -14,7 +14,9 @@ from mongoeco.core.identity import (
     materialize_replacement_document,
     preserve_and_validate_pipeline_id,
     replacement_document_changed,
+    updated_document_storage_key,
 )
+from mongoeco.core.operators import apply_update_with_change
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.results import DeleteOutcome, MutationOutcome
@@ -325,16 +327,18 @@ def update_with_operation(
             preserve_and_validate_pipeline_id(
                 original_document, document, dialect=semantics.dialect
             )
-        modified = (
-            replacement_document_changed(
+        change = None
+        if replacement_document is not None:
+            modified = replacement_document_changed(
                 original_document, document, replacement_document
             )
-            if replacement_document is not None
-            else semantics.compiled_update_plan.apply(
+        else:
+            modified, change = apply_update_with_change(
+                semantics.compiled_update_plan,
                 document,
                 variables=semantics.variables,
+                capture=captures_changes(getattr(semantics, "operation_context", None)),
             )
-        )
         if not modified:
             result = UpdateResult(matched_count=1, modified_count=0)
             return MutationOutcome(
@@ -342,17 +346,15 @@ def update_with_operation(
                 before_document=deepcopy(original_document),
                 after_document=deepcopy(document),
             )
-        updated_storage_key = storage_key_for_id(document.get("_id"))
-        if (
-            "_id" in original_document and "_id" in document
-            and same_bson_update_value(original_document["_id"], document["_id"])
-        ):
-            updated_storage_key = storage_key
-        if (
-            "_id" not in original_document
-            or (replacement_document is None and isinstance(
-                semantics.compiled_update_plan, compiled_update_plan_type
-            ))
+        updated_storage_key = updated_document_storage_key(
+            original_document,
+            document,
+            storage_key,
+            storage_key_for_id=storage_key_for_id,
+        )
+        if "_id" not in original_document or (
+            replacement_document is None
+            and isinstance(semantics.compiled_update_plan, compiled_update_plan_type)
         ):
             assert_document_kept_storage_key(
                 document, storage_key, storage_key_for_id=storage_key_for_id
@@ -377,10 +379,16 @@ def update_with_operation(
             if dialect_requires_python_fallback(semantics.dialect):
                 raise NotImplementedError("Custom dialect requires Python fallback")
             if operation.array_filters is not None:
-                raise NotImplementedError("array_filters require Python update fallback")
+                raise NotImplementedError(
+                    "array_filters require Python update fallback"
+                )
             if replacement_document is not None:
-                raise NotImplementedError("replacement updates require Python update fallback")
-            if not isinstance(semantics.compiled_update_plan, compiled_update_plan_type):
+                raise NotImplementedError(
+                    "replacement updates require Python update fallback"
+                )
+            if not isinstance(
+                semantics.compiled_update_plan, compiled_update_plan_type
+            ):
                 raise NotImplementedError(
                     "Aggregation pipeline updates require Python update fallback"
                 )
@@ -432,6 +440,7 @@ def update_with_operation(
                 result=result,
                 before_document=deepcopy(original_document),
                 after_document=deepcopy(document),
+                change=change,
             )
         except (NotImplementedError, TypeError):
             pass
@@ -492,6 +501,7 @@ def update_with_operation(
                 result=result,
                 before_document=deepcopy(original_document),
                 after_document=deepcopy(document),
+                change=change,
             )
         except sqlite3.IntegrityError as exc:
             raise DuplicateKeyError(str(exc)) from exc

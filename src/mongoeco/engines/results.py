@@ -22,6 +22,7 @@ class MutationOutcome:
     before_document: Document | None = None
     after_document: Document | None = None
     commit_sequence: int | None = None
+    change: Document | None = None
 
     def __post_init__(self) -> None:
         matched = self.result.matched_count
@@ -45,6 +46,10 @@ class MutationOutcome:
         ):
             message = "an upsert must expose only its after image"
             raise ValueError(message)
+        if self.change is not None and modified == 0 and not upserted:
+            message = "only an applied mutation can expose a change"
+            raise ValueError(message)
+        object.__setattr__(self, "change", deepcopy(self.change))
         _validate_commit_sequence(self.commit_sequence)
         if self.commit_sequence is not None and modified == 0 and not upserted:
             message = "an unapplied mutation cannot have a commit sequence"

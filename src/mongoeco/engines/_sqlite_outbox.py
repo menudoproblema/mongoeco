@@ -4,6 +4,7 @@ import hashlib
 
 from typing import TYPE_CHECKING
 
+from mongoeco.core.change_events import build_change_payload
 from mongoeco.core.operation_context import (
     ChangeOperationType,
     ChangePublicationPolicy,
@@ -718,6 +719,7 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
     coll_name: str,
     document_key: Document,
     full_document: Document | None,
+    update_description: Document | None = None,
     serialize_document: Callable[[Document], str],
     max_entries: int = 10_000,
     maintenance_operation_id: str | None = None,
@@ -741,16 +743,11 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
         and context.publication is ChangePublicationPolicy.RECORD_GAP
         else "event"
     )
-    effect = serialize_document(
-        {
-            "operation_type": operation_type,
-            "db_name": db_name,
-            "coll_name": coll_name,
-            "document_key": document_key,
-            "full_document": full_document,
-            "update_description": None,
-        },
-    )
+    effect = serialize_document(build_change_payload(
+        operation_type=operation_type, db_name=db_name, coll_name=coll_name,
+        document_key=document_key, full_document=full_document,
+        update_description=update_description,
+    ))
     payload = effect if kind == "event" else None
     effective_event_index = (
         (context.change_event_index if context is not None else 0)

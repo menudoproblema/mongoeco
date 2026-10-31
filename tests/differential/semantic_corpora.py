@@ -115,6 +115,10 @@ from tests.differential.semantic_type_query_cases import (
     SEED as TYPE_QUERY_SEED,
     SEMANTIC_TYPE_QUERY_CASES,
 )
+from tests.differential.semantic_update_event_cases import (
+    SEED as UPDATE_EVENT_SEED,
+    SEMANTIC_UPDATE_EVENT_CASES,
+)
 from tests.differential.semantic_update_identity_cases import (
     SEED as UPDATE_IDENTITY_SEED,
     SEMANTIC_UPDATE_IDENTITY_CASES,
@@ -136,6 +140,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "update_event": SemanticCorpus(
+        "update-event",
+        "semantic_update_event_cases",
+        UPDATE_EVENT_SEED,
+        SEMANTIC_UPDATE_EVENT_CASES,
+        surfaces=("sync", "async"),
+    ),
     "bson_size": SemanticCorpus(
         "bson-size",
         "semantic_bson_size_cases",

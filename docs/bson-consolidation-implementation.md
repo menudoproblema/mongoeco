@@ -419,9 +419,52 @@ del plan/outcome y un constructor de contenido común, conservando políticas de
 operador y owners transaccionales. La identidad física sola no decide todos los
 contadores/eventos. No se modifica producción en esta revisión documental.
 
+## D01b — Contenido de cambios y entrega persistente
+
+La [evidencia del incremento](evidence/bson-consolidation-implementation/update-events/receipt.json)
+implementa contenido compartido y su integración en Memory/SQLite, sin cerrar
+todavía D01b: commands/findAndModify conservan la regresión permanente y revisión
+final pendientes. La sonda sync actual de esas entradas coincide, pero no se
+cuenta como prueba permanente ni como ejecución async.
+
+Los planes clásicos conservan las rutas que aplicaron, separadas de identidad
+BSON: unset sobre slot null, NaN aritmético y push con sort/append+truncate
+pueden producir efectos con postimagen idéntica. Slice sin efecto no modifica;
+rename no mueve un destino existente. Pipeline conserva imagen calculada y
+guardada para `_id`; tamaño BSON contrastado permite elegir update/replace y
+subdiffs sin estimaciones JSON. El mismo cálculo sirve a `$bsonSize`; regex
+conserva sus opciones BSON también al atravesar wire.
+
+Merge emparejado reutiliza los planes y políticas existentes. Se retiran su
+materializador manual y las decisiones duplicadas de selección de storage key;
+rekey permitido conserva orden natural, índices y formato persistido. La
+revisión evita convertir DuplicateKeyError en OperationFailure genérico al
+adaptar otros WriteError a fallo de comando.
+
+La prueba de reapertura encontró orden JSON recursivamente normalizado y decode
+sin widths. Journal conserva ambos: log V2 con checksum sensible al orden,
+lectura V1 y snapshot V1 sin reordenación. No se alteran tokens ni esquema de
+outbox. Se verifica un journal realmente creado por el runtime anterior; la
+información ya perdida en un journal antiguo no puede recuperarse.
+
+Cuatro acciones de tamaño y nueve de eventos tienen referencias 7.0.43/8.0.32/
+9.0.2 verificadas con --check. La base archivada 375382a falla 192 checks y pasa
+18 sobre el corpus final; el candidato pasa 210 focales y 5.905 integrados.
+Pasan 2.660 de core/propiedades/entrega (942 subtests, un skip local), 12.155 de
+consumidores de escritura (1.478 subtests), 2.746 wire (92 subtests) y 253 con
+orjson. Pasan typing público/boundary, SDK-free 3.13 y lint sin deuda nueva.
+Se mantienen observers, snapshots y fixtures históricos. Los controles nuevos
+incluyen fallo posterior al registro, rollback, reintento, commit/abort y replay
+incremental/compactado una vez; no aceptan por asociación watch transformado,
+fullDocument modes, aislamiento distribuido ni todo D04/D05.
+
+La medición pequeña secuencial conserva checksums: razones aproximadas 1,01/0,99
+en Memory/SQLite sin observador y 1,01/1,03 en no-ops con observador. D05 conserva
+su evaluación completa de costes y matrices.
+
 ## Trabajo restante
 
-- D01b: construcción/contenido de eventos y entrega/outbox/rollback, con procedencia de rutas y documentKey físico anterior. Estado/contadores/índices/múltiples poseen el incremento anterior; no acreditan cierre completo.
+- D01b: regresión permanente sync/async de commands/findAndModify y revisión final del bloque frente al plan. Los incrementos anteriores conservan estado/índices/múltiples y el actual contenido/entrega; no se declara cierre completo por la sonda adicional.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
 - D04: preparación/contexto de watch y fixtures de replica set para los jobs
   nativos que alcanzan watch/TTL; la entrega TTL no cierra esos errores de entrada.

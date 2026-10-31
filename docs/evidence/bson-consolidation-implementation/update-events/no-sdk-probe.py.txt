@@ -1,0 +1,32 @@
+"""Exercise size and producer effects without the optional BSON SDK."""
+import importlib.util
+
+assert importlib.util.find_spec("bson") is None
+from mongoeco import MongoClient
+from mongoeco.core.bson_size import bson_document_size
+from mongoeco.core.bson_scalars import BsonInt64
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.types import Binary, Regex
+
+assert bson_document_size({"v": BsonInt64(1)}) == 16
+assert bson_document_size({"v": Binary(b"ab", 2)}) == 19
+assert bson_document_size({"v": Regex("a", "u")}) == 12
+for factory in (MemoryEngine, SQLiteEngine):
+    with MongoClient(factory()) as client:
+        collection = client.effects.records
+        collection.insert_one({"_id": 1, "v": 1, "a": [None], "pad": "x" * 1000})
+        stream = collection.watch(max_await_time_ms=1)
+        try:
+            assert collection.update_one({}, {"$unset": {"a.0": 1}}).modified_count == 1
+            event = stream.try_next()
+            assert event["updateDescription"]["updatedFields"] == {"a.0": None}
+            assert collection.update_one({}, [{"$set": {"v": 1.0}}]).modified_count == 1
+            event = stream.try_next()
+            assert event["operationType"] == "update"
+            assert type(event["updateDescription"]["updatedFields"]["v"]) is float
+            assert collection.update_one({}, {"$set": {"v": 1.0}}).modified_count == 0
+            collection.insert_one({"_id": "barrier"})
+            assert stream.try_next()["documentKey"] == {"_id": "barrier"}
+        finally:
+            stream.close()
+print("SDK-free sizes and mutation event contents passed on both engines")

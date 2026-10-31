@@ -99,6 +99,21 @@ def _storage_key_matches_id(value, storage_key, storage_key_for_id):
     )
 
 
+def updated_document_storage_key(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    storage_key: Any,
+    *,
+    storage_key_for_id: Callable[[Any], Any],
+) -> Any:
+    """Keep the selected persisted key when its BSON identifier is unchanged."""
+    if "_id" in before and "_id" in after and same_bson_update_value(
+        before["_id"], after["_id"]
+    ):
+        return storage_key
+    return storage_key_for_id(after.get("_id"))
+
+
 def assert_document_matches_storage_key(
     document: dict[str, Any],
     storage_key: Any,
@@ -200,17 +215,6 @@ def materialize_merge_insert_document(
         keys.sort()
     for key in keys:
         materialized[key] = deepcopy(document[key])
-    return materialized
-
-
-def materialize_merge_update_document(
-    original_document: dict[str, Any],
-    incoming_document: dict[str, Any],
-) -> dict[str, Any]:
-    """Merge fields in update-operator order while retaining existing positions."""
-    materialized = deepcopy(original_document)
-    for key in sorted(incoming_document):
-        materialized[key] = deepcopy(incoming_document[key])
     return materialized
 
 

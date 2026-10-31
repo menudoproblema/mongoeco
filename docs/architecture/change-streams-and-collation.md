@@ -57,6 +57,21 @@ Una operacion sin consumidor activo registra un hueco de secuencia en vez de
 inventar un evento recuperable. Los resume tokens no pueden atravesar esos
 huecos silenciosamente.
 
+El contenido de los cambios de actualización se construye en
+`core/change_events.py`, compartido por Memory y SQLite. Los planes clásicos
+conservan las rutas realmente aplicadas; los pipelines conservan la imagen
+calculada cuando difiere de la guardada por la política de `_id`. Ese contenido
+no se publica hasta confirmar la escritura: scopes transaccionales y outbox
+siguen siendo responsables de la entrega.
+
+El journal conserva orden documental y anchos numéricos BSON al reanudar.
+Las entradas incrementales nuevas usan versión 2, cuyo checksum incluye el
+orden; el lector sigue aceptando las entradas versión 1 con su checksum
+canónico anterior. Los snapshots conservan su formato versión 1 y dejan de
+ordenar recursivamente los documentos. No se cambian tokens ni esquema del
+outbox SQLite. El orden o ancho ya perdido en journals antiguos no puede
+reconstruirse a partir del fichero.
+
 La arquitectura persigue robustez local, no durabilidad de cluster. Por eso se
 admiten opciones como:
 

@@ -1,0 +1,32 @@
+[
+  {
+    "file": "db/update/document_diff_calculator.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/update/document_diff_calculator.cpp",
+    "sha256": "5a6146f0a403425e29a74865b599b9159f0e13bccae90c5ba819bfd0841c66cf",
+    "bytes": 19148
+  },
+  {
+    "file": "db/update/document_diff_serialization.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/update/document_diff_serialization.h",
+    "sha256": "01224d9af10f9bcbb62f04fdd0fc15f05e9bf8576604e06c645cd6f61c1aee02",
+    "bytes": 14713
+  },
+  {
+    "file": "db/update/document_diff_serialization.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/update/document_diff_serialization.cpp",
+    "sha256": "f26f5037c9aab638dc5c5990303d44db3069bf10f0018b7ae1b7b4d314bcd99e",
+    "bytes": 26274
+  },
+  {
+    "file": "db/update/update_oplog_entry_serialization.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/update/update_oplog_entry_serialization.h",
+    "sha256": "5b602f0e867933c3bf5616695dc89bda78aa46c63fd01c7fe10088ca64a5a91e",
+    "bytes": 4935
+  },
+  {
+    "file": "db/update/v2_log_builder.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/update/v2_log_builder.cpp",
+    "sha256": "90a19262a36e40bda9929a8de916820a5c78a5e0c3ed7b91ca957c6cbe5e800e",
+    "bytes": 6136
+  }
+]

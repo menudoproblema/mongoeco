@@ -86,6 +86,7 @@ def apply_set(
                 deepcopy(application.instruction.value),
             ):
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 
@@ -104,8 +105,22 @@ def apply_unset(
         allow_positional=True,
     ):
         for target in application.targets:
-            if delete_document_value(doc, target.concrete_path):
+            # Classic $unset logs an existing array slot even when it already
+            # contains null. This is an operator effect, not BSON inequality.
+            path = target.concrete_path
+            parent_path, _, leaf = path.rpartition(".")
+            found, parent = (
+                get_document_value(doc, parent_path) if parent_path else (False, None)
+            )
+            existing_array_slot = (
+                found
+                and isinstance(parent, list)
+                and leaf.isdigit()
+                and int(leaf) < len(parent)
+            )
+            if delete_document_value(doc, target.concrete_path) or existing_array_slot:
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 
@@ -131,6 +146,7 @@ def apply_inc(
             if not found:
                 if set_document_value(doc, target.concrete_path, increment):
                     modified = True
+                    context.record_change(target.concrete_path)
                 continue
             if not helpers._is_numeric(current):
                 raise OperationFailure(
@@ -141,6 +157,7 @@ def apply_inc(
                 doc, target.concrete_path, current, increment, "$inc"
             ):
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 
@@ -196,6 +213,7 @@ def apply_min(
             if not found or context.dialect.policy.compare_values(current, value) > 0:
                 if set_document_value(doc, target.concrete_path, deepcopy(value)):
                     modified = True
+                    context.record_change(target.concrete_path)
     return modified
 
 
@@ -219,6 +237,7 @@ def apply_max(
             if not found or context.dialect.policy.compare_values(current, value) < 0:
                 if set_document_value(doc, target.concrete_path, deepcopy(value)):
                     modified = True
+                    context.record_change(target.concrete_path)
     return modified
 
 
@@ -249,6 +268,7 @@ def apply_mul(
                 )
                 if set_document_value(doc, target.concrete_path, missing_value):
                     modified = True
+                    context.record_change(target.concrete_path)
                 continue
             if not helpers._is_numeric(current):
                 message = "$mul requires the target field to be numeric"
@@ -257,6 +277,7 @@ def apply_mul(
                 doc, target.concrete_path, current, factor, "$mul"
             ):
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 
@@ -297,6 +318,7 @@ def apply_bit(
                     doc, target.concrete_path, bson_bitwise(operator, 0, operand)
                 ):
                     modified = True
+                    context.record_change(target.concrete_path)
                 continue
             if not helpers._is_integral(current) or not _is_signed_int64(current):
                 message = "$bit requires the target field to be a signed 64-bit integer"
@@ -307,6 +329,7 @@ def apply_bit(
             replacement = bson_bitwise(operator, current, operand)
             if set_document_value(doc, target.concrete_path, replacement):
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 
@@ -317,7 +340,7 @@ def apply_rename(
     context: UpdateExecutionContext,
     helpers: Any,
 ) -> bool:
-    del context, helpers
+    del helpers
     modified = False
     for instruction in instructions:
         if instruction.target_path is None:
@@ -334,10 +357,10 @@ def apply_rename(
         found, current = get_document_value(doc, instruction.path.raw)
         if not found:
             continue
-        delete_document_value(doc, instruction.target_path.raw)
         set_document_value(doc, instruction.target_path.raw, deepcopy(current))
         delete_document_value(doc, instruction.path.raw)
         modified = True
+        context.record_change(instruction.path.raw)
     return modified
 
 
@@ -379,6 +402,7 @@ def apply_current_date(
         for target in application.targets:
             if set_document_value(doc, target.concrete_path, replacement):
                 modified = True
+                context.record_change(target.concrete_path)
     return modified
 
 

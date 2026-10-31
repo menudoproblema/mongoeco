@@ -28,7 +28,8 @@ def snapshot_to_document(snapshot: ChangeEventSnapshot) -> dict[str, object]:
 
 
 def snapshot_from_document(document: object) -> ChangeEventSnapshot:
-    document = DocumentCodec.decode(document)
+    # Keep physical numeric widths for the cursor's normal materialization.
+    document = DocumentCodec.decode(document, preserve_bson_wrappers=True)
     if not isinstance(document, dict):
         raise OperationFailure("change stream journal could not be loaded")
     token = document.get("token")
@@ -77,7 +78,7 @@ def journal_payload(
         },
         separators=(",", ":"),
         ensure_ascii=True,
-        sort_keys=True,
+        sort_keys=False,
     )
 
 
@@ -85,16 +86,19 @@ def journal_event_entry(event: ChangeEventSnapshot) -> str:
     payload = json.dumps(
         snapshot_to_document(event),
         separators=(",", ":"),
-        sort_keys=True,
+        sort_keys=False,
     )
     return json.dumps(
         {
-            "version": 1,
+            # V1 checksums canonicalized keys recursively, losing BSON order.
+            # V2 authenticates the actual ordered document; legacy logs remain
+            # readable below without rewriting their checksums or tokens.
+            "version": 2,
             "event": json.loads(payload),
             "checksum": hashlib.sha256(payload.encode("utf-8")).hexdigest(),
         },
         separators=(",", ":"),
-        sort_keys=True,
+        sort_keys=False,
     )
 
 
@@ -104,9 +108,13 @@ def snapshot_from_log_entry(document: object) -> ChangeEventSnapshot:
     version = document.get("version")
     event = document.get("event")
     checksum = document.get("checksum")
-    if version != 1 or not isinstance(checksum, str):
+    if (
+        isinstance(version, bool)
+        or version not in (1, 2)
+        or not isinstance(checksum, str)
+    ):
         raise OperationFailure("change stream journal could not be loaded")
-    payload = json.dumps(event, separators=(",", ":"), sort_keys=True)
+    payload = json.dumps(event, separators=(",", ":"), sort_keys=version == 1)
     if hashlib.sha256(payload.encode("utf-8")).hexdigest() != checksum:
         raise OperationFailure("change stream journal could not be loaded")
     return snapshot_from_document(event)
