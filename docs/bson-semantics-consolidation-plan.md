@@ -42,6 +42,13 @@ D04 y su aceptación frente a imágenes y DDL observados en MongoDB 7/8/9.
 El orden restante vigente es el de «Refinamiento de la revisión 8» en sección 5.
 Esta revisión solo modifica documentación/evidencia, sin aceptar el candidato.
 
+Revisión 9: el adjunto vuelve a ser idéntico por SHA-256, contrastado con
+HEAD `163ccb4` y runtime/tests limpios. La [evidencia de revisión 9](evidence/bson-consolidation-review/review9/receipt.json)
+separa las regresiones repetidas de la aceptación histórica. Preparación/contexto
+e imágenes CRUD de watch ya tienen aceptación propia; siguen pendientes DDL,
+protocolo/reanudación y su integración. El orden vigente se precisa al final
+de la sección 5, sin crear bloques ni reabrir cortes cerrados.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H55 y su integración con B00–B10 y
@@ -352,7 +359,7 @@ Las prioridades ordenan riesgos, sin exigir una migración horizontal previa.
 | D01 — Identidad de modificación | P1; H48/H54 | Cortes D01a/D01b definidos abajo. Helper físico y consecuencias públicas, separados de igualdad semántica. |
 | D02 — Milisegundos exactos | P1; H49 | Independiente de Binary. Conversión, dateDiff/subtract, roundtrip; revisar ventanas, ambos lados de TTL y auxiliares antiguos frente a nuevo cutoff. Retirar resta sin callers tras comprobar usos/export privados. |
 | D03 — Tipos, Binary y especialización SQL | P1; H48/H51 | Cortes D03a/D03b definidos abajo. Clasificación/vistas y consumidores reales, incluyendo deduplicación pública. |
-| D04 — Preparación y contexto de watch | P1; H52 | Testigos D00 con replica set. Allowlist local y preparación común una vez; corregir replaceWith, capturar dialecto/reloj/codec. No depende del cierre completo de B04 ni de toda D06. |
+| D04 — Watch: preparación, imágenes y ciclo de vida | P1; H52 | Tres garantías con aceptación separada dentro del mismo bloque. Preparación/contexto e imágenes CRUD ya entregadas; completar DDL, protocolo/reanudación e integración sobre el registro/entrega existentes. Testigos D00 con replica set; no depende del cierre completo de B04 ni de toda D06. |
 | D05 — Cierre integrado | P1 transversal | Cierre por familia y final conjunto de entregas obligatorias; comparar wheel/código, contratos y archivos SQLite, registrar costes y commits semánticos. |
 | D06 — Gramática, transporte, vistas y claves | P1; H50 y consolidación contextual | Cortes D06a/D06b/D06c. Reconocimiento de literal DBRef, preservación en wire y claves por consumidor. H48 distinct y eq/in ya deben pasar en D03a. Conservar storage_key/tie-breakers. |
 | D07 — Piloto opcional schema | P2; no bloquea los fixes | Solo después de D03/D06 y una hipótesis medible. Evaluar nodos schema propios con arrays atómicos y diagnósticos anotados; no convertirlos a hojas MQL ordinarias. No compromiso de migración completa. |
@@ -732,7 +739,7 @@ conservan su cierre funcional y receipts; no se repiten sus extracciones.
 
 | Orden | Entrega | Dependencias y salida |
 | --- | --- | --- |
-| 1 | Completar D04 por las tres garantías anteriores | Revisar el candidato de preparación sin confundirlo con imágenes/DDL. Incorporar las sondas pendientes al registro/capturador/replay existentes, capturar y --check en 7/8/9. Un receipt por corte identifica la garantía aceptada; el padre D04 sigue abierto mientras quede alguna obligatoria. |
+| 1 | Completar las garantías restantes de D04 | Preparación/contexto e imágenes CRUD conservan sus receipts aceptados; no repetir su implementación. Completar DDL, protocolo/reanudación e interacción con imágenes. Incorporar las sondas pendientes al registro/capturador/replay existentes, capturar y --check en 7/8/9. Un receipt por corte identifica la garantía aceptada; el padre D04 sigue abierto mientras quede alguna obligatoria. |
 | 1, junto a los testigos físicos | Fixture replica set del job nativo | El workflow actual arranca standalone. Reutilizar imágenes fijadas y runner; inicializar/verificar primary/FCV, timeout acotado, cleanup incluso tras fallo, artefacto/wheel y corpus completo alcanzado. No crear otro runner ni llamar ejecución física a un replay de JSON; no cambiar goldens para acomodar la topología. |
 | 2 | Completar D06a/b y D06c | Primitivas/gramática/raw ya entregadas: quedan aceptación de contextos/subpipelines y consumidores, con/sin hash/spill y Search según sus políticas. El éxito de DBRef literal básico no cierra esos caminos; no depende de terminar D04 para avanzar. |
 | 3 | Disponer H53, conversión escalar y D07 | Mantener owners C03/B08 y conversión; contrastar sNaN en 7/8/9 y añadir regresión. D07 es decisión opcional continuar/descartar, sin migración ni logging nuevo implícitos. |
@@ -744,6 +751,57 @@ los receipts poseen comandos, hashes y resultados. Los apartados de revisiones
 anteriores son historia identificada, no otras listas activas. No crear nuevos
 IDs por cada revisión del mismo adjunto ni copiar todas las matrices en cada
 corte. Este refinamiento no acepta ni modifica el trabajo productivo en curso.
+
+### Refinamiento de la revisión 9: disposición y mínima refactorización restante
+
+El adjunto no aporta una reproducción nueva respecto de revisión 8. Sus
+retractaciones son consistentes con las trazas históricas; sus cuatro huecos
+adicionales ya forman parte del plan y tienen disposiciones diferentes:
+
+| Observación | Contraste actual y decisión |
+| --- | --- |
+| H48 interno/local y Binary SDK | `bson_values.binary_parts`/`binary_order_key` reconocen las representaciones bytes con subtipo; comparación y clasificación delegan. Distinct observa payload/subtipo. Conservar propiedades D00 y regresiones D03a; no agregar otra tabla de clases. La herencia explica el fallo histórico, pero no debe ser la nueva autoridad semántica. |
+| Eq/in SQL y tags históricos | `_is_translatable_equality_value` rechaza las formas binarias y membership conserva fallback. El test de rutas ejecuta SQL, verifica matcher y compara con traducción desactivada. No optimizar por tag ni reabrir D03b para satisfacer una preferencia por pushdown. |
+| Literal DBRef y wire | `query_operators` comparte la decisión gramatical por contexto; `bson_raw` preserva el orden antes de la conversión SDK. La regresión básica pasa por directa y wire. D06a/b conservan contextos/subpipelines y H55; D06c conserva consumidores. El éxito del parser básico no equivale al cierre de esas obligaciones. |
+| Watch: fase/clase/código | El corpus permanente `semantic_watch_cases` registra las tres dimensiones; preparación/contexto tiene receipt aceptado. Mantener esa regresión. DDL, opciones del cursor, cierre y reanudación siguen abiertos con sus testigos propios; no describir todo watch como corregido ni toda su preparación como candidata. |
+| Frontera real del matcher | La sonda actual observa 18 filas en seis pares motor/dialecto, separando documento y operando. Es diagnóstico reproducible, no contrato de nombre de clase. Las propiedades entre representaciones y los resultados públicos son la garantía permanente. |
+| TTL y fuentes | El cutoff SQLite actual usa `bson_datetime_milliseconds` entero y conserva residual exacto; la explicación flotante pertenece a la base histórica. No adoptar «retraso irrelevante» como garantía. Los 16 hashes versionados vuelven a coincidir; la lectura de r8.0.0 explica mecanismos, sin sustituir referencias 7/8/9. |
+
+**Refactorización conjunta restante.** El patrón común es perder información
+antes de decidir: subtipo al comparar bytes, orden documental al decodificar,
+tipo físico al detectar modificaciones, contexto al preparar expresiones o
+secuencia confirmada al publicar DDL. La solución compartida ya está repartida
+entre vistas BSON, identidad, gramática/raw, preparación/contexto y efectos.
+Mantener esas autoridades pequeñas y delegar desde los consumidores; un helper
+universal de igualdad o un nuevo normalizador volverían a mezclar contratos.
+
+Para el siguiente corte D04, la extracción útil y acotada es la coordinación
+de entrega hoy situada en `CollectionRuntimeCoordinator`: preparación de engine,
+hooks de commit y despacho en `finally` pueden compartirse con DDL de base/cliente.
+No crear una colección ficticia para acceder a ellos ni replicar el protocolo
+en cada API. Los motores registran el efecto real en la unidad atómica/outbox
+existente; ámbito/cierre y materialización pública siguen siendo decisiones
+del consumidor. Esta extracción depende de testigos DDL previos y debe conservar
+entrega tras commits parciales, abort, fallos de publicación y extensiones SPI v2.
+
+La aceptación restante se ejecuta en este orden, dentro de D04:
+
+1. Incorporar drop/rename/dropDatabase y ausencia de efecto al mismo orden
+   confirmado. Cubrir entradas públicas y comandos que ya soporten esas acciones;
+   verificar barrera posterior, sin omisión ni duplicado, en los tres ámbitos.
+2. Completar protocolo, argumentos, cierre/error/cancelación y resume/start,
+   con caracterización nativa antes de fijar códigos o reglas no observadas.
+   Probar que posición inicial, token y eventos procesados son coherentes ante
+   escrituras entre apertura y lectura; cubrir filtros, retención y reapertura.
+   El valor opaco del token no se compara con el del servidor.
+3. Integrar imágenes y DDL —incluida recreación que ya coincide— y fixture RS
+   de CI. Reutilizar receipts de preparación/imágenes cuando no cambien sus
+   inputs; repetir los gates alcanzados por la extracción y el integrado final.
+
+El orden D06/H53/conversión/D07/D05 permanece en la tabla anterior. Las 88
+comprobaciones focales y 408 de replay de esta revisión usan el candidato
+actual y capturas existentes; no son recaptura física, suite global ni cierre
+del incremento. No se cambia producción, tests, goldens ni receipts anteriores.
 
 ## 6. Pruebas y aceptación por garantía
 

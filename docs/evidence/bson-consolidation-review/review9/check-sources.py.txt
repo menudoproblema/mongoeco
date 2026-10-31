@@ -1,0 +1,14 @@
+import concurrent.futures,hashlib,json,urllib.request
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-review/review9')
+rows=json.loads(Path('docs/evidence/bson-consolidation-review/review7/sources-check.json').read_text())
+def check(row):
+    try:
+        data=urllib.request.urlopen(row['url'],timeout=30).read()
+        actual=hashlib.sha256(data).hexdigest()
+        return {'file':row['file'],'url':row['url'],'expected_sha256':row['expected_sha256'],'actual_sha256':actual,'bytes':len(data),'matches':actual==row['expected_sha256']}
+    except Exception as exc:return {'file':row['file'],'url':row['url'],'matches':False,'error':repr(exc)}
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:result=list(pool.map(check,rows))
+(root/'sources-check.json').write_text(json.dumps(result,indent=2)+'\n')
+print({'downloaded':len(result),'matched':sum(row['matches'] for row in result)})
+assert all(row['matches'] for row in result)

@@ -590,6 +590,15 @@ vacío y cursor vivo nativo. Estos testigos se unen al protocolo y bypass de
 secuencia ya identificados. Es diagnóstico sync, sin producción ni cierre D04;
 siguen pendientes regresiones permanentes, corrección y aceptación del bloque.
 
+## Revisión 9 del mismo adjunto
+
+El [contraste sobre 163ccb4](evidence/bson-consolidation-review/review9/receipt.json)
+repite 88 checks focales y 408 de replay sobre capturas existentes, sin cambios
+de runtime/tests ni nuevas capturas físicas. El plan reconoce explícitamente
+la aceptación de preparación/contexto e imágenes CRUD y acota la extracción
+de entrega compartida para DDL. No cambia el estado de ningún corte ni
+sustituye los gates de aceptación anteriores.
+
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
