@@ -12,7 +12,9 @@ la trazabilidad, sin imponer siete etapas secuenciales ni otro roadmap.
 Se ha recibido un informe con cuatro áreas. El mensaje anuncia dos informes,
 pero el segundo no está incluido; su integración queda pendiente. Este plan
 cubre completamente los hallazgos del informe disponible y los contraejemplos
-adicionales comprobados aquí. No se han aplicado correcciones productivas.
+adicionales comprobados aquí. El progreso de implementación se conserva en el
+[registro de ejecución](semantic-parity-implementation.md), separado de esta
+caracterización inicial.
 
 Revisión de simplicidad del plan sobre `1f9c794`: se reducen barreras de
 ejecución y construcciones previstas, conservando H37–H47, los testigos,

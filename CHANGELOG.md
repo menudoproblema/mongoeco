@@ -10,6 +10,13 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Apply MQL type bracketing in interpreted, generated and SQLite query paths;
+  preserve native missing/null inclusive bounds, NaN ranges and Code scopes.
+  Keep generated queries as boolean composition of the common matcher, without
+  swallowing internal failures or retaining temporary matcher instrumentation.
+  Fix partial-index range implication and missing-field null negations across
+  dialects, including SQLite membership and persisted-index regression coverage.
+
 - Validate structured get/set/unsetField arguments before reading rows, retain
   MongoDB 7 constant-field rules versus dynamic getField in 8/9, and preserve
   CURRENT and missing results. Reject unary group/bucket array operands while

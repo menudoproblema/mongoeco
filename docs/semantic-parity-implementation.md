@@ -770,17 +770,55 @@ El [análisis y plan H37–H47](predicate-authorities-analysis-and-plan.md) aña
 los cortes C00–C06 sobre la base `79529a2`, después de los commits del trabajo
 anterior. Posee sus causas, alcance y dependencias; este registro posee su estado.
 
-Estado: **analizado y planificado, sin correcciones productivas**. La evidencia
-de caracterización conserva 65 estímulos de solo lectura contra MongoDB 9.0.2,
+Estado: **implementación en curso**. La evidencia de caracterización previa
+conserva 65 estímulos de solo lectura contra MongoDB 9.0.2,
 ocho escenarios de rutas públicas en ambos motores privados y 38 pruebas
 existentes verdes. No es aceptación de los hallazgos nuevos ni captura nativa
 7/8. Se ha recibido un informe; el segundo anunciado sigue pendiente.
 
-H37–H47 están pendientes de implementación y aceptación C00–C06. Los receipts
-y cierres focales anteriores conservan su identidad y no se reescriben; los
+Los receipts y cierres focales anteriores conservan su identidad y no se reescriben; los
 pendientes B00–B10 no quedan absorbidos ni cerrados por esta ampliación.
 
 El plan incorpora una revisión de simplicidad sobre `1f9c794`: C00/C06
 acompañan cada entrega y C02/C03 se integran por familia. Se mantienen los
 hallazgos, la matriz de garantías y sus aceptaciones pendientes. Esta revisión
 solo cambia la organización del trabajo; no añade resultados de ejecución.
+
+### C01: matching común y especializaciones SQL
+
+Base del incremento: `c835181`. Mecanismo: reutilización de `QueryNode`,
+`QueryEngine.match_plan`, clasificación BSON y comparación numérica existentes;
+composición booleana generada y adaptaciones de SQL/índices sobre esas reglas.
+Se retiran las implementaciones hoja del generador y la comparación SQL por
+orden entre familias. No se añade otro planner ni una caché de valores.
+
+El matcher restringe familias antes de comparar, conserva límites inclusivos
+con null/ausencia, MinKey/MaxKey, NaN y la distinción Code/Code-with-scope.
+La plantilla cacheada resuelve el método del owner al ejecutarse y conserva
+valores por consulta; no retiene instrumentación temporal. Los fallos internos
+dejan de convertirse en `False`.
+
+La integración corrige además la implicación de límites inclusivos/estrictos en
+índices parciales. El testigo SQLite creado con las fuentes anteriores verifica
+reapertura, inserción válida, rechazo de un duplicado real y estado posterior;
+en ese testigo no hace falta migración. La selección de updates, `$pull` y
+array filters comparte la regla nativa capturada.
+
+Las capturas ampliadas demuestran también que `$ne: null` y `$nin: [null]`
+excluyen ausencia en **7/8/9**. Se corrigen matcher, SQL, dos expectativas
+locales anteriores y `DIALECTS.md`; el delta de `UNDEFINED` explícito permanece
+separado. Esta corrección elimina otro error compartido por ambos evaluadores.
+
+El [receipt C01](evidence/predicate-authorities/query-matching-validation.json)
+posee identidad de fuentes, corpus, resultados y límites. Conserva once acciones
+nativas por versión en ambos motores, el contraste rojo de la base anterior,
+la matriz pública y las regresiones causales. Los benchmarks de predicados
+reutilizan workloads existentes y se conservan como tendencia, sin umbral CPU.
+La prueba de contexto decimal compara el mapping de sus nueve flags públicos:
+`SignalDict` puede diferir de su copia por subflags internos de InvalidOperation
+aunque los flags observables no hayan cambiado. No se limpian flags heredados.
+
+H37–H39 quedan corregidos en el alcance C01 capturado; los gates globales de
+C06 siguen pendientes. **H40–H47 / C02–C05 siguen abiertos.** El siguiente
+incremento es igualdad/preparación de schema y su integración de escritura
+C02/C03, conservando la aceptación específica del dialecto de `moderate`.

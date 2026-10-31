@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from copy import deepcopy
 import re
 
+from copy import deepcopy
+
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import _is_nan_numeric_value, unwrap_bson_numeric
 from mongoeco.core.collation import (
     CollationSpec,
     compare_with_collation,
@@ -500,6 +502,12 @@ def _compare_bounds(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> bool:
+    if not QueryEngine._comparison_types_match(left, right, dialect=dialect):
+        return False
+    if _is_nan_numeric_value(unwrap_bson_numeric(left)) != _is_nan_numeric_value(
+        unwrap_bson_numeric(right)
+    ):
+        return False
     comparison = compare_with_collation(
         left,
         right,
@@ -507,16 +515,10 @@ def _compare_bounds(
         collation=collation,
     )
     if reverse:
-        if comparison < 0:
-            return True
-        if comparison == 0:
-            return (not left_inclusive) or right_inclusive
-        return False
-    if comparison > 0:
-        return True
-    if comparison == 0:
-        return left_inclusive or not right_inclusive
-    return False
+        comparison = -comparison
+    return comparison > 0 or (
+        comparison == 0 and ((not left_inclusive) or right_inclusive)
+    )
 
 
 def _value_satisfies_bounds(
@@ -528,22 +530,12 @@ def _value_satisfies_bounds(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> bool:
-    if minimum is not None:
-        minimum_comparison = compare_with_collation(
-            value,
-            minimum,
-            dialect=dialect,
-            collation=collation,
+    return all(
+        bound is None or QueryEngine._comparison_matches_candidate(
+            value, bound, operator, dialect=dialect, collation=collation
         )
-        if minimum_comparison < 0 or (minimum_comparison == 0 and not inclusive):
-            return False
-    if maximum is not None:
-        maximum_comparison = compare_with_collation(
-            value,
-            maximum,
-            dialect=dialect,
-            collation=collation,
+        for bound, operator in (
+            (minimum, "gte" if inclusive else "gt"),
+            (maximum, "lte" if inclusive else "lt"),
         )
-        if maximum_comparison > 0 or (maximum_comparison == 0 and not inclusive):
-            return False
-    return True
+    )

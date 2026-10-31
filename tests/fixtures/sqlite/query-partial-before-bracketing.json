@@ -1,0 +1,7 @@
+{
+  "base": "c835181",
+  "fixture_sha256": "0ab0ea11fab82f63aa558781a5054fa5107076a031967c46213cce957476b100",
+  "source_path": "/tmp/mongoeco-predicate-implementation-baseline/src/mongoeco/core/_filtering_matching.py",
+  "source_sha256": "14e29427cef5f72ce6cf2ce0f3ac881cf33fdafc3422910ccc52e676bf6380a7",
+  "scope": "Legacy partial membership under an unbracketed numeric query"
+}

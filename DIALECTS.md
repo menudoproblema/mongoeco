@@ -88,11 +88,16 @@ delta ya está conectado al runtime en el perímetro actualmente soportado:
 
 * igualdad por `null` y `$eq`
 * `$in` que incluye `null`
-* `$ne` / `$nin` frente a `null` cuando el campo está ausente
+* `$ne` / `$nin` frente a `null` sobre `UNDEFINED` explícito
 * `$lookup` con `localField` / `foreignField`
 
 La suite local fija explícitamente la diferencia entre `7.0` y `8.0` en esos
 caminos.
+
+El campo ausente no es `UNDEFINED` explícito. `$ne: null` y `$nin: [null]`
+excluyen campos ausentes en 7/8/9; esta regla común no depende del hook.
+Las capturas de `semantic_query_matching` verifican también estas negaciones
+en datos que permiten SQL y en fallback Python.
 
 ### Deltas activos hoy
 
@@ -101,8 +106,8 @@ caminos.
 | `null_query_matches_undefined()` | `True` | `False` | `null_query_matches_undefined()` | sí | `tests/unit/test_compat.py` |
 | Igualdad query `{"field": null}` sobre `UNDEFINED` | match | no match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
 | `"$in": [null]` sobre `UNDEFINED` | match | no match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
-| `"$ne": null` con campo ausente | no match | match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
-| `"$nin": [null]` con campo ausente | no match | match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
+| `"$ne": null` con campo ausente | no match | no match | regla común, sin delta | sí | `tests/differential/semantic_query_matching_cases.py` |
+| `"$nin": [null]` con campo ausente | no match | no match | regla común, sin delta | sí | `tests/differential/semantic_query_matching_cases.py` |
 | `$lookup` simple con `null` vs `UNDEFINED` | iguala | no iguala | `null_query_matches_undefined()` | sí | `tests/unit/core/test_aggregation.py`, `tests/differential/*` |
 
 La separación actual entre consulta y expresión y sus formas admitidas se

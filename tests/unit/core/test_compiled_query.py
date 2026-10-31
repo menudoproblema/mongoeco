@@ -274,9 +274,9 @@ class CompiledQueryTests(unittest.TestCase):
             [{'_id': 1, 'tags': ['python', 'mongo']}],
         )
 
-    def test_compiled_query_covers_inline_prefix_and_empty_boolean_nodes(self):
+    def test_compiled_query_covers_empty_boolean_nodes(self):
         self.assertEqual(
-            CompiledQuery(AndCondition(())).get_inline_code(prefix='tmp'),
+            CompiledQuery(AndCondition(())).get_inline_code(),
             'True',
         )
         self.assertEqual(

@@ -65,6 +65,10 @@ from tests.differential.semantic_overflow_write_cases import (
     SEMANTIC_OVERFLOW_WRITE_CASES,
     WRITE_SEED as OVERFLOW_WRITE_SEED,
 )
+from tests.differential.semantic_query_matching_cases import (
+    SEED as QUERY_MATCHING_SEED,
+    SEMANTIC_QUERY_MATCHING_CASES,
+)
 from tests.differential.semantic_sum_cases import (
     SEED as SUM_SEED,
     SEMANTIC_SUM_CASES,
@@ -83,6 +87,12 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "query_matching": SemanticCorpus(
+        "query-matching",
+        "semantic_query_matching_cases",
+        QUERY_MATCHING_SEED,
+        SEMANTIC_QUERY_MATCHING_CASES,
+    ),
     "object_grammar": SemanticCorpus(
         "object-grammar",
         "semantic_object_grammar_cases",

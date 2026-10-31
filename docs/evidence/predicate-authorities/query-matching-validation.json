@@ -1,0 +1,181 @@
+{
+  "base": "c835181d83f3f35ef22b5334c75f6e16d8181015",
+  "status": "C01_focally_corrected_C02_C06_pending",
+  "findings": [
+    "H37",
+    "H38",
+    "H39"
+  ],
+  "scope": "Query family eligibility, interpreted/generated leaves, scalar/array SQL, partial-index implication, update/pull/array-filter selection, missing/null negations and legacy SQLite reopen. Not full plan closure.",
+  "mechanism": "Reuse QueryNode and canonical match_plan; generated code composes booleans and dynamically resolves its owner. SQL uses existing bracketed scalar/array leaves. No new policy registry or value cache.",
+  "source_count": 276,
+  "all_source_fingerprint": "5c172f3a392e84d02819601b1b1789ce8eff5aa352f438800b3c2ba35c6e1af4",
+  "source_sha256": {
+    "src/mongoeco/core/_filtering_matching.py": "c661af10cbb765d434d644c556dcf565128c61e30844378f56493bb12acbc410",
+    "src/mongoeco/core/compiled_query.py": "6279f46488543c895adda55d844b695bdc6229503769fd839922250e531a8a14",
+    "src/mongoeco/engines/sqlite_query.py": "c1f74edf7894e1287a9e6cfa33b8b85cb21de4877d4a378170d60d1379978215",
+    "src/mongoeco/engines/virtual_indexes.py": "639323888d20af297ecdbea15c7e3683f6299ef1e42f114adce63e79aaa6e4d7"
+  },
+  "baseline_all_source_fingerprint": "75ad2520f74b86b6aaa0bcb24ef77c5fead6978fadf1f4f55ff37b2324358338",
+  "baseline_source_sha256": {
+    "src/mongoeco/core/_filtering_matching.py": "14e29427cef5f72ce6cf2ce0f3ac881cf33fdafc3422910ccc52e676bf6380a7",
+    "src/mongoeco/core/compiled_query.py": "4a7414dd78626eb804388387ec2310ca081a30c4f8beb07e9167fff0937a80ac",
+    "src/mongoeco/engines/sqlite_query.py": "78b60d1e6a7a493ac964adcb8e2f1f316bec5e24433a53d71c161785e2ec1432",
+    "src/mongoeco/engines/virtual_indexes.py": "a00d8eaf0da632107408cefb31e87cf94426f795bc67dd457770bfe6ae4bc44e"
+  },
+  "baseline_origin": "All 276 imported baseline src files verified byte-for-byte against git archive of the base commit. Runtime CLI uses MONGOECO_TEST_INSTALLED_ARTIFACT=1 and PYTHONPATH=<baseline-src>:.",
+  "support_sha256": {
+    "tests/differential/semantic_corpora.py": "6c6387e5e7feb30249d83e85382a28b3fdb910dd9dd048b99db48310b2014462",
+    "tests/differential/semantic_query_matching_cases.py": "c4c9fd619ca24fdfcc944a21513e53d0695ac613d9f6431e57504e95fdfdc8f6",
+    "tests/integration/api/test_query_partial_index_conservation.py": "09554907a67ed3d4fa38fa8d115f19a554c502ec1e818e917963caf6f18284e8",
+    "tests/integration/api/test_semantic_group_regressions.py": "c7713bc51d224c23d2b90ed4eb97f405c62a37fe4725f952750fadecd954fa3d",
+    "tests/unit/core/test_compiled_query.py": "4281ebd93ac794488832192cb93ee1f15b5951bb32f1c61df5f30fe0640f4cfa",
+    "tests/unit/core/test_filtering_queries.py": "3d289ebc8d7d7183ffa6c20d668d1a2d338b2ff94a11dec6e0b5278ec4869daa",
+    "tests/unit/core/test_query_matching_failures.py": "d5cb3da71b2ebf0318f00797e0e2a0208d2b7b0a74640a8c850ac0fe802e65b4",
+    "tests/unit/core/test_sqlite_engine.py": "6d19f42d2ea705b6375cf976c4623f48d2064693be2f7dfb6ce24c11486d4595",
+    "tests/unit/core/test_sqlite_query.py": "536024737a3dbde1699022d7df6b5d3028e3c5716eb74b399fdae33bb1c1d5df",
+    "tests/unit/core/test_virtual_indexes.py": "cbb7de631b867d1d8c90462110b06fa5ecf98189183459ec3abbc758187d8b64"
+  },
+  "fixture_sha256": {
+    "tests/fixtures/semantic_query_matching_7_0.json": "ce4f98a2f62ce8f6a47a1a859f41310a2e5cbfa2fcbd3802e259a4b2bf904ec9",
+    "tests/fixtures/semantic_query_matching_8_0.json": "b2990b8e62094c7ac5a0babc1c68185b769a6bc7b9d4529b6663f5c3ac5d991d",
+    "tests/fixtures/semantic_query_matching_9_0.json": "56fab7ed0d853b8df74cb3addf0aa05e38331fd2fca11e8ab56a7c4c6b7e2a95",
+    "tests/fixtures/sqlite/query-partial-before-bracketing.sqlite": "0ab0ea11fab82f63aa558781a5054fa5107076a031967c46213cce957476b100",
+    "tests/fixtures/sqlite/query-partial-before-bracketing.json": "c03e3b4ad94c6811996861e92a664966be6328f4735e6ee1a62d5221c8ad8046"
+  },
+  "native": [
+    {
+      "path": "docs/evidence/predicate-authorities/query-matching-native-7.json",
+      "sha256": "49b7bc2a199c6351352b0038bbab4663f334cd408ea331b8388781b75c2ac019",
+      "server": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "tests_run": 11,
+      "engine_checks_per_action": [
+        "Memory",
+        "SQLite"
+      ],
+      "successful": true,
+      "skips": 0
+    },
+    {
+      "path": "docs/evidence/predicate-authorities/query-matching-native-8.json",
+      "sha256": "f12937b662ec1aa8e8669e94f0e2a4326038bfa388f07cae1159ea5c7e57b3ad",
+      "server": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "tests_run": 11,
+      "engine_checks_per_action": [
+        "Memory",
+        "SQLite"
+      ],
+      "successful": true,
+      "skips": 0
+    },
+    {
+      "path": "docs/evidence/predicate-authorities/query-matching-native-9.json",
+      "sha256": "9fd160bbc15c474af435253b6222645f8c96a7dabdf3575b7f6bf9d1a08fb151",
+      "server": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "tests_run": 11,
+      "engine_checks_per_action": [
+        "Memory",
+        "SQLite"
+      ],
+      "successful": true,
+      "skips": 0
+    }
+  ],
+  "before": {
+    "path": "docs/evidence/predicate-authorities/query-matching-before-8.json",
+    "sha256": "bc5df74fcc6529dafe92403c02dd76afa1c023528ec5298b5785802b338e40e8",
+    "tests_run": 11,
+    "failures": 18,
+    "errors": 2,
+    "skipped": 0,
+    "explanation": "The legacy partial-index witness raises duplicate-key errors in both engines; all failure/error traces are retained, not skipped."
+  },
+  "checks": {
+    "checkpoint": {
+      "path": "docs/evidence/predicate-authorities/query-matching-regression.txt",
+      "sha256": "9ef466579cad84cb77304a3cdaadeb1064203c5bb9f70bd748de5506cfe3ea2a",
+      "summary": "2789 passed, 1 skipped, 3576 deselected, 936 subtests passed in 48.98s"
+    },
+    "cursors": {
+      "path": "docs/evidence/predicate-authorities/query-matching-cursors.txt",
+      "sha256": "fd390f8b298aa0dd6741f8019a480597b39323782ab0db70603e371465c19da7",
+      "summary": "241 passed, 1016 subtests passed in 8.94s"
+    },
+    "manifest": {
+      "path": "docs/evidence/predicate-authorities/query-matching-public-manifest.txt",
+      "sha256": "d5cad463dca075ce0547be8f305973f6f4bb4204b0258745e1a11b6f28245699",
+      "summary": "12 passed in 0.48s"
+    },
+    "lint": {
+      "path": "docs/evidence/predicate-authorities/query-matching-lint.txt",
+      "sha256": "bfda4cc1567766ca4c43730cc2dfdd4c9e3c67a888f53f933b6b2bf806c5d998",
+      "summary": "lint ratchet passed for 14 changed Python files"
+    }
+  },
+  "benchmarks": {
+    "memory": {
+      "before": "docs/evidence/predicate-authorities/query-matching-benchmark-before-memory.json",
+      "before_sha256": "21f952f23a367ac5a11a63736ef607ea5071ba91fd3497bbdd9efe9c5984213e",
+      "after": "docs/evidence/predicate-authorities/query-matching-benchmark-after-memory.json",
+      "after_sha256": "f3108b056e5d7009d621ef47bcafef9758fb7797fceef064a8c005cb3f1b5d8a",
+      "median_time_ratio_after_over_before": {
+        "predicate_indexed_numeric_equality_100": 1.0171,
+        "predicate_eq_bool_high_100": 1.1231,
+        "predicate_eq_string_medium_100": 1.0677,
+        "predicate_cmp_int_medium_100": 1.1581,
+        "predicate_indexed_conjunct_residual_100": 1.0479,
+        "predicate_unindexed_conjunct_residual_100": 1.1747
+      },
+      "repetitions": 3,
+      "size": 250,
+      "workload": "predicate_diagnostics",
+      "interpretation": "Local trend only, no CPU cutoff; physical plan/cost assertions retain their own gates."
+    },
+    "sqlite": {
+      "before": "docs/evidence/predicate-authorities/query-matching-benchmark-before-sqlite.json",
+      "before_sha256": "fa86446f7964b40ccd987e6d6b3dab46a102fc76b8ae202eafea28a419986b9c",
+      "after": "docs/evidence/predicate-authorities/query-matching-benchmark-after-sqlite.json",
+      "after_sha256": "a69fa01853eb080a07cb9a81c03d570facaba597969501cb857f72f1232747ec",
+      "median_time_ratio_after_over_before": {
+        "predicate_indexed_numeric_equality_100": 0.9898,
+        "predicate_eq_bool_high_100": 1.0019,
+        "predicate_eq_string_medium_100": 1.0038,
+        "predicate_cmp_int_medium_100": 1.0876,
+        "predicate_indexed_conjunct_residual_100": 1.0814,
+        "predicate_unindexed_conjunct_residual_100": 1.0769
+      },
+      "repetitions": 3,
+      "size": 250,
+      "workload": "predicate_diagnostics",
+      "interpretation": "Local trend only, no CPU cutoff; physical plan/cost assertions retain their own gates."
+    }
+  },
+  "commands": {
+    "capture": "MONGOECO_REAL_MONGODB_URI=<isolated-uri> .venv/bin/python scripts/capture_differential_replay_golden.py --target <7.0|8.0|9.0> --case-set query-matching --output tests/fixtures/semantic_query_matching_<version>.json",
+    "native": "MONGOECO_REAL_MONGODB_URI=<isolated-uri> .venv/bin/python scripts/run_mongodb_real_differential.py <target> semantic_query_matching_* --json-report <report>",
+    "checkpoint": ".venv/bin/python -m pytest tests/unit/core tests/integration/api/test_query_partial_index_conservation.py tests/integration/api/test_semantic_group_regressions.py -k \"not expression_matches_native_capture or query_matching\" -q -rs",
+    "cursors": ".venv/bin/python -m pytest tests/unit/api/test_cursors.py tests/unit/api/test_aggregation_cursor.py tests/integration/api/test_find_preparation_contract.py tests/integration/api/test_aggregation_semantic_context.py -q",
+    "lint": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref c835181",
+    "benchmark": "PYTHONPATH=<baseline-src|src>:. .venv/bin/python -m benchmarks.run --engine <memory-sync|sqlite-sync> --size 250 --warmup 0 --repetitions 3 --workload predicate_diagnostics --format json --output <report>"
+  },
+  "notes": [
+    "Old missing-field $ne/$nin expectations and DIALECTS table were incorrect; the native 7/8/9 logical-null witnesses now own this rule separately from explicit undefined.",
+    "Decimal flag checks materialize the public SignalDict mapping, preserving inherited flags rather than comparing hidden InvalidOperation subflags. No arithmetic guarantee is waived.",
+    "Legacy partial-index fixture verifies current membership on reopen and correct uniqueness decisions; this witness requires no migration."
+  ],
+  "remaining": [
+    "C02/C03 schema and collection validation H40-H44",
+    "C04 candidate conservation H45/H46",
+    "C05 query mod H47",
+    "C06 full installed acceptance, coverage and Python/SDK matrix"
+  ]
+}

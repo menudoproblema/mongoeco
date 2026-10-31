@@ -4237,7 +4237,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("json_extract(document, '$.age') >= ?", sql)
         self.assertEqual(params[-1], 20)
 
-    async def test_build_select_sql_keeps_type_order_case_for_mixed_type_comparisons(
+    async def test_build_select_sql_brackets_mixed_type_comparisons(
         self,
     ):
         engine = SQLiteEngine()
@@ -4255,7 +4255,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-        self.assertIn("CASE WHEN", sql)
+        self.assertNotIn("CASE WHEN", sql)
+        self.assertIn("json_type", sql)
 
     async def test_build_select_sql_sorts_original_numeric_values_for_indexed_field(
         self,

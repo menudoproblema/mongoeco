@@ -111,6 +111,15 @@ nativos cubren group, lookup e índices unique; el cierre ampliado de lectores
 indexados y sus límites sigue en el
 [registro de implementación](docs/semantic-parity-implementation.md).
 
+Los predicados de rango MQL restringen la comparación a familias BSON
+compatibles antes de usar ese orden. Los tipos numéricos comparten familia;
+MinKey/MaxKey y NaN conservan las reglas de consulta capturadas del servidor.
+Esto no cambia la comparación entre tipos de `$expr` ni de sort. Las rutas
+interpretada, generada y SQL conservan la misma selección; los planes de
+índices parciales no pueden inferir cobertura entre familias incompatibles.
+Los campos ausentes siguen satisfaciendo igualdad con null y sus límites
+inclusivos, y quedan excluidos de `$ne: null` y `$nin: [null]` en 7/8/9.
+
 La corrección Decimal128 está verificada en testigos de suma, resta, producto,
 división, resto y promedio, incluidas proyección, group, ventanas y escritura por
 pipeline. Usa contextos propios y conserva Decimal128 hasta la salida pública.

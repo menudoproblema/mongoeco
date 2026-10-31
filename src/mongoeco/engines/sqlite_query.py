@@ -694,30 +694,6 @@ def _translate_size_condition(field: str, value: int) -> SqlFragment:
     )
 
 
-def _comparison_type_order(value_type: str) -> int:
-    if value_type == 'number':
-        return 2
-    if value_type == 'string':
-        return 3
-    if value_type == 'bool':
-        return 8
-    # bytes tagged values deliberately use Python fallback in SQLite; see
-    # SQLiteEngine._plan_requires_python_for_bytes.
-    if value_type == 'uuid':
-        return 6
-    if value_type == 'objectid':
-        return 7
-    if value_type == 'datetime':
-        return 9
-    if value_type == 'timestamp':
-        return 10
-    if value_type == 'regex':
-        return 11
-    raise NotImplementedError(
-        'Unsupported comparison type for SQL translation'
-    )
-
-
 def _translate_same_type_comparison(
     operator: str, field: str, value: object
 ) -> SqlFragment:
@@ -776,49 +752,10 @@ def _translate_scalar_or_array_same_type_comparison(
 def _translate_comparison(
     operator: str, field: str, value: object
 ) -> SqlFragment:
-    value_type, comparable = _normalize_comparable_value(value)
-    sql_operator = {
-        '>': '>',
-        '>=': '>=',
-        '<': '<',
-        '<=': '<=',
-    }[operator]
-    path = _path_literal(field)
-    document_order_sql = (
-        'CASE '
-        f'WHEN json_type(document, {path}) IS NULL THEN NULL '
-        f"WHEN json_type(document, {path}) = 'null' THEN 1 "
-        f"WHEN json_type(document, {path}) IN ('integer', 'real') THEN 2 "
-        f"WHEN json_type(document, {path}) = 'text' THEN 3 "
-        f"WHEN json_type(document, {path}) = 'object' AND json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) IS NULL THEN 4 "
-        f"WHEN json_type(document, {path}) = 'array' THEN 5 "
-        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'binary' THEN 6 "
-        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'uuid' THEN 6 "
-        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'objectid' THEN 7 "
-        f"WHEN json_type(document, {path}) IN ('true', 'false') THEN 8 "
-        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'datetime' THEN 9 "
-        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'timestamp' THEN 10 "
-        f"WHEN json_extract(document, {_quote_sql_string(_tagged_paths(field)[0])}) = 'regex' THEN 11 "
-        'ELSE 100 END'
-    )
-    if value_type == 'number':
-        same_type_sql = f"(json_type(document, {path}) IN ('integer', 'real') AND json_extract(document, {path}) {sql_operator} ?)"
-    elif value_type == 'string':
-        same_type_sql = f"(json_type(document, {path}) = 'text' AND json_extract(document, {path}) {sql_operator} ?)"
-    elif value_type == 'bool':
-        same_type_sql = f"(json_type(document, {path}) IN ('true', 'false') AND json_extract(document, {path}) {sql_operator} ?)"
-    else:
-        same_type_sql = f'({type_expression_sql(field)} = ? AND {value_expression_sql(field)} {sql_operator} ?)'
-    cross_sql = '>' if operator in {'>', '>='} else '<'
-    if value_type in {'number', 'string', 'bool'}:
-        return (
-            f'(({document_order_sql} {cross_sql} ?) OR {same_type_sql})',
-            [_comparison_type_order(value_type), comparable],
-        )
-    return (
-        f'(({document_order_sql} {cross_sql} ?) OR {same_type_sql})',
-        [_comparison_type_order(value_type), value_type, comparable],
-    )
+    # MQL comparisons are type-bracketed. The array-aware leaf uses the same
+    # family for scalars and terminal elements; unsupported representations
+    # retain the engine's guarded Python fallback.
+    return _translate_scalar_or_array_same_type_comparison(operator, field, value)
 
 
 def _translate_membership(
@@ -877,6 +814,8 @@ def _translate_membership(
         params.extend(array_sql_params)
     wrapped = ' OR '.join(clauses)
     if negated:
+        if any(value is None for value in values):
+            return f'NOT ({wrapped})', params
         return (
             f"(json_type(document, {path}) IS NULL OR json_type(document, {path}) = 'null' OR NOT ({wrapped}))",
             params,

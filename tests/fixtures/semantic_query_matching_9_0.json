@@ -1,0 +1,10287 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_query_matching_a_aggregate": {
+      "null_$eq": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "null_$gt": [],
+      "null_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "null_$lt": [],
+      "null_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "false_$eq": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "false_$gt": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$gte": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$lt": [],
+      "false_$lte": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "number_$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "number_$gt": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "large_$eq": [],
+      "large_$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$gte": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "large_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "decimal_$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "decimal_$gt": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "decimal_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "decimal_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "decimal_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "nan_$eq": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$gt": [],
+      "nan_$gte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$lt": [],
+      "nan_$lte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "string_$eq": [],
+      "string_$gt": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$gte": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$lt": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "string_$lte": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "object_$eq": [],
+      "object_$gt": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$gte": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$lt": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "object_$lte": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "array_$eq": [],
+      "array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$gte": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$lt": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "array_$lte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$eq": [
+        {
+          "$numberInt": "18"
+        }
+      ],
+      "empty_array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$gte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$lt": [],
+      "empty_array_$lte": [
+        {
+          "$numberInt": "18"
+        }
+      ],
+      "binary_$eq": [],
+      "binary_$gt": [],
+      "binary_$gte": [],
+      "binary_$lt": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "binary_$lte": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "date_$eq": [],
+      "date_$gt": [],
+      "date_$gte": [],
+      "date_$lt": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "date_$lte": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "min_$eq": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "min_$gt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$lt": [],
+      "min_$lte": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "max_$eq": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$gt": [],
+      "max_$gte": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$lt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "max_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "code_$eq": [],
+      "code_$gt": [],
+      "code_$gte": [],
+      "code_$lt": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_$lte": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_scope_$eq": [],
+      "code_scope_$gt": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$gte": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$lt": [],
+      "code_scope_$lte": []
+    },
+    "semantic_query_matching_a_count": {
+      "null_$eq": {
+        "$numberInt": "4"
+      },
+      "null_$gt": {
+        "$numberInt": "0"
+      },
+      "null_$gte": {
+        "$numberInt": "4"
+      },
+      "null_$lt": {
+        "$numberInt": "0"
+      },
+      "null_$lte": {
+        "$numberInt": "4"
+      },
+      "false_$eq": {
+        "$numberInt": "1"
+      },
+      "false_$gt": {
+        "$numberInt": "1"
+      },
+      "false_$gte": {
+        "$numberInt": "2"
+      },
+      "false_$lt": {
+        "$numberInt": "0"
+      },
+      "false_$lte": {
+        "$numberInt": "1"
+      },
+      "number_$eq": {
+        "$numberInt": "1"
+      },
+      "number_$gt": {
+        "$numberInt": "5"
+      },
+      "number_$gte": {
+        "$numberInt": "6"
+      },
+      "number_$lt": {
+        "$numberInt": "6"
+      },
+      "number_$lte": {
+        "$numberInt": "7"
+      },
+      "large_$eq": {
+        "$numberInt": "0"
+      },
+      "large_$gt": {
+        "$numberInt": "2"
+      },
+      "large_$gte": {
+        "$numberInt": "2"
+      },
+      "large_$lt": {
+        "$numberInt": "9"
+      },
+      "large_$lte": {
+        "$numberInt": "9"
+      },
+      "decimal_$eq": {
+        "$numberInt": "1"
+      },
+      "decimal_$gt": {
+        "$numberInt": "8"
+      },
+      "decimal_$gte": {
+        "$numberInt": "9"
+      },
+      "decimal_$lt": {
+        "$numberInt": "2"
+      },
+      "decimal_$lte": {
+        "$numberInt": "3"
+      },
+      "nan_$eq": {
+        "$numberInt": "1"
+      },
+      "nan_$gt": {
+        "$numberInt": "0"
+      },
+      "nan_$gte": {
+        "$numberInt": "1"
+      },
+      "nan_$lt": {
+        "$numberInt": "0"
+      },
+      "nan_$lte": {
+        "$numberInt": "1"
+      },
+      "string_$eq": {
+        "$numberInt": "0"
+      },
+      "string_$gt": {
+        "$numberInt": "1"
+      },
+      "string_$gte": {
+        "$numberInt": "1"
+      },
+      "string_$lt": {
+        "$numberInt": "1"
+      },
+      "string_$lte": {
+        "$numberInt": "1"
+      },
+      "object_$eq": {
+        "$numberInt": "0"
+      },
+      "object_$gt": {
+        "$numberInt": "1"
+      },
+      "object_$gte": {
+        "$numberInt": "1"
+      },
+      "object_$lt": {
+        "$numberInt": "1"
+      },
+      "object_$lte": {
+        "$numberInt": "1"
+      },
+      "array_$eq": {
+        "$numberInt": "0"
+      },
+      "array_$gt": {
+        "$numberInt": "2"
+      },
+      "array_$gte": {
+        "$numberInt": "2"
+      },
+      "array_$lt": {
+        "$numberInt": "3"
+      },
+      "array_$lte": {
+        "$numberInt": "3"
+      },
+      "empty_array_$eq": {
+        "$numberInt": "1"
+      },
+      "empty_array_$gt": {
+        "$numberInt": "4"
+      },
+      "empty_array_$gte": {
+        "$numberInt": "5"
+      },
+      "empty_array_$lt": {
+        "$numberInt": "0"
+      },
+      "empty_array_$lte": {
+        "$numberInt": "1"
+      },
+      "binary_$eq": {
+        "$numberInt": "0"
+      },
+      "binary_$gt": {
+        "$numberInt": "0"
+      },
+      "binary_$gte": {
+        "$numberInt": "0"
+      },
+      "binary_$lt": {
+        "$numberInt": "1"
+      },
+      "binary_$lte": {
+        "$numberInt": "1"
+      },
+      "date_$eq": {
+        "$numberInt": "0"
+      },
+      "date_$gt": {
+        "$numberInt": "0"
+      },
+      "date_$gte": {
+        "$numberInt": "0"
+      },
+      "date_$lt": {
+        "$numberInt": "1"
+      },
+      "date_$lte": {
+        "$numberInt": "1"
+      },
+      "min_$eq": {
+        "$numberInt": "1"
+      },
+      "min_$gt": {
+        "$numberInt": "29"
+      },
+      "min_$gte": {
+        "$numberInt": "30"
+      },
+      "min_$lt": {
+        "$numberInt": "0"
+      },
+      "min_$lte": {
+        "$numberInt": "1"
+      },
+      "max_$eq": {
+        "$numberInt": "1"
+      },
+      "max_$gt": {
+        "$numberInt": "0"
+      },
+      "max_$gte": {
+        "$numberInt": "1"
+      },
+      "max_$lt": {
+        "$numberInt": "29"
+      },
+      "max_$lte": {
+        "$numberInt": "30"
+      },
+      "code_$eq": {
+        "$numberInt": "0"
+      },
+      "code_$gt": {
+        "$numberInt": "0"
+      },
+      "code_$gte": {
+        "$numberInt": "0"
+      },
+      "code_$lt": {
+        "$numberInt": "1"
+      },
+      "code_$lte": {
+        "$numberInt": "1"
+      },
+      "code_scope_$eq": {
+        "$numberInt": "0"
+      },
+      "code_scope_$gt": {
+        "$numberInt": "1"
+      },
+      "code_scope_$gte": {
+        "$numberInt": "1"
+      },
+      "code_scope_$lt": {
+        "$numberInt": "0"
+      },
+      "code_scope_$lte": {
+        "$numberInt": "0"
+      }
+    },
+    "semantic_query_matching_a_find": {
+      "null_$eq": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "null_$gt": [],
+      "null_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "null_$lt": [],
+      "null_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "false_$eq": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "false_$gt": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$gte": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$lt": [],
+      "false_$lte": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "number_$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "number_$gt": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "large_$eq": [],
+      "large_$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$gte": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "large_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "decimal_$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "decimal_$gt": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "decimal_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "decimal_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "decimal_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "nan_$eq": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$gt": [],
+      "nan_$gte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$lt": [],
+      "nan_$lte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "string_$eq": [],
+      "string_$gt": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$gte": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$lt": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "string_$lte": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "object_$eq": [],
+      "object_$gt": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$gte": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$lt": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "object_$lte": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "array_$eq": [],
+      "array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$gte": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$lt": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "array_$lte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$eq": [
+        {
+          "$numberInt": "18"
+        }
+      ],
+      "empty_array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$gte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$lt": [],
+      "empty_array_$lte": [
+        {
+          "$numberInt": "18"
+        }
+      ],
+      "binary_$eq": [],
+      "binary_$gt": [],
+      "binary_$gte": [],
+      "binary_$lt": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "binary_$lte": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "date_$eq": [],
+      "date_$gt": [],
+      "date_$gte": [],
+      "date_$lt": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "date_$lte": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "min_$eq": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "min_$gt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$lt": [],
+      "min_$lte": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "max_$eq": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$gt": [],
+      "max_$gte": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$lt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "max_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "code_$eq": [],
+      "code_$gt": [],
+      "code_$gte": [],
+      "code_$lt": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_$lte": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_scope_$eq": [],
+      "code_scope_$gt": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$gte": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$lt": [],
+      "code_scope_$lte": []
+    },
+    "semantic_query_matching_expression_control": [
+      {
+        "$numberInt": "2"
+      },
+      {
+        "$numberInt": "3"
+      },
+      {
+        "$numberInt": "7"
+      },
+      {
+        "$numberInt": "8"
+      },
+      {
+        "$numberInt": "13"
+      },
+      {
+        "$numberInt": "14"
+      },
+      {
+        "$numberInt": "15"
+      },
+      {
+        "$numberInt": "16"
+      },
+      {
+        "$numberInt": "17"
+      },
+      {
+        "$numberInt": "18"
+      },
+      {
+        "$numberInt": "19"
+      },
+      {
+        "$numberInt": "20"
+      },
+      {
+        "$numberInt": "21"
+      },
+      {
+        "$numberInt": "22"
+      },
+      {
+        "$numberInt": "23"
+      },
+      {
+        "$numberInt": "24"
+      },
+      {
+        "$numberInt": "26"
+      },
+      {
+        "$numberInt": "27"
+      },
+      {
+        "$numberInt": "28"
+      }
+    ],
+    "semantic_query_matching_logical_nulls": {
+      "rich_a_ne_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "rich_a_nin_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "rich_a_not_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "rich_a_in_null": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_a_ne_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_a_not_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_a_missing": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_o.a_ne_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_o.a_nin_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_o.a_not_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_o.a_in_null": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "rich_o.a_ne_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "rich_o.a_not_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "rich_o.a_missing": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "sql_a_ne_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "sql_a_nin_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "sql_a_not_null": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "sql_a_in_null": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "sql_a_ne_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "sql_a_not_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "sql_a_missing": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "sql_o.a_ne_null": [],
+      "sql_o.a_nin_null": [],
+      "sql_o.a_not_null": [],
+      "sql_o.a_in_null": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "sql_o.a_ne_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "sql_o.a_not_number": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "sql_o.a_missing": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ]
+    },
+    "semantic_query_matching_o_a_aggregate": {
+      "null_$eq": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "null_$gt": [],
+      "null_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "null_$lt": [],
+      "null_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "false_$eq": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "false_$gt": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$gte": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$lt": [],
+      "false_$lte": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "number_$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "number_$gt": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "number_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "number_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "large_$eq": [],
+      "large_$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$gte": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "large_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "decimal_$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "decimal_$gt": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "decimal_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "decimal_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "decimal_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "nan_$eq": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$gt": [],
+      "nan_$gte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$lt": [],
+      "nan_$lte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "string_$eq": [],
+      "string_$gt": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$gte": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$lt": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "string_$lte": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "object_$eq": [],
+      "object_$gt": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$gte": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$lt": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "object_$lte": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "array_$eq": [],
+      "array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$gte": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$lt": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "array_$lte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "empty_array_$eq": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "empty_array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$gte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "empty_array_$lt": [],
+      "empty_array_$lte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "binary_$eq": [],
+      "binary_$gt": [],
+      "binary_$gte": [],
+      "binary_$lt": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "binary_$lte": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "date_$eq": [],
+      "date_$gt": [],
+      "date_$gte": [],
+      "date_$lt": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "date_$lte": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "min_$eq": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "min_$gt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$lt": [],
+      "min_$lte": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "max_$eq": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$gt": [],
+      "max_$gte": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$lt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "max_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "code_$eq": [],
+      "code_$gt": [],
+      "code_$gte": [],
+      "code_$lt": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_$lte": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_scope_$eq": [],
+      "code_scope_$gt": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$gte": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$lt": [],
+      "code_scope_$lte": []
+    },
+    "semantic_query_matching_o_a_count": {
+      "null_$eq": {
+        "$numberInt": "3"
+      },
+      "null_$gt": {
+        "$numberInt": "0"
+      },
+      "null_$gte": {
+        "$numberInt": "3"
+      },
+      "null_$lt": {
+        "$numberInt": "0"
+      },
+      "null_$lte": {
+        "$numberInt": "3"
+      },
+      "false_$eq": {
+        "$numberInt": "1"
+      },
+      "false_$gt": {
+        "$numberInt": "1"
+      },
+      "false_$gte": {
+        "$numberInt": "2"
+      },
+      "false_$lt": {
+        "$numberInt": "0"
+      },
+      "false_$lte": {
+        "$numberInt": "1"
+      },
+      "number_$eq": {
+        "$numberInt": "1"
+      },
+      "number_$gt": {
+        "$numberInt": "6"
+      },
+      "number_$gte": {
+        "$numberInt": "7"
+      },
+      "number_$lt": {
+        "$numberInt": "6"
+      },
+      "number_$lte": {
+        "$numberInt": "7"
+      },
+      "large_$eq": {
+        "$numberInt": "0"
+      },
+      "large_$gt": {
+        "$numberInt": "2"
+      },
+      "large_$gte": {
+        "$numberInt": "2"
+      },
+      "large_$lt": {
+        "$numberInt": "10"
+      },
+      "large_$lte": {
+        "$numberInt": "10"
+      },
+      "decimal_$eq": {
+        "$numberInt": "1"
+      },
+      "decimal_$gt": {
+        "$numberInt": "9"
+      },
+      "decimal_$gte": {
+        "$numberInt": "10"
+      },
+      "decimal_$lt": {
+        "$numberInt": "2"
+      },
+      "decimal_$lte": {
+        "$numberInt": "3"
+      },
+      "nan_$eq": {
+        "$numberInt": "1"
+      },
+      "nan_$gt": {
+        "$numberInt": "0"
+      },
+      "nan_$gte": {
+        "$numberInt": "1"
+      },
+      "nan_$lt": {
+        "$numberInt": "0"
+      },
+      "nan_$lte": {
+        "$numberInt": "1"
+      },
+      "string_$eq": {
+        "$numberInt": "0"
+      },
+      "string_$gt": {
+        "$numberInt": "1"
+      },
+      "string_$gte": {
+        "$numberInt": "1"
+      },
+      "string_$lt": {
+        "$numberInt": "1"
+      },
+      "string_$lte": {
+        "$numberInt": "1"
+      },
+      "object_$eq": {
+        "$numberInt": "0"
+      },
+      "object_$gt": {
+        "$numberInt": "1"
+      },
+      "object_$gte": {
+        "$numberInt": "1"
+      },
+      "object_$lt": {
+        "$numberInt": "1"
+      },
+      "object_$lte": {
+        "$numberInt": "1"
+      },
+      "array_$eq": {
+        "$numberInt": "0"
+      },
+      "array_$gt": {
+        "$numberInt": "2"
+      },
+      "array_$gte": {
+        "$numberInt": "2"
+      },
+      "array_$lt": {
+        "$numberInt": "4"
+      },
+      "array_$lte": {
+        "$numberInt": "4"
+      },
+      "empty_array_$eq": {
+        "$numberInt": "2"
+      },
+      "empty_array_$gt": {
+        "$numberInt": "4"
+      },
+      "empty_array_$gte": {
+        "$numberInt": "6"
+      },
+      "empty_array_$lt": {
+        "$numberInt": "0"
+      },
+      "empty_array_$lte": {
+        "$numberInt": "2"
+      },
+      "binary_$eq": {
+        "$numberInt": "0"
+      },
+      "binary_$gt": {
+        "$numberInt": "0"
+      },
+      "binary_$gte": {
+        "$numberInt": "0"
+      },
+      "binary_$lt": {
+        "$numberInt": "1"
+      },
+      "binary_$lte": {
+        "$numberInt": "1"
+      },
+      "date_$eq": {
+        "$numberInt": "0"
+      },
+      "date_$gt": {
+        "$numberInt": "0"
+      },
+      "date_$gte": {
+        "$numberInt": "0"
+      },
+      "date_$lt": {
+        "$numberInt": "1"
+      },
+      "date_$lte": {
+        "$numberInt": "1"
+      },
+      "min_$eq": {
+        "$numberInt": "1"
+      },
+      "min_$gt": {
+        "$numberInt": "29"
+      },
+      "min_$gte": {
+        "$numberInt": "30"
+      },
+      "min_$lt": {
+        "$numberInt": "0"
+      },
+      "min_$lte": {
+        "$numberInt": "1"
+      },
+      "max_$eq": {
+        "$numberInt": "1"
+      },
+      "max_$gt": {
+        "$numberInt": "0"
+      },
+      "max_$gte": {
+        "$numberInt": "1"
+      },
+      "max_$lt": {
+        "$numberInt": "29"
+      },
+      "max_$lte": {
+        "$numberInt": "30"
+      },
+      "code_$eq": {
+        "$numberInt": "0"
+      },
+      "code_$gt": {
+        "$numberInt": "0"
+      },
+      "code_$gte": {
+        "$numberInt": "0"
+      },
+      "code_$lt": {
+        "$numberInt": "1"
+      },
+      "code_$lte": {
+        "$numberInt": "1"
+      },
+      "code_scope_$eq": {
+        "$numberInt": "0"
+      },
+      "code_scope_$gt": {
+        "$numberInt": "1"
+      },
+      "code_scope_$gte": {
+        "$numberInt": "1"
+      },
+      "code_scope_$lt": {
+        "$numberInt": "0"
+      },
+      "code_scope_$lte": {
+        "$numberInt": "0"
+      }
+    },
+    "semantic_query_matching_o_a_find": {
+      "null_$eq": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "null_$gt": [],
+      "null_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "null_$lt": [],
+      "null_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "false_$eq": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "false_$gt": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$gte": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$lt": [],
+      "false_$lte": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "number_$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "number_$gt": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "number_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "number_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "number_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "21"
+        }
+      ],
+      "large_$eq": [],
+      "large_$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$gte": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "13"
+        }
+      ],
+      "large_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "large_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "decimal_$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "decimal_$gt": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "decimal_$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "decimal_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "decimal_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "nan_$eq": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$gt": [],
+      "nan_$gte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "nan_$lt": [],
+      "nan_$lte": [
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "string_$eq": [],
+      "string_$gt": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$gte": [
+        {
+          "$numberInt": "15"
+        }
+      ],
+      "string_$lt": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "string_$lte": [
+        {
+          "$numberInt": "14"
+        }
+      ],
+      "object_$eq": [],
+      "object_$gt": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$gte": [
+        {
+          "$numberInt": "17"
+        }
+      ],
+      "object_$lt": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "object_$lte": [
+        {
+          "$numberInt": "16"
+        }
+      ],
+      "array_$eq": [],
+      "array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$gte": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ],
+      "array_$lt": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "array_$lte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "empty_array_$eq": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "empty_array_$gt": [
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        }
+      ],
+      "empty_array_$gte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "empty_array_$lt": [],
+      "empty_array_$lte": [
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "binary_$eq": [],
+      "binary_$gt": [],
+      "binary_$gte": [],
+      "binary_$lt": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "binary_$lte": [
+        {
+          "$numberInt": "23"
+        }
+      ],
+      "date_$eq": [],
+      "date_$gt": [],
+      "date_$gte": [],
+      "date_$lt": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "date_$lte": [
+        {
+          "$numberInt": "24"
+        }
+      ],
+      "min_$eq": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "min_$gt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "min_$lt": [],
+      "min_$lte": [
+        {
+          "$numberInt": "25"
+        }
+      ],
+      "max_$eq": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$gt": [],
+      "max_$gte": [
+        {
+          "$numberInt": "26"
+        }
+      ],
+      "max_$lt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "max_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "18"
+        },
+        {
+          "$numberInt": "19"
+        },
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "21"
+        },
+        {
+          "$numberInt": "22"
+        },
+        {
+          "$numberInt": "23"
+        },
+        {
+          "$numberInt": "24"
+        },
+        {
+          "$numberInt": "25"
+        },
+        {
+          "$numberInt": "26"
+        },
+        {
+          "$numberInt": "27"
+        },
+        {
+          "$numberInt": "28"
+        },
+        {
+          "$numberInt": "100"
+        }
+      ],
+      "code_$eq": [],
+      "code_$gt": [],
+      "code_$gte": [],
+      "code_$lt": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_$lte": [
+        {
+          "$numberInt": "27"
+        }
+      ],
+      "code_scope_$eq": [],
+      "code_scope_$gt": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$gte": [
+        {
+          "$numberInt": "28"
+        }
+      ],
+      "code_scope_$lt": [],
+      "code_scope_$lte": []
+    },
+    "semantic_query_matching_partial_indexes": {
+      "other_family": [
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "inclusive": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "equality": [
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "matched": {
+        "$numberInt": "2"
+      },
+      "selected": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ]
+    },
+    "semantic_query_matching_selection_writes": {
+      "matched": {
+        "$numberInt": "1"
+      },
+      "pulled": {
+        "$numberInt": "2"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": "z",
+          "items": [
+            "z"
+          ],
+          "records": [
+            {
+              "a": "z"
+            },
+            {
+              "a": {
+                "$numberInt": "6"
+              },
+              "selected": true
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "items": [
+            {
+              "$numberInt": "2"
+            }
+          ],
+          "selected": true
+        }
+      ],
+      "recovery": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_query_matching_sql_routes": {
+      "null_$eq": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "null_$gt": [],
+      "null_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "null_$lt": [],
+      "null_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "false_$eq": [],
+      "false_$gt": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$gte": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "false_$lt": [],
+      "false_$lte": [],
+      "number_$eq": [],
+      "number_$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "number_$gte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "number_$lt": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "number_$lte": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "large_$eq": [],
+      "large_$gt": [],
+      "large_$gte": [],
+      "large_$lt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "large_$lte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "decimal_$eq": [],
+      "decimal_$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "decimal_$gte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "decimal_$lt": [],
+      "decimal_$lte": [],
+      "nan_$eq": [],
+      "nan_$gt": [],
+      "nan_$gte": [],
+      "nan_$lt": [],
+      "nan_$lte": [],
+      "string_$eq": [],
+      "string_$gt": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "string_$gte": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "string_$lt": [],
+      "string_$lte": [],
+      "object_$eq": [],
+      "object_$gt": [],
+      "object_$gte": [],
+      "object_$lt": [],
+      "object_$lte": [],
+      "array_$eq": [],
+      "array_$gt": [
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "array_$gte": [
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "array_$lt": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "array_$lte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "empty_array_$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "empty_array_$gt": [
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "empty_array_$gte": [
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "empty_array_$lt": [],
+      "empty_array_$lte": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "binary_$eq": [],
+      "binary_$gt": [],
+      "binary_$gte": [],
+      "binary_$lt": [],
+      "binary_$lte": [],
+      "date_$eq": [],
+      "date_$gt": [],
+      "date_$gte": [],
+      "date_$lt": [],
+      "date_$lte": [],
+      "min_$eq": [],
+      "min_$gt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "min_$gte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "min_$lt": [],
+      "min_$lte": [],
+      "max_$eq": [],
+      "max_$gt": [],
+      "max_$gte": [],
+      "max_$lt": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "max_$lte": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "code_$eq": [],
+      "code_$gt": [],
+      "code_$gte": [],
+      "code_$lt": [],
+      "code_$lte": [],
+      "code_scope_$eq": [],
+      "code_scope_$gt": [],
+      "code_scope_$gte": [],
+      "code_scope_$lt": [],
+      "code_scope_$lte": []
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_query_matching_cases.py",
+    "sha256": "c4c9fd619ca24fdfcc944a21513e53d0695ac613d9f6431e57504e95fdfdc8f6"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_query_matching_a_find",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_a_find"
+    },
+    {
+      "name": "semantic_query_matching_a_count",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_a_count"
+    },
+    {
+      "name": "semantic_query_matching_a_aggregate",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_a_aggregate"
+    },
+    {
+      "name": "semantic_query_matching_o_a_find",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_o_a_find"
+    },
+    {
+      "name": "semantic_query_matching_o_a_count",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_o_a_count"
+    },
+    {
+      "name": "semantic_query_matching_o_a_aggregate",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_o_a_aggregate"
+    },
+    {
+      "name": "semantic_query_matching_expression_control",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_expression_control"
+    },
+    {
+      "name": "semantic_query_matching_partial_indexes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_partial_indexes"
+    },
+    {
+      "name": "semantic_query_matching_selection_writes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_selection_writes"
+    },
+    {
+      "name": "semantic_query_matching_sql_routes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_sql_routes"
+    },
+    {
+      "name": "semantic_query_matching_logical_nulls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "o": {
+            "a": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": false,
+          "o": {
+            "a": false
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": true,
+          "o": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "-1"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "-1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "a": {
+            "$numberInt": "0"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "a": {
+            "$numberInt": "6"
+          },
+          "o": {
+            "a": {
+              "$numberInt": "6"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "o": {
+            "a": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "a": {
+            "$numberDecimal": "0.5"
+          },
+          "o": {
+            "a": {
+              "$numberDecimal": "0.5"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "a": {
+            "$numberDouble": "NaN"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "NaN"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "a": {
+            "$numberDouble": "Infinity"
+          },
+          "o": {
+            "a": {
+              "$numberDouble": "Infinity"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "a": "a",
+          "o": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "a": "z",
+          "o": {
+            "a": "z"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "a": {},
+          "o": {
+            "a": {}
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "a": {
+            "k": {
+              "$numberInt": "5"
+            }
+          },
+          "o": {
+            "a": {
+              "k": {
+                "$numberInt": "5"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "a": [],
+          "o": {
+            "a": []
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "a": [
+            {
+              "$numberInt": "6"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "a": [
+            [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          ],
+          "o": {
+            "a": [
+              [
+                {
+                  "$numberInt": "6"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "o": {
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "a": [
+            null
+          ],
+          "o": {
+            "a": [
+              null
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "a": {
+            "$binary": {
+              "base64": "YQ==",
+              "subType": "00"
+            }
+          },
+          "o": {
+            "a": {
+              "$binary": {
+                "base64": "YQ==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "a": {
+            "$date": {
+              "$numberLong": "1577836800000"
+            }
+          },
+          "o": {
+            "a": {
+              "$date": {
+                "$numberLong": "1577836800000"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "a": {
+            "$minKey": 1
+          },
+          "o": {
+            "a": {
+              "$minKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "a": {
+            "$maxKey": 1
+          },
+          "o": {
+            "a": {
+              "$maxKey": 1
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "27"
+          },
+          "a": {
+            "$code": "a"
+          },
+          "o": {
+            "a": {
+              "$code": "a"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "a": {
+            "$code": "z",
+            "$scope": {
+              "x": {
+                "$numberInt": "1"
+              }
+            }
+          },
+          "o": {
+            "a": {
+              "$code": "z",
+              "$scope": {
+                "x": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "o": [
+            {
+              "a": {
+                "$numberInt": "6"
+              }
+            },
+            {
+              "a": []
+            }
+          ]
+        }
+      ],
+      "selector": "semantic_query_matching_logical_nulls"
+    }
+  ]
+}

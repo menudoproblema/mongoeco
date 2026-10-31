@@ -1,9 +1,14 @@
-import unittest
 import datetime
-import uuid
 import json
+import sqlite3
+import unittest
+import uuid
+
+from pathlib import Path
 from unittest import mock
 from unittest.mock import patch
+
+from bson.json_util import loads
 
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operators import UpdateEngine
@@ -18,8 +23,8 @@ from mongoeco.core.query_plan import (
     LessThanCondition,
     LessThanOrEqualCondition,
     MatchAll,
-    NotEqualsCondition,
     NotCondition,
+    NotEqualsCondition,
     NotInCondition,
     OrCondition,
     QueryNode,
@@ -27,34 +32,35 @@ from mongoeco.core.query_plan import (
     TypeCondition,
 )
 from mongoeco.engines.sqlite_query import (
-    _comparison_type_order,
     _normalize_comparable_value,
     _path_crosses_scalar_parent,
     _translate_all_condition,
+    _translate_array_contains_scalar,
+    _translate_comparison,
     _translate_elem_match_condition,
+    _translate_equals,
     _translate_json_each_scalar_comparison,
     _translate_json_each_scalar_match,
     _translate_json_each_value_plan,
-    _translate_scalar_or_array_same_type_comparison,
-    _translate_same_type_comparison,
-    _translate_array_contains_scalar,
-    _translate_comparison,
-    _translate_equals,
     _translate_not_equals,
+    _translate_same_type_comparison,
     _translate_scalar_equals,
-    parse_safe_literal_regex,
+    _translate_scalar_or_array_same_type_comparison,
     index_expressions_sql,
     json_path_for_field,
+    parse_safe_literal_regex,
     path_array_prefixes,
     sort_type_expression_sql,
-    translate_query_plan,
     translate_compiled_update_plan,
+    translate_query_plan,
     translate_sort_spec,
     translate_update_spec,
     type_expression_sql,
     value_expression_sql,
 )
-from mongoeco.types import ObjectId, UNDEFINED
+from mongoeco.types import UNDEFINED, ObjectId
+
+from tests.differential.semantic_query_matching_cases import SQL_SEED
 
 
 class SQLiteQueryTranslationTests(unittest.TestCase):
@@ -464,34 +470,20 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         )
 
     def test_translate_comparison_and_exists(self):
-        self.assertEqual(
-            translate_query_plan(GreaterThanCondition('age', 18)),
-            (
-                "((CASE WHEN json_type(document, '$.age') IS NULL THEN NULL WHEN json_type(document, '$.age') = 'null' THEN 1 WHEN json_type(document, '$.age') IN ('integer', 'real') THEN 2 WHEN json_type(document, '$.age') = 'text' THEN 3 WHEN json_type(document, '$.age') = 'object' AND json_extract(document, '$.age.\"$mongoeco\".type') IS NULL THEN 4 WHEN json_type(document, '$.age') = 'array' THEN 5 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'binary' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'uuid' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'objectid' THEN 7 WHEN json_type(document, '$.age') IN ('true', 'false') THEN 8 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'datetime' THEN 9 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'timestamp' THEN 10 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'regex' THEN 11 ELSE 100 END > ?) OR (json_type(document, '$.age') IN ('integer', 'real') AND json_extract(document, '$.age') > ?))",
-                [2, 18],
-            ),
-        )
-        self.assertEqual(
-            translate_query_plan(GreaterThanOrEqualCondition('age', 18)),
-            (
-                "((CASE WHEN json_type(document, '$.age') IS NULL THEN NULL WHEN json_type(document, '$.age') = 'null' THEN 1 WHEN json_type(document, '$.age') IN ('integer', 'real') THEN 2 WHEN json_type(document, '$.age') = 'text' THEN 3 WHEN json_type(document, '$.age') = 'object' AND json_extract(document, '$.age.\"$mongoeco\".type') IS NULL THEN 4 WHEN json_type(document, '$.age') = 'array' THEN 5 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'binary' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'uuid' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'objectid' THEN 7 WHEN json_type(document, '$.age') IN ('true', 'false') THEN 8 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'datetime' THEN 9 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'timestamp' THEN 10 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'regex' THEN 11 ELSE 100 END > ?) OR (json_type(document, '$.age') IN ('integer', 'real') AND json_extract(document, '$.age') >= ?))",
-                [2, 18],
-            ),
-        )
-        self.assertEqual(
-            translate_query_plan(LessThanCondition('age', 18)),
-            (
-                "((CASE WHEN json_type(document, '$.age') IS NULL THEN NULL WHEN json_type(document, '$.age') = 'null' THEN 1 WHEN json_type(document, '$.age') IN ('integer', 'real') THEN 2 WHEN json_type(document, '$.age') = 'text' THEN 3 WHEN json_type(document, '$.age') = 'object' AND json_extract(document, '$.age.\"$mongoeco\".type') IS NULL THEN 4 WHEN json_type(document, '$.age') = 'array' THEN 5 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'binary' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'uuid' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'objectid' THEN 7 WHEN json_type(document, '$.age') IN ('true', 'false') THEN 8 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'datetime' THEN 9 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'timestamp' THEN 10 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'regex' THEN 11 ELSE 100 END < ?) OR (json_type(document, '$.age') IN ('integer', 'real') AND json_extract(document, '$.age') < ?))",
-                [2, 18],
-            ),
-        )
-        self.assertEqual(
-            translate_query_plan(LessThanOrEqualCondition('age', 18)),
-            (
-                "((CASE WHEN json_type(document, '$.age') IS NULL THEN NULL WHEN json_type(document, '$.age') = 'null' THEN 1 WHEN json_type(document, '$.age') IN ('integer', 'real') THEN 2 WHEN json_type(document, '$.age') = 'text' THEN 3 WHEN json_type(document, '$.age') = 'object' AND json_extract(document, '$.age.\"$mongoeco\".type') IS NULL THEN 4 WHEN json_type(document, '$.age') = 'array' THEN 5 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'binary' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'uuid' THEN 6 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'objectid' THEN 7 WHEN json_type(document, '$.age') IN ('true', 'false') THEN 8 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'datetime' THEN 9 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'timestamp' THEN 10 WHEN json_extract(document, '$.age.\"$mongoeco\".type') = 'regex' THEN 11 ELSE 100 END < ?) OR (json_type(document, '$.age') IN ('integer', 'real') AND json_extract(document, '$.age') <= ?))",
-                [2, 18],
-            ),
-        )
+        capture = loads((Path(__file__).parents[2] / 'fixtures' /
+                         'semantic_query_matching_8_0.json').read_text())
+        expected = capture['cases']['semantic_query_matching_sql_routes']
+        with sqlite3.connect(':memory:') as connection:
+            connection.execute('CREATE TABLE documents (document TEXT)')
+            connection.executemany('INSERT INTO documents VALUES (?)',
+                                   [(json.dumps(DocumentCodec.encode(doc)),) for doc in SQL_SEED])
+            for operator in ('>', '>=', '<', '<='):
+                sql, params = _translate_comparison(operator, 'a', 5)
+                actual = [row[0] for row in connection.execute(
+                    "SELECT json_extract(document, '$._id') FROM documents WHERE " + sql  # noqa: S608 - compiler-generated fragment, fixture-only database
+                    + " ORDER BY json_extract(document, '$._id')", params)]
+                self.assertEqual(actual, expected['number_$' +
+                    {'>':'gt', '>=':'gte', '<':'lt', '<=':'lte'}[operator]])
         self.assertEqual(
             translate_query_plan(ExistsCondition('profile.name', True)),
             ("json_type(document, '$.profile.name') IS NOT NULL", []),
@@ -566,13 +558,9 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             _translate_not_equals('payload', {'a': 1})
 
-        self.assertEqual(_comparison_type_order('string'), 3)
-        with self.assertRaises(NotImplementedError):
-            _comparison_type_order('unsupported')
-
         sql, params = _translate_comparison('>', 'name', 'Ada')
         self.assertIn("json_type(document, '$.name') = 'text'", sql)
-        self.assertEqual(params, [3, 'Ada'])
+        self.assertEqual(params, ['Ada', 'Ada'])
 
     def test_translate_comparison_rejects_non_comparable_tagged_values(self):
         self.assertEqual(
@@ -585,11 +573,6 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
     def test_sqlite_query_helper_branches_cover_same_type_comparison_type_codes_and_update_fallbacks(
         self,
     ):
-        self.assertEqual(_comparison_type_order('uuid'), 6)
-        self.assertEqual(_comparison_type_order('objectid'), 7)
-        self.assertEqual(_comparison_type_order('datetime'), 9)
-        self.assertEqual(_comparison_type_order('timestamp'), 10)
-        self.assertEqual(_comparison_type_order('regex'), 11)
 
         sql, params = _translate_same_type_comparison('>', 'name', 'Ada')
         self.assertIn("json_type(document, '$.name') = 'text'", sql)
@@ -891,19 +874,12 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         created_at = datetime.datetime(2025, 1, 2, 3, 4, 5)
         object_id = ObjectId('0123456789abcdef01234567')
 
-        sql, params = translate_query_plan(
-            GreaterThanCondition('created_at', created_at)
-        )
-        self.assertIn(
-            "CASE WHEN json_type(document, '$.created_at') IS NULL", sql
-        )
-        self.assertIn("'datetime'", sql)
-        self.assertEqual(params, [9, 'datetime', '2025-01-02T03:04:05'])
-
-        sql, params = translate_query_plan(LessThanCondition('_id', object_id))
-        self.assertIn("CASE WHEN json_type(document, '$._id') IS NULL", sql)
-        self.assertIn("'objectid'", sql)
-        self.assertEqual(params, [7, 'objectid', '0123456789abcdef01234567'])
+        # A generic translation cannot assume tagged values never occur in
+        # arrays. The engine may use its guarded scalar leaf or Python fallback.
+        for plan in (GreaterThanCondition('created_at', created_at),
+                     LessThanCondition('_id', object_id)):
+            with self.assertRaises(NotImplementedError):
+                translate_query_plan(plan)
 
     def test_translate_update_spec(self):
         sql, params = translate_update_spec(
@@ -987,7 +963,7 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
         self.assertIn(
             "json_type(document, '$.flag') IN ('true', 'false')", sql
         )
-        self.assertEqual(params, [8, 1])
+        self.assertEqual(params, [1, 1])
 
         with self.assertRaises(NotImplementedError):
             translate_query_plan(

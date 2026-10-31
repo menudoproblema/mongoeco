@@ -368,7 +368,10 @@ def test_numeric_rules_are_independent_of_decimal_context(
                 assert _normalize(action(collection)) == _normalize(
                     capture["cases"][name]
                 )
-        assert context.flags == before_flags
+        # SignalDict equality compares internal invalid-operation subflags too;
+        # its public bool mapping can be identical after ConversionSyntax.
+        # Preserve and compare every observable flag, including inherited ones.
+        assert dict(context.flags) == before_flags
 
 
 def test_observer_distinguishes_boolean_and_numeric_literals():

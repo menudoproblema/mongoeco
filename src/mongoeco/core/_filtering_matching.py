@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import math
 import re
+
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core._filtering_support import (
     compile_bson_regex,
     extract_all_candidates as _extract_all_candidates,
 )
+from mongoeco.core.bson_ordering import Code, bson_type_rank
+from mongoeco.core.bson_scalars import _is_nan_numeric_value, wrap_bson_numeric
+from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.types import Regex, UndefinedType
 
 
@@ -18,6 +21,16 @@ _FAST_NUMERIC_TYPES = (int, float)
 
 
 class FilteringMatchingMixin:
+    @staticmethod
+    def _comparison_types_match(left, right, *, dialect):
+        if bson_type_rank(left, dialect.bson_type_order) != bson_type_rank(
+            right, dialect.bson_type_order
+        ):
+            return False
+        if isinstance(left, Code) and isinstance(right, Code):
+            return (left.scope is None) == (right.scope is None)
+        return True
+
     @classmethod
     def _regex_item_matches_candidate(cls, candidate: Any, pattern: re.Pattern[str]) -> bool:
         return isinstance(candidate, str) and pattern.search(candidate) is not None
@@ -155,42 +168,23 @@ class FilteringMatchingMixin:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
-        if isinstance(candidate, list) and not isinstance(target, list):
+        target_rank = bson_type_rank(target, dialect.bson_type_order)
+        if target_rank not in {0, 127} and not cls._comparison_types_match(
+            candidate, target, dialect=dialect
+        ):
             return False
-        if collation is None and dialect is MONGODB_DIALECT_70:
-            candidate_type = type(candidate)
-            target_type = type(target)
-            if (
-                candidate_type is target_type
-                and candidate_type in _FAST_SCALAR_TYPES
-                and not (candidate_type is float and (math.isnan(candidate) or math.isnan(target)))
-            ):
-                comparison = -1 if candidate < target else 1 if candidate > target else 0
-            elif (
-                candidate_type in _FAST_NUMERIC_TYPES
-                and target_type in _FAST_NUMERIC_TYPES
-                and candidate_type is not bool
-                and target_type is not bool
-                and not (
-                    (candidate_type is float and math.isnan(candidate))
-                    or (target_type is float and math.isnan(target))
-                )
-            ):
-                comparison = -1 if candidate < target else 1 if candidate > target else 0
-            else:
-                comparison = compare_with_collation(
-                    candidate,
-                    target,
-                    dialect=dialect,
-                    collation=collation,
-                )
-        else:
-            comparison = compare_with_collation(
-                candidate,
-                target,
-                dialect=dialect,
-                collation=collation,
-            )
+        # Query ranges only compare NaN to NaN, unlike the total BSON ordering
+        # used for aggregation and sort. Inclusive bounds retain equality.
+        left = wrap_bson_numeric(candidate)
+        right = wrap_bson_numeric(target)
+        if left is not None and right is not None:
+            left_nan = _is_nan_numeric_value(left.value)
+            right_nan = _is_nan_numeric_value(right.value)
+            if left_nan or right_nan:
+                return left_nan and right_nan and operator in {"gte", ">=", "lte", "<="}
+        comparison = compare_with_collation(
+            candidate, target, dialect=dialect, collation=collation
+        )
         if operator in {"gt", ">"}:
             return comparison > 0
         if operator in {"gte", ">="}:
@@ -213,7 +207,9 @@ class FilteringMatchingMixin:
         collation: CollationSpec | None = None,
     ) -> bool:
         if field not in doc:
-            return False
+            return cls._comparison_matches_candidate(
+                None, target, operator, dialect=dialect, collation=collation
+            )
         value = doc[field]
         if collation is None and dialect is MONGODB_DIALECT_70 and not isinstance(value, list):
             value_type = type(value)
@@ -393,7 +389,7 @@ class FilteringMatchingMixin:
     ) -> bool:
         values = cls._extract_values(doc, field)
         if not values:
-            return not (condition is None and dialect.policy.null_query_matches_undefined())
+            return condition is not None
         return all(
             not cls._query_equality_matches(
                 value,
@@ -427,7 +423,9 @@ class FilteringMatchingMixin:
             )
         candidates = cls._extract_values(doc, field)
         if not candidates:
-            return False
+            return cls._comparison_matches_candidate(
+                None, target, operator, dialect=dialect, collation=collation
+            )
         if len(candidates) == 1:
             return cls._comparison_matches_candidate(
                 candidates[0],
@@ -493,7 +491,7 @@ class FilteringMatchingMixin:
         candidates = cls._extract_values(doc, field)
         if not candidates:
             has_null = any(item is None for item in values)
-            return not (has_null and null_matches_undefined)
+            return not has_null
         literal_lookup, regex_values, residual_values = cls._prepare_membership_values(
             values,
             null_matches_undefined=null_matches_undefined,

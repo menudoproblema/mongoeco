@@ -156,7 +156,7 @@ class VirtualIndexTests(unittest.TestCase):
             )
         )
 
-    def test_partial_index_implication_uses_bson_type_order_for_mixed_type_bounds(self):
+    def test_partial_index_implication_respects_query_type_bracketing(self):
         partial_index = EngineIndexRecord(
             name="score_gte_idx",
             fields=["score"],
@@ -165,8 +165,16 @@ class VirtualIndexTests(unittest.TestCase):
             partial_filter_expression={"score": {"$gte": 10}},
         )
 
-        self.assertTrue(query_can_use_index(partial_index, compile_filter({"score": {"$gt": "Ada"}})))
-        self.assertFalse(query_can_use_index(partial_index, compile_filter({"score": {"$lt": "Ada"}})))
+        self.assertFalse(
+            query_can_use_index(
+                partial_index, compile_filter({"score": {"$gt": "Ada"}})
+            )
+        )
+        self.assertFalse(
+            query_can_use_index(
+                partial_index, compile_filter({"score": {"$lt": "Ada"}})
+            )
+        )
 
     def test_partial_index_implication_handles_type_and_regex_requirements(self):
         typed_index = EngineIndexRecord(
@@ -503,7 +511,10 @@ class VirtualIndexTests(unittest.TestCase):
                 InCondition("score", (5, 6)),
             )
         )
-        self.assertFalse(_compare_bounds(10, 10, False, True))
+        self.assertTrue(_compare_bounds(10, 10, False, True))
+        self.assertFalse(
+            _compare_bounds(10, 10, left_inclusive=True, right_inclusive=False)
+        )
         self.assertTrue(_compare_bounds(10, 10, False, False, reverse=True))
         self.assertFalse(_compare_bounds(11, 10, False, False, reverse=True))
         self.assertFalse(_compare_bounds(9, 10, False, True))

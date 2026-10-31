@@ -105,7 +105,10 @@ candidatos antes de producir el primero, aunque difiere su proyeccion y copia.
 ## Query planning y filtering
 
 `query_plan.py` compila filtros a un arbol de nodos semanticos. `filtering.py`
-los ejecuta y `compiled_query.py` ofrece una ruta compilada cuando el shape lo
+posee el matching de cada hoja. `compiled_query.py` compone esas hojas mediante
+booleanos y resuelve el matcher comun al ejecutar; la plantilla cacheada no
+retiene valores de otra consulta ni instrumentacion temporal. No captura fallos
+internos como si fueran no-match. Esta ruta compilada se usa cuando el shape lo
 permite.
 
 Dentro de `filtering`, la fachada estable sigue siendo `QueryEngine`, pero la
