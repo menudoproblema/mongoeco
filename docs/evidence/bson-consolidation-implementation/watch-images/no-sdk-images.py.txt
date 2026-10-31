@@ -1,0 +1,29 @@
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.errors import OperationFailure
+try:
+    import bson
+except ModuleNotFoundError:pass
+else:raise AssertionError('Expected genuinely SDK-free environment')
+for factory in (MemoryEngine,SQLiteEngine):
+    for version in ('7.0','8.0','9.0'):
+        with MongoClient(factory(),mongodb_dialect=version) as client:
+            for enabled in (False,True):
+                for mode in ('default','updateLookup','whenAvailable','required'):
+                    c=client.smoke.create_collection('c_'+str(enabled)+mode,changeStreamPreAndPostImages={'enabled':enabled})
+                    c.insert_one({'_id':1,'v':0,'pad':'x'*1000})
+                    stream=c.watch([{'$set':{'kind':'$operationType'}},{'$match':{'kind':'update'}}],full_document=mode,max_await_time_ms=1)
+                    try:
+                        c.update_one({}, {'$set':{'v':1}});c.update_one({}, {'$set':{'v':2}})
+                        if mode=='required' and not enabled:
+                            try:stream.try_next()
+                            except OperationFailure as e:assert e.code==47 and not stream.alive
+                            else:raise AssertionError('Missing post-image accepted')
+                        else:
+                            event=stream.try_next()
+                            if mode=='default':assert 'fullDocument' not in event
+                            elif mode=='updateLookup':assert event['fullDocument']['v']==2
+                            elif enabled:assert event['fullDocument']['v']==1
+                            else:assert event['fullDocument'] is None
+                    finally:stream.close()
+print('SDK-free Python 3.13: six pairs, eight image scenarios each passed')

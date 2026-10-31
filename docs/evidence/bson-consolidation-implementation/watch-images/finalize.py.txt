@@ -1,0 +1,68 @@
+import gzip,hashlib,json,re,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/watch-images')
+def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def read(name):return (root/name).read_text()
+def dump(name,value):(root/name).write_text(json.dumps(value,indent=2,ensure_ascii=False)+'\n')
+manifest=json.loads(read('runtime-sources.json'))
+assert manifest=={str(p):sha(p) for p in sorted(Path('src').rglob('*.py'))}
+workset=json.loads(read('workset.json'))
+assert all(sha(p)==v for p,v in workset.items())
+assert '2690 passed, 1 skipped, 936 subtests passed' in read('acceptance-core.txt')
+assert '6118 passed' in read('acceptance-integrated.txt')
+assert '110 passed' in read('acceptance-orjson.txt')
+assert '12 passed' in read('acceptance-wire-options.txt')
+assert 'contract passed' in read('acceptance-typing.txt')
+assert 'lint ratchet passed' in read('acceptance-lint.txt')
+assert 'six pairs, eight image scenarios each passed' in read('acceptance-sdk-free.txt')
+protected=json.loads(Path('docs/evidence/bson-consolidation-implementation/watch-context/receipt.json').read_text())['protected_observers_and_catalogs']
+assert all(sha(p)==v for p,v in protected.items())
+assert subprocess.check_output(['git','diff','--name-only','--','tests/fixtures'],text=True)==''
+native={}
+for version in ('7.0','8.0','9.0'):
+    fixture=Path('tests/fixtures/semantic_watch_image_'+version.replace('.','_')+'.json')
+    data=json.loads(fixture.read_text())
+    assert len(data['cases'])==8 and sum(map(len,data['cases'].values()))==118
+    assert data['corpus']['sha256']==sha('tests/differential/semantic_watch_image_cases.py')
+    assert 'verified 8 native cases' in read('native-final-eight-'+version+'.txt')
+    native[version]={'fixture':str(fixture),'sha256':sha(fixture),'version':data['runtime']['build_info']['version'],'fcv':data['runtime']['fcv']}
+for log in root.glob('*.txt'):
+    if log.name.endswith('.py.txt'):continue
+    with gzip.GzipFile(str(log)+'.gz','wb',mtime=0) as output:output.write(log.read_bytes())
+    log.unlink()
+links=0
+for doc in [Path('docs/README.md'),Path('docs/bson-semantics-consolidation-plan.md'),Path('docs/bson-consolidation-implementation.md'),root/'README.md']:
+    for target in re.findall(r'\]\(([^)]+)\)',doc.read_text()):
+        if ':' in target or target.startswith('#'):continue
+        path=doc.parent/target.split('#')[0]
+        assert path.exists() or path.resolve()==(root/'receipt.json').resolve(),(doc,target)
+        links+=1
+receipt={
+ 'status':'D04 CRUD image guarantee implemented and reviewed; D04 parent and full goal remain open',
+ 'base':subprocess.check_output(['git','rev-parse','429deec'],text=True).strip(),
+ 'mechanism':'compose existing read coordinator/context/snapshot and BSON-aware query/projection primitives; optional captured-availability metadata; no new AST/context/runner/SPI v2 signature',
+ 'runtime_manifest':{'file':'runtime-sources.json','sha256':sha(root/'runtime-sources.json'),'files':len(manifest)},
+ 'workset':{'file':'workset.json','sha256':sha(root/'workset.json'),'paths':list(workset)},
+ 'native':{'references':native,'topology':'preexisting owned single-member replica sets','ports':[49973,49974,49975],'actions':8,'scenarios_per_major':118,'independent_check':True,'captures':'raw sync PyMongo; replay local sync/async; UUID disposable DBs dropped','service_lifecycle':'unchanged; habitual instance untouched'},
+ 'checks':{
+  'integrated':{'command':'.venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py','passed':6118,'log':'acceptance-integrated.txt.gz'},
+  'core':{'command':'.venv/bin/python -m pytest -q tests/unit/core tests/property tests/unit/test_change_streams.py tests/integration/api/test_watch_image_contract.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_update_change_delivery.py','passed':2690,'skipped':1,'subtests_passed':936,'log':'acceptance-core.txt.gz'},
+  'orjson':{'passed':110,'env':'MONGOECO_JSON_BACKEND=orjson','scope':'image replay/contracts and missing-resource admission','log':'acceptance-orjson.txt.gz'},
+  'wire_options':{'passed':12,'scope':'create/collMod configuration; sync/async, both engines and three dialects; not positive wire watch','log':'acceptance-wire-options.txt.gz'},
+  'baseline':{'runtime':'429deec archive; preload before pytest','failed':84,'passed':15,'log':'before-accepted.txt.gz'},
+  'typing':{'status':'passed public and engine boundary','log':'acceptance-typing.txt.gz'},
+  'sdk_free':{'python':'3.13 genuinely without bson','pairs':6,'scenarios_per_pair':8,'log':'acceptance-sdk-free.txt.gz'},
+  'lint':{'status':'passed; no baseline expansion','changed_python_files':19,'log':'acceptance-lint.txt.gz'},
+  'property':{'examples':250,'scope':'necessary guard preserves candidates across distinct captured/resolved images, aliases, projections and logical composition'},
+  'legacy':{'producer':'429deec source archive, actual SQLite + journal','consumer':'candidate','result':'legacy.json','schema_before':'legacy-schema-before.json','logs':['create-legacy-final.txt.gz','read-legacy-final.txt.gz'],'schema_and_keys_unchanged':True,'legacy_unknown_availability':'not fabricated; default/lookup work, whenAvailable null, required 47; no downgrade claim'},
+  'options_read':{'before':'options-reads-before.json','after':'options-reads-after.json','reads_before':2,'reads_after':1,'scope':'diagnostic spy, not public call-count contract; same image availability'},
+  'performance':{'summary':'benchmark-paired-summary.json','order':'base/candidate/candidate/base, sequential without other active gates','samples_per_runtime_per_case':10,'operations_per_sample':200,'documents':100,'checksums_equal':True,'scope':'small diagnostic; D05 broader matrix pending'}
+ },
+ 'review':{'skill':'gdx-revisar-cambio','workset_fixed':True,'demonstrated_findings_remaining_in_CRUD_image_algorithm':0,'limits':['Not absence claim over every MongoDB expression or optimizer variant.','H55 literal Code parsing confirmed in aggregate preparation/runtime; D06a owns permanent differential and fix.','DDL/generation/invalidation, error/cancel/offset/token integration and RS CI fixture remain D04 obligations.']},
+ 'protected_observers_and_catalogs':protected,
+ 'document_checks':{'relative_links':links,'dedicated_checker':'none found; relative targets and git diff --check'},
+ 'remaining':['D04 DDL/close by scope, images with namespace recreation, resume/start-after invalidation, native RS jobs','D06a/b/c including H55; H53/scalar sNaN; optional D07 disposition','D05 global/wheel/environment/coverage/performance/physical acceptance; B07 general BSON boundary not closed'],
+ 'artifacts':{p.name:sha(p) for p in sorted(root.iterdir()) if p.is_file() and p.name!='receipt.json'}
+}
+dump('receipt.json',receipt)
+print({'runtime_files':len(manifest),'workset_paths':len(workset),'links':links,'references':len(native)})

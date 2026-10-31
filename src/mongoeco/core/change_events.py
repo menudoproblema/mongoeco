@@ -16,6 +16,7 @@ from mongoeco.core.bson_size import (
 from mongoeco.core.bson_values import document_mapping
 from mongoeco.core.operation_context import ChangePublicationPolicy
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.server_errors import server_error
 
 
 if TYPE_CHECKING:
@@ -34,6 +35,28 @@ def captures_changes(context: OperationContext | None) -> bool:
     return context is not None and context.publication is ChangePublicationPolicy.EMIT
 
 
+def validate_post_image_options(value):
+    if value is None:
+        return
+    if not isinstance(value, dict):
+        message = "changeStreamPreAndPostImages must be an object"
+        raise server_error(message, code=14)
+    if value.keys() - {"enabled"}:
+        message = "Unknown changeStreamPreAndPostImages field"
+        raise server_error(message, code=40415)
+    if value.get("enabled") is None:
+        message = "changeStreamPreAndPostImages requires enabled"
+        raise server_error(message, code=40414)
+    if not isinstance(value["enabled"], bool):
+        message = "changeStreamPreAndPostImages.enabled must be a bool"
+        raise server_error(message, code=14)
+
+
+def post_image_enabled(options: Mapping) -> bool:
+    images = options.get("changeStreamPreAndPostImages")
+    return isinstance(images, Mapping) and images.get("enabled") is True
+
+
 def build_change_payload(  # noqa: PLR0913 - complete internal change payload
     *,
     operation_type: str,
@@ -42,8 +65,9 @@ def build_change_payload(  # noqa: PLR0913 - complete internal change payload
     document_key: dict,
     full_document: dict | None = None,
     update_description: dict | None = None,
+    post_image_available: bool = False,
 ) -> dict:
-    return {
+    payload = {
         "operation_type": operation_type,
         "db_name": db_name,
         "coll_name": coll_name,
@@ -51,6 +75,10 @@ def build_change_payload(  # noqa: PLR0913 - complete internal change payload
         "full_document": deepcopy(full_document),
         "update_description": deepcopy(update_description),
     }
+    # Omit the default to keep legacy outbox fingerprints and journal payloads.
+    if operation_type == "update" and post_image_available:
+        payload["post_image_available"] = True
+    return payload
 
 
 @dataclass(slots=True)

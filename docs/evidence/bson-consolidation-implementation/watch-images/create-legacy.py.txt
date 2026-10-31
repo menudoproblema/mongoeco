@@ -1,0 +1,21 @@
+import json,sqlite3,os
+from pathlib import Path
+from bson import Int64
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path(os.environ.get('MONGOECO_IMAGE_COMPAT_DIR','/tmp/mongoeco-watch-image-compat'))
+root.mkdir(parents=True,exist_ok=True)
+assert not (root/'old.sqlite').exists(), 'Use a fresh fixture directory'
+with MongoClient(SQLiteEngine(str(root/'old.sqlite')),change_stream_journal_path=str(root/'old.json')) as client:
+    c=client.compat.records;s=c.watch(max_await_time_ms=1)
+    try:
+        c.insert_one({'_id':1,'v':0,'n':Int64(7),'pad':'x'*1000})
+        token=s.try_next()['_id']
+        c.update_one({}, {'$set':{'v':1}})
+        assert s.try_next()['operationType']=='update'
+    finally:s.close()
+with sqlite3.connect(root/'old.sqlite') as connection:
+    schema=connection.execute("SELECT name,sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY name").fetchall()
+    keys=connection.execute('SELECT storage_key FROM documents ORDER BY storage_key').fetchall()
+(root/'before.json').write_text(json.dumps({'token':token,'schema':schema,'keys':keys},indent=2)+'\n')
+print('Old runtime created actual SQLite + journal, two commits')

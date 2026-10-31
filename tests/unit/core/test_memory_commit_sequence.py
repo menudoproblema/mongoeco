@@ -155,16 +155,53 @@ class MemoryCommitSequenceTests(unittest.IsolatedAsyncioTestCase):
     async def test_consumer_checkpoint_cannot_start_ahead_of_history(self):
         with self.assertRaisesRegex(OperationFailure, 'ahead'):
             self.engine.register_change_consumer(
-                'future',
+                "future",
                 initial_checkpoint=1,
             )
+
+    async def test_durable_checkpoint_cannot_advance_live_history(self):
+        self.engine.register_change_consumer("existing")
+        with self.assertRaisesRegex(OperationFailure, "ahead"):
+            self.engine.register_change_consumer(
+                "future",
+                initial_checkpoint=1,
+                durable=True,
+            )
+        self.assertEqual(
+            self.engine._runtime_diagnostics_info()["changeDelivery"]["newestSequence"],
+            0,
+        )
+
+    async def test_durable_checkpoint_cannot_adopt_history_over_volatile_data(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.insert_document(
+                "db",
+                "legacy",
+                {"_id": "volatile"},
+                overwrite=False,
+            )
+            with self.assertRaisesRegex(OperationFailure, "ahead"):
+                engine.register_change_consumer(
+                    "future",
+                    initial_checkpoint=1,
+                    durable=True,
+                )
+            self.assertIsNotNone(await engine.get_document("db", "legacy", "volatile"))
+            self.assertEqual(
+                engine._runtime_diagnostics_info()["changeDelivery"]["newestSequence"],
+                0,
+            )
+        finally:
+            await engine.disconnect()
 
     async def test_concurrent_dispatch_is_serialized_per_consumer(self):
         for index in (1, 2):
             await self.engine.insert_document(
-                'db',
-                'items',
-                {'_id': index},
+                "db",
+                "items",
+                {"_id": index},
                 overwrite=False,
                 operation_context=self._context(),
             )

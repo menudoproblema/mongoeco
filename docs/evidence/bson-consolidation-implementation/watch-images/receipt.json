@@ -1,0 +1,320 @@
+{
+  "status": "D04 CRUD image guarantee implemented and reviewed; D04 parent and full goal remain open",
+  "base": "429deec6b925573bc6d415a61fe2240883bf2298",
+  "mechanism": "compose existing read coordinator/context/snapshot and BSON-aware query/projection primitives; optional captured-availability metadata; no new AST/context/runner/SPI v2 signature",
+  "runtime_manifest": {
+    "file": "runtime-sources.json",
+    "sha256": "53ab3a30e901a08a2211531c84c6c51584eedc3a3026bd228659b93b15f9c687",
+    "files": 281
+  },
+  "workset": {
+    "file": "workset.json",
+    "sha256": "dd1ab37ddb752ec5a50ae9ea098ea8af46d5e285712b6c946f2a0f1330e90c10",
+    "paths": [
+      "src/mongoeco/_change_streams/cursor.py",
+      "src/mongoeco/_change_streams/hub.py",
+      "src/mongoeco/_change_streams/journal.py",
+      "src/mongoeco/_change_streams/pipeline.py",
+      "src/mongoeco/_types/documents.py",
+      "src/mongoeco/api/_async/_collection_watch.py",
+      "src/mongoeco/api/_async/client.py",
+      "src/mongoeco/api/_async/database_admin.py",
+      "src/mongoeco/core/change_events.py",
+      "src/mongoeco/engines/_sqlite_outbox.py",
+      "src/mongoeco/engines/memory.py",
+      "src/mongoeco/engines/sqlite.py",
+      "tests/differential/semantic_corpora.py",
+      "tests/differential/semantic_watch_image_cases.py",
+      "tests/fixtures/semantic_watch_image_7_0.json",
+      "tests/fixtures/semantic_watch_image_8_0.json",
+      "tests/fixtures/semantic_watch_image_9_0.json",
+      "tests/integration/api/test_watch_image_contract.py",
+      "tests/integration/api/test_watch_image_options_wire.py",
+      "tests/property/test_watch_image_prefilter.py",
+      "tests/unit/core/test_memory_commit_sequence.py",
+      "tests/unit/test_change_streams.py"
+    ]
+  },
+  "native": {
+    "references": {
+      "7.0": {
+        "fixture": "tests/fixtures/semantic_watch_image_7_0.json",
+        "sha256": "77109c3700e865b6f1d06a06e823d06767efea724e054e3728d63429a6ab1351",
+        "version": "7.0.43",
+        "fcv": {
+          "version": "7.0"
+        }
+      },
+      "8.0": {
+        "fixture": "tests/fixtures/semantic_watch_image_8_0.json",
+        "sha256": "ddd102d25b3661591428176291d2ae807491582a8e502c794f1aff9256ce33da",
+        "version": "8.0.32",
+        "fcv": {
+          "version": "8.0"
+        }
+      },
+      "9.0": {
+        "fixture": "tests/fixtures/semantic_watch_image_9_0.json",
+        "sha256": "0409a4783282ba6c8d8cb02e4d110bdccb3d98a11629b3e6bec2a43c4f6b3b69",
+        "version": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        }
+      }
+    },
+    "topology": "preexisting owned single-member replica sets",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "actions": 8,
+    "scenarios_per_major": 118,
+    "independent_check": true,
+    "captures": "raw sync PyMongo; replay local sync/async; UUID disposable DBs dropped",
+    "service_lifecycle": "unchanged; habitual instance untouched"
+  },
+  "checks": {
+    "integrated": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py",
+      "passed": 6118,
+      "log": "acceptance-integrated.txt.gz"
+    },
+    "core": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/property tests/unit/test_change_streams.py tests/integration/api/test_watch_image_contract.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_update_change_delivery.py",
+      "passed": 2690,
+      "skipped": 1,
+      "subtests_passed": 936,
+      "log": "acceptance-core.txt.gz"
+    },
+    "orjson": {
+      "passed": 110,
+      "env": "MONGOECO_JSON_BACKEND=orjson",
+      "scope": "image replay/contracts and missing-resource admission",
+      "log": "acceptance-orjson.txt.gz"
+    },
+    "wire_options": {
+      "passed": 12,
+      "scope": "create/collMod configuration; sync/async, both engines and three dialects; not positive wire watch",
+      "log": "acceptance-wire-options.txt.gz"
+    },
+    "baseline": {
+      "runtime": "429deec archive; preload before pytest",
+      "failed": 84,
+      "passed": 15,
+      "log": "before-accepted.txt.gz"
+    },
+    "typing": {
+      "status": "passed public and engine boundary",
+      "log": "acceptance-typing.txt.gz"
+    },
+    "sdk_free": {
+      "python": "3.13 genuinely without bson",
+      "pairs": 6,
+      "scenarios_per_pair": 8,
+      "log": "acceptance-sdk-free.txt.gz"
+    },
+    "lint": {
+      "status": "passed; no baseline expansion",
+      "changed_python_files": 19,
+      "log": "acceptance-lint.txt.gz"
+    },
+    "property": {
+      "examples": 250,
+      "scope": "necessary guard preserves candidates across distinct captured/resolved images, aliases, projections and logical composition"
+    },
+    "legacy": {
+      "producer": "429deec source archive, actual SQLite + journal",
+      "consumer": "candidate",
+      "result": "legacy.json",
+      "schema_before": "legacy-schema-before.json",
+      "logs": [
+        "create-legacy-final.txt.gz",
+        "read-legacy-final.txt.gz"
+      ],
+      "schema_and_keys_unchanged": true,
+      "legacy_unknown_availability": "not fabricated; default/lookup work, whenAvailable null, required 47; no downgrade claim"
+    },
+    "options_read": {
+      "before": "options-reads-before.json",
+      "after": "options-reads-after.json",
+      "reads_before": 2,
+      "reads_after": 1,
+      "scope": "diagnostic spy, not public call-count contract; same image availability"
+    },
+    "performance": {
+      "summary": "benchmark-paired-summary.json",
+      "order": "base/candidate/candidate/base, sequential without other active gates",
+      "samples_per_runtime_per_case": 10,
+      "operations_per_sample": 200,
+      "documents": 100,
+      "checksums_equal": true,
+      "scope": "small diagnostic; D05 broader matrix pending"
+    }
+  },
+  "review": {
+    "skill": "gdx-revisar-cambio",
+    "workset_fixed": true,
+    "demonstrated_findings_remaining_in_CRUD_image_algorithm": 0,
+    "limits": [
+      "Not absence claim over every MongoDB expression or optimizer variant.",
+      "H55 literal Code parsing confirmed in aggregate preparation/runtime; D06a owns permanent differential and fix.",
+      "DDL/generation/invalidation, error/cancel/offset/token integration and RS CI fixture remain D04 obligations."
+    ]
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "document_checks": {
+    "relative_links": 87,
+    "dedicated_checker": "none found; relative targets and git diff --check"
+  },
+  "remaining": [
+    "D04 DDL/close by scope, images with namespace recreation, resume/start-after invalidation, native RS jobs",
+    "D06a/b/c including H55; H53/scalar sNaN; optional D07 disposition",
+    "D05 global/wheel/environment/coverage/performance/physical acceptance; B07 general BSON boundary not closed"
+  ],
+  "artifacts": {
+    "README.md": "ff40dd4517608a76bee7f5bf348cfb4a4cabde4ade98ef4ec2a13bfc64901226",
+    "acceptance-core.txt.gz": "d9204776e147f4649c0fb613497cee54cf618336e84cbe3fc04048356d5cff99",
+    "acceptance-integrated.txt.gz": "5cdfe450a65df996d8eb3690c03a45c3f7aa9a5ceccbcf2e7a0e35cafe6fa5c3",
+    "acceptance-lint.txt.gz": "9362b6ac28950d223431f17dfec6037862dade45f255aa746207c7f94b9e5838",
+    "acceptance-orjson.txt.gz": "53c61104e4de5534aa0a70035c93445787a94584d84e1ff5e5f25d6a220b2d9f",
+    "acceptance-sdk-free.txt.gz": "0e4b69978008eb71d7f972ca267717300283bc0c33b379c2f3f17a212fa1d7fe",
+    "acceptance-typing.txt.gz": "f8b33e93b542417e5c31069aada5fd1706f12a0f626ed693eae52bbc2017e12b",
+    "acceptance-wire-options.txt.gz": "52c4f2453396efb3fcbb082082f4947bb510deff7c57c72ee65c7b12b34db55b",
+    "accepted-final-core-enrichment.txt.gz": "b1f47240ab7dd160ec0dc000e8a094d38809250ce5715a8211faf7bc05a4c238",
+    "accepted-final-core.txt.gz": "3112a8cb05515519685722ec9fcc5641df2fa6ea2f279cd68aef025cfa95ec83",
+    "accepted-final-integrated.txt.gz": "5e8509253a3539b07f2b3e942bd33826448c0987ce68dce843f50a6a2d5f19f1",
+    "accepted-lint-final.txt.gz": "fc0009bfdad78613cf6fd0992962521f97695795b871876c52ad45624b426239",
+    "accepted-lint-last.txt.gz": "83cbf5fd323c22c11dca0665030fdace673ad86b6a0531e439b37ae72855b513",
+    "before-accepted.txt.gz": "963c59a833793f19e80491f845492439460449f36e64bd09abdbc09f0dfdd193",
+    "before-final.txt.gz": "ac887bf17c6822a76dc0587d8cfc0ef4e22f60b868dafac6af4b371f2c169f89",
+    "benchmark-after-final.json": "343a2480fad62d401c183425dc4a1d1cd9a09fc3ca66028b25cdfff14d089404",
+    "benchmark-after.json": "41f70830423d11e192bf02c29049062964133332b4e2c5dd9cc1ad99123b0a00",
+    "benchmark-after0.json": "53c28a16710155105ad4e57a133b3276e6707251a4d183a27d344cee96fe0841",
+    "benchmark-after1.json": "43fc231641b4aab6b65da9c631294f5e0fb901213d4db85cefe8878289788e32",
+    "benchmark-before-final.json": "34d3f78ce384270aaca346f8402ffdbf7e898b5a2ac27b9c556aea62e9809394",
+    "benchmark-before.json": "ab10df52d85fb4c3afcdf66d527441514803bdecc49836c0bad95afef6ac658b",
+    "benchmark-before0.json": "4160b6e330a1d2d74c0a1d9482b108a4d04f61e6451c98d9fbff60a2b5b173f2",
+    "benchmark-before1.json": "c853c022b69aac38e5d4b08826fceead2085ab5fdfac980ede7280b8d72c8aa4",
+    "benchmark-final-summary.json": "770c9a3e0c8f283bca20fb0420428025a42c35e830001a5820a0a109d201a8bd",
+    "benchmark-paired-summary.json": "72c6e0cf98ac6017e27ccb7e7a85eb694e3d80b2304cc3fea9449bee42e49beb",
+    "benchmark-summary.json": "cc25c8c3c920155f6ee9af77854866473485717e8d9f43984dab36e398d58d90",
+    "benchmark.py.txt": "8526f989901cc3001560e072b9ec51244a6a892faf1376b1c99bfb01bc58b848",
+    "code-path-probe.json": "0d07c0939d0c3727126924e70c6ed1dbf304e7038124b6bf2cf349f9fa523167",
+    "code-path-probe.py.txt": "cfb5dd9cffd03bb18f29e7d7db28976c28f49950a341ea67f746f5bcd390cc4d",
+    "code-path-probe.txt.gz": "425c3d5ac8c5ff1a184f32df44f80ee40f88e67c5d0a4cc2022327e284cf520b",
+    "components-feedback.txt.gz": "df27861f5a7a1a6bb1d087899c434d007d9410cbbd38b2db0daa57b15cb9d30a",
+    "components-fourth.txt.gz": "0e9ea384689796739f0e1adb705a7b4bf6e132426fc649ca234da00970ea5ada",
+    "components-second.txt.gz": "6bf9009f943e736478360c376696d226b337e48090853ce9ee900f48550abb65",
+    "components-third.txt.gz": "0d4f9fba227f95db91c38cda1233d460a26db30250da618ab88a27ec8bb9a6d4",
+    "contracts-complete.txt.gz": "4ed29f08f5112230fd1af0dad42ed895b7eb1da4d68dad85dfad4e78f835483b",
+    "contracts-current.txt.gz": "6e29a93f6bcf24be4d338836740c017b31ea72ab9555a1212204209ebe70e692",
+    "contracts-first.txt.gz": "0b775b7ee91d82a04c0d4ba6804c5e528e7491cc8024ebd0815858dcfa27a977",
+    "contracts-frozen.txt.gz": "60aec853663a04f43a7b1db7674f2e3e1999fc1177324689bd98ba3aad1ecc84",
+    "core-accepted.txt.gz": "e282fffe38f7d68ff31b0e7894a2f9c733da66c128f985c5c31a8e322cc14e1b",
+    "core-complete.txt.gz": "039b7ec2819746c8c4ff2f354fd66d268c9f54723aec54c3c645046a3c5c65f0",
+    "core-enrichment-accepted.txt.gz": "b37daa5674afbe47e4d30ff8f866a50ef3bac2fa29ca359cd81eb4b832e953fd",
+    "core-final.txt.gz": "d0eae0552bddf6483996142209dc08ae4f0bd2be8bf6b784dddfa97fb01b83c3",
+    "create-legacy-final.txt.gz": "294e1b763ecc971c44357c01e741f6a9fd8c1e099785f9113608e2068e69786a",
+    "create-legacy.py.txt": "66351d32f3654c638276f27292adc992bfed0e57980d677db9593ac2f4e94a39",
+    "create-legacy.txt.gz": "7fc6efa74e368ca8ef607e9eb289cf158879bc7a1014b55743a7a693ae550862",
+    "feedback-images.json": "4ad911544bcf8e74a7529cc882d9da9b761242bb36e7843c3bafc7ffdfa0e51d",
+    "feedback-images.txt.gz": "547608f8a01b7bff696d7b755008ed3bd50940ed5f15e4a481380661525ebe8b",
+    "filter-probe.json": "7300f45ede6d5d8ab4e96d8a63881ceda838c91d99324266f0200bfbb74a6074",
+    "filter-probe.py.txt": "ccd2bf9f32793022625063724d3f97aff6b6bd9ba5164e16f085dfc4a05c2f9f",
+    "filter-probe.txt.gz": "addc4b7d735ac8c7205dc9cdc7ae128dc528f75ccc1fd6d21c748edc2f3730e5",
+    "final-core.txt.gz": "5f33f41853a42cf60dd6408851be6a87501aab0a7780ffa85bbd2443da0e1c86",
+    "final-integrated.txt.gz": "6149c4ee6ea3a255f5139008fcd4257d23aa28c083726bdb6aea119354ccc6af",
+    "final-lint.txt.gz": "9524a3606bbf4099a7f442cdb6355aa4e299d92de7ef2d4732f4d6ae814afbdb",
+    "final-sdk-free.txt.gz": "07a2ebeec820e0621a4972fe8cbec6ecd0ac9422d360b578b1b8dd04731c66be",
+    "final-typing.txt.gz": "2619185ec2218c8f3f440118f3077466a3da68b64d53c9eacf0cfb12def81ebf",
+    "finalize.py.txt": "223be81b38618c5250a9356c5558f943f0f8b4671f89b7bcc2aae13acb795d09",
+    "focal-fifth.txt.gz": "631c2f312db45be42c5c0e747e59993e0944d1a8af0062928c011032b1882f4f",
+    "focal-fourth.txt.gz": "b077cd5c37ff8d1a2bd3af8cd744ee394d65ef840f996c8fee745731f7a6c378",
+    "images-probe.py.txt": "dd3ecd74fd92b94b31143937828b0b21376935aaffce037742cabe01f6877471",
+    "integrated-accepted.txt.gz": "93a4aa3c527026d7e79bd8ab473de58ccca928a1c3a961150f9ffd06c6e359bd",
+    "integrated-before-stage-review.txt.gz": "6c6f49da02c492bac02981de398385105cc92a68c250edc2444c3f6908e44488",
+    "legacy-schema-before.json": "b6e10912f488dc51766f4075be963f7597a71f9982a8361f5751aef98cd43d93",
+    "legacy.json": "971dad1e6a5e2cb9a5cf25a1fcee98e4b644f49ad83cb44b3311bd6c47997bfe",
+    "lifecycle-probe.json": "7ac15e5968e6d2402f28c2302115a4fd1f0863cd88636a8038aa79ac2fff0d80",
+    "lifecycle-probe.py.txt": "cb5cfdab44f0e75b1dea2375a6b983780725e3d6fe7df172b41f217e5a124d81",
+    "lifecycle-probe.txt.gz": "b990f3ccc99f117ec5f16b0b0bcd0769db758d83121b9ea2f85171c5f3ac97c5",
+    "lint-code-guard.txt.gz": "49f8392ce5703825e293a8d303e90dff1768a1c99ce74ca0f9de7da36c7debcf",
+    "lint-complete.txt.gz": "67ec5d2b766cfce24401167bace0fe2e4b008921d0f248464866b1a83d0d51c7",
+    "lint-current.txt.gz": "8f386ae7714f014c18ac802e5b63613e11455c594ce8e6e2e4d42025afdad6f2",
+    "lint-feedback.txt.gz": "f720f31f894f726b4871e5c321f952e670590218164c911de1d3f1715f26848f",
+    "lint-fourth.txt.gz": "21a718c7194eb5529b6c57ed0fc1962ce74cd50066b59f51a9f0545a32d79359",
+    "lint-frozen.txt.gz": "95504704ff0f2ddca4b9933789c8fd268e90bc06f729d162ce472abe7d80afd6",
+    "lint-options-reuse.txt.gz": "988100db9a53565064f2a77b5d4ac07ec2026a37a42f7312b89a0e1b38e142a3",
+    "lint-resource-accepted.txt.gz": "f512801e04f281df16e5d78c66bddc07e389f26f2ef1e14d9fc30d6bb19da664",
+    "lint-second.txt.gz": "ee0dcf5737a57e77689eb3b75cd5ff26344f0d22ccdddfdb62debcebe66d35fa",
+    "lint-stage.txt.gz": "eac8a0fee2c19d6e960b90630c5d9c2d1a25d29c2284b54e87a6a11df345b0fe",
+    "lint-third.txt.gz": "312d37ac4ca2eb394392841c881c7e07373ed4513cdf376284aa490f2224181e",
+    "native-7.0.txt.gz": "e110f849326b2dbc4c656778e49b1e6011b482a247c999330a04c9335e346c5d",
+    "native-8.0.txt.gz": "724cf73c9e3726da5d5e226aaef812342bd123095e891ecf817fb46ea9fcb529",
+    "native-9.0.txt.gz": "9abe00a046dd173c1295d9ea07191eac1c461bdc461057e5fe03a447f92ad643",
+    "native-accepted-7.0.txt.gz": "9c5b6cbabb6fefc31797aa8925dfbe39b5fa1342bfdd875d864e763a717e1796",
+    "native-accepted-8.0.txt.gz": "04c6f257e2909be0f2c3994de80123176a9ca9d93efb6ce262c94d8360778df6",
+    "native-accepted-9.0.txt.gz": "622cb937aa3d24b05abcfd6be3580c02034223df38c472768380727e9c99fe95",
+    "native-current-7.0.txt.gz": "9307693485256cb34846c7afad8b0ea2021e3d4a829dc339ee3dae194e4716b1",
+    "native-current-8.0.txt.gz": "a8fbb161d6e2c67a649a1f6e24e5fc5c0c04003f9a114ad2f583fa79c68c05ed",
+    "native-current-9.0.txt.gz": "3305fe50cab30d01ccc223e80c0d65f7ca23cd113c22b65845b1995d26a42a0c",
+    "native-final-7.0.txt.gz": "b02fc69bf747bc64c80aea0c345c635f0dd0a647ad5d86d521791bd99c455701",
+    "native-final-8.0.txt.gz": "85ccb6412d27dba81597046c78f786a1c277e5a40dd10c7fe13bc0ee9526073b",
+    "native-final-9.0.txt.gz": "cb8123a953251fc9fb21dcc39daf317b78c2c03cf2478efe760977314b121835",
+    "native-final-eight-7.0.txt.gz": "211036cd0f93e70dd4f075426631756c6aec3f50cecf79669a73f8818cf69030",
+    "native-final-eight-8.0.txt.gz": "d084d3653cd47622a1714956c77bde77b8399ba098541d7ca67289e43f5e39d0",
+    "native-final-eight-9.0.txt.gz": "9a2feb0071a1810d2e66a8bbca9c967aa0b2dc964390ac02315162c6d070d723",
+    "native-frozen-7.0.txt.gz": "0874faaca86f131e57956b7213884dfd29b3b23bcf35b6e03aaee9d12b088267",
+    "native-frozen-8.0.txt.gz": "b510bfadeeb5f8ce0feac877665af1a698f708d9cb4ae63069e958addbc1679d",
+    "native-frozen-9.0.txt.gz": "059379202a8f1d16ed01566c76b0b550cd122a2e2610a99790144b9e9471dc99",
+    "no-sdk-accepted.txt.gz": "4e6edcb8cd5fbc56f29065f06e283ed0e389d144bb5e2bc32455970ad70e37b1",
+    "no-sdk-images.py.txt": "5f0bd516c554edd30e2cbc3f7275e63bb90ff3e4754eb4308462141e6a2701a2",
+    "no-sdk-images.txt.gz": "335d5f3dd62926bf0d2a6222c116390ee4a9d6453ea33c569449a5da44165efa",
+    "options-probe.json": "33f025b77597268cb6d06ed89f4f4b6e375c598d690ea6773c6cb9b00b4a83fd",
+    "options-probe.py.txt": "b564e09e2a31e5b42f6085540be34fa640e659c657e1c924ac8fe5afb8e9e510",
+    "options-probe.txt.gz": "a0fe16ab6cc61fad12a35cac250528eccd6a51207bd5c06a36d1b9c99d0a3a44",
+    "options-read-probe.py.txt": "f13672e3ea817024fe374fe1a652f559a5cd50c2457e878c2511f296a32e0932",
+    "options-reads-after.json": "0623089005d0afa07bc5ddebec9378f48d4a6cc60d56ee20ce62a2d59a20bf25",
+    "options-reads-before.json": "c2905cd7346449cf7ff9af0f47144ae87e1fe9eab00aae01a2397d37a6e5eb54",
+    "options-reuse-focal.txt.gz": "3b7bc64a9dc6c688655383e7c29e9db8388fb1e8ea0e6752032e4785010bd072",
+    "orjson-accepted.txt.gz": "a378f177405fb5cfd75be6c69d0d647616169173ccb20e2116becc81dd00649a",
+    "orjson-final.txt.gz": "cc16c17c963468b83d069604eca088c553d15ccf34b19621e2b1447cf4f2f648",
+    "orjson-resource-accepted.txt.gz": "a58ab6984887a27e4fc838b58815e93ad6226d752aa2a8828d9d7c3f6ffc352f",
+    "paired-benchmark.py.txt": "64248aa2447282884a4b0bf8459616fef41685c6ed12fe4a0f7b5228b65a5df8",
+    "paired-benchmark.txt.gz": "46d3418e312d9955f8306e8db8a18890198c719d8381523e345ed079309a7cee",
+    "property-code-guard.txt.gz": "d85a24ad57c526d7147165e7d16af0e170998d12fe23ffa4cd28735f943f66f0",
+    "property-enrichment.txt.gz": "3aed3fe3ccb31bf8495662c35f3314723fe04c31325505fbbf534942627a4f62",
+    "property-frozen.txt.gz": "c681a27ffa1de6a1d89c8020415c4f3d9f28ddedf7d712e536031956909a59d5",
+    "read-legacy-final.txt.gz": "f874464794ddbe5ba9aa335fc449e0a9ea080e4264e351fa0bfaf14d18b1d084",
+    "read-legacy.py.txt": "a783aab3863ad2e793229b2ac4b7a0dbcddf3253331e13dae1fa6eebd2d3e687",
+    "read-legacy.txt.gz": "af2067d405e747be7351e7f5d625c278b30c00b1aac990e9ce58c98d6052a8ba",
+    "replay-current.txt.gz": "9837595769ee32f4340a073946a772ed4cdf8ca3f6416fdc2eb295ae60035217",
+    "replay-first.txt.gz": "a35cab5a6519620eb5c8b4721a762d06c5403489ad34e44c4b3c231e04012d78",
+    "replay-second.txt.gz": "7d906164e3dc2d3efc7a7e1d4d76ed38457ec622bfeacf5d6a5b2882580acf0c",
+    "resource-contract.txt.gz": "fd7a9fc0b319fc9a14eae20133a33c7a08236358a48f2d9ff88c58a4a5ecc1bf",
+    "runtime-sources-before-options-reuse.json": "7f4a0340c96cebffa3e769ba272336ec5eebecd6283f8374b87dc8a7c07697e1",
+    "runtime-sources-before-resource-guard.json": "2bb8ea32f1a6d675f6ae6079c004c6c4559dc34fa96dce3ef553749158176d6a",
+    "runtime-sources.json": "53ab3a30e901a08a2211531c84c6c51584eedc3a3026bd228659b93b15f9c687",
+    "sdk-free-resource-accepted.txt.gz": "da370e71bdb6d9f8758c0c9d7b94191485714f127fc09ef663c4d0d4c8f29141",
+    "stage-contracts.txt.gz": "f4845d657f8e75bee31cd177f7bca8beb61b04a4a4dfde775705154d72b20851",
+    "stage-filter-probe.json": "3754487182498f544dff62f62e0d4372a6e2ae1fc347e2016e362071f839b755",
+    "stage-filter-probe.py.txt": "d03628a45e06b61b41a66a7ea06bd0661123458e65083444529572326939229a",
+    "stage-filter-probe.txt.gz": "adc91e88a259e323d65644acde7fc940126d89925ae6f697627472d9e0f51ebd",
+    "stage-filter-second.txt.gz": "213aafb7ce4b080e2075a9f321b9d0920a847a1a7fcdd214eded6aedfd02eba4",
+    "typing-accepted.txt.gz": "becc7db9d833a07faf613efb4e1a5880f3b7c64afb3b796f5d929b4226c2f318",
+    "typing-complete.txt.gz": "2d8cbc4a3eeee3bdec4fd484914862eb5b3a53a19f014653163163d089813d71",
+    "typing-feedback.txt.gz": "0513fa7e643bb838196a3695d2b6cbb14fc703121044422d1e20cec99d72cbf4",
+    "typing-final.txt.gz": "d0661e65e80b8c953491cbdc135114e90fda79d9e5b880c67ebef48c19947acd",
+    "typing-resource-accepted.txt.gz": "f990ab21afbac707e99fd2d99b3bd2c96d4bb79523d7a8b448b0e37e39d7c4c1",
+    "wire-options-accepted.txt.gz": "fd0f5e24fe98ba15046adfa92d4e18a5385650f8e7977b1abde256dc68da9a75",
+    "wire-options-final.txt.gz": "c16081e2f3c32ba9a64495fac43ca4cbea8b7b36cd3c94b053c89ecf0de42e30",
+    "wire-options.txt.gz": "396d4228308f6a2dc50fa6d5a13d1fc6c53bccc68bc8dcc52994b2633c0c017a",
+    "workset.json": "dd1ab37ddb752ec5a50ae9ea098ea8af46d5e285712b6c946f2a0f1330e90c10"
+  }
+}

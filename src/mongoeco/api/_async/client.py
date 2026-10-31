@@ -7,6 +7,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async._collection_watch import lookup_change_document
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
 from mongoeco.api._async.database_commands import build_info_document
@@ -47,11 +48,11 @@ from mongoeco.driver import (
 from mongoeco.driver.monitoring import (  # noqa: TC001 - public annotations are introspectable
     DriverMonitor,
 )
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.base import (  # noqa: TC001 - public annotations are introspectable
     AsyncStorageEngine,
 )
 from mongoeco.engines.capabilities import resolve_engine_capabilities
-from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -373,6 +374,9 @@ class AsyncDatabase:
         return AsyncChangeStreamCursor(
             self._change_hub,
             scope=ChangeStreamScope(db_name=self._db_name),
+            lookup_full_document=lambda event: lookup_change_document(
+                self.get_collection(event.coll_name), event
+            ),
             dialect=self._mongodb_dialect,
             execution_context=self._new_execution_context(),
             pipeline=pipeline,
@@ -914,6 +918,9 @@ class AsyncMongoClient:
         return AsyncChangeStreamCursor(
             self._change_hub,
             scope=ChangeStreamScope(),
+            lookup_full_document=lambda event: lookup_change_document(
+                self.get_database(event.db_name).get_collection(event.coll_name), event
+            ),
             dialect=self._mongodb_dialect,
             execution_context=ExpressionExecutionContext(now=self._resolve_now()),
             pipeline=pipeline,

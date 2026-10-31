@@ -106,9 +106,22 @@ class ChangeStreamPipelineTests(unittest.TestCase):
         update = {"operationType": "update", "fullDocument": {"_id": 1}}
         self.assertIs(apply_full_document_mode(insert, "default"), insert)
         self.assertNotIn("fullDocument", apply_full_document_mode(update, "default"))
-        self.assertEqual(apply_full_document_mode(update, "updateLookup"), update)
-        self.assertEqual(apply_full_document_mode(update, "whenAvailable"), update)
-        self.assertEqual(apply_full_document_mode(update, "required"), update)
+        self.assertEqual(
+            apply_full_document_mode(
+                update, "updateLookup", lookup_document=update["fullDocument"]
+            ),
+            update,
+        )
+        self.assertEqual(
+            apply_full_document_mode(
+                update, "whenAvailable", post_image_available=True
+            ),
+            update,
+        )
+        self.assertEqual(
+            apply_full_document_mode(update, "required", post_image_available=True),
+            update,
+        )
         with self.assertRaisesRegex(OperationFailure, "required"):
             apply_full_document_mode({"operationType": "update"}, "required")
 
@@ -1036,12 +1049,25 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event["operationType"], "invalidate")
         self.assertFalse(cursor.alive)
 
+    async def test_update_lookup_requires_a_resource_before_registering(self):
+        hub = ChangeStreamHub()
+        with self.assertRaisesRegex(NotImplementedError, "lookup resource"):
+            AsyncChangeStreamCursor(
+                hub, scope=ChangeStreamScope(), full_document="updateLookup",
+            )
+        self.assertEqual(hub.watcher_count, 0)
+
     async def test_cursor_hides_update_full_document_by_default_and_can_require_it(self):
         hub = ChangeStreamHub()
         default_cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope(), max_await_time_ms=10)
+        async def lookup(event):
+            self.assertEqual(event.document_key, {"_id": 1})
+            return {"_id": 1, "name": "Ada"}
+
         lookup_cursor = AsyncChangeStreamCursor(
             hub,
             scope=ChangeStreamScope(),
+            lookup_full_document=lookup,
             full_document="updateLookup",
             max_await_time_ms=10,
         )

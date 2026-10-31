@@ -1,0 +1,23 @@
+import json
+from pathlib import Path
+from unittest.mock import patch
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+r={}
+for enabled in (False,True):
+ engine=SQLiteEngine()
+ with MongoClient(engine) as client:
+  c=client.config.create_collection('records',changeStreamPreAndPostImages={'enabled':enabled})
+  c.insert_one({'_id':1,'v':0,'pad':'x'*1000})
+  s=c.watch(full_document='whenAvailable',max_await_time_ms=1)
+  try:
+   original=engine._collection_options_or_empty_sync;reads=[]
+   def observed(*args,**kwargs):
+    reads.append([args[1],args[2]])
+    return original(*args,**kwargs)
+   with patch.object(engine,'_collection_options_or_empty_sync',side_effect=observed):
+    c.update_one({}, {'$set':{'v':1}})
+   event=s.try_next()
+   r[str(enabled)]={'option_reads':len(reads),'image':None if event.get('fullDocument') is None else event['fullDocument']['v']}
+  finally:s.close()
+print(json.dumps(r,indent=2))

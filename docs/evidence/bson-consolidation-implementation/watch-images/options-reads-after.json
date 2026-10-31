@@ -1,0 +1,10 @@
+{
+  "False": {
+    "option_reads": 1,
+    "image": null
+  },
+  "True": {
+    "option_reads": 1,
+    "image": 1
+  }
+}

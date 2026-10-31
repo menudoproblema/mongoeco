@@ -131,6 +131,10 @@ from tests.differential.semantic_watch_cases import (
     SEED as WATCH_SEED,
     SEMANTIC_WATCH_CASES,
 )
+from tests.differential.semantic_watch_image_cases import (
+    SEED as WATCH_IMAGE_SEED,
+    SEMANTIC_WATCH_IMAGE_CASES,
+)
 from tests.differential.semantic_write_effect_cases import (
     SEED as WRITE_EFFECT_SEED,
     SEMANTIC_WRITE_EFFECT_CASES,
@@ -148,6 +152,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "watch_image": SemanticCorpus(
+        "watch-image", "semantic_watch_image_cases", WATCH_IMAGE_SEED,
+        SEMANTIC_WATCH_IMAGE_CASES, surfaces=("sync", "async"),
+    ),
     "watch": SemanticCorpus(
         "watch",
         "semantic_watch_cases",

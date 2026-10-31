@@ -1,0 +1,128 @@
+{
+  "7.0": {
+    "field": {
+      "type": "Code",
+      "value": "$operationType"
+    },
+    "variable": {
+      "type": "Code",
+      "value": "$$not_defined"
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "memory-7.0": {
+    "field": {
+      "type": "str",
+      "value": "insert"
+    },
+    "variable": {
+      "error": "OperationFailure",
+      "code": 17276
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "sqlite-7.0": {
+    "field": {
+      "type": "str",
+      "value": "insert"
+    },
+    "variable": {
+      "error": "OperationFailure",
+      "code": 17276
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "8.0": {
+    "field": {
+      "type": "Code",
+      "value": "$operationType"
+    },
+    "variable": {
+      "type": "Code",
+      "value": "$$not_defined"
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "memory-8.0": {
+    "field": {
+      "type": "str",
+      "value": "insert"
+    },
+    "variable": {
+      "error": "OperationFailure",
+      "code": 17276
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "sqlite-8.0": {
+    "field": {
+      "type": "str",
+      "value": "insert"
+    },
+    "variable": {
+      "error": "OperationFailure",
+      "code": 17276
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "9.0": {
+    "field": {
+      "type": "Code",
+      "value": "$operationType"
+    },
+    "variable": {
+      "type": "Code",
+      "value": "$$not_defined"
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "memory-9.0": {
+    "field": {
+      "type": "str",
+      "value": "insert"
+    },
+    "variable": {
+      "error": "OperationFailure",
+      "code": 17276
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  },
+  "sqlite-9.0": {
+    "field": {
+      "type": "str",
+      "value": "insert"
+    },
+    "variable": {
+      "error": "OperationFailure",
+      "code": 17276
+    },
+    "literal": {
+      "type": "Code",
+      "value": "$operationType"
+    }
+  }
+}

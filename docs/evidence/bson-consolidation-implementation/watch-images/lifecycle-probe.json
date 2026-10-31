@@ -1,0 +1,651 @@
+{
+  "native": {
+    "7.0": {
+      "protocol": {
+        "iterator": {
+          "value": true
+        },
+        "context_manager": true,
+        "resume_token_present": {
+          "value": true
+        }
+      },
+      "closed_try_next": {
+        "value": true
+      },
+      "closed_next": {
+        "error": "StopIteration",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "opened": true
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": 2
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": 2
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "value": true,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "drop",
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "error": "OperationFailure",
+        "code": 260
+      },
+      "start_after_invalidate": {
+        "value": "insert"
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    },
+    "8.0": {
+      "protocol": {
+        "iterator": {
+          "value": true
+        },
+        "context_manager": true,
+        "resume_token_present": {
+          "value": true
+        }
+      },
+      "closed_try_next": {
+        "value": true
+      },
+      "closed_next": {
+        "error": "StopIteration",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "opened": true
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": 2
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": 2
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "value": true,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "drop",
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "error": "OperationFailure",
+        "code": 260
+      },
+      "start_after_invalidate": {
+        "value": "insert"
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    },
+    "9.0": {
+      "protocol": {
+        "iterator": {
+          "value": true
+        },
+        "context_manager": true,
+        "resume_token_present": {
+          "value": true
+        }
+      },
+      "closed_try_next": {
+        "value": true
+      },
+      "closed_next": {
+        "error": "StopIteration",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "opened": true
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": 2
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": 2
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "value": true,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "drop",
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "error": "OperationFailure",
+        "code": 260
+      },
+      "start_after_invalidate": {
+        "value": "insert"
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    }
+  },
+  "local": {
+    "memory-7.0": {
+      "protocol": {
+        "iterator": {
+          "error": "TypeError",
+          "code": null
+        },
+        "context_manager": false,
+        "resume_token_present": {
+          "error": "AttributeError",
+          "code": null
+        }
+      },
+      "closed_try_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "closed_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "error": "TypeError",
+          "code": null
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "error": "OperationFailure",
+        "code": null,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "opened": true
+      },
+      "start_after_invalidate": {
+        "error": "TimeoutError",
+        "code": null
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    },
+    "sqlite-7.0": {
+      "protocol": {
+        "iterator": {
+          "error": "TypeError",
+          "code": null
+        },
+        "context_manager": false,
+        "resume_token_present": {
+          "error": "AttributeError",
+          "code": null
+        }
+      },
+      "closed_try_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "closed_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "error": "TypeError",
+          "code": null
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "error": "OperationFailure",
+        "code": null,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "opened": true
+      },
+      "start_after_invalidate": {
+        "error": "TimeoutError",
+        "code": null
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    },
+    "memory-8.0": {
+      "protocol": {
+        "iterator": {
+          "error": "TypeError",
+          "code": null
+        },
+        "context_manager": false,
+        "resume_token_present": {
+          "error": "AttributeError",
+          "code": null
+        }
+      },
+      "closed_try_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "closed_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "error": "TypeError",
+          "code": null
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "error": "OperationFailure",
+        "code": null,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "opened": true
+      },
+      "start_after_invalidate": {
+        "error": "TimeoutError",
+        "code": null
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    },
+    "sqlite-8.0": {
+      "protocol": {
+        "iterator": {
+          "error": "TypeError",
+          "code": null
+        },
+        "context_manager": false,
+        "resume_token_present": {
+          "error": "AttributeError",
+          "code": null
+        }
+      },
+      "closed_try_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "closed_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "error": "TypeError",
+          "code": null
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "error": "OperationFailure",
+        "code": null,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "opened": true
+      },
+      "start_after_invalidate": {
+        "error": "TimeoutError",
+        "code": null
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    },
+    "memory-9.0": {
+      "protocol": {
+        "iterator": {
+          "error": "TypeError",
+          "code": null
+        },
+        "context_manager": false,
+        "resume_token_present": {
+          "error": "AttributeError",
+          "code": null
+        }
+      },
+      "closed_try_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "closed_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "error": "TypeError",
+          "code": null
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "error": "OperationFailure",
+        "code": null,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "opened": true
+      },
+      "start_after_invalidate": {
+        "error": "TimeoutError",
+        "code": null
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    },
+    "sqlite-9.0": {
+      "protocol": {
+        "iterator": {
+          "error": "TypeError",
+          "code": null
+        },
+        "context_manager": false,
+        "resume_token_present": {
+          "error": "AttributeError",
+          "code": null
+        }
+      },
+      "closed_try_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "closed_next": {
+        "error": "OperationFailure",
+        "code": null
+      },
+      "arguments": {
+        "none": {
+          "error": "TypeError",
+          "code": null
+        },
+        "int": {
+          "error": "TypeError",
+          "code": null
+        },
+        "array": {
+          "error": "TypeError",
+          "code": null
+        },
+        "bool": {
+          "error": "TypeError",
+          "code": null
+        },
+        "unknown": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "empty": {
+          "error": "OperationFailure",
+          "code": null
+        },
+        "default": {
+          "opened": true
+        }
+      },
+      "filtered_invalidate": {
+        "error": "OperationFailure",
+        "code": null,
+        "alive": false
+      },
+      "invalidate": {
+        "types": [
+          "invalidate"
+        ],
+        "alive": false
+      },
+      "resume_after_invalidate": {
+        "opened": true
+      },
+      "start_after_invalidate": {
+        "error": "TimeoutError",
+        "code": null
+      },
+      "nested_token": {
+        "error": "OperationFailure",
+        "code": 280,
+        "alive": false
+      }
+    }
+  }
+}

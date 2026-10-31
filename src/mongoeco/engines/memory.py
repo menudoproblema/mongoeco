@@ -27,6 +27,7 @@ from mongoeco.core.change_events import (
     build_change_payload,
     captures_changes,
     committed_change_content,
+    post_image_enabled,
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
@@ -1330,13 +1331,29 @@ class MemoryEngine(AsyncStorageEngine):
         initial_checkpoint: int | None = None,
         durable: bool = False,
     ) -> int:
-        del durable
         with self._meta_lock:
             requested = (
                 self._commit_sequence
                 if initial_checkpoint is None
                 else initial_checkpoint
             )
+            if (
+                durable
+                and isinstance(requested, int)
+                and not isinstance(requested, bool)
+                and requested > 0
+                and self._commit_sequence == 0
+                and not self._change_checkpoints
+                and not self._storage
+                and not self._collections
+                and not self._indexes
+                and not self._search_indexes
+            ):
+                # A pristine Memory engine may resume its durable local history.
+                # Documents remain volatile; only the already journaled sequence
+                # is adopted. Other consumers cannot read the missing engine log.
+                self._commit_sequence = requested
+                self._change_pruned_through = requested
             if requested > self._commit_sequence:
                 raise OperationFailure(
                     "change consumer checkpoint is ahead of committed history",
@@ -3596,6 +3613,11 @@ class MemoryEngine(AsyncStorageEngine):
                     self._change_payload(
                         db_name=db_name,
                         coll_name=coll_name,
+                        post_image_available=post_image_enabled(
+                            self._collection_options_snapshot_locked(
+                                db_name, coll_name, collection_options=option_store
+                            )
+                        ),
                         **committed_change_content(
                             operation_context, original_document, next_document,
                             operation_type, change,
@@ -4193,7 +4215,8 @@ class MemoryEngine(AsyncStorageEngine):
                         commit_sequence = self._record_committed_change(
                             change_context,
                             self._change_payload(
-                                db_name=db_name, coll_name=coll_name, **content
+                                db_name=db_name, coll_name=coll_name, **content,
+                                post_image_available=post_image_enabled(collection_options),
                             ),
                         )
                         captured = replace(

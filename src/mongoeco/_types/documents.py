@@ -78,7 +78,7 @@ class ChangeEventDocument(TypedDict, total=False):
     operationType: str
     ns: ChangeNamespaceDocument
     documentKey: Document
-    fullDocument: Document
+    fullDocument: Document | None
     clusterTime: int
     updateDescription: dict[str, object]
 
@@ -194,6 +194,7 @@ class ChangeEventSnapshot:
     document_key: Document
     full_document: Document | None = None
     update_description: dict[str, object] | None = None
+    post_image_available: bool = False
 
     def to_document(self) -> ChangeEventDocument:
         document: ChangeEventDocument = {

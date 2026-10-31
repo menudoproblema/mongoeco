@@ -1,0 +1,25 @@
+import json,uuid,time
+from pathlib import Path
+from pymongo import MongoClient as Native
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine
+
+def run(client):
+    db=client['image_filter_'+uuid.uuid4().hex];out={}
+    try:
+        c=db.c;c.insert_one({'_id':1,'v':0,'pad':'x'*1000})
+        for name,pipeline in [('match_insert',[{'$match':{'operationType':'insert'}}]),('match_other_key',[{'$match':{'documentKey._id':2}}]),('match_image',[{'$match':{'fullDocument.v':2}}]),('project_no_image',[{'$project':{'_id':1}}]),('match_mixed',[{'$match':{'operationType':'insert','fullDocument.v':2}}])]:
+            s=c.watch(pipeline,full_document='required',max_await_time_ms=20)
+            try:
+                c.update_one({}, {'$inc':{'v':1}})
+                try:out[name]={'empty':s.try_next() is None,'alive':s.alive}
+                except Exception as e:out[name]={'error':type(e).__name__,'code':getattr(e,'code',None),'alive':s.alive}
+            finally:s.close()
+        return out
+    finally:client.drop_database(db.name)
+r={}
+for v,p in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+    with Native(f'mongodb://127.0.0.1:{p}/?directConnection=true&serverSelectionTimeoutMS=3000') as c:r[v]=run(c)
+with MongoClient(MemoryEngine()) as c:r['local']=run(c)
+Path('docs/evidence/bson-consolidation-implementation/watch-images/filter-probe.json').write_text(json.dumps(r,indent=2)+'\n')
+print(r)

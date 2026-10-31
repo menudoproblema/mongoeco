@@ -44,7 +44,7 @@ Esta revisión solo modifica documentación/evidencia, sin aceptar el candidato.
 
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
-el cierre completo del incremento. Este documento posee H48–H54 y su integración con B00–B10 y
+el cierre completo del incremento. Este documento posee H48–H55 y su integración con B00–B10 y
 C00–C06. No reabre H37–H47 ni sustituye sus receipts. La implementación y los
 gates históricos siguen en el [registro vigente](semantic-parity-implementation.md).
 El [plan histórico](plan-semantic-parity-refactor.md) conserva las obligaciones
@@ -128,7 +128,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
 | H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
 | H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
-| H52 y H53 | D04 sigue abierto: preparación/contexto tiene aceptación propia en el registro; imágenes y ciclo de vida por ámbito conservan divergencias observadas en revisión 8. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
+| H52 y H53 | D04 sigue abierto: preparación/contexto y modos CRUD de imágenes tienen aceptación propia en el registro; DDL/cierre por ámbito e interacción con imágenes conservan su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 
@@ -174,6 +174,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H52 | P1; confirmado en el subset local | Watch prepara solo forma externa y ejecuta por evento sin dialecto/reloj capturados. OperationFailure 31325 aparece tarde; replaceWith de ruta válida se rechaza localmente con TypeError mientras MongoDB abre el stream; NOW cambia entre eventos e ignora now_factory. La fuga 7→9 con undefined ya tiene sonda local, faltando captura nativa tipada. |
 | H53 | P2; diferencia caracterizada | Moderate evalúa primero el antiguo y puede devolver aceptación sin evaluar el nuevo. MongoDB evalúa el nuevo y registra warning 20294 para bad→bad bajo warn. Local tampoco emite warning en strict/warn: el hueco de observabilidad es más amplio que el orden moderate. No atribuir rechazo incorrecto de escrituras a este testigo. |
 | H54 | P1; confirmado | La identidad de escritura termina usando igualdad Python para Code; ésta ignora el orden del scope. MongoDB modifica y conserva el nuevo orden; classic y pipeline locales devuelven cero y conservan el anterior en ambos motores. |
+| H55 | P1; confirmado durante D04, pendiente D06a | Un Code BSON con prefijo $/$$ entra en la rama Python `str`: el runtime lo evalúa como campo y el preparador exige una variable inexistente. Referencias 7/8/9 y seis pares locales en la evidencia de imágenes confirman el mismo defecto en agregación ordinaria; $literal es control positivo. Reutilizar clasificación String/Code al decidir gramática y evaluar, con regresión permanente por contexto antes de corregir. No se confunde con identidad física H54. |
 
 Testigos físicos destacados: `Binary(ab,0)` selecciona IDs 1/2 en MongoDB y
 ninguno localmente; reasignar Binary idéntico devuelve 0 frente a 1;
@@ -347,7 +348,7 @@ Las prioridades ordenan riesgos, sin exigir una migración horizontal previa.
 
 | Bloque | Prioridad / hallazgos | Dependencias y entrega |
 | --- | --- | --- |
-| D00 — Oráculos y fronteras | P1 transversal; H48–H54 | Propiedades y testigos del primer corte antes de arreglar H48; ampliar registro/capturador/replay existentes, capturas 7/8/9 y fallo previo por familia. No otro runner. |
+| D00 — Oráculos y fronteras | P1 transversal; H48–H55 | Propiedades y testigos del primer corte antes de arreglar H48; ampliar registro/capturador/replay existentes, capturas 7/8/9 y fallo previo por familia. No otro runner. |
 | D01 — Identidad de modificación | P1; H48/H54 | Cortes D01a/D01b definidos abajo. Helper físico y consecuencias públicas, separados de igualdad semántica. |
 | D02 — Milisegundos exactos | P1; H49 | Independiente de Binary. Conversión, dateDiff/subtract, roundtrip; revisar ventanas, ambos lados de TTL y auxiliares antiguos frente a nuevo cutoff. Retirar resta sin callers tras comprobar usos/export privados. |
 | D03 — Tipos, Binary y especialización SQL | P1; H48/H51 | Cortes D03a/D03b definidos abajo. Clasificación/vistas y consumidores reales, incluyendo deduplicación pública. |
@@ -362,7 +363,7 @@ Las prioridades ordenan riesgos, sin exigir una migración horizontal previa.
 | D01a — Helper de identidad BSON | D00 de H48/H54 y vistas necesarias de D03a | Parte de identidad de la misma fila antigua: mover same_bson_update_value y corregir Code scope/Binary sin perder no-op, tipo ni orden. Puede acompañar a D03a en una entrega, con ambos IDs explícitos. |
 | D03b — SQL y tipos | D00 de H48/H51 y D03a | Antigua fila «D03, corte SQL/tipos». Canonicalizar aliases; constructor por tipo/forma escalar-array y tag binary para type. Para eq/in bytes-Binary 0: traducción exacta acreditada o conservar fallback de D03a. Reintroducir pushdown solo con pruebas/benchmark ADR-015; incluir virtual/partial indexes. |
 | D01b — Efectos públicos de modificación | D01a | Antigua fila «D01, corte restante». Estado, contadores, índices, outbox/eventos, classic/pipeline/replacement y operaciones múltiples. Casos físicos adicionales solo cambian con testigo nativo. |
-| D06a — Literales y vistas DBRef | D00 de H50 y primitivas necesarias de D03a | Desambiguar literal/operadores en la gramática común por contexto, sin exigir constructor SDK ni modificar las reglas de expresión de agregación. Igualdad directa DBRef/documento con orden/extras y controles negativos. |
+| D06a — Literales y vistas DBRef | D00 de H50/H55 y primitivas necesarias de D03a | Desambiguar literal/operadores en la gramática común por contexto, sin exigir constructor SDK ni modificar las reglas de expresión de agregación. Igualdad directa DBRef/documento con orden/extras y controles negativos. H55 añade String/Code como decisión gramatical en preparación/runtime y sus contextos; no otro normalizador. |
 | D06b — Preservación BSON en wire | D00 de H50/H35 y D06a para aceptación conjunta | Evitar perder orden en filtros y documentos de escritura. Usar owner `bson_raw`/bridge existente; conservar inputs de SDK, undefined y tipos BSON. Directa/wire/nativo deben coincidir también con orden inverso y tipos de campo no canónicos; no reconstruir historia ya perdida. |
 | D06c — Claves y consumidores DBRef | D06a y clasificación D03a | Parte restante de la antigua fila D06: group/lookup/sets/Search y spill conforme a sus políticas; retirar `_aggregation_key` tras sustituir su guarda. D06 no se cierra sin D06b aunque este corte pase. |
 
@@ -682,6 +683,26 @@ runner, jerarquía de eventos o intérprete de watch.
 | Preparación y contexto | Reutilizar `PreparedPipeline`/compilación y `ExpressionExecutionContext`; capturar dialecto/reloj/codec al abrir. El candidato actual ya lo intenta, pero no está aceptado. Validación estructural compartida con aggregate/update, con política de stages permitidos propia de watch. Reconocimiento sintáctico de un stage y capacidad de ejecutarlo son decisiones distintas: no usar capacidades de dialecto como catálogo gramatical y romper Search/registro de extensiones. | Sin eventos: pipelines válidos/erróneos, colección vacía/poblada, precedencia, fase/familia/código y ningún watcher registrado tras apertura fallida. Error dependiente del evento ocurre al consumir y cierra cuando lo haga el nativo. `$$NOW` estable entre etapas/eventos/getMore vacío y reloj nuevo al reabrir/reanudar; override de dialecto y codec. Handles derivados (`collection.database`, clones/opciones) conservan la inyección del reloj también para agregación ordinaria. Undefined: referencia propia de 7, 8 y 9, sin aplanar diferencias. |
 | Imágenes de actualización | `apply_full_document_mode` trata actualmente todos los modos no default como la postimagen almacenada. Conservar disponibilidad de imagen al escribir cuando corresponda; resolver `updateLookup` al consumir mediante recursos existentes y lookup interno tipado. Separar ese recurso del reloj constante de expresiones. El diseño definitivo y su compatibilidad persistida se revisan antes de cambiar journal/outbox. | Con v0→v1→v2 antes de consumir, `updateLookup` da v2, o null si se borró; no v1. Sin imágenes habilitadas, `whenAvailable` da null y `required` falla con OperationFailure 47 y cursor cerrado. Con imágenes habilitadas, ambos dan v1 incluso tras borrar. Default omite fullDocument en update. Controles insert/replace, filtros/proyecciones sobre fullDocument, opciones cambiadas entre escritura/lectura, scopes y reapertura/journal. Una opción aceptada en create_collection no demuestra que se capturen imágenes. |
 | DDL y ciclo de vida por ámbito | El productor de drop publica solo invalidate y `ChangeStreamScope.matches` lo entrega a todos los ámbitos; drop_database rápido evita esa publicación. Reutilizar enrutamiento/publicación y cursor actuales, distinguiendo metadatos internos para decidir destinatarios/cierre de los campos del evento público. Validar commit/offset/token con los owners actuales: no emitir fuera del orden confirmado ni fabricar documentKey/ns para invalidate. | Drop de colección: colección recibe drop→invalidate y cierra; DB/cliente reciben drop y siguen hasta una inserción barrera. Drop de base: colección recibe drop→invalidate, DB drop→dropDatabase→invalidate, cliente drop→dropDatabase y sigue. En las sondas invalidate carece de ns/documentKey. Añadir pruebas permanentes sync/async, continuidad tras recrear, cierre explícito/error/cancelación, filtro que oculta invalidate, rename soportado, resumeAfter/startAfter de token invalidate y replay persistente. Los últimos casos requieren caracterización adicional: no se dan por verificados con el drop básico. |
+
+La revisión de implementación añade una caracterización del protocolo local
+([sonda](evidence/bson-consolidation-implementation/watch-images/lifecycle-probe.json)):
+los tres servidores coinciden en iteración/context manager/resume_token,
+try_next cerrado devuelve None y next termina con StopIteration. None es un
+full_document válido por defecto; las cadenas desconocidas/vacías fallan con 2.
+Invalidate filtrado devuelve None y cierra; resumeAfter de invalidate falla al
+abrir con 260, mientras startAfter permite la inserción posterior. Localmente
+faltan protocolos, fallan clase/código/cierre y no llega la inserción posterior.
+La alteración anidada del token ya coincide (280 y cierre): conservar ese control.
+
+La causa de la pérdida posterior se deduce del camino actual: drop publica al
+hub directamente, adelantando su token sin incrementar la secuencia del engine;
+publish_committed descarta entonces el siguiente commit como ya entregado.
+D04 debe incorporar DDL al mismo registro atómico/outbox y a la entrega actual,
+con la vía existente de cambios de mantenimiento donde corresponda, sin cambiar
+SPI v2 ni mantener dos productores de secuencias. El cierre por ámbito y el
+protocolo del cursor se corrigen sobre ese orden único. Las sondas son sync y
+caracterización; aún requieren testigos permanentes sync/async, iteración/cierre,
+argumentos, offsets/tokens, fallos/reanudación y los controles de DDL sin efecto.
 
 Las dos últimas filas tienen sondas nuevas, no aceptación: 16 escenarios de
 imágenes por versión y par local; dos acciones DDL en tres ámbitos por versión

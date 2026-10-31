@@ -47,7 +47,11 @@ from mongoeco.core.bson_scalars import (
     is_bson_numeric,
     utc_bson_now,
 )
-from mongoeco.core.change_events import captures_changes, committed_change_content
+from mongoeco.core.change_events import (
+    captures_changes,
+    committed_change_content,
+    post_image_enabled,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
     normalize_collation,
@@ -5748,6 +5752,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         context=operation_context,
                         db_name=db_name,
                         coll_name=coll_name,
+                        post_image_available=post_image_enabled(collection_options),
                         **committed_change_content(
                             operation_context,
                             original_document,
@@ -7550,6 +7555,16 @@ class SQLiteEngine(AsyncStorageEngine):
         if deadline is None:
             deadline = operation_deadline(operation.max_time_ms)
         enforce_deadline(deadline)
+        options_for_write = {}
+
+        def collection_options_for_write(current, current_db, current_collection):
+            key = (id(current), current_db, current_collection)
+            if key not in options_for_write:
+                options_for_write[key] = self._collection_options_or_empty_sync(
+                    current, current_db, current_collection
+                )
+            return options_for_write[key]
+
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -7604,7 +7619,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 ),
                             )
                         ),
-                        collection_options_or_empty=self._collection_options_or_empty_sync,
+                        collection_options_or_empty=collection_options_for_write,
                         dialect_requires_python_fallback=self._dialect_requires_python_fallback,
                         select_first_document_for_plan=self._select_first_document_for_plan,
                         load_documents=self._load_documents,
@@ -7692,6 +7707,9 @@ class SQLiteEngine(AsyncStorageEngine):
                             db_name=db_name,
                             coll_name=coll_name,
                             **content,
+                            post_image_available=post_image_enabled(
+                                collection_options_for_write(conn, db_name, coll_name)
+                            ),
                             serialize_document=self._serialize_document,
                             max_entries=self._change_outbox_max_entries,
                         )

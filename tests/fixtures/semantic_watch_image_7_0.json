@@ -1,0 +1,1526 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_watch_availability_changes": {
+      "availability_False_False_whenAvailable": {
+        "kind": "update",
+        "v": null,
+        "alive": true
+      },
+      "availability_False_False_required": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "availability_False_False_updateLookup": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      },
+      "availability_False_True_whenAvailable": {
+        "kind": "update",
+        "v": null,
+        "alive": true
+      },
+      "availability_False_True_required": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "availability_False_True_updateLookup": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      },
+      "availability_True_False_whenAvailable": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      },
+      "availability_True_False_required": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      },
+      "availability_True_False_updateLookup": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      },
+      "availability_True_True_whenAvailable": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      },
+      "availability_True_True_required": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      },
+      "availability_True_True_updateLookup": {
+        "kind": "update",
+        "v": {
+          "$numberInt": "1"
+        },
+        "alive": true
+      }
+    },
+    "semantic_watch_client_images": {
+      "image_client_False_default_False": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_False_default_True": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_False_updateLookup_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_client_False_updateLookup_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_False_whenAvailable_False": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_False_whenAvailable_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_False_required_False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "image_client_False_required_True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "image_client_True_default_False": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_True_default_True": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_True_updateLookup_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_client_True_updateLookup_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_client_True_whenAvailable_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_client_True_whenAvailable_True": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_client_True_required_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_client_True_required_True": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      }
+    },
+    "semantic_watch_collection_images": {
+      "image_collection_False_default_False": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_False_default_True": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_False_updateLookup_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_collection_False_updateLookup_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_False_whenAvailable_False": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_False_whenAvailable_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_False_required_False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "image_collection_False_required_True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "image_collection_True_default_False": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_True_default_True": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_True_updateLookup_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_collection_True_updateLookup_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_collection_True_whenAvailable_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_collection_True_whenAvailable_True": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_collection_True_required_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_collection_True_required_True": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      }
+    },
+    "semantic_watch_database_images": {
+      "image_database_False_default_False": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_False_default_True": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_False_updateLookup_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_database_False_updateLookup_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_False_whenAvailable_False": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_False_whenAvailable_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_False_required_False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "image_database_False_required_True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "image_database_True_default_False": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_True_default_True": {
+        "kind": "update",
+        "present": false,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_True_updateLookup_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_database_True_updateLookup_True": {
+        "kind": "update",
+        "present": true,
+        "image": null,
+        "numberType": "missing",
+        "alive": true
+      },
+      "image_database_True_whenAvailable_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_database_True_whenAvailable_True": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_database_True_required_False": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      },
+      "image_database_True_required_True": {
+        "kind": "update",
+        "present": true,
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          },
+          "n": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "numberType": "long",
+        "alive": true
+      }
+    },
+    "semantic_watch_filtered_required": {
+      "expr_false": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "expr_type": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "expr_root": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "expr_image": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "insert": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "key": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "image": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "project": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "mixed": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "or": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "or_mixed": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      },
+      "not": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "alive": true
+      }
+    },
+    "semantic_watch_filters_after_stages": {
+      "set_unrelated": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "hasImage": true,
+        "hasTag": true,
+        "alias": null,
+        "alive": true
+      },
+      "set_alias": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "hasImage": true,
+        "hasTag": false,
+        "alias": "insert",
+        "alive": true
+      },
+      "project_metadata": {
+        "kind": "insert",
+        "key": null,
+        "hasImage": true,
+        "hasTag": false,
+        "alias": null,
+        "alive": true
+      },
+      "unset_image": {
+        "kind": "insert",
+        "key": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        },
+        "hasImage": false,
+        "hasTag": false,
+        "alias": null,
+        "alive": true
+      },
+      "replace_merge": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      },
+      "set_operation_type": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "47"
+        },
+        "alive": false
+      }
+    },
+    "semantic_watch_image_option_validation": {
+      "option_create_0": {
+        "ok": true
+      },
+      "option_collMod_0": {
+        "ok": true
+      },
+      "option_create_1": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_collMod_1": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_create_2": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_collMod_2": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_create_3": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "option_collMod_3": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "option_create_4": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "option_collMod_4": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "option_create_5": {
+        "ok": true
+      },
+      "option_collMod_5": {
+        "ok": true
+      },
+      "option_create_6": {
+        "ok": true
+      },
+      "option_collMod_6": {
+        "ok": true
+      },
+      "option_create_7": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_collMod_7": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_create_8": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_collMod_8": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_create_9": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_collMod_9": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "option_create_10": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "option_collMod_10": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "option_create_11": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "option_collMod_11": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      }
+    },
+    "semantic_watch_non_update_images": {
+      "non_update_False_default_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_False_default_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_False_updateLookup_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_False_updateLookup_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_False_whenAvailable_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_False_whenAvailable_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_False_required_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_False_required_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_default_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_default_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_updateLookup_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_updateLookup_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_whenAvailable_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_whenAvailable_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_required_insert": {
+        "kind": "insert",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      },
+      "non_update_True_required_replace": {
+        "kind": "replace",
+        "image": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberLong": "7"
+          },
+          "b": {
+            "$binary": {
+              "base64": "c2FtZQ==",
+              "subType": "05"
+            }
+          }
+        },
+        "alive": true
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793461352,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793461352,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_watch_image_cases.py",
+    "sha256": "02daf318d52db866734113bfd67289457d4e1cf3e0e43bbff1536101bbc1d0ff"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_watch_collection_images",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_collection_images"
+    },
+    {
+      "name": "semantic_watch_database_images",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_database_images"
+    },
+    {
+      "name": "semantic_watch_client_images",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_client_images"
+    },
+    {
+      "name": "semantic_watch_availability_changes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_availability_changes"
+    },
+    {
+      "name": "semantic_watch_filtered_required",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_filtered_required"
+    },
+    {
+      "name": "semantic_watch_image_option_validation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_image_option_validation"
+    },
+    {
+      "name": "semantic_watch_filters_after_stages",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_filters_after_stages"
+    },
+    {
+      "name": "semantic_watch_non_update_images",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_non_update_images"
+    }
+  ]
+}

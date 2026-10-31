@@ -1,0 +1,30 @@
+{
+  "memory-default": {
+    "before": 0.05484754190547392,
+    "after": 0.057335395948030055,
+    "ratio": 1.0453594446738157,
+    "checksum": 20100,
+    "samples_per_runtime": 10
+  },
+  "memory-updateLookup": {
+    "before": 0.05342093703802675,
+    "after": 0.07125693745911121,
+    "ratio": 1.333876592400246,
+    "checksum": 20100,
+    "samples_per_runtime": 10
+  },
+  "sqlite-default": {
+    "before": 0.12391710450174287,
+    "after": 0.127676104020793,
+    "ratio": 1.0303347914249985,
+    "checksum": 20100,
+    "samples_per_runtime": 10
+  },
+  "sqlite-updateLookup": {
+    "before": 0.12621016695629805,
+    "after": 0.19823543750680983,
+    "ratio": 1.5706772464333358,
+    "checksum": 20100,
+    "samples_per_runtime": 10
+  }
+}

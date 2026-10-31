@@ -3,8 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope
+from mongoeco.api.operations import compile_find_operation
+from mongoeco.change_streams import (
+    AsyncChangeStreamCursor,
+    ChangeStreamHub,
+    ChangeStreamScope,
+)
 from mongoeco.errors import InvalidOperation
+
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
@@ -64,4 +70,19 @@ def open_collection_change_stream(
         materialize_document=collection._apply_codec_options_to_document,
         dialect=collection._mongodb_dialect,
         execution_context=collection._new_execution_context(),
+        lookup_full_document=lambda event: lookup_change_document(collection, event),
     )
+
+
+async def lookup_change_document(collection, event):
+    # A fresh read resource at consumption time; the stream's expression clock
+    # remains fixed. Scan internally so BSON widths/undefined reach its pipeline
+    # before codec_options and public materialization are applied once.
+    operation = compile_find_operation(
+        event.document_key,
+        limit=1,
+        dialect=collection._mongodb_dialect,
+        planning_mode=collection._planning_mode,
+    ).bind(collection._new_operation_context())
+    async with collection._runtime.engine_scan_with_operation(operation) as snapshot:
+        return await anext(snapshot, None)

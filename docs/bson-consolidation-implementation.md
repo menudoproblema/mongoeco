@@ -543,11 +543,49 @@ No quedan findings demostrados abiertos de preparación/contexto dentro de lo
 ejercido; los defectos de imágenes/DDL de revisión 8 mantienen sus testigos y
 no quedan aceptados por estos gates. D05 conserva matrices/costes y cierre final.
 
+## D04 — Imágenes y recursos de lectura
+
+La [evidencia del corte](evidence/bson-consolidation-implementation/watch-images/receipt.json)
+implementa los modos de imágenes CRUD con los recursos/contextos existentes:
+updateLookup consulta al consumir y mantiene tipos internos hasta materializar;
+whenAvailable/required usan disponibilidad capturada al escribir. Metadatos
+opcionales conservan journal y outbox sin cambiar esquema SQL, claves o tokens.
+Create/collMod comparten validación; SQLite reutiliza las opciones de cada
+escritura para validar y fijar disponibilidad, evitando la segunda consulta.
+Una guarda necesaria delega al matcher y
+sigue aliases demostrables sin reemplazar el pipeline original. La propiedad
+amplía conservación de candidatos y clasificación String/Code común.
+
+La reapertura pública corrige adopción de checkpoint en Memory completamente
+vacío para consumidor durable, sin recuperar documentos ni permitir adelantar
+un motor con datos/consumidores. Tests sync/async prueban replay/continuidad;
+otros controles verifican reloj actual del recurso frente al del stream,
+publicación local commit/abort y mantenimiento TTL con entrega.
+
+Ocho acciones permanentes, 118 escenarios por major, tienen capturas físicas
+7.0.43/8.0.32/9.0.2 / FCV correspondiente y --check. El candidato pasa 6.118
+integrados, 2.690 de core/propiedades/contexto/entrega (936 subtests, un skip),
+y 110 de imágenes/contratos con orjson. La base archivada 429deec falla 84 y pasa
+15 controles/metadata. Pasan typing/lint/SDK-free real 3.13. La ficha conserva
+además la comprobación wire de opciones, compatibilidad de un archivo realmente
+creado por la base y medidas secuenciales; no se presenta como cierre D05.
+
+Default mantiene coste próximo al previo; lookup añade el coste de la lectura
+antes omitida. El journal anterior sin bandera se lee sin inventar disponibilidad.
+D04 sigue abierto para DDL/cierre por ámbito, interacción con imágenes y los
+fixtures replica set de CI. D05 conserva matrices/aceptación física más amplia.
+
+La revisión confirma H55 en el plan: Code BSON $/$$ se interpreta como ruta/
+variable en preparación/runtime, también en agregación ordinaria. La sonda
+nativa/local es caracterización; D06a conserva arreglo y regresión permanente.
+No se cierra mediante la guarda de imágenes ni se pierde del trabajo restante.
+
 ## Trabajo restante
 
-- D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
-- D04: preparación/contexto, resolución de fullDocument, DDL/cierre por ámbito
-  y fixtures replica set de jobs nativos. Las obligaciones y testigos concretos
+- D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
+- D04: DDL/cierre por ámbito e interacción con imágenes, continuidad/reanudación
+  y fixtures replica set de jobs nativos. Preparación/contexto y modos CRUD de
+  imágenes tienen aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
   están en revisión 8 del plan; ni publicación TTL ni D01b los cierran.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.

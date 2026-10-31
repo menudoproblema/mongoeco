@@ -1,0 +1,21 @@
+{
+  "default": {
+    "hasImage": false,
+    "numberType": "missing"
+  },
+  "updateLookup": {
+    "hasImage": true,
+    "numberType": "long"
+  },
+  "whenAvailable": {
+    "hasImage": true,
+    "numberType": "missing"
+  },
+  "required": {
+    "code": 47,
+    "alive": false
+  },
+  "schema_unchanged": true,
+  "storage_keys_unchanged": true,
+  "new_available_image_read": true
+}

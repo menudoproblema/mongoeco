@@ -6,7 +6,10 @@ import threading
 import time
 import weakref
 
-from collections.abc import Callable
+from collections.abc import (  # noqa: TC003 - introspectable signature
+    Awaitable,
+    Callable,
+)
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import apply_pipeline, compile_pipeline
@@ -16,9 +19,13 @@ from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
     ensure_expression_context,
 )
+from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ChangeEventDocument
+from mongoeco.types import (  # noqa: TC001 - introspectable signature
+    ChangeEventDocument,
+    ChangeEventSnapshot,
+)
 
 from .hub import ChangeStreamHub  # noqa: TC001 - introspectable cursor signature
 from .models import (
@@ -28,6 +35,7 @@ from .pipeline import (
     apply_full_document_mode,
     compile_change_stream_pipeline,
     normalize_full_document_mode,
+    pre_image_match,
 )
 
 
@@ -47,7 +55,10 @@ class AsyncChangeStreamCursor:
         | None = None,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         execution_context: ExpressionExecutionContext | None = None,
+        lookup_full_document: Callable[[ChangeEventSnapshot], Awaitable[dict | None]]
+        | None = None,
     ) -> None:
+        self._lookup_full_document = lookup_full_document
         self._hub = hub
         self._scope = scope
         self._offset = resolve_change_stream_offset(
@@ -61,6 +72,7 @@ class AsyncChangeStreamCursor:
             dialect=dialect,
             collection=scope.coll_name,
         )
+        self._pre_image_match = pre_image_match(self._pipeline, dialect)
         self._dialect = dialect
         self._execution_context = ensure_expression_context(execution_context)
         self._compiled_pipeline = (
@@ -70,6 +82,9 @@ class AsyncChangeStreamCursor:
         )
         self._max_await_time_ms = max_await_time_ms
         self._full_document = normalize_full_document_mode(full_document)
+        if self._full_document == "updateLookup" and lookup_full_document is None:
+            message = "updateLookup requires a current-document lookup resource"
+            raise NotImplementedError(message)
         self._materialize_document = materialize_document or DocumentCodec.to_pymongo
         self._closed = False
         self._stop_event = threading.Event()
@@ -86,14 +101,34 @@ class AsyncChangeStreamCursor:
 
         return _resolve().__await__()
 
-    def _transform(self, event) -> ChangeEventDocument | None:
+    async def _transform(self, event) -> ChangeEventDocument | None:
         if not self._scope.matches(event):
             return None
         document = event.to_document()
-        document = apply_full_document_mode(document, self._full_document)
-        if self._pipeline is not None:
-            token = document["_id"]
-            try:
+        try:
+            if self._pre_image_match is not None and not QueryEngine.match_plan(
+                document,
+                self._pre_image_match,
+                dialect=self._dialect,
+                variables=self._execution_context,
+            ):
+                return None
+            lookup_document = None
+            if (
+                event.operation_type == "update"
+                and self._full_document == "updateLookup"
+                and self._lookup_full_document is not None
+            ):
+                lookup_document = await self._lookup_full_document(event)
+                self._ensure_open()
+            document = apply_full_document_mode(
+                document,
+                self._full_document,
+                post_image_available=event.post_image_available,
+                lookup_document=lookup_document,
+            )
+            if self._pipeline is not None:
+                token = document["_id"]
                 transformed = (
                     self._compiled_pipeline.execute(
                         [document],
@@ -117,9 +152,9 @@ class AsyncChangeStreamCursor:
                         "Change stream pipeline must preserve the event resume token"
                     )
                     raise server_error(message, code=280)
-            except OperationFailure:
-                self.close()
-                raise
+        except OperationFailure:
+            self.close()
+            raise
         return self._materialize_document(document)
 
     async def try_next(self) -> ChangeEventDocument | None:
@@ -140,7 +175,7 @@ class AsyncChangeStreamCursor:
             self._offset = next_offset
             if event is None:
                 return None
-            transformed = self._transform(event)
+            transformed = await self._transform(event)
             if event.operation_type == "invalidate" and self._scope.matches(event):
                 self.close()
             if transformed is not None:
@@ -158,7 +193,7 @@ class AsyncChangeStreamCursor:
             self._offset, event = document
             if event is None:
                 continue
-            transformed = self._transform(event)
+            transformed = await self._transform(event)
             if event.operation_type == "invalidate" and self._scope.matches(event):
                 self.close()
             if transformed is not None:

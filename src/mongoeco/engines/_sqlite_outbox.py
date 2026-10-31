@@ -720,6 +720,7 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
     document_key: Document,
     full_document: Document | None,
     update_description: Document | None = None,
+    post_image_available: bool = False,
     serialize_document: Callable[[Document], str],
     max_entries: int = 10_000,
     maintenance_operation_id: str | None = None,
@@ -747,6 +748,7 @@ def append_change(  # noqa: PLR0913 - transactional outbox boundary
         operation_type=operation_type, db_name=db_name, coll_name=coll_name,
         document_key=document_key, full_document=full_document,
         update_description=update_description,
+        post_image_available=post_image_available,
     ))
     payload = effect if kind == "event" else None
     effective_event_index = (

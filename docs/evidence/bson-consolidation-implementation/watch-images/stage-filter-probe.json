@@ -1,0 +1,114 @@
+{
+  "7.0": {
+    "set_unrelated": {
+      "empty": true,
+      "alive": true
+    },
+    "set_alias": {
+      "empty": true,
+      "alive": true
+    },
+    "project_metadata": {
+      "empty": true,
+      "alive": true
+    },
+    "unset_image": {
+      "empty": true,
+      "alive": true
+    },
+    "replace_merge": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "set_operation_type": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    }
+  },
+  "8.0": {
+    "set_unrelated": {
+      "empty": true,
+      "alive": true
+    },
+    "set_alias": {
+      "empty": true,
+      "alive": true
+    },
+    "project_metadata": {
+      "empty": true,
+      "alive": true
+    },
+    "unset_image": {
+      "empty": true,
+      "alive": true
+    },
+    "replace_merge": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "set_operation_type": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    }
+  },
+  "9.0": {
+    "set_unrelated": {
+      "empty": true,
+      "alive": true
+    },
+    "set_alias": {
+      "empty": true,
+      "alive": true
+    },
+    "project_metadata": {
+      "empty": true,
+      "alive": true
+    },
+    "unset_image": {
+      "empty": true,
+      "alive": true
+    },
+    "replace_merge": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "set_operation_type": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    }
+  },
+  "local": {
+    "set_unrelated": {
+      "empty": true,
+      "alive": true
+    },
+    "set_alias": {
+      "empty": true,
+      "alive": true
+    },
+    "project_metadata": {
+      "empty": true,
+      "alive": true
+    },
+    "unset_image": {
+      "empty": true,
+      "alive": true
+    },
+    "replace_merge": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "set_operation_type": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    }
+  }
+}

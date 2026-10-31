@@ -1,0 +1,278 @@
+{
+  "7.0": {
+    "create0": {
+      "ok": true
+    },
+    "collMod0": {
+      "ok": true
+    },
+    "create1": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod1": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create2": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod2": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create3": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "collMod3": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "create4": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "collMod4": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "create5": {
+      "ok": true
+    },
+    "collMod5": {
+      "ok": true
+    },
+    "create6": {
+      "ok": true
+    },
+    "collMod6": {
+      "ok": true
+    },
+    "create7": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod7": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create8": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod8": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create9": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod9": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create10": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "collMod10": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "create11": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "collMod11": {
+      "error": "OperationFailure",
+      "code": 40415
+    }
+  },
+  "8.0": {
+    "create0": {
+      "ok": true
+    },
+    "collMod0": {
+      "ok": true
+    },
+    "create1": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod1": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create2": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod2": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create3": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "collMod3": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "create4": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "collMod4": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "create5": {
+      "ok": true
+    },
+    "collMod5": {
+      "ok": true
+    },
+    "create6": {
+      "ok": true
+    },
+    "collMod6": {
+      "ok": true
+    },
+    "create7": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod7": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create8": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod8": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create9": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod9": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create10": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "collMod10": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "create11": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "collMod11": {
+      "error": "OperationFailure",
+      "code": 40415
+    }
+  },
+  "9.0": {
+    "create0": {
+      "ok": true
+    },
+    "collMod0": {
+      "ok": true
+    },
+    "create1": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod1": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create2": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod2": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create3": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "collMod3": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "create4": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "collMod4": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "create5": {
+      "ok": true
+    },
+    "collMod5": {
+      "ok": true
+    },
+    "create6": {
+      "ok": true
+    },
+    "collMod6": {
+      "ok": true
+    },
+    "create7": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod7": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create8": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod8": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create9": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "collMod9": {
+      "error": "OperationFailure",
+      "code": 14
+    },
+    "create10": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "collMod10": {
+      "error": "OperationFailure",
+      "code": 40414
+    },
+    "create11": {
+      "error": "OperationFailure",
+      "code": 40415
+    },
+    "collMod11": {
+      "error": "OperationFailure",
+      "code": 40415
+    }
+  }
+}

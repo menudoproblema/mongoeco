@@ -1,5 +1,18 @@
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async._database_admin_command_compiler import (
+    DatabaseAdminCommandCompiler,
+)
+from mongoeco.api._async._database_admin_namespace import DatabaseNamespaceAdminService
+from mongoeco.api._async._database_admin_read_commands import (
+    DatabaseAdminReadCommandService,
+)
+from mongoeco.api._async._database_admin_routing import DatabaseAdminRoutingService
+from mongoeco.api._async._database_admin_write_commands import (
+    DatabaseAdminWriteCommandService,
+)
+from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
+from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api.admin_parsing import (
     FindAndModifyCommandOptions,
     normalize_command_batch_size,
@@ -22,12 +35,6 @@ from mongoeco.api.admin_parsing import (
     require_collection_name,
     resolve_collection_reference,
 )
-from mongoeco.api.public_api import (
-    ARG_UNSET,
-    DATABASE_LIST_COLLECTION_NAMES_SPEC,
-    DATABASE_LIST_COLLECTIONS_SPEC,
-    normalize_public_operation_arguments,
-)
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -36,45 +43,39 @@ from mongoeco.api.operations import (
     compile_find_selection_from_update_operation,
     compile_update_operation,
 )
-from mongoeco.api._async._database_admin_command_compiler import (
-    DatabaseAdminCommandCompiler,
+from mongoeco.api.public_api import (
+    ARG_UNSET,
+    DATABASE_LIST_COLLECTION_NAMES_SPEC,
+    DATABASE_LIST_COLLECTIONS_SPEC,
+    normalize_public_operation_arguments,
 )
-from mongoeco.api._async._database_admin_namespace import DatabaseNamespaceAdminService
-from mongoeco.api._async._database_admin_read_commands import (
-    DatabaseAdminReadCommandService,
-)
-from mongoeco.api._async._database_admin_routing import DatabaseAdminRoutingService
-from mongoeco.api._async._database_admin_write_commands import (
-    DatabaseAdminWriteCommandService,
-)
-from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
-from mongoeco.api._async.listing_cursor import AsyncListingCursor
+from mongoeco.core.change_events import validate_post_image_options
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.server_errors import server_error
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.semantic_core import compile_collection_validation_semantics
-from mongoeco.core.server_errors import server_error
 from mongoeco.errors import BulkWriteError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BulkWriteErrorDetails,
-    CollectionStatsSnapshot,
     CollectionListingDocument,
     CollectionListingSnapshot,
     CollectionStatsDocument,
+    CollectionStatsSnapshot,
     CollectionValidationDocument,
     CollectionValidationSnapshot,
     CommandCursorResult,
     CountCommandResult,
     CreateIndexesCommandResult,
-    DatabaseStatsSnapshot,
     DatabaseListingDocument,
     DatabaseListingSnapshot,
     DatabaseStatsDocument,
+    DatabaseStatsSnapshot,
     DistinctCommandResult,
+    Document,
     DropDatabaseCommandResult,
     DropIndexesCommandResult,
-    Document,
     Filter,
     FindAndModifyCommandResult,
     FindAndModifyLastErrorObject,
@@ -85,9 +86,10 @@ from mongoeco.types import (
     Projection,
     ReturnDocument,
     UpsertedWriteEntry,
-    WriteErrorEntry,
     WriteCommandResult,
+    WriteErrorEntry,
 )
+
 
 if TYPE_CHECKING:
     from mongoeco.api._async.client import AsyncDatabase
@@ -146,6 +148,9 @@ class AsyncDatabaseAdminService:
 
     @staticmethod
     def _validate_create_collection_options(options: dict[str, object]) -> None:
+        validate_post_image_options(options.get("changeStreamPreAndPostImages"))
+        if options.get("changeStreamPreAndPostImages") is None:
+            options.pop("changeStreamPreAndPostImages", None)
         capped = options.get("capped")
         if capped is not None and not isinstance(capped, bool):
             raise TypeError("capped must be a bool")
@@ -597,6 +602,7 @@ class AsyncDatabaseAdminService:
         allowed = {
             "collMod",
             "$db",
+            "changeStreamPreAndPostImages",
             "validator",
             "validationLevel",
             "validationAction",
@@ -606,10 +612,12 @@ class AsyncDatabaseAdminService:
         if spec.keys() - allowed:
             message = "Unsupported collMod option"
             raise server_error(message, code=40415)
+        validate_post_image_options(spec.get("changeStreamPreAndPostImages"))
         changes = {
             key: value
             for key, value in spec.items()
             if key in {"validator", "validationLevel", "validationAction"}
+            or (key == "changeStreamPreAndPostImages" and value is not None)
         }
         modifier = getattr(self._engine, "_modify_collection_options", None)
         if modifier is None:

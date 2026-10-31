@@ -1,0 +1,101 @@
+{
+  "7.0": {
+    "match_insert": {
+      "empty": true,
+      "alive": true
+    },
+    "match_other_key": {
+      "empty": true,
+      "alive": true
+    },
+    "match_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "project_no_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "match_mixed": {
+      "empty": true,
+      "alive": true
+    }
+  },
+  "8.0": {
+    "match_insert": {
+      "empty": true,
+      "alive": true
+    },
+    "match_other_key": {
+      "empty": true,
+      "alive": true
+    },
+    "match_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "project_no_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "match_mixed": {
+      "empty": true,
+      "alive": true
+    }
+  },
+  "9.0": {
+    "match_insert": {
+      "empty": true,
+      "alive": true
+    },
+    "match_other_key": {
+      "empty": true,
+      "alive": true
+    },
+    "match_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "project_no_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "match_mixed": {
+      "empty": true,
+      "alive": true
+    }
+  },
+  "local": {
+    "match_insert": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "match_other_key": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "match_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "project_no_image": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    },
+    "match_mixed": {
+      "error": "OperationFailure",
+      "code": 47,
+      "alive": false
+    }
+  }
+}

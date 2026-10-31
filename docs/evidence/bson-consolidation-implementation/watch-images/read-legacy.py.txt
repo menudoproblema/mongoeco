@@ -1,0 +1,35 @@
+import json,sqlite3,os
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+from mongoeco.errors import OperationFailure
+root=Path(os.environ.get('MONGOECO_IMAGE_COMPAT_DIR','/tmp/mongoeco-watch-image-compat'));before=json.loads((root/'before.json').read_text());out={}
+with MongoClient(SQLiteEngine(str(root/'old.sqlite')),change_stream_journal_path=str(root/'old.json')) as client:
+    c=client.compat.records
+    for mode in ('default','updateLookup','whenAvailable','required'):
+        s=c.watch([{'$set':{'numberType':{'$type':'$fullDocument.n'}}}],full_document=mode,resume_after=before['token'],max_await_time_ms=1)
+        try:
+            if mode=='required':
+                try:s.try_next()
+                except OperationFailure as e:assert e.code==47 and not s.alive;out[mode]={'code':e.code,'alive':s.alive}
+                else:raise AssertionError('Legacy unknown availability was fabricated')
+            else:
+                e=s.try_next();out[mode]={'hasImage':'fullDocument' in e,'numberType':e['numberType']}
+                if mode=='updateLookup':assert e['fullDocument']['v']==1 and e['numberType']=='long'
+                elif mode=='whenAvailable':assert e['fullDocument'] is None
+                else:assert 'fullDocument' not in e
+        finally:s.close()
+    client.compat.command({'collMod':'records','changeStreamPreAndPostImages':{'enabled':True}})
+    s=c.watch(full_document='required',max_await_time_ms=1)
+    try:
+        c.update_one({}, {'$set':{'v':2}})
+        assert s.try_next()['fullDocument']['v']==2
+    finally:s.close()
+with sqlite3.connect(root/'old.sqlite') as connection:
+    schema=connection.execute("SELECT name,sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY name").fetchall()
+    keys=connection.execute('SELECT storage_key FROM documents ORDER BY storage_key').fetchall()
+assert json.loads(json.dumps(schema))==before['schema']
+assert json.loads(json.dumps(keys))==before['keys']
+out.update({'schema_unchanged':True,'storage_keys_unchanged':True,'new_available_image_read':True})
+Path('docs/evidence/bson-consolidation-implementation/watch-images/legacy.json').write_text(json.dumps(out,indent=2)+'\n')
+print(out)

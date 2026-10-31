@@ -1,0 +1,77 @@
+import json,time,uuid
+from pathlib import Path
+from pymongo import MongoClient as Native
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+
+def call(action):
+    try:return {'value':action()}
+    except Exception as e:return {'error':type(e).__name__,'code':getattr(e,'code',None)}
+
+def event(stream):
+    deadline=time.monotonic()+1
+    while time.monotonic()<deadline:
+        row=stream.try_next()
+        if row is not None:return row
+    raise TimeoutError('No event before diagnostic deadline')
+
+def run(client):
+    db=client['lifecycle_'+uuid.uuid4().hex];out={}
+    try:
+        c=db.protocol;c.insert_one({'_id':0})
+        s=c.watch(max_await_time_ms=20)
+        out['protocol']={'iterator':call(lambda:iter(s) is s),'context_manager':hasattr(s,'__enter__'),'resume_token_present':call(lambda:s.resume_token is not None)}
+        s.close()
+        out['closed_try_next']=call(lambda:s.try_next() is None)
+        out['closed_next']=call(lambda:s.next())
+        out['arguments']={}
+        for name,value in [('none',None),('int',1),('array',[]),('bool',True),('unknown','later'),('empty',''),('default','default')]:
+            try:
+                stream=c.watch(full_document=value,max_await_time_ms=20)
+                stream.close();out['arguments'][name]={'opened':True}
+            except Exception as e:out['arguments'][name]={'error':type(e).__name__,'code':getattr(e,'code',None)}
+        c=db.filtered;c.insert_one({'_id':0})
+        s=c.watch([{'$match':{'operationType':'insert'}}],max_await_time_ms=20)
+        try:
+            c.drop();c.insert_one({'_id':'barrier'})
+            out['filtered_invalidate']=call(lambda:s.try_next() is None)
+            out['filtered_invalidate']['alive']=s.alive
+        finally:s.close()
+        c=db.resume;c.insert_one({'_id':0})
+        s=c.watch(max_await_time_ms=20);token=None;seen=[]
+        try:
+            c.drop()
+            deadline=time.monotonic()+1
+            while s.alive and time.monotonic()<deadline:
+                e=s.try_next()
+                if e is None:continue
+                seen.append(e['operationType'])
+                if e['operationType']=='invalidate':token=e['_id']
+            out['invalidate']={'types':seen,'alive':s.alive}
+        finally:s.close()
+        if token is not None:
+            try:
+                s=c.watch(resume_after=token,max_await_time_ms=20)
+                s.close();out['resume_after_invalidate']={'opened':True}
+            except Exception as e:out['resume_after_invalidate']={'error':type(e).__name__,'code':getattr(e,'code',None)}
+            s=c.watch(start_after=token,max_await_time_ms=20)
+            try:
+                c.insert_one({'_id':'new'})
+                out['start_after_invalidate']=call(lambda:event(s)['operationType'])
+            finally:s.close()
+        c=db.token;c.insert_one({'_id':0})
+        s=c.watch([{'$set':{'_id._data':'changed'}}],max_await_time_ms=20)
+        try:
+            c.insert_one({'_id':1})
+            out['nested_token']=call(lambda:event(s)['operationType'])
+            out['nested_token']['alive']=s.alive
+        finally:s.close()
+        return out
+    finally:client.drop_database(db.name)
+r={'native':{},'local':{}}
+for v,p in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+    with Native(f'mongodb://127.0.0.1:{p}/?directConnection=true&serverSelectionTimeoutMS=3000') as c:r['native'][v]=run(c)
+    for name,factory in [('memory',MemoryEngine),('sqlite',SQLiteEngine)]:
+        with MongoClient(factory(),mongodb_dialect=v) as c:r['local'][name+'-'+v]=run(c)
+Path('docs/evidence/bson-consolidation-implementation/watch-images/lifecycle-probe.json').write_text(json.dumps(r,indent=2)+'\n')
+print(r['native']['9.0']);print(r['local']['memory-9.0'])
