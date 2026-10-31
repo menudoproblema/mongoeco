@@ -556,7 +556,16 @@ def materializing_aggregation(
             ),
         )
         metadata["pipeline_shape"] = "match-group-sort-limit"
+        nested_metrics: list[Metrics] = []
         return {
+            "materializing_aggregation_nested_group": _measure_single_task(
+                nested_metrics,
+                callback=lambda: engine.aggregate(
+                    db_name, coll_name, [{"$facet": {"groups": pipeline}}],
+                    allow_disk_use=True,
+                ),
+                metadata={"pipeline_shape": "facet-match-group-sort-limit"},
+            ),
             "materializing_aggregation_group_sort": _measure_single_task(
                 agg_metrics,
                 callback=lambda: engine.aggregate(
@@ -825,6 +834,7 @@ def predicate_diagnostics(
     eq_bool_metrics: list[Metrics] = []
     eq_string_metrics: list[Metrics] = []
     cmp_int_metrics: list[Metrics] = []
+    indexed_numeric_metrics: list[Metrics] = []
     conjunct_residual_metrics: list[Metrics] = []
     conjunct_residual_reference_metrics: list[Metrics] = []
     db_name, coll_name, docs = _load_users(engine, count)
@@ -833,6 +843,11 @@ def predicate_diagnostics(
         engine.drop_collection(db_name, reference_coll_name)
         engine.insert_many(db_name, reference_coll_name, docs)
         engine.create_index(db_name, coll_name, [("city", 1)])
+        numeric_coll_name = "users_numeric_index"
+        engine.drop_collection(db_name, numeric_coll_name)
+        engine.insert_many(db_name, numeric_coll_name, docs)
+        engine.create_index(db_name, numeric_coll_name, [("age", 1)])
+        indexed_numeric_filter = {"age": docs[0]["age"]}
         eq_bool_filter = {"active": True}
         eq_string_filter = {"city": "Madrid"}
         cmp_int_filter = {"age": {"$gte": 40}}
@@ -899,6 +914,25 @@ def predicate_diagnostics(
         }
 
         return {
+            "predicate_indexed_numeric_equality_100": _measure_single_task(
+                indexed_numeric_metrics,
+                callback=lambda: [
+                    sorted(
+                        engine.find(db_name, numeric_coll_name, indexed_numeric_filter),
+                        key=lambda document: document["_id"],
+                    )
+                    for _ in range(100)
+                ],
+                metadata={
+                    **_summarize_find_explain(
+                        engine.explain_find(
+                            db_name, numeric_coll_name, indexed_numeric_filter
+                        ),
+                    ),
+                    "query_shape": "indexed scalar integer equality",
+                    "observation_order": "sort returned IDs outside the cursor",
+                },
+            ),
             "predicate_eq_bool_high_100": _measure_single_task(
                 eq_bool_metrics,
                 callback=lambda: [
@@ -955,6 +989,7 @@ def sort_shape_diagnostics(
     nested_metrics: list[Metrics] = []
     top_level_full_metrics: list[Metrics] = []
     nested_full_metrics: list[Metrics] = []
+    document_full_metrics: list[Metrics] = []
 
     def _add_nested_sort_fields(docs: list[dict[str, Any]]) -> None:
         for doc in docs:
@@ -971,6 +1006,7 @@ def sort_shape_diagnostics(
     try:
         top_level_sort = [("score", -1)]
         nested_sort = [("profile.score", -1)]
+        document_sort = [("profile", 1), ("_id", 1)]
 
         top_level_metadata = {
             **_summarize_find_explain(
@@ -1019,6 +1055,20 @@ def sort_shape_diagnostics(
         }
 
         return {
+            "sort_shape_document_full_20": _measure_single_task(
+                document_full_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, {}, sort=document_sort)
+                    for _ in range(20)
+                ],
+                metadata={
+                    **_summarize_find_explain(
+                        engine.explain_find(db_name, coll_name, {}, sort=document_sort),
+                    ),
+                    "query_shape": "sort document profile asc with ID tie-breaker",
+                    "field_shape": "fixed-key document, numeric and string values",
+                },
+            ),
             "sort_shape_top_level_limit_200": _measure_single_task(
                 top_level_metrics,
                 callback=lambda: [
