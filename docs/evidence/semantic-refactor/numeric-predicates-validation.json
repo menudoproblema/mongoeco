@@ -1,0 +1,67 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B03",
+  "status": "in_progress",
+  "scope": "Indexed and unindexed numeric predicates, scalar/array paths, original Python inputs, safe SQL strategy selection and a base-4.11.0 SQLite witness; B03 remains open.",
+  "sources_sha256": {
+    "src/mongoeco/core/bson_ordering.py": "9193be32f9b82eccafc214fe0732428c8585c8e5b3fdda9b31ef368f1034f2a2",
+    "src/mongoeco/engines/_sqlite_fast_paths.py": "02305563195f97fce3969df7c357fe4d08175bf513e32042753222de31266b89",
+    "src/mongoeco/engines/_sqlite_read_fast_path_runtime.py": "d71cb3b40692026021581065e7b9bb77372d6d3c9e42e26d534358cd028a20dc",
+    "src/mongoeco/engines/_sqlite_read_execution.py": "b42bb37ce2daa967a074ec4603f807f4e65e98fe6c16b63dfa672e25aa0159a4",
+    "src/mongoeco/engines/_sqlite_read_runtime.py": "f5eae696c4416b7368d751f4720b97dffdf28d4d6d773d0ebc3199ad25a2cbbf",
+    "src/mongoeco/engines/sqlite.py": "5d93304039b1228c7352c00cce472d623a5ec800a3391e8570f4511c05ae6ab6",
+    "src/mongoeco/engines/sqlite_planner.py": "323d8a687ec9e09002991fcaaa249df12d9956178e5b8ffe31046605bf3b0313",
+    "tests/differential/semantic_numeric_predicate_cases.py": "393eccb2527a52cfa63f6046256f470532c79aee7ced98d5b6c0f24c1b5bb138",
+    "tests/differential/semantic_corpora.py": "0019c6ca8d916f2c057461117d2eb2a10083e78ac89103afbd8797d7ffaf0a9e",
+    "tests/integration/api/test_semantic_group_regressions.py": "84b333ee2bdad214f7a8d71c40012eed818a819118f434467feb9b0bac6df570",
+    "tests/integration/api/test_numeric_predicate_index_conservation.py": "6261c4314a4915f6c0bb45ac480b301fc2d7b6df8c1e8c5ff59f7216ffd10506",
+    "docs/evidence/semantic-refactor/create_numeric_index_fixture.py": "062106b90d3d89991d6cb0418a5dde3052e8f2d0d0be8b06f9126cfa56217cc6"
+  },
+  "before": {
+    "report": "numeric-predicates-previous-cut-8.json",
+    "production_baseline": "Previous B03 core hashes verified against numeric-validation.json; all SQLite modules from HEAD base; corpus and harness are current. Imported through PYTHONPATH with MONGOECO_TEST_INSTALLED_ARTIFACT=1.",
+    "result": "Two failing case subtests on SQLite, no errors or skips."
+  },
+  "native_reports": [
+    "numeric-predicates-native-7.json",
+    "numeric-predicates-native-8.json",
+    "numeric-predicates-native-9.json"
+  ],
+  "native_fixtures": [
+    "tests/fixtures/semantic_numeric_predicates_7_0.json",
+    "tests/fixtures/semantic_numeric_predicates_8_0.json",
+    "tests/fixtures/semantic_numeric_predicates_9_0.json"
+  ],
+  "legacy_fixture": {
+    "path": "tests/fixtures/sqlite/numeric-indexes-before-semantic-fix.sqlite",
+    "manifest": "tests/fixtures/sqlite/numeric-indexes-before-semantic-fix.json",
+    "source_verification": "All 293 tracked source blobs used for fixture generation match base HEAD, verified by git blob hashes.",
+    "invariants": "Reopen twice; native results at precisions 6/34; schema, document storage and semantic index-entry rows unchanged."
+  },
+  "checks": {
+    "surfaces": "........................................................................ [  6%]\n........................................................................ [ 12%]\n........................................................................ [ 18%]\n........................................................................ [ 24%]\n........................................................................ [ 31%]\n........................................................................ [ 37%]\n........................................................................ [ 43%]\n........................................................................ [ 49%]\n........................................................................ [ 55%]\n........................................................................ [ 62%]\n........................................................................ [ 68%]\n........................................................................ [ 74%]\n........................................................................ [ 80%]\n........................................................................ [ 87%]\n........................................................................ [ 93%]\n........................................................................ [ 99%]\n......                                                                   [100%]\n1158 passed in 18.66s\n",
+    "numeric_planner_and_storage": "............................................... [ 55%]\n..................................... [100%]\n84 passed, 93 subtests passed in 8.03s\n",
+    "wire_shared_regressions": "........................................................................ [  4%]\n........................................................................ [  8%]\n........................................................................ [ 13%]\n........................................................................ [ 17%]\n........................................................................ [ 22%]\n........................................................................ [ 26%]\n........................................................................ [ 31%]\n........................................................................ [ 35%]\n........................................................................ [ 40%]\n........................................................................ [ 44%]\n........................................................................ [ 49%]\n........................................................................ [ 53%]\n........................................................................ [ 57%]\n........................................................................ [ 62%]\n........................................................................ [ 66%]\n........................................................................ [ 71%]\n........................................................................ [ 75%]\n........................................................................ [ 80%]\n........................................................................ [ 84%]\n........................................................................ [ 89%]\n........................................................................ [ 93%]\n........................................................................ [ 98%]\n................................                                         [100%]\n1616 passed in 10.28s\n",
+    "lint_ratchet": "lint ratchet passed for 37 changed Python files\n"
+  },
+  "additional_regression": {
+    "result": "1741 passed; 24 wire tests could not bind sockets inside sandbox. Full affected wire files rerun with local socket permission: 1616 passed. Counts overlap and must not be summed.",
+    "initial_failure": "PermissionError: [Errno 1] error while attempting to bind on address (127.0.0.1, 0)",
+    "covered": "pushdown equivalence, read jobs, SQLite 4.5/4.10 fixtures, nonfinite mutations, query/modify errors, SQL helpers"
+  },
+  "benchmark": {
+    "before": "numeric-predicates-benchmark-before.json",
+    "after": "numeric-predicates-benchmark-after.json",
+    "report": "numeric-predicates-benchmark.md",
+    "baseline": "Same previous B03 production cut as above; same current harness/dataset.",
+    "sample": "sqlite-sync, 1000 documents, warmup 1, repetitions 3; all output hashes equal.",
+    "indexed_integer_equality_delta_percent": -2.1
+  },
+  "pending": [
+    "H24 wider numeric limits/nonfinite, unique multikey and partial/collated consumers",
+    "H26 arithmetic Decimal128 precision and boolean conversion",
+    "H27 int64 promotion/overflow and write error atomicity",
+    "H33 BSON document ordering with dialect overrides/collation",
+    "B10 distribution and global gates"
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "blocks": [
+    "B03",
+    "B06"
+  ],
+  "finding": "H26",
+  "status": "average_finalization_focally_corrected_blocks_in_progress",
+  "scope": "Prepared group-average numeric finalization, version/prefix/expression/scope deltas, propagation through generic/provenance/incremental/spill execution. H24/H27 and remaining B06/B10 obligations are not closed.",
+  "sources_sha256": {
+    "src/mongoeco/core/aggregation/group_average.py": "6aed0dbb7ae55ed116462888809cf77d546a42a06004cf0a23688ddbaf4bd2e8",
+    "src/mongoeco/core/aggregation/preparation.py": "32c213319d72e53041fb02d708a7035a3e35c01fc92bffa68b588b089cc4cfad",
+    "src/mongoeco/core/aggregation/numeric_accumulation.py": "79ab8e509a26d9ff9d11ce3c02025cbeb35216a3c0346e9ba254287971bf51fb",
+    "src/mongoeco/core/aggregation/accumulators.py": "1d5e4c310cba8b543c98b338415b17d2b349c47c98f3ffde805e8110f86d7f87",
+    "src/mongoeco/core/aggregation/grouping_stages.py": "01ea03a0dfcb5d5f645d76dc73eedd7e4162e9cb672dfd792260c8863a9e35a2",
+    "src/mongoeco/core/aggregation/runtime.py": "af9f11a76dbb57cde1158418eb980c684fdb8e4ed836f53449a41927f34266a1",
+    "src/mongoeco/core/aggregation/stages.py": "6662292fc0c3dc5115531bd3cfa8ed9949fa0a623cf7e444350d083442021595",
+    "src/mongoeco/core/aggregation/runtime_state.py": "9061df0543be9c3c347f12bc87f8788e824afe259c09ec491bdd9194e652be09",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "d3355013d95ad6df135f816ac37ac156f596535d7eef049b435b9bba05518e87",
+    "tests/differential/semantic_average_route_cases.py": "b949f70de9b8fc9fc06def9fd93bb3ec0855fa5efdc78d3c77a17f9f6b6e9109",
+    "tests/differential/semantic_corpora.py": "471b5fa57f8f149f51ad39f87b87222c8cca72dbbeeed47d72f35f3e7f70de6c",
+    "tests/integration/api/test_semantic_group_regressions.py": "6153dc20b4d2c1ca659b2d4ad17701843770ce1c22b4b46e56d60736edc59b0c"
+  },
+  "before": {
+    "report": "average-route-before-8.json",
+    "tests_run": 76,
+    "engine_subfailures": 4,
+    "failed_actions": [
+      "semantic_average_routes",
+      "semantic_sum_stream_groups"
+    ],
+    "errors": 0,
+    "skips": 0,
+    "sources_sha256": {
+      "src/mongoeco/core/aggregation/group_average.py": null,
+      "src/mongoeco/core/aggregation/preparation.py": "69380d0e00d0bb34cc1210ffe52caf98bc60e74f80422898f1caa1ca3cdbb4af",
+      "src/mongoeco/core/aggregation/numeric_accumulation.py": "aa01bef85bdd8b8833bf54b4398fea3ec38ca340aa31954103c82d98421c9f92",
+      "src/mongoeco/core/aggregation/accumulators.py": "28922ad330c5c7dde9a07d224702e244afbe33566ea50e7f1fcf55b4b0e53aa6",
+      "src/mongoeco/core/aggregation/grouping_stages.py": "17d7e87ff2c02312dc8d3d88b9784f32a0e689796522c58a92ed860776a5d63a",
+      "src/mongoeco/core/aggregation/runtime.py": "b3fb5eaae16a728ff889d60c64ce7faa81be18947133194910ddbc8c5453fe92",
+      "src/mongoeco/core/aggregation/stages.py": "d249a16967519ab6b92943d381948af524663fc762800fe32c4bc866c94f5f69",
+      "src/mongoeco/core/aggregation/runtime_state.py": "c5d6d5a09cec7eab27a1fd32add238226762a00089cdb0878f675f7c377ca198",
+      "src/mongoeco/api/_async/aggregation_cursor.py": "4f4dad025dc1503c24fe34df562240fb9c438f19db59eff66840fa9c471cafd2"
+    },
+    "focal_source_patch": "average-route-change.patch",
+    "patch_sha256": "256ee2f8c668dd95a558280ef70829eee5afa7ebbfc52faaf190e009a5280dca"
+  },
+  "native_reports": [
+    "average-route-native-7.json",
+    "average-route-native-8.json",
+    "average-route-final-native-9.json"
+  ],
+  "new_native_references_sha256": {
+    "tests/fixtures/semantic_average_routes_7_0.json": "172e590d6978309b5a8f7f4e332681946686c18de5540bbbbca6cdb5eb149d39",
+    "tests/fixtures/semantic_average_routes_8_0.json": "7326970c8fa8fa499eca44326e6861b681856870f30aca5831db18b4e760ec43",
+    "tests/fixtures/semantic_average_routes_9_0.json": "57838ed7f922476ce767e00000fbf9231a1470f69971428d26bbe57a5b0e4a54"
+  },
+  "new_corpus": {
+    "actions": 1,
+    "pipeline_contexts": 31,
+    "includes": [
+      "prefixes",
+      "expressions",
+      "facet",
+      "lookup_nested",
+      "union_nested"
+    ],
+    "native_action_imports_local_evaluator": false
+  },
+  "surface_summary": {
+    "passed": 2017,
+    "failed": 0,
+    "engines": [
+      "memory",
+      "sqlite"
+    ],
+    "dialects": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "surfaces": [
+      "sync",
+      "async",
+      "wire-sync",
+      "wire-async"
+    ],
+    "includes": [
+      "real group spool opening at threshold 2 and no-spill controls",
+      "decimal ambient context independence",
+      "copy/list/slice/pickle of stages and logical relocation",
+      "provenance execution",
+      "native reference identity/source checks"
+    ]
+  },
+  "regressions": {
+    "passed": 517,
+    "subtests_passed": 591,
+    "failed": 0
+  },
+  "checks": {
+    "surfaces": "........................................................................ [  3%]\n........................................................................ [  7%]\n........................................................................ [ 10%]\n........................................................................ [ 14%]\n........................................................................ [ 17%]\n........................................................................ [ 21%]\n........................................................................ [ 24%]\n........................................................................ [ 28%]\n........................................................................ [ 32%]\n........................................................................ [ 35%]\n........................................................................ [ 39%]\n........................................................................ [ 42%]\n........................................................................ [ 46%]\n........................................................................ [ 49%]\n........................................................................ [ 53%]\n........................................................................ [ 57%]\n........................................................................ [ 60%]\n........................................................................ [ 64%]\n........................................................................ [ 67%]\n........................................................................ [ 71%]\n........................................................................ [ 74%]\n........................................................................ [ 78%]\n........................................................................ [ 82%]\n........................................................................ [ 85%]\n........................................................................ [ 89%]\n........................................................................ [ 92%]\n........................................................................ [ 96%]\n........................................................................ [ 99%]\n.                                                                        [100%]\n2017 passed in 36.48s\n",
+    "regressions": "........................................................................ [ 13%]\n.................................................................................................................... [ 36%]\n........................................... [ 44%]\n.............................................................. [ 56%]\n.................................................................... [ 69%]\n...................................................................... [ 83%]\n......................................................................................                                             [100%]\n517 passed, 591 subtests passed in 3.34s\n",
+    "linter": "lint ratchet passed for 56 changed Python files\n",
+    "public_manifest": "public API manifest is current\n",
+    "benchmark": "Running memory-sync...\n"
+  },
+  "benchmark": {
+    "report": "average-route-benchmark.json",
+    "rendering": "average-route-benchmark.md",
+    "baseline": "sum-benchmark.json",
+    "same_harness_dataset_and_outcomes": true,
+    "sample": "memory-sync / 1000 documents / warmup 1 / 3 repetitions",
+    "results": {
+      "materializing_aggregation_nested_group": {
+        "outcome_sha256": "sha256:4f6b4089b9d450f4aa495d9cd4a769e63bc2eb42d522575d8b1d6dd404e0c331",
+        "wall_delta_percent": 3.4
+      },
+      "materializing_aggregation_group_sort": {
+        "outcome_sha256": "sha256:11f56ce20b5eead18791cd418338e1f592bbf9b479ab43b2d356120de5627aa8",
+        "wall_delta_percent": 4.1
+      }
+    },
+    "limit": "Focal trend, not a universal performance or B10 acceptance claim."
+  },
+  "source_notes": "average-route-source-notes.md",
+  "pending": [
+    "H24 remaining comparison/index consumers",
+    "H27 arithmetic overflow promotion and inc write errors/atomicity",
+    "B04/B08 complete grammar/error phase and envelope obligations",
+    "B06 remaining consumer contracts",
+    "B00 complete H-to-case coverage",
+    "B10 final candidate distribution and full gates"
+  ]
+}

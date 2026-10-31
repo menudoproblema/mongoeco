@@ -1,0 +1,1006 @@
+--- before/src/mongoeco/core/bson_scalars.py
++++ after/src/mongoeco/core/bson_scalars.py
+@@ -5,6 +5,7 @@
+ 
+ from dataclasses import dataclass
+ from datetime import UTC, datetime
++from operator import add, mul, sub
+ from typing import Any
+ 
+ from mongoeco.errors import OperationFailure
+@@ -232,7 +233,14 @@
+     if isinstance(value, decimal.Decimal):
+         return _normalize_decimal128(value)
+     if isinstance(value, float):
+-        return _DOUBLE_TO_DECIMAL_CONTEXT.create_decimal_from_float(value)
++        with decimal.localcontext(_DOUBLE_TO_DECIMAL_CONTEXT) as context:
++            converted = context.create_decimal_from_float(value)
++            if not value or not math.isfinite(value):
++                return converted
++            # MongoDB arithmetic conversion retains exactly 15 significant digits,
++            # including trailing zeros. Accumulator conversion stays separate.
++            quantum = decimal.Decimal(1).scaleb(converted.adjusted() - 14)
++            return context.quantize(converted, quantum)
+     return decimal.Decimal(value)
+ 
+ 
+@@ -256,61 +264,64 @@
+             _normalize_decimal128(wrapped.value)
+ 
+ 
+-def bson_add(left: object, right: object) -> object:
+-    if (
+-        isinstance(left, int)
+-        and not isinstance(left, bool)
+-        and isinstance(right, int)
+-        and not isinstance(right, bool)
+-    ):
+-        result = left + right
+-        if result < INT64_MIN or result > INT64_MAX:
+-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
++def bson_add(left: object, right: object, *, promote_overflow: bool = False) -> object:
++    return _bson_arithmetic(left, right, add, promote_overflow=promote_overflow)
++
++
++def bson_multiply(left: object, right: object, *, promote_overflow: bool = False) -> object:
++    return _bson_arithmetic(left, right, mul, promote_overflow=promote_overflow)
++
++
++def bson_subtract(left: object, right: object, *, promote_overflow: bool = False) -> object:
++    return _bson_arithmetic(left, right, sub, promote_overflow=promote_overflow)
++
++
++def _bson_arithmetic(left, right, operation, *, promote_overflow):
++    numeric_left, numeric_right = wrap_bson_numeric(left), wrap_bson_numeric(right)
++    if numeric_left is None or numeric_right is None:
++        message = "BSON arithmetic requires numeric values"
++        raise TypeError(message)
++    if isinstance(numeric_left, (BsonInt32, BsonInt64)) and isinstance(
++        numeric_right, (BsonInt32, BsonInt64)
++    ):
++        result = operation(numeric_left.value, numeric_right.value)
++        if not INT64_MIN <= result <= INT64_MAX:
++            if promote_overflow:
++                # Promotion converts operands before performing the operation.
++                # Rounding the exact overflowing integer gives different tie results.
++                return _wrap_float_result(
++                    operation(float(numeric_left.value), float(numeric_right.value)),
++                    left, right,
++                )
++            message = "integer exceeds BSON int64 range"
++            raise BsonScalarOverflowError(message)
++        if not INT32_MIN <= result <= INT32_MAX:
++            return BsonInt64(result)
+         return bson_rewrap_numeric(result, left, right)
+-    float_result = _try_fast_float_arithmetic(left, right, "add")
+-    if float_result is not None:
+-        return float_result
+-    with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT):
+-        result = _numeric_to_decimal(unwrap_bson_numeric(left)) + _numeric_to_decimal(unwrap_bson_numeric(right))
+-        return _wrap_numeric_result(left, right, result)
+-
+-
+-def bson_multiply(left: object, right: object) -> object:
+-    if (
+-        isinstance(left, int)
+-        and not isinstance(left, bool)
+-        and isinstance(right, int)
+-        and not isinstance(right, bool)
+-    ):
+-        result = left * right
+-        if result < INT64_MIN or result > INT64_MAX:
+-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+-        return bson_rewrap_numeric(result, left, right)
+-    float_result = _try_fast_float_arithmetic(left, right, "multiply")
+-    if float_result is not None:
+-        return float_result
+-    with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT):
+-        result = _numeric_to_decimal(unwrap_bson_numeric(left)) * _numeric_to_decimal(unwrap_bson_numeric(right))
+-        return _wrap_numeric_result(left, right, result)
+-
+-
+-def bson_subtract(left: object, right: object) -> object:
+-    if (
+-        isinstance(left, int)
+-        and not isinstance(left, bool)
+-        and isinstance(right, int)
+-        and not isinstance(right, bool)
+-    ):
+-        result = left - right
+-        if result < INT64_MIN or result > INT64_MAX:
+-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+-        return bson_rewrap_numeric(result, left, right)
+-    float_result = _try_fast_float_arithmetic(left, right, "subtract")
+-    if float_result is not None:
+-        return float_result
+-    with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT):
+-        result = _numeric_to_decimal(unwrap_bson_numeric(left)) - _numeric_to_decimal(unwrap_bson_numeric(right))
+-        return _wrap_numeric_result(left, right, result)
++    if isinstance(numeric_left, BsonDecimal128) or isinstance(
++        numeric_right, BsonDecimal128
++    ):
++        with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT):
++            result = operation(
++                _numeric_to_decimal(numeric_left.value),
++                _numeric_to_decimal(numeric_right.value),
++            )
++            return BsonDecimal128(_normalize_decimal128(result))
++    return _wrap_float_result(
++        operation(float(numeric_left.value), float(numeric_right.value)), left, right
++    )
++
++
++def _wrap_float_result(result, *templates):
++    return (
++        BsonDouble(result)
++        if any(
++            isinstance(value, (BsonInt32, BsonInt64, BsonDouble, BsonDecimal128))
++            or (_PublicInt64 is not None and isinstance(value, _PublicInt64))
++            for value in templates
++        )
++        else result
++    )
+ 
+ 
+ def bson_divide(left: object, right: object) -> object:
+@@ -328,12 +339,14 @@
+                 _numeric_to_decimal(wrapped_left.value)
+                 / _numeric_to_decimal(wrapped_right.value)
+             )
+-            return _wrap_numeric_result(left, right, result)
+-    result = float(unwrap_bson_numeric(left)) / float(unwrap_bson_numeric(right))
+-    return _wrap_from_templates(result, left, right)
+-
+-
+-def bson_mod(left: object, right: object) -> object:
++            return BsonDecimal128(_normalize_decimal128(result))
++    result = float(wrapped_left.value) / float(wrapped_right.value)
++    return _wrap_float_result(result, left, right)
++
++
++def bson_mod(
++    left: object, right: object, *, integral_double_divisor: bool = False,
++) -> object:
+     wrapped_left = wrap_bson_numeric(left)
+     wrapped_right = wrap_bson_numeric(right)
+     if wrapped_left is None or wrapped_right is None:
+@@ -354,9 +367,20 @@
+                     context.prec, left_decimal.adjusted() - right_decimal.adjusted() + 1
+                 )
+             result = left_decimal % right_decimal
+-            return _wrap_numeric_result(left, right, result)
+-    left_value = unwrap_bson_numeric(left)
+-    right_value = unwrap_bson_numeric(right)
++            return BsonDecimal128(_normalize_decimal128(result))
++    left_value = wrapped_left.value
++    right_value = wrapped_right.value
++    result_templates = (left, right)
++    if (
++        integral_double_divisor
++        and isinstance(wrapped_left, (BsonInt32, BsonInt64))
++        and isinstance(wrapped_right, BsonDouble)
++        and math.isfinite(right_value)
++        and right_value.is_integer()
++        and INT64_MIN <= right_value < (1 << 63)
++    ):
++        right_value = int(right_value)
++        result_templates = (left,)  # Retain the dividend's BSON numeric type.
+     if (
+         isinstance(left_value, int)
+         and not isinstance(left_value, bool)
+@@ -367,14 +391,14 @@
+         if (left_value < 0) != (right_value < 0):
+             quotient = -quotient
+         result = left_value - right_value * quotient
+-        return _wrap_from_templates(result, left, right)
+-    if isinstance(left_value, float) and not math.isfinite(left_value):
+-        return math.nan
+-    if isinstance(right_value, float) and not math.isfinite(right_value):
+-        return math.nan
+-    quotient = int(left_value / right_value)
+-    result = left_value - right_value * quotient
+-    return _wrap_from_templates(result, left, right)
++        return _wrap_from_templates(result, *result_templates)
++    left_double, right_double = float(left_value), float(right_value)
++    result = (
++        math.fmod(left_double, right_double)
++        if math.isfinite(left_double) and not math.isnan(right_double)
++        else math.nan
++    )
++    return _wrap_float_result(result, *result_templates)
+ 
+ 
+ def bson_rewrap_numeric(result: object, *templates: object) -> object:
+@@ -407,91 +431,6 @@
+     if unwrapped < INT64_MIN or unwrapped > INT64_MAX:
+         raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+     return unwrapped
+-
+-
+-def _try_fast_float_arithmetic(left: object, right: object, operator: str) -> object | None:
+-    wrapped_left = wrap_bson_numeric(left)
+-    wrapped_right = wrap_bson_numeric(right)
+-    if wrapped_left is None or wrapped_right is None:
+-        raise TypeError("BSON arithmetic requires numeric values")
+-    if isinstance(wrapped_left, BsonDecimal128) or isinstance(wrapped_right, BsonDecimal128):
+-        return None
+-    if not isinstance(wrapped_left, BsonDouble) and not isinstance(wrapped_right, BsonDouble):
+-        return None
+-
+-    left_value = float(unwrap_bson_numeric(left))
+-    right_value = float(unwrap_bson_numeric(right))
+-    if operator == "add":
+-        result = left_value + right_value
+-    elif operator == "subtract":
+-        result = left_value - right_value
+-    elif operator == "multiply":
+-        result = left_value * right_value
+-    else:
+-        raise ValueError(f"unsupported BSON float arithmetic operator: {operator}")
+-
+-    preserve_wrappers = isinstance(left, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128) or isinstance(
+-        right,
+-        BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128,
+-    )
+-    return BsonDouble(result) if preserve_wrappers else result
+-
+-
+-def _numeric_template_metadata(value: object) -> tuple[str | None, bool]:
+-    if _PublicInt64 is not None and isinstance(value, _PublicInt64):
+-        return "long", True
+-    if isinstance(value, BsonDecimal128):
+-        return "decimal", True
+-    if isinstance(value, BsonDouble):
+-        return "double", True
+-    if isinstance(value, BsonInt64):
+-        return "long", True
+-    if isinstance(value, BsonInt32):
+-        return "int", True
+-    if isinstance(value, bool):
+-        return None, False
+-    if isinstance(value, Decimal128 | decimal.Decimal):
+-        return "decimal", False
+-    if isinstance(value, float):
+-        return "double", False
+-    if isinstance(value, int):
+-        if value < INT64_MIN or value > INT64_MAX:
+-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+-        return ("int" if INT32_MIN <= value <= INT32_MAX else "long"), False
+-    return None, False
+-
+-
+-def _wrap_numeric_result(left: object, right: object, result: decimal.Decimal) -> object:
+-    left_kind, preserve_left = _numeric_template_metadata(left)
+-    right_kind, preserve_right = _numeric_template_metadata(right)
+-    if left_kind is None or right_kind is None:
+-        raise TypeError("BSON arithmetic requires numeric values")
+-
+-    preserve_wrappers = preserve_left or preserve_right
+-
+-    if left_kind == "decimal" or right_kind == "decimal":
+-        normalized = _normalize_decimal128(result)
+-        return BsonDecimal128(normalized)
+-
+-    if left_kind == "double" or right_kind == "double":
+-        normalized = float(result)
+-        return BsonDouble(normalized) if preserve_wrappers else normalized
+-
+-    integer_result = int(result)
+-    if result != decimal.Decimal(integer_result):
+-        normalized = float(result)
+-        return BsonDouble(normalized) if preserve_wrappers else normalized
+-
+-    if integer_result < INT64_MIN or integer_result > INT64_MAX:
+-        raise BsonScalarOverflowError("integer exceeds BSON int64 range")
+-    if not preserve_wrappers:
+-        return integer_result
+-    if (
+-        left_kind == "long" or right_kind == "long"
+-        or not INT32_MIN <= integer_result <= INT32_MAX
+-    ):
+-        return BsonInt64(integer_result)
+-    return BsonInt32(integer_result)
+ 
+ 
+ def _wrap_from_templates(result: object, *templates: object) -> object:
+--- before/src/mongoeco/core/aggregation/numeric_expressions.py
++++ after/src/mongoeco/core/aggregation/numeric_expressions.py
+@@ -12,18 +12,22 @@
+ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+ from mongoeco.core.aggregation.numeric_accumulation import NumericSum
+ from mongoeco.core.bson_scalars import (
++    _DECIMAL128_ARITHMETIC_CONTEXT,
++    INT32_MAX,
++    INT32_MIN,
+     INT64_MIN,
+     BsonDecimal128,
+     BsonDouble,
+     BsonInt32,
+     BsonInt64,
+-    _DECIMAL128_ARITHMETIC_CONTEXT,
+     _numeric_to_decimal,
++    _wrap_float_result,
+     bson_add,
+     bson_bitwise,
+     bson_divide,
+     bson_mod,
+     bson_multiply,
++    bson_numeric_alias,
+     bson_rewrap_numeric,
+     bson_subtract,
+     is_bson_numeric,
+@@ -124,10 +128,18 @@
+         result = values[0]
+         for value in values[1:]:
+             result = (
+-                bson_add(result, value)
++                bson_add(result, value, promote_overflow=True)
+                 if operator == "$add"
+-                else bson_multiply(result, value)
++                else bson_multiply(result, value, promote_overflow=True)
+             )
++        # N-ary arithmetic keeps an int64 working total, but int32-only inputs
++        # finalize as int32 when the final value fits, unlike a binary reduction.
++        if (
++            isinstance(result, BsonInt64)
++            and INT32_MIN <= result.value <= INT32_MAX
++            and all(bson_numeric_alias(value) == "int" for value in values)
++        ):
++            return BsonInt32(result.value)
+         return result
+ 
+     if operator in {"$subtract", "$divide", "$mod"}:
+@@ -146,7 +158,9 @@
+             return bson_divide(left, right)
+         if unwrap_bson_numeric(right) == 0:
+             raise OperationFailure("can't $mod by zero", code=16610)
+-        return bson_mod(left, right)
++        return bson_mod(
++            left, right, integral_double_divisor=dialect.server_version == "7.0"
++        )
+ 
+     if operator in {"$bitAnd", "$bitOr", "$bitXor"}:
+         args = require_expression_args(operator, spec, 2, None)
+@@ -200,13 +214,13 @@
+                 result = math.exp(value)
+             except OverflowError:
+                 result = math.inf
+-            return bson_rewrap_numeric(result, raw_value)
++            return _wrap_float_result(result, raw_value)
+         if operator == "$sqrt":
+             if value < 0:
+                 raise OperationFailure(
+                     "$sqrt cannot operate on negative numbers", code=28714
+                 )
+-            return bson_rewrap_numeric(math.sqrt(value), raw_value)
++            return _wrap_float_result(math.sqrt(value), raw_value)
+         if value <= 0:
+             message = f"{operator} requires a positive numeric argument"
+             raise server_error(
+@@ -214,7 +228,7 @@
+                 code=28766 if operator == "$ln" else 28761,
+             )
+         result = math.log(value) if operator == "$ln" else math.log10(value)
+-        return bson_rewrap_numeric(result, raw_value)
++        return _wrap_float_result(result, raw_value)
+ 
+     if operator in {"$stdDevPop", "$stdDevSamp"}:
+         values = _stddev_expression_values(
+@@ -690,5 +704,6 @@
+             "$subtract only supports number-number, date-date, or date-number"
+         )
+     return bson_subtract(
+-        _require_numeric("$subtract", left), _require_numeric("$subtract", right)
++        _require_numeric("$subtract", left), _require_numeric("$subtract", right),
++        promote_overflow=True,
+     )
+--- before/src/mongoeco/core/error_documents.py
++++ after/src/mongoeco/core/error_documents.py
+@@ -2,6 +2,12 @@
+ 
+ from __future__ import annotations
+ 
++import json
++import math
++import re
++import uuid
++
++from datetime import UTC, datetime
+ from functools import wraps
+ 
+ from mongoeco.core.server_errors import operation_error, retain_diagnostic
+@@ -100,3 +106,94 @@
+             raise _complete_command_error(resolved) from error
+ 
+     return invoke
++
++
++_UUID_SUBTYPE = 4
++_UUID_BYTES = 16
++_BINARY_DISPLAY_LIMIT = 80
++
++
++def render_bson_diagnostic(value):  # noqa: PLR0911, PLR0912 - explicit BSON display dispatch
++    kind = type(value).__name__
++    if kind == "Code":
++        code = str(value)
++        if value.scope is not None:
++            return f"CodeWScope( {code}, {render_bson_diagnostic(value.scope)})"
++        return _truncate_text(code, 79, 70)
++    if kind in {"MinKey", "MaxKey"}:
++        return kind
++    if isinstance(value, uuid.UUID):
++        return f'UUID("{value}")'
++    if isinstance(value, str):
++        return f'"{_truncate_text(value, 159, 150)}"'
++    if isinstance(value, bytes):
++        subtype = getattr(value, "subtype", 0)
++        if subtype == _UUID_SUBTYPE and len(value) == _UUID_BYTES:
++            return f'UUID("{uuid.UUID(bytes=bytes(value))}")'
++        binary = (
++            value[:70].hex().upper() + "..."
++            if len(value) > _BINARY_DISPLAY_LIMIT
++            else value.hex().upper()
++        )
++        return f"BinData({subtype}, {binary})"
++    if isinstance(value, float) and not math.isfinite(value):
++        return "nan.0" if math.isnan(value) else "-inf.0" if value < 0 else "inf.0"
++    if isinstance(value, datetime):
++        normalized = value.replace(tzinfo=UTC) if value.tzinfo is None else value
++        delta = normalized - datetime(1970, 1, 1, tzinfo=UTC)
++        milliseconds = (
++            delta.days * 86400000 + delta.seconds * 1000 + delta.microseconds // 1000
++        )
++        return f"new Date({milliseconds})"
++    kind = type(value).__name__
++    renderers = {
++        "ObjectId": lambda: f"ObjectId('{value}')",
++        "Binary": lambda: f"BinData({value.subtype}, {bytes(value).hex().upper()})",
++        "Timestamp": lambda: f"Timestamp({value.time}, {value.inc})",
++        "Decimal128": lambda: str(value),
++        "Regex": lambda: _regex_diagnostic(value),
++    }
++    if kind in renderers:
++        return renderers[kind]()
++    if isinstance(value, dict):
++        if not value:
++            return "{}"
++        return (
++            "{ "
++            + ", ".join(
++                f"{key}: {render_bson_diagnostic(item)}" for key, item in value.items()
++            )
++            + " }"
++        )
++    if isinstance(value, list):
++        if not value:
++            return "[]"
++        return "[ " + ", ".join(render_bson_diagnostic(item) for item in value) + " ]"
++    try:
++        rendered = json.dumps(value, ensure_ascii=False)
++    except TypeError:
++        rendered = str(value)
++    return rendered
++
++
++def _regex_diagnostic(value):
++    flags = "".join(
++        letter
++        for flag, letter in (
++            (re.IGNORECASE, "i"),
++            (re.LOCALE, "l"),
++            (re.MULTILINE, "m"),
++            (re.DOTALL, "s"),
++            (re.UNICODE, "u"),
++            (re.VERBOSE, "x"),
++        )
++        if value.flags & flag
++    )
++    return f"/{value.pattern}/{flags}"
++
++
++def _truncate_text(value, threshold, length):
++    encoded = value.encode("utf-8")
++    if len(encoded) <= threshold:
++        return value
++    return encoded[:length].decode("utf-8", errors="replace") + "..."
+--- before/src/mongoeco/core/duplicate_keys.py
++++ after/src/mongoeco/core/duplicate_keys.py
+@@ -2,12 +2,6 @@
+ 
+ from __future__ import annotations
+ 
+-import json
+-import math
+-import re
+-import uuid
+-
+-from datetime import UTC, datetime
+ from itertools import product
+ 
+ from mongoeco.core.bson_ordering import bson_equality_key
+@@ -17,7 +11,7 @@
+     index_collation_key,
+     normalize_collation,
+ )
+-from mongoeco.core.error_documents import error_message
++from mongoeco.core.error_documents import error_message, render_bson_diagnostic
+ from mongoeco.core.filtering import QueryEngine
+ from mongoeco.errors import DuplicateKeyError
+ 
+@@ -75,11 +69,11 @@
+ def duplicate_key_message(context, *, command=True, update_dialect=None):
+     """Render the stable MongoDB duplicate-key diagnostic for command failures."""
+     values = ", ".join(
+-        f"{field}: {'undefined' if value == [] else _diagnostic_value(value)}"
++        f"{field}: {'undefined' if value == [] else render_bson_diagnostic(value)}"
+         for field, value in context["diagnosticKey"].items()
+     )
+     collation = (
+-        f"collation: {_diagnostic_value(context['collation'])} "
++        f"collation: {render_bson_diagnostic(context['collation'])} "
+         if "collation" in context
+         else ""
+     )
+@@ -102,97 +96,6 @@
+     if context is None:
+         return error_message(error)
+     return duplicate_key_message(context, command=False, update_dialect=update_dialect)
+-
+-
+-_UUID_SUBTYPE = 4
+-_UUID_BYTES = 16
+-_BINARY_DISPLAY_LIMIT = 80
+-
+-
+-def _diagnostic_value(value):  # noqa: PLR0911, PLR0912 - explicit BSON display dispatch
+-    kind = type(value).__name__
+-    if kind == "Code":
+-        code = str(value)
+-        if value.scope is not None:
+-            return f"CodeWScope( {code}, {_diagnostic_value(value.scope)})"
+-        return _truncate_text(code, 79, 70)
+-    if kind in {"MinKey", "MaxKey"}:
+-        return kind
+-    if isinstance(value, uuid.UUID):
+-        return f'UUID("{value}")'
+-    if isinstance(value, str):
+-        return f'"{_truncate_text(value, 159, 150)}"'
+-    if isinstance(value, bytes):
+-        subtype = getattr(value, "subtype", 0)
+-        if subtype == _UUID_SUBTYPE and len(value) == _UUID_BYTES:
+-            return f'UUID("{uuid.UUID(bytes=bytes(value))}")'
+-        binary = (
+-            value[:70].hex().upper() + "..."
+-            if len(value) > _BINARY_DISPLAY_LIMIT
+-            else value.hex().upper()
+-        )
+-        return f"BinData({subtype}, {binary})"
+-    if isinstance(value, float) and not math.isfinite(value):
+-        return "nan.0" if math.isnan(value) else "-inf.0" if value < 0 else "inf.0"
+-    if isinstance(value, datetime):
+-        normalized = value.replace(tzinfo=UTC) if value.tzinfo is None else value
+-        delta = normalized - datetime(1970, 1, 1, tzinfo=UTC)
+-        milliseconds = (
+-            delta.days * 86400000 + delta.seconds * 1000 + delta.microseconds // 1000
+-        )
+-        return f"new Date({milliseconds})"
+-    kind = type(value).__name__
+-    renderers = {
+-        "ObjectId": lambda: f"ObjectId('{value}')",
+-        "Binary": lambda: f"BinData({value.subtype}, {bytes(value).hex().upper()})",
+-        "Timestamp": lambda: f"Timestamp({value.time}, {value.inc})",
+-        "Decimal128": lambda: str(value),
+-        "Regex": lambda: _regex_diagnostic(value),
+-    }
+-    if kind in renderers:
+-        return renderers[kind]()
+-    if isinstance(value, dict):
+-        if not value:
+-            return "{}"
+-        return (
+-            "{ "
+-            + ", ".join(
+-                f"{key}: {_diagnostic_value(item)}" for key, item in value.items()
+-            )
+-            + " }"
+-        )
+-    if isinstance(value, list):
+-        if not value:
+-            return "[]"
+-        return "[ " + ", ".join(_diagnostic_value(item) for item in value) + " ]"
+-    try:
+-        rendered = json.dumps(value, ensure_ascii=False)
+-    except TypeError:
+-        rendered = str(value)
+-    return rendered
+-
+-
+-def _regex_diagnostic(value):
+-    flags = "".join(
+-        letter
+-        for flag, letter in (
+-            (re.IGNORECASE, "i"),
+-            (re.LOCALE, "l"),
+-            (re.MULTILINE, "m"),
+-            (re.DOTALL, "s"),
+-            (re.UNICODE, "u"),
+-            (re.VERBOSE, "x"),
+-        )
+-        if value.flags & flag
+-    )
+-    return f"/{value.pattern}/{flags}"
+-
+-
+-def _truncate_text(value, threshold, length):
+-    encoded = value.encode("utf-8")
+-    if len(encoded) <= threshold:
+-        return value
+-    return encoded[:length].decode("utf-8", errors="replace") + "..."
+ 
+ 
+ def _collated_container(value, collation):
+--- before/src/mongoeco/core/update_scalar_operators.py
++++ after/src/mongoeco/core/update_scalar_operators.py
+@@ -3,14 +3,20 @@
+ from collections.abc import Mapping
+ from copy import deepcopy
+ from datetime import UTC
++from decimal import Decimal
+ from typing import TYPE_CHECKING, Any
+ 
+ from mongoeco.core.bson_scalars import (
++    BsonScalarOverflowError,
+     bson_add,
+     bson_bitwise,
+     bson_multiply,
++    bson_numeric_alias,
+     unwrap_bson_numeric,
++    wrap_bson_numeric,
+ )
++from mongoeco.core.codec import DocumentCodec
++from mongoeco.core.error_documents import render_bson_diagnostic
+ from mongoeco.core.expression_context import ensure_expression_context
+ from mongoeco.core.paths import (
+     delete_document_value,
+@@ -131,11 +137,43 @@
+                     "$inc requires the target field to be numeric",
+                     code=14,
+                 )
+-            if set_document_value(
+-                doc, target.concrete_path, bson_add(current, increment)
++            if _apply_numeric_update(
++                doc, target.concrete_path, current, increment, "$inc"
+             ):
+                 modified = True
+     return modified
++
++
++def _apply_numeric_update(document, path, current, operand, operator):
++    try:
++        result = (
++            bson_add(current, operand) if operator == "$inc"
++            else bson_multiply(current, operand)
++        )
++    except BsonScalarOverflowError as error:
++        identifier = render_bson_diagnostic(
++            DocumentCodec.to_public(document.get("_id"))
++        )
++        message = (
++            f"Failed to apply {operator} operations to current value "
++            f"((NumberLong){unwrap_bson_numeric(current)}) "
++            f"for document {{_id: {identifier}}}"
++        )
++        raise server_error(message, code=2, reason="arithmetic_overflow") from error
++
++    numeric_current = wrap_bson_numeric(current)
++    numeric_result = wrap_bson_numeric(result)
++    if (numeric_current is not None and numeric_result is not None
++            and bson_numeric_alias(current) == bson_numeric_alias(result)):
++        left, right = numeric_current.value, numeric_result.value
++        # Arithmetic equality intentionally differs from $set's BSON identity:
++        # cohorts/signed zero can be unchanged, while NaN arithmetic is a write.
++        decimal_nan = (isinstance(left, Decimal) and isinstance(right, Decimal)
++                       and (left.is_nan() or right.is_nan()))
++        if not decimal_nan and left == right:
++            return False
++    set_document_value(document, path, result)
++    return True
+ 
+ 
+ def apply_min(
+@@ -215,8 +253,8 @@
+             if not helpers._is_numeric(current):
+                 message = "$mul requires the target field to be numeric"
+                 raise server_error(message, code=2)
+-            if set_document_value(
+-                doc, target.concrete_path, bson_multiply(current, factor)
++            if _apply_numeric_update(
++                doc, target.concrete_path, current, factor, "$mul"
+             ):
+                 modified = True
+     return modified
+--- before/src/mongoeco/core/server_errors.py
++++ after/src/mongoeco/core/server_errors.py
+@@ -103,6 +103,20 @@
+ def operation_error(error, operation, dialect):
+     """Resolve a semantic diagnostic using the operation's explicit server context."""
+     diagnostic = getattr(error, "_server_diagnostic", None)
++    if diagnostic is not None and diagnostic.reason == "arithmetic_overflow":
++        if operation.startswith("find_one_and_"):
++            prefix = "Plan executor error during findAndModify :: caused by :: "
++        elif dialect == "9.0" and operation in {"update_one", "update_many"}:
++            prefix = "Plan executor error during update :: caused by :: "
++        else:
++            return error
++        if diagnostic.message.startswith(prefix):
++            return error
++        return server_error(
++            prefix + diagnostic.message,
++            code=diagnostic.code, scope=diagnostic.scope,
++            context=diagnostic.context, reason=diagnostic.reason,
++        )
+     if diagnostic is None or diagnostic.reason != "cluster_time_unavailable":
+         return error
+     code = diagnostic.code
+--- before/src/mongoeco/_types/documents.py
++++ after/src/mongoeco/_types/documents.py
+@@ -405,7 +405,12 @@
+             document["code"] = self.code
+         if self.operation is not None:
+             document["op"] = deepcopy(self.operation)
+-        return document
++        # Preserve field precedence while rendering the native envelope order.
++        ordered = {
++            key: document[key] for key in ("index", "code", "errmsg") if key in document
++        }
++        ordered.update(document)
++        return ordered
+ 
+ 
+ @dataclass(frozen=True, slots=True)
+--- before/src/mongoeco/core/paths.py
++++ after/src/mongoeco/core/paths.py
+@@ -1,6 +1,13 @@
+-import math
++import struct
++
+ from typing import Any
+ 
++from mongoeco.core.bson_scalars import (
++    BsonDecimal128,
++    BsonDouble,
++    bson_numeric_alias,
++    wrap_bson_numeric,
++)
+ from mongoeco.core.runtime_metadata import (
+     RuntimeDocumentState,
+ )
+@@ -33,27 +40,36 @@
+     return None
+ 
+ 
+-def _same_value_for_update(left: Any, right: Any) -> bool:
+-    if type(left) is not type(right):
+-        return False
+-    if isinstance(left, dict):
+-        if list(left.keys()) != list(right.keys()):
+-            return False
+-        return all(_same_value_for_update(left[key], right[key]) for key in left)
+-    if isinstance(left, list):
+-        if len(left) != len(right):
+-            return False
+-        return all(
+-            _same_value_for_update(left_item, right_item)
+-            for left_item, right_item in zip(left, right)
+-        )
+-    if isinstance(left, float):
+-        return (
+-            math.isnan(left) and math.isnan(right)
+-            if isinstance(right, float)
+-            else False
+-        )
+-    return left == right
++def same_bson_update_value(left: Any, right: Any) -> bool:
++    """BSON identity for assignment, distinct from query/arithmetic equality."""
++    left_kind, right_kind = bson_numeric_alias(left), bson_numeric_alias(right)
++    if left_kind is not None or right_kind is not None:
++        numeric_left, numeric_right = wrap_bson_numeric(left), wrap_bson_numeric(right)
++        if left_kind != right_kind or numeric_left is None or numeric_right is None:
++            return False
++        if isinstance(numeric_left, BsonDouble) and isinstance(
++            numeric_right, BsonDouble
++        ):
++            identical = struct.pack("!d", numeric_left.value) == struct.pack(
++                "!d", numeric_right.value
++            )
++        elif isinstance(numeric_left, BsonDecimal128) and isinstance(
++            numeric_right, BsonDecimal128
++        ):
++            identical = numeric_left.value.as_tuple() == numeric_right.value.as_tuple()
++        else:
++            identical = numeric_left.value == numeric_right.value
++        return identical
++    if isinstance(left, dict) and isinstance(right, dict):
++        return list(left.keys()) == list(right.keys()) and all(
++            same_bson_update_value(left[key], right[key]) for key in left
++        )
++    if isinstance(left, list) and isinstance(right, list):
++        return len(left) == len(right) and all(
++            same_bson_update_value(left_item, right_item)
++            for left_item, right_item in zip(left, right, strict=True)
++        )
++    return type(left) is type(right) and left == right
+ 
+ 
+ def get_max_array_index() -> int:
+@@ -123,7 +139,7 @@
+             _ensure_array_index_within_limit(index)
+             if index >= len(doc):
+                 doc.extend([None] * (index - len(doc) + 1))
+-            if not _same_value_for_update(doc[index], value):
++            if not same_bson_update_value(doc[index], value):
+                 doc[index] = value
+                 return True
+             return False
+@@ -146,7 +162,7 @@
+         return set_document_value(doc[index], rest, value)
+ 
+     if "." not in path:
+-        if path not in doc or not _same_value_for_update(doc[path], value):
++        if path not in doc or not same_bson_update_value(doc[path], value):
+             doc[path] = value
+             return True
+         return False
+--- before/src/mongoeco/core/update_array_operators.py
++++ after/src/mongoeco/core/update_array_operators.py
+@@ -8,8 +8,8 @@
+ 
+ from mongoeco.core.filtering import QueryEngine
+ from mongoeco.core.paths import (
+-    _same_value_for_update,
+     get_document_value,
++    same_bson_update_value,
+     set_document_value,
+ )
+ from mongoeco.core.query_operators import (
+@@ -341,7 +341,7 @@
+                 for candidate in current
+                 if not _pull_candidate_matches(candidate, value, context=context)
+             ]
+-            if not _same_value_for_update(filtered, current):
++            if not same_bson_update_value(filtered, current):
+                 if set_document_value(doc, target.concrete_path, filtered):
+                     modified = True
+     return modified
+@@ -385,7 +385,7 @@
+                     for removal in value
+                 )
+             ]
+-            if not _same_value_for_update(filtered, current):
++            if not same_bson_update_value(filtered, current):
+                 if set_document_value(doc, target.concrete_path, filtered):
+                     modified = True
+     return modified
+--- before/src/mongoeco/core/operators.py
++++ after/src/mongoeco/core/operators.py
+@@ -22,9 +22,9 @@
+ from mongoeco.core.identity import (
+     assert_classic_update_preserves_id,
+     assert_valid_root_document_id,
+-    document_id_bson_type_changed,
+     preserve_and_validate_pipeline_id,
+ )
++from mongoeco.core.paths import same_bson_update_value
+ from mongoeco.core.query_plan import compile_filter
+ from mongoeco.core.server_errors import ErrorScope, server_error
+ from mongoeco.core.update_array_operators import (
+@@ -192,9 +192,7 @@
+                 "Update pipeline must produce a single document",
+             )
+         replacement = result[0]
+-        modified = document_id_bson_type_changed(
+-            original, replacement
+-        ) or not self.context.dialect.values_equal(original, replacement)
++        modified = not same_bson_update_value(original, replacement)
+         preserve_and_validate_pipeline_id(
+             original,
+             replacement,
+--- before/src/mongoeco/core/identity.py
++++ after/src/mongoeco/core/identity.py
+@@ -5,6 +5,7 @@
+ 
+ from mongoeco.core.bson_scalars import bson_numeric_alias, is_bson_numeric
+ from mongoeco.core.codec import DocumentCodec
++from mongoeco.core.paths import same_bson_update_value
+ from mongoeco.errors import WriteError
+ from mongoeco.types import Regex
+ 
+@@ -131,6 +132,14 @@
+ ) -> None:
+     if storage_key_for_id(document.get("_id")) != storage_key:
+         raise WriteError(UPDATED_DOCUMENT_STORAGE_MISMATCH_MESSAGE, code=66)
++
++
++def replacement_document_changed(original, materialized, replacement):
++    """Native replacement no-op rule, including implicit _id insertion."""
++    return (
++        ("_id" not in replacement and "_id" in original)
++        or not same_bson_update_value(original, materialized)
++    )
+ 
+ 
+ def materialize_replacement_document(
+--- before/src/mongoeco/engines/memory.py
++++ after/src/mongoeco/engines/memory.py
+@@ -42,13 +42,13 @@
+     assert_document_matches_storage_key,
+     assert_valid_root_document_id,
+     assert_valid_upsert_document_id,
+-    document_id_bson_type_changed,
+     document_matches_root_id_lookup,
+     id_contains_numeric_value,
+     materialize_merge_insert_document,
+     materialize_merge_update_document,
+     materialize_replacement_document,
+     preserve_and_validate_pipeline_id,
++    replacement_document_changed,
+ )
+ from mongoeco.core.operation_context import (
+     ChangePublicationPolicy,
+@@ -4052,11 +4052,8 @@
+                         original_document, document, dialect=semantics.dialect
+                     )
+                 modified = (
+-                    ("_id" not in replacement_document and "_id" in original_document)
+-                    or document_id_bson_type_changed(original_document, document)
+-                    or not semantics.dialect.values_equal(
+-                        document,
+-                        original_document,
++                    replacement_document_changed(
++                        original_document, document, replacement_document
+                     )
+                     if replacement_document is not None
+                     else semantics.compiled_update_plan.apply(
+--- before/src/mongoeco/engines/_sqlite_modify_ops.py
++++ after/src/mongoeco/engines/_sqlite_modify_ops.py
+@@ -4,14 +4,15 @@
+ 
+ from collections.abc import Callable, Iterable, Mapping
+ from copy import deepcopy
++from typing import TYPE_CHECKING
+ 
+ from mongoeco.core.identity import (
+     assert_document_kept_storage_key,
+     assert_document_matches_storage_key,
+     assert_valid_upsert_document_id,
+-    document_id_bson_type_changed,
++    materialize_replacement_document,
+     preserve_and_validate_pipeline_id,
+-    materialize_replacement_document,
++    replacement_document_changed,
+ )
+ from mongoeco.core.sorting import sort_documents
+ from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
+@@ -24,7 +25,7 @@
+     Filter,
+     UpdateResult,
+ )
+-from typing import TYPE_CHECKING
++
+ 
+ if TYPE_CHECKING:
+     from mongoeco.compat import MongoDialect
+@@ -324,9 +325,9 @@
+                 original_document, document, dialect=semantics.dialect
+             )
+         modified = (
+-            ("_id" not in replacement_document and "_id" in original_document)
+-            or document_id_bson_type_changed(original_document, document)
+-            or not semantics.dialect.values_equal(document, original_document)
++            replacement_document_changed(
++                original_document, document, replacement_document
++            )
+             if replacement_document is not None
+             else semantics.compiled_update_plan.apply(
+                 document,

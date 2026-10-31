@@ -1,0 +1,277 @@
+{
+  "case_filter": "semantic_numeric_predicate_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_numeric_predicate_scan",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": [
+            0.1
+          ],
+          "b": [
+            0.1
+          ],
+          "d": 0.1,
+          "v": 0.1
+        },
+        {
+          "_id": 1,
+          "a": [
+            "0.1"
+          ],
+          "v": "0.1"
+        },
+        {
+          "_id": 2,
+          "a": [
+            0.5
+          ],
+          "b": [
+            0.5
+          ],
+          "d": 0.5,
+          "v": 0.5
+        },
+        {
+          "_id": 3,
+          "a": [
+            "0.5"
+          ],
+          "v": "0.5"
+        },
+        {
+          "_id": 4,
+          "a": [
+            1.0000000000000001e+18
+          ],
+          "b": [
+            1.0000000000000001e+18
+          ],
+          "d": 1.0000000000000001e+18,
+          "v": 1.0000000000000001e+18
+        },
+        {
+          "_id": 5,
+          "a": [
+            1000000000000000128
+          ],
+          "b": [
+            1000000000000000128
+          ],
+          "d": 1000000000000000128,
+          "v": 1000000000000000128
+        },
+        {
+          "_id": 6,
+          "a": [
+            "1000000000000000128"
+          ],
+          "v": "1000000000000000128"
+        },
+        {
+          "_id": 7,
+          "a": [
+            "1000000000000000100"
+          ],
+          "v": "1000000000000000100"
+        },
+        {
+          "_id": 8,
+          "a": [
+            9007199254740993
+          ],
+          "b": [
+            9007199254740993
+          ],
+          "d": 9007199254740993,
+          "v": 9007199254740993
+        },
+        {
+          "_id": 9,
+          "a": [
+            9007199254740992.0
+          ],
+          "b": [
+            9007199254740992.0
+          ],
+          "d": 9007199254740992.0,
+          "v": 9007199254740992.0
+        }
+      ],
+      "selector": "semantic_numeric_predicate_scan"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_numeric_predicate_index",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": [
+            0.1
+          ],
+          "b": [
+            0.1
+          ],
+          "d": 0.1,
+          "v": 0.1
+        },
+        {
+          "_id": 1,
+          "a": [
+            "0.1"
+          ],
+          "v": "0.1"
+        },
+        {
+          "_id": 2,
+          "a": [
+            0.5
+          ],
+          "b": [
+            0.5
+          ],
+          "d": 0.5,
+          "v": 0.5
+        },
+        {
+          "_id": 3,
+          "a": [
+            "0.5"
+          ],
+          "v": "0.5"
+        },
+        {
+          "_id": 4,
+          "a": [
+            1.0000000000000001e+18
+          ],
+          "b": [
+            1.0000000000000001e+18
+          ],
+          "d": 1.0000000000000001e+18,
+          "v": 1.0000000000000001e+18
+        },
+        {
+          "_id": 5,
+          "a": [
+            1000000000000000128
+          ],
+          "b": [
+            1000000000000000128
+          ],
+          "d": 1000000000000000128,
+          "v": 1000000000000000128
+        },
+        {
+          "_id": 6,
+          "a": [
+            "1000000000000000128"
+          ],
+          "v": "1000000000000000128"
+        },
+        {
+          "_id": 7,
+          "a": [
+            "1000000000000000100"
+          ],
+          "v": "1000000000000000100"
+        },
+        {
+          "_id": 8,
+          "a": [
+            9007199254740993
+          ],
+          "b": [
+            9007199254740993
+          ],
+          "d": 9007199254740993,
+          "v": 9007199254740993
+        },
+        {
+          "_id": 9,
+          "a": [
+            9007199254740992.0
+          ],
+          "b": [
+            9007199254740992.0
+          ],
+          "d": 9007199254740992.0,
+          "v": 9007199254740992.0
+        }
+      ],
+      "selector": "semantic_numeric_predicate_index"
+    }
+  ],
+  "duration_seconds": 1.2331383228302002,
+  "errors": [],
+  "expected_tests": 2,
+  "failures": [
+    {
+      "test": "test_semantic_numeric_predicate_index_matches_real_mongodb (tests.differential.mongodb7_real_parity.MongoDB7RealParityTests.test_semantic_numeric_predicate_index_matches_real_mongodb) (engine='sqlite', case='semantic_numeric_predicate_index')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (((<c[6531 chars], 0), (<class 'int'>, 1)), ((<class 'int'>, 1)[15823 chars] 8))) != (((<c[6531 chars], 0),), ((<class 'int'>, 1),), ((<class 'int'>[16039 chars] 8)))\n\nFirst differing element 70:\n((<class 'int'>, 0), (<class 'int'>, 1))\n((<class 'int'>, 0),)\n\nDiff is 35197 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_numeric_predicate_scan_matches_real_mongodb (tests.differential.mongodb7_real_parity.MongoDB7RealParityTests.test_semantic_numeric_predicate_scan_matches_real_mongodb) (engine='sqlite', case='semantic_numeric_predicate_scan')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (((<c[7807 chars], 2),), ((<class 'int'>, 0), (<class 'int'>, 1[14595 chars] 8))) != (((<c[7807 chars], 2), (<class 'int'>, 3)), ((<class 'int'>, 0)[14763 chars] 8)))\n\nFirst differing element 84:\n((<class 'int'>, 2),)\n((<class 'int'>, 2), (<class 'int'>, 3))\n\nDiff is 31367 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "tcmalloc",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "distarch": "aarch64",
+        "distmod": "ubuntu2204",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux"
+      },
+      "debug": false,
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "javascriptEngine": "mozjs",
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022",
+        "running": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysInfo": "deprecated",
+      "version": "7.0.43",
+      "versionArray": [
+        7,
+        0,
+        43,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "7.0",
+  "tests_run": 2
+}

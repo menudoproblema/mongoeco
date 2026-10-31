@@ -1,0 +1,387 @@
+{
+  "local_module": "/tmp/mongoeco-sum-baseline/src/mongoeco/__init__.py",
+  "cases": {
+    "group": {
+      "native": [
+        {
+          "_id": "Tokyo",
+          "avg_score": {
+            "$numberDouble": "55.32955793619843"
+          },
+          "total_users": {
+            "$numberInt": "118"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "London",
+          "avg_score": {
+            "$numberDouble": "49.240530555934285"
+          },
+          "total_users": {
+            "$numberInt": "132"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "Paris",
+          "avg_score": {
+            "$numberDouble": "48.107385231784484"
+          },
+          "total_users": {
+            "$numberInt": "128"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "Madrid",
+          "avg_score": {
+            "$numberDouble": "47.49814261161807"
+          },
+          "total_users": {
+            "$numberInt": "145"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "New York",
+          "avg_score": {
+            "$numberDouble": "46.61927142408951"
+          },
+          "total_users": {
+            "$numberInt": "111"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "Berlin",
+          "avg_score": {
+            "$numberDouble": "46.30099291215278"
+          },
+          "total_users": {
+            "$numberInt": "131"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        }
+      ],
+      "local": [
+        {
+          "_id": "Tokyo",
+          "avg_score": {
+            "$numberDouble": "55.32955793619843"
+          },
+          "total_users": {
+            "$numberInt": "118"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "London",
+          "avg_score": {
+            "$numberDouble": "49.2405305559343"
+          },
+          "total_users": {
+            "$numberInt": "132"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "Paris",
+          "avg_score": {
+            "$numberDouble": "48.107385231784484"
+          },
+          "total_users": {
+            "$numberInt": "128"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "Madrid",
+          "avg_score": {
+            "$numberDouble": "47.49814261161804"
+          },
+          "total_users": {
+            "$numberInt": "145"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "New York",
+          "avg_score": {
+            "$numberDouble": "46.619271424089504"
+          },
+          "total_users": {
+            "$numberInt": "111"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        },
+        {
+          "_id": "Berlin",
+          "avg_score": {
+            "$numberDouble": "46.30099291215279"
+          },
+          "total_users": {
+            "$numberInt": "131"
+          },
+          "roles": [
+            "admin",
+            "editor",
+            "guest",
+            "user"
+          ]
+        }
+      ],
+      "matches_native": false
+    },
+    "facet": {
+      "native": [
+        {
+          "groups": [
+            {
+              "_id": "Tokyo",
+              "avg_score": {
+                "$numberDouble": "55.32955793619843"
+              },
+              "total_users": {
+                "$numberInt": "118"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "London",
+              "avg_score": {
+                "$numberDouble": "49.240530555934285"
+              },
+              "total_users": {
+                "$numberInt": "132"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "Paris",
+              "avg_score": {
+                "$numberDouble": "48.107385231784484"
+              },
+              "total_users": {
+                "$numberInt": "128"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "Madrid",
+              "avg_score": {
+                "$numberDouble": "47.49814261161807"
+              },
+              "total_users": {
+                "$numberInt": "145"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "New York",
+              "avg_score": {
+                "$numberDouble": "46.61927142408951"
+              },
+              "total_users": {
+                "$numberInt": "111"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "Berlin",
+              "avg_score": {
+                "$numberDouble": "46.30099291215278"
+              },
+              "total_users": {
+                "$numberInt": "131"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            }
+          ]
+        }
+      ],
+      "local": [
+        {
+          "groups": [
+            {
+              "_id": "Tokyo",
+              "avg_score": {
+                "$numberDouble": "55.32955793619843"
+              },
+              "total_users": {
+                "$numberInt": "118"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "London",
+              "avg_score": {
+                "$numberDouble": "49.2405305559343"
+              },
+              "total_users": {
+                "$numberInt": "132"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "Paris",
+              "avg_score": {
+                "$numberDouble": "48.107385231784484"
+              },
+              "total_users": {
+                "$numberInt": "128"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "Madrid",
+              "avg_score": {
+                "$numberDouble": "47.49814261161804"
+              },
+              "total_users": {
+                "$numberInt": "145"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "New York",
+              "avg_score": {
+                "$numberDouble": "46.619271424089504"
+              },
+              "total_users": {
+                "$numberInt": "111"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            },
+            {
+              "_id": "Berlin",
+              "avg_score": {
+                "$numberDouble": "46.30099291215279"
+              },
+              "total_users": {
+                "$numberInt": "131"
+              },
+              "roles": [
+                "admin",
+                "editor",
+                "guest",
+                "user"
+              ]
+            }
+          ]
+        }
+      ],
+      "matches_native": false
+    }
+  }
+}

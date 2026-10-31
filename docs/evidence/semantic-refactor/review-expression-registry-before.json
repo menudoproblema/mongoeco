@@ -1,0 +1,45 @@
+{
+  "scope": "Pre-review expression-registry invalidation versus independent native average fixture",
+  "source_origin": "/tmp/mongoeco-review-baseline/src/mongoeco/core/aggregation/extensions.py",
+  "source_sha256": "5e8cf1522fe01334e5d398657b2575dbc651c0984fbc622dd5c41ed2b244742d",
+  "native_capture": "tests/fixtures/semantic_expression_grammar_8_0.json",
+  "native_sha256": "95370ac8bd6a0961be3773590bb571d98e60b9bb626c08e323659f7da44597b2",
+  "pipeline": [
+    {
+      "$sort": {
+        "_id": 1
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "$not": false
+        },
+        "average": {
+          "$avg": "$x"
+        }
+      }
+    }
+  ],
+  "seed": [
+    {
+      "_id": 0,
+      "x": 9223372036854775807
+    },
+    {
+      "_id": 1,
+      "x": 1
+    },
+    {
+      "_id": 2,
+      "x": -9223372036854775807
+    }
+  ],
+  "expected_average": 0.3333333333333333,
+  "actual": [
+    {
+      "_id": true,
+      "average": 0.0
+    }
+  ]
+}

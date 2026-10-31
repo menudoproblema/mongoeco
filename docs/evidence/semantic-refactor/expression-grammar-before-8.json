@@ -1,0 +1,1282 @@
+{
+  "case_filter": "semantic_expression_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_valid_forms",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_valid_forms"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_average_contexts",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_average_contexts"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_nested_facet",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_nested_facet"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_nested_lookup",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_nested_lookup"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_nested_union",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_nested_union"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_query_only_project",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_query_only_project"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_query_only_set",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_query_only_set"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_query_only_expr",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_query_only_expr"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_query_only_find",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_query_only_find"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_query_only_count",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_query_only_count"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_query_only_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_query_only_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_arity_project",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_arity_project"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_arity_expr",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_arity_expr"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_arity_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_arity_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_types_project",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_types_project"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_types_expr",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_types_expr"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_types_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_types_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_inactive_project",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_inactive_project"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_inactive_expr",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_inactive_expr"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_expression_inactive_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "items": [
+            1,
+            2
+          ]
+        },
+        {
+          "_id": 2,
+          "items": []
+        },
+        {
+          "_id": 3,
+          "a": false,
+          "items": null
+        },
+        {
+          "_id": 4,
+          "a": 0
+        },
+        {
+          "_id": 5,
+          "a": 5,
+          "items": [
+            null,
+            4
+          ]
+        },
+        {
+          "_id": 6,
+          "a": {
+            "k": 5
+          },
+          "items": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ]
+        }
+      ],
+      "selector": "semantic_expression_inactive_update"
+    }
+  ],
+  "duration_seconds": 4.448882102966309,
+  "errors": [
+    {
+      "test": "test_semantic_expression_average_contexts_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_average_contexts_matches_real_mongodb) (engine='memory', case='semantic_expression_average_contexts')",
+      "traceback": "Traceback (most recent call last):\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 79, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 2493, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 226, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 2134, in _open_batch_stream\n    return await self._open_incremental_group_stream(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1786, in _open_incremental_group_stream\n    result = await self._accumulate_group_source(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1553, in _accumulate_group_source\n    group_spool = await self._consume_incremental_group_pages(\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1649, in _consume_incremental_group_pages\n    self._accumulate_or_spill_group_page(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        transformed,\n        ^^^^^^^^^^^^\n    ...<5 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1682, in _accumulate_or_spill_group_page\n    accumulator.consume_document(document, position=group_position)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/grouping_stages.py\", line 710, in consume_document\n    group_id = self.group_id(document)\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/grouping_stages.py\", line 685, in group_id\n    return evaluate_expression(\n        document,\n    ...<2 lines>...\n        dialect=self._dialect,\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/runtime.py\", line 920, in evaluate_expression\n    raise server_error(\n    ...<2 lines>...\n    )\nmongoeco.errors.OperationFailure: Unsupported aggregation expression: $not, full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': 'Unsupported aggregation expression: $not'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_expression_grammar_cases.py\", line 224, in average_contexts\n    operator: list(\n              ~~~~^\n        collection.aggregate(\n        ^^^^^^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n        )\n        ^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 87, in invoke\n    raise _complete_command_error(resolved) from error\nmongoeco.errors.OperationFailure: Unsupported aggregation expression: $not, full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': 'Unsupported aggregation expression: $not'}\n"
+    },
+    {
+      "test": "test_semantic_expression_average_contexts_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_average_contexts_matches_real_mongodb) (engine='sqlite', case='semantic_expression_average_contexts')",
+      "traceback": "Traceback (most recent call last):\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 79, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 2493, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 226, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 2134, in _open_batch_stream\n    return await self._open_incremental_group_stream(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1786, in _open_incremental_group_stream\n    result = await self._accumulate_group_source(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1553, in _accumulate_group_source\n    group_spool = await self._consume_incremental_group_pages(\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1649, in _consume_incremental_group_pages\n    self._accumulate_or_spill_group_page(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        transformed,\n        ^^^^^^^^^^^^\n    ...<5 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/aggregation_cursor.py\", line 1682, in _accumulate_or_spill_group_page\n    accumulator.consume_document(document, position=group_position)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/grouping_stages.py\", line 710, in consume_document\n    group_id = self.group_id(document)\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/grouping_stages.py\", line 685, in group_id\n    return evaluate_expression(\n        document,\n    ...<2 lines>...\n        dialect=self._dialect,\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/runtime.py\", line 920, in evaluate_expression\n    raise server_error(\n    ...<2 lines>...\n    )\nmongoeco.errors.OperationFailure: Unsupported aggregation expression: $not, full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': 'Unsupported aggregation expression: $not'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_expression_grammar_cases.py\", line 224, in average_contexts\n    operator: list(\n              ~~~~^\n        collection.aggregate(\n        ^^^^^^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n        )\n        ^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 87, in invoke\n    raise _complete_command_error(resolved) from error\nmongoeco.errors.OperationFailure: Unsupported aggregation expression: $not, full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': 'Unsupported aggregation expression: $not'}\n"
+    },
+    {
+      "test": "test_semantic_expression_valid_forms_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_valid_forms_matches_real_mongodb) (engine='memory', case='semantic_expression_valid_forms')",
+      "traceback": "Traceback (most recent call last):\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 98, in invoke\n    return method(*args, **kwargs)\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/collection.py\", line 1161, in aggregate\n    operation = compile_aggregate_operation(\n        DocumentCodec.to_internal(options[\"pipeline\"]),\n    ...<9 lines>...\n        planning_mode=self._planning_mode,\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/operations.py\", line 585, in compile_aggregate_operation\n    normalized_pipeline = prepare_pipeline(\n        normalized_pipeline,\n    ...<2 lines>...\n        variables=frozenset(_normalize_let(let) or {}),\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 537, in prepare_pipeline\n    spec = _prepare_builtin_stage(\n        operator, spec, dialect=dialect, address=address, context=context\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 464, in _prepare_builtin_stage\n    prepare_expression(\n    ~~~~~~~~~~~~~~~~~~^\n        spec,\n        ^^^^^\n    ...<2 lines>...\n        fold_constants=\"update\" not in context.scopes,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 664, in prepare_expression\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        expression, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 715, in _prepare_expression_structure\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        value, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 704, in _prepare_expression_structure\n    raise server_error(message, code=168)\nmongoeco.errors.OperationFailure: Unrecognized expression '$not', full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': \"Unrecognized expression '$not'\"}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_expression_grammar_cases.py\", line 167, in valid_forms\n    collection.aggregate(\n    ~~~~~~~~~~~~~~~~~~~~^\n        [\n        ^\n    ...<3 lines>...\n        ]\n        ^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/collection.py\", line 374, in aggregate\n    self._async_collection().aggregate(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        options[\"pipeline\"],\n        ^^^^^^^^^^^^^^^^^^^^\n    ...<7 lines>...\n        session=options.get(\"session\"),\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ),\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 106, in invoke\n    raise _complete_command_error(resolved) from error\nmongoeco.errors.OperationFailure: Unrecognized expression '$not', full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': \"Unrecognized expression '$not'\"}\n"
+    },
+    {
+      "test": "test_semantic_expression_valid_forms_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_valid_forms_matches_real_mongodb) (engine='sqlite', case='semantic_expression_valid_forms')",
+      "traceback": "Traceback (most recent call last):\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 98, in invoke\n    return method(*args, **kwargs)\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_async/collection.py\", line 1161, in aggregate\n    operation = compile_aggregate_operation(\n        DocumentCodec.to_internal(options[\"pipeline\"]),\n    ...<9 lines>...\n        planning_mode=self._planning_mode,\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/operations.py\", line 585, in compile_aggregate_operation\n    normalized_pipeline = prepare_pipeline(\n        normalized_pipeline,\n    ...<2 lines>...\n        variables=frozenset(_normalize_let(let) or {}),\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 537, in prepare_pipeline\n    spec = _prepare_builtin_stage(\n        operator, spec, dialect=dialect, address=address, context=context\n    )\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 464, in _prepare_builtin_stage\n    prepare_expression(\n    ~~~~~~~~~~~~~~~~~~^\n        spec,\n        ^^^^^\n    ...<2 lines>...\n        fold_constants=\"update\" not in context.scopes,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 664, in prepare_expression\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        expression, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 715, in _prepare_expression_structure\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        value, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/aggregation/preparation.py\", line 704, in _prepare_expression_structure\n    raise server_error(message, code=168)\nmongoeco.errors.OperationFailure: Unrecognized expression '$not', full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': \"Unrecognized expression '$not'\"}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_expression_grammar_cases.py\", line 167, in valid_forms\n    collection.aggregate(\n    ~~~~~~~~~~~~~~~~~~~~^\n        [\n        ^\n    ...<3 lines>...\n        ]\n        ^\n    )\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/api/_sync/collection.py\", line 374, in aggregate\n    self._async_collection().aggregate(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        options[\"pipeline\"],\n        ^^^^^^^^^^^^^^^^^^^^\n    ...<7 lines>...\n        session=options.get(\"session\"),\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ),\n    ^\n  File \"/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-grammar-baseline-p4yhzi65/src/mongoeco/core/error_documents.py\", line 106, in invoke\n    raise _complete_command_error(resolved) from error\nmongoeco.errors.OperationFailure: Unrecognized expression '$not', full error: {'ok': 0.0, 'code': 168, 'codeName': 'InvalidPipelineOperator', 'errmsg': \"Unrecognized expression '$not'\"}\n"
+    }
+  ],
+  "expected_tests": 20,
+  "failures": [
+    {
+      "test": "test_semantic_expression_arity_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_arity_expr_matches_real_mongodb) (engine='memory', case='semantic_expression_arity_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[124 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[36273 chars]))))) != ('doc[124 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39800 chars])))))\n\nFirst differing element 1:\n((<cl[111 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[36272 chars])))))\n((<cl[111 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39799 chars])))))\n\nDiff is 67300 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_arity_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_arity_expr_matches_real_mongodb) (engine='sqlite', case='semantic_expression_arity_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[124 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[36273 chars]))))) != ('doc[124 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39800 chars])))))\n\nFirst differing element 1:\n((<cl[111 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[36272 chars])))))\n((<cl[111 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39799 chars])))))\n\nDiff is 67300 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_arity_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_arity_project_matches_real_mongodb) (engine='memory', case='semantic_expression_arity_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[124 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[37464 chars]))))) != ('doc[124 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[40592 chars])))))\n\nFirst differing element 1:\n((<cl[111 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[37463 chars])))))\n((<cl[111 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[40591 chars])))))\n\nDiff is 69070 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_arity_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_arity_project_matches_real_mongodb) (engine='sqlite', case='semantic_expression_arity_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[124 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[37464 chars]))))) != ('doc[124 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[40592 chars])))))\n\nFirst differing element 1:\n((<cl[111 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[37463 chars])))))\n((<cl[111 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[40591 chars])))))\n\nDiff is 69070 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_arity_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_arity_update_matches_real_mongodb) (engine='memory', case='semantic_expression_arity_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[124 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[37632 chars]))))) != ('doc[124 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39710 chars])))))\n\nFirst differing element 1:\n((<cl[111 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[37631 chars])))))\n((<cl[111 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39709 chars])))))\n\nDiff is 70025 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_arity_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_arity_update_matches_real_mongodb) (engine='sqlite', case='semantic_expression_arity_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[124 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[37632 chars]))))) != ('doc[124 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39710 chars])))))\n\nFirst differing element 1:\n((<cl[111 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[37631 chars])))))\n((<cl[111 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[39709 chars])))))\n\nDiff is 70025 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_inactive_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_inactive_expr_matches_real_mongodb) (engine='memory', case='semantic_expression_inactive_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[127 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[32310 chars]))))) != ('doc[127 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27431 chars])))))\n\nFirst differing element 1:\n((<cl[114 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[32309 chars])))))\n((<cl[114 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27430 chars])))))\n\nDiff is 63612 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_inactive_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_inactive_expr_matches_real_mongodb) (engine='sqlite', case='semantic_expression_inactive_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[127 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[32310 chars]))))) != ('doc[127 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27431 chars])))))\n\nFirst differing element 1:\n((<cl[114 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[32309 chars])))))\n((<cl[114 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27430 chars])))))\n\nDiff is 63612 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_inactive_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_inactive_project_matches_real_mongodb) (engine='memory', case='semantic_expression_inactive_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[127 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[29155 chars]))))) != ('doc[127 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27101 chars])))))\n\nFirst differing element 1:\n((<cl[114 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[29154 chars])))))\n((<cl[114 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27100 chars])))))\n\nDiff is 59364 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_inactive_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_inactive_project_matches_real_mongodb) (engine='sqlite', case='semantic_expression_inactive_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[127 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[29155 chars]))))) != ('doc[127 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27101 chars])))))\n\nFirst differing element 1:\n((<cl[114 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[29154 chars])))))\n((<cl[114 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[27100 chars])))))\n\nDiff is 59364 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_inactive_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_inactive_update_matches_real_mongodb) (engine='memory', case='semantic_expression_inactive_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[127 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[27043 chars]))))) != ('doc[127 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[26689 chars])))))\n\nFirst differing element 1:\n((<cl[114 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[27042 chars])))))\n((<cl[114 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[26688 chars])))))\n\nDiff is 58144 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_inactive_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_inactive_update_matches_real_mongodb) (engine='sqlite', case='semantic_expression_inactive_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[127 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[27043 chars]))))) != ('doc[127 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[26689 chars])))))\n\nFirst differing element 1:\n((<cl[114 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[27042 chars])))))\n((<cl[114 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[26688 chars])))))\n\nDiff is 58144 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_nested_facet_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_nested_facet_matches_real_mongodb) (engine='memory', case='semantic_expression_nested_facet')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[125 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[5845 chars]))))) != ('doc[125 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[5555 chars])))))\n\nFirst differing element 1:\n((<cl[112 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[5844 chars])))))\n((<cl[112 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[5554 chars])))))\n\nDiff is 13308 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_nested_facet_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_nested_facet_matches_real_mongodb) (engine='sqlite', case='semantic_expression_nested_facet')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[125 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[5845 chars]))))) != ('doc[125 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[5555 chars])))))\n\nFirst differing element 1:\n((<cl[112 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[5844 chars])))))\n((<cl[112 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[5554 chars])))))\n\nDiff is 13308 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_nested_lookup_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_nested_lookup_matches_real_mongodb) (engine='memory', case='semantic_expression_nested_lookup')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[125 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[28888 chars]))))) != ('doc[125 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[20917 chars])))))\n\nFirst differing element 1:\n((<cl[112 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[28887 chars])))))\n((<cl[112 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[20916 chars])))))\n\nDiff is 61745 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_nested_lookup_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_nested_lookup_matches_real_mongodb) (engine='sqlite', case='semantic_expression_nested_lookup')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[125 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[28888 chars]))))) != ('doc[125 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[20917 chars])))))\n\nFirst differing element 1:\n((<cl[112 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[28887 chars])))))\n((<cl[112 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[20916 chars])))))\n\nDiff is 61745 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_nested_union_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_nested_union_matches_real_mongodb) (engine='memory', case='semantic_expression_nested_union')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[125 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[10978 chars]))))) != ('doc[125 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[8977 chars])))))\n\nFirst differing element 1:\n((<cl[112 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[10977 chars])))))\n((<cl[112 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[8976 chars])))))\n\nDiff is 21376 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_nested_union_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_nested_union_matches_real_mongodb) (engine='sqlite', case='semantic_expression_nested_union')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[125 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[10978 chars]))))) != ('doc[125 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[8977 chars])))))\n\nFirst differing element 1:\n((<cl[112 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[10977 chars])))))\n((<cl[112 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[8976 chars])))))\n\nDiff is 21376 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_count_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_count_matches_real_mongodb) (engine='memory', case='semantic_expression_query_only_count')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', (<cla[16672 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19618 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', (<cla[16671 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19617 chars])))))\n\nDiff is 31767 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_count_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_count_matches_real_mongodb) (engine='sqlite', case='semantic_expression_query_only_count')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', (<cla[16672 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19618 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', (<cla[16671 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19617 chars])))))\n\nDiff is 31767 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_expr_matches_real_mongodb) (engine='memory', case='semantic_expression_query_only_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20216 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19618 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20215 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19617 chars])))))\n\nDiff is 41701 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_expr_matches_real_mongodb) (engine='sqlite', case='semantic_expression_query_only_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20216 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19618 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20215 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19617 chars])))))\n\nDiff is 41701 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_find_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_find_matches_real_mongodb) (engine='memory', case='semantic_expression_query_only_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20216 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19618 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20215 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19617 chars])))))\n\nDiff is 41701 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_find_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_find_matches_real_mongodb) (engine='sqlite', case='semantic_expression_query_only_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20216 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19618 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20215 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19617 chars])))))\n\nDiff is 41701 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_project_matches_real_mongodb) (engine='memory', case='semantic_expression_query_only_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20800 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19794 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20799 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19793 chars])))))\n\nDiff is 40075 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_project_matches_real_mongodb) (engine='sqlite', case='semantic_expression_query_only_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20800 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19794 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[20799 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19793 chars])))))\n\nDiff is 40075 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_set_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_set_matches_real_mongodb) (engine='memory', case='semantic_expression_query_only_set')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[25444 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19944 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[25443 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19943 chars])))))\n\nDiff is 50278 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_set_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_set_matches_real_mongodb) (engine='sqlite', case='semantic_expression_query_only_set')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[25444 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19944 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[25443 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19943 chars])))))\n\nDiff is 50278 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_update_matches_real_mongodb) (engine='memory', case='semantic_expression_query_only_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[19584 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19464 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[19583 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19463 chars])))))\n\nDiff is 40097 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_query_only_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_query_only_update_matches_real_mongodb) (engine='sqlite', case='semantic_expression_query_only_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[19584 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19464 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[19583 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[19463 chars])))))\n\nDiff is 40097 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_types_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_types_expr_matches_real_mongodb) (engine='memory', case='semantic_expression_types_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38012 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38737 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38011 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38736 chars])))))\n\nDiff is 70820 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_types_expr_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_types_expr_matches_real_mongodb) (engine='sqlite', case='semantic_expression_types_expr')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38012 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38737 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38011 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38736 chars])))))\n\nDiff is 70820 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_types_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_types_project_matches_real_mongodb) (engine='memory', case='semantic_expression_types_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38953 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38113 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38952 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38112 chars])))))\n\nDiff is 69724 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_types_project_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_types_project_matches_real_mongodb) (engine='sqlite', case='semantic_expression_types_project')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[122 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38953 chars]))))) != ('doc[122 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38113 chars])))))\n\nFirst differing element 1:\n((<cl[109 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('arr[38952 chars])))))\n((<cl[109 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[38112 chars])))))\n\nDiff is 69724 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_types_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_types_update_matches_real_mongodb) (engine='memory', case='semantic_expression_types_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[3224 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[34757 chars]))))) != ('doc[3224 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[33859 chars])))))\n\nFirst differing element 1:\n((<cl[3211 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[34756 chars])))))\n((<cl[3211 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[33858 chars])))))\n\nDiff is 65654 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_expression_types_update_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_expression_types_update_matches_real_mongodb) (engine='sqlite', case='semantic_expression_types_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[3224 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[34757 chars]))))) != ('doc[3224 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[33859 chars])))))\n\nFirst differing element 1:\n((<cl[3211 chars]00\\x00\\x00')), (<class 'str'>, 'family', (<cla[34756 chars])))))\n((<cl[3211 chars]00\\x01\\x00')), (<class 'str'>, 'result', ('doc[33858 chars])))))\n\nDiff is 65654 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "tcmalloc-google",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "distarch": "aarch64",
+        "distmod": "ubuntu2404",
+        "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+        "target_arch": "aarch64",
+        "target_os": "linux"
+      },
+      "debug": false,
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "javascriptEngine": "mozjs",
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024",
+        "running": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysInfo": "deprecated",
+      "version": "8.0.32",
+      "versionArray": [
+        8,
+        0,
+        32,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "8.0",
+  "tests_run": 20
+}

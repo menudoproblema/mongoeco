@@ -1,0 +1,234 @@
+{
+  "case_filter": "semantic_decimal_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_decimal_arithmetic",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "x": "1.234567890123456789012345678901234",
+          "y": "3"
+        },
+        {
+          "_id": 2,
+          "x": "2",
+          "y": "7"
+        }
+      ],
+      "selector": "semantic_decimal_arithmetic"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_decimal_group",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "x": "1.234567890123456789012345678901234",
+          "y": "3"
+        },
+        {
+          "_id": 2,
+          "x": "2",
+          "y": "7"
+        }
+      ],
+      "selector": "semantic_decimal_group"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_decimal_window",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "x": "1.234567890123456789012345678901234",
+          "y": "3"
+        },
+        {
+          "_id": 2,
+          "x": "2",
+          "y": "7"
+        }
+      ],
+      "selector": "semantic_decimal_window"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_decimal_pipeline_write",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "x": "1.234567890123456789012345678901234",
+          "y": "3"
+        },
+        {
+          "_id": 2,
+          "x": "2",
+          "y": "7"
+        }
+      ],
+      "selector": "semantic_decimal_pipeline_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_decimal_truth",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "x": "1.234567890123456789012345678901234",
+          "y": "3"
+        },
+        {
+          "_id": 2,
+          "x": "2",
+          "y": "7"
+        }
+      ],
+      "selector": "semantic_decimal_truth"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_decimal_bool_conversion",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "x": "1.234567890123456789012345678901234",
+          "y": "3"
+        },
+        {
+          "_id": 2,
+          "x": "2",
+          "y": "7"
+        }
+      ],
+      "selector": "semantic_decimal_bool_conversion"
+    }
+  ],
+  "duration_seconds": 0.5089080333709717,
+  "errors": [
+    {
+      "test": "test_semantic_decimal_bool_conversion_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_bool_conversion_matches_real_mongodb) (engine='memory', case='semantic_decimal_bool_conversion')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/scalar_expressions.py\", line 245, in evaluate_scalar_expression\n    converted = _convert_aggregation_scalar(\n        operator, value, target, stringify_value=stringify_value\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/scalar_expressions.py\", line 581, in _convert_aggregation_scalar\n    raise OperationFailure(f\"{operator} cannot convert the value\")\nmongoeco.errors.OperationFailure: $toBool cannot convert the value\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1219, in apply_pipeline\n    compiled_plan.execute(\n    ~~~~~~~~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n    ...<3 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 285, in _project_step\n    return _apply_project([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 211, in _apply_project\n    value = _evaluate_expression_with_missing(\n        document, expression, variables, dialect=dialect\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 802, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 832, in evaluate_expression\n    null_if_missing(evaluate_expression(document, item, variables, dialect=dialect))\n                    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 926, in evaluate_expression\n    return evaluate_scalar_expression(\n        operator,\n    ...<25 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/scalar_expressions.py\", line 251, in evaluate_scalar_expression\n    raise server_error(str(error), code=241) from error\nmongoeco.errors.OperationFailure: $toBool cannot convert the value, full error: {'ok': 0.0, 'code': 241, 'codeName': 'ConversionFailure', 'errmsg': '$toBool cannot convert the value'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 96, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_decimal_cases.py\", line 98, in bool_conversion\n    return list(\n        collection.aggregate(\n    ...<8 lines>...\n        )\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 81, in invoke\n    raise _complete_command_error(resolved) from error\nmongoeco.errors.OperationFailure: $toBool cannot convert the value, full error: {'ok': 0.0, 'code': 241, 'codeName': 'ConversionFailure', 'errmsg': '$toBool cannot convert the value'}\n"
+    },
+    {
+      "test": "test_semantic_decimal_bool_conversion_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_bool_conversion_matches_real_mongodb) (engine='sqlite', case='semantic_decimal_bool_conversion')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/scalar_expressions.py\", line 245, in evaluate_scalar_expression\n    converted = _convert_aggregation_scalar(\n        operator, value, target, stringify_value=stringify_value\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/scalar_expressions.py\", line 581, in _convert_aggregation_scalar\n    raise OperationFailure(f\"{operator} cannot convert the value\")\nmongoeco.errors.OperationFailure: $toBool cannot convert the value\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1219, in apply_pipeline\n    compiled_plan.execute(\n    ~~~~~~~~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n    ...<3 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 285, in _project_step\n    return _apply_project([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 211, in _apply_project\n    value = _evaluate_expression_with_missing(\n        document, expression, variables, dialect=dialect\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 802, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 832, in evaluate_expression\n    null_if_missing(evaluate_expression(document, item, variables, dialect=dialect))\n                    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 926, in evaluate_expression\n    return evaluate_scalar_expression(\n        operator,\n    ...<25 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/scalar_expressions.py\", line 251, in evaluate_scalar_expression\n    raise server_error(str(error), code=241) from error\nmongoeco.errors.OperationFailure: $toBool cannot convert the value, full error: {'ok': 0.0, 'code': 241, 'codeName': 'ConversionFailure', 'errmsg': '$toBool cannot convert the value'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 96, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_decimal_cases.py\", line 98, in bool_conversion\n    return list(\n        collection.aggregate(\n    ...<8 lines>...\n        )\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 81, in invoke\n    raise _complete_command_error(resolved) from error\nmongoeco.errors.OperationFailure: $toBool cannot convert the value, full error: {'ok': 0.0, 'code': 241, 'codeName': 'ConversionFailure', 'errmsg': '$toBool cannot convert the value'}\n"
+    }
+  ],
+  "expected_tests": 6,
+  "failures": [
+    {
+      "test": "test_semantic_decimal_arithmetic_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_arithmetic_matches_real_mongodb) (engine='memory', case='semantic_decimal_arithmetic')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[39 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[1134 chars]))))) != (('di[39 chars]d', ('repr', \"Decimal128('4.234567890123456789[954 chars])))))\n\nFirst differing element 0:\n('dic[38 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[601 chars])))))\n('dic[38 chars]d', ('repr', \"Decimal128('4.234567890123456789[529 chars]\"))))\n\nDiff is 2434 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_decimal_arithmetic_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_arithmetic_matches_real_mongodb) (engine='sqlite', case='semantic_decimal_arithmetic')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[39 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[1134 chars]))))) != (('di[39 chars]d', ('repr', \"Decimal128('4.234567890123456789[954 chars])))))\n\nFirst differing element 0:\n('dic[38 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[601 chars])))))\n('dic[38 chars]d', ('repr', \"Decimal128('4.234567890123456789[529 chars]\"))))\n\nDiff is 2434 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_decimal_group_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_group_matches_real_mongodb) (engine='memory', case='semantic_decimal_group')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[47 chars]m', (<class 'decimal.Decimal'>, Decimal('3.234[189 chars]))),) != (('di[47 chars]m', ('repr', \"Decimal128('3.234567890123456789[173 chars]))),)\n\nFirst differing element 0:\n('dic[46 chars]m', (<class 'decimal.Decimal'>, Decimal('3.234[187 chars]'))))\n('dic[46 chars]m', ('repr', \"Decimal128('3.234567890123456789[171 chars]'))))\n\n  (('dict',\n    (('_id', (<class 'NoneType'>, None)),\n+    ('sum', ('repr', \"Decimal128('3.234567890123456789012345678901234')\")),\n+    ('avg', ('repr', \"Decimal128('1.617283945061728394506172839450617')\")),\n-    ('sum',\n-     (<class 'decimal.Decimal'>, Decimal('3.234567890123456789012345679'))),\n-    ('avg',\n-     (<class 'decimal.Decimal'>, Decimal('1.617283945061728394506172840'))),\n     ('avgType', (<class 'str'>, 'decimal')),\n     ('sumType', (<class 'str'>, 'decimal')))),)\n"
+    },
+    {
+      "test": "test_semantic_decimal_group_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_group_matches_real_mongodb) (engine='sqlite', case='semantic_decimal_group')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[47 chars]m', (<class 'decimal.Decimal'>, Decimal('3.234[189 chars]))),) != (('di[47 chars]m', ('repr', \"Decimal128('3.234567890123456789[173 chars]))),)\n\nFirst differing element 0:\n('dic[46 chars]m', (<class 'decimal.Decimal'>, Decimal('3.234[187 chars]'))))\n('dic[46 chars]m', ('repr', \"Decimal128('3.234567890123456789[171 chars]'))))\n\n  (('dict',\n    (('_id', (<class 'NoneType'>, None)),\n+    ('sum', ('repr', \"Decimal128('3.234567890123456789012345678901234')\")),\n+    ('avg', ('repr', \"Decimal128('1.617283945061728394506172839450617')\")),\n-    ('sum',\n-     (<class 'decimal.Decimal'>, Decimal('3.234567890123456789012345679'))),\n-    ('avg',\n-     (<class 'decimal.Decimal'>, Decimal('1.617283945061728394506172840'))),\n     ('avgType', (<class 'str'>, 'decimal')),\n     ('sumType', (<class 'str'>, 'decimal')))),)\n"
+    },
+    {
+      "test": "test_semantic_decimal_pipeline_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_pipeline_write_matches_real_mongodb) (engine='memory', case='semantic_decimal_pipeline_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[245 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[1210 chars]))))) != ('dic[245 chars]d', ('repr', \"Decimal128('4.234567890123456789[1030 chars])))))\n\nFirst differing element 1:\n(('ma[236 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[1209 chars])))))\n(('ma[236 chars]d', ('repr', \"Decimal128('4.234567890123456789[1029 chars])))))\n\nDiff is 2914 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_decimal_pipeline_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_pipeline_write_matches_real_mongodb) (engine='sqlite', case='semantic_decimal_pipeline_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[245 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[1210 chars]))))) != ('dic[245 chars]d', ('repr', \"Decimal128('4.234567890123456789[1030 chars])))))\n\nFirst differing element 1:\n(('ma[236 chars]d', (<class 'decimal.Decimal'>, Decimal('4.234[1209 chars])))))\n(('ma[236 chars]d', ('repr', \"Decimal128('4.234567890123456789[1029 chars])))))\n\nDiff is 2914 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_decimal_truth_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_truth_matches_real_mongodb) (engine='memory', case='semantic_decimal_truth')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[67 chars]l'>, True), (<class 'bool'>, True), (<class 'b[527 chars]))))) != (('di[67 chars]l'>, False), (<class 'bool'>, False), (<class [535 chars])))))\n\nFirst differing element 0:\n('dic[66 chars]l'>, True), (<class 'bool'>, True), (<class 'b[201 chars])))))\n('dic[66 chars]l'>, False), (<class 'bool'>, False), (<class [205 chars])))))\n\nDiff is 1616 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_decimal_truth_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_truth_matches_real_mongodb) (engine='sqlite', case='semantic_decimal_truth')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[67 chars]l'>, True), (<class 'bool'>, True), (<class 'b[527 chars]))))) != (('di[67 chars]l'>, False), (<class 'bool'>, False), (<class [535 chars])))))\n\nFirst differing element 0:\n('dic[66 chars]l'>, True), (<class 'bool'>, True), (<class 'b[201 chars])))))\n('dic[66 chars]l'>, False), (<class 'bool'>, False), (<class [205 chars])))))\n\nDiff is 1616 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_decimal_window_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_window_matches_real_mongodb) (engine='memory', case='semantic_decimal_window')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[39 chars]g', (<class 'decimal.Decimal'>, Decimal('1.234[389 chars]))))) != (('di[39 chars]g', ('repr', \"Decimal128('1.234567890123456789[357 chars])))))\n\nFirst differing element 0:\n('dic[38 chars]g', (<class 'decimal.Decimal'>, Decimal('1.234[146 chars]'))))\n('dic[38 chars]g', ('repr', \"Decimal128('1.234567890123456789[130 chars]'))))\n\nDiff is 860 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_decimal_window_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_decimal_window_matches_real_mongodb) (engine='sqlite', case='semantic_decimal_window')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[39 chars]g', (<class 'decimal.Decimal'>, Decimal('1.234[389 chars]))))) != (('di[39 chars]g', ('repr', \"Decimal128('1.234567890123456789[357 chars])))))\n\nFirst differing element 0:\n('dic[38 chars]g', (<class 'decimal.Decimal'>, Decimal('1.234[146 chars]'))))\n('dic[38 chars]g', ('repr', \"Decimal128('1.234567890123456789[130 chars]'))))\n\nDiff is 860 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 6
+}

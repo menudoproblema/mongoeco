@@ -1,0 +1,39 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B02",
+  "status": "in_progress",
+  "scope": "Preservation of missing values: eight canonical projection witnesses; B02 not closed.",
+  "sources_sha256": {
+    "src/mongoeco/core/aggregation/expression_values.py": "f51723b9c703d3754f2ecedfbcf87ca41655d18d8d87b4c3d7c9488e7a7bb314",
+    "src/mongoeco/core/aggregation/runtime.py": "b3fb5eaae16a728ff889d60c64ce7faa81be18947133194910ddbc8c5453fe92",
+    "src/mongoeco/core/aggregation/control_object_expressions.py": "863a1e1f861bbab57681cbbd1f282cb752f2cd98ee5febf10a4d02bfadcfcabd",
+    "src/mongoeco/core/aggregation/scalar_expressions.py": "9a03ae13c82f0329fe927ae6d52e6742c3ae694232671356f01666ed1574e04c",
+    "src/mongoeco/core/aggregation/array_string_expressions.py": "6091d16da94bf60e3776f827d291ae487201a4e2b4f8a8164ecc0214f0d50ef9",
+    "src/mongoeco/core/aggregation/accumulators.py": "da1c8fb89fb6ee2e9d762a0c61f3f2f9da4a678f0818b5e7392706a73301b5da",
+    "src/mongoeco/core/aggregation/preparation.py": "69380d0e00d0bb34cc1210ffe52caf98bc60e74f80422898f1caa1ca3cdbb4af",
+    "src/mongoeco/core/aggregation/transform_stages.py": "f8b98fb0f992d6d0e82b5da3d4e48bfc4dd59d57727330c5483320f6dc66a56f",
+    "tests/differential/semantic_missing_cases.py": "d6893eb44e632285bca733761162c0f4a7dcc43644dea6ed38741063218265d8",
+    "tests/integration/api/test_semantic_group_regressions.py": "7fd983058e8fa50a80b7e98ed1ecfdb830efb22c50455758d12f1c8c18552467"
+  },
+  "native_reports": [
+    "missing-native-7.json",
+    "missing-native-8.json",
+    "missing-native-9.json"
+  ],
+  "native_fixtures": [
+    "tests/fixtures/semantic_missing_7_0.json",
+    "tests/fixtures/semantic_missing_8_0.json",
+    "tests/fixtures/semantic_missing_9_0.json"
+  ],
+  "before": "missing-before-9.json",
+  "checks": {
+    "surfaces": "........................................................................ [ 25%]\n........................................................................ [ 51%]\n........................................................................ [ 77%]\n..............................................................           [100%]\n278 passed in 1.50s\n",
+    "regression": "........................................................................ [ 14%]\n.................................................................................................................................................................................. [ 51%]\n...................................................... [ 62%]\n............................................................. [ 75%]\n........................................ [ 83%]\n.........................ssssssssssssssssssssssssssssssssssssssss................         [100%]\n446 passed, 40 skipped, 1594 subtests passed in 2.04s\n",
+    "lint_ratchet": "lint ratchet passed for 23 changed Python files\n"
+  },
+  "pending": [
+    "Additional composition/nullable consumers, including reduce and terminal ifNull",
+    "Dedicated write and replaceRoot/replaceWith witnesses",
+    "Consumer integration and final block gates"
+  ]
+}

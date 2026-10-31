@@ -1,0 +1,892 @@
+{
+  "case_filter": "semantic_overflow_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_arithmetic",
+      "seed_documents": [
+        {
+          "_id": "int_max",
+          "a": 2147483647,
+          "b": 1
+        },
+        {
+          "_id": "int_min",
+          "a": -2147483648,
+          "b": -1
+        },
+        {
+          "_id": "long_small",
+          "a": 4,
+          "b": 2
+        },
+        {
+          "_id": "long_max",
+          "a": 9223372036854775807,
+          "b": 1
+        },
+        {
+          "_id": "long_min",
+          "a": -9223372036854775808,
+          "b": -1
+        },
+        {
+          "_id": "sum_rounding",
+          "a": 9223372036854775807,
+          "b": 1025
+        },
+        {
+          "_id": "subtract_overflow",
+          "a": 9223372036854775807,
+          "b": -9223372036854775808
+        },
+        {
+          "_id": "subtract_min",
+          "a": -9223372036854775808,
+          "b": 9223372036854775807
+        },
+        {
+          "_id": "multiply",
+          "a": 4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "multiply_negative",
+          "a": -4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "long_exact",
+          "a": 9007199254740993,
+          "b": 1
+        },
+        {
+          "_id": "mixed_double",
+          "a": 9223372036854775807,
+          "b": 2.0
+        },
+        {
+          "_id": "mixed_decimal",
+          "a": 9223372036854775807,
+          "b": "2"
+        },
+        {
+          "_id": "double_overflow",
+          "a": 1e+308,
+          "b": 2
+        }
+      ],
+      "selector": "semantic_overflow_arithmetic"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_variadic",
+      "seed_documents": [
+        {
+          "_id": "int_max",
+          "a": 2147483647,
+          "b": 1
+        },
+        {
+          "_id": "int_min",
+          "a": -2147483648,
+          "b": -1
+        },
+        {
+          "_id": "long_small",
+          "a": 4,
+          "b": 2
+        },
+        {
+          "_id": "long_max",
+          "a": 9223372036854775807,
+          "b": 1
+        },
+        {
+          "_id": "long_min",
+          "a": -9223372036854775808,
+          "b": -1
+        },
+        {
+          "_id": "sum_rounding",
+          "a": 9223372036854775807,
+          "b": 1025
+        },
+        {
+          "_id": "subtract_overflow",
+          "a": 9223372036854775807,
+          "b": -9223372036854775808
+        },
+        {
+          "_id": "subtract_min",
+          "a": -9223372036854775808,
+          "b": 9223372036854775807
+        },
+        {
+          "_id": "multiply",
+          "a": 4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "multiply_negative",
+          "a": -4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "long_exact",
+          "a": 9007199254740993,
+          "b": 1
+        },
+        {
+          "_id": "mixed_double",
+          "a": 9223372036854775807,
+          "b": 2.0
+        },
+        {
+          "_id": "mixed_decimal",
+          "a": 9223372036854775807,
+          "b": "2"
+        },
+        {
+          "_id": "double_overflow",
+          "a": 1e+308,
+          "b": 2
+        }
+      ],
+      "selector": "semantic_overflow_variadic"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_pipeline_write",
+      "seed_documents": [
+        {
+          "_id": "int_max",
+          "a": 2147483647,
+          "b": 1
+        },
+        {
+          "_id": "int_min",
+          "a": -2147483648,
+          "b": -1
+        },
+        {
+          "_id": "long_small",
+          "a": 4,
+          "b": 2
+        },
+        {
+          "_id": "long_max",
+          "a": 9223372036854775807,
+          "b": 1
+        },
+        {
+          "_id": "long_min",
+          "a": -9223372036854775808,
+          "b": -1
+        },
+        {
+          "_id": "sum_rounding",
+          "a": 9223372036854775807,
+          "b": 1025
+        },
+        {
+          "_id": "subtract_overflow",
+          "a": 9223372036854775807,
+          "b": -9223372036854775808
+        },
+        {
+          "_id": "subtract_min",
+          "a": -9223372036854775808,
+          "b": 9223372036854775807
+        },
+        {
+          "_id": "multiply",
+          "a": 4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "multiply_negative",
+          "a": -4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "long_exact",
+          "a": 9007199254740993,
+          "b": 1
+        },
+        {
+          "_id": "mixed_double",
+          "a": 9223372036854775807,
+          "b": 2.0
+        },
+        {
+          "_id": "mixed_decimal",
+          "a": 9223372036854775807,
+          "b": "2"
+        },
+        {
+          "_id": "double_overflow",
+          "a": 1e+308,
+          "b": 2
+        }
+      ],
+      "selector": "semantic_overflow_pipeline_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_individual_writes",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_individual_writes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_many_write",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_many_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_bulk_write",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_bulk_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_array_write",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_array_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_raw_commands",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_raw_commands"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_identifiers",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_identifiers"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_write_controls",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_write_controls"
+    }
+  ],
+  "duration_seconds": 1.7350099086761475,
+  "errors": [],
+  "expected_tests": 10,
+  "failures": [
+    {
+      "test": "test_semantic_overflow_array_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_array_write_matches_real_mongodb) (engine='memory', case='semantic_overflow_array_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[624 chars]'>, 'Failed to apply $inc operations to curren[3982 chars]))))) != ('dic[624 chars]'>, 'Plan executor error during update :: caus[4032 chars])))))\n\nFirst differing element 1:\n(('er[615 chars]'>, 'Failed to apply $inc operations to curren[3981 chars])))))\n(('er[615 chars]'>, 'Plan executor error during update :: caus[4031 chars])))))\n\nDiff is 7178 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_array_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_array_write_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_array_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[624 chars]'>, 'Failed to apply $inc operations to curren[3982 chars]))))) != ('dic[624 chars]'>, 'Plan executor error during update :: caus[4032 chars])))))\n\nFirst differing element 1:\n(('er[615 chars]'>, 'Failed to apply $inc operations to curren[3981 chars])))))\n(('er[615 chars]'>, 'Plan executor error during update :: caus[4031 chars])))))\n\nDiff is 7178 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_bulk_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_bulk_write_matches_real_mongodb) (engine='memory', case='semantic_overflow_bulk_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[3343 chars]'>, 'Failed to apply $inc operations to curren[11366 chars]))))) != ('dic[3343 chars]'>, 'Plan executor error during update :: caus[11466 chars])))))\n\nFirst differing element 1:\n(('Tr[3334 chars]'>, 'Failed to apply $inc operations to curren[11365 chars])))))\n(('Tr[3334 chars]'>, 'Plan executor error during update :: caus[11465 chars])))))\n\nDiff is 28457 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_bulk_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_bulk_write_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_bulk_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[3343 chars]'>, 'Failed to apply $inc operations to curren[11366 chars]))))) != ('dic[3343 chars]'>, 'Plan executor error during update :: caus[11466 chars])))))\n\nFirst differing element 1:\n(('Tr[3334 chars]'>, 'Failed to apply $inc operations to curren[11365 chars])))))\n(('Tr[3334 chars]'>, 'Plan executor error during update :: caus[11465 chars])))))\n\nDiff is 28457 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_identifiers_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_identifiers_matches_real_mongodb) (engine='memory', case='semantic_overflow_identifiers')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[625 chars]'>, 'Failed to apply $inc operations to curren[22688 chars]))))) != (('di[625 chars]'>, 'Plan executor error during update :: caus[22938 chars])))))\n\nFirst differing element 0:\n('dic[624 chars]'>, 'Failed to apply $inc operations to curren[3986 chars])))))\n('dic[624 chars]'>, 'Plan executor error during update :: caus[4036 chars])))))\n\nDiff is 37228 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_identifiers_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_identifiers_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_identifiers')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[625 chars]'>, 'Failed to apply $inc operations to curren[22688 chars]))))) != (('di[625 chars]'>, 'Plan executor error during update :: caus[22938 chars])))))\n\nFirst differing element 0:\n('dic[624 chars]'>, 'Failed to apply $inc operations to curren[3986 chars])))))\n('dic[624 chars]'>, 'Plan executor error during update :: caus[4036 chars])))))\n\nDiff is 37228 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_individual_writes_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_individual_writes_matches_real_mongodb) (engine='memory', case='semantic_overflow_individual_writes')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[656 chars]'>, 'Failed to apply $inc operations to curren[70858 chars]))))) != ('dic[656 chars]'>, 'Plan executor error during update :: caus[71058 chars])))))\n\nFirst differing element 1:\n(('up[647 chars]'>, 'Failed to apply $inc operations to curren[70857 chars])))))\n(('up[647 chars]'>, 'Plan executor error during update :: caus[71057 chars])))))\n\nDiff is 117706 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_individual_writes_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_individual_writes_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_individual_writes')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[656 chars]'>, 'Failed to apply $inc operations to curren[70858 chars]))))) != ('dic[656 chars]'>, 'Plan executor error during update :: caus[71058 chars])))))\n\nFirst differing element 1:\n(('up[647 chars]'>, 'Failed to apply $inc operations to curren[70857 chars])))))\n(('up[647 chars]'>, 'Plan executor error during update :: caus[71057 chars])))))\n\nDiff is 117706 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_many_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_many_write_matches_real_mongodb) (engine='memory', case='semantic_overflow_many_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[624 chars]'>, 'Failed to apply $inc operations to curren[3982 chars]))))) != ('dic[624 chars]'>, 'Plan executor error during update :: caus[4032 chars])))))\n\nFirst differing element 1:\n(('er[615 chars]'>, 'Failed to apply $inc operations to curren[3981 chars])))))\n(('er[615 chars]'>, 'Plan executor error during update :: caus[4031 chars])))))\n\nDiff is 7178 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_many_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_many_write_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_many_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[624 chars]'>, 'Failed to apply $inc operations to curren[3982 chars]))))) != ('dic[624 chars]'>, 'Plan executor error during update :: caus[4032 chars])))))\n\nFirst differing element 1:\n(('er[615 chars]'>, 'Failed to apply $inc operations to curren[3981 chars])))))\n(('er[615 chars]'>, 'Plan executor error during update :: caus[4031 chars])))))\n\nDiff is 7178 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_raw_commands_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_raw_commands_matches_real_mongodb) (engine='memory', case='semantic_overflow_raw_commands')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[675 chars]'>, 'Failed to apply $inc operations to curren[8800 chars]))))) != ('dic[675 chars]'>, 'Plan executor error during update :: caus[8850 chars])))))\n\nFirst differing element 1:\n(('up[666 chars]'>, 'Failed to apply $inc operations to curren[8799 chars])))))\n(('up[666 chars]'>, 'Plan executor error during update :: caus[8849 chars])))))\n\nDiff is 15884 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_overflow_raw_commands_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_overflow_raw_commands_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_raw_commands')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 107, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[675 chars]'>, 'Failed to apply $inc operations to curren[8800 chars]))))) != ('dic[675 chars]'>, 'Plan executor error during update :: caus[8850 chars])))))\n\nFirst differing element 1:\n(('up[666 chars]'>, 'Failed to apply $inc operations to curren[8799 chars])))))\n(('up[666 chars]'>, 'Plan executor error during update :: caus[8849 chars])))))\n\nDiff is 15884 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 10
+}

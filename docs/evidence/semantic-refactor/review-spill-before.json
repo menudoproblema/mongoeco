@@ -1,0 +1,72 @@
+{
+  "scope": "Pre-review forced-spill observation versus native cardinality/value witness; not a distribution gate",
+  "source_origin": "/tmp/mongoeco-review-baseline/src/mongoeco/core/bson_ordering.py",
+  "source_sha256": "adfc4e1171f7344c838c99f5eb8ac99998214d18c6228086c23171cb9d47c2e7",
+  "native_capture": "tests/fixtures/semantic_object_grammar_8_0.json",
+  "native_capture_sha256": "26b2acf8ba1dd67349e3966fbacc180b8bd1dc95918d02292107230d3a45a2d9",
+  "case": "semantic_object_numeric_group_identity",
+  "expected": [
+    {
+      "value": {
+        "$numberDouble": "0.0"
+      },
+      "count": {
+        "$numberInt": "3"
+      }
+    },
+    {
+      "value": {
+        "$numberDouble": "0.5"
+      },
+      "count": {
+        "$numberInt": "3"
+      }
+    },
+    {
+      "value": {
+        "$numberDouble": "2.0"
+      },
+      "count": {
+        "$numberInt": "1"
+      }
+    },
+    {
+      "value": {
+        "$numberDouble": "3.0"
+      },
+      "count": {
+        "$numberInt": "1"
+      }
+    },
+    {
+      "value": {
+        "$numberDouble": "1000.0"
+      },
+      "count": {
+        "$numberInt": "3"
+      }
+    }
+  ],
+  "results": {
+    "MemoryEngine": {
+      "error": {
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "message": "$toDouble cannot convert the value"
+      },
+      "matches": false
+    },
+    "SQLiteEngine": {
+      "error": {
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "241"
+        },
+        "message": "$toDouble cannot convert the value"
+      },
+      "matches": false
+    }
+  }
+}

@@ -1,0 +1,818 @@
+--- a/src/mongoeco/api/_async/_collection_reads.py
++++ b/src/mongoeco/api/_async/_collection_reads.py
+@@ -276,14 +276,16 @@
+         comment=options.get("comment"),
+         max_time_ms=options.get("max_time_ms"),
+     ):
+-        async for document in collection.find(
++        cursor = collection.find(
+             options.get("filter_spec"),
+             collation=options.get("collation"),
+             hint=options.get("hint"),
+             comment=options.get("comment"),
+             max_time_ms=options.get("max_time_ms"),
+             session=options.get("session"),
+-        ):
++        )
++        cursor._expression_error_operation = "distinct"
++        async for document in cursor:
+             values = QueryEngine.extract_values(document, options["key"])
+             found, value = QueryEngine._get_field_value(document, options["key"])
+             candidates = resolve_distinct_candidates(
+--- a/src/mongoeco/api/_async/_database_admin_read_commands.py
++++ b/src/mongoeco/api/_async/_database_admin_read_commands.py
+@@ -180,10 +180,13 @@
+     ) -> DistinctCommandResult:
+         distinct_values: list[object] = []
+         normalized_collation = normalize_collation(operation.collation)
+-        async for document in self._admin._database.get_collection(collection_name)._build_cursor(
+-            operation,
+-            session=session,
+-        ):
++        cursor = self._admin._database.get_collection(collection_name)._build_cursor(
++            operation,
++            session=session,
++        )
++        # This command reuses find semantics, but owns distinct diagnostics.
++        cursor._expression_error_operation = "distinct"
++        async for document in cursor:
+             values = QueryEngine.extract_values(document, key)
+             if not values:
+                 found, value = QueryEngine._get_field_value(document, key)
+--- a/src/mongoeco/api/_async/cursor.py
++++ b/src/mongoeco/api/_async/cursor.py
+@@ -23,6 +23,7 @@
+     resolve_operation_session,
+ )
+ from mongoeco.core.query_plan import QueryNode
++from mongoeco.core.server_errors import operation_error
+ from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
+ from mongoeco.engines.adapter import EngineSpiAdapter
+ from mongoeco.engines.semantic_core import EngineFindSemantics
+@@ -159,8 +160,9 @@
+                 self._cursor._exhausted = True
+                 await self.close()
+                 raise
+-            except BaseException:
++            except BaseException as error:
+                 await self._close_after_failure()
++                self._cursor._raise_expression_diagnostic(error)
+                 raise
+         if not self._buffer:
+             if self._cursor._exhausted:
+@@ -195,8 +197,9 @@
+                     if not items:
+                         await self.close()
+                     break
+-                except BaseException:
++                except BaseException as error:
+                     await self._close_after_failure()
++                    self._cursor._raise_expression_diagnostic(error)
+                     raise
+             if not self._buffer:
+                 if self._cursor._exhausted:
+@@ -218,8 +221,9 @@
+         )
+         try:
+             page = await self._cursor._fetch_batch(self._position, target_size)
+-        except BaseException:
++        except BaseException as error:
+             await self._close_after_failure()
++            self._cursor._raise_expression_diagnostic(error)
+             raise
+         if not page:
+             self._cursor._exhausted = True
+@@ -403,6 +407,21 @@
+             operation_context=operation.context,
+         )
+ 
++    _expression_error_operation = "find_runtime"
++
++    def _raise_expression_diagnostic(self, error):
++        """Render expression diagnostics once, preserving unrelated failures."""
++        if not isinstance(error, OperationFailure):
++            return
++        resolved = operation_error(
++            error,
++            self._expression_error_operation,
++            self._current_dialect().key,
++            namespace=getattr(self._collection, "full_name", None),
++        )
++        if resolved is not error:
++            raise resolved from error
++
+     def _materialize_document(self, document: Document) -> Document:
+         applier = getattr(self._collection, "_apply_codec_options_to_document", None)
+         if callable(applier):
+@@ -450,9 +469,10 @@
+                 await self._close_batch_source()
+                 self._exhausted = True
+                 break
+-            except BaseException:
++            except BaseException as error:
+                 self._exhausted = True
+                 await self._close_batch_source()
++                self._raise_expression_diagnostic(error)
+                 raise
+             page.append(
+                 self._materialize_document(document)
+@@ -723,6 +743,7 @@
+         self._retire_batch_source()
+         self._started = False
+         self._exhausted = False
++        self._semantics_cache = None
+         if (
+             isinstance(self._let, ExpressionExecutionContext)
+             and self._let.command_let is not None
+@@ -738,7 +759,7 @@
+             )
+             self._execution_variables = expressions
+             self._let = expressions
+-        self._invalidate_execution_cache()
++            self._invalidate_execution_cache()
+         return self
+ 
+     def _fresh_operation_context(self):
+--- a/src/mongoeco/compat/_catalog_constants.py
++++ b/src/mongoeco/compat/_catalog_constants.py
+@@ -1,4 +1,5 @@
+ MONGODB_DIALECT_HOOK_NAMES = (
++    "supports_dynamic_get_field",
+     "supports_now_in_read_command_let",
+     "uses_distinct_command_request_field_name",
+     "null_query_matches_undefined",
+--- a/src/mongoeco/compat/_catalog_dialects.py
++++ b/src/mongoeco/compat/_catalog_dialects.py
+@@ -66,6 +66,7 @@
+                 {
+                     "uses_distinct_command_request_field_name": False,
+                     "supports_now_in_read_command_let": True,
++                    "supports_dynamic_get_field": False,
+                     "null_query_matches_undefined": True,
+                     "uses_server_densify_bounds": True,
+                     "densify_equal_bounds_are_empty": False,
+@@ -87,6 +88,7 @@
+                 {
+                     "uses_distinct_command_request_field_name": True,
+                     "supports_now_in_read_command_let": False,
++                    "supports_dynamic_get_field": True,
+                     "null_query_matches_undefined": False,
+                     "uses_server_densify_bounds": True,
+                     "densify_equal_bounds_are_empty": True,
+@@ -108,6 +110,7 @@
+                 {
+                     "uses_distinct_command_request_field_name": False,
+                     "supports_now_in_read_command_let": False,
++                    "supports_dynamic_get_field": True,
+                     "null_query_matches_undefined": False,
+                     "rejects_empty_group_fields": True,
+                     "validates_densify_partition_paths": True,
+--- a/src/mongoeco/core/aggregation/accumulators.py
++++ b/src/mongoeco/core/aggregation/accumulators.py
+@@ -24,6 +24,7 @@
+ )
+ from mongoeco.core.collation import CollationSpec, compare_with_collation
+ from mongoeco.core.paths import get_document_value
++from mongoeco.core.server_errors import server_error
+ from mongoeco.error_catalog import EMPTY_GROUP_FIELD_ERROR
+ from mongoeco.errors import OperationFailure
+ from mongoeco.types import Document, SortSpec, UndefinedType
+@@ -117,7 +118,21 @@
+     return new_flags
+ 
+ 
+-def _validate_accumulator_expression(operator: str, expression: object) -> None:
++def _validate_unary_accumulator_operand(operator, expression, allow_array_operand):
++    if (
++        not allow_array_operand
++        and isinstance(expression, list)
++        and operator
++        in {"$sum", "$avg", "$first", "$last", "$min", "$max", "$push", "$addToSet"}
++    ):
++        message = f"The {operator} accumulator is a unary operator"
++        raise server_error(message, code=40237)
++
++
++def _validate_accumulator_expression(
++    operator: str, expression: object, *, allow_array_operand: bool = False
++) -> None:
++    _validate_unary_accumulator_operand(operator, expression, allow_array_operand)
+     if operator == "$count":
+         if not isinstance(expression, dict) or expression:
+             raise OperationFailure("$count accumulator requires an empty document")
+@@ -321,10 +336,11 @@
+         raise OperationFailure(message, descriptor=EMPTY_GROUP_FIELD_ERROR)
+ 
+ 
+-def _prepare_accumulator_specs(
++def _prepare_accumulator_specs(  # noqa: PLR0913 - group/window grammar and runtime context
+     accumulator_specs: dict[str, object] | None,
+     *,
+     default_sum: bool = False,
++    allow_array_operand: bool = False,
+     dialect: MongoDialect = MONGODB_DIALECT_70,
+     support_checker: Callable[[str], bool] | None = None,
+     unsupported_message: str = "Unsupported accumulator",
+@@ -339,7 +355,9 @@
+         operator, expression = next(iter(accumulator.items()))
+         if not support_checker(operator):
+             raise OperationFailure(f"{unsupported_message}: {operator}")
+-        _validate_accumulator_expression(operator, expression)
++        _validate_accumulator_expression(
++            operator, expression, allow_array_operand=allow_array_operand
++        )
+         prepared.append((field, operator, expression))
+     return tuple(prepared)
+ 
+--- a/src/mongoeco/core/aggregation/control_object_expressions.py
++++ b/src/mongoeco/core/aggregation/control_object_expressions.py
+@@ -47,6 +47,95 @@
+ )
+ 
+ 
++def parse_field_expression(operator, spec, *, parse_operand=None):
++    """Own the syntax of field expressions without evaluating input documents."""
++    getter = operator == "$getField"
++    if getter and not isinstance(spec, dict):
++        parsed = {"field": spec, "input": "$$CURRENT"}
++        if parse_operand is not None:
++            for operand in parsed.values():
++                parse_operand(operand)
++    else:
++        if not isinstance(spec, dict):
++            message = f"{operator} only supports an object as its argument"
++            raise server_error(message, code=4161100, reason="expression_structure")
++        allowed = {"field", "input"} | ({"value"} if operator == "$setField" else set())
++        for key, operand in spec.items():
++            if key not in allowed:
++                message = f"{operator} found an unknown argument: {key}"
++                raise server_error(
++                    message,
++                    code=3041701 if getter else 4161101,
++                    reason="expression_structure",
++                )
++            if parse_operand is not None:
++                parse_operand(operand)
++        required = (
++            ("field", 3041702 if getter else 4161102),
++            ("value", 4161103),
++            ("input", 3041703 if getter else 4161109),
++        )
++        for name, code in required:
++            if name not in allowed:
++                continue
++            if name not in spec:
++                message = f"{operator} requires '{name}' to be specified"
++                raise server_error(message, code=code, reason="expression_structure")
++        parsed = spec
++    return parsed
++
++
++def prepare_field_expression(operator, spec, *, dialect):
++    parsed = parse_field_expression(operator, spec)
++    getter = operator == "$getField"
++    if not getter or not dialect.behavior_flag(
++        "supports_dynamic_get_field", default=False
++    ):
++        _prepare_constant_field(parsed["field"], getter=getter)
++    return parsed
++
++
++def _prepare_constant_field(expression, *, getter):
++    name = "$getField" if getter else "$setField"
++    if isinstance(expression, str) and expression.startswith("$"):
++        path = (
++            "$" + expression[2:]
++            if expression.startswith("$$")
++            else "$CURRENT." + expression[1:]
++        )
++        message = (
++            f"'{path}' is a field path reference which is not allowed in this context. "
++            f"Did you mean {{$literal: '{path}'}}?"
++        )
++        raise server_error(
++            message, code=5654600 if getter else 4161108, reason="expression_structure"
++        )
++    if (
++        isinstance(expression, dict)
++        and len(expression) == 1
++        and next(iter(expression)) in {"$literal", "$const"}
++    ):
++        value = next(iter(expression.values()))
++    elif isinstance(expression, (dict, list)):
++        message = (
++            f"{name} requires 'field' to evaluate to a constant, "
++            "but got a non-constant argument"
++        )
++        raise server_error(
++            message, code=5654601 if getter else 4161106, reason="expression_structure"
++        )
++    else:
++        value = expression
++    if not isinstance(value, str):
++        kind = _aggregation_type_name(value, missing_sentinel=None)
++        # null is a BSON value here, never the internal missing sentinel.
++        kind = "null" if value is None else kind
++        message = f"{name} requires 'field' to evaluate to type String, but got {kind}"
++        raise server_error(
++            message, code=5654602 if getter else 4161107, reason="expression_structure"
++        )
++
++
+ def evaluate_control_object_expression(
+     operator: str,
+     document: Document,
+@@ -145,18 +234,11 @@
+         branch = when_true if expression_truthy(condition_value) else when_false
+         return evaluate_expression(document, branch, variables)
+ 
+-    if operator == "$setField":
+-        if not isinstance(spec, dict) or not {
+-            "field",
+-            "input",
+-            "value",
+-        } <= set(spec):
+-            raise OperationFailure("$setField requires field, input, and value")
+-        field_name = evaluate_expression(document, spec["field"], variables)
+-        if not isinstance(field_name, str):
+-            raise OperationFailure("$setField field must resolve to a string")
++    if operator in {"$setField", "$unsetField"}:
++        parsed = prepare_field_expression(operator, spec, dialect=dialect)
++        field_name = evaluate_expression(document, parsed["field"], variables)
+         input_value = evaluate_expression_with_missing(
+-            document, spec["input"], variables
++            document, parsed["input"], variables
+         )
+         if (
+             input_value is missing_sentinel
+@@ -165,34 +247,18 @@
+         ):
+             return None
+         if not isinstance(input_value, dict):
+-            raise OperationFailure("$setField input must resolve to an object")
++            message = "$setField requires 'input' to evaluate to type Object"
++            raise server_error(message, code=4161105, reason="expression_type")
+         result = deepcopy(input_value)
+-        value = evaluate_expression(document, spec["value"], variables)
++        value = (
++            evaluate_expression(document, parsed["value"], variables)
++            if operator == "$setField"
++            else missing_sentinel
++        )
+         if value is missing_sentinel:
+             result.pop(field_name, None)
+         else:
+             result[field_name] = value
+-        return result
+-
+-    if operator == "$unsetField":
+-        if not isinstance(spec, dict) or not {"field", "input"} <= set(spec):
+-            raise OperationFailure("$unsetField requires field and input")
+-        field_name = evaluate_expression(document, spec["field"], variables)
+-        if not isinstance(field_name, str):
+-            raise OperationFailure("$unsetField field must resolve to a string")
+-        input_value = evaluate_expression_with_missing(
+-            document, spec["input"], variables
+-        )
+-        if (
+-            input_value is missing_sentinel
+-            or input_value is None
+-            or isinstance(input_value, UndefinedType)
+-        ):
+-            return None
+-        if not isinstance(input_value, dict):
+-            raise OperationFailure("$unsetField input must resolve to an object")
+-        result = deepcopy(input_value)
+-        result.pop(field_name, None)
+         return result
+ 
+     if operator == "$switch":
+@@ -285,35 +351,18 @@
+         return merged
+ 
+     if operator == "$getField":
+-        if isinstance(spec, str):
+-            field_name = spec
+-            source = document
+-        elif isinstance(spec, dict):
+-            if "field" not in spec:
+-                raise OperationFailure("$getField requires field")
+-            field_name = evaluate_expression(document, spec["field"], variables)
+-            source = evaluate_expression_with_missing(
+-                document, spec.get("input", "$$CURRENT"), variables
++        parsed = prepare_field_expression(operator, spec, dialect=dialect)
++        field_name = evaluate_expression(document, parsed["field"], variables)
++        if not isinstance(field_name, str):
++            kind = _aggregation_type_name(field_name, missing_sentinel=missing_sentinel)
++            message = (
++                f"$getField requires 'field' to evaluate to type String, but got {kind}"
+             )
+-        else:
+-            raise OperationFailure(
+-                "$getField requires a string or document specification"
+-            )
+-        if field_name is None:
++            raise server_error(message, code=3041704, reason="expression_type")
++        source = evaluate_expression_with_missing(document, parsed["input"], variables)
++        if source is None or isinstance(source, UndefinedType):
+             return None
+-        if not isinstance(field_name, str):
+-            raise OperationFailure("$getField field must evaluate to a string")
+-        if source is missing_sentinel:
+-            return missing_sentinel
+-        if (
+-            source is missing_sentinel
+-            or source is None
+-            or isinstance(source, UndefinedType)
+-        ):
+-            return None
+-        if not isinstance(source, dict):
+-            return None
+-        if field_name not in source:
++        if not isinstance(source, dict) or field_name not in source:
+             return missing_sentinel
+         return deepcopy(source[field_name])
+ 
+--- a/src/mongoeco/core/aggregation/extensions.py
++++ b/src/mongoeco/core/aggregation/extensions.py
+@@ -40,17 +40,18 @@
+ 
+ 
+ @dataclass(slots=True)
+-class _AggregationStageRegistry:
+-    handlers: dict[str, AggregationStageExtensionRegistration] = field(
++class _AggregationExtensionRegistry:
++    expression_handlers: dict[str, AggregationExpressionExtensionHandler] = field(
++        default_factory=dict
++    )
++    stage_handlers: dict[str, AggregationStageExtensionRegistration] = field(
+         default_factory=dict
+     )
+     version: int = 0
+ 
+ 
+-_expression_lock = RLock()
+-_stage_lock = RLock()
+-_expression_handlers: dict[str, AggregationExpressionExtensionHandler] = {}
+-_stage_registry = _AggregationStageRegistry()
++_registry_lock = RLock()
++_registry = _AggregationExtensionRegistry()
+ 
+ 
+ def _require_operator_name(name: str) -> str:
+@@ -66,21 +67,23 @@
+     operator = _require_operator_name(name)
+     if not callable(handler):
+         raise TypeError("handler must be callable")
+-    with _expression_lock:
+-        _expression_handlers[operator] = handler
++    with _registry_lock:
++        _registry.expression_handlers[operator] = handler
++        _registry.version += 1
+ 
+ 
+ def unregister_aggregation_expression_operator(name: str) -> None:
+     operator = _require_operator_name(name)
+-    with _expression_lock:
+-        _expression_handlers.pop(operator, None)
++    with _registry_lock:
++        _registry.expression_handlers.pop(operator, None)
++        _registry.version += 1
+ 
+ 
+ def get_registered_aggregation_expression_operator(
+     name: str,
+ ) -> AggregationExpressionExtensionHandler | None:
+-    with _expression_lock:
+-        return _expression_handlers.get(name)
++    with _registry_lock:
++        return _registry.expression_handlers.get(name)
+ 
+ 
+ def registered_aggregation_expression_operator(
+@@ -106,25 +109,25 @@
+         raise TypeError("handler must be callable")
+     if execution_mode not in {"streamable", "materializing"}:
+         raise ValueError("execution_mode must be 'streamable' or 'materializing'")
+-    with _stage_lock:
+-        _stage_registry.handlers[operator] = AggregationStageExtensionRegistration(
++    with _registry_lock:
++        _registry.stage_handlers[operator] = AggregationStageExtensionRegistration(
+             handler=handler,
+             execution_mode=execution_mode,
+         )
+-        _stage_registry.version += 1
++        _registry.version += 1
+ 
+ 
+ def unregister_aggregation_stage(name: str) -> None:
+     operator = _require_operator_name(name)
+-    with _stage_lock:
+-        _stage_registry.handlers.pop(operator, None)
+-        _stage_registry.version += 1
++    with _registry_lock:
++        _registry.stage_handlers.pop(operator, None)
++        _registry.version += 1
+ 
+ 
+-def _aggregation_stage_registry_version() -> int:
+-    """Invalidate prepared semantics when extension registrations change."""
+-    with _stage_lock:
+-        return _stage_registry.version
++def _aggregation_registry_version() -> int:
++    """Invalidate prepared syntax and numeric strategy after any extension change."""
++    with _registry_lock:
++        return _registry.version
+ 
+ 
+ def get_registered_aggregation_stage(
+@@ -139,8 +142,8 @@
+ def get_registered_aggregation_stage_registration(
+     name: str,
+ ) -> AggregationStageExtensionRegistration | None:
+-    with _stage_lock:
+-        return _stage_registry.handlers.get(name)
++    with _registry_lock:
++        return _registry.stage_handlers.get(name)
+ 
+ 
+ def registered_aggregation_stage(
+--- a/src/mongoeco/core/aggregation/grouping_stages.py
++++ b/src/mongoeco/core/aggregation/grouping_stages.py
+@@ -818,21 +818,8 @@
+     accumulator_runtime = _build_accumulator_runtime(
+         dialect=dialect, collation=collation
+     )
+-    buckets: list[_AccumulatorBucket] = []
+-    for lower in iter_with_deadline(boundaries[:-1], deadline):
+-        buckets.append(
+-            _AccumulatorBucket(
+-                bucket_id=_copy_if_mutable(lower),
+-                values=_create_accumulator_state(prepared_output),
+-            )
+-        )
+-
++    buckets: list[_AccumulatorBucket | None] = [None for _ in boundaries[:-1]]
+     default_state: _AccumulatorBucket | None = None
+-    if "default" in spec:
+-        default_state = _AccumulatorBucket(
+-            bucket_id=_copy_if_mutable(default_bucket),
+-            values=_create_accumulator_state(prepared_output),
+-        )
+ 
+     for document in iter_with_deadline(documents, deadline):
+         value = evaluate_expression(
+@@ -842,8 +829,15 @@
+             value, boundaries, dialect=dialect, collation=collation
+         )
+         if bucket_index is not None:
++            bucket = buckets[bucket_index]
++            if bucket is None:
++                bucket = _AccumulatorBucket(
++                    bucket_id=_copy_if_mutable(boundaries[bucket_index]),
++                    values=_create_accumulator_state(prepared_output),
++                )
++                buckets[bucket_index] = bucket
+             _apply_accumulators(
+-                buckets[bucket_index],
++                bucket,
+                 prepared_output,
+                 document,
+                 variables,
+@@ -852,7 +846,12 @@
+                 **accumulator_runtime,
+             )
+             continue
+-        if default_state is not None:
++        if "default" in spec:
++            if default_state is None:
++                default_state = _AccumulatorBucket(
++                    bucket_id=_copy_if_mutable(default_bucket),
++                    values=_create_accumulator_state(prepared_output),
++                )
+             _apply_accumulators(
+                 default_state,
+                 prepared_output,
+@@ -870,6 +869,7 @@
+     result = [
+         _finalize_accumulators(bucket)
+         for bucket in iter_with_deadline(buckets, deadline)
++        if bucket is not None
+     ]
+     if default_state is not None:
+         result.append(_finalize_accumulators(default_state))
+@@ -1018,6 +1018,7 @@
+             continue
+         prepared_specs = _prepare_accumulator_specs(
+             {field: {operator: expression}},
++            allow_array_operand=True,
+             dialect=dialect,
+             support_checker=dialect.supports_window_accumulator,
+             unsupported_message="Unsupported $setWindowFields accumulator",
+--- a/src/mongoeco/core/aggregation/preparation.py
++++ b/src/mongoeco/core/aggregation/preparation.py
+@@ -11,14 +11,21 @@
+     CONTROL_EXPRESSION_ARGUMENTS,
+     SCALAR_EXPRESSION_ARGUMENTS,
+ )
+-from mongoeco.core.aggregation.accumulators import _validate_empty_group_fields
++from mongoeco.core.aggregation.accumulators import (
++    _prepare_accumulator_specs,
++    _validate_empty_group_fields,
++)
+ from mongoeco.core.aggregation.array_string_expressions import (
+     array_variable_names,
+     validate_trim_chars,
+ )
++from mongoeco.core.aggregation.control_object_expressions import (
++    parse_field_expression,
++    prepare_field_expression,
++)
+ from mongoeco.core.aggregation.evaluation_environment import environment_for_document
+ from mongoeco.core.aggregation.extensions import (
+-    _aggregation_stage_registry_version,
++    _aggregation_registry_version,
+     get_registered_aggregation_expression_operator,
+     get_registered_aggregation_stage_registration,
+ )
+@@ -360,7 +367,7 @@
+     return expression.startswith("$") and "CURRENT" not in variables
+ 
+ 
+-def _validate_expression_variables(expression, dialect, variables):
++def _validate_expression_variables(expression, dialect, variables):  # noqa: PLR0911 - distinct expression grammars and lexical scopes
+     if not isinstance(expression, (dict, list)):
+         return _expression_scalar_requires_document(expression, dialect, variables)
+     if isinstance(expression, list):
+@@ -372,6 +379,21 @@
+             or get_registered_aggregation_expression_operator(operator) is not None
+         ):
+             return False
++        if operator in {"$getField", "$setField", "$unsetField"}:
++            dependencies = []
++            parse_field_expression(
++                operator,
++                spec,
++                parse_operand=lambda operand: dependencies.append(
++                    prepare_expression(
++                        operand,
++                        dialect=dialect,
++                        variables=variables,
++                        fold_constants=False,
++                    )
++                ),
++            )
++            return any(dependencies)
+         if operator in {"$map", "$filter", "$reduce"}:
+             return _validate_array_expression_scope(operator, spec, dialect, variables)
+         if (
+@@ -494,6 +516,11 @@
+         parse_information_spec(operator, spec)
+     elif operator == "$group":
+         _validate_empty_group_fields(spec, dialect=dialect)
++        if isinstance(spec, dict):
++            _prepare_accumulator_specs(
++                {name: value for name, value in spec.items() if name != "_id"},
++                dialect=dialect,
++            )
+     elif operator == "$densify":
+         _validate_densify_partition_paths(spec, dialect=dialect)
+         if isinstance(spec, dict):
+@@ -558,7 +585,7 @@
+         collection,
+         scopes,
+         path,
+-        _aggregation_stage_registry_version(),
++        _aggregation_registry_version(),
+         frozenset(variables),
+     )
+     relocating = previous is not None and (
+@@ -594,10 +621,17 @@
+                 diagnostic = getattr(error, "_server_diagnostic", None)
+                 parsing = (
+                     diagnostic is not None
+-                    and diagnostic.reason in {"expression_unknown", "expression_arity"}
++                    and diagnostic.reason
++                    in {
++                        "expression_unknown",
++                        "expression_arity",
++                        "expression_structure",
++                    }
+                     and operator in {"$project", "$set", "$addFields"}
+                 )
+-                if error.code != _UNDEFINED_VARIABLE_CODE and not parsing:
++                if (
++                    error.code != _UNDEFINED_VARIABLE_CODE or operator == "$match"
++                ) and not parsing:
+                     raise
+                 message = f"Invalid {operator} :: caused by :: {error_message(error)}"
+                 if parsing:
+@@ -788,6 +822,16 @@
+             min_args=_EXPRESSION_ARITIES[operator][0],
+             max_args=_EXPRESSION_ARITIES[operator][1],
+         )
++    if operator in {"$getField", "$setField", "$unsetField"}:
++        parse_field_expression(
++            operator,
++            expression[operator],
++            parse_operand=lambda operand: _prepare_expression_structure(
++                operand, dialect, fold_constants=False, document_code=document_code
++            ),
++        )
++        prepare_field_expression(operator, expression[operator], dialect=dialect)
++        return
+     for value in expression.values():
+         _prepare_expression_structure(
+             value, dialect, fold_constants=fold_constants, document_code=document_code
+--- a/src/mongoeco/core/bson_ordering.py
++++ b/src/mongoeco/core/bson_ordering.py
+@@ -151,6 +151,21 @@
+         return ("repr", repr(value))
+ 
+ 
++def _numeric_equality_decimal(numeric):
++    number = numeric_comparison_decimal(numeric)
++    if number.is_zero():
++        number = Decimal(0)
++    else:
++        sign, digits, exponent = number.as_tuple()
++        end = len(digits)
++        while end > 1 and digits[end - 1] == 0:
++            end -= 1
++        number = Decimal((sign, digits[:end], exponent + len(digits) - end))
++    # Equal keys must also encode identically when spill partitions hash
++    # their codec representation. Decimal hashing alone ignores cohorts.
++    return number
++
++
+ def bson_equality_key(value: Any) -> Any:
+     """Clave hashable que conserva la igualdad semantica BSON.
+ 
+@@ -178,7 +193,7 @@
+                 return ("number", "-inf" if numeric < 0 else "+inf")
+         # Decimal equality and hashing already ignore scale and signed zero;
+         # normalize() would unnecessarily round under the ambient context.
+-        return ("number", numeric_comparison_decimal(numeric))
++        return ("number", _numeric_equality_decimal(numeric))
+     if isinstance(value, (Binary, bytes)):
+         return ("binary", getattr(value, "subtype", 0), bytes(value))
+     if isinstance(value, dict):
+--- a/src/mongoeco/core/error_documents.py
++++ b/src/mongoeco/core/error_documents.py
+@@ -83,7 +83,12 @@
+                 if args
+                 else None
+             )
+-            resolved = operation_error(error, method.__name__, dialect)
++            resolved = operation_error(
++                error,
++                method.__name__,
++                dialect,
++                namespace=getattr(args[0], "full_name", None) if args else None,
++            )
+             raise _complete_command_error(resolved) from error
+ 
+     return invoke
+@@ -102,7 +107,12 @@
+                 if args
+                 else None
+             )
+-            resolved = operation_error(error, method.__name__, dialect)
++            resolved = operation_error(
++                error,
++                method.__name__,
++                dialect,
++                namespace=getattr(args[0], "full_name", None) if args else None,
++            )
+             raise _complete_command_error(resolved) from error
+ 
+     return invoke
+--- a/src/mongoeco/core/server_errors.py
++++ b/src/mongoeco/core/server_errors.py
+@@ -112,12 +112,25 @@
+         )
+     if diagnostic.reason != "expression_type":
+         return None
+-    if operation == "aggregate_runtime":
++    if operation in {"aggregate_runtime", "count_documents"}:
+         prefix = (
+             f"Executor error during aggregate command on namespace: {namespace} "
+             ":: caused by :: "
+             if dialect == "9.0"
+             else "PlanExecutor error during aggregation :: caused by :: "
++        )
++    elif operation in {"find_runtime", "find_one"}:
++        prefix = (
++            "Executor error during find command :: caused by :: "
++            if dialect == "7.0"
++            else f"Executor error during find command: {namespace} :: caused by :: "
++        )
++    elif operation == "distinct":
++        prefix = (
++            "Executor error during distinct command on namespace: "
++            f"{namespace} :: caused by :: "
++            if dialect == "9.0"
++            else "Executor error during distinct command :: caused by :: "
+         )
+     elif dialect == "9.0" and operation in {"update_one", "update_many"}:
+         prefix = "Plan executor error during update :: caused by :: "

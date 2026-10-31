@@ -1,0 +1,741 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+____ test_registered_field_expression_owns_its_opaque_arguments[$getField] _____
+
+pipeline = [{'$project': {'v': {'$getField': {'opaque': '$$not_a_builtin_binding'}}}}]
+dialect = MongoDialect70(key='7.0', server_version='7.0', label='MongoDB 7.0', catalog_behavior_flags=mappingproxy({'uses_distin...ilities=frozenset({'query.null_matches_undefined'}), catalog_query_field_operators=None, catalog_update_operators=None)
+collection = None, scope = <object object at 0x107ad1930>, path = ()
+variables = frozenset()
+
+    def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
+        pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+        collection=_UNSPECIFIED,
+        scope=_UNSPECIFIED,
+        path=_UNSPECIFIED,
+        variables=_UNSPECIFIED,
+    ):
+        """Parse built-in join shapes before selecting a physical execution strategy."""
+        previous = (
+            pipeline.context
+            if isinstance(pipeline, PreparedPipeline)
+            else getattr(pipeline[0], "context", None)
+            if pipeline
+            else None
+        )
+        if collection is _UNSPECIFIED:
+            collection = previous.collection if previous is not None else None
+        if scope is _UNSPECIFIED:
+            scopes = previous.scopes if previous is not None else ()
+        else:
+            scopes = (
+                (() if scope == "root" else (scope,))
+                if isinstance(scope, str)
+                else tuple(scope)
+            )
+        if path is _UNSPECIFIED:
+            path = previous.path if previous is not None else ()
+        if variables is _UNSPECIFIED:
+            variables = previous.variables if previous is not None else frozenset()
+        context = PreparationContext(
+            collection,
+            scopes,
+            path,
+            _aggregation_stage_registry_version(),
+            frozenset(variables),
+        )
+        relocating = previous is not None and (
+            previous.collection != collection
+            or previous.scopes != scopes
+            or previous.path != path
+        )
+        if (
+            isinstance(pipeline, PreparedPipeline)
+            and pipeline.dialect is dialect
+            and pipeline.context == context
+        ):
+            return pipeline
+        stages, addresses, requests = [], [], []
+        average_prefix_compatible = (
+            dialect.server_version in {"8.0", "9.0"}
+            and not ({"$facet", "$lookup"} & set(scopes))
+        )
+        for index, stage in enumerate(pipeline):
+            operator, raw_spec = _require_stage(stage)
+            spec = _copy_spec(raw_spec)
+            address = (
+                StageAddress((*path, index), index)
+                if relocating
+                else getattr(stage, "address", StageAddress((*path, index), index))
+            )
+            if get_registered_aggregation_stage_registration(operator) is None:
+                try:
+>                   spec = _prepare_builtin_stage(
+                        operator, spec, dialect=dialect, address=address, context=context
+                    )
+
+src/mongoeco/core/aggregation/preparation.py:617: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/mongoeco/core/aggregation/preparation.py:544: in _prepare_builtin_stage
+    prepare_expression(
+src/mongoeco/core/aggregation/preparation.py:755: in prepare_expression
+    requires_document = _validate_expression_variables(
+src/mongoeco/core/aggregation/preparation.py:410: in _validate_expression_variables
+    requires_document = _validate_expression_values(
+src/mongoeco/core/aggregation/preparation.py:356: in _validate_expression_values
+    requires_document |= _validate_expression_variables(value, dialect, variables)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/mongoeco/core/aggregation/preparation.py:379: in _validate_expression_variables
+    parse_field_expression(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+operator = '$getField', spec = {'opaque': '$$not_a_builtin_binding'}
+parse_operand = <function _validate_expression_variables.<locals>.<lambda> at 0x1109df8a0>
+
+    def parse_field_expression(operator, spec, *, parse_operand=None):
+        """Own the syntax of field expressions without evaluating input documents."""
+        getter = operator == "$getField"
+        if getter and not isinstance(spec, dict):
+            parsed = {"field": spec, "input": "$$CURRENT"}
+            if parse_operand is not None:
+                for operand in parsed.values():
+                    parse_operand(operand)
+        else:
+            if not isinstance(spec, dict):
+                message = f"{operator} only supports an object as its argument"
+                raise server_error(message, code=4161100, reason="expression_structure")
+            allowed = {"field", "input"} | ({"value"} if operator == "$setField" else set())
+            for key, operand in spec.items():
+                if key not in allowed:
+                    message = f"{operator} found an unknown argument: {key}"
+>                   raise server_error(
+                        message,
+                        code=3041701 if getter else 4161101,
+                        reason="expression_structure",
+                    )
+E                   mongoeco.errors.OperationFailure: $getField found an unknown argument: opaque, full error: {'ok': 0.0, 'code': 3041701, 'codeName': 'Location3041701', 'errmsg': '$getField found an unknown argument: opaque'}
+
+src/mongoeco/core/aggregation/control_object_expressions.py:66: OperationFailure
+
+The above exception was the direct cause of the following exception:
+
+operator = '$getField'
+
+    @pytest.mark.parametrize("operator", ["$getField", "$setField", "$unsetField"])
+    def test_registered_field_expression_owns_its_opaque_arguments(operator):
+        previous = get_registered_aggregation_expression_operator(operator)
+        handler = Mock(return_value="extension-result")
+        operand = {"opaque": "$$not_a_builtin_binding"}
+        register_aggregation_expression_operator(operator, handler)
+        try:
+>           prepared = prepare_pipeline([{"$project": {"v": {operator: operand}}}])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/core/test_prepared_expression_extensions.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pipeline = [{'$project': {'v': {'$getField': {'opaque': '$$not_a_builtin_binding'}}}}]
+dialect = MongoDialect70(key='7.0', server_version='7.0', label='MongoDB 7.0', catalog_behavior_flags=mappingproxy({'uses_distin...ilities=frozenset({'query.null_matches_undefined'}), catalog_query_field_operators=None, catalog_update_operators=None)
+collection = None, scope = <object object at 0x107ad1930>, path = ()
+variables = frozenset()
+
+    def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
+        pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+        collection=_UNSPECIFIED,
+        scope=_UNSPECIFIED,
+        path=_UNSPECIFIED,
+        variables=_UNSPECIFIED,
+    ):
+        """Parse built-in join shapes before selecting a physical execution strategy."""
+        previous = (
+            pipeline.context
+            if isinstance(pipeline, PreparedPipeline)
+            else getattr(pipeline[0], "context", None)
+            if pipeline
+            else None
+        )
+        if collection is _UNSPECIFIED:
+            collection = previous.collection if previous is not None else None
+        if scope is _UNSPECIFIED:
+            scopes = previous.scopes if previous is not None else ()
+        else:
+            scopes = (
+                (() if scope == "root" else (scope,))
+                if isinstance(scope, str)
+                else tuple(scope)
+            )
+        if path is _UNSPECIFIED:
+            path = previous.path if previous is not None else ()
+        if variables is _UNSPECIFIED:
+            variables = previous.variables if previous is not None else frozenset()
+        context = PreparationContext(
+            collection,
+            scopes,
+            path,
+            _aggregation_stage_registry_version(),
+            frozenset(variables),
+        )
+        relocating = previous is not None and (
+            previous.collection != collection
+            or previous.scopes != scopes
+            or previous.path != path
+        )
+        if (
+            isinstance(pipeline, PreparedPipeline)
+            and pipeline.dialect is dialect
+            and pipeline.context == context
+        ):
+            return pipeline
+        stages, addresses, requests = [], [], []
+        average_prefix_compatible = (
+            dialect.server_version in {"8.0", "9.0"}
+            and not ({"$facet", "$lookup"} & set(scopes))
+        )
+        for index, stage in enumerate(pipeline):
+            operator, raw_spec = _require_stage(stage)
+            spec = _copy_spec(raw_spec)
+            address = (
+                StageAddress((*path, index), index)
+                if relocating
+                else getattr(stage, "address", StageAddress((*path, index), index))
+            )
+            if get_registered_aggregation_stage_registration(operator) is None:
+                try:
+                    spec = _prepare_builtin_stage(
+                        operator, spec, dialect=dialect, address=address, context=context
+                    )
+                except OperationFailure as error:
+                    diagnostic = getattr(error, "_server_diagnostic", None)
+                    parsing = (
+                        diagnostic is not None
+                        and diagnostic.reason
+                        in {
+                            "expression_unknown",
+                            "expression_arity",
+                            "expression_structure",
+                        }
+                        and operator in {"$project", "$set", "$addFields"}
+                    )
+                    if (
+                        error.code != _UNDEFINED_VARIABLE_CODE or operator == "$match"
+                    ) and not parsing:
+                        raise
+                    message = f"Invalid {operator} :: caused by :: {error_message(error)}"
+                    if parsing:
+>                       raise server_error(
+                            message, code=error.code, reason="expression_parse"
+                        ) from error
+E                       mongoeco.errors.OperationFailure: Invalid $project :: caused by :: $getField found an unknown argument: opaque, full error: {'ok': 0.0, 'code': 3041701, 'codeName': 'Location3041701', 'errmsg': 'Invalid $project :: caused by :: $getField found an unknown argument: opaque'}
+
+src/mongoeco/core/aggregation/preparation.py:638: OperationFailure
+____ test_registered_field_expression_owns_its_opaque_arguments[$setField] _____
+
+pipeline = [{'$project': {'v': {'$setField': {'opaque': '$$not_a_builtin_binding'}}}}]
+dialect = MongoDialect70(key='7.0', server_version='7.0', label='MongoDB 7.0', catalog_behavior_flags=mappingproxy({'uses_distin...ilities=frozenset({'query.null_matches_undefined'}), catalog_query_field_operators=None, catalog_update_operators=None)
+collection = None, scope = <object object at 0x107ad1930>, path = ()
+variables = frozenset()
+
+    def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
+        pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+        collection=_UNSPECIFIED,
+        scope=_UNSPECIFIED,
+        path=_UNSPECIFIED,
+        variables=_UNSPECIFIED,
+    ):
+        """Parse built-in join shapes before selecting a physical execution strategy."""
+        previous = (
+            pipeline.context
+            if isinstance(pipeline, PreparedPipeline)
+            else getattr(pipeline[0], "context", None)
+            if pipeline
+            else None
+        )
+        if collection is _UNSPECIFIED:
+            collection = previous.collection if previous is not None else None
+        if scope is _UNSPECIFIED:
+            scopes = previous.scopes if previous is not None else ()
+        else:
+            scopes = (
+                (() if scope == "root" else (scope,))
+                if isinstance(scope, str)
+                else tuple(scope)
+            )
+        if path is _UNSPECIFIED:
+            path = previous.path if previous is not None else ()
+        if variables is _UNSPECIFIED:
+            variables = previous.variables if previous is not None else frozenset()
+        context = PreparationContext(
+            collection,
+            scopes,
+            path,
+            _aggregation_stage_registry_version(),
+            frozenset(variables),
+        )
+        relocating = previous is not None and (
+            previous.collection != collection
+            or previous.scopes != scopes
+            or previous.path != path
+        )
+        if (
+            isinstance(pipeline, PreparedPipeline)
+            and pipeline.dialect is dialect
+            and pipeline.context == context
+        ):
+            return pipeline
+        stages, addresses, requests = [], [], []
+        average_prefix_compatible = (
+            dialect.server_version in {"8.0", "9.0"}
+            and not ({"$facet", "$lookup"} & set(scopes))
+        )
+        for index, stage in enumerate(pipeline):
+            operator, raw_spec = _require_stage(stage)
+            spec = _copy_spec(raw_spec)
+            address = (
+                StageAddress((*path, index), index)
+                if relocating
+                else getattr(stage, "address", StageAddress((*path, index), index))
+            )
+            if get_registered_aggregation_stage_registration(operator) is None:
+                try:
+>                   spec = _prepare_builtin_stage(
+                        operator, spec, dialect=dialect, address=address, context=context
+                    )
+
+src/mongoeco/core/aggregation/preparation.py:617: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/mongoeco/core/aggregation/preparation.py:544: in _prepare_builtin_stage
+    prepare_expression(
+src/mongoeco/core/aggregation/preparation.py:755: in prepare_expression
+    requires_document = _validate_expression_variables(
+src/mongoeco/core/aggregation/preparation.py:410: in _validate_expression_variables
+    requires_document = _validate_expression_values(
+src/mongoeco/core/aggregation/preparation.py:356: in _validate_expression_values
+    requires_document |= _validate_expression_variables(value, dialect, variables)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/mongoeco/core/aggregation/preparation.py:379: in _validate_expression_variables
+    parse_field_expression(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+operator = '$setField', spec = {'opaque': '$$not_a_builtin_binding'}
+parse_operand = <function _validate_expression_variables.<locals>.<lambda> at 0x1109dfab0>
+
+    def parse_field_expression(operator, spec, *, parse_operand=None):
+        """Own the syntax of field expressions without evaluating input documents."""
+        getter = operator == "$getField"
+        if getter and not isinstance(spec, dict):
+            parsed = {"field": spec, "input": "$$CURRENT"}
+            if parse_operand is not None:
+                for operand in parsed.values():
+                    parse_operand(operand)
+        else:
+            if not isinstance(spec, dict):
+                message = f"{operator} only supports an object as its argument"
+                raise server_error(message, code=4161100, reason="expression_structure")
+            allowed = {"field", "input"} | ({"value"} if operator == "$setField" else set())
+            for key, operand in spec.items():
+                if key not in allowed:
+                    message = f"{operator} found an unknown argument: {key}"
+>                   raise server_error(
+                        message,
+                        code=3041701 if getter else 4161101,
+                        reason="expression_structure",
+                    )
+E                   mongoeco.errors.OperationFailure: $setField found an unknown argument: opaque, full error: {'ok': 0.0, 'code': 4161101, 'codeName': 'Location4161101', 'errmsg': '$setField found an unknown argument: opaque'}
+
+src/mongoeco/core/aggregation/control_object_expressions.py:66: OperationFailure
+
+The above exception was the direct cause of the following exception:
+
+operator = '$setField'
+
+    @pytest.mark.parametrize("operator", ["$getField", "$setField", "$unsetField"])
+    def test_registered_field_expression_owns_its_opaque_arguments(operator):
+        previous = get_registered_aggregation_expression_operator(operator)
+        handler = Mock(return_value="extension-result")
+        operand = {"opaque": "$$not_a_builtin_binding"}
+        register_aggregation_expression_operator(operator, handler)
+        try:
+>           prepared = prepare_pipeline([{"$project": {"v": {operator: operand}}}])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/core/test_prepared_expression_extensions.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pipeline = [{'$project': {'v': {'$setField': {'opaque': '$$not_a_builtin_binding'}}}}]
+dialect = MongoDialect70(key='7.0', server_version='7.0', label='MongoDB 7.0', catalog_behavior_flags=mappingproxy({'uses_distin...ilities=frozenset({'query.null_matches_undefined'}), catalog_query_field_operators=None, catalog_update_operators=None)
+collection = None, scope = <object object at 0x107ad1930>, path = ()
+variables = frozenset()
+
+    def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
+        pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+        collection=_UNSPECIFIED,
+        scope=_UNSPECIFIED,
+        path=_UNSPECIFIED,
+        variables=_UNSPECIFIED,
+    ):
+        """Parse built-in join shapes before selecting a physical execution strategy."""
+        previous = (
+            pipeline.context
+            if isinstance(pipeline, PreparedPipeline)
+            else getattr(pipeline[0], "context", None)
+            if pipeline
+            else None
+        )
+        if collection is _UNSPECIFIED:
+            collection = previous.collection if previous is not None else None
+        if scope is _UNSPECIFIED:
+            scopes = previous.scopes if previous is not None else ()
+        else:
+            scopes = (
+                (() if scope == "root" else (scope,))
+                if isinstance(scope, str)
+                else tuple(scope)
+            )
+        if path is _UNSPECIFIED:
+            path = previous.path if previous is not None else ()
+        if variables is _UNSPECIFIED:
+            variables = previous.variables if previous is not None else frozenset()
+        context = PreparationContext(
+            collection,
+            scopes,
+            path,
+            _aggregation_stage_registry_version(),
+            frozenset(variables),
+        )
+        relocating = previous is not None and (
+            previous.collection != collection
+            or previous.scopes != scopes
+            or previous.path != path
+        )
+        if (
+            isinstance(pipeline, PreparedPipeline)
+            and pipeline.dialect is dialect
+            and pipeline.context == context
+        ):
+            return pipeline
+        stages, addresses, requests = [], [], []
+        average_prefix_compatible = (
+            dialect.server_version in {"8.0", "9.0"}
+            and not ({"$facet", "$lookup"} & set(scopes))
+        )
+        for index, stage in enumerate(pipeline):
+            operator, raw_spec = _require_stage(stage)
+            spec = _copy_spec(raw_spec)
+            address = (
+                StageAddress((*path, index), index)
+                if relocating
+                else getattr(stage, "address", StageAddress((*path, index), index))
+            )
+            if get_registered_aggregation_stage_registration(operator) is None:
+                try:
+                    spec = _prepare_builtin_stage(
+                        operator, spec, dialect=dialect, address=address, context=context
+                    )
+                except OperationFailure as error:
+                    diagnostic = getattr(error, "_server_diagnostic", None)
+                    parsing = (
+                        diagnostic is not None
+                        and diagnostic.reason
+                        in {
+                            "expression_unknown",
+                            "expression_arity",
+                            "expression_structure",
+                        }
+                        and operator in {"$project", "$set", "$addFields"}
+                    )
+                    if (
+                        error.code != _UNDEFINED_VARIABLE_CODE or operator == "$match"
+                    ) and not parsing:
+                        raise
+                    message = f"Invalid {operator} :: caused by :: {error_message(error)}"
+                    if parsing:
+>                       raise server_error(
+                            message, code=error.code, reason="expression_parse"
+                        ) from error
+E                       mongoeco.errors.OperationFailure: Invalid $project :: caused by :: $setField found an unknown argument: opaque, full error: {'ok': 0.0, 'code': 4161101, 'codeName': 'Location4161101', 'errmsg': 'Invalid $project :: caused by :: $setField found an unknown argument: opaque'}
+
+src/mongoeco/core/aggregation/preparation.py:638: OperationFailure
+___ test_registered_field_expression_owns_its_opaque_arguments[$unsetField] ____
+
+pipeline = [{'$project': {'v': {'$unsetField': {'opaque': '$$not_a_builtin_binding'}}}}]
+dialect = MongoDialect70(key='7.0', server_version='7.0', label='MongoDB 7.0', catalog_behavior_flags=mappingproxy({'uses_distin...ilities=frozenset({'query.null_matches_undefined'}), catalog_query_field_operators=None, catalog_update_operators=None)
+collection = None, scope = <object object at 0x107ad1930>, path = ()
+variables = frozenset()
+
+    def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
+        pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+        collection=_UNSPECIFIED,
+        scope=_UNSPECIFIED,
+        path=_UNSPECIFIED,
+        variables=_UNSPECIFIED,
+    ):
+        """Parse built-in join shapes before selecting a physical execution strategy."""
+        previous = (
+            pipeline.context
+            if isinstance(pipeline, PreparedPipeline)
+            else getattr(pipeline[0], "context", None)
+            if pipeline
+            else None
+        )
+        if collection is _UNSPECIFIED:
+            collection = previous.collection if previous is not None else None
+        if scope is _UNSPECIFIED:
+            scopes = previous.scopes if previous is not None else ()
+        else:
+            scopes = (
+                (() if scope == "root" else (scope,))
+                if isinstance(scope, str)
+                else tuple(scope)
+            )
+        if path is _UNSPECIFIED:
+            path = previous.path if previous is not None else ()
+        if variables is _UNSPECIFIED:
+            variables = previous.variables if previous is not None else frozenset()
+        context = PreparationContext(
+            collection,
+            scopes,
+            path,
+            _aggregation_stage_registry_version(),
+            frozenset(variables),
+        )
+        relocating = previous is not None and (
+            previous.collection != collection
+            or previous.scopes != scopes
+            or previous.path != path
+        )
+        if (
+            isinstance(pipeline, PreparedPipeline)
+            and pipeline.dialect is dialect
+            and pipeline.context == context
+        ):
+            return pipeline
+        stages, addresses, requests = [], [], []
+        average_prefix_compatible = (
+            dialect.server_version in {"8.0", "9.0"}
+            and not ({"$facet", "$lookup"} & set(scopes))
+        )
+        for index, stage in enumerate(pipeline):
+            operator, raw_spec = _require_stage(stage)
+            spec = _copy_spec(raw_spec)
+            address = (
+                StageAddress((*path, index), index)
+                if relocating
+                else getattr(stage, "address", StageAddress((*path, index), index))
+            )
+            if get_registered_aggregation_stage_registration(operator) is None:
+                try:
+>                   spec = _prepare_builtin_stage(
+                        operator, spec, dialect=dialect, address=address, context=context
+                    )
+
+src/mongoeco/core/aggregation/preparation.py:617: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/mongoeco/core/aggregation/preparation.py:544: in _prepare_builtin_stage
+    prepare_expression(
+src/mongoeco/core/aggregation/preparation.py:755: in prepare_expression
+    requires_document = _validate_expression_variables(
+src/mongoeco/core/aggregation/preparation.py:410: in _validate_expression_variables
+    requires_document = _validate_expression_values(
+src/mongoeco/core/aggregation/preparation.py:356: in _validate_expression_values
+    requires_document |= _validate_expression_variables(value, dialect, variables)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/mongoeco/core/aggregation/preparation.py:379: in _validate_expression_variables
+    parse_field_expression(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+operator = '$unsetField', spec = {'opaque': '$$not_a_builtin_binding'}
+parse_operand = <function _validate_expression_variables.<locals>.<lambda> at 0x1109f1b10>
+
+    def parse_field_expression(operator, spec, *, parse_operand=None):
+        """Own the syntax of field expressions without evaluating input documents."""
+        getter = operator == "$getField"
+        if getter and not isinstance(spec, dict):
+            parsed = {"field": spec, "input": "$$CURRENT"}
+            if parse_operand is not None:
+                for operand in parsed.values():
+                    parse_operand(operand)
+        else:
+            if not isinstance(spec, dict):
+                message = f"{operator} only supports an object as its argument"
+                raise server_error(message, code=4161100, reason="expression_structure")
+            allowed = {"field", "input"} | ({"value"} if operator == "$setField" else set())
+            for key, operand in spec.items():
+                if key not in allowed:
+                    message = f"{operator} found an unknown argument: {key}"
+>                   raise server_error(
+                        message,
+                        code=3041701 if getter else 4161101,
+                        reason="expression_structure",
+                    )
+E                   mongoeco.errors.OperationFailure: $unsetField found an unknown argument: opaque, full error: {'ok': 0.0, 'code': 4161101, 'codeName': 'Location4161101', 'errmsg': '$unsetField found an unknown argument: opaque'}
+
+src/mongoeco/core/aggregation/control_object_expressions.py:66: OperationFailure
+
+The above exception was the direct cause of the following exception:
+
+operator = '$unsetField'
+
+    @pytest.mark.parametrize("operator", ["$getField", "$setField", "$unsetField"])
+    def test_registered_field_expression_owns_its_opaque_arguments(operator):
+        previous = get_registered_aggregation_expression_operator(operator)
+        handler = Mock(return_value="extension-result")
+        operand = {"opaque": "$$not_a_builtin_binding"}
+        register_aggregation_expression_operator(operator, handler)
+        try:
+>           prepared = prepare_pipeline([{"$project": {"v": {operator: operand}}}])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/core/test_prepared_expression_extensions.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pipeline = [{'$project': {'v': {'$unsetField': {'opaque': '$$not_a_builtin_binding'}}}}]
+dialect = MongoDialect70(key='7.0', server_version='7.0', label='MongoDB 7.0', catalog_behavior_flags=mappingproxy({'uses_distin...ilities=frozenset({'query.null_matches_undefined'}), catalog_query_field_operators=None, catalog_update_operators=None)
+collection = None, scope = <object object at 0x107ad1930>, path = ()
+variables = frozenset()
+
+    def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
+        pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+        collection=_UNSPECIFIED,
+        scope=_UNSPECIFIED,
+        path=_UNSPECIFIED,
+        variables=_UNSPECIFIED,
+    ):
+        """Parse built-in join shapes before selecting a physical execution strategy."""
+        previous = (
+            pipeline.context
+            if isinstance(pipeline, PreparedPipeline)
+            else getattr(pipeline[0], "context", None)
+            if pipeline
+            else None
+        )
+        if collection is _UNSPECIFIED:
+            collection = previous.collection if previous is not None else None
+        if scope is _UNSPECIFIED:
+            scopes = previous.scopes if previous is not None else ()
+        else:
+            scopes = (
+                (() if scope == "root" else (scope,))
+                if isinstance(scope, str)
+                else tuple(scope)
+            )
+        if path is _UNSPECIFIED:
+            path = previous.path if previous is not None else ()
+        if variables is _UNSPECIFIED:
+            variables = previous.variables if previous is not None else frozenset()
+        context = PreparationContext(
+            collection,
+            scopes,
+            path,
+            _aggregation_stage_registry_version(),
+            frozenset(variables),
+        )
+        relocating = previous is not None and (
+            previous.collection != collection
+            or previous.scopes != scopes
+            or previous.path != path
+        )
+        if (
+            isinstance(pipeline, PreparedPipeline)
+            and pipeline.dialect is dialect
+            and pipeline.context == context
+        ):
+            return pipeline
+        stages, addresses, requests = [], [], []
+        average_prefix_compatible = (
+            dialect.server_version in {"8.0", "9.0"}
+            and not ({"$facet", "$lookup"} & set(scopes))
+        )
+        for index, stage in enumerate(pipeline):
+            operator, raw_spec = _require_stage(stage)
+            spec = _copy_spec(raw_spec)
+            address = (
+                StageAddress((*path, index), index)
+                if relocating
+                else getattr(stage, "address", StageAddress((*path, index), index))
+            )
+            if get_registered_aggregation_stage_registration(operator) is None:
+                try:
+                    spec = _prepare_builtin_stage(
+                        operator, spec, dialect=dialect, address=address, context=context
+                    )
+                except OperationFailure as error:
+                    diagnostic = getattr(error, "_server_diagnostic", None)
+                    parsing = (
+                        diagnostic is not None
+                        and diagnostic.reason
+                        in {
+                            "expression_unknown",
+                            "expression_arity",
+                            "expression_structure",
+                        }
+                        and operator in {"$project", "$set", "$addFields"}
+                    )
+                    if (
+                        error.code != _UNDEFINED_VARIABLE_CODE or operator == "$match"
+                    ) and not parsing:
+                        raise
+                    message = f"Invalid {operator} :: caused by :: {error_message(error)}"
+                    if parsing:
+>                       raise server_error(
+                            message, code=error.code, reason="expression_parse"
+                        ) from error
+E                       mongoeco.errors.OperationFailure: Invalid $project :: caused by :: $unsetField found an unknown argument: opaque, full error: {'ok': 0.0, 'code': 4161101, 'codeName': 'Location4161101', 'errmsg': 'Invalid $project :: caused by :: $unsetField found an unknown argument: opaque'}
+
+src/mongoeco/core/aggregation/preparation.py:638: OperationFailure
+_____ test_expression_registry_changes_refresh_native_average_finalization _____
+
+    def test_expression_registry_changes_refresh_native_average_finalization():
+        previous = get_registered_aggregation_expression_operator("$not")
+        handler = Mock(return_value=False)
+        register_aggregation_expression_operator("$not", handler)
+        try:
+            prepared = prepare_pipeline(
+                [
+                    {"$sort": {"_id": 1}},
+                    {"$group": {"_id": {"$not": False}, "average": {"$avg": "$x"}}},
+                ],
+                dialect=MONGODB_DIALECT_80,
+            )
+            handler.assert_not_called()
+            unregister_aggregation_expression_operator("$not")
+            # Use the independent captured plain-MongoDB request as the oracle after
+            # removing the local override, rather than comparing two local planners.
+            capture = json.loads(
+                (
+                    Path(__file__).parents[2]
+                    / "fixtures"
+                    / "semantic_expression_grammar_8_0.json"
+                ).read_text()
+            )
+            native = capture["cases"]["semantic_expression_average_contexts"]["$not"][0]
+            maximum = 2**63 - 1
+            rows = [
+                {"_id": i, "x": value} for i, value in enumerate((maximum, 1, -maximum))
+            ]
+            result = apply_pipeline(rows, prepared, dialect=MONGODB_DIALECT_80)
+>           assert result == [
+                {"_id": True, "average": float(native["average"]["$numberDouble"])}
+            ]
+E           AssertionError: assert [{'_id': True...verage': 0.0}] == [{'_id': True...333333333333}]
+E             
+E             At index 0 diff: {'_id': True, 'average': 0.0} != {'_id': True, 'average': 0.3333333333333333}
+E             Use -v to get more diff
+
+tests/unit/core/test_prepared_expression_extensions.py:69: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/core/test_prepared_expression_extensions.py::test_registered_field_expression_owns_its_opaque_arguments[$getField]
+FAILED tests/unit/core/test_prepared_expression_extensions.py::test_registered_field_expression_owns_its_opaque_arguments[$setField]
+FAILED tests/unit/core/test_prepared_expression_extensions.py::test_registered_field_expression_owns_its_opaque_arguments[$unsetField]
+FAILED tests/unit/core/test_prepared_expression_extensions.py::test_expression_registry_changes_refresh_native_average_finalization
+4 failed in 0.30s

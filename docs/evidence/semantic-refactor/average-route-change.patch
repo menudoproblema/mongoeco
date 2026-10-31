@@ -1,0 +1,386 @@
+--- a/src/mongoeco/core/aggregation/group_average.py
++++ b/src/mongoeco/core/aggregation/group_average.py
+@@ -0,0 +1,161 @@
++"""Select the captured native average finalization before physical slicing.
++
++This is numeric compatibility metadata, not a second execution planner. The
++classic evaluator uses the double total; native slot-based groups finalize the
++BSON sum first. Grammar support remains owned by the existing dialect catalog.
++"""
++
++from mongoeco.core.aggregation.extensions import (
++    get_registered_aggregation_expression_operator,
++    get_registered_aggregation_stage_registration,
++)
++
++
++# Native 8/9 expression lowering boundaries (see average-route-source-notes.md).
++_CLASSIC_EXPRESSIONS = frozenset(
++    {
++        "$allElementsTrue",
++        "$arrayElemAt",
++        "$bitAnd",
++        "$bitOr",
++        "$bitXor",
++        "$bitNot",
++        "$first",
++        "$last",
++        "$filter",
++        "$in",
++        "$indexOfArray",
++        "$log",
++        "$map",
++        "$meta",
++        "$reduce",
++        "$replaceAll",
++        "$size",
++        "$slice",
++        "$strcasecmp",
++        "$substr",
++        "$substrBytes",
++        "$substrCP",
++        "$binarySize",
++        "$strLenCP",
++        "$type",
++        "$zip",
++        "$convert",
++        "$avg",
++        "$firstN",
++        "$lastN",
++        "$max",
++        "$min",
++        "$maxN",
++        "$minN",
++        "$median",
++        "$percentile",
++        "$stdDevPop",
++        "$stdDevSamp",
++        "$sum",
++        "$mergeObjects",
++        "$rand",
++        "$toHashedIndexKey",
++        "$getField",
++        "$setField",
++        "$unsetField",
++        "$toBool",
++        "$toDate",
++        "$toDecimal",
++        "$toInt",
++        "$toDouble",
++        "$toLong",
++        "$toObjectId",
++        "$toUUID",
++        "$toString",
++    }
++)
++
++
++def _expression_compatible(value, dialect):
++    if isinstance(value, list):
++        return all(_expression_compatible(item, dialect) for item in value)
++    if not isinstance(value, dict):
++        return True
++    for name, operand in value.items():
++        if name in {"$literal", "$const"}:
++            continue
++        if name.startswith("$") and (
++            (
++                name in _CLASSIC_EXPRESSIONS
++                and not (dialect.server_version == "9.0" and name == "$in")
++            )
++            or not dialect.supports_aggregation_expression_operator(name)
++            or get_registered_aggregation_expression_operator(name) is not None
++        ):
++            return False
++        if not _expression_compatible(operand, dialect):
++            return False
++    return True
++
++
++def group_average_uses_sum(spec, *, dialect):
++    return (
++        isinstance(spec, dict)
++        and _expression_compatible(spec.get("_id"), dialect)
++        and all(
++            isinstance(value, dict) for name, value in spec.items() if name != "_id"
++        )
++        and all(
++            _expression_compatible(operand, dialect)
++            for name, accumulator in spec.items()
++            if name != "_id"
++            for operand in accumulator.values()
++        )
++    )
++
++
++def group_average_prefix_compatible(operator, spec, *, dialect):
++    if get_registered_aggregation_stage_registration(operator) is not None:
++        return False
++    if operator in {"$sort", "$skip", "$limit"}:
++        return True
++    if operator == "$match":
++        return _match_compatible(spec, dialect)
++    if dialect.server_version == "9.0" and operator in {
++        "$project",
++        "$set",
++        "$addFields",
++        "$unset",
++        "$replaceRoot",
++        "$replaceWith",
++    }:
++        return _expression_compatible(spec, dialect)
++    if operator == "$project":
++        return (
++            any(
++                name != "_id" and value not in (False, 0)
++                for name, value in spec.items()
++            )
++            and not any(
++                name != "_id" and value in (False, 0) for name, value in spec.items()
++            )
++            and _expression_compatible(spec, dialect)
++        )
++    return (
++        operator == "$lookup"
++        and "pipeline" not in spec
++        and "let" not in spec
++        and all(
++            not any(part.isdigit() for part in spec.get(field, "").split("."))
++            for field in ("localField", "foreignField")
++        )
++    )
++
++
++def _match_compatible(spec, dialect):
++    for name, value in spec.items():
++        if name in {"$where", "$text", "$jsonSchema"}:
++            return False
++        if name == "$expr" and not _expression_compatible(value, dialect):
++            return False
++        if name in {"$and", "$or", "$nor"} and not all(
++            _match_compatible(item, dialect) for item in value
++        ):
++            return False
++    return True
+--- a/src/mongoeco/core/aggregation/preparation.py
++++ b/src/mongoeco/core/aggregation/preparation.py
+@@ -15,6 +15,10 @@
+     _aggregation_stage_registry_version,
+     get_registered_aggregation_expression_operator,
+     get_registered_aggregation_stage_registration,
++)
++from mongoeco.core.aggregation.group_average import (
++    group_average_prefix_compatible,
++    group_average_uses_sum,
+ )
+ from mongoeco.core.aggregation.grouping_stages import validate_date_range_window
+ from mongoeco.core.aggregation.information_stages import (
+@@ -78,6 +82,7 @@
+         super().__init__({operator: spec})
+         self.address = address
+         self.context = context
++        self.group_average_uses_sum = False
+ 
+ 
+ class PreparedPipeline(list):
+@@ -515,6 +520,10 @@
+     ):
+         return pipeline
+     stages, addresses, requests = [], [], []
++    average_prefix_compatible = (
++        dialect.server_version in {"8.0", "9.0"}
++        and not ({"$facet", "$lookup"} & set(scopes))
++    )
+     for index, stage in enumerate(pipeline):
+         operator, raw_spec = _require_stage(stage)
+         spec = _copy_spec(raw_spec)
+@@ -538,7 +547,20 @@
+                     message, code=error.code, details=details
+                 ) from error
+         requests.extend(_discover_stage_requests(operator, spec, collection))
+-        stages.append(PreparedStage(operator, spec, address, context))
++        prepared_stage = PreparedStage(operator, spec, address, context)
++        if operator == "$group":
++            prepared_stage.group_average_uses_sum = (
++                stage.group_average_uses_sum
++                if isinstance(stage, PreparedStage) and not relocating
++                and stage.context == context
++                else average_prefix_compatible
++                and group_average_uses_sum(spec, dialect=dialect)
++            )
++        average_prefix_compatible = (
++            average_prefix_compatible
++            and group_average_prefix_compatible(operator, spec, dialect=dialect)
++        )
++        stages.append(prepared_stage)
+         addresses.append(address)
+     return PreparedPipeline(
+         stages, addresses, requests, dialect=dialect, context=context
+--- a/src/mongoeco/core/aggregation/numeric_accumulation.py
++++ b/src/mongoeco/core/aggregation/numeric_accumulation.py
+@@ -101,12 +101,15 @@
+             return BsonInt64(integer)
+         return integer
+ 
+-    def average(self, count: int) -> object:
++    def average(self, count: int, *, finalize_sum: bool = False) -> object:
+         if not count:
+             return None
+         if self.decimal_total is not None:
+             with localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+                 return BsonDecimal128(context.divide(self._decimal(), Decimal(count)))
++        if finalize_sum and self.kind != "double":
++            total = self.sum()
++            return (total.value if isinstance(total, BsonInt64) else total) / count
+         return self._double() / count
+ 
+ 
+--- a/src/mongoeco/core/aggregation/accumulators.py
++++ b/src/mongoeco/core/aggregation/accumulators.py
+@@ -103,6 +103,7 @@
+     values: dict[str, Any]
+     flags: dict[str, bool] = field(default_factory=dict)
+     include_bucket_id: bool = True
++    group_average_uses_sum: bool = False
+ 
+ 
+ def _accumulator_flags(bucket: dict[object, Any] | _AccumulatorBucket) -> dict[str, bool]:
+@@ -673,7 +674,12 @@
+         if isinstance(value, NumericSum):
+             document[field] = value.sum()
+         elif isinstance(value, _AverageAccumulator):
+-            document[field] = value.total.average(value.count)
++            document[field] = value.total.average(
++                value.count, finalize_sum=(
++                    isinstance(bucket, _AccumulatorBucket)
++                    and bucket.group_average_uses_sum
++                ),
++            )
+         elif isinstance(value, _StdDevAccumulator):
+             if value.invalid or value.count == 0:
+                 document[field] = None
+--- a/src/mongoeco/core/aggregation/grouping_stages.py
++++ b/src/mongoeco/core/aggregation/grouping_stages.py
+@@ -620,6 +620,7 @@
+     dialect: MongoDialect = MONGODB_DIALECT_70,
+     collation: CollationSpec | None = None,
+     deadline: float | None = None,
++    group_average_uses_sum: bool = False,
+ ) -> list[Document]:
+     if not isinstance(spec, dict) or "_id" not in spec:
+         raise OperationFailure("$group requires a document specification with _id")
+@@ -632,6 +633,7 @@
+         dialect=dialect,
+         collation=collation,
+         deadline=deadline,
++        group_average_uses_sum=group_average_uses_sum,
+     )
+     accumulator.consume(documents)
+     return accumulator.finish()
+@@ -640,7 +642,7 @@
+ class _IncrementalGroup:
+     """Own group accumulator state without retaining its input documents."""
+ 
+-    def __init__(
++    def __init__(  # noqa: PLR0913 - prepared numeric finalization and execution context
+         self,
+         spec: object,
+         variables: dict[str, Any] | None = None,
+@@ -648,6 +650,7 @@
+         dialect: MongoDialect = MONGODB_DIALECT_70,
+         collation: CollationSpec | None = None,
+         deadline: float | None = None,
++        group_average_uses_sum: bool = False,
+     ) -> None:
+         if not isinstance(spec, dict) or "_id" not in spec:
+             message = "$group requires a document specification with _id"
+@@ -655,6 +658,7 @@
+         self._id_expression = spec["_id"]
+         _validate_empty_group_fields(spec, dialect=dialect)
+         self._variables = aggregation_environment(variables, collation)
++        self._group_average_uses_sum = group_average_uses_sum
+         self._dialect = dialect
+         self._collation = collation
+         self._deadline = deadline
+@@ -708,6 +712,7 @@
+         if group_key not in self._groups:
+             self._groups[group_key] = _AccumulatorBucket(
+                 bucket_id=_copy_if_mutable(group_id),
++                group_average_uses_sum=self._group_average_uses_sum,
+                 values=_create_accumulator_state(
+                     self._prepared,
+                     unsupported_message="Unsupported $group accumulator",
+--- a/src/mongoeco/core/aggregation/runtime.py
++++ b/src/mongoeco/core/aggregation/runtime.py
+@@ -158,6 +158,7 @@
+     lookup_hash_max_associations: int | None = None
+     deadline: float | None = None
+ 
++    group_average_uses_sum: bool = False
+ 
+ def aggregation_equality_key(value: Any, collation: CollationSpec | None = None) -> Any:
+     """Semantic group identity, independent of physical numeric representation."""
+--- a/src/mongoeco/core/aggregation/stages.py
++++ b/src/mongoeco/core/aggregation/stages.py
+@@ -230,6 +230,7 @@
+         dialect=context.dialect,
+         collation=context.collation,
+         deadline=context.deadline,
++        group_average_uses_sum=context.group_average_uses_sum,
+     )
+ 
+ 
+@@ -1266,6 +1267,7 @@
+             spec,
+             AggregationStageContext(
+                 stage_index=pipeline.addresses[index].index,
++                group_average_uses_sum=stage.group_average_uses_sum,
+                 collection_resolver=collection_resolver,
+                 collection_stats_resolver=collection_stats_resolver,
+                 index_stats_resolver=index_stats_resolver,
+--- a/src/mongoeco/core/aggregation/runtime_state.py
++++ b/src/mongoeco/core/aggregation/runtime_state.py
+@@ -779,6 +779,7 @@
+                     dialect=dialect,
+                     collation=collation,
+                     deadline=deadline,
++                    group_average_uses_sum=stage.group_average_uses_sum,
+                 )
+             elif operator == "$bucket":
+                 output = _apply_bucket(
+--- a/src/mongoeco/api/_async/aggregation_cursor.py
++++ b/src/mongoeco/api/_async/aggregation_cursor.py
+@@ -125,6 +125,7 @@
+     prefix_limit: int | None
+     group_spec: object
+     suffix: Pipeline
++    group_average_uses_sum: bool = False
+ 
+ 
+ @dataclass(frozen=True, slots=True)
+@@ -835,6 +836,9 @@
+                     prefix_limit=prefix_limit,
+                     group_spec=spec,
+                     suffix=pipeline[index + 1 :],
++                    group_average_uses_sum=getattr(
++                        stage, "group_average_uses_sum", False
++                    ),
+                 )
+             if operator not in _LOCAL_STREAM_PREFIX_OPERATORS:
+                 return None
+@@ -1542,6 +1546,7 @@
+             dialect=dialect,
+             collation=self._collation,
+             deadline=deadline,
++            group_average_uses_sum=plan.group_average_uses_sum,
+         )
+         group_spool = None
+         try:
+@@ -1731,6 +1736,7 @@
+                     dialect=dialect,
+                     collation=self._collation,
+                     deadline=deadline,
++                    group_average_uses_sum=plan.group_average_uses_sum,
+                 )
+                 for record in partition:
+                     if record[0] == "state":

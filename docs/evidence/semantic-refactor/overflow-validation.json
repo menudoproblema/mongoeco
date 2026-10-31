@@ -1,0 +1,298 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "blocks": [
+    "B03",
+    "B00"
+  ],
+  "primary_finding": "H27",
+  "related_findings": [
+    "H26",
+    "H05",
+    "H34",
+    "H35"
+  ],
+  "status": "overflow_focally_corrected_shared_numeric_write_identities_and_independent_comparison_verified",
+  "scope": "Aggregation integer promotion, strict inc/mul errors and effects, arithmetic conversion/result types, assignment/replacement identity, double remainder and differential comparator independence. Not complete B03/B00/B05/B08/B10.",
+  "sources_sha256": {
+    "src/mongoeco/core/bson_scalars.py": "9d7ad4d2d609173f78e00cbd31d30c226045b34e7562b368721fb8dea5906be0",
+    "src/mongoeco/core/aggregation/numeric_expressions.py": "0826c763f105ccf4f760a214abab52b853d1b8a588180a45d1329dea84ec0d9e",
+    "src/mongoeco/core/error_documents.py": "e62232c980715bc0fcd1bf0c818234c82dce37544e725703aeb270c2cfd2e5da",
+    "src/mongoeco/core/duplicate_keys.py": "25b67d6b84c7ce4cc9f041a4226ca022241656c0d44f2f816e63ecd85963d8eb",
+    "src/mongoeco/core/update_scalar_operators.py": "4d67669fb3a3ba5b839145d0011dedd4e638ba1ffb7012361fc3f214deeec676",
+    "src/mongoeco/core/server_errors.py": "c1bf2ffaff4b88d0685e7197693f193ade74c12e127110dd7bd6718644eb95db",
+    "src/mongoeco/_types/documents.py": "0ae6a0040f7e00af50de3ed72cabcbc0fe3187a6f637fa0d11a7fabcc7a4fb98",
+    "src/mongoeco/core/paths.py": "e9e1e6c902827c8c5799c92137f6560026daf1edb9c8042414bdc8139a69730b",
+    "src/mongoeco/core/update_array_operators.py": "1c30962c003de5ff696ae1d1618ba8c0aae6aeb5fc51feda0a71dc35d2ce3307",
+    "src/mongoeco/core/operators.py": "f704d0527ebd39e17612e188b67f30d75b96f90222593fdf3fbbabd2ff3d4c03",
+    "src/mongoeco/core/identity.py": "80adb588d15237a12afdf680252813b0d8c8b58b79dcbcb5a86552bac93470a6",
+    "src/mongoeco/engines/memory.py": "0cedb6a0823e0f1770df580ca1526133c0f7599dd61394598a209b2de1a5427a",
+    "src/mongoeco/engines/_sqlite_modify_ops.py": "f95a43f3982ad9e258b351dbeb75db69bf536fef310acdb2de051d4e8bddd391",
+    "tests/differential/semantic_overflow_cases.py": "1229c40dd348e7ee08504d583ddf3287f282bde94efc4ffbe3513287bedd12e9",
+    "tests/differential/semantic_overflow_write_cases.py": "6fc1413ed372efef3cdb15c172a80a79cb91dca55ea4b996b004484d614f8861",
+    "tests/differential/semantic_corpora.py": "28ebed8bbdb4d9e16be79603e4641496e3c0d2a840ffac2d1e069b9bed519b1d",
+    "tests/differential/_real_parity_base.py": "464c58922ffc79f1ae2f30ff16a43cc7dea40e84d37840f79973055e2b45f0d8",
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "scripts/capture_differential_replay_golden.py": "82002e204129df37829389c7ac1eb0d73fd3bd1840f67810197175e634cb1417",
+    "scripts/run_mongodb_real_differential.py": "3212674e70d305b737d96e1197da0508d68dbafd7910bb5db6693323d25c52d9",
+    "tests/integration/api/test_semantic_group_regressions.py": "2e7fe2e82397ecdacd85d2110711c8c8a728e998e8988aefa6d50bd02a725eff",
+    "tests/unit/core/test_bson_scalars.py": "858151e1803ba91504fe4926f1b0e6937b649173a44e7c2a61d43aa7f2ab1a6e",
+    "tests/unit/core/test_documents_internal.py": "8f4ef3c20567a845859c5c6ed323d237848619bceae3ef96049a36c03b0efac2",
+    "tests/unit/core/test_sqlite_engine.py": "9b5b4b104e1119cb0b84b92de29320b362b002f82234a7525a632a71634205ee",
+    "tests/unit/test_native_capture_comparison.py": "c19b807aa8e19473cfa16f89b33f08f62a4db942e8a50eb5c926127e132c0d35",
+    "tests/unit/test_differential_replay.py": "8c7c1fc5459fa6bbfef9c541de87a0bf5df08c9e376acf3905b15b4b7e9aaafc"
+  },
+  "before": {
+    "report": "overflow-complete-before-8.json",
+    "sha256": "22ab2714a7620aeb68ae3a846930259ee6390921fda799330a6f1dfec662d9c5",
+    "tests_run": 13,
+    "successful": false,
+    "engine_subfailures": 6,
+    "errors": 18,
+    "skips": 0,
+    "failed_actions": [
+      "test_semantic_overflow_arithmetic_matches_real_mongodb",
+      "test_semantic_overflow_array_write_matches_real_mongodb",
+      "test_semantic_overflow_bulk_write_matches_real_mongodb",
+      "test_semantic_overflow_identifiers_matches_real_mongodb",
+      "test_semantic_overflow_individual_writes_matches_real_mongodb",
+      "test_semantic_overflow_many_write_matches_real_mongodb",
+      "test_semantic_overflow_numeric_controls_matches_real_mongodb",
+      "test_semantic_overflow_numeric_noops_matches_real_mongodb",
+      "test_semantic_overflow_pipeline_write_matches_real_mongodb",
+      "test_semantic_overflow_raw_commands_matches_real_mongodb",
+      "test_semantic_overflow_variadic_matches_real_mongodb",
+      "test_semantic_overflow_write_identity_matches_real_mongodb"
+    ],
+    "version": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "selection": "semantic_overflow_* before the additional remainder-edges action; 13 actions",
+    "command": "MONGOECO_TEST_INSTALLED_ARTIFACT=1 PYTHONPATH=/tmp/mongoeco-overflow-baseline/src:. MONGOECO_REAL_MONGODB_URI=mongodb://127.0.0.1:27081 .venv/bin/python scripts/run_mongodb_real_differential.py 8.0 semantic_overflow_* --json-report docs/evidence/semantic-refactor/overflow-complete-before-8.json",
+    "import_verified": "/tmp/mongoeco-overflow-baseline/src/mongoeco/core/bson_scalars.py",
+    "baseline_sources_sha256": {
+      "src/mongoeco/core/bson_scalars.py": "bc3d4245c8bec3dfe731a09bf2e893d757dc7cf68e730d2e5a2438a35916de1e",
+      "src/mongoeco/core/aggregation/numeric_expressions.py": "b6ebf78c05717f8aad8274ced3651be58e0a83aa085788e8da8efd58cdab72a2",
+      "src/mongoeco/core/error_documents.py": "7419057b59986e05aa45b615b9488c3d6e4cf74b246ff206c0b80e77a49ccb3f",
+      "src/mongoeco/core/duplicate_keys.py": "533132bdfec222f5abb94f10f00dcdf6a5111601658758b8c45a64585178ae45",
+      "src/mongoeco/core/update_scalar_operators.py": "815e2ca856fe3b20efa4f3ba093134c1efda3b5efa1f90489cfb504d62acd0fd",
+      "src/mongoeco/core/server_errors.py": "d331c3a06924b5ae3f59d0f4796bb535ece4928966dc3de7e69447cbeb3bf773",
+      "src/mongoeco/_types/documents.py": "5bdb19ce86418602147ab9ff86ab8113ccc0b1062cb4759b1018e28b08be7416",
+      "src/mongoeco/core/paths.py": "d1fc1a09111fd063ad7bc952a9846ec6444c475a7acee56f338cbbbf3ffc03d8",
+      "src/mongoeco/core/update_array_operators.py": "96ede24ce7f8e6dce23983e1ad3f69d9b77c62caa0424270708055dd6239c5ae",
+      "src/mongoeco/core/operators.py": "363b868bbbf7c31881b8042af8de7d29858e452b90339589228c78a6214b85eb",
+      "src/mongoeco/core/identity.py": "6fb3ee7d6cb467e0d0d8e1d634ba847ed2a5536fcb1d4fc1a1627479ba4dd87c",
+      "src/mongoeco/engines/memory.py": "6ef201b5e9d398d3e5b62f2a45066f0363d02245950fc0fac983dc599331bf9c",
+      "src/mongoeco/engines/_sqlite_modify_ops.py": "65041e05249e00862eda53b2209242ede762f4c567970b0a33a558e75f768539"
+    },
+    "source_patch": "overflow-change.patch",
+    "source_patch_sha256": "5fcea103818f2f7e26f70b19be2f68175150e2d7348b1e964a03cf8ce2da9392"
+  },
+  "independent_comparator_exposed": {
+    "before_fix": [
+      {
+        "report": "observer-native-8.json",
+        "sha256": "0d0ee842537a6352988b3919af729309a08e92c86ee13be4de18e540e9916d5c",
+        "tests_run": 89,
+        "successful": false,
+        "engine_subfailures": 4,
+        "errors": 0,
+        "skips": 0,
+        "failed_actions": [
+          "test_semantic_overflow_arithmetic_matches_real_mongodb",
+          "test_semantic_overflow_pipeline_write_matches_real_mongodb"
+        ],
+        "version": "8.0.32",
+        "fcv": {
+          "version": "8.0"
+        }
+      },
+      {
+        "report": "observer-native-9.json",
+        "sha256": "1c927e2801e585225cb51333e345220c015aebf2fb11609d943420918935d155",
+        "tests_run": 89,
+        "successful": false,
+        "engine_subfailures": 4,
+        "errors": 0,
+        "skips": 0,
+        "failed_actions": [
+          "test_semantic_overflow_arithmetic_matches_real_mongodb",
+          "test_semantic_overflow_pipeline_write_matches_real_mongodb"
+        ],
+        "version": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        }
+      },
+      {
+        "report": "observer-remainder-before-9.json",
+        "sha256": "cdc15e4be5bd6e876d94345ed8b8b83bcffb57ed0cd30ba4db4a4b7264331be4",
+        "tests_run": 90,
+        "successful": false,
+        "engine_subfailures": 6,
+        "errors": 0,
+        "skips": 0,
+        "failed_actions": [
+          "test_semantic_overflow_arithmetic_matches_real_mongodb",
+          "test_semantic_overflow_pipeline_write_matches_real_mongodb",
+          "test_semantic_overflow_remainder_edges_matches_real_mongodb"
+        ],
+        "version": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        }
+      }
+    ],
+    "cause": "Production identity normalization used Python float equality and could not distinguish +0.0 from -0.0. Independent BSON scalar encoding reveals incorrect mod sign in read/pipeline-write; added edges also reveal finite/infinite-divisor and quotient-construction defects.",
+    "independent_owner": "tests/support_bson_observation.py:bson_comparison_value",
+    "controlled_distinctions": [
+      "bool/int32/int64/double/decimal",
+      "public scalar classes",
+      "datetime microseconds and aware/naive",
+      "double signed zero",
+      "decimal cohorts/signed zero",
+      "ordered document fields",
+      "array order",
+      "missing/null",
+      "error code presence",
+      "write counters",
+      "nested values"
+    ],
+    "controls_include": [
+      "production identity/comparison helpers replaced with failures",
+      "unknown objects rejected instead of repr equality",
+      "canonical JSON observations decoded exactly once"
+    ],
+    "retained_normalizations": [
+      "list/tuple array transport",
+      "double NaN payload/sign only; BSON type retained"
+    ]
+  },
+  "native_reports": [
+    {
+      "report": "observer-final-native-7.json",
+      "sha256": "8f2d73441c84c7f7d8b340d22b65b8833f2e882923140d059b5f9d1d3f33a3b9",
+      "tests_run": 90,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "failed_actions": [],
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      }
+    },
+    {
+      "report": "observer-final-native-8.json",
+      "sha256": "816c91c27955854ee69e2b1c928a62f6015bd62068c18f2dfacc877341e89cd0",
+      "tests_run": 90,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "failed_actions": [],
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      }
+    },
+    {
+      "report": "observer-final-native-9.json",
+      "sha256": "1e78d126e229dba120ac76943542db53293b1bdf355eb842b07f675d5862309c",
+      "tests_run": 90,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "failed_actions": [],
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      }
+    }
+  ],
+  "native_command": "MONGOECO_REAL_MONGODB_URI=<isolated-native-uri> .venv/bin/python scripts/run_mongodb_real_differential.py <7.0|8.0|9.0> semantic_* --json-report <report>",
+  "new_native_references_sha256": {
+    "tests/fixtures/semantic_overflow_7_0.json": "7fb5fd98362a6e16e5ff2f3a51655ec48feab36275040e41e59979897b771001",
+    "tests/fixtures/semantic_overflow_8_0.json": "78fbcb4948b6d3aae7e9f51ad0ced6c681e5b78ae85308bfb5abab8c4cf12366",
+    "tests/fixtures/semantic_overflow_9_0.json": "428a8d1ac6ceaed68b71c9b564db91bbb2bbefb025006087537ed2d5f994304c",
+    "tests/fixtures/semantic_overflow_writes_7_0.json": "6b12aec754103986d56867c780a2fb5e9af36829d60bb280c608f180437c942d",
+    "tests/fixtures/semantic_overflow_writes_8_0.json": "96d35a34321a093f9851c9cfde368c6d83dff733795a6defb1be6f69d6eaf2b4",
+    "tests/fixtures/semantic_overflow_writes_9_0.json": "7b89d0b8c0f802937568170945adafa261fef59b75ba35add2f182ef0d4c4f01",
+    "tests/fixtures/semantic_overflow_numeric_controls_7_0.json": "f7687c30243d0b50f9acd7ae73a810e2248a1e4ac2ad1112d615b3c7de9b1a61",
+    "tests/fixtures/semantic_overflow_numeric_controls_8_0.json": "8a79ac7f95b3bf38250bfeae5eedc97b02c568204e5d40d674708233cdfe7ae8",
+    "tests/fixtures/semantic_overflow_numeric_controls_9_0.json": "d8cce2da643b01548e71d67cb42372c84b57d254728a7dda005fe79b052a2048"
+  },
+  "new_corpora": {
+    "overflow": 3,
+    "overflow_numeric_controls": 2,
+    "overflow_writes": 9
+  },
+  "native_action_count_total": 90,
+  "remainder_edges_in_one_action": 17,
+  "write_observation_encoding": "canonical-json strings nested in BSON envelope; metadata/manifests remain BSON decoded",
+  "checks": {
+    "surfaces": {
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_semantic_group_regressions.py -q",
+      "passed": 2398,
+      "subtests_passed": 0,
+      "skipped": 0,
+      "stdout_tail": "........................................................................ [ 87%]\n........................................................................ [ 90%]\n........................................................................ [ 93%]\n........................................................................ [ 96%]\n........................................................................ [ 99%]\n......................                                                   [100%]\n2398 passed in 61.83s (0:01:01)"
+    },
+    "core_and_observer_replay": {
+      "command": ".venv/bin/python -m pytest tests/unit/core tests/unit/test_native_capture_comparison.py tests/unit/test_differential_replay.py -q",
+      "passed": 2283,
+      "subtests_passed": 994,
+      "skipped": 1,
+      "stdout_tail": "........................................................................ [ 82%]\n........................................................................ [ 86%]\n........................................................................................................................... [ 91%]\n........................................................................ [ 94%]\n...................................................................... [ 97%]\n.................................................... [100%]\n2283 passed, 1 skipped, 994 subtests passed in 13.56s"
+    },
+    "observer_controls_after_import_cleanup": {
+      "command": ".venv/bin/python -m pytest tests/unit/test_native_capture_comparison.py tests/unit/test_differential_replay.py -q",
+      "passed": 45,
+      "subtests_passed": 58,
+      "skipped": 0,
+      "stdout_tail": "............................................. [100%]\n45 passed, 58 subtests passed in 0.65s"
+    },
+    "write_error_regressions": {
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_shared_error_parity.py tests/integration/api/test_write_parity_corpus.py tests/integration/api/test_find_modify_errors.py tests/integration/api/test_write_identity_parity.py tests/integration/api/test_write_histories.py tests/unit/api/test_find_modify_error_documents.py tests/unit/api/test_collection_write_helpers.py tests/unit/api/test_command_bson_grammar.py tests/unit/test_native_capture_comparison.py tests/unit/test_differential_replay.py -x -q",
+      "passed": 17273,
+      "subtests_passed": 5578,
+      "skipped": 0,
+      "stdout_tail": "........................................................................ [ 98%]\n........................................................................ [ 98%]\n........................................................................ [ 98%]\n........................................................................ [ 99%]\n........................................................................ [ 99%]\n......................................... [100%]\n17273 passed, 5578 subtests passed in 118.16s (0:01:58)"
+    },
+    "regression_admission": "The broad write/error run uses the unchanged historical write observer and current productive code. The later strengthened independent scalar/date comparison and its new controls are revalidated by the final core, observer/replay, surface and native checks; broad-run counts are not inflated with those additional controls.",
+    "skip_disposition": "One existing ICU-unavailable unit check; native differential and surface runs have zero skips.",
+    "lint": {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref HEAD",
+      "stdout": "lint ratchet passed for 73 changed Python files\n"
+    },
+    "public_manifest": {
+      "command": ".venv/bin/python scripts/update_public_api_manifest.py --check",
+      "stdout": "public API manifest is current\n"
+    }
+  },
+  "stale_sqlite_test_migration": {
+    "finding": "H24 regression tests for the previously retired rounded numeric auxiliary-key path",
+    "baseline_proof": "overflow-sqlite-baseline-failures.log",
+    "baseline_proof_sha256": "2e3916e5c6d5755d3f83a6904147a809f8cc29780af9c85b7b6a607c4b565e0b",
+    "failed_tests_before_h27": 5,
+    "migration_patch": "overflow-sqlite-test-migration.patch",
+    "migration_patch_sha256": "04849ca7910422c328ab4d46ef96f27f2f67380569f57e5e230435769f9f9976",
+    "productive_sqlite_read_planning_changed_in_this_cut": false
+  },
+  "source_notes": "overflow-source-notes.md",
+  "pending": [
+    "H24 remaining numeric boundaries/nonfinite and index consumers",
+    "B00 complete H-to-case/frontier coverage, capture helper provenance and remaining oracle controls",
+    "B04 grammar/bindings and errors without rows",
+    "B05 complete paths/broadcast/projection",
+    "B06 remaining accumulator/distinct/lookup/bucket consumers",
+    "B07 strict public BSON boundary",
+    "B08 full surfaces/database aggregate and phases",
+    "B09 local contracts/consumer migration",
+    "B10 immutable distribution and full gates"
+  ],
+  "next_unit": "B04 grammar/bindings"
+}

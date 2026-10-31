@@ -1,0 +1,705 @@
+{
+  "case_filter": "semantic_command_let_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_unused",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_unused"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_bulk",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_bulk"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_random",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_random"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_clock",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_clock"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_cursors",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_cursors"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_precedence",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_precedence"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_aggregate",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_aggregate"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_find",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_find"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_count",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_count"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_replace",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_replace"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_find_modify",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_find_modify"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_delete",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_delete"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_find",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_find"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_aggregate",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_aggregate"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_delete",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_delete"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_find_modify",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_find_modify"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_aggregate",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_aggregate"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_find",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_find"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_find_modify",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_find_modify"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_raw_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_raw_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_raw_delete",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_raw_delete"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_unsupported_raw_count",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_unsupported_raw_count"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_unsupported_raw_distinct",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_unsupported_raw_distinct"
+    }
+  ],
+  "duration_seconds": 4.252478837966919,
+  "errors": [],
+  "expected_tests": 26,
+  "failures": [
+    {
+      "test": "test_semantic_command_let_clock_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_clock_matches_real_mongodb) (engine='memory', case='semantic_command_let_clock')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[59 chars]'>, 'shared', (<class 'bool'>, b'\\r\\x00\\x00\\x0[998 chars]))))) != ('doc[59 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[3925 chars])))))\n\nFirst differing element 1:\n((<cl[46 chars]'>, 'shared', (<class 'bool'>, b'\\r\\x00\\x00\\x0[997 chars])))))\n((<cl[46 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[3924 chars])))))\n\nDiff is 7348 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_clock_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_clock_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_clock')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[59 chars]'>, 'shared', (<class 'bool'>, b'\\r\\x00\\x00\\x0[998 chars]))))) != ('doc[59 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[3925 chars])))))\n\nFirst differing element 1:\n((<cl[46 chars]'>, 'shared', (<class 'bool'>, b'\\r\\x00\\x00\\x0[997 chars])))))\n((<cl[46 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[3924 chars])))))\n\nDiff is 7348 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb) (engine='memory', case='semantic_command_let_unsupported_raw_distinct')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[1591 chars]>, b\"M\\x00\\x00\\x00\\x02value\\x00=\\x00\\x00\\x00BS[9251 chars]))))) != ('doc[1591 chars]>, b\"?\\x00\\x00\\x00\\x02value\\x00/\\x00\\x00\\x00BS[9195 chars])))))\n\nFirst differing element 1:\n((<cl[1578 chars]>, b\"M\\x00\\x00\\x00\\x02value\\x00=\\x00\\x00\\x00BS[9250 chars])))))\n((<cl[1578 chars]>, b\"?\\x00\\x00\\x00\\x02value\\x00/\\x00\\x00\\x00BS[9194 chars])))))\n\nDiff is 19339 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_unsupported_raw_distinct')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[1591 chars]>, b\"M\\x00\\x00\\x00\\x02value\\x00=\\x00\\x00\\x00BS[9251 chars]))))) != ('doc[1591 chars]>, b\"?\\x00\\x00\\x00\\x02value\\x00/\\x00\\x00\\x00BS[9195 chars])))))\n\nFirst differing element 1:\n((<cl[1578 chars]>, b\"M\\x00\\x00\\x00\\x02value\\x00=\\x00\\x00\\x00BS[9250 chars])))))\n((<cl[1578 chars]>, b\"?\\x00\\x00\\x00\\x02value\\x00/\\x00\\x00\\x00BS[9194 chars])))))\n\nDiff is 19339 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 26
+}

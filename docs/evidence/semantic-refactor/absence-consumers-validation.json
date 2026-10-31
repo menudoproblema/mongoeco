@@ -1,0 +1,52 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B02",
+  "status": "focal_implementation_complete",
+  "scope": "Missing expression semantics, composition, replacements and six pipeline-write routes; path broadcast, accumulators and strict BSON validation remain B05/B06/B07.",
+  "sources_sha256": {
+    "src/mongoeco/core/aggregation/expression_values.py": "f51723b9c703d3754f2ecedfbcf87ca41655d18d8d87b4c3d7c9488e7a7bb314",
+    "src/mongoeco/core/aggregation/runtime.py": "b3fb5eaae16a728ff889d60c64ce7faa81be18947133194910ddbc8c5453fe92",
+    "src/mongoeco/core/aggregation/control_object_expressions.py": "b4946dae2dfdffe758d95553383a23cff6a520d549dfb28a08eb57ac7a24b02c",
+    "src/mongoeco/core/aggregation/scalar_expressions.py": "9a03ae13c82f0329fe927ae6d52e6742c3ae694232671356f01666ed1574e04c",
+    "src/mongoeco/core/aggregation/array_string_expressions.py": "d2a6751378f7cc5c7d5361dc92253fb81679b84b270e22f33b422b9443f5850e",
+    "src/mongoeco/core/aggregation/accumulators.py": "da1c8fb89fb6ee2e9d762a0c61f3f2f9da4a678f0818b5e7392706a73301b5da",
+    "src/mongoeco/core/aggregation/preparation.py": "69380d0e00d0bb34cc1210ffe52caf98bc60e74f80422898f1caa1ca3cdbb4af",
+    "src/mongoeco/core/aggregation/transform_stages.py": "f8b98fb0f992d6d0e82b5da3d4e48bfc4dd59d57727330c5483320f6dc66a56f",
+    "tests/differential/semantic_missing_cases.py": "d6893eb44e632285bca733761162c0f4a7dcc43644dea6ed38741063218265d8",
+    "tests/integration/api/test_semantic_group_regressions.py": "91c988fb3994e0922da17031f90e5849db19ded1d14835c591d9f9a3668cd5e0",
+    "tests/differential/semantic_absence_consumer_cases.py": "ee203de9fdee8d63e24c9f6cd5b5825d1550815f1d2c4587a433bbd2d608ece1",
+    "tests/differential/cases.py": "29a139aad82eaec10d370fa57c30d00cc6c083a6ff597d5fda85746faca1ff66",
+    "scripts/capture_differential_replay_golden.py": "91eb8d8c475b09041a8030c4028001dc3585bf4fd6c643b68cae5438c106066a",
+    "tests/unit/test_differential_replay.py": "14700b1acf903aeed538d84d624e568e5b7a2848a0b7f86fed0f327cef0d056c"
+  },
+  "native_reports": [
+    "absence-consumers-native-7.json",
+    "absence-consumers-native-8.json",
+    "absence-consumers-native-9.json"
+  ],
+  "native_corpora": [
+    "group_parity: 3",
+    "missing: 8",
+    "absence_consumers: 30"
+  ],
+  "checks": {
+    "surfaces": "........................................................................ [  7%]\n........................................................................ [ 14%]\n........................................................................ [ 21%]\n........................................................................ [ 28%]\n........................................................................ [ 35%]\n........................................................................ [ 43%]\n........................................................................ [ 50%]\n........................................................................ [ 57%]\n........................................................................ [ 64%]\n........................................................................ [ 71%]\n........................................................................ [ 79%]\n........................................................................ [ 86%]\n........................................................................ [ 93%]\n.................................................................        [100%]\n1001 passed in 4.53s\n",
+    "regression": "........................................................................ [ 13%]\n.................................................................................................................................................................................. [ 48%]\n...................................................... [ 58%]\n............................................................. [ 70%]\n........................................ [ 78%]\n.........................sssssssssssssssssssssssssssssssssssssssssssssssssssss [ 93%]\nsssssssssssssssss................ [100%]\n446 passed, 70 skipped, 1594 subtests passed in 2.06s\n",
+    "properties": "................                             [100%]\n16 passed, 28 subtests passed in 0.91s\n",
+    "lint_ratchet": "lint ratchet passed for 24 changed Python files\n"
+  },
+  "benchmark": {
+    "before": "missing-benchmark-before.json",
+    "after": "missing-benchmark-after.json",
+    "report": "missing-benchmark.md",
+    "baseline": "B01 production sources: original base minus compiled_aggregation.py and with B01 grouping_stages.py; hash checked against group-validation.json",
+    "outcomes": "equal",
+    "sample": "1000 documents, warmup 1, repetitions 3; trend only"
+  },
+  "pending_in_other_blocks": [
+    "H05 path/broadcast cases B05",
+    "H08 accumulator missing B06",
+    "H06 strict BSON boundary B07",
+    "B10 distribution/global gates"
+  ]
+}

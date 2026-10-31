@@ -1,0 +1,802 @@
+{
+  "case_filter": "semantic_command_let_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_unused",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_unused"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_bulk",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_bulk"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_random",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_random"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_aggregate",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_aggregate"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_find",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_find"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_count",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_count"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_replace",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_replace"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_find_modify",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_find_modify"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_delete",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_delete"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_find",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_find"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_aggregate",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_aggregate"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_delete",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_delete"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_values_raw_find_modify",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_values_raw_find_modify"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_aggregate",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_aggregate"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_find",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_find"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_find_modify",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_find_modify"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_raw_update",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_raw_update"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_errors_raw_delete",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_errors_raw_delete"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_unsupported_raw_count",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_unsupported_raw_count"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_command_let_unsupported_raw_distinct",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": 5,
+          "v": "existing"
+        },
+        {
+          "_id": 2,
+          "a": 9,
+          "v": "existing"
+        },
+        {
+          "_id": 3,
+          "v": "existing"
+        }
+      ],
+      "selector": "semantic_command_let_unsupported_raw_distinct"
+    }
+  ],
+  "duration_seconds": 6.834831237792969,
+  "errors": [
+    {
+      "test": "test_semantic_command_let_random_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_random_matches_real_mongodb) (engine='memory', case='semantic_command_let_random')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_command_let_cases.py\", line 234, in random_binding\n    \"read_one_value\": len({doc[\"v\"] for doc in values}) == 1,\n                           ~~~^^^^^\nTypeError: cannot use 'dict' as a set element (unhashable type: 'dict')\n"
+    },
+    {
+      "test": "test_semantic_command_let_random_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_random_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_random')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_command_let_cases.py\", line 234, in random_binding\n    \"read_one_value\": len({doc[\"v\"] for doc in values}) == 1,\n                           ~~~^^^^^\nTypeError: cannot use 'dict' as a set element (unhashable type: 'dict')\n"
+    }
+  ],
+  "expected_tests": 23,
+  "failures": [
+    {
+      "test": "test_semantic_command_let_bulk_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_bulk_matches_real_mongodb) (engine='memory', case='semantic_command_let_bulk')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2801 chars]>, '$document', ('array', (('array', ((<class [33737 chars]))))) != ('doc[2801 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[136789 chars])))))\n\nFirst differing element 1:\n((<cl[2788 chars]>, '$document', ('array', (('array', ((<class [33736 chars])))))\n((<cl[2788 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[136788 chars])))))\n\nDiff is 301228 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_bulk_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_bulk_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_bulk')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2801 chars]>, '$document', ('array', (('array', ((<class [33737 chars]))))) != ('doc[2801 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[136789 chars])))))\n\nFirst differing element 1:\n((<cl[2788 chars]>, '$document', ('array', (('array', ((<class [33736 chars])))))\n((<cl[2788 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[136788 chars])))))\n\nDiff is 301228 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_aggregate_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_aggregate_matches_real_mongodb) (engine='memory', case='semantic_command_let_errors_aggregate')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'd[71500 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82694 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'd[71499 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82693 chars])))))\n\nDiff is 218018 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_aggregate_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_aggregate_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_errors_aggregate')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'd[71500 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82694 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'd[71499 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82693 chars])))))\n\nDiff is 218018 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_find_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_find_matches_real_mongodb) (engine='memory', case='semantic_command_let_errors_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'd[40410 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82694 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'd[40409 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82693 chars])))))\n\nDiff is 143492 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_find_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_find_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_errors_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'd[40410 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82694 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'd[40409 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82693 chars])))))\n\nDiff is 143492 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_find_modify_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_find_modify_matches_real_mongodb) (engine='memory', case='semantic_command_let_errors_find_modify')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'd[57820 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82694 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'd[57819 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82693 chars])))))\n\nDiff is 211065 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_find_modify_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_find_modify_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_errors_find_modify')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'd[57820 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82694 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'd[57819 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[82693 chars])))))\n\nDiff is 211065 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_raw_delete_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_raw_delete_matches_real_mongodb) (engine='memory', case='semantic_command_let_errors_raw_delete')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[601 chars],))))))),))),))), (<class 'str'>, 'state', ('a[54907 chars]))))) != ('doc[601 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[74585 chars])))))\n\nFirst differing element 1:\n((<cl[588 chars],))))))),))),))), (<class 'str'>, 'state', ('a[54906 chars])))))\n((<cl[588 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[74584 chars])))))\n\nDiff is 149792 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_raw_delete_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_raw_delete_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_errors_raw_delete')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[601 chars],))))))),))),))), (<class 'str'>, 'state', ('a[54907 chars]))))) != ('doc[601 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[74585 chars])))))\n\nFirst differing element 1:\n((<cl[588 chars],))))))),))),))), (<class 'str'>, 'state', ('a[54906 chars])))))\n((<cl[588 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[74584 chars])))))\n\nDiff is 149792 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_raw_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_raw_update_matches_real_mongodb) (engine='memory', case='semantic_command_let_errors_raw_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[820 chars],))))))),))),))), (<class 'str'>, 'state', ('a[65453 chars]))))) != ('doc[820 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[80936 chars])))))\n\nFirst differing element 1:\n((<cl[807 chars],))))))),))),))), (<class 'str'>, 'state', ('a[65452 chars])))))\n((<cl[807 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[80935 chars])))))\n\nDiff is 187166 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_raw_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_raw_update_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_errors_raw_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[820 chars],))))))),))),))), (<class 'str'>, 'state', ('a[65453 chars]))))) != ('doc[820 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[80936 chars])))))\n\nFirst differing element 1:\n((<cl[807 chars],))))))),))),))), (<class 'str'>, 'state', ('a[65452 chars])))))\n((<cl[807 chars],)))), ('array', ((<class 'str'>, b'\\x1c\\x00\\x[80935 chars])))))\n\nDiff is 187166 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_update_matches_real_mongodb) (engine='memory', case='semantic_command_let_errors_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'a[60960 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[78134 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'a[60959 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[78133 chars])))))\n\nDiff is 163266 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_errors_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_errors_update_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_errors_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[66 chars]'>, 'result', ('document', ((<class 'str'>, 'a[60960 chars]))))) != ('doc[66 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[78134 chars])))))\n\nFirst differing element 1:\n((<cl[53 chars]'>, 'result', ('document', ((<class 'str'>, 'a[60959 chars])))))\n((<cl[53 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[78133 chars])))))\n\nDiff is 163266 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unsupported_raw_count_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unsupported_raw_count_matches_real_mongodb) (engine='memory', case='semantic_command_let_unsupported_raw_count')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[276 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10434 chars]))))) != ('doc[276 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10498 chars])))))\n\nFirst differing element 1:\n((<cl[263 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10433 chars])))))\n((<cl[263 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10497 chars])))))\n\nDiff is 21507 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unsupported_raw_count_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unsupported_raw_count_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_unsupported_raw_count')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[276 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10434 chars]))))) != ('doc[276 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10498 chars])))))\n\nFirst differing element 1:\n((<cl[263 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10433 chars])))))\n((<cl[263 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10497 chars])))))\n\nDiff is 21507 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb) (engine='memory', case='semantic_command_let_unsupported_raw_distinct')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[276 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10434 chars]))))) != ('doc[276 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10510 chars])))))\n\nFirst differing element 1:\n((<cl[263 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10433 chars])))))\n((<cl[263 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10509 chars])))))\n\nDiff is 21519 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unsupported_raw_distinct_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_unsupported_raw_distinct')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[276 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10434 chars]))))) != ('doc[276 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10510 chars])))))\n\nFirst differing element 1:\n((<cl[263 chars]e\\x00|C\\x00\\x00\\x00')), (<class 'str'>, 'codeN[10433 chars])))))\n((<cl[263 chars]e\\x00\\xdf\\x9d\\x00\\x00\\x00')), (<class 'str'>, [10509 chars])))))\n\nDiff is 21519 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unused_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unused_matches_real_mongodb) (engine='memory', case='semantic_command_let_unused')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[70 chars]'>, 'result', ('document', ((<class 'str'>, 'd[14285 chars]))))) != ('doc[70 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[27130 chars])))))\n\nFirst differing element 1:\n((<cl[57 chars]'>, 'result', ('document', ((<class 'str'>, 'd[14284 chars])))))\n((<cl[57 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[27129 chars])))))\n\nDiff is 54710 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_unused_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_unused_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_unused')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[70 chars]'>, 'result', ('document', ((<class 'str'>, 'd[14285 chars]))))) != ('doc[70 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[27130 chars])))))\n\nFirst differing element 1:\n((<cl[57 chars]'>, 'result', ('document', ((<class 'str'>, 'd[14284 chars])))))\n((<cl[57 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[27129 chars])))))\n\nDiff is 54710 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_aggregate_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_aggregate_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_aggregate')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[1776 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[71983 chars]))))) != ('doc[1776 chars]'>, 'result', ('document', ((<class 'str'>, 'd[64822 chars])))))\n\nFirst differing element 1:\n((<cl[1763 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[71982 chars])))))\n((<cl[1763 chars]'>, 'result', ('document', ((<class 'str'>, 'd[64821 chars])))))\n\nDiff is 195882 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_aggregate_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_aggregate_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_aggregate')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[1776 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[71983 chars]))))) != ('doc[1776 chars]'>, 'result', ('document', ((<class 'str'>, 'd[64822 chars])))))\n\nFirst differing element 1:\n((<cl[1763 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[71982 chars])))))\n((<cl[1763 chars]'>, 'result', ('document', ((<class 'str'>, 'd[64821 chars])))))\n\nDiff is 195882 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_count_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_count_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_count')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2406 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[33294 chars]))))) != ('doc[2406 chars]'>, 'result', ('document', ((<class 'str'>, 'v[30516 chars])))))\n\nFirst differing element 1:\n((<cl[2393 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[33293 chars])))))\n((<cl[2393 chars]'>, 'result', ('document', ((<class 'str'>, 'v[30515 chars])))))\n\nDiff is 61682 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_count_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_count_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_count')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2406 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[33294 chars]))))) != ('doc[2406 chars]'>, 'result', ('document', ((<class 'str'>, 'v[30516 chars])))))\n\nFirst differing element 1:\n((<cl[2393 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[33293 chars])))))\n((<cl[2393 chars]'>, 'result', ('document', ((<class 'str'>, 'v[30515 chars])))))\n\nDiff is 61682 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_delete_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_delete_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_delete')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2676 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[38640 chars]))))) != ('doc[2676 chars]'>, 'result', ('document', ((<class 'str'>, 'a[24163 chars])))))\n\nFirst differing element 1:\n((<cl[2663 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[38639 chars])))))\n((<cl[2663 chars]'>, 'result', ('document', ((<class 'str'>, 'a[24162 chars])))))\n\nDiff is 72803 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_delete_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_delete_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_delete')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2676 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[38640 chars]))))) != ('doc[2676 chars]'>, 'result', ('document', ((<class 'str'>, 'a[24163 chars])))))\n\nFirst differing element 1:\n((<cl[2663 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[38639 chars])))))\n((<cl[2663 chars]'>, 'result', ('document', ((<class 'str'>, 'a[24162 chars])))))\n\nDiff is 72803 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_find_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_find_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[1776 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[31824 chars]))))) != ('doc[1776 chars]'>, 'result', ('document', ((<class 'str'>, 'd[35663 chars])))))\n\nFirst differing element 1:\n((<cl[1763 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[31823 chars])))))\n((<cl[1763 chars]'>, 'result', ('document', ((<class 'str'>, 'd[35662 chars])))))\n\nDiff is 72240 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_find_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_find_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[1776 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[31824 chars]))))) != ('doc[1776 chars]'>, 'result', ('document', ((<class 'str'>, 'd[35663 chars])))))\n\nFirst differing element 1:\n((<cl[1763 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[31823 chars])))))\n((<cl[1763 chars]'>, 'result', ('document', ((<class 'str'>, 'd[35662 chars])))))\n\nDiff is 72240 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_find_modify_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_find_modify_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_find_modify')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2028 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[51864 chars]))))) != ('doc[2028 chars]'>, 'result', ('document', ((<class 'str'>, 'd[38306 chars])))))\n\nFirst differing element 1:\n((<cl[2015 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[51863 chars])))))\n((<cl[2015 chars]'>, 'result', ('document', ((<class 'str'>, 'd[38305 chars])))))\n\nDiff is 129886 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_find_modify_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_find_modify_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_find_modify')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[2028 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[51864 chars]))))) != ('doc[2028 chars]'>, 'result', ('document', ((<class 'str'>, 'd[38306 chars])))))\n\nFirst differing element 1:\n((<cl[2015 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[51863 chars])))))\n((<cl[2015 chars]'>, 'result', ('document', ((<class 'str'>, 'd[38305 chars])))))\n\nDiff is 129886 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_aggregate_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_aggregate_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_raw_aggregate')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[241 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44719 chars]))))) != ('doc[241 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69523 chars])))))\n\nFirst differing element 1:\n((<cl[228 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44718 chars])))))\n((<cl[228 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69522 chars])))))\n\nDiff is 131724 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_aggregate_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_aggregate_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_raw_aggregate')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[241 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44719 chars]))))) != ('doc[241 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69523 chars])))))\n\nFirst differing element 1:\n((<cl[228 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44718 chars])))))\n((<cl[228 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69522 chars])))))\n\nDiff is 131724 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_delete_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_delete_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_raw_delete')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[10247 chars]0\\x000\\x00\\x00')),)))), ('array', ((<class 'st[32321 chars]))))) != ('doc[10247 chars]0\\x001\\x00\\x00')),)))), ('array', ((<class 'st[25068 chars])))))\n\nFirst differing element 1:\n((<cl[10234 chars]0\\x000\\x00\\x00')),)))), ('array', ((<class 'st[32320 chars])))))\n((<cl[10234 chars]0\\x001\\x00\\x00')),)))), ('array', ((<class 'st[25067 chars])))))\n\nDiff is 79140 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_delete_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_delete_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_raw_delete')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[10247 chars]0\\x000\\x00\\x00')),)))), ('array', ((<class 'st[32321 chars]))))) != ('doc[10247 chars]0\\x001\\x00\\x00')),)))), ('array', ((<class 'st[25068 chars])))))\n\nFirst differing element 1:\n((<cl[10234 chars]0\\x000\\x00\\x00')),)))), ('array', ((<class 'st[32320 chars])))))\n((<cl[10234 chars]0\\x001\\x00\\x00')),)))), ('array', ((<class 'st[25067 chars])))))\n\nDiff is 79140 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_find_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_find_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_raw_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[241 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44719 chars]))))) != ('doc[241 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69523 chars])))))\n\nFirst differing element 1:\n((<cl[228 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44718 chars])))))\n((<cl[228 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69522 chars])))))\n\nDiff is 131724 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_find_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_find_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_raw_find')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[241 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44719 chars]))))) != ('doc[241 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69523 chars])))))\n\nFirst differing element 1:\n((<cl[228 chars]ass 'NoneType'>, b'\\x0c\\x00\\x00\\x00\\nvalue\\x00[44718 chars])))))\n((<cl[228 chars]ass 'int'>, b'\\x10\\x00\\x00\\x00\\x10value\\x00;\\x[69522 chars])))))\n\nDiff is 131724 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_find_modify_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_find_modify_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_raw_find_modify')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[17592 chars]>, '$document', ('array', (('array', ((<class [53662 chars]))))) != ('doc[17592 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[46220 chars])))))\n\nFirst differing element 1:\n((<cl[17579 chars]>, '$document', ('array', (('array', ((<class [53661 chars])))))\n((<cl[17579 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[46219 chars])))))\n\nDiff is 164449 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_find_modify_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_find_modify_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_raw_find_modify')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[17592 chars]>, '$document', ('array', (('array', ((<class [53662 chars]))))) != ('doc[17592 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[46220 chars])))))\n\nFirst differing element 1:\n((<cl[17579 chars]>, '$document', ('array', (('array', ((<class [53661 chars])))))\n((<cl[17579 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[46219 chars])))))\n\nDiff is 164449 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_update_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_raw_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[14199 chars]>, '$document', ('array', (('array', ((<class [47101 chars]))))) != ('doc[14199 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[35940 chars])))))\n\nFirst differing element 1:\n((<cl[14186 chars]>, '$document', ('array', (('array', ((<class [47100 chars])))))\n((<cl[14186 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[35939 chars])))))\n\nDiff is 141848 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_raw_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_raw_update_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_raw_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[14199 chars]>, '$document', ('array', (('array', ((<class [47101 chars]))))) != ('doc[14199 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[35940 chars])))))\n\nFirst differing element 1:\n((<cl[14186 chars]>, '$document', ('array', (('array', ((<class [47100 chars])))))\n((<cl[14186 chars]>, '$numberInt', (<class 'str'>, b'\\x12\\x00\\x0[35939 chars])))))\n\nDiff is 141848 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_replace_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_replace_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_replace')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[4386 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[40470 chars]))))) != ('doc[4386 chars]'>, 'result', ('document', ((<class 'str'>, 'a[34308 chars])))))\n\nFirst differing element 1:\n((<cl[4373 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[40469 chars])))))\n((<cl[4373 chars]'>, 'result', ('document', ((<class 'str'>, 'a[34307 chars])))))\n\nDiff is 78197 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_replace_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_replace_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_replace')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[4386 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[40470 chars]))))) != ('doc[4386 chars]'>, 'result', ('document', ((<class 'str'>, 'a[34308 chars])))))\n\nFirst differing element 1:\n((<cl[4373 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[40469 chars])))))\n((<cl[4373 chars]'>, 'result', ('document', ((<class 'str'>, 'a[34307 chars])))))\n\nDiff is 78197 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_update_matches_real_mongodb) (engine='memory', case='semantic_command_let_values_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[4386 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[55689 chars]))))) != ('doc[4386 chars]'>, 'result', ('document', ((<class 'str'>, 'a[38993 chars])))))\n\nFirst differing element 1:\n((<cl[4373 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[55688 chars])))))\n((<cl[4373 chars]'>, 'result', ('document', ((<class 'str'>, 'a[38992 chars])))))\n\nDiff is 137603 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_command_let_values_update_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_command_let_values_update_matches_real_mongodb) (engine='sqlite', case='semantic_command_let_values_update')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[4386 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[55689 chars]))))) != ('doc[4386 chars]'>, 'result', ('document', ((<class 'str'>, 'a[38993 chars])))))\n\nFirst differing element 1:\n((<cl[4373 chars]'>, 'error', ('document', ((<class 'str'>, 'fa[55688 chars])))))\n((<cl[4373 chars]'>, 'result', ('document', ((<class 'str'>, 'a[38992 chars])))))\n\nDiff is 137603 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 23
+}

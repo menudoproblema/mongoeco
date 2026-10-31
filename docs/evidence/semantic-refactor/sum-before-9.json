@@ -1,0 +1,1295 @@
+{
+  "case_filter": "semantic_sum_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_sum_expressions",
+      "seed_documents": [
+        {
+          "_id": "cancel",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "cancel_reversed",
+          "v": [
+            -1e+16,
+            1.0,
+            1e+16
+          ]
+        },
+        {
+          "_id": "tenths",
+          "v": [
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1
+          ]
+        },
+        {
+          "_id": "low_parts",
+          "v": [
+            1e+16,
+            0.1,
+            0.2,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "long_exact",
+          "v": [
+            9223372036854775807,
+            -9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow",
+          "v": [
+            9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow_cancel",
+          "v": [
+            9223372036854775807,
+            1,
+            -9223372036854775807
+          ]
+        },
+        {
+          "_id": "long_underflow",
+          "v": [
+            -9223372036854775808,
+            -1
+          ]
+        },
+        {
+          "_id": "long_small",
+          "v": [
+            1,
+            -1
+          ]
+        },
+        {
+          "_id": "int_promote",
+          "v": [
+            2147483647,
+            1
+          ]
+        },
+        {
+          "_id": "int_cancel",
+          "v": [
+            2147483647,
+            1,
+            -2147483647
+          ]
+        },
+        {
+          "_id": "mixed_cancel",
+          "v": [
+            1e+16,
+            "0.1",
+            "0.11",
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_cancel",
+          "v": [
+            "1E+34",
+            1.0,
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_round",
+          "v": [
+            "1E+34",
+            "1",
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_last",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_first",
+          "v": [
+            "0",
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_double",
+          "v": [
+            0.1,
+            0.2,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_long",
+          "v": [
+            9223372036854775807,
+            "0"
+          ]
+        },
+        {
+          "_id": "nan",
+          "v": [
+            NaN,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinity",
+          "v": [
+            Infinity,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinities",
+          "v": [
+            Infinity,
+            -Infinity
+          ]
+        },
+        {
+          "_id": "double_overflow",
+          "v": [
+            1e+308,
+            1e+308,
+            -1e+308
+          ]
+        },
+        {
+          "_id": "decimal_infinity",
+          "v": [
+            Infinity,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_nan",
+          "v": [
+            "NaN",
+            1
+          ]
+        },
+        {
+          "_id": "negative_zero",
+          "v": [
+            -0.0,
+            -0.0
+          ]
+        },
+        {
+          "_id": "operands",
+          "v": [
+            1,
+            [
+              2,
+              3
+            ],
+            null,
+            false,
+            {},
+            1
+          ]
+        },
+        {
+          "_id": "ignored",
+          "v": [
+            null,
+            false,
+            [],
+            {},
+            "x"
+          ]
+        },
+        {
+          "_id": "empty",
+          "v": []
+        }
+      ],
+      "selector": "semantic_sum_expressions"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_sum_group",
+      "seed_documents": [
+        {
+          "_id": "cancel",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "cancel_reversed",
+          "v": [
+            -1e+16,
+            1.0,
+            1e+16
+          ]
+        },
+        {
+          "_id": "tenths",
+          "v": [
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1
+          ]
+        },
+        {
+          "_id": "low_parts",
+          "v": [
+            1e+16,
+            0.1,
+            0.2,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "long_exact",
+          "v": [
+            9223372036854775807,
+            -9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow",
+          "v": [
+            9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow_cancel",
+          "v": [
+            9223372036854775807,
+            1,
+            -9223372036854775807
+          ]
+        },
+        {
+          "_id": "long_underflow",
+          "v": [
+            -9223372036854775808,
+            -1
+          ]
+        },
+        {
+          "_id": "long_small",
+          "v": [
+            1,
+            -1
+          ]
+        },
+        {
+          "_id": "int_promote",
+          "v": [
+            2147483647,
+            1
+          ]
+        },
+        {
+          "_id": "int_cancel",
+          "v": [
+            2147483647,
+            1,
+            -2147483647
+          ]
+        },
+        {
+          "_id": "mixed_cancel",
+          "v": [
+            1e+16,
+            "0.1",
+            "0.11",
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_cancel",
+          "v": [
+            "1E+34",
+            1.0,
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_round",
+          "v": [
+            "1E+34",
+            "1",
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_last",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_first",
+          "v": [
+            "0",
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_double",
+          "v": [
+            0.1,
+            0.2,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_long",
+          "v": [
+            9223372036854775807,
+            "0"
+          ]
+        },
+        {
+          "_id": "nan",
+          "v": [
+            NaN,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinity",
+          "v": [
+            Infinity,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinities",
+          "v": [
+            Infinity,
+            -Infinity
+          ]
+        },
+        {
+          "_id": "double_overflow",
+          "v": [
+            1e+308,
+            1e+308,
+            -1e+308
+          ]
+        },
+        {
+          "_id": "decimal_infinity",
+          "v": [
+            Infinity,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_nan",
+          "v": [
+            "NaN",
+            1
+          ]
+        },
+        {
+          "_id": "negative_zero",
+          "v": [
+            -0.0,
+            -0.0
+          ]
+        },
+        {
+          "_id": "operands",
+          "v": [
+            1,
+            [
+              2,
+              3
+            ],
+            null,
+            false,
+            {},
+            1
+          ]
+        },
+        {
+          "_id": "ignored",
+          "v": [
+            null,
+            false,
+            [],
+            {},
+            "x"
+          ]
+        },
+        {
+          "_id": "empty",
+          "v": []
+        }
+      ],
+      "selector": "semantic_sum_group"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_sum_subpipeline",
+      "seed_documents": [
+        {
+          "_id": "cancel",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "cancel_reversed",
+          "v": [
+            -1e+16,
+            1.0,
+            1e+16
+          ]
+        },
+        {
+          "_id": "tenths",
+          "v": [
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1
+          ]
+        },
+        {
+          "_id": "low_parts",
+          "v": [
+            1e+16,
+            0.1,
+            0.2,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "long_exact",
+          "v": [
+            9223372036854775807,
+            -9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow",
+          "v": [
+            9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow_cancel",
+          "v": [
+            9223372036854775807,
+            1,
+            -9223372036854775807
+          ]
+        },
+        {
+          "_id": "long_underflow",
+          "v": [
+            -9223372036854775808,
+            -1
+          ]
+        },
+        {
+          "_id": "long_small",
+          "v": [
+            1,
+            -1
+          ]
+        },
+        {
+          "_id": "int_promote",
+          "v": [
+            2147483647,
+            1
+          ]
+        },
+        {
+          "_id": "int_cancel",
+          "v": [
+            2147483647,
+            1,
+            -2147483647
+          ]
+        },
+        {
+          "_id": "mixed_cancel",
+          "v": [
+            1e+16,
+            "0.1",
+            "0.11",
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_cancel",
+          "v": [
+            "1E+34",
+            1.0,
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_round",
+          "v": [
+            "1E+34",
+            "1",
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_last",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_first",
+          "v": [
+            "0",
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_double",
+          "v": [
+            0.1,
+            0.2,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_long",
+          "v": [
+            9223372036854775807,
+            "0"
+          ]
+        },
+        {
+          "_id": "nan",
+          "v": [
+            NaN,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinity",
+          "v": [
+            Infinity,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinities",
+          "v": [
+            Infinity,
+            -Infinity
+          ]
+        },
+        {
+          "_id": "double_overflow",
+          "v": [
+            1e+308,
+            1e+308,
+            -1e+308
+          ]
+        },
+        {
+          "_id": "decimal_infinity",
+          "v": [
+            Infinity,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_nan",
+          "v": [
+            "NaN",
+            1
+          ]
+        },
+        {
+          "_id": "negative_zero",
+          "v": [
+            -0.0,
+            -0.0
+          ]
+        },
+        {
+          "_id": "operands",
+          "v": [
+            1,
+            [
+              2,
+              3
+            ],
+            null,
+            false,
+            {},
+            1
+          ]
+        },
+        {
+          "_id": "ignored",
+          "v": [
+            null,
+            false,
+            [],
+            {},
+            "x"
+          ]
+        },
+        {
+          "_id": "empty",
+          "v": []
+        }
+      ],
+      "selector": "semantic_sum_subpipeline"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_sum_windows",
+      "seed_documents": [
+        {
+          "_id": "cancel",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "cancel_reversed",
+          "v": [
+            -1e+16,
+            1.0,
+            1e+16
+          ]
+        },
+        {
+          "_id": "tenths",
+          "v": [
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1
+          ]
+        },
+        {
+          "_id": "low_parts",
+          "v": [
+            1e+16,
+            0.1,
+            0.2,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "long_exact",
+          "v": [
+            9223372036854775807,
+            -9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow",
+          "v": [
+            9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow_cancel",
+          "v": [
+            9223372036854775807,
+            1,
+            -9223372036854775807
+          ]
+        },
+        {
+          "_id": "long_underflow",
+          "v": [
+            -9223372036854775808,
+            -1
+          ]
+        },
+        {
+          "_id": "long_small",
+          "v": [
+            1,
+            -1
+          ]
+        },
+        {
+          "_id": "int_promote",
+          "v": [
+            2147483647,
+            1
+          ]
+        },
+        {
+          "_id": "int_cancel",
+          "v": [
+            2147483647,
+            1,
+            -2147483647
+          ]
+        },
+        {
+          "_id": "mixed_cancel",
+          "v": [
+            1e+16,
+            "0.1",
+            "0.11",
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_cancel",
+          "v": [
+            "1E+34",
+            1.0,
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_round",
+          "v": [
+            "1E+34",
+            "1",
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_last",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_first",
+          "v": [
+            "0",
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_double",
+          "v": [
+            0.1,
+            0.2,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_long",
+          "v": [
+            9223372036854775807,
+            "0"
+          ]
+        },
+        {
+          "_id": "nan",
+          "v": [
+            NaN,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinity",
+          "v": [
+            Infinity,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinities",
+          "v": [
+            Infinity,
+            -Infinity
+          ]
+        },
+        {
+          "_id": "double_overflow",
+          "v": [
+            1e+308,
+            1e+308,
+            -1e+308
+          ]
+        },
+        {
+          "_id": "decimal_infinity",
+          "v": [
+            Infinity,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_nan",
+          "v": [
+            "NaN",
+            1
+          ]
+        },
+        {
+          "_id": "negative_zero",
+          "v": [
+            -0.0,
+            -0.0
+          ]
+        },
+        {
+          "_id": "operands",
+          "v": [
+            1,
+            [
+              2,
+              3
+            ],
+            null,
+            false,
+            {},
+            1
+          ]
+        },
+        {
+          "_id": "ignored",
+          "v": [
+            null,
+            false,
+            [],
+            {},
+            "x"
+          ]
+        },
+        {
+          "_id": "empty",
+          "v": []
+        }
+      ],
+      "selector": "semantic_sum_windows"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_sum_pipeline_write",
+      "seed_documents": [
+        {
+          "_id": "cancel",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "cancel_reversed",
+          "v": [
+            -1e+16,
+            1.0,
+            1e+16
+          ]
+        },
+        {
+          "_id": "tenths",
+          "v": [
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1
+          ]
+        },
+        {
+          "_id": "low_parts",
+          "v": [
+            1e+16,
+            0.1,
+            0.2,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "long_exact",
+          "v": [
+            9223372036854775807,
+            -9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow",
+          "v": [
+            9223372036854775807,
+            1
+          ]
+        },
+        {
+          "_id": "long_overflow_cancel",
+          "v": [
+            9223372036854775807,
+            1,
+            -9223372036854775807
+          ]
+        },
+        {
+          "_id": "long_underflow",
+          "v": [
+            -9223372036854775808,
+            -1
+          ]
+        },
+        {
+          "_id": "long_small",
+          "v": [
+            1,
+            -1
+          ]
+        },
+        {
+          "_id": "int_promote",
+          "v": [
+            2147483647,
+            1
+          ]
+        },
+        {
+          "_id": "int_cancel",
+          "v": [
+            2147483647,
+            1,
+            -2147483647
+          ]
+        },
+        {
+          "_id": "mixed_cancel",
+          "v": [
+            1e+16,
+            "0.1",
+            "0.11",
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_cancel",
+          "v": [
+            "1E+34",
+            1.0,
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_round",
+          "v": [
+            "1E+34",
+            "1",
+            "-1E+34"
+          ]
+        },
+        {
+          "_id": "decimal_last",
+          "v": [
+            1e+16,
+            1.0,
+            -1e+16,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_first",
+          "v": [
+            "0",
+            1e+16,
+            1.0,
+            -1e+16
+          ]
+        },
+        {
+          "_id": "decimal_double",
+          "v": [
+            0.1,
+            0.2,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_long",
+          "v": [
+            9223372036854775807,
+            "0"
+          ]
+        },
+        {
+          "_id": "nan",
+          "v": [
+            NaN,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinity",
+          "v": [
+            Infinity,
+            1.0
+          ]
+        },
+        {
+          "_id": "infinities",
+          "v": [
+            Infinity,
+            -Infinity
+          ]
+        },
+        {
+          "_id": "double_overflow",
+          "v": [
+            1e+308,
+            1e+308,
+            -1e+308
+          ]
+        },
+        {
+          "_id": "decimal_infinity",
+          "v": [
+            Infinity,
+            "0"
+          ]
+        },
+        {
+          "_id": "decimal_nan",
+          "v": [
+            "NaN",
+            1
+          ]
+        },
+        {
+          "_id": "negative_zero",
+          "v": [
+            -0.0,
+            -0.0
+          ]
+        },
+        {
+          "_id": "operands",
+          "v": [
+            1,
+            [
+              2,
+              3
+            ],
+            null,
+            false,
+            {},
+            1
+          ]
+        },
+        {
+          "_id": "ignored",
+          "v": [
+            null,
+            false,
+            [],
+            {},
+            "x"
+          ]
+        },
+        {
+          "_id": "empty",
+          "v": []
+        }
+      ],
+      "selector": "semantic_sum_pipeline_write"
+    }
+  ],
+  "duration_seconds": 0.5717360973358154,
+  "errors": [
+    {
+      "test": "test_semantic_sum_expressions_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_expressions_matches_real_mongodb) (engine='memory', case='semantic_sum_expressions')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 48, in expressions\n    return list(collection.aggregate([\n        {\"$project\": {\"s\": {\"$sum\": \"$v\"}, \"a\": {\"$avg\": \"$v\"}}},\n        {\"$set\": RESULT_TYPES},\n        {\"$sort\": {\"_id\": 1}},\n    ]))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1219, in apply_pipeline\n    compiled_plan.execute(\n    ~~~~~~~~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n    ...<3 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 285, in _project_step\n    return _apply_project([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 211, in _apply_project\n    value = _evaluate_expression_with_missing(\n        document, expression, variables, dialect=dialect\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 802, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1057, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 100, in evaluate_numeric_expression\n    total = bson_accumulator_add(total, value)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_expressions_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_expressions_matches_real_mongodb) (engine='sqlite', case='semantic_sum_expressions')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 48, in expressions\n    return list(collection.aggregate([\n        {\"$project\": {\"s\": {\"$sum\": \"$v\"}, \"a\": {\"$avg\": \"$v\"}}},\n        {\"$set\": RESULT_TYPES},\n        {\"$sort\": {\"_id\": 1}},\n    ]))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1219, in apply_pipeline\n    compiled_plan.execute(\n    ~~~~~~~~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n    ...<3 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 285, in _project_step\n    return _apply_project([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 211, in _apply_project\n    value = _evaluate_expression_with_missing(\n        document, expression, variables, dialect=dialect\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 802, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1057, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 100, in evaluate_numeric_expression\n    total = bson_accumulator_add(total, value)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_group_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_group_matches_real_mongodb) (engine='memory', case='semantic_sum_group')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 56, in groups\n    return list(collection.aggregate(GROUP_PIPELINE))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 226, in _stage_group\n    return _apply_group(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 633, in _apply_group\n    accumulator.consume(documents)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 690, in consume\n    self.consume_document(document)\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 714, in consume_document\n    _apply_accumulators(\n    ~~~~~~~~~~~~~~~~~~~^\n        self._groups[group_key],\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n        **self._runtime,\n        ^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/accumulators.py\", line 521, in _apply_accumulators\n    values[field] = bson_accumulator_add(values[field], numeric_value)\n                    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_group_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_group_matches_real_mongodb) (engine='sqlite', case='semantic_sum_group')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 56, in groups\n    return list(collection.aggregate(GROUP_PIPELINE))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 226, in _stage_group\n    return _apply_group(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 633, in _apply_group\n    accumulator.consume(documents)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 690, in consume\n    self.consume_document(document)\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 714, in consume_document\n    _apply_accumulators(\n    ~~~~~~~~~~~~~~~~~~~^\n        self._groups[group_key],\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n        **self._runtime,\n        ^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/accumulators.py\", line 521, in _apply_accumulators\n    values[field] = bson_accumulator_add(values[field], numeric_value)\n                    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_pipeline_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_pipeline_write_matches_real_mongodb) (engine='memory', case='semantic_sum_pipeline_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 82, in pipeline_write\n    result = collection.update_many({}, [{\"$set\": {\n        \"s\": {\"$sum\": \"$v\"}, \"a\": {\"$avg\": \"$v\"},\n    }}])\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 812, in update_many\n    return self._run_collection_method(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        \"update_many\",\n        ^^^^^^^^^^^^^^\n    ...<10 lines>...\n        inline=True,\n        ^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 149, in _run_collection_method\n    return self._client._run(method(*args, **kwargs), inline=use_inline)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 287, in run\n    return self._run_inline_direct(awaitable)\n           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 118, in _run_inline_direct\n    awaitable.send(None)\n    ~~~~~~~~~~~~~~^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 1360, in update_many\n    result = await _collection_modify.update_many(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_write_errors.py\", line 48, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_modify.py\", line 344, in update_many\n    captured = await collection._engine_update_with_operation(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<12 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 722, in _engine_update_with_operation\n    return await self._runtime.engine_update_with_operation(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_runtime.py\", line 484, in engine_update_with_operation\n    result = await self._engine_spi.update_outcome(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<10 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/adapter.py\", line 462, in update_outcome\n    result = await engine.update_with_operation(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<9 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/memory.py\", line 4062, in update_with_operation\n    else semantics.compiled_update_plan.apply(\n         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document,\n        ^^^^^^^^^\n        variables=semantics.variables,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/operators.py\", line 178, in apply\n    result = self.compiled_pipeline.execute(\n        [working],\n        variables=variables,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 294, in _add_fields_step\n    return _apply_add_fields([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 132, in _apply_add_fields\n    path: _evaluate_expression_with_missing(\n          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document, expression, variables, dialect=dialect\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 802, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1057, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 100, in evaluate_numeric_expression\n    total = bson_accumulator_add(total, value)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_pipeline_write_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_pipeline_write_matches_real_mongodb) (engine='sqlite', case='semantic_sum_pipeline_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 82, in pipeline_write\n    result = collection.update_many({}, [{\"$set\": {\n        \"s\": {\"$sum\": \"$v\"}, \"a\": {\"$avg\": \"$v\"},\n    }}])\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 812, in update_many\n    return self._run_collection_method(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        \"update_many\",\n        ^^^^^^^^^^^^^^\n    ...<10 lines>...\n        inline=True,\n        ^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 149, in _run_collection_method\n    return self._client._run(method(*args, **kwargs), inline=use_inline)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 1360, in update_many\n    result = await _collection_modify.update_many(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_write_errors.py\", line 48, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_modify.py\", line 344, in update_many\n    captured = await collection._engine_update_with_operation(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<12 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 722, in _engine_update_with_operation\n    return await self._runtime.engine_update_with_operation(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_runtime.py\", line 484, in engine_update_with_operation\n    result = await self._engine_spi.update_outcome(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<10 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/adapter.py\", line 462, in update_outcome\n    result = await engine.update_with_operation(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<9 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py\", line 7414, in update_with_operation\n    return await self._run_blocking(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py\", line 843, in _run_blocking\n    return await asyncio.shield(submitted)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py\", line 86, in run\n    result = ctx.run(self.task)\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py\", line 73, in run\n    return fn(*args, **kwargs)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py\", line 7483, in _update_with_operation_sync\n    result = _sqlite_update_with_operation(\n        db_name=db_name,\n    ...<79 lines>...\n        replacement_document=replacement_document,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_modify_ops.py\", line 331, in update_with_operation\n    else semantics.compiled_update_plan.apply(\n         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document,\n        ^^^^^^^^^\n        variables=semantics.variables,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/operators.py\", line 178, in apply\n    result = self.compiled_pipeline.execute(\n        [working],\n        variables=variables,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 294, in _add_fields_step\n    return _apply_add_fields([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 132, in _apply_add_fields\n    path: _evaluate_expression_with_missing(\n          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document, expression, variables, dialect=dialect\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 802, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1057, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 100, in evaluate_numeric_expression\n    total = bson_accumulator_add(total, value)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_subpipeline_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_subpipeline_matches_real_mongodb) (engine='memory', case='semantic_sum_subpipeline')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 60, in subpipeline\n    return list(collection.aggregate([{\"$facet\": {\"groups\": GROUP_PIPELINE}}]))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 365, in _stage_facet\n    return _apply_facet(\n        documents,\n    ...<12 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/join_stages.py\", line 203, in _apply_facet\n    faceted[field] = apply_pipeline(\n                     ~~~~~~~~~~~~~~^\n        list(documents),\n        ^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 226, in _stage_group\n    return _apply_group(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 633, in _apply_group\n    accumulator.consume(documents)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 690, in consume\n    self.consume_document(document)\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 714, in consume_document\n    _apply_accumulators(\n    ~~~~~~~~~~~~~~~~~~~^\n        self._groups[group_key],\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n        **self._runtime,\n        ^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/accumulators.py\", line 521, in _apply_accumulators\n    values[field] = bson_accumulator_add(values[field], numeric_value)\n                    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_subpipeline_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_subpipeline_matches_real_mongodb) (engine='sqlite', case='semantic_sum_subpipeline')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 60, in subpipeline\n    return list(collection.aggregate([{\"$facet\": {\"groups\": GROUP_PIPELINE}}]))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 365, in _stage_facet\n    return _apply_facet(\n        documents,\n    ...<12 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/join_stages.py\", line 203, in _apply_facet\n    faceted[field] = apply_pipeline(\n                     ~~~~~~~~~~~~~~^\n        list(documents),\n        ^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 226, in _stage_group\n    return _apply_group(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 633, in _apply_group\n    accumulator.consume(documents)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 690, in consume\n    self.consume_document(document)\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 714, in consume_document\n    _apply_accumulators(\n    ~~~~~~~~~~~~~~~~~~~^\n        self._groups[group_key],\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n        **self._runtime,\n        ^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/accumulators.py\", line 521, in _apply_accumulators\n    values[field] = bson_accumulator_add(values[field], numeric_value)\n                    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 286, in bson_accumulator_add\n    return bson_add(left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 269, in bson_add\n    return _wrap_numeric_result(left, right, result)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 497, in _wrap_numeric_result\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_windows_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_windows_matches_real_mongodb) (engine='memory', case='semantic_sum_windows')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 64, in windows\n    return list(collection.aggregate([\n        {\"$unwind\": {\"path\": \"$v\", \"includeArrayIndex\": \"i\"}},\n    ...<11 lines>...\n        {\"$sort\": {\"_id\": 1, \"i\": 1}},\n    ]))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 409, in _stage_set_window_fields\n    return _apply_set_window_fields(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 1245, in _apply_set_window_fields\n    enriched, field, _finalize_accumulators(state)[field]\n                     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/accumulators.py\", line 700, in _finalize_accumulators\n    document[field] = bson_divide(value.total, value.count)\n                      ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 344, in bson_divide\n    return _wrap_from_templates(result, left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 550, in _wrap_from_templates\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    },
+    {
+      "test": "test_semantic_sum_windows_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_sum_windows_matches_real_mongodb) (engine='sqlite', case='semantic_sum_windows')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_sum_cases.py\", line 64, in windows\n    return list(collection.aggregate([\n        {\"$unwind\": {\"path\": \"$v\", \"includeArrayIndex\": \"i\"}},\n    ...<11 lines>...\n        {\"$sort\": {\"_id\": 1, \"i\": 1}},\n    ]))\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 409, in _stage_set_window_fields\n    return _apply_set_window_fields(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 1245, in _apply_set_window_fields\n    enriched, field, _finalize_accumulators(state)[field]\n                     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/accumulators.py\", line 700, in _finalize_accumulators\n    document[field] = bson_divide(value.total, value.count)\n                      ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 344, in bson_divide\n    return _wrap_from_templates(result, left, right)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/bson_scalars.py\", line 550, in _wrap_from_templates\n    raise BsonScalarOverflowError(\"integer exceeds BSON int64 range\")\nmongoeco.core.bson_scalars.BsonScalarOverflowError: integer exceeds BSON int64 range\n"
+    }
+  ],
+  "expected_tests": 5,
+  "failures": [],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 5
+}

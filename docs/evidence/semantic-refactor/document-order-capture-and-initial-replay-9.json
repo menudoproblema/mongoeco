@@ -1,0 +1,724 @@
+{
+  "case_filter": "semantic_document_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_document_compare_simple",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": 1,
+          "v": {
+            "a": 1
+          }
+        },
+        {
+          "_id": 2,
+          "v": {
+            "z": 1
+          }
+        },
+        {
+          "_id": 3,
+          "v": {
+            "a": 2
+          }
+        },
+        {
+          "_id": 4,
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": 5,
+          "v": {}
+        },
+        {
+          "_id": 6,
+          "v": {
+            "a": [
+              1
+            ]
+          }
+        },
+        {
+          "_id": 7,
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": 8,
+          "v": {
+            "a": {
+              "a": 1
+            }
+          }
+        },
+        {
+          "_id": 9,
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": 10,
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": 11,
+          "v": {
+            "A": 1
+          }
+        },
+        {
+          "_id": 12,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 13,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 14,
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": 15,
+          "v": {
+            "a": [
+              {
+                "a": 1
+              }
+            ]
+          }
+        },
+        {
+          "_id": 16,
+          "v": {
+            "z": "0.1"
+          }
+        },
+        {
+          "_id": 17,
+          "v": {
+            "a": 0.1
+          }
+        }
+      ],
+      "selector": "semantic_document_compare_simple"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_document_compare_collation",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": 1,
+          "v": {
+            "a": 1
+          }
+        },
+        {
+          "_id": 2,
+          "v": {
+            "z": 1
+          }
+        },
+        {
+          "_id": 3,
+          "v": {
+            "a": 2
+          }
+        },
+        {
+          "_id": 4,
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": 5,
+          "v": {}
+        },
+        {
+          "_id": 6,
+          "v": {
+            "a": [
+              1
+            ]
+          }
+        },
+        {
+          "_id": 7,
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": 8,
+          "v": {
+            "a": {
+              "a": 1
+            }
+          }
+        },
+        {
+          "_id": 9,
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": 10,
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": 11,
+          "v": {
+            "A": 1
+          }
+        },
+        {
+          "_id": 12,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 13,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 14,
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": 15,
+          "v": {
+            "a": [
+              {
+                "a": 1
+              }
+            ]
+          }
+        },
+        {
+          "_id": 16,
+          "v": {
+            "z": "0.1"
+          }
+        },
+        {
+          "_id": 17,
+          "v": {
+            "a": 0.1
+          }
+        }
+      ],
+      "selector": "semantic_document_compare_collation"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_document_sort_simple",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": 1,
+          "v": {
+            "a": 1
+          }
+        },
+        {
+          "_id": 2,
+          "v": {
+            "z": 1
+          }
+        },
+        {
+          "_id": 3,
+          "v": {
+            "a": 2
+          }
+        },
+        {
+          "_id": 4,
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": 5,
+          "v": {}
+        },
+        {
+          "_id": 6,
+          "v": {
+            "a": [
+              1
+            ]
+          }
+        },
+        {
+          "_id": 7,
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": 8,
+          "v": {
+            "a": {
+              "a": 1
+            }
+          }
+        },
+        {
+          "_id": 9,
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": 10,
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": 11,
+          "v": {
+            "A": 1
+          }
+        },
+        {
+          "_id": 12,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 13,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 14,
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": 15,
+          "v": {
+            "a": [
+              {
+                "a": 1
+              }
+            ]
+          }
+        },
+        {
+          "_id": 16,
+          "v": {
+            "z": "0.1"
+          }
+        },
+        {
+          "_id": 17,
+          "v": {
+            "a": 0.1
+          }
+        }
+      ],
+      "selector": "semantic_document_sort_simple"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_document_sort_collation",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": 1,
+          "v": {
+            "a": 1
+          }
+        },
+        {
+          "_id": 2,
+          "v": {
+            "z": 1
+          }
+        },
+        {
+          "_id": 3,
+          "v": {
+            "a": 2
+          }
+        },
+        {
+          "_id": 4,
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": 5,
+          "v": {}
+        },
+        {
+          "_id": 6,
+          "v": {
+            "a": [
+              1
+            ]
+          }
+        },
+        {
+          "_id": 7,
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": 8,
+          "v": {
+            "a": {
+              "a": 1
+            }
+          }
+        },
+        {
+          "_id": 9,
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": 10,
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": 11,
+          "v": {
+            "A": 1
+          }
+        },
+        {
+          "_id": 12,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 13,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 14,
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": 15,
+          "v": {
+            "a": [
+              {
+                "a": 1
+              }
+            ]
+          }
+        },
+        {
+          "_id": 16,
+          "v": {
+            "z": "0.1"
+          }
+        },
+        {
+          "_id": 17,
+          "v": {
+            "a": 0.1
+          }
+        }
+      ],
+      "selector": "semantic_document_sort_collation"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_document_partial_index",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": 1,
+          "v": {
+            "a": 1
+          }
+        },
+        {
+          "_id": 2,
+          "v": {
+            "z": 1
+          }
+        },
+        {
+          "_id": 3,
+          "v": {
+            "a": 2
+          }
+        },
+        {
+          "_id": 4,
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": 5,
+          "v": {}
+        },
+        {
+          "_id": 6,
+          "v": {
+            "a": [
+              1
+            ]
+          }
+        },
+        {
+          "_id": 7,
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": 8,
+          "v": {
+            "a": {
+              "a": 1
+            }
+          }
+        },
+        {
+          "_id": 9,
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": 10,
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": 11,
+          "v": {
+            "A": 1
+          }
+        },
+        {
+          "_id": 12,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 13,
+          "v": {
+            "a": 1,
+            "b": 0
+          }
+        },
+        {
+          "_id": 14,
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": 15,
+          "v": {
+            "a": [
+              {
+                "a": 1
+              }
+            ]
+          }
+        },
+        {
+          "_id": 16,
+          "v": {
+            "z": "0.1"
+          }
+        },
+        {
+          "_id": 17,
+          "v": {
+            "a": 0.1
+          }
+        }
+      ],
+      "selector": "semantic_document_partial_index"
+    }
+  ],
+  "duration_seconds": 0.7182028293609619,
+  "errors": [],
+  "expected_tests": 5,
+  "failures": [],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": true,
+  "target": "9.0",
+  "tests_run": 5
+}

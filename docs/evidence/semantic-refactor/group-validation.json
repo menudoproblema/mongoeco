@@ -1,0 +1,35 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B01",
+  "status": "implemented_and_focally_verified",
+  "deleted_source": "src/mongoeco/core/aggregation/compiled_aggregation.py",
+  "sources_sha256": {
+    "src/mongoeco/core/aggregation/grouping_stages.py": "77e876b3947455d818f9301c705abd940e3ca123a7f356fac3c27186a78f58f5",
+    "tests/differential/semantic_group_cases.py": "303ae30dcddfdf402527622460dff5d41365eea1b8cf4710b1b827a747d12b81",
+    "tests/integration/api/test_semantic_group_regressions.py": "665b11c7b9cb15798416aa717bbb78921abc44675ed79a66c65c655998729217",
+    "scripts/capture_differential_replay_golden.py": "781f11f70c9f352fc1eb9ced8c305e758efddeb17d8792a2764885cfc1e8192f",
+    "benchmarks/runners/workloads.py": "90d61aa072abee06420b57d508d15e91a5b5855d4a48235dbf227afe4698afd6"
+  },
+  "native_reports": [
+    "group-native-7.json",
+    "group-native-8.json",
+    "group-native-9.json"
+  ],
+  "checks": {
+    "group_regressions": "........................................................................ [ 87%]\n..........                                                               [100%]\n82 passed in 0.73s\n",
+    "aggregation_regressions": "........................................................................ [ 14%]\n.................................................................................................................................................................................. [ 49%]\n...................................................... [ 60%]\n............................................................. [ 72%]\n........................................ [ 80%]\n................................................ssssssssssssssssssssssssssssss [ 96%]\nss................ [100%]\n469 passed, 32 skipped, 1594 subtests passed in 2.19s\n",
+    "lint_ratchet": "lint ratchet passed for 13 changed Python files\n"
+  },
+  "benchmark": {
+    "report": "group-benchmark.md",
+    "scope": "memory-sync; 1000 docs; 1 warmup; 3 repetitions; nested group + group/sort + topk",
+    "nested_wall_delta_percent": 24.6,
+    "outcome_comparison": "passed",
+    "note": "Small local sample; correctness takes precedence. No general performance claim."
+  },
+  "pending_global": [
+    "wheel/sdist and full Python/SDK matrix",
+    "whole-plan differential families",
+    "B02\u2013B10"
+  ]
+}

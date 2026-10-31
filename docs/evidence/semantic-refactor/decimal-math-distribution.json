@@ -1,0 +1,18 @@
+{
+  "scope": "Changed numeric source files and notices in wheel/sdist, plus bounded native-capture replay from the wheel; B10 global gates pending.",
+  "files": {
+    "core/decimal_math.py": "b3e9575a749ecdd8a47ed8d9346171ded60ca45bd0f5dae3c71d553b9bd59bd5",
+    "core/bson_scalars.py": "ca3a899c8207273750c9ca2f8849dbe390edf354841eca75374b8a1f85beb92a",
+    "core/aggregation/numeric_expressions.py": "a67faf486a2f282e9c2c2eedc1629bdb2df2788402abcdb6c978caa365fb6958",
+    "core/resources/Intel-Decimal-Math-LICENSE.txt": "8c3b5d8e93ed1b08469d60b57d4e4ab715a39102cb78930a3c99f96a6f6948ab"
+  },
+  "artifacts": {
+    "mongoeco-4.11.0-py3-none-any.whl": "ca03c301dfe75a24b2c7f3735ae985f488fd4fba62a6b93226e6be863021e469",
+    "mongoeco-4.11.0.tar.gz": "108de9e6abdfec303271f15f61e72b1462b7451dbf9a9a6d2af9081696a34202"
+  },
+  "license_expression": "Apache-2.0 AND ICU AND BSD-3-Clause",
+  "result": "passed",
+  "native_replay_smoke": "Wheel import origin verified; native-capture replay: 48 actions passed; both engines, three dialects.\n",
+  "maintained_smoke": "version 4.11.0\nmodule /tmp/mongoeco-decimal-math-wheel/mongoeco/__init__.py\nunicode_collation True\nfind_one {'_id': '1', 'kind': 'view', 'count': 1}\ndocs [{'_id': '1', 'kind': 'view', 'count': 1}]\n",
+  "smoke_script_sha256": "adf7fe935a3d96a29a61392d3ad4107378e4d10ee84228ce869ea348a0dbafa1"
+}

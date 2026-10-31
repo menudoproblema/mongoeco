@@ -1,0 +1,39 @@
+{
+  "pymongo": "4.19.0",
+  "server": "8.0.32",
+  "original": [
+    {
+      "_id": 1,
+      "a": 5
+    }
+  ],
+  "clone": {
+    "family": "OperationFailure",
+    "code": 17276,
+    "errmsg": "Use of undefined variable: x"
+  },
+  "fresh": [
+    {
+      "_id": 1,
+      "a": 5
+    }
+  ],
+  "find_commands": [
+    {
+      "let": {
+        "x": 5
+      },
+      "let_present": true
+    },
+    {
+      "let": null,
+      "let_present": false
+    },
+    {
+      "let": {
+        "x": 5
+      },
+      "let_present": true
+    }
+  ]
+}

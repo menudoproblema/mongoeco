@@ -1,0 +1,79 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B03",
+  "finding": "H26",
+  "status": "advanced_functions_focally_corrected_h26_in_progress",
+  "scope": "Decimal128 abs/exp/ln/log10/log/sqrt/pow/round/trunc/floor/ceil; supported-dialect log-base delta; generated inputs, numeric controls, domain error family/code/recovery, pipeline writes, NaN observer; compensated accumulation remains pending.",
+  "sources_sha256": {
+    "src/mongoeco/core/decimal_math.py": "b3e9575a749ecdd8a47ed8d9346171ded60ca45bd0f5dae3c71d553b9bd59bd5",
+    "src/mongoeco/core/bson_scalars.py": "ca3a899c8207273750c9ca2f8849dbe390edf354841eca75374b8a1f85beb92a",
+    "src/mongoeco/core/aggregation/numeric_expressions.py": "a67faf486a2f282e9c2c2eedc1629bdb2df2788402abcdb6c978caa365fb6958",
+    "src/mongoeco/core/resources/Intel-Decimal-Math-LICENSE.txt": "8c3b5d8e93ed1b08469d60b57d4e4ab715a39102cb78930a3c99f96a6f6948ab",
+    "pyproject.toml": "51350c3bd6b9b88184a020815842569bb71c87a5d177c98ad2cd53f301b9f3fd",
+    "scripts/smoke_installed_wheel.py": "adf7fe935a3d96a29a61392d3ad4107378e4d10ee84228ce869ea348a0dbafa1",
+    "tests/differential/semantic_decimal_advanced_cases.py": "4a5e3184ede9516a3c192182c90e13860d87ff2ad628bfcbc68d6b7dfaf000d7",
+    "tests/differential/semantic_corpora.py": "da70db9ed8c13e401874d341f8cd9e31b4bf1e6f9b24c0e9146202de47481a45",
+    "tests/differential/_real_parity_base.py": "e9ba8cc3585367449dc38bc940bc56566fb33bdccf34adebf176fa7b53e7c101",
+    "tests/integration/api/test_semantic_group_regressions.py": "5f6af8105791a6a4213eb421f444747f7f43f430ee432f152d32912c1ea8e06d",
+    "tests/unit/core/test_aggregation_expression_advanced.py": "ed1c81f75a83da6c83c2b40d316397d29d0ad91a101d4037b00586f6e532b10c",
+    "tests/unit/core/test_aggregation_helper_branches.py": "726bf1df4588f81881148a4c1f52a2bff8b535bb015654b30ccf6a0b33ac8d6c",
+    "tests/unit/core/test_aggregation_pipeline_advanced.py": "5c1a46aeeb34fc38b36d65fcb938ba95aecfb5a0c410c66e89efb6a07d1b978d"
+  },
+  "before": {
+    "initial": "decimal-advanced-before-9.json",
+    "final_corpus": "decimal-advanced-prior-candidate-8.json",
+    "provenance": "Prior-to-H26 candidate reconstructed and source hashes checked in decimal-validation.json; current corpus/harness/native MongoDB 8 reused. This baseline precedes both basic and advanced H26 fixes.",
+    "result": "8 actions, 2 subfailures, 14 errors, zero skips."
+  },
+  "native_reports": [
+    "decimal-advanced-native-7.json",
+    "decimal-advanced-native-8.json",
+    "decimal-advanced-native-9.json"
+  ],
+  "native_fixtures": [
+    "tests/fixtures/semantic_decimal_advanced_7_0.json",
+    "tests/fixtures/semantic_decimal_advanced_8_0.json",
+    "tests/fixtures/semantic_decimal_advanced_9_0.json",
+    "tests/fixtures/semantic_decimal_advanced_edges_7_0.json",
+    "tests/fixtures/semantic_decimal_advanced_edges_8_0.json",
+    "tests/fixtures/semantic_decimal_advanced_edges_9_0.json",
+    "tests/fixtures/semantic_decimal_generated_7_0.json",
+    "tests/fixtures/semantic_decimal_generated_8_0.json",
+    "tests/fixtures/semantic_decimal_generated_9_0.json",
+    "tests/fixtures/semantic_decimal_controls_7_0.json",
+    "tests/fixtures/semantic_decimal_controls_8_0.json",
+    "tests/fixtures/semantic_decimal_controls_9_0.json"
+  ],
+  "checks": {
+    "surfaces": "........................................................................ [  4%]\n........................................................................ [  8%]\n........................................................................ [ 12%]\n........................................................................ [ 16%]\n........................................................................ [ 20%]\n........................................................................ [ 24%]\n........................................................................ [ 28%]\n........................................................................ [ 32%]\n........................................................................ [ 37%]\n........................................................................ [ 41%]\n........................................................................ [ 45%]\n........................................................................ [ 49%]\n........................................................................ [ 53%]\n........................................................................ [ 57%]\n........................................................................ [ 61%]\n........................................................................ [ 65%]\n........................................................................ [ 69%]\n........................................................................ [ 74%]\n........................................................................ [ 78%]\n........................................................................ [ 82%]\n........................................................................ [ 86%]\n........................................................................ [ 90%]\n........................................................................ [ 94%]\n........................................................................ [ 98%]\n......................                                                   [100%]\n1750 passed in 24.43s\n",
+    "core_aggregation_properties": ".................................................................... [ 13%]\n.................................................................... [ 26%]\n............................................................. [ 39%]\n................................................. [ 48%]\n...................................................... [ 59%]\n..................................................................................................................................... [ 85%]\n.......................................................................  [100%]\n504 passed, 359 subtests passed in 3.90s\n",
+    "bson_wire_storage": ".......................................                      [100%]\n39 passed, 84 subtests passed in 7.38s\n",
+    "lint_ratchet": "lint ratchet passed for 49 changed Python files\n",
+    "maintained_smoke_tests": "....                                                                     [100%]\n4 passed in 0.45s\n",
+    "maintained_smoke_from_wheel": "version 4.11.0\nmodule /tmp/mongoeco-decimal-math-wheel/mongoeco/__init__.py\nunicode_collation True\nfind_one {'_id': '1', 'kind': 'view', 'count': 1}\ndocs [{'_id': '1', 'kind': 'view', 'count': 1}]\n",
+    "wheel_native_replay": "Wheel import origin verified; native-capture replay: 48 actions passed; both engines, three dialects.\n"
+  },
+  "distribution": "decimal-math-distribution.json",
+  "upstream_provenance": "decimal-math-source-notes.md",
+  "public_api_manifest": "current; no exported symbol changes",
+  "diff_check": "passed",
+  "benchmark": {
+    "baseline": "decimal-benchmark-after.json",
+    "candidate": "decimal-advanced-benchmark.json",
+    "report": "decimal-advanced-benchmark.md",
+    "provenance": "Same existing aggregation harness/dataset and runtime environment as the verified basic H26 candidate in decimal-validation.json; equal output hashes.",
+    "sample": "memory-sync, 1000 documents, warmup 1, repetitions 3; controls only, not a full transcendental performance claim.",
+    "delta_wall_percent": {
+      "materializing_aggregation_nested_group": 3.2,
+      "materializing_aggregation_group_sort": 2.3
+    }
+  },
+  "pending": [
+    "H26 cancellation and compensated accumulation",
+    "H24 wider numeric/nonfinite and unique multikey/partial/collation consumers",
+    "H27 int64 overflow/promotion and write errors/atomicity",
+    "B04/B08 complete numeric error envelopes and phases",
+    "B06 remaining accumulator contexts",
+    "B10 full immutable-artifact Python/SDK gates"
+  ]
+}

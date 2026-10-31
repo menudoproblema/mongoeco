@@ -1,0 +1,864 @@
+{
+  "case_filter": "semantic_overflow_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_arithmetic",
+      "seed_documents": [
+        {
+          "_id": "int_max",
+          "a": 2147483647,
+          "b": 1
+        },
+        {
+          "_id": "int_min",
+          "a": -2147483648,
+          "b": -1
+        },
+        {
+          "_id": "long_small",
+          "a": 4,
+          "b": 2
+        },
+        {
+          "_id": "long_max",
+          "a": 9223372036854775807,
+          "b": 1
+        },
+        {
+          "_id": "long_min",
+          "a": -9223372036854775808,
+          "b": -1
+        },
+        {
+          "_id": "sum_rounding",
+          "a": 9223372036854775807,
+          "b": 1025
+        },
+        {
+          "_id": "subtract_overflow",
+          "a": 9223372036854775807,
+          "b": -9223372036854775808
+        },
+        {
+          "_id": "subtract_min",
+          "a": -9223372036854775808,
+          "b": 9223372036854775807
+        },
+        {
+          "_id": "multiply",
+          "a": 4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "multiply_negative",
+          "a": -4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "long_exact",
+          "a": 9007199254740993,
+          "b": 1
+        },
+        {
+          "_id": "mixed_double",
+          "a": 9223372036854775807,
+          "b": 2.0
+        },
+        {
+          "_id": "mixed_decimal",
+          "a": 9223372036854775807,
+          "b": "2"
+        },
+        {
+          "_id": "double_overflow",
+          "a": 1e+308,
+          "b": 2
+        }
+      ],
+      "selector": "semantic_overflow_arithmetic"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_variadic",
+      "seed_documents": [
+        {
+          "_id": "int_max",
+          "a": 2147483647,
+          "b": 1
+        },
+        {
+          "_id": "int_min",
+          "a": -2147483648,
+          "b": -1
+        },
+        {
+          "_id": "long_small",
+          "a": 4,
+          "b": 2
+        },
+        {
+          "_id": "long_max",
+          "a": 9223372036854775807,
+          "b": 1
+        },
+        {
+          "_id": "long_min",
+          "a": -9223372036854775808,
+          "b": -1
+        },
+        {
+          "_id": "sum_rounding",
+          "a": 9223372036854775807,
+          "b": 1025
+        },
+        {
+          "_id": "subtract_overflow",
+          "a": 9223372036854775807,
+          "b": -9223372036854775808
+        },
+        {
+          "_id": "subtract_min",
+          "a": -9223372036854775808,
+          "b": 9223372036854775807
+        },
+        {
+          "_id": "multiply",
+          "a": 4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "multiply_negative",
+          "a": -4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "long_exact",
+          "a": 9007199254740993,
+          "b": 1
+        },
+        {
+          "_id": "mixed_double",
+          "a": 9223372036854775807,
+          "b": 2.0
+        },
+        {
+          "_id": "mixed_decimal",
+          "a": 9223372036854775807,
+          "b": "2"
+        },
+        {
+          "_id": "double_overflow",
+          "a": 1e+308,
+          "b": 2
+        }
+      ],
+      "selector": "semantic_overflow_variadic"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_pipeline_write",
+      "seed_documents": [
+        {
+          "_id": "int_max",
+          "a": 2147483647,
+          "b": 1
+        },
+        {
+          "_id": "int_min",
+          "a": -2147483648,
+          "b": -1
+        },
+        {
+          "_id": "long_small",
+          "a": 4,
+          "b": 2
+        },
+        {
+          "_id": "long_max",
+          "a": 9223372036854775807,
+          "b": 1
+        },
+        {
+          "_id": "long_min",
+          "a": -9223372036854775808,
+          "b": -1
+        },
+        {
+          "_id": "sum_rounding",
+          "a": 9223372036854775807,
+          "b": 1025
+        },
+        {
+          "_id": "subtract_overflow",
+          "a": 9223372036854775807,
+          "b": -9223372036854775808
+        },
+        {
+          "_id": "subtract_min",
+          "a": -9223372036854775808,
+          "b": 9223372036854775807
+        },
+        {
+          "_id": "multiply",
+          "a": 4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "multiply_negative",
+          "a": -4611686018427387904,
+          "b": 4
+        },
+        {
+          "_id": "long_exact",
+          "a": 9007199254740993,
+          "b": 1
+        },
+        {
+          "_id": "mixed_double",
+          "a": 9223372036854775807,
+          "b": 2.0
+        },
+        {
+          "_id": "mixed_decimal",
+          "a": 9223372036854775807,
+          "b": "2"
+        },
+        {
+          "_id": "double_overflow",
+          "a": 1e+308,
+          "b": 2
+        }
+      ],
+      "selector": "semantic_overflow_pipeline_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_individual_writes",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_individual_writes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_many_write",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_many_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_bulk_write",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_bulk_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_array_write",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_array_write"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_raw_commands",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_raw_commands"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_identifiers",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_identifiers"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_overflow_write_controls",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 1,
+          "a": 9223372036854775807,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 2,
+          "a": 1,
+          "b": 0,
+          "zone": "many"
+        },
+        {
+          "_id": 3,
+          "a": -9223372036854775808,
+          "b": 0
+        },
+        {
+          "_id": 4,
+          "a": 4,
+          "b": 0
+        },
+        {
+          "_id": 5,
+          "b": 0,
+          "items": [
+            {
+              "n": 1
+            },
+            {
+              "n": 9223372036854775807
+            }
+          ]
+        },
+        {
+          "_id": "a\"b",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": {
+            "k": 1
+          },
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": 99,
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "1.5",
+          "a": 9223372036854775807,
+          "b": 0
+        },
+        {
+          "_id": "000000000000000000000001",
+          "a": 9223372036854775807,
+          "b": 0
+        }
+      ],
+      "selector": "semantic_overflow_write_controls"
+    }
+  ],
+  "duration_seconds": 1.1049280166625977,
+  "errors": [
+    {
+      "test": "test_semantic_overflow_arithmetic_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_overflow_arithmetic_matches_real_mongodb) (engine='memory', case='semantic_overflow_arithmetic')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_overflow_cases.py\", line 50, in arithmetic\n    return list(\n        collection.aggregate(\n    ...<5 lines>...\n        )\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 79, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2493, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 226, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2156, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1426, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1220, in apply_pipeline\n    compiled_plan.execute(\n    ~~~~~~~~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n    ...<3 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 285, in _project_step\n    return _apply_project([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 211, in _apply_project\n    value = _evaluate_expression_with_missing(\n        document, expression, variables, dialect=dialect\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 803, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1058, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 134, in evaluate_numeric_expression\n    if (isinstance(result, BsonInt64) and INT32_MIN <= result.value <= INT32_MAX\n                                          ^^^^^^^^^\nNameError: name 'INT32_MIN' is not defined. Did you mean: 'INT64_MIN'?\n"
+    },
+    {
+      "test": "test_semantic_overflow_arithmetic_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_overflow_arithmetic_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_arithmetic')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_overflow_cases.py\", line 50, in arithmetic\n    return list(\n        collection.aggregate(\n    ...<5 lines>...\n        )\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 79, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2493, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 226, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2156, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1426, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1220, in apply_pipeline\n    compiled_plan.execute(\n    ~~~~~~~~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n    ...<3 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 285, in _project_step\n    return _apply_project([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 211, in _apply_project\n    value = _evaluate_expression_with_missing(\n        document, expression, variables, dialect=dialect\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 803, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1058, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 134, in evaluate_numeric_expression\n    if (isinstance(result, BsonInt64) and INT32_MIN <= result.value <= INT32_MAX\n                                          ^^^^^^^^^\nNameError: name 'INT32_MIN' is not defined. Did you mean: 'INT64_MIN'?\n"
+    },
+    {
+      "test": "test_semantic_overflow_pipeline_write_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_overflow_pipeline_write_matches_real_mongodb) (engine='memory', case='semantic_overflow_pipeline_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_overflow_cases.py\", line 95, in pipeline_write\n    result = collection.update_many({}, [{\"$set\": FIELDS}])\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 812, in update_many\n    return self._run_collection_method(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        \"update_many\",\n        ^^^^^^^^^^^^^^\n    ...<10 lines>...\n        inline=True,\n        ^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 149, in _run_collection_method\n    return self._client._run(method(*args, **kwargs), inline=use_inline)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 287, in run\n    return self._run_inline_direct(awaitable)\n           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 118, in _run_inline_direct\n    awaitable.send(None)\n    ~~~~~~~~~~~~~~^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 1360, in update_many\n    result = await _collection_modify.update_many(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_write_errors.py\", line 48, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_modify.py\", line 344, in update_many\n    captured = await collection._engine_update_with_operation(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<12 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 722, in _engine_update_with_operation\n    return await self._runtime.engine_update_with_operation(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_runtime.py\", line 484, in engine_update_with_operation\n    result = await self._engine_spi.update_outcome(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<10 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/adapter.py\", line 462, in update_outcome\n    result = await engine.update_with_operation(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<9 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/memory.py\", line 4062, in update_with_operation\n    else semantics.compiled_update_plan.apply(\n         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document,\n        ^^^^^^^^^\n        variables=semantics.variables,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/operators.py\", line 178, in apply\n    result = self.compiled_pipeline.execute(\n        [working],\n        variables=variables,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 294, in _add_fields_step\n    return _apply_add_fields([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 132, in _apply_add_fields\n    path: _evaluate_expression_with_missing(\n          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document, expression, variables, dialect=dialect\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 803, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1058, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 134, in evaluate_numeric_expression\n    if (isinstance(result, BsonInt64) and INT32_MIN <= result.value <= INT32_MAX\n                                          ^^^^^^^^^\nNameError: name 'INT32_MIN' is not defined. Did you mean: 'INT64_MIN'?\n"
+    },
+    {
+      "test": "test_semantic_overflow_pipeline_write_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_overflow_pipeline_write_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_pipeline_write')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_overflow_cases.py\", line 95, in pipeline_write\n    result = collection.update_many({}, [{\"$set\": FIELDS}])\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 812, in update_many\n    return self._run_collection_method(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        \"update_many\",\n        ^^^^^^^^^^^^^^\n    ...<10 lines>...\n        inline=True,\n        ^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 149, in _run_collection_method\n    return self._client._run(method(*args, **kwargs), inline=use_inline)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 1360, in update_many\n    result = await _collection_modify.update_many(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_write_errors.py\", line 48, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_modify.py\", line 344, in update_many\n    captured = await collection._engine_update_with_operation(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<12 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 722, in _engine_update_with_operation\n    return await self._runtime.engine_update_with_operation(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_collection_runtime.py\", line 484, in engine_update_with_operation\n    result = await self._engine_spi.update_outcome(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<10 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/adapter.py\", line 462, in update_outcome\n    result = await engine.update_with_operation(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<9 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py\", line 7414, in update_with_operation\n    return await self._run_blocking(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py\", line 843, in _run_blocking\n    return await asyncio.shield(submitted)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py\", line 86, in run\n    result = ctx.run(self.task)\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py\", line 73, in run\n    return fn(*args, **kwargs)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/sqlite.py\", line 7483, in _update_with_operation_sync\n    result = _sqlite_update_with_operation(\n        db_name=db_name,\n    ...<79 lines>...\n        replacement_document=replacement_document,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/engines/_sqlite_modify_ops.py\", line 331, in update_with_operation\n    else semantics.compiled_update_plan.apply(\n         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document,\n        ^^^^^^^^^\n        variables=semantics.variables,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/operators.py\", line 178, in apply\n    result = self.compiled_pipeline.execute(\n        [working],\n        variables=variables,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 196, in execute\n    node.apply(result, variables=variables, deadline=deadline)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 67, in apply\n    current = step(current, variables)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_pipeline.py\", line 294, in _add_fields_step\n    return _apply_add_fields([document], spec, variables, dialect=dialect)[0]\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/transform_stages.py\", line 132, in _apply_add_fields\n    path: _evaluate_expression_with_missing(\n          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        document, expression, variables, dialect=dialect\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 803, in _evaluate_expression_with_missing\n    return evaluate_expression(document, expression, variables, dialect=dialect)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1058, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 134, in evaluate_numeric_expression\n    if (isinstance(result, BsonInt64) and INT32_MIN <= result.value <= INT32_MAX\n                                          ^^^^^^^^^\nNameError: name 'INT32_MIN' is not defined. Did you mean: 'INT64_MIN'?\n"
+    },
+    {
+      "test": "test_semantic_overflow_variadic_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_overflow_variadic_matches_real_mongodb) (engine='memory', case='semantic_overflow_variadic')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_overflow_cases.py\", line 79, in variadic\n    collection.aggregate(\n    ~~~~~~~~~~~~~~~~~~~~^\n        [\n        ^\n    ...<8 lines>...\n        ]\n        ^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 374, in aggregate\n    self._async_collection().aggregate(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        options[\"pipeline\"],\n        ^^^^^^^^^^^^^^^^^^^^\n    ...<7 lines>...\n        session=options.get(\"session\"),\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ),\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 98, in invoke\n    return method(*args, **kwargs)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 1161, in aggregate\n    operation = compile_aggregate_operation(\n        DocumentCodec.to_internal(options[\"pipeline\"]),\n    ...<9 lines>...\n        planning_mode=self._planning_mode,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/operations.py\", line 585, in compile_aggregate_operation\n    normalized_pipeline = prepare_pipeline(\n        normalized_pipeline,\n    ...<2 lines>...\n        variables=frozenset(_normalize_let(let) or {}),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 537, in prepare_pipeline\n    spec = _prepare_builtin_stage(\n        operator, spec, dialect=dialect, address=address, context=context\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 464, in _prepare_builtin_stage\n    prepare_expression(\n    ~~~~~~~~~~~~~~~~~~^\n        spec,\n        ^^^^^\n    ...<2 lines>...\n        fold_constants=\"update\" not in context.scopes,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 664, in prepare_expression\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        expression, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 715, in _prepare_expression_structure\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        value, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 723, in _prepare_expression_structure\n    evaluate_expression({}, expression, dialect=dialect)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1058, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 134, in evaluate_numeric_expression\n    if (isinstance(result, BsonInt64) and INT32_MIN <= result.value <= INT32_MAX\n                                          ^^^^^^^^^\nNameError: name 'INT32_MIN' is not defined. Did you mean: 'INT64_MIN'?\n"
+    },
+    {
+      "test": "test_semantic_overflow_variadic_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_semantic_overflow_variadic_matches_real_mongodb) (engine='sqlite', case='semantic_overflow_variadic')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 105, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_overflow_cases.py\", line 79, in variadic\n    collection.aggregate(\n    ~~~~~~~~~~~~~~~~~~~~^\n        [\n        ^\n    ...<8 lines>...\n        ]\n        ^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/collection.py\", line 374, in aggregate\n    self._async_collection().aggregate(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        options[\"pipeline\"],\n        ^^^^^^^^^^^^^^^^^^^^\n    ...<7 lines>...\n        session=options.get(\"session\"),\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ),\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 98, in invoke\n    return method(*args, **kwargs)\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/collection.py\", line 1161, in aggregate\n    operation = compile_aggregate_operation(\n        DocumentCodec.to_internal(options[\"pipeline\"]),\n    ...<9 lines>...\n        planning_mode=self._planning_mode,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/operations.py\", line 585, in compile_aggregate_operation\n    normalized_pipeline = prepare_pipeline(\n        normalized_pipeline,\n    ...<2 lines>...\n        variables=frozenset(_normalize_let(let) or {}),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 537, in prepare_pipeline\n    spec = _prepare_builtin_stage(\n        operator, spec, dialect=dialect, address=address, context=context\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 464, in _prepare_builtin_stage\n    prepare_expression(\n    ~~~~~~~~~~~~~~~~~~^\n        spec,\n        ^^^^^\n    ...<2 lines>...\n        fold_constants=\"update\" not in context.scopes,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 664, in prepare_expression\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        expression, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 715, in _prepare_expression_structure\n    _prepare_expression_structure(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        value, dialect, fold_constants=fold_constants, document_code=document_code\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/preparation.py\", line 723, in _prepare_expression_structure\n    evaluate_expression({}, expression, dialect=dialect)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/runtime.py\", line 1058, in evaluate_expression\n    return evaluate_numeric_expression(\n        operator,\n    ...<23 lines>...\n        missing_sentinel=_MISSING,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/numeric_expressions.py\", line 134, in evaluate_numeric_expression\n    if (isinstance(result, BsonInt64) and INT32_MIN <= result.value <= INT32_MAX\n                                          ^^^^^^^^^\nNameError: name 'INT32_MIN' is not defined. Did you mean: 'INT64_MIN'?\n"
+    }
+  ],
+  "expected_tests": 10,
+  "failures": [],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "tcmalloc-google",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "distarch": "aarch64",
+        "distmod": "ubuntu2404",
+        "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+        "target_arch": "aarch64",
+        "target_os": "linux"
+      },
+      "debug": false,
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "javascriptEngine": "mozjs",
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024",
+        "running": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysInfo": "deprecated",
+      "version": "8.0.32",
+      "versionArray": [
+        8,
+        0,
+        32,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "8.0",
+  "tests_run": 10
+}

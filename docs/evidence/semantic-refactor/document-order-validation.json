@@ -1,0 +1,67 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B03",
+  "finding": "H33",
+  "status": "finding_focally_corrected_block_in_progress",
+  "scope": "BSON document ordering, recursive dialect overrides, collation values versus binary names, transparent internal containers, query/filter/sort and partial index consumers.",
+  "sources_sha256": {
+    "src/mongoeco/core/bson_ordering.py": "adfc4e1171f7344c838c99f5eb8ac99998214d18c6228086c23171cb9d47c2e7",
+    "src/mongoeco/compat/base.py": "8dc192168d1b125058984a0afbb6134288818bed62df52d6bcf007ce3b4f181b",
+    "src/mongoeco/core/collation.py": "c5b1b42f090a57472312fc6da619ea0c400901cd0498de658fc30ef18fe98b61",
+    "tests/differential/semantic_document_order_cases.py": "b0eb4f795cf3d8cee962ab59696693721dc2e9171e8df06d0f231bfed66831b5",
+    "tests/differential/semantic_corpora.py": "4c704cb40d15fa008430bf6921e6ed6e4835bb9b6a54256cfc389ab1dd825611",
+    "tests/unit/core/test_document_order_context.py": "a91b40f44b33b50a52d032fbdb2bad37335b49b202c604e1f1fb1e6c3485a4b9",
+    "tests/integration/api/test_semantic_group_regressions.py": "5488710c27abd2d6a6ff469e89f8db1afa6f1c23d190306a99959d8916dea80f",
+    "benchmarks/runners/workloads.py": "4381ad8277d537b0a98d1c2fdf88945d267b1e438c46d6d0bb056e894db7ce2b"
+  },
+  "before": {
+    "report": "document-order-previous-cut-8.json",
+    "result": "Five actions fail on both engines: ten subfailures.",
+    "baseline_sources_sha256": {
+      "src/mongoeco/core/bson_ordering.py": "9193be32f9b82eccafc214fe0732428c8585c8e5b3fdda9b31ef368f1034f2a2",
+      "src/mongoeco/compat/base.py": "0e58c76646c58ea35da934eb8e3a2233fd6437c0a3c08dcab11cadb7d6c696de",
+      "src/mongoeco/core/collation.py": "c6cebeb9a5422c597863165a1974a92130b93f58d1e5929d2c12f6c8f640d2b5"
+    },
+    "provenance": "Comparator and ordering reconstructed from hashes in numeric-validation.json/numeric-predicates-validation.json; collation matches base HEAD; SQLite deltas checked against numeric-predicates-validation.json. Current corpus/native server used on both candidates."
+  },
+  "native_reports": [
+    "document-order-native-7.json",
+    "document-order-native-8.json",
+    "document-order-native-9.json"
+  ],
+  "native_fixtures": [
+    "tests/fixtures/semantic_document_order_7_0.json",
+    "tests/fixtures/semantic_document_order_8_0.json",
+    "tests/fixtures/semantic_document_order_9_0.json"
+  ],
+  "checks": {
+    "surfaces": "........................................................................ [  5%]\n........................................................................ [ 11%]\n........................................................................ [ 16%]\n........................................................................ [ 22%]\n........................................................................ [ 28%]\n........................................................................ [ 33%]\n........................................................................ [ 39%]\n........................................................................ [ 44%]\n........................................................................ [ 50%]\n........................................................................ [ 56%]\n........................................................................ [ 61%]\n........................................................................ [ 67%]\n........................................................................ [ 73%]\n........................................................................ [ 78%]\n........................................................................ [ 84%]\n........................................................................ [ 89%]\n........................................................................ [ 95%]\n.........................................................                [100%]\n1281 passed in 20.79s\n",
+    "comparison_context_properties": "................................................................s....... [ 30%]\n........................................................................ [ 61%]\n........................................................................ [ 92%]\n.................                                                   [100%]\n232 passed, 1 skipped, 293 subtests passed in 4.26s\n",
+    "optional_skip_reason": "s........................                                                [100%]\n=========================== short test summary info ============================\nSKIPPED [1] tests/unit/core/test_collation.py:325: ICU backend unavailable\n24 passed, 1 skipped in 0.36s\n",
+    "shared_consumers": "....................................... [100%]\n39 passed, 68 subtests passed in 6.74s\n",
+    "lint_ratchet": "lint ratchet passed for 40 changed Python files\n"
+  },
+  "public_api_manifest": "current; no public symbol changes",
+  "diff_check": "passed",
+  "benchmark": {
+    "before": "document-order-benchmark-before.json",
+    "after": "document-order-benchmark-after.json",
+    "report": "document-order-benchmark.md",
+    "baseline": "Same previous B03 production cut as before report, same current harness/dataset.",
+    "sample": "memory-sync, 1000 documents, warmup 1, repetitions 3; all output hashes equal; small local sample.",
+    "delta_wall_percent": {
+      "sort_shape_document_full_20": 5.0,
+      "sort_shape_top_level_limit_200": 12.9,
+      "sort_shape_nested_limit_200": 5.5,
+      "sort_shape_top_level_full_50": 4.6,
+      "sort_shape_nested_full_50": 1.2
+    }
+  },
+  "pending": [
+    "H24 wider numeric limits/nonfinite, unique multikey and partial/collated numeric consumers",
+    "H26 decimal arithmetic and bool conversion",
+    "H27 int64 promotion/overflow and write error atomicity",
+    "H35/B08 create_index partialFilterExpression alias observation needs contractual classification and a regression",
+    "B10 distribution and global gates"
+  ]
+}

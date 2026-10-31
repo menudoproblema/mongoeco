@@ -1,0 +1,249 @@
+Verified baseline module: /tmp/mongoeco-overflow-baseline/src/mongoeco/engines/sqlite.py
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+_ SQLiteEngineTests.test_build_select_sql_uses_scalar_index_entries_for_homogeneous_single_field_sort _
+
+self = <tests.unit.core.test_sqlite_engine.SQLiteEngineTests testMethod=test_build_select_sql_uses_scalar_index_entries_for_homogeneous_single_field_sort>
+
+    async def test_build_select_sql_uses_scalar_index_entries_for_homogeneous_single_field_sort(
+        self,
+    ):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.insert_document("db", "coll", {"_id": "1", "score": 10})
+            await engine.insert_document("db", "coll", {"_id": "2", "score": 30})
+            await engine.create_index("db", "coll", [("score", -1)])
+    
+            sql, _ = engine._build_select_sql(
+                "db",
+                "coll",
+                MatchAll(),
+                select_clause="document",
+                sort=[("score", -1)],
+                limit=5,
+            )
+        finally:
+            await engine.disconnect()
+    
+>       self.assertIn("FROM scalar_index_entries", sql)
+E       AssertionError: 'FROM scalar_index_entries' not found in 'SELECT document FROM documents WHERE db_name = ? AND coll_name = ? AND (1 = 1)  ORDER BY COALESCE(json_extract(document, \'$.score."$mongoeco".value\'), json_extract(document, \'$.score\')) DESC LIMIT ?'
+
+tests/unit/core/test_sqlite_engine.py:4278: AssertionError
+_ SQLiteEngineTests.test_explain_query_plan_uses_scalar_entries_for_top_level_numeric_range _
+
+self = <tests.unit.core.test_sqlite_engine.SQLiteEngineTests testMethod=test_explain_query_plan_uses_scalar_entries_for_top_level_numeric_range>
+
+    async def test_explain_query_plan_uses_scalar_entries_for_top_level_numeric_range(
+        self,
+    ):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.create_index("db", "coll", [("age", 1)])
+    
+            explained = engine._explain_query_plan_sync(
+                "db", "coll", {"age": {"$gte": 20}}, limit=1
+            )
+        finally:
+            await engine.disconnect()
+    
+>       self.assertTrue(any("scalar_index_entries" in row for row in explained))
+E       AssertionError: False is not true
+
+tests/unit/core/test_sqlite_engine.py:4417: AssertionError
+_ SQLiteEngineTests.test_multikey_helpers_cover_supported_unsupported_and_logical_translation_paths _
+
+self = <tests.unit.core.test_sqlite_engine.SQLiteEngineTests testMethod=test_multikey_helpers_cover_supported_unsupported_and_logical_translation_paths>
+
+    def test_multikey_helpers_cover_supported_unsupported_and_logical_translation_paths(
+        self,
+    ):
+        engine = SQLiteEngine()
+        engine._connection = Mock()
+    
+        self.assertEqual(
+            SQLiteEngine._normalize_multikey_number(1),
+            SQLiteEngine._normalize_multikey_number(1.0),
+        )
+        self.assertLess(
+            SQLiteEngine._normalize_multikey_number(-10),
+            SQLiteEngine._normalize_multikey_number(-1),
+        )
+        self.assertLess(
+            SQLiteEngine._normalize_multikey_number(-1),
+            SQLiteEngine._normalize_multikey_number(0),
+        )
+        self.assertLess(
+            SQLiteEngine._normalize_multikey_number(1.5),
+            SQLiteEngine._normalize_multikey_number(2),
+        )
+        self.assertEqual(SQLiteEngine._multikey_value_signature(None), ("null", ""))
+        self.assertEqual(SQLiteEngine._multikey_value_signature(True), ("bool", "1"))
+        self.assertEqual(
+            SQLiteEngine._multikey_value_signature(7),
+            ("number", SQLiteEngine._normalize_multikey_number(7)),
+        )
+        self.assertEqual(
+            SQLiteEngine._multikey_value_signature("Ada"), ("string", "Ada")
+        )
+        self.assertEqual(
+            SQLiteEngine._multikey_value_signature(
+                uuid.UUID("12345678-1234-5678-1234-567812345678")
+            ),
+            ("uuid", "12345678-1234-5678-1234-567812345678"),
+        )
+        self.assertEqual(
+            SQLiteEngine._multikey_value_signature(UNDEFINED), ("undefined", "1")
+        )
+        self.assertEqual(
+            SQLiteEngine._multikey_signatures_for_query_value(
+                None, null_matches_undefined=True
+            ),
+            (("null", ""), ("undefined", "1")),
+        )
+        self.assertIsNone(SQLiteEngine._multikey_value_signature({"x": 1}))
+        self.assertIsNone(
+            SQLiteEngine._multikey_value_signature(
+                DocumentCodec._tagged_value("dict", {})
+            )
+        )
+    
+        with self.assertRaises(NotImplementedError):
+            SQLiteEngine._normalize_multikey_number(float("nan"))
+        with self.assertRaises(NotImplementedError):
+            SQLiteEngine._multikey_signatures_for_query_value({"x": 1})
+    
+        engine._lookup_collection_id = Mock(return_value=1)
+        engine._find_multikey_index = Mock(
+            return_value={"name": "idx_tags", "multikey_physical_name": "mkidx_test"}
+        )
+        eq_sql, _ = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"tags": "python"}),
+        )
+        self.assertIn("multikey_entries", eq_sql)
+    
+        in_sql, _ = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"tags": {"$in": ["python", "sqlite"]}}),
+        )
+        self.assertIn("multikey_entries", in_sql)
+        self.assertIn(" OR ", in_sql)
+    
+>       gt_sql, gt_params = engine._translate_query_plan_with_multikey(
+            "db",
+            "coll",
+            compile_filter({"tags": {"$gt": 2}}),
+        )
+
+tests/unit/core/test_sqlite_engine.py:522: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/tmp/mongoeco-overflow-baseline/src/mongoeco/engines/sqlite.py:2497: in _translate_query_plan_with_multikey
+    return self._translate_range_with_multikey(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x10c1552b0>
+collection_id = 1, db_name = 'db', coll_name = 'coll'
+plan = GreaterThanCondition(field='tags', value=2)
+index = {'name': 'idx_tags', 'multikey_physical_name': 'mkidx_test'}
+operator = '>'
+
+    def _translate_range_with_multikey(
+        self,
+        collection_id: int,
+        db_name: str,
+        coll_name: str,
+        plan: (
+            GreaterThanCondition
+            | GreaterThanOrEqualCondition
+            | LessThanCondition
+            | LessThanOrEqualCondition
+        ),
+        index: EngineIndexRecord,
+        *,
+        operator: str,
+    ) -> tuple[str, list[object]]:
+        if is_bson_numeric(plan.value):
+            has_type_mismatch = (
+                self._field_has_scalar_or_array_element_type_mismatch_in_collection
+            )
+            if (
+                "." not in plan.field
+                and not has_type_mismatch(
+                    db_name, coll_name, plan.field, "number"
+                )
+            ):
+                return _translate_scalar_or_array_same_type_comparison(
+                    operator, plan.field, plan.value
+                )
+            message = "Mixed numeric array comparisons require Python fallback"
+>           raise NotImplementedError(message)
+E           NotImplementedError: Mixed numeric array comparisons require Python fallback
+
+/tmp/mongoeco-overflow-baseline/src/mongoeco/engines/sqlite.py:2364: NotImplementedError
+_ SQLiteEngineTests.test_plan_find_semantics_keeps_generic_sql_for_mixed_type_top_level_numeric_range _
+
+self = <tests.unit.core.test_sqlite_engine.SQLiteEngineTests testMethod=test_plan_find_semantics_keeps_generic_sql_for_mixed_type_top_level_numeric_range>
+
+    async def test_plan_find_semantics_keeps_generic_sql_for_mixed_type_top_level_numeric_range(
+        self,
+    ):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": "40"})
+            await engine.create_index("db", "coll", [("age", 1)])
+    
+            plan = await engine.plan_find_semantics(
+                "db",
+                "coll",
+                compile_find_semantics({"age": {"$gte": 20}}, limit=1),
+            )
+        finally:
+            await engine.disconnect()
+    
+>       self.assertTrue(plan.use_sql)
+E       AssertionError: False is not true
+
+tests/unit/core/test_sqlite_engine.py:4397: AssertionError
+_ SQLiteEngineTests.test_plan_find_semantics_uses_scalar_entries_for_top_level_numeric_range _
+
+self = <tests.unit.core.test_sqlite_engine.SQLiteEngineTests testMethod=test_plan_find_semantics_uses_scalar_entries_for_top_level_numeric_range>
+
+    async def test_plan_find_semantics_uses_scalar_entries_for_top_level_numeric_range(
+        self,
+    ):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.create_index("db", "coll", [("age", 1)])
+    
+            plan = await engine.plan_find_semantics(
+                "db",
+                "coll",
+                compile_find_semantics({"age": {"$gte": 20}}, limit=1),
+            )
+        finally:
+            await engine.disconnect()
+    
+        self.assertTrue(plan.use_sql)
+        self.assertIsNotNone(plan.sql)
+>       self.assertIn("FROM scalar_index_entries", plan.sql)
+E       AssertionError: 'FROM scalar_index_entries' not found in "\n            SELECT document\n            FROM documents\n            WHERE db_name = ? AND coll_name = ? AND (((json_type(document, '$.age') IN ('integer', 'real') AND json_extract(document, '$.age') >= ?) OR (json_type(document, '$.age') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.age') WHERE json_each.type IN ('integer', 'real') AND json_each.value >= ?))))\n            \n         LIMIT ?"
+
+tests/unit/core/test_sqlite_engine.py:4374: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/core/test_sqlite_engine.py::SQLiteEngineTests::test_build_select_sql_uses_scalar_index_entries_for_homogeneous_single_field_sort
+FAILED tests/unit/core/test_sqlite_engine.py::SQLiteEngineTests::test_explain_query_plan_uses_scalar_entries_for_top_level_numeric_range
+FAILED tests/unit/core/test_sqlite_engine.py::SQLiteEngineTests::test_multikey_helpers_cover_supported_unsupported_and_logical_translation_paths
+FAILED tests/unit/core/test_sqlite_engine.py::SQLiteEngineTests::test_plan_find_semantics_keeps_generic_sql_for_mixed_type_top_level_numeric_range
+FAILED tests/unit/core/test_sqlite_engine.py::SQLiteEngineTests::test_plan_find_semantics_uses_scalar_entries_for_top_level_numeric_range
+5 failed, 210 deselected in 0.35s

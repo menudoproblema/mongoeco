@@ -1,0 +1,80 @@
+{
+  "7.0.43": {
+    "pipeline": [
+      {
+        "$documents": [
+          {}
+        ]
+      },
+      {
+        "$project": {
+          "type": {
+            "$type": "$$REMOVE.path"
+          },
+          "equal": {
+            "$eq": [
+              "$$REMOVE.path",
+              null
+            ]
+          },
+          "null_variable_path": {
+            "$let": {
+              "vars": {
+                "x": null
+              },
+              "in": {
+                "$type": "$$x.foo"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "result": [
+      {
+        "type": "missing",
+        "equal": false,
+        "null_variable_path": "missing"
+      }
+    ]
+  },
+  "8.0.32": {
+    "pipeline": [
+      {
+        "$documents": [
+          {}
+        ]
+      },
+      {
+        "$project": {
+          "type": {
+            "$type": "$$REMOVE.path"
+          },
+          "equal": {
+            "$eq": [
+              "$$REMOVE.path",
+              null
+            ]
+          },
+          "null_variable_path": {
+            "$let": {
+              "vars": {
+                "x": null
+              },
+              "in": {
+                "$type": "$$x.foo"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "result": [
+      {
+        "type": "missing",
+        "equal": false,
+        "null_variable_path": "missing"
+      }
+    ]
+  }
+}

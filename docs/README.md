@@ -53,6 +53,8 @@ Python/PyMongo versions.
 
 ## Advanced tooling and development
 
+- [Semantic parity correction and refactoring plan](plan-semantic-parity-refactor.md):
+  prioritized blocks, finding coverage, dependencies and real MongoDB acceptance.
 - [Architecture index](architecture/index.md) and
   [testing policy](architecture/testing-and-compatibility.md).
 - [CXP exchange](cxp-exchange.md): inspect the declared compatibility subset.

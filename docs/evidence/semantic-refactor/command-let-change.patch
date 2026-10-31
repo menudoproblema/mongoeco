@@ -1,0 +1,983 @@
+--- a/src/mongoeco/api/_async/_collection_bulk.py
++++ b/src/mongoeco/api/_async/_collection_bulk.py
+@@ -386,7 +386,7 @@
+     prepared_requests = await BulkWritePreparationContext(
+         collection, list(requests), source_requests
+     ).prepare()
+-    normalized_bulk_let = collection._normalize_let(let)
++    normalized_bulk_let = let
+ 
+     inserted_count = 0
+     matched_count = 0
+@@ -435,12 +435,18 @@
+                 continue
+             if batch_context is None:
+                 batch_context = collection._new_execution_context()
+-            variables = batch_context.with_bindings(
+-                request.let
+-                if getattr(request, "let", None) is not None
+-                else normalized_bulk_let
+-            )
+             try:
++                variables = (
++                    batch_context
++                    if isinstance(request, InsertOne)
++                    else batch_context.with_command_let(
++                        request.let
++                        if getattr(request, "let", None) is not None
++                        else normalized_bulk_let,
++                        dialect=collection._mongodb_dialect,
++                        write=True,
++                    )
++                )
+                 if isinstance(request, InsertOne):
+                     insert_kwargs = {"session": session}
+                     if bypass_document_validation:
+--- a/src/mongoeco/api/_async/_collection_reads.py
++++ b/src/mongoeco/api/_async/_collection_reads.py
+@@ -67,7 +67,9 @@
+         dialect=collection._mongodb_dialect,
+         planning_mode=collection._planning_mode,
+     )
+-    expressions = collection._new_execution_context().with_bindings(operation.let)
++    expressions = collection._new_execution_context().with_command_let(
++        operation.let, dialect=collection._mongodb_dialect
++    )
+     operation_context = collection._new_operation_context(
+         session=options.get("session"),
+         collation=operation.collation,
+--- a/src/mongoeco/api/_async/_database_admin_command_compiler.py
++++ b/src/mongoeco/api/_async/_database_admin_command_compiler.py
+@@ -26,7 +26,7 @@
+     compile_find_selection_from_update_operation,
+     compile_update_operation,
+ )
+-from mongoeco.core.server_errors import operation_error
++from mongoeco.core.server_errors import ErrorScope, operation_error, server_error
+ from mongoeco.errors import OperationFailure
+ 
+ 
+@@ -225,6 +225,9 @@
+     def compile_count_operation(
+         self, spec: dict[str, object]
+     ) -> tuple[str, FindOperation]:
++        if "let" in spec:
++            message = "BSON field 'count.let' is an unknown field."
++            raise server_error(message, code=40415, scope=ErrorScope.COMMAND)
+         return self.compile_find_operation(
+             spec,
+             collection_field="count",
+@@ -236,6 +239,16 @@
+     def compile_distinct_operation(
+         self, spec: dict[str, object]
+     ) -> tuple[str, str, FindOperation]:
++        if "let" in spec:
++            field = (
++                "distinctCommandRequest"
++                if self._admin._mongodb_dialect.behavior_flag(
++                    "uses_distinct_command_request_field_name", default=False
++                )
++                else "distinct"
++            )
++            message = f"BSON field '{field}.let' is an unknown field."
++            raise server_error(message, code=40415, scope=ErrorScope.COMMAND)
+         collection_name = self.require_collection_name(
+             spec.get("distinct"),
+             "distinct",
+--- a/src/mongoeco/api/_async/_database_admin_read_commands.py
++++ b/src/mongoeco/api/_async/_database_admin_read_commands.py
+@@ -2,6 +2,7 @@
+ 
+ import socket
+ import time
++
+ from hashlib import md5
+ from typing import TYPE_CHECKING
+ 
+@@ -24,9 +25,10 @@
+     ListDatabasesCommandResult,
+ )
+ 
++
+ if TYPE_CHECKING:
++    from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+     from mongoeco.api.operations import AggregateOperation, FindOperation
+-    from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+     from mongoeco.session import ClientSession
+ 
+ 
+@@ -114,7 +116,9 @@
+         collection_name, operation = self._admin._command_compiler.compile_count_operation(spec)
+         if execution_context is not None:
+             operation = operation.with_overrides(
+-                let=execution_context.with_bindings(operation.let)
++                let=execution_context.with_command_let(
++                    operation.let, dialect=self._admin._mongodb_dialect
++                )
+             )
+         return await self.execute_count_command(
+             collection_name,
+@@ -132,7 +136,9 @@
+         collection_name, key, operation = self._admin._command_compiler.compile_distinct_operation(spec)
+         if execution_context is not None:
+             operation = operation.with_overrides(
+-                let=execution_context.with_bindings(operation.let)
++                let=execution_context.with_command_let(
++                    operation.let, dialect=self._admin._mongodb_dialect
++                )
+             )
+         return await self.execute_distinct_command(
+             collection_name,
+@@ -288,7 +294,9 @@
+         )
+         if execution_context is not None:
+             operation = operation.with_overrides(
+-                let=execution_context.with_bindings(operation.let)
++                let=execution_context.with_command_let(
++                    operation.let, dialect=self._admin._mongodb_dialect
++                )
+             )
+         return await self.execute_find_command(
+             collection_name,
+@@ -322,7 +330,9 @@
+         collection_name, operation = self._admin._command_compiler.compile_aggregate_operation(spec)
+         if execution_context is not None:
+             operation = operation.with_overrides(
+-                let=execution_context.with_bindings(operation.let)
++                let=execution_context.with_command_let(
++                    operation.let, dialect=self._admin._mongodb_dialect
++                )
+             )
+         return await self.execute_aggregate_command(
+             collection_name,
+--- a/src/mongoeco/api/_async/_database_admin_write_commands.py
++++ b/src/mongoeco/api/_async/_database_admin_write_commands.py
+@@ -247,7 +247,9 @@
+                 array_filters = update_spec.get("arrayFilters")
+                 hint = self._admin._normalize_hint_from_command(update_spec.get("hint"))
+                 let = command_let
+-                variables = command_context.with_bindings(let or {})
++                variables = command_context.with_command_let(
++                    let, dialect=self._admin._mongodb_dialect, write=True
++                )
+ 
+                 is_operator_update = self.is_operator_update(update_document)
+                 if multi and not is_operator_update:
+@@ -325,7 +327,9 @@
+                 limit = delete_spec.get("limit", 0)
+                 hint = self._admin._normalize_hint_from_command(delete_spec.get("hint"))
+                 let = command_let
+-                variables = command_context.with_bindings(let or {})
++                variables = command_context.with_command_let(
++                    let, dialect=self._admin._mongodb_dialect, write=True
++                )
+                 result = await _collection_modify.execute_server_delete(
+                     collection,
+                     query,
+--- a/src/mongoeco/api/_async/aggregation_cursor.py
++++ b/src/mongoeco/api/_async/aggregation_cursor.py
+@@ -362,7 +362,12 @@
+                     collation=self._collation,
+                     expressions=ExpressionExecutionContext(
+                         now=utc_bson_now(),
+-                    ).with_bindings(self._let),
++                    ).with_command_let(
++                        self._let,
++                        dialect=getattr(
++                            collection, "mongodb_dialect", MONGODB_DIALECT_70
++                        ),
++                    ),
+                 )
+             self._operation_context = context
+             self._execution_context = context.expressions
+--- a/src/mongoeco/api/_async/collection.py
++++ b/src/mongoeco/api/_async/collection.py
+@@ -1,6 +1,5 @@
+ from __future__ import annotations
+ 
+-import re
+ import time
+ 
+ from collections.abc import (
+@@ -80,6 +79,7 @@
+ from mongoeco.core.aggregation import (
+     Pipeline,  # noqa: TC001 - runtime public annotations
+ )
++from mongoeco.core.aggregation.preparation import normalize_command_let
+ from mongoeco.core.bson_scalars import (
+     normalize_utc_bson_datetime,
+     utc_bson_now,
+@@ -116,7 +116,7 @@
+     InsertOutcome,
+     MutationOutcome,
+ )
+-from mongoeco.errors import DuplicateKeyError, OperationFailure
++from mongoeco.errors import DuplicateKeyError
+ from mongoeco.session import ClientSession  # noqa: TC001
+ from mongoeco.types import (
+     ArrayFilters,
+@@ -156,7 +156,6 @@
+ 
+ _FILTER_UNSET = ARG_UNSET
+ _UPDATE_UNSET = ARG_UNSET
+-_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
+ _resolve_distinct_candidates = _collection_reads.resolve_distinct_candidates
+ 
+ 
+@@ -325,7 +324,11 @@
+             bindings = None
+         execution_context = expressions or self._new_execution_context()
+         if bindings is not None:
+-            execution_context = execution_context.with_bindings(bindings)
++            execution_context = execution_context.with_command_let(
++                bindings,
++                dialect=self._mongodb_dialect,
++                write=change_operation_type is not None,
++            )
+         return OperationContext.create(
+             dialect=self._mongodb_dialect,
+             codec_options=self._codec_options,
+@@ -451,21 +454,8 @@
+         return max_time_ms
+ 
+     @staticmethod
+-    def _normalize_let(
+-        let: object | None,
+-    ) -> dict[str, object] | ExpressionExecutionContext | None:
+-        if let is None:
+-            return None
+-        if isinstance(let, ExpressionExecutionContext):
+-            return let
+-        if not isinstance(let, dict):
+-            raise TypeError("let must be a dict")
+-        for name in let:
+-            if not isinstance(name, str) or not _LET_VARIABLE_RE.match(name):
+-                raise OperationFailure(
+-                    "$lookup let variable names must begin with a lowercase letter or non-ascii character"
+-                )
+-        return DocumentCodec.to_internal(let)
++    def _normalize_let(let):
++        return normalize_command_let(let)
+ 
+     @staticmethod
+     def _normalize_array_filters(
+@@ -1023,7 +1013,9 @@
+         requests = self._require_write_requests(requests)
+         if not isinstance(ordered, bool):
+             raise TypeError("ordered must be a bool")
+-        let = self._normalize_let(let)
++        if let is not None and not isinstance(let, (dict, ExpressionExecutionContext)):
++            message = "let must be a dict"
++            raise TypeError(message)
+         result = await execute_bulk_write(
+             self,
+             requests,
+--- a/src/mongoeco/api/_async/cursor.py
++++ b/src/mongoeco/api/_async/cursor.py
+@@ -723,24 +723,61 @@
+         self._retire_batch_source()
+         self._started = False
+         self._exhausted = False
+-        self._semantics_cache = None
++        if (
++            isinstance(self._let, ExpressionExecutionContext)
++            and self._let.command_let is not None
++        ):
++            expressions = ExpressionExecutionContext(
++                self._let.command_let_base or {}, now=self._let.now
++            ).with_command_let(
++                self._let.command_let,
++                dialect=self._operation_context.dialect,
++            )
++            self._operation_context = replace(
++                self._operation_context, expressions=expressions
++            )
++            self._execution_variables = expressions
++            self._let = expressions
++        self._invalidate_execution_cache()
+         return self
+ 
++    def _fresh_operation_context(self):
++        create_context = getattr(self._collection, "_new_operation_context", None)
++        if not callable(create_context):
++            return None
++        if isinstance(self._let, ExpressionExecutionContext):
++            create_expressions = getattr(
++                self._collection, "_new_execution_context", None
++            )
++            if callable(create_expressions):
++                base = (
++                    self._let.command_let_base
++                    if self._let.command_let is not None
++                    else self._let.bindings
++                )
++                expressions = create_expressions().with_bindings(base)
++                if self._let.command_let is not None:
++                    expressions = expressions.with_command_let(
++                        self._let.command_let, dialect=self._operation_context.dialect
++                    )
++                return create_context(
++                    session=self._session,
++                    collation=self._collation,
++                    expressions=expressions,
++                )
++            bindings = (
++                self._let.command_let
++                if self._let.command_let is not None
++                else self._let.bindings
++            )
++        else:
++            bindings = self._let
++        return create_context(
++            session=self._session, collation=self._collation, bindings=bindings
++        )
++
+     def clone(self) -> "AsyncCursor":
+-        create_context = getattr(self._collection, "_new_operation_context", None)
+-        operation_context = (
+-            create_context(
+-                session=self._session,
+-                collation=self._collation,
+-                bindings=(
+-                    self._let.bindings
+-                    if isinstance(self._let, ExpressionExecutionContext)
+-                    else self._let
+-                ),
+-            )
+-            if callable(create_context)
+-            else None
+-        )
++        operation_context = self._fresh_operation_context()
+         execution_variables = (
+             operation_context.expressions if operation_context is not None else None
+         )
+--- a/src/mongoeco/api/_async/database_commands.py
++++ b/src/mongoeco/api/_async/database_commands.py
+@@ -1503,8 +1503,9 @@
+             operation = command.operation
+             if operation is not None and hasattr(operation, "with_overrides"):
+                 operation = operation.with_overrides(
+-                    let=execution_context.with_bindings(
+-                        getattr(operation, "let", None) or {}
++                    let=execution_context.with_command_let(
++                        getattr(operation, "let", None),
++                        dialect=self._admin._mongodb_dialect,
+                     )
+                 )
+                 return replace(command, operation=operation)
+@@ -1516,7 +1517,11 @@
+                 command,
+                 options=replace(
+                     command.options,
+-                    let=execution_context.with_bindings(command.options.let or {}),
++                    let=execution_context.with_command_let(
++                        command.options.let,
++                        dialect=self._admin._mongodb_dialect,
++                        write=True,
++                    ),
+                 ),
+             )
+         return command
+--- a/src/mongoeco/api/operations.py
++++ b/src/mongoeco/api/operations.py
+@@ -1,4 +1,3 @@
+-import re
+ import threading
+ 
+ from collections import OrderedDict
+@@ -14,7 +13,12 @@
+ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+ from mongoeco.core.aggregation import Pipeline
+ from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
+-from mongoeco.core.aggregation.preparation import PreparedPipeline, prepare_pipeline
++from mongoeco.core.aggregation.preparation import (
++    PreparedPipeline,
++    normalize_command_let,
++    prepare_pipeline,
++    validate_command_let_dependencies,
++)
+ from mongoeco.core.codec import DocumentCodec
+ from mongoeco.core.collation import normalize_collation
+ from mongoeco.core.error_documents import error_message
+@@ -292,7 +296,6 @@
+     tuple["_UpdatePlanTemplate", "_UpdatePlanTemplate"],
+ ] = OrderedDict()
+ 
+-_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
+ 
+ 
+ @dataclass(frozen=True, slots=True)
+@@ -446,7 +449,7 @@
+     normalized_batch_size = _normalize_batch_size(batch_size)
+     normalized_skip = _normalize_skip(skip)
+     normalized_limit = _normalize_limit(limit)
+-    normalized_let = _normalize_let(variables)
++    normalized_let = _normalize_let(variables, dialect=dialect)
+     if text_query is None:
+         if _projection_requests_text_score(normalized_projection):
+             raise OperationFailure("$meta textScore projection requires a $text query")
+@@ -509,7 +512,7 @@
+     normalized_array_filters = _normalize_array_filters(array_filters)
+     normalized_hint = _normalize_hint(hint)
+     normalized_max_time_ms = _normalize_max_time_ms(max_time_ms)
+-    normalized_let = _normalize_let(let)
++    normalized_let = _normalize_let(let, dialect=dialect)
+     compiled_update_plan, compiled_upsert_plan = _compile_update_plans(
+         normalized_update_spec,
+         dialect=dialect,
+@@ -578,6 +581,7 @@
+         if isinstance(pipeline, PreparedPipeline)
+         else DocumentCodec.to_internal(pipeline)
+     )
++    normalized_let = _normalize_let(let, dialect=dialect)
+     validate_search_stage_pipeline(normalized_pipeline)
+     if planning_mode is PlanningMode.STRICT and dialect.behavior_flag(
+         "validates_aggregation_syntax_early", default=True
+@@ -586,7 +590,7 @@
+             normalized_pipeline,
+             dialect=dialect,
+             collection=collection,
+-            variables=frozenset(_normalize_let(let) or {}),
++            variables=frozenset(normalized_let or {}),
+         )
+     return AggregateOperation(
+         pipeline=normalized_pipeline,
+@@ -596,7 +600,7 @@
+         max_time_ms=_normalize_max_time_ms(max_time_ms),
+         batch_size=_normalize_batch_size(batch_size),
+         allow_disk_use=_normalize_allow_disk_use(allow_disk_use),
+-        let=_normalize_let(let),
++        let=normalized_let,
+         planning_mode=planning_mode,
+         planning_issues=_collect_aggregate_planning_issues(
+             normalized_pipeline,
+@@ -1049,19 +1053,12 @@
+     return normalized
+ 
+ 
+-def _normalize_let(let: object | None) -> Mapping[str, object] | None:
+-    if let is None:
+-        return None
+-    if isinstance(let, ExpressionExecutionContext):
+-        return let
+-    if not isinstance(let, dict):
+-        raise TypeError("let must be a dict")
+-    for name in let:
+-        if not isinstance(name, str) or not _LET_VARIABLE_RE.match(name):
+-            raise OperationFailure(
+-                "$lookup let variable names must begin with a lowercase letter or non-ascii character"
+-            )
+-    return DocumentCodec.to_internal(let)
++def _normalize_let(
++    let: object | None, *, dialect=MONGODB_DIALECT_70
++) -> Mapping[str, object] | None:
++    result = normalize_command_let(let)
++    validate_command_let_dependencies(result, dialect=dialect)
++    return result
+ 
+ 
+ def _normalize_batch_size(batch_size: object | None) -> int | None:
+--- a/src/mongoeco/compat/_catalog_constants.py
++++ b/src/mongoeco/compat/_catalog_constants.py
+@@ -1,4 +1,6 @@
+ MONGODB_DIALECT_HOOK_NAMES = (
++    "supports_now_in_read_command_let",
++    "uses_distinct_command_request_field_name",
+     "null_query_matches_undefined",
+     "rejects_empty_group_fields",
+     "validates_densify_partition_paths",
+--- a/src/mongoeco/compat/_catalog_dialects.py
++++ b/src/mongoeco/compat/_catalog_dialects.py
+@@ -62,14 +62,18 @@
+             server_version="7.0",
+             label="MongoDB 7.0",
+             aliases=("7", "7.0"),
+-            behavior_flags=MappingProxyType({
+-                "null_query_matches_undefined": True,
+-                "uses_server_densify_bounds": True,
+-                "densify_equal_bounds_are_empty": False,
+-                "densify_full_nonadvancing_step_errors": False,
+-                "densify_empty_partition_generates_values": True,
+-                "documents_join_omits_collection_namespace": False,
+-            }),
++            behavior_flags=MappingProxyType(
++                {
++                    "uses_distinct_command_request_field_name": False,
++                    "supports_now_in_read_command_let": True,
++                    "null_query_matches_undefined": True,
++                    "uses_server_densify_bounds": True,
++                    "densify_equal_bounds_are_empty": False,
++                    "densify_full_nonadvancing_step_errors": False,
++                    "densify_empty_partition_generates_values": True,
++                    "documents_join_omits_collection_namespace": False,
++                }
++            ),
+             policy_spec=MongoBehaviorPolicySpec(null_query_matches_undefined=True),
+             capabilities=frozenset({MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED}),
+             system_variables=SUPPORTED_SYSTEM_VARIABLES,
+@@ -79,14 +83,18 @@
+             server_version="8.0",
+             label="MongoDB 8.0",
+             aliases=("8", "8.0"),
+-            behavior_flags=MappingProxyType({
+-                "null_query_matches_undefined": False,
+-                "uses_server_densify_bounds": True,
+-                "densify_equal_bounds_are_empty": True,
+-                "densify_full_nonadvancing_step_errors": True,
+-                "densify_empty_partition_generates_values": False,
+-                "documents_join_omits_collection_namespace": True,
+-            }),
++            behavior_flags=MappingProxyType(
++                {
++                    "uses_distinct_command_request_field_name": True,
++                    "supports_now_in_read_command_let": False,
++                    "null_query_matches_undefined": False,
++                    "uses_server_densify_bounds": True,
++                    "densify_equal_bounds_are_empty": True,
++                    "densify_full_nonadvancing_step_errors": True,
++                    "densify_empty_partition_generates_values": False,
++                    "documents_join_omits_collection_namespace": True,
++                }
++            ),
+             policy_spec=MongoBehaviorPolicySpec(null_query_matches_undefined=False),
+             capabilities=frozenset(),
+             system_variables=SUPPORTED_SYSTEM_VARIABLES,
+@@ -96,33 +104,39 @@
+             server_version="9.0",
+             label="MongoDB 9.0",
+             aliases=("9", "9.0"),
+-            behavior_flags=MappingProxyType({
+-                "null_query_matches_undefined": False,
+-                "rejects_empty_group_fields": True,
+-                "validates_densify_partition_paths": True,
+-                "validates_aggregation_syntax_early": True,
+-                "documents_join_omits_collection_namespace": True,
+-                "supports_array_index_variables": True,
+-                "uses_extended_conversions": True,
+-                "uses_server_densify_bounds": True,
+-                "densify_equal_bounds_are_empty": True,
+-                "densify_full_nonadvancing_step_errors": True,
+-                "densify_empty_partition_generates_values": False,
+-                "supports_date_range_windows": True,
+-                "limits_trim_chars": True,
+-                "rejects_cluster_time_expression": True,
+-                "list_indexes_includes_simple_collation": True,
+-                "rejects_unimplemented_wildcard_projection": True,
+-                "merge_insert_preserves_incoming_field_order": True,
+-            }),
++            behavior_flags=MappingProxyType(
++                {
++                    "uses_distinct_command_request_field_name": False,
++                    "supports_now_in_read_command_let": False,
++                    "null_query_matches_undefined": False,
++                    "rejects_empty_group_fields": True,
++                    "validates_densify_partition_paths": True,
++                    "validates_aggregation_syntax_early": True,
++                    "documents_join_omits_collection_namespace": True,
++                    "supports_array_index_variables": True,
++                    "uses_extended_conversions": True,
++                    "uses_server_densify_bounds": True,
++                    "densify_equal_bounds_are_empty": True,
++                    "densify_full_nonadvancing_step_errors": True,
++                    "densify_empty_partition_generates_values": False,
++                    "supports_date_range_windows": True,
++                    "limits_trim_chars": True,
++                    "rejects_cluster_time_expression": True,
++                    "list_indexes_includes_simple_collation": True,
++                    "rejects_unimplemented_wildcard_projection": True,
++                    "merge_insert_preserves_incoming_field_order": True,
++                }
++            ),
+             policy_spec=MongoBehaviorPolicySpec(null_query_matches_undefined=False),
+-            capabilities=frozenset({
+-                "aggregation.array_index_variables",
+-                "aggregation.convert.base",
+-                "aggregation.to_string.extended",
+-                "aggregation.date_range_windows",
+-                "indexes.simple_collation_metadata",
+-            }),
++            capabilities=frozenset(
++                {
++                    "aggregation.array_index_variables",
++                    "aggregation.convert.base",
++                    "aggregation.to_string.extended",
++                    "aggregation.date_range_windows",
++                    "indexes.simple_collation_metadata",
++                }
++            ),
+             system_variables=SUPPORTED_SYSTEM_VARIABLES,
+         ),
+     }
+--- a/src/mongoeco/core/aggregation/evaluation_environment.py
++++ b/src/mongoeco/core/aggregation/evaluation_environment.py
+@@ -14,7 +14,7 @@
+ class EvaluationEnvironment(dict[str, Any]):
+     """Explicit aggregation frame with stable root and rebindable current."""
+ 
+-    def __init__(
++    def __init__(  # noqa: PLR0913 - complete expression frame metadata
+         self,
+         bindings: Mapping[str, Any] | None = None,
+         *,
+@@ -22,20 +22,25 @@
+         current: Document | None = None,
+         collation=None,
+         preserve_numeric_conversion_types: bool = False,
++        unavailable_system_variables=frozenset(),
+     ) -> None:
+         super().__init__(bindings or {})
+         self.root = root
+-        self.current = current
+         self.collation = collation
+         self.preserve_numeric_conversion_types = preserve_numeric_conversion_types
++        self.unavailable_system_variables = unavailable_system_variables
+         if root is not None:
+             self["ROOT"] = root
+         if current is not None:
+             self["CURRENT"] = current
+ 
+     @property
++    def current(self):
++        return self.get("CURRENT")
++
++    @property
+     def is_bound(self) -> bool:
+-        return self.root is not None and self.current is not None
++        return self.root is not None
+ 
+     def with_lexicals(self) -> EvaluationEnvironment:
+         return EvaluationEnvironment(
+@@ -44,6 +49,7 @@
+             current=self.current,
+             collation=self.collation,
+             preserve_numeric_conversion_types=self.preserve_numeric_conversion_types,
++            unavailable_system_variables=self.unavailable_system_variables,
+         )
+ 
+     def with_current(self, document: Document) -> EvaluationEnvironment:
+@@ -53,6 +59,7 @@
+             current=document,
+             collation=self.collation,
+             preserve_numeric_conversion_types=self.preserve_numeric_conversion_types,
++            unavailable_system_variables=self.unavailable_system_variables,
+         )
+ 
+ 
+@@ -61,12 +68,23 @@
+     variables: Mapping[str, Any] | None,
+ ) -> EvaluationEnvironment:
+     if isinstance(variables, EvaluationEnvironment):
+-        return variables if variables.is_bound else variables.with_current(document)
++        return (
++            variables
++            if variables.is_bound
++            else EvaluationEnvironment(
++                variables,
++                root=document,
++                current=variables.get("CURRENT", document),
++                collation=variables.collation,
++                preserve_numeric_conversion_types=variables.preserve_numeric_conversion_types,
++                unavailable_system_variables=variables.unavailable_system_variables,
++            )
++        )
+     context = ensure_expression_context(variables)
+     return EvaluationEnvironment(
+-        {**context, "ROOT": document, "CURRENT": document},
++        context,
+         root=document,
+-        current=document,
++        current=context.bindings.get("CURRENT", document),
+     )
+ 
+ 
+--- a/src/mongoeco/core/aggregation/preparation.py
++++ b/src/mongoeco/core/aggregation/preparation.py
+@@ -16,6 +16,7 @@
+     array_variable_names,
+     validate_trim_chars,
+ )
++from mongoeco.core.aggregation.evaluation_environment import environment_for_document
+ from mongoeco.core.aggregation.extensions import (
+     _aggregation_stage_registry_version,
+     get_registered_aggregation_expression_operator,
+@@ -44,7 +45,9 @@
+     evaluate_expression,
+ )
+ from mongoeco.core.aggregation.scalar_expressions import validate_convert_spec
++from mongoeco.core.codec import DocumentCodec
+ from mongoeco.core.error_documents import command_error_document, error_message
++from mongoeco.core.expression_context import ExpressionExecutionContext
+ from mongoeco.core.server_errors import operation_error, server_error
+ from mongoeco.errors import OperationFailure
+ 
+@@ -287,13 +290,19 @@
+ 
+ def _validate_array_expression_scope(operator, spec, dialect, variables):
+     names = array_variable_names(operator, spec, dialect=dialect)
+-    _validate_expression_variables(spec["input"], dialect, variables)
++    requires_document = _validate_expression_variables(
++        spec["input"], dialect, variables
++    )
+     if operator == "$reduce":
+-        _validate_expression_variables(spec["initialValue"], dialect, variables)
++        requires_document |= _validate_expression_variables(
++            spec["initialValue"], dialect, variables
++        )
+     if operator == "$filter" and "limit" in spec:
+-        _validate_expression_variables(spec["limit"], dialect, variables)
++        requires_document |= _validate_expression_variables(
++            spec["limit"], dialect, variables
++        )
+     body = spec["cond"] if operator == "$filter" else spec["in"]
+-    _validate_expression_variables(
++    return requires_document | _validate_expression_variables(
+         body,
+         dialect,
+         variables
+@@ -334,44 +343,57 @@
+         _validate_variable_path(expression, path)
+ 
+ 
++def _validate_expression_values(values, dialect, variables):
++    requires_document = False
++    for value in values:
++        requires_document |= _validate_expression_variables(value, dialect, variables)
++    return requires_document
++
++
++def _expression_scalar_requires_document(expression, dialect, variables):
++    if not isinstance(expression, str):
++        return False
++    _validate_variable_reference(expression, variables, dialect)
++    if expression.startswith("$$"):
++        name, _path = _parse_variable_reference(expression)
++        return name in {"ROOT", "CURRENT"} and name not in variables
++    return expression.startswith("$") and "CURRENT" not in variables
++
++
+ def _validate_expression_variables(expression, dialect, variables):
+-    if isinstance(expression, str):
+-        _validate_variable_reference(expression, variables, dialect)
+-        return
++    if not isinstance(expression, (dict, list)):
++        return _expression_scalar_requires_document(expression, dialect, variables)
+     if isinstance(expression, list):
+-        for item in expression:
+-            _validate_expression_variables(item, dialect, variables)
+-        return
+-    if not isinstance(expression, dict):
+-        return
++        return _validate_expression_values(expression, dialect, variables)
+     if len(expression) == 1:
+         operator, spec = next(iter(expression.items()))
+         if (
+             operator in {"$literal", "$const"}
+             or get_registered_aggregation_expression_operator(operator) is not None
+         ):
+-            return
++            return False
+         if operator in {"$map", "$filter", "$reduce"}:
+-            _validate_array_expression_scope(operator, spec, dialect, variables)
+-            return
++            return _validate_array_expression_scope(operator, spec, dialect, variables)
+         if (
+             operator == "$let"
+             and isinstance(spec, dict)
+             and isinstance(spec.get("vars"), dict)
+         ):
+-            for value in spec["vars"].values():
+-                _validate_expression_variables(value, dialect, variables)
+-            _validate_expression_variables(
++            requires_document = _validate_expression_values(
++                spec["vars"].values(), dialect, variables
++            )
++            return requires_document | _validate_expression_variables(
+                 spec.get("in"), dialect, variables | frozenset(spec["vars"])
+             )
+-            return
+-    for value in expression.values():
+-        _validate_expression_variables(value, dialect, variables)
++    requires_document = _validate_expression_values(
++        expression.values(), dialect, variables
++    )
+     if "$convert" in expression and dialect.behavior_flag(
+         "uses_extended_conversions", default=False
+     ):
+         validate_convert_spec(expression["$convert"])
+     _validate_static_trim_expression(expression, dialect)
++    return requires_document
+ 
+ 
+ def _validate_static_trim_expression(expression, dialect):
+@@ -694,8 +716,11 @@
+     expression, *, dialect, variables=(), fold_constants=False, document_code=40181
+ ):
+     """Validate expression syntax and lexical scope without requiring a row."""
++    requires_document = False
+     if variables is not None:
+-        _validate_expression_variables(expression, dialect, frozenset(variables))
++        requires_document = _validate_expression_variables(
++            expression, dialect, frozenset(variables)
++        )
+     try:
+         _prepare_expression_structure(
+             expression,
+@@ -717,6 +742,7 @@
+             code=diagnostic.code,
+             reason="expression_optimization",
+         ) from error
++    return requires_document
+ 
+ 
+ def _prepare_expression_structure(
+@@ -772,3 +798,87 @@
+         and _pure_constant(expression)
+     ):
+         evaluate_expression({}, expression, dialect=dialect)
++
++
++def normalize_command_let(bindings):
++    """Check command-variable names without interpreting evaluated internal frames."""
++    if bindings is None or isinstance(bindings, ExpressionExecutionContext):
++        return bindings
++    if not isinstance(bindings, dict):
++        message = "let must be a dict"
++        raise TypeError(message)
++    for name in bindings:
++        if name in {"NOW", "CLUSTER_TIME"}:
++            message = f"Attempt to set internal constant: {name}"
++            raise server_error(message, code=4738901)
++        if not isinstance(name, str) or not name:
++            reason = "empty variable names are not allowed"
++        elif name != "CURRENT" and not ("a" <= name[0] <= "z" or not name[0].isascii()):
++            reason = (
++                f"'{name}' starts with an invalid character for a user variable name"
++            )
++        else:
++            invalid = next(
++                (
++                    char
++                    for char in name[1:]
++                    if char.isascii() and not (char.isalnum() or char == "_")
++                ),
++                None,
++            )
++            if invalid is None:
++                continue
++            reason = (
++                f"'{name}' contains an invalid character for a variable name: "
++                f"'{invalid}'"
++            )
++        raise server_error("Invalid 'let' parameter :: caused by :: " + reason, code=9)
++    return DocumentCodec.to_internal(bindings)
++
++
++def _command_let_expressions(bindings, *, variables, dialect):
++    for name, expression in bindings.items():
++        if prepare_expression(expression, dialect=dialect, variables=variables):
++            message = (
++                "Command let Expression tried to access a field, "
++                "but this is not allowed because"
++                "Command let Expressions run before the query examines any documents."
++            )
++            raise server_error(message, code=4890500)
++        yield name, expression
++        variables = variables | {name}
++
++
++def validate_command_let_dependencies(bindings, *, dialect):
++    if bindings is None or isinstance(bindings, ExpressionExecutionContext):
++        return
++    for _name, _expression in _command_let_expressions(
++        bindings, variables=frozenset(), dialect=dialect
++    ):
++        pass
++
++
++def prepare_command_let(bindings, *, context, dialect, write=False):
++    """Evaluate a closed command program once; overlays remain literal values."""
++    bindings = normalize_command_let(bindings)
++    if isinstance(bindings, ExpressionExecutionContext):
++        return bindings
++    if not bindings:
++        return context
++    result = context
++    for name, expression in _command_let_expressions(
++        bindings, variables=frozenset(context.bindings), dialect=dialect
++    ):
++        frame = environment_for_document({}, result)
++        if not write and not dialect.behavior_flag(
++            "supports_now_in_read_command_let", default=True
++        ):
++            frame.unavailable_system_variables = frozenset({"NOW"})
++        value = evaluate_expression({}, expression, frame, dialect=dialect)
++        result = result.with_bindings({name: value})
++    return ExpressionExecutionContext(
++        result.bindings,
++        now=context.now,
++        command_let=bindings,
++        command_let_base=context.bindings,
++    )
+--- a/src/mongoeco/core/aggregation/runtime.py
++++ b/src/mongoeco/core/aggregation/runtime.py
+@@ -559,6 +559,9 @@
+     dialect: MongoDialect = MONGODB_DIALECT_70,
+ ) -> Any:
+     name, path = _parse_variable_reference(expression)
++    if name in getattr(variables, "unavailable_system_variables", ()):
++        message = f"Builtin variable '$${name}' is not available"
++        raise server_error(message, code=51144)
+     if name == "CLUSTER_TIME":
+         message = (
+             "Builtin variable '$$CLUSTER_TIME' is not available on a standalone runtime"
+--- a/src/mongoeco/core/expression_context.py
++++ b/src/mongoeco/core/expression_context.py
+@@ -90,6 +90,12 @@
+ 
+     bindings: Mapping[str, Any] = field(default_factory=dict)
+     now: datetime = field(default_factory=utc_bson_now)
++    command_let: Mapping[str, Any] | None = field(
++        default=None, repr=False, compare=False
++    )
++    command_let_base: Mapping[str, Any] | None = field(
++        default=None, repr=False, compare=False
++    )
+ 
+     def __post_init__(self) -> None:
+         source = self.bindings
+@@ -101,6 +107,14 @@
+         immutable_bindings = MappingProxyType(normalized)
+         object.__setattr__(self, "bindings", immutable_bindings)
+         object.__setattr__(self, 'now', normalize_utc_bson_datetime(self.now))
++        if self.command_let is not None:
++            object.__setattr__(
++                self, "command_let", _freeze_bson(dict(self.command_let))
++            )
++        if self.command_let_base is not None:
++            object.__setattr__(
++                self, "command_let_base", _freeze_bson(dict(self.command_let_base))
++            )
+ 
+     def __getitem__(self, key: str) -> Any:
+         if key == "NOW":
+@@ -134,7 +148,19 @@
+         combined_bindings = DocumentCodec.mark_internal(
+             {**self.bindings, **normalized_inherited},
+         )
+-        return ExpressionExecutionContext(combined_bindings, now=self.now)
++        return ExpressionExecutionContext(
++            combined_bindings,
++            now=self.now,
++            command_let=self.command_let,
++            command_let_base=self.command_let_base,
++        )
++
++    def with_command_let(self, bindings, *, dialect, write=False):
++        from mongoeco.core.aggregation import preparation  # noqa: PLC0415
++
++        return preparation.prepare_command_let(
++            bindings, context=self, dialect=dialect, write=write
++        )
+ 
+ 
+ def ensure_expression_context(

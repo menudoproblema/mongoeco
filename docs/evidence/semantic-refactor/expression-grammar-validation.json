@@ -1,0 +1,312 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "date": "2026-10-31",
+  "block": "B04",
+  "status": "expression_families_focally_corrected_B04_in_progress",
+  "findings": [
+    "H09",
+    "H10",
+    "H11",
+    "H12",
+    "H13"
+  ],
+  "partial_findings": [
+    "H14",
+    "H35"
+  ],
+  "related_regression": "H26 native average-finalization selector",
+  "scope": "Query/expression grammar separation, migrated argument families, boolean/scalar/array forms, type errors and parse/optimization/runtime adapters. Not complete command let, all structural validation or B08 cursor phases.",
+  "sources_sha256": {
+    "src/mongoeco/compat/_catalog_operators.py": "67aff93ea25c1fec9ed0dbd9d6f80c9dfa0a8ea0577a64760e4586fb770c42e7",
+    "src/mongoeco/core/aggregation/control_object_expressions.py": "41684c13e39457c77d4e71711581726c3829781534c27fdba5bb386e286d6970",
+    "src/mongoeco/core/aggregation/array_string_expressions.py": "69df8bc0ec2377144a2c4fafd4fbee0fb2c6cf9a0f14f22d654e5ada08fea5ac",
+    "src/mongoeco/core/aggregation/scalar_expressions.py": "db613fbda3fead603413df78ca92c3a42bca437324150192f838c10b709393fe",
+    "src/mongoeco/core/aggregation/preparation.py": "ce0046734080f4498354883d1c6eca15dba95849d98a5bc78f40aec7031388b6",
+    "src/mongoeco/core/aggregation/runtime.py": "363be20fb170faac1593fa435cd55b510f9dcf3049fba5fd982d42d204317898",
+    "src/mongoeco/core/server_errors.py": "6a15e0f04af9348ce85b469bd5281ffc02a32df6a7d0a84de79487f98d356947",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "fea05ad8ee28f8ab0e8d27d1138b9d71e79405f519138c3f4f17422e3adc47bc",
+    "tests/differential/semantic_expression_grammar_cases.py": "824ff05ae51dcf667766456e9f32f1a48ac28cc0b3ab8bad133946524834d4ca",
+    "tests/differential/semantic_corpora.py": "60718f958f7721812673051cde48273e5ef21b58923e0aab09352dd2f268bb87",
+    "tests/differential/_real_parity_base.py": "464c58922ffc79f1ae2f30ff16a43cc7dea40e84d37840f79973055e2b45f0d8",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/integration/api/test_semantic_group_regressions.py": "9a5042ec029727c3aa5c4e81963803b461277d3e2f19533b66acaec3b2f9463f",
+    "tests/integration/api/test_sync_api.py": "dec3c7c3274c7945638ba52978fc0e79e9ce054c0132df50ccc7e4ad75313c75",
+    "tests/integration/api/test_async_api.py": "c649eeac5dc02e1d17b34466100179f642e58175ba09e3fd8c904e32d80d6631",
+    "tests/unit/core/test_aggregation_core.py": "ca63c741e29c69c25fb827fb9d8ef550d7cac8101aa77aeba58972c554cedf28",
+    "tests/unit/core/test_aggregation_helper_branches.py": "a6eca468d3ed7952ae467132d7efaa3b6c57ce75d59307ce84ee2f023a84c0bb",
+    "tests/unit/core/test_aggregation_pipeline_core.py": "05a71ff1084f4659d31e743faea4292ef076cd92a29617b4d566fce425a3684d",
+    "tests/unit/test_native_capture_comparison.py": "29d84d41f2697517532fd4b7d99c46c9e298f157ad56dd745f473b60bf60b809",
+    "scripts/run_mongodb_real_differential.py": "3212674e70d305b737d96e1197da0508d68dbafd7910bb5db6693323d25c52d9",
+    "scripts/capture_differential_replay_golden.py": "82002e204129df37829389c7ac1eb0d73fd3bd1840f67810197175e634cb1417"
+  },
+  "before": {
+    "report": "expression-grammar-before-8.json",
+    "sha256": "0f8e3ebad8a09825ab7dfbe67e88f3e65c7e68e81e72653e262b1071eb0f90a4",
+    "tests_run": 20,
+    "successful": false,
+    "engine_subfailures": 36,
+    "errors": 4,
+    "skips": 0,
+    "server_version": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "source_snapshot": "Pre-B04 src snapshot selected explicitly with PYTHONPATH and MONGOECO_TEST_INSTALLED_ARTIFACT=1; not a pytest installed-artifact gate.",
+    "command": "MONGOECO_TEST_INSTALLED_ARTIFACT=1 PYTHONPATH=<pre-B04-src>:. MONGOECO_REAL_MONGODB_URI=<isolated-8-uri> .venv/bin/python scripts/run_mongodb_real_differential.py 8.0 semantic_expression_* --json-report docs/evidence/semantic-refactor/expression-grammar-before-8.json",
+    "baseline_sources_sha256": {
+      "src/mongoeco/compat/_catalog_operators.py": "ccc53ca83d05f83442ecdcab393a3b3d2dc297739a835200060a97ee182c29cd",
+      "src/mongoeco/core/aggregation/control_object_expressions.py": "b4946dae2dfdffe758d95553383a23cff6a520d549dfb28a08eb57ac7a24b02c",
+      "src/mongoeco/core/aggregation/array_string_expressions.py": "d2a6751378f7cc5c7d5361dc92253fb81679b84b270e22f33b422b9443f5850e",
+      "src/mongoeco/core/aggregation/scalar_expressions.py": "c6b43c3d794ac5f706960f135ef9b1fd54adf4884134b9bfd956be194c7e7357",
+      "src/mongoeco/core/aggregation/preparation.py": "32c213319d72e53041fb02d708a7035a3e35c01fc92bffa68b588b089cc4cfad",
+      "src/mongoeco/core/aggregation/runtime.py": "af9f11a76dbb57cde1158418eb980c684fdb8e4ed836f53449a41927f34266a1",
+      "src/mongoeco/core/server_errors.py": "c1bf2ffaff4b88d0685e7197693f193ade74c12e127110dd7bd6718644eb95db",
+      "src/mongoeco/api/_async/aggregation_cursor.py": "d3355013d95ad6df135f816ac37ac156f596535d7eef049b435b9bba05518e87"
+    },
+    "source_patch": "expression-grammar-change.patch",
+    "source_patch_sha256": "5244c907cda20bb0517db5004c55aad579f0e3c693ea4f2cbf08d197aee6cc44"
+  },
+  "native_reports": [
+    {
+      "report": "expression-grammar-final-native-7.json",
+      "sha256": "b38612533917924ea3d8dbe565f325b962c0e273fb80b79be7dd7453d22fa0f1",
+      "tests_run": 110,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "server_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    },
+    {
+      "report": "expression-grammar-final-native-8.json",
+      "sha256": "c516eea655a51f20a1675f8f83e0b60c6e476bee676a0f0a92202e95e782f22e",
+      "tests_run": 110,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "server_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    },
+    {
+      "report": "expression-grammar-final-native-9.json",
+      "sha256": "031c18f8b34958a297833c43c8a22e203734002077c6cf3cafdd10f857bc8f77",
+      "tests_run": 110,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "server_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    }
+  ],
+  "native_reference_sha256": {
+    "tests/fixtures/semantic_expression_grammar_7_0.json": "fe8f1bb47d15c1a163e6649e9522b52c8b965b7465f26f7249d20d6a77313d9f",
+    "tests/fixtures/semantic_expression_grammar_8_0.json": "95370ac8bd6a0961be3773590bb571d98e60b9bb626c08e323659f7da44597b2",
+    "tests/fixtures/semantic_expression_grammar_9_0.json": "e6d5c855d23495d9d47d95eda3986ec485afad2bb5fc652c7a6c080651246615"
+  },
+  "native_command": "MONGOECO_REAL_MONGODB_URI=<isolated-uri> .venv/bin/python scripts/run_mongodb_real_differential.py <7.0|8.0|9.0> semantic_* --json-report <report>",
+  "native_actions_total": 110,
+  "new_actions": 20,
+  "new_action_ids": [
+    "semantic_expression_arity_expr",
+    "semantic_expression_arity_project",
+    "semantic_expression_arity_update",
+    "semantic_expression_average_contexts",
+    "semantic_expression_inactive_expr",
+    "semantic_expression_inactive_project",
+    "semantic_expression_inactive_update",
+    "semantic_expression_nested_facet",
+    "semantic_expression_nested_lookup",
+    "semantic_expression_nested_union",
+    "semantic_expression_query_only_count",
+    "semantic_expression_query_only_expr",
+    "semantic_expression_query_only_find",
+    "semantic_expression_query_only_project",
+    "semantic_expression_query_only_set",
+    "semantic_expression_query_only_update",
+    "semantic_expression_types_expr",
+    "semantic_expression_types_project",
+    "semantic_expression_types_update",
+    "semantic_expression_valid_forms"
+  ],
+  "focal_finding_cases": {
+    "H09": [
+      "semantic_expression_inactive_expr",
+      "semantic_expression_inactive_project",
+      "semantic_expression_inactive_update",
+      "semantic_expression_nested_facet",
+      "semantic_expression_nested_lookup",
+      "semantic_expression_nested_union",
+      "semantic_expression_query_only_count",
+      "semantic_expression_query_only_expr",
+      "semantic_expression_query_only_find",
+      "semantic_expression_query_only_project",
+      "semantic_expression_query_only_set",
+      "semantic_expression_query_only_update"
+    ],
+    "H10": [
+      "semantic_expression_arity_expr",
+      "semantic_expression_arity_project",
+      "semantic_expression_arity_update",
+      "semantic_expression_nested_facet",
+      "semantic_expression_nested_lookup",
+      "semantic_expression_nested_union",
+      "semantic_expression_valid_forms"
+    ],
+    "H11": [
+      "semantic_expression_arity_expr",
+      "semantic_expression_arity_project",
+      "semantic_expression_arity_update",
+      "semantic_expression_average_contexts",
+      "semantic_expression_nested_facet",
+      "semantic_expression_nested_lookup",
+      "semantic_expression_nested_union",
+      "semantic_expression_types_expr",
+      "semantic_expression_types_project",
+      "semantic_expression_types_update",
+      "semantic_expression_valid_forms"
+    ],
+    "H12": [
+      "semantic_expression_types_expr",
+      "semantic_expression_types_project",
+      "semantic_expression_types_update",
+      "semantic_expression_valid_forms"
+    ],
+    "H13": [
+      "semantic_expression_inactive_expr",
+      "semantic_expression_inactive_project",
+      "semantic_expression_inactive_update",
+      "semantic_expression_types_expr",
+      "semantic_expression_types_project",
+      "semantic_expression_types_update",
+      "semantic_expression_valid_forms"
+    ],
+    "H14": [
+      "semantic_expression_arity_expr",
+      "semantic_expression_arity_project",
+      "semantic_expression_arity_update",
+      "semantic_expression_inactive_expr",
+      "semantic_expression_inactive_project",
+      "semantic_expression_inactive_update",
+      "semantic_expression_types_expr",
+      "semantic_expression_types_project",
+      "semantic_expression_types_update"
+    ],
+    "H26": [
+      "semantic_expression_average_contexts"
+    ]
+  },
+  "traceability_limit": "Focal case references are evidence for this cut. Complete executable H-to-case/frontier metadata remains B00 pending; this is not a new selector or result matrix.",
+  "contexts": [
+    "project",
+    "set",
+    "match/expr",
+    "find",
+    "count",
+    "pipeline update",
+    "facet",
+    "lookup with let",
+    "unionWith"
+  ],
+  "states": [
+    "empty",
+    "populated",
+    "post-operation contents",
+    "valid recovery read"
+  ],
+  "observer_contract": {
+    "native_actions_import_productive_evaluator": false,
+    "types_and_order": "Independent BSON/public-type comparison in support_bson_observation; full error family/code/codeName/message and result/state retained.",
+    "namespace_normalization": "Only an exact aggregate-execution prefix naming the collection under test is replaced with <namespace>; wrong namespaces and successful user data remain unchanged.",
+    "phase_limit": "The shared action observes request plus consumption. Complete firstBatch/getMore and physical cursor/connection phase contracts remain B08/H35."
+  },
+  "catalog": {
+    "current_exports_sha256": {
+      "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json": "7c0834ba26a92d2bcd1a41d91d216855c83642adb1cb3a015881c475c3893697",
+      "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.md": "9ac15826dfee7d5caa44e2afed761fd635186fbcd22c691de2e8292ddea4e95e",
+      "tests/snapshots/compat-current/historical_deltas.json": "78a2d832b56df8ad3b9a4554b50041c8d6eae2be72471fa3da175d5fc9c7430e"
+    },
+    "expression_names_removed": [
+      "$all",
+      "$elemMatch",
+      "$exists",
+      "$nin"
+    ],
+    "expression_names_added": [
+      "$last",
+      "$not"
+    ],
+    "query_names_unchanged": true,
+    "historical_fixtures_unchanged": true,
+    "generator": ".venv/bin/python scripts/update_compat_snapshots.py --output-dir tests/snapshots/compat-current"
+  },
+  "checks": {
+    "surfaces": {
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_semantic_group_regressions.py -q",
+      "passed": 2881,
+      "subtests_passed": 0,
+      "skipped": 0,
+      "stdout_tail": "........................................................................ [ 89%]\n........................................................................ [ 92%]\n........................................................................ [ 94%]\n........................................................................ [ 97%]\n........................................................................ [ 99%]\n.                                                                        [100%]\n2881 passed in 86.15s (0:01:26)"
+    },
+    "core_catalog_observer_replay": {
+      "command": ".venv/bin/python -m pytest tests/unit/core tests/unit/test_native_capture_comparison.py tests/unit/test_differential_replay.py tests/unit/test_compat.py tests/unit/test_compat_contract.py tests/unit/test_cxp_exchange_catalog.py -q",
+      "passed": 2411,
+      "subtests_passed": 994,
+      "skipped": 1,
+      "stdout_tail": "........................................................................................................................... [ 86%]\n........................................................................ [ 89%]\n...................................................................... [ 92%]\n...................................................................................... [ 96%]\n........................................................................ [ 99%]\n......................                                                   [100%]\n2411 passed, 1 skipped, 994 subtests passed in 26.77s"
+    },
+    "public_api_error_write_regressions": {
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_shared_error_parity.py tests/integration/api/test_write_parity_corpus.py tests/integration/api/test_find_modify_errors.py tests/integration/api/test_write_identity_parity.py tests/integration/api/test_write_histories.py tests/integration/api/test_sync_api.py tests/integration/api/test_async_api.py tests/unit/api/test_find_modify_error_documents.py tests/unit/api/test_collection_write_helpers.py tests/unit/api/test_command_bson_grammar.py -q",
+      "passed": 17698,
+      "subtests_passed": 6338,
+      "skipped": 0,
+      "stdout_tail": "...................................................................................................... [ 97%]\n.............................................................................................................................................. [ 98%]\n............................................................................................................................ [ 99%]\n.......................... [ 99%]\n.................................................................................... [ 99%]\n............................................................             [100%]\n17698 passed, 6338 subtests passed in 133.14s (0:02:13)"
+    },
+    "positive_lookup_migrations": {
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_sync_api.py tests/integration/api/test_async_api.py -k 'supports_logical_expr_conditions_inside_lookup or supports_query_filter_conditions_inside_lookup' -q",
+      "passed": 4,
+      "subtests_passed": 8,
+      "skipped": 0,
+      "stdout_tail": "....                                                             [100%]\n4 passed, 462 deselected, 8 subtests passed in 0.48s"
+    },
+    "skip_disposition": "One pre-existing ICU-unavailable unit check; native and surface runs have no skips.",
+    "lint": {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref HEAD",
+      "stdout": "lint ratchet passed for 78 changed Python files\n"
+    },
+    "manifest": {
+      "command": ".venv/bin/python scripts/update_public_api_manifest.py --check",
+      "stdout": "public API manifest is current\n"
+    }
+  },
+  "source_notes": "expression-grammar-source-notes.md",
+  "pending": [
+    "H14 other object structures and accumulator validation",
+    "H30 command-level let preparation and evaluated internal bindings",
+    "B00 complete case/frontier and helper provenance integration",
+    "B03 remaining H24 comparison/index consumers",
+    "B05 paths/broadcast/projection",
+    "B06 remaining consumer contracts",
+    "B07 strict BSON boundary",
+    "B08 remaining public surfaces/database aggregate/phase obligations",
+    "B09 consumer migration and complete local contracts",
+    "B10 immutable distribution and full gates"
+  ],
+  "next_unit": "B04 command let versus internal evaluated bindings"
+}

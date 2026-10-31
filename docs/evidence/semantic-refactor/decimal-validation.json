@@ -1,0 +1,81 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B03",
+  "finding": "H26",
+  "status": "in_progress",
+  "scope": "Basic Decimal128 arithmetic, 15-digit arithmetic versus 34-digit accumulator promotion, group/window averages, public materialization, boolean conversion, exponent/nonfinite boundaries and pipeline writes. H26 not closed.",
+  "sources_sha256": {
+    "src/mongoeco/core/bson_scalars.py": "4a707c1db63090441b4a5d6f6bd234401c0251af442a4f9aa85d6360d6ec712a",
+    "src/mongoeco/compat/base.py": "943370ab5c7a1f27fde9af525a2919cfb1d336752185f72d8cbb429915a2dbf7",
+    "src/mongoeco/core/codec.py": "1595b67ae0aab834a7e8c62c8d63779e181c9a83f2aee06386d6f513adb927ca",
+    "src/mongoeco/core/aggregation/accumulators.py": "284d0d3d8b69b9f77430bf2c8ce655a7ddd86245913a8a89f05e3f3e6a92df58",
+    "src/mongoeco/core/aggregation/numeric_expressions.py": "9383e0a175e5651602059defb466e7334cff0f39fd5b84c7b5687db75f1bcae2",
+    "src/mongoeco/core/aggregation/scalar_expressions.py": "af305d92d80c0eae2f271b153b243ffa49818423e143562064c5e3ee2aa3e39c",
+    "tests/differential/semantic_decimal_cases.py": "35a1560e6b6a565b3d5a84dd495203df9495f24fa22e09f29c096f03c305de87",
+    "tests/differential/semantic_corpora.py": "923690f89628c024732bfc69acd2ad26d22df803fca756f6f2e4187c0e1c7fe7",
+    "tests/integration/api/test_semantic_group_regressions.py": "2d40fb464c68440b400db4802fb6030b79b220f237cb7c7c82455dffa9d3299d",
+    "tests/unit/core/test_bson_scalars.py": "c4defe4d43c5510278820f539c06d95eba784849a9c4b5f18c55e79d592c59ac",
+    "tests/unit/core/test_codec.py": "34f9bfb1ead6e39d54c5857d02c0248284509a2fbd3802fedc4640745fa830ac",
+    "tests/unit/core/test_aggregation_core.py": "673de4bc4ca95432d9d493f37df194c303d660768c59ce76b21ad0fecb16624c",
+    "tests/unit/core/test_aggregation_helper_branches.py": "1d0ae5f20b48a08167457152ff0b8d97b8f14857755bd0e7d7e94bcde828aa4e"
+  },
+  "before": {
+    "initial": "decimal-before-9.json",
+    "final_corpus": "decimal-previous-cut-8.json",
+    "baseline_sources_sha256": {
+      "src/mongoeco/core/bson_scalars.py": "e536979f7aaa5d3d1d063546aa70e6ec718e83446a56933f6e15b6c4e496d4a9",
+      "src/mongoeco/compat/base.py": "8dc192168d1b125058984a0afbb6134288818bed62df52d6bcf007ce3b4f181b",
+      "src/mongoeco/core/codec.py": "9e709d73b85734130902c3203c30a3174f010cce6a1f7a13f4edab869a912eb6",
+      "src/mongoeco/core/aggregation/accumulators.py": "da1c8fb89fb6ee2e9d762a0c61f3f2f9da4a678f0818b5e7392706a73301b5da",
+      "src/mongoeco/core/aggregation/numeric_expressions.py": "693c6d6253760b05fe2ba3ea8ba56f27891bad1a391b18ce87fed89206e50f0e",
+      "src/mongoeco/core/aggregation/scalar_expressions.py": "9a03ae13c82f0329fe927ae6d52e6742c3ae694232671356f01666ed1574e04c"
+    },
+    "provenance": "Prior candidate sources reconstructed and checked against document-order-validation.json, numeric-validation.json and absence-consumers-validation.json; codec equals base HEAD. Current harness/corpus used against MongoDB 8 real.",
+    "final_corpus_result": "8 actions, 10 subfailures, 6 errors, zero skips."
+  },
+  "native_reports": [
+    "decimal-native-7.json",
+    "decimal-native-8.json",
+    "decimal-native-9.json"
+  ],
+  "native_fixtures": [
+    "tests/fixtures/semantic_decimal_7_0.json",
+    "tests/fixtures/semantic_decimal_8_0.json",
+    "tests/fixtures/semantic_decimal_9_0.json",
+    "tests/fixtures/semantic_decimal_edges_7_0.json",
+    "tests/fixtures/semantic_decimal_edges_8_0.json",
+    "tests/fixtures/semantic_decimal_edges_9_0.json"
+  ],
+  "context_regression": {
+    "before": "12 failures with FloatOperation traps for the numeric corpus; 12 decimal controls passed before adding edge-context variants.",
+    "after": "Final suite covers precisions 6/28/34, ROUND_UP/DOWN, Inexact/FloatOperation traps and unchanged ambient flags for numeric/decimal/decimal_edges, both engines."
+  },
+  "checks": {
+    "surfaces": "........................................................................ [  4%]\n........................................................................ [  9%]\n........................................................................ [ 14%]\n........................................................................ [ 19%]\n........................................................................ [ 23%]\n........................................................................ [ 28%]\n........................................................................ [ 33%]\n........................................................................ [ 38%]\n........................................................................ [ 42%]\n........................................................................ [ 47%]\n........................................................................ [ 52%]\n........................................................................ [ 57%]\n........................................................................ [ 62%]\n........................................................................ [ 66%]\n........................................................................ [ 71%]\n........................................................................ [ 76%]\n........................................................................ [ 81%]\n........................................................................ [ 85%]\n........................................................................ [ 90%]\n........................................................................ [ 95%]\n.....................................................................    [100%]\n1509 passed in 23.55s\n",
+    "core_aggregation_properties": ".................................................................... [ 13%]\n........................................................................ [ 27%]\n.................................................................. [ 41%]\n...................................................................................................................................................................... [ 74%]\n....................................... [ 81%]\n...................... [ 86%]\n.....................................................................    [100%]\n502 passed, 359 subtests passed in 3.02s\n",
+    "bson_wire_storage_boundary": "....................................                                   [100%]\n36 passed, 74 subtests passed in 7.33s\n",
+    "lint_ratchet": "lint ratchet passed for 45 changed Python files\n"
+  },
+  "public_api_manifest": "current; no exported API changes",
+  "diff_check": "passed",
+  "benchmark": {
+    "before": "decimal-benchmark-before.json",
+    "after": "decimal-benchmark-after.json",
+    "report": "decimal-benchmark.md",
+    "baseline": "Same prior production candidate as before report; same current harness/dataset.",
+    "sample": "memory-sync, 1000 documents, warmup 1, repetitions 3; equal outcome hashes; existing aggregation workload, not full decimal-domain performance.",
+    "delta_wall_percent": {
+      "materializing_aggregation_nested_group": 10.5,
+      "materializing_aggregation_group_sort": 15.0
+    }
+  },
+  "pending": [
+    "H26 advanced numeric functions: abs/pow/log/exp/sqrt/round/trunc/floor/ceil",
+    "H26 cancellation and compensated mixed accumulation witnesses",
+    "H24 wider numeric limits/nonfinite and unique multikey/partial/collation consumers",
+    "H27 int64 promotion/overflow and write error atomicity",
+    "B06 remaining accumulator consumer rules",
+    "B07 strict BSON validation of inputs",
+    "B10 distribution and global gates"
+  ]
+}

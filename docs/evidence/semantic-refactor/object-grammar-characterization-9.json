@@ -1,0 +1,7567 @@
+{
+  "scope": "H14 native characterization only; no candidate acceptance",
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0"
+  },
+  "seed": [
+    {
+      "_id": {
+        "$numberInt": "1"
+      },
+      "a": {
+        "$numberInt": "5"
+      },
+      "name": "a",
+      "object": {
+        "a": {
+          "$numberInt": "3"
+        }
+      }
+    }
+  ],
+  "cases": {
+    "get_empty_empty_project": {
+      "expression": {
+        "$getField": {}
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "codeName": "Location3041702"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_empty_empty_update": {
+      "expression": {
+        "$getField": {}
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField requires 'field' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_empty_rows_project": {
+      "expression": {
+        "$getField": {}
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "codeName": "Location3041702"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_empty_rows_update": {
+      "expression": {
+        "$getField": {}
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField requires 'field' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_no_input_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041703"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField requires 'input' to be specified",
+        "code": {
+          "$numberInt": "3041703"
+        },
+        "codeName": "Location3041703"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_no_input_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041703"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041703"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField requires 'input' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_no_input_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041703"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField requires 'input' to be specified",
+        "code": {
+          "$numberInt": "3041703"
+        },
+        "codeName": "Location3041703"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_no_input_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041703"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041703"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField requires 'input' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_no_field_empty_project": {
+      "expression": {
+        "$getField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "codeName": "Location3041702"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_no_field_empty_update": {
+      "expression": {
+        "$getField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField requires 'field' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_no_field_rows_project": {
+      "expression": {
+        "$getField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "codeName": "Location3041702"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_no_field_rows_update": {
+      "expression": {
+        "$getField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041702"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041702"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField requires 'field' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_unknown_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041701"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField found an unknown argument: other",
+        "code": {
+          "$numberInt": "3041701"
+        },
+        "codeName": "Location3041701"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_unknown_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041701"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041701"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField found an unknown argument: other"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_unknown_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041701"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $getField found an unknown argument: other",
+        "code": {
+          "$numberInt": "3041701"
+        },
+        "codeName": "Location3041701"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_unknown_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041701"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041701"
+        },
+        "errmsg": "Invalid $set :: caused by :: $getField found an unknown argument: other"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_field_null_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": null,
+          "input": {}
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_field_null_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": null,
+          "input": {}
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_field_null_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": null,
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Executor error during aggregate command on namespace: mongoeco_h14_0d82fc28d3b94e7f9fa39b2d2368890e.records :: caused by :: $getField requires 'field' to evaluate to type String, but got null",
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "codeName": "Location3041704"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_field_null_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": null,
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "errmsg": "Plan executor error during update :: caused by :: $getField requires 'field' to evaluate to type String, but got null"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_field_number_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_field_number_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_field_number_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Executor error during aggregate command on namespace: mongoeco_h14_0d82fc28d3b94e7f9fa39b2d2368890e.records :: caused by :: $getField requires 'field' to evaluate to type String, but got int",
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "codeName": "Location3041704"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_field_number_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "errmsg": "Plan executor error during update :: caused by :: $getField requires 'field' to evaluate to type String, but got int"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_input_scalar_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_input_scalar_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_input_scalar_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_input_scalar_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_input_array_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": []
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_input_array_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": []
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_input_array_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": []
+        }
+      },
+      "ok": true,
+      "result": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_input_array_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": []
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_input_missing_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": "$absent"
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_input_missing_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": "$absent"
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_input_missing_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": "$absent"
+        }
+      },
+      "ok": true,
+      "result": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_input_missing_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": "a",
+          "input": "$absent"
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_dynamic_empty_project": {
+      "expression": {
+        "$getField": {
+          "field": "$name",
+          "input": "$$CURRENT"
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_dynamic_empty_update": {
+      "expression": {
+        "$getField": {
+          "field": "$name",
+          "input": "$$CURRENT"
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_dynamic_rows_project": {
+      "expression": {
+        "$getField": {
+          "field": "$name",
+          "input": "$$CURRENT"
+        }
+      },
+      "ok": true,
+      "result": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "5"
+          }
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_dynamic_rows_update": {
+      "expression": {
+        "$getField": {
+          "field": "$name",
+          "input": "$$CURRENT"
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          },
+          "v": {
+            "$numberInt": "5"
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_shorthand_empty_project": {
+      "expression": {
+        "$getField": "a"
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_shorthand_empty_update": {
+      "expression": {
+        "$getField": "a"
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_shorthand_rows_project": {
+      "expression": {
+        "$getField": "a"
+      },
+      "ok": true,
+      "result": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "5"
+          }
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_shorthand_rows_update": {
+      "expression": {
+        "$getField": "a"
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          },
+          "v": {
+            "$numberInt": "5"
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_current_empty_project": {
+      "expression": {
+        "$let": {
+          "vars": {
+            "CURRENT": {
+              "a": {
+                "$numberInt": "9"
+              }
+            }
+          },
+          "in": {
+            "$getField": "a"
+          }
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_current_empty_update": {
+      "expression": {
+        "$let": {
+          "vars": {
+            "CURRENT": {
+              "a": {
+                "$numberInt": "9"
+              }
+            }
+          },
+          "in": {
+            "$getField": "a"
+          }
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "get_current_rows_project": {
+      "expression": {
+        "$let": {
+          "vars": {
+            "CURRENT": {
+              "a": {
+                "$numberInt": "9"
+              }
+            }
+          },
+          "in": {
+            "$getField": "a"
+          }
+        }
+      },
+      "ok": true,
+      "result": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "9"
+          }
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "get_current_rows_update": {
+      "expression": {
+        "$let": {
+          "vars": {
+            "CURRENT": {
+              "a": {
+                "$numberInt": "9"
+              }
+            }
+          },
+          "in": {
+            "$getField": "a"
+          }
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          },
+          "v": {
+            "$numberInt": "9"
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_empty_empty_project": {
+      "expression": {
+        "$setField": {}
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_empty_empty_update": {
+      "expression": {
+        "$setField": {}
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_empty_rows_project": {
+      "expression": {
+        "$setField": {}
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_empty_rows_update": {
+      "expression": {
+        "$setField": {}
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_no_field_empty_project": {
+      "expression": {
+        "$setField": {
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_no_field_empty_update": {
+      "expression": {
+        "$setField": {
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_no_field_rows_project": {
+      "expression": {
+        "$setField": {
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_no_field_rows_update": {
+      "expression": {
+        "$setField": {
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_no_input_empty_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'input' to be specified",
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "codeName": "Location4161109"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_no_input_empty_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'input' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_no_input_rows_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'input' to be specified",
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "codeName": "Location4161109"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_no_input_rows_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'input' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_no_value_empty_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161103"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'value' to be specified",
+        "code": {
+          "$numberInt": "4161103"
+        },
+        "codeName": "Location4161103"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_no_value_empty_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161103"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161103"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'value' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_no_value_rows_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161103"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'value' to be specified",
+        "code": {
+          "$numberInt": "4161103"
+        },
+        "codeName": "Location4161103"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_no_value_rows_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161103"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161103"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'value' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_unknown_empty_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          },
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField found an unknown argument: other",
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "codeName": "Location4161101"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_unknown_empty_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          },
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField found an unknown argument: other"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_unknown_rows_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          },
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField found an unknown argument: other",
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "codeName": "Location4161101"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_unknown_rows_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          },
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField found an unknown argument: other"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_field_number_empty_project": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to evaluate to type String, but got int",
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "codeName": "Location4161107"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_field_number_empty_update": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to evaluate to type String, but got int"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_field_number_rows_project": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to evaluate to type String, but got int",
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "codeName": "Location4161107"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_field_number_rows_update": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to evaluate to type String, but got int"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_dynamic_empty_project": {
+      "expression": {
+        "$setField": {
+          "field": "$name",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161108"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: '$CURRENT.name' is a field path reference which is not allowed in this context. Did you mean {$literal: '$CURRENT.name'}?",
+        "code": {
+          "$numberInt": "4161108"
+        },
+        "codeName": "Location4161108"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_dynamic_empty_update": {
+      "expression": {
+        "$setField": {
+          "field": "$name",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161108"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161108"
+        },
+        "errmsg": "Invalid $set :: caused by :: '$CURRENT.name' is a field path reference which is not allowed in this context. Did you mean {$literal: '$CURRENT.name'}?"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_dynamic_rows_project": {
+      "expression": {
+        "$setField": {
+          "field": "$name",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161108"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: '$CURRENT.name' is a field path reference which is not allowed in this context. Did you mean {$literal: '$CURRENT.name'}?",
+        "code": {
+          "$numberInt": "4161108"
+        },
+        "codeName": "Location4161108"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_dynamic_rows_update": {
+      "expression": {
+        "$setField": {
+          "field": "$name",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161108"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161108"
+        },
+        "errmsg": "Invalid $set :: caused by :: '$CURRENT.name' is a field path reference which is not allowed in this context. Did you mean {$literal: '$CURRENT.name'}?"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_input_scalar_empty_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          },
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_input_scalar_empty_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          },
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_input_scalar_rows_project": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          },
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161105"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Executor error during aggregate command on namespace: mongoeco_h14_0d82fc28d3b94e7f9fa39b2d2368890e.records :: caused by :: $setField requires 'input' to evaluate to type Object",
+        "code": {
+          "$numberInt": "4161105"
+        },
+        "codeName": "Location4161105"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_input_scalar_rows_update": {
+      "expression": {
+        "$setField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          },
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161105"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161105"
+        },
+        "errmsg": "Plan executor error during update :: caused by :: $setField requires 'input' to evaluate to type Object"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_constant_empty_project": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$concat": [
+              "a",
+              "b"
+            ]
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161106"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to evaluate to a constant, but got a non-constant argument",
+        "code": {
+          "$numberInt": "4161106"
+        },
+        "codeName": "Location4161106"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_constant_empty_update": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$concat": [
+              "a",
+              "b"
+            ]
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161106"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161106"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to evaluate to a constant, but got a non-constant argument"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "set_constant_rows_project": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$concat": [
+              "a",
+              "b"
+            ]
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161106"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to evaluate to a constant, but got a non-constant argument",
+        "code": {
+          "$numberInt": "4161106"
+        },
+        "codeName": "Location4161106"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "set_constant_rows_update": {
+      "expression": {
+        "$setField": {
+          "field": {
+            "$concat": [
+              "a",
+              "b"
+            ]
+          },
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161106"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161106"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to evaluate to a constant, but got a non-constant argument"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_empty_empty_project": {
+      "expression": {
+        "$unsetField": {}
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_empty_empty_update": {
+      "expression": {
+        "$unsetField": {}
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField requires 'field' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_empty_rows_project": {
+      "expression": {
+        "$unsetField": {}
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_empty_rows_update": {
+      "expression": {
+        "$unsetField": {}
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField requires 'field' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_no_field_empty_project": {
+      "expression": {
+        "$unsetField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_no_field_empty_update": {
+      "expression": {
+        "$unsetField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField requires 'field' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_no_field_rows_project": {
+      "expression": {
+        "$unsetField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField requires 'field' to be specified",
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "codeName": "Location4161102"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_no_field_rows_update": {
+      "expression": {
+        "$unsetField": {
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161102"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161102"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField requires 'field' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_no_input_empty_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField requires 'input' to be specified",
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "codeName": "Location4161109"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_no_input_empty_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField requires 'input' to be specified"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_no_input_rows_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField requires 'input' to be specified",
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "codeName": "Location4161109"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_no_input_rows_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161109"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161109"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField requires 'input' to be specified"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_value_empty_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField found an unknown argument: value",
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "codeName": "Location4161101"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_value_empty_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField found an unknown argument: value"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_value_rows_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField found an unknown argument: value",
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "codeName": "Location4161101"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_value_rows_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "value": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField found an unknown argument: value"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_unknown_empty_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField found an unknown argument: other",
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "codeName": "Location4161101"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_unknown_empty_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField found an unknown argument: other"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_unknown_rows_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField found an unknown argument: other",
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "codeName": "Location4161101"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_unknown_rows_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {},
+          "other": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161101"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161101"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField found an unknown argument: other"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_field_number_empty_project": {
+      "expression": {
+        "$unsetField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to evaluate to type String, but got int",
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "codeName": "Location4161107"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_field_number_empty_update": {
+      "expression": {
+        "$unsetField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to evaluate to type String, but got int"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_field_number_rows_project": {
+      "expression": {
+        "$unsetField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField requires 'field' to evaluate to type String, but got int",
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "codeName": "Location4161107"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_field_number_rows_update": {
+      "expression": {
+        "$unsetField": {
+          "field": {
+            "$numberInt": "1"
+          },
+          "input": {}
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161107"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161107"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField requires 'field' to evaluate to type String, but got int"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_input_scalar_empty_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_input_scalar_empty_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unset_input_scalar_rows_project": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161105"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Executor error during aggregate command on namespace: mongoeco_h14_0d82fc28d3b94e7f9fa39b2d2368890e.records :: caused by :: $setField requires 'input' to evaluate to type Object",
+        "code": {
+          "$numberInt": "4161105"
+        },
+        "codeName": "Location4161105"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unset_input_scalar_rows_update": {
+      "expression": {
+        "$unsetField": {
+          "field": "a",
+          "input": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161105"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161105"
+        },
+        "errmsg": "Plan executor error during update :: caused by :: $setField requires 'input' to evaluate to type Object"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "getField_null_empty_project": {
+      "expression": {
+        "$getField": null
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "getField_null_empty_update": {
+      "expression": {
+        "$getField": null
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "getField_null_rows_project": {
+      "expression": {
+        "$getField": null
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Executor error during aggregate command on namespace: mongoeco_h14_0d82fc28d3b94e7f9fa39b2d2368890e.records :: caused by :: $getField requires 'field' to evaluate to type String, but got null",
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "codeName": "Location3041704"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "getField_null_rows_update": {
+      "expression": {
+        "$getField": null
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "errmsg": "Plan executor error during update :: caused by :: $getField requires 'field' to evaluate to type String, but got null"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "getField_number_empty_project": {
+      "expression": {
+        "$getField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "getField_number_empty_update": {
+      "expression": {
+        "$getField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "getField_number_rows_project": {
+      "expression": {
+        "$getField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Executor error during aggregate command on namespace: mongoeco_h14_0d82fc28d3b94e7f9fa39b2d2368890e.records :: caused by :: $getField requires 'field' to evaluate to type String, but got int",
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "codeName": "Location3041704"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "getField_number_rows_update": {
+      "expression": {
+        "$getField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "errmsg": "Plan executor error during update :: caused by :: $getField requires 'field' to evaluate to type String, but got int"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "getField_array_empty_project": {
+      "expression": {
+        "$getField": []
+      },
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "getField_array_empty_update": {
+      "expression": {
+        "$getField": []
+      },
+      "ok": true,
+      "result": {
+        "matched": {
+          "$numberInt": "0"
+        },
+        "modified": {
+          "$numberInt": "0"
+        }
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "getField_array_rows_project": {
+      "expression": {
+        "$getField": []
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Executor error during aggregate command on namespace: mongoeco_h14_0d82fc28d3b94e7f9fa39b2d2368890e.records :: caused by :: $getField requires 'field' to evaluate to type String, but got array",
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "codeName": "Location3041704"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "getField_array_rows_update": {
+      "expression": {
+        "$getField": []
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "3041704"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "3041704"
+        },
+        "errmsg": "Plan executor error during update :: caused by :: $getField requires 'field' to evaluate to type String, but got array"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "setField_null_empty_project": {
+      "expression": {
+        "$setField": null
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "setField_null_empty_update": {
+      "expression": {
+        "$setField": null
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField only supports an object as its argument"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "setField_null_rows_project": {
+      "expression": {
+        "$setField": null
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "setField_null_rows_update": {
+      "expression": {
+        "$setField": null
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField only supports an object as its argument"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "setField_number_empty_project": {
+      "expression": {
+        "$setField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "setField_number_empty_update": {
+      "expression": {
+        "$setField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField only supports an object as its argument"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "setField_number_rows_project": {
+      "expression": {
+        "$setField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "setField_number_rows_update": {
+      "expression": {
+        "$setField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField only supports an object as its argument"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "setField_array_empty_project": {
+      "expression": {
+        "$setField": []
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "setField_array_empty_update": {
+      "expression": {
+        "$setField": []
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField only supports an object as its argument"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "setField_array_rows_project": {
+      "expression": {
+        "$setField": []
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $setField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "setField_array_rows_update": {
+      "expression": {
+        "$setField": []
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $setField only supports an object as its argument"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unsetField_null_empty_project": {
+      "expression": {
+        "$unsetField": null
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unsetField_null_empty_update": {
+      "expression": {
+        "$unsetField": null
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField only supports an object as its argument"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unsetField_null_rows_project": {
+      "expression": {
+        "$unsetField": null
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unsetField_null_rows_update": {
+      "expression": {
+        "$unsetField": null
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField only supports an object as its argument"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unsetField_number_empty_project": {
+      "expression": {
+        "$unsetField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unsetField_number_empty_update": {
+      "expression": {
+        "$unsetField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField only supports an object as its argument"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unsetField_number_rows_project": {
+      "expression": {
+        "$unsetField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unsetField_number_rows_update": {
+      "expression": {
+        "$unsetField": {
+          "$numberInt": "5"
+        }
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField only supports an object as its argument"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unsetField_array_empty_project": {
+      "expression": {
+        "$unsetField": []
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unsetField_array_empty_update": {
+      "expression": {
+        "$unsetField": []
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField only supports an object as its argument"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "unsetField_array_rows_project": {
+      "expression": {
+        "$unsetField": []
+      },
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "Invalid $project :: caused by :: $unsetField only supports an object as its argument",
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "codeName": "Location4161100"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "unsetField_array_rows_update": {
+      "expression": {
+        "$unsetField": []
+      },
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "4161100"
+      },
+      "details": {
+        "index": {
+          "$numberInt": "0"
+        },
+        "code": {
+          "$numberInt": "4161100"
+        },
+        "errmsg": "Invalid $set :: caused by :: $unsetField only supports an object as its argument"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_sum_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $sum accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_sum_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $sum accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_sum_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $sum accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_sum_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $sum accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_sum_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $sum accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_sum_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $sum accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_sum_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_sum_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_avg_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $avg accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_avg_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $avg accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_avg_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $avg accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_avg_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $avg accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_avg_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $avg accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_avg_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $avg accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_avg_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_avg_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$avg": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": null
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_first_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $first accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_first_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $first accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_first_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $first accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_first_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $first accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_first_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $first accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_first_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $first accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_first_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_first_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$first": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_last_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $last accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_last_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $last accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_last_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $last accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_last_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $last accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_last_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $last accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_last_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $last accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_last_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_last_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$last": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_min_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $min accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_min_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $min accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_min_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $min accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_min_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $min accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_min_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $min accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_min_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $min accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_min_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_min_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$min": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_max_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $max accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_max_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $max accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_max_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $max accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_max_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $max accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_max_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $max accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_max_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $max accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_max_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_max_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$max": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_push_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $push accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_push_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $push accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_push_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $push accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_push_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $push accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_push_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $push accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_push_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $push accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_push_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_push_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$push": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": [
+            [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          ]
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_addToSet_empty_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $addToSet accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_addToSet_empty_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": []
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $addToSet accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_addToSet_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $addToSet accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_addToSet_one_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $addToSet accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_addToSet_two_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $addToSet accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_addToSet_two_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40237"
+      },
+      "details": {
+        "ok": {
+          "$numberDouble": "0.0"
+        },
+        "errmsg": "The $addToSet accumulator is a unary operator",
+        "code": {
+          "$numberInt": "40237"
+        },
+        "codeName": "Location40237"
+      },
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    },
+    "group_addToSet_literal_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [],
+      "state": [],
+      "recovery_count": {
+        "$numberInt": "0"
+      }
+    },
+    "group_addToSet_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$addToSet": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "ok": true,
+      "result": [
+        {
+          "_id": null,
+          "v": [
+            [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          ]
+        }
+      ],
+      "state": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "recovery_count": {
+        "$numberInt": "1"
+      }
+    }
+  }
+}

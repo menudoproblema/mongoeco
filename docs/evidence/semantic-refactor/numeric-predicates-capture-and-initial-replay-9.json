@@ -1,0 +1,334 @@
+{
+  "case_filter": "semantic_numeric_predicate_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_numeric_predicate_scan",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": [
+            0.1
+          ],
+          "b": [
+            0.1
+          ],
+          "d": 0.1,
+          "plain": 0.1,
+          "plainArray": [
+            0.1
+          ],
+          "v": 0.1
+        },
+        {
+          "_id": 1,
+          "a": [
+            "0.1"
+          ],
+          "v": "0.1"
+        },
+        {
+          "_id": 2,
+          "a": [
+            0.5
+          ],
+          "b": [
+            0.5
+          ],
+          "d": 0.5,
+          "plain": 0.5,
+          "plainArray": [
+            0.5
+          ],
+          "v": 0.5
+        },
+        {
+          "_id": 3,
+          "a": [
+            "0.5"
+          ],
+          "v": "0.5"
+        },
+        {
+          "_id": 4,
+          "a": [
+            1.0000000000000001e+18
+          ],
+          "b": [
+            1.0000000000000001e+18
+          ],
+          "d": 1.0000000000000001e+18,
+          "plain": 1.0000000000000001e+18,
+          "plainArray": [
+            1.0000000000000001e+18
+          ],
+          "v": 1.0000000000000001e+18
+        },
+        {
+          "_id": 5,
+          "a": [
+            1000000000000000128
+          ],
+          "b": [
+            1000000000000000128
+          ],
+          "d": 1000000000000000128,
+          "v": 1000000000000000128
+        },
+        {
+          "_id": 6,
+          "a": [
+            "1000000000000000128"
+          ],
+          "v": "1000000000000000128"
+        },
+        {
+          "_id": 7,
+          "a": [
+            "1000000000000000100"
+          ],
+          "v": "1000000000000000100"
+        },
+        {
+          "_id": 8,
+          "a": [
+            1000000000000000128
+          ],
+          "b": [
+            1000000000000000128
+          ],
+          "d": 1000000000000000128,
+          "plain": 1000000000000000128,
+          "plainArray": [
+            1000000000000000128
+          ],
+          "v": 1000000000000000128
+        },
+        {
+          "_id": 9,
+          "a": [
+            9007199254740993
+          ],
+          "b": [
+            9007199254740993
+          ],
+          "d": 9007199254740993,
+          "v": 9007199254740993
+        },
+        {
+          "_id": 10,
+          "a": [
+            9007199254740992.0
+          ],
+          "b": [
+            9007199254740992.0
+          ],
+          "d": 9007199254740992.0,
+          "plain": 9007199254740992.0,
+          "plainArray": [
+            9007199254740992.0
+          ],
+          "v": 9007199254740992.0
+        }
+      ],
+      "selector": "semantic_numeric_predicate_scan"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_numeric_predicate_index",
+      "seed_documents": [
+        {
+          "_id": 0,
+          "a": [
+            0.1
+          ],
+          "b": [
+            0.1
+          ],
+          "d": 0.1,
+          "plain": 0.1,
+          "plainArray": [
+            0.1
+          ],
+          "v": 0.1
+        },
+        {
+          "_id": 1,
+          "a": [
+            "0.1"
+          ],
+          "v": "0.1"
+        },
+        {
+          "_id": 2,
+          "a": [
+            0.5
+          ],
+          "b": [
+            0.5
+          ],
+          "d": 0.5,
+          "plain": 0.5,
+          "plainArray": [
+            0.5
+          ],
+          "v": 0.5
+        },
+        {
+          "_id": 3,
+          "a": [
+            "0.5"
+          ],
+          "v": "0.5"
+        },
+        {
+          "_id": 4,
+          "a": [
+            1.0000000000000001e+18
+          ],
+          "b": [
+            1.0000000000000001e+18
+          ],
+          "d": 1.0000000000000001e+18,
+          "plain": 1.0000000000000001e+18,
+          "plainArray": [
+            1.0000000000000001e+18
+          ],
+          "v": 1.0000000000000001e+18
+        },
+        {
+          "_id": 5,
+          "a": [
+            1000000000000000128
+          ],
+          "b": [
+            1000000000000000128
+          ],
+          "d": 1000000000000000128,
+          "v": 1000000000000000128
+        },
+        {
+          "_id": 6,
+          "a": [
+            "1000000000000000128"
+          ],
+          "v": "1000000000000000128"
+        },
+        {
+          "_id": 7,
+          "a": [
+            "1000000000000000100"
+          ],
+          "v": "1000000000000000100"
+        },
+        {
+          "_id": 8,
+          "a": [
+            1000000000000000128
+          ],
+          "b": [
+            1000000000000000128
+          ],
+          "d": 1000000000000000128,
+          "plain": 1000000000000000128,
+          "plainArray": [
+            1000000000000000128
+          ],
+          "v": 1000000000000000128
+        },
+        {
+          "_id": 9,
+          "a": [
+            9007199254740993
+          ],
+          "b": [
+            9007199254740993
+          ],
+          "d": 9007199254740993,
+          "v": 9007199254740993
+        },
+        {
+          "_id": 10,
+          "a": [
+            9007199254740992.0
+          ],
+          "b": [
+            9007199254740992.0
+          ],
+          "d": 9007199254740992.0,
+          "plain": 9007199254740992.0,
+          "plainArray": [
+            9007199254740992.0
+          ],
+          "v": 9007199254740992.0
+        }
+      ],
+      "selector": "semantic_numeric_predicate_index"
+    }
+  ],
+  "duration_seconds": 1.7610118389129639,
+  "errors": [],
+  "expected_tests": 2,
+  "failures": [],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": true,
+  "target": "9.0",
+  "tests_run": 2
+}

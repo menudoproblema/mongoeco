@@ -1,0 +1,409 @@
+{
+  "case_filter": "semantic_missing_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_compare",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_compare"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_references",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_references"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_producers",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_producers"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_composition",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_composition"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_arrays",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_arrays"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_remove_object",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_remove_object"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_truth",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_truth"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_missing_current_scope",
+      "seed_documents": [
+        {
+          "_id": 1,
+          "a": null,
+          "arr": [
+            1
+          ],
+          "keep": 7
+        },
+        {
+          "_id": 2,
+          "arr": [],
+          "keep": 7
+        },
+        {
+          "_id": 3,
+          "a": 5,
+          "keep": 7
+        },
+        {
+          "_id": 4,
+          "a": [
+            null
+          ],
+          "keep": 7
+        }
+      ],
+      "selector": "semantic_missing_current_scope"
+    }
+  ],
+  "duration_seconds": 0.6877408027648926,
+  "errors": [],
+  "expected_tests": 8,
+  "failures": [
+    {
+      "test": "test_semantic_missing_arrays_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_arrays_matches_real_mongodb) (engine='memory', case='semantic_missing_arrays')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[59 chars]ass 'object'>, <object object at 0x107195500>)[669 chars]))))) != (('di[59 chars]ass 'NoneType'>, None), (<class 'NoneType'>, N[477 chars])))))\n\nFirst differing element 0:\n('dic[58 chars]ass 'object'>, <object object at 0x107195500>)[80 chars])))))\n('dic[58 chars]ass 'NoneType'>, None), (<class 'NoneType'>, N[32 chars])))))\n\nDiff is 1236 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_arrays_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_arrays_matches_real_mongodb) (engine='sqlite', case='semantic_missing_arrays')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[59 chars]ass 'object'>, <object object at 0x1071954f0>)[669 chars]))))) != (('di[59 chars]ass 'NoneType'>, None), (<class 'NoneType'>, N[477 chars])))))\n\nFirst differing element 0:\n('dic[58 chars]ass 'object'>, <object object at 0x1071954f0>)[80 chars])))))\n('dic[58 chars]ass 'NoneType'>, None), (<class 'NoneType'>, N[32 chars])))))\n\nDiff is 1236 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_compare_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_compare_matches_real_mongodb) (engine='memory', case='semantic_missing_compare')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[276 chars]l'>, False)), ('getfield_cmp', (<class 'int'>,[1018 chars]))))) != (('di[276 chars]l'>, True)), ('getfield_cmp', (<class 'int'>, [1020 chars])))))\n\nFirst differing element 0:\n('dic[267 chars]ass 'bool'>, False)), ('getfield_cmp', (<class 'int'>, 1)))))))\n('dic[267 chars]ass 'bool'>, True)), ('getfield_cmp', (<class 'int'>, -1)))))))\n\nDiff is 2881 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_compare_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_compare_matches_real_mongodb) (engine='sqlite', case='semantic_missing_compare')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[276 chars]l'>, False)), ('getfield_cmp', (<class 'int'>,[1018 chars]))))) != (('di[276 chars]l'>, True)), ('getfield_cmp', (<class 'int'>, [1020 chars])))))\n\nFirst differing element 0:\n('dic[267 chars]ass 'bool'>, False)), ('getfield_cmp', (<class 'int'>, 1)))))))\n('dic[267 chars]ass 'bool'>, True)), ('getfield_cmp', (<class 'int'>, -1)))))))\n\nDiff is 2881 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_composition_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_composition_matches_real_mongodb) (engine='memory', case='semantic_missing_composition')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[71 chars]t', (('k', (<class 'NoneType'>, None)),))), ('[1445 chars]))))) != (('di[71 chars]t', ())), ('map', ('list', (('dict', ()),))), [693 chars])))))\n\nFirst differing element 0:\n('dic[70 chars]t', (('k', (<class 'NoneType'>, None)),))), ('[265 chars])))))\n('dic[70 chars]t', ())), ('map', ('list', (('dict', ()),))), [77 chars])))))\n\nDiff is 3000 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_composition_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_composition_matches_real_mongodb) (engine='sqlite', case='semantic_missing_composition')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[71 chars]t', (('k', (<class 'NoneType'>, None)),))), ('[1445 chars]))))) != (('di[71 chars]t', ())), ('map', ('list', (('dict', ()),))), [693 chars])))))\n\nFirst differing element 0:\n('dic[70 chars]t', (('k', (<class 'NoneType'>, None)),))), ('[265 chars])))))\n('dic[70 chars]t', ())), ('map', ('list', (('dict', ()),))), [77 chars])))))\n\nDiff is 3000 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_current_scope_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_current_scope_matches_real_mongodb) (engine='memory', case='semantic_missing_current_scope')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[72 chars]ass 'NoneType'>, None)), ('explicit', (<class [552 chars]))))) != (('di[72 chars]ass 'int'>, 8)), ('explicit', (<class 'int'>, [520 chars])))))\n\nFirst differing element 0:\n('dic[71 chars]ass 'NoneType'>, None)), ('explicit', (<class [41 chars])))))\n('dic[71 chars]ass 'int'>, 8)), ('explicit', (<class 'int'>, [33 chars])))))\n\nDiff is 1364 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_current_scope_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_current_scope_matches_real_mongodb) (engine='sqlite', case='semantic_missing_current_scope')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[72 chars]ass 'NoneType'>, None)), ('explicit', (<class [552 chars]))))) != (('di[72 chars]ass 'int'>, 8)), ('explicit', (<class 'int'>, [520 chars])))))\n\nFirst differing element 0:\n('dic[71 chars]ass 'NoneType'>, None)), ('explicit', (<class [41 chars])))))\n('dic[71 chars]ass 'int'>, 8)), ('explicit', (<class 'int'>, [33 chars])))))\n\nDiff is 1364 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_producers_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_producers_matches_real_mongodb) (engine='memory', case='semantic_missing_producers')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[77 chars]'>, 'null')), ('first', (<class 'str'>, 'null'[411 chars]))))) != (('di[77 chars]'>, 'missing')), ('first', (<class 'str'>, 'mi[429 chars])))))\n\nFirst differing element 0:\n('dic[72 chars]'str'>, 'null')), ('first', (<class 'str'>, 'null')))))))\n('dic[72 chars]'str'>, 'missing')), ('first', (<class 'str'>, 'missing')))))))\n\nDiff is 1488 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_producers_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_producers_matches_real_mongodb) (engine='sqlite', case='semantic_missing_producers')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[77 chars]'>, 'null')), ('first', (<class 'str'>, 'null'[411 chars]))))) != (('di[77 chars]'>, 'missing')), ('first', (<class 'str'>, 'mi[429 chars])))))\n\nFirst differing element 0:\n('dic[72 chars]'str'>, 'null')), ('first', (<class 'str'>, 'null')))))))\n('dic[72 chars]'str'>, 'missing')), ('first', (<class 'str'>, 'missing')))))))\n\nDiff is 1488 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_references_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_references_matches_real_mongodb) (engine='memory', case='semantic_missing_references')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[115 chars]'>, 'null')), ('current', (<class 'str'>, 'nul[841 chars]))))) != (('di[115 chars]'>, 'missing')), ('current', (<class 'str'>, '[889 chars])))))\n\nFirst differing element 0:\n('dic[114 chars]'>, 'null')), ('current', (<class 'str'>, 'nul[81 chars])))))\n('dic[114 chars]'>, 'missing')), ('current', (<class 'str'>, '[93 chars])))))\n\nDiff is 3444 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_references_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_references_matches_real_mongodb) (engine='sqlite', case='semantic_missing_references')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[115 chars]'>, 'null')), ('current', (<class 'str'>, 'nul[841 chars]))))) != (('di[115 chars]'>, 'missing')), ('current', (<class 'str'>, '[889 chars])))))\n\nFirst differing element 0:\n('dic[114 chars]'>, 'null')), ('current', (<class 'str'>, 'nul[81 chars])))))\n('dic[114 chars]'>, 'missing')), ('current', (<class 'str'>, '[93 chars])))))\n\nDiff is 3444 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_remove_object_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_remove_object_matches_real_mongodb) (engine='memory', case='semantic_missing_remove_object')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[50 chars]t', (('k', (<class 'object'>, <object object a[390 chars]))))) != (('di[50 chars]t', ())))), ('dict', (('_id', (<class 'int'>, [158 chars])))))\n\nFirst differing element 0:\n('dic[49 chars]t', (('k', (<class 'object'>, <object object a[17 chars])))))\n('dic[49 chars]t', ()))))\n\nDiff is 844 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_remove_object_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_remove_object_matches_real_mongodb) (engine='sqlite', case='semantic_missing_remove_object')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[50 chars]t', (('k', (<class 'object'>, <object object a[390 chars]))))) != (('di[50 chars]t', ())))), ('dict', (('_id', (<class 'int'>, [158 chars])))))\n\nFirst differing element 0:\n('dic[49 chars]t', (('k', (<class 'object'>, <object object a[17 chars])))))\n('dic[49 chars]t', ()))))\n\nDiff is 844 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_truth_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_truth_matches_real_mongodb) (engine='memory', case='semantic_missing_truth')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[76 chars]'>, 'yes')), ('and', (<class 'bool'>, True)), [728 chars]))))) != (('di[76 chars]'>, 'no')), ('and', (<class 'bool'>, False)), [628 chars])))))\n\nFirst differing element 0:\n('dic[75 chars]'>, 'yes')), ('and', (<class 'bool'>, True)), [82 chars])))))\n('dic[75 chars]'>, 'no')), ('and', (<class 'bool'>, False)), [57 chars])))))\n\nDiff is 2624 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_missing_truth_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_missing_truth_matches_real_mongodb) (engine='sqlite', case='semantic_missing_truth')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (('di[76 chars]'>, 'yes')), ('and', (<class 'bool'>, True)), [728 chars]))))) != (('di[76 chars]'>, 'no')), ('and', (<class 'bool'>, False)), [628 chars])))))\n\nFirst differing element 0:\n('dic[75 chars]'>, 'yes')), ('and', (<class 'bool'>, True)), [82 chars])))))\n('dic[75 chars]'>, 'no')), ('and', (<class 'bool'>, False)), [57 chars])))))\n\nDiff is 2624 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 8
+}

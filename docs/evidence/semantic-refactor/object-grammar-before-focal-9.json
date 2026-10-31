@@ -1,0 +1,476 @@
+{
+  "scope": "Pre-H14 focal characterization only, result/BSON type/error code/state; not complete error envelopes, phases, corpus or gate",
+  "native_source": "object-grammar-characterization-9.json",
+  "native_source_sha256": "3f43e50d9bd2a07c199b482a19e740171a2f8a45a83fa9d8e4b254e71fc10919",
+  "sources_sha256": {
+    "src/mongoeco/core/aggregation/control_object_expressions.py": "41684c13e39457c77d4e71711581726c3829781534c27fdba5bb386e286d6970",
+    "src/mongoeco/core/aggregation/preparation.py": "c824752ccd34acb06053be3d8400cb9f1469d0423d6313e61fb91202b710311a",
+    "src/mongoeco/core/aggregation/accumulators.py": "1d5e4c310cba8b543c98b338415b17d2b349c47c98f3ffde805e8110f86d7f87"
+  },
+  "cases": {
+    "get_no_input_empty_project": {
+      "pipeline": [
+        {
+          "$project": {
+            "v": {
+              "$getField": {
+                "field": "a"
+              }
+            }
+          }
+        }
+      ],
+      "seed": [],
+      "native": {
+        "ok": false,
+        "code": {
+          "$numberInt": "3041703"
+        },
+        "state": []
+      },
+      "engines": {
+        "MemoryEngine": {
+          "observed": {
+            "ok": true,
+            "result": [],
+            "state": []
+          },
+          "matches_focal_observation": false
+        },
+        "SQLiteEngine": {
+          "observed": {
+            "ok": true,
+            "result": [],
+            "state": []
+          },
+          "matches_focal_observation": false
+        }
+      }
+    },
+    "get_input_scalar_rows_project": {
+      "pipeline": [
+        {
+          "$project": {
+            "v": {
+              "$getField": {
+                "field": "a",
+                "input": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "seed": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "native": {
+        "ok": true,
+        "result": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            }
+          }
+        ],
+        "state": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": {
+              "$numberInt": "5"
+            },
+            "name": "a",
+            "object": {
+              "a": {
+                "$numberInt": "3"
+              }
+            }
+          }
+        ]
+      },
+      "engines": {
+        "MemoryEngine": {
+          "observed": {
+            "ok": true,
+            "result": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "v": null
+              }
+            ],
+            "state": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "a": {
+                  "$numberInt": "5"
+                },
+                "name": "a",
+                "object": {
+                  "a": {
+                    "$numberInt": "3"
+                  }
+                }
+              }
+            ]
+          },
+          "matches_focal_observation": false
+        },
+        "SQLiteEngine": {
+          "observed": {
+            "ok": true,
+            "result": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "v": null
+              }
+            ],
+            "state": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "a": {
+                  "$numberInt": "5"
+                },
+                "name": "a",
+                "object": {
+                  "a": {
+                    "$numberInt": "3"
+                  }
+                }
+              }
+            ]
+          },
+          "matches_focal_observation": false
+        }
+      }
+    },
+    "get_current_rows_project": {
+      "pipeline": [
+        {
+          "$project": {
+            "v": {
+              "$let": {
+                "vars": {
+                  "CURRENT": {
+                    "a": {
+                      "$numberInt": "9"
+                    }
+                  }
+                },
+                "in": {
+                  "$getField": "a"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "seed": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "native": {
+        "ok": true,
+        "result": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "9"
+            }
+          }
+        ],
+        "state": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": {
+              "$numberInt": "5"
+            },
+            "name": "a",
+            "object": {
+              "a": {
+                "$numberInt": "3"
+              }
+            }
+          }
+        ]
+      },
+      "engines": {
+        "MemoryEngine": {
+          "observed": {
+            "ok": true,
+            "result": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                }
+              }
+            ],
+            "state": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "a": {
+                  "$numberInt": "5"
+                },
+                "name": "a",
+                "object": {
+                  "a": {
+                    "$numberInt": "3"
+                  }
+                }
+              }
+            ]
+          },
+          "matches_focal_observation": false
+        },
+        "SQLiteEngine": {
+          "observed": {
+            "ok": true,
+            "result": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                }
+              }
+            ],
+            "state": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "a": {
+                  "$numberInt": "5"
+                },
+                "name": "a",
+                "object": {
+                  "a": {
+                    "$numberInt": "3"
+                  }
+                }
+              }
+            ]
+          },
+          "matches_focal_observation": false
+        }
+      }
+    },
+    "group_sum_one_empty": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "seed": [],
+      "native": {
+        "ok": false,
+        "code": {
+          "$numberInt": "40237"
+        },
+        "state": []
+      },
+      "engines": {
+        "MemoryEngine": {
+          "observed": {
+            "ok": true,
+            "result": [],
+            "state": []
+          },
+          "matches_focal_observation": false
+        },
+        "SQLiteEngine": {
+          "observed": {
+            "ok": true,
+            "result": [],
+            "state": []
+          },
+          "matches_focal_observation": false
+        }
+      }
+    },
+    "group_sum_literal_rows": {
+      "pipeline": [
+        {
+          "$group": {
+            "_id": null,
+            "v": {
+              "$sum": {
+                "$literal": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "seed": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "name": "a",
+          "object": {
+            "a": {
+              "$numberInt": "3"
+            }
+          }
+        }
+      ],
+      "native": {
+        "ok": true,
+        "result": [
+          {
+            "_id": null,
+            "v": {
+              "$numberInt": "0"
+            }
+          }
+        ],
+        "state": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": {
+              "$numberInt": "5"
+            },
+            "name": "a",
+            "object": {
+              "a": {
+                "$numberInt": "3"
+              }
+            }
+          }
+        ]
+      },
+      "engines": {
+        "MemoryEngine": {
+          "observed": {
+            "ok": true,
+            "result": [
+              {
+                "_id": null,
+                "v": {
+                  "$numberInt": "0"
+                }
+              }
+            ],
+            "state": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "a": {
+                  "$numberInt": "5"
+                },
+                "name": "a",
+                "object": {
+                  "a": {
+                    "$numberInt": "3"
+                  }
+                }
+              }
+            ]
+          },
+          "matches_focal_observation": true
+        },
+        "SQLiteEngine": {
+          "observed": {
+            "ok": true,
+            "result": [
+              {
+                "_id": null,
+                "v": {
+                  "$numberInt": "0"
+                }
+              }
+            ],
+            "state": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "a": {
+                  "$numberInt": "5"
+                },
+                "name": "a",
+                "object": {
+                  "a": {
+                    "$numberInt": "3"
+                  }
+                }
+              }
+            ]
+          },
+          "matches_focal_observation": true
+        }
+      }
+    }
+  },
+  "native_probe": {
+    "path": "docs/evidence/semantic-refactor/characterize_object_grammar.py",
+    "sha256": "c50132b3890d92f748811772734c3c64719ecb67369278b5afa7678a7235990f"
+  }
+}

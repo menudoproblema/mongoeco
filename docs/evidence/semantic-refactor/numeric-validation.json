@@ -1,0 +1,48 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "block": "B03",
+  "status": "in_progress",
+  "scope": "First numeric comparison/equality-key slice plus Int64 rank; B03 not closed. B00 corpus registration deduplicated without changing native observation.",
+  "sources_sha256": {
+    "src/mongoeco/core/bson_scalars.py": "e536979f7aaa5d3d1d063546aa70e6ec718e83446a56933f6e15b6c4e496d4a9",
+    "src/mongoeco/core/bson_ordering.py": "7a00eb997dd1faf047f09e7109ecba0e34295ee881957fab6062bb77d9523ddb",
+    "src/mongoeco/compat/base.py": "0e58c76646c58ea35da934eb8e3a2233fd6437c0a3c08dcab11cadb7d6c696de",
+    "tests/differential/semantic_numeric_cases.py": "de5bbb26e432fc432be81e948468d184085e437d9540f4283580ca8a413e98a8",
+    "tests/differential/semantic_corpora.py": "2bcffc6385f92a18be5d816d91b7d4ced7dc5e77115a53817fe12959fc74827a",
+    "tests/differential/cases.py": "f7be5cb8ddfdfdf12060e581c502e94b917f36bfddaf7f84516bea56f0489746",
+    "scripts/capture_differential_replay_golden.py": "bfe003871c58868a4acffcc536c3bf37e0a80061e63d7859e322970e29d2bf23",
+    "tests/integration/api/test_semantic_group_regressions.py": "31cb7a5955245eb54ac12d56e5c3738505ab145aee2f0c037c5c7479661eb71b",
+    "tests/unit/test_differential_replay.py": "90f3f2e11d11fe9d8753f2f5cd339a2de158b7a1cfefeec6119ff6bfefa272ba"
+  },
+  "native_reports": [
+    "numeric-native-7.json",
+    "numeric-native-8.json",
+    "numeric-native-9.json"
+  ],
+  "native_fixtures": [
+    "tests/fixtures/semantic_numeric_7_0.json",
+    "tests/fixtures/semantic_numeric_8_0.json",
+    "tests/fixtures/semantic_numeric_9_0.json"
+  ],
+  "before": [
+    "numeric-before-8.json",
+    "numeric-before-9.json"
+  ],
+  "checks": {
+    "surfaces": "........................................................................ [  6%]\n........................................................................ [ 13%]\n........................................................................ [ 19%]\n........................................................................ [ 26%]\n........................................................................ [ 32%]\n........................................................................ [ 39%]\n........................................................................ [ 45%]\n........................................................................ [ 52%]\n........................................................................ [ 58%]\n........................................................................ [ 65%]\n........................................................................ [ 71%]\n........................................................................ [ 78%]\n........................................................................ [ 84%]\n........................................................................ [ 91%]\n........................................................................ [ 97%]\n...........................                                              [100%]\n1107 passed in 7.07s\n",
+    "numeric_index_regression": ".................................................................... [ 68%]\n............................... [100%]\n99 passed, 62 subtests passed in 0.78s\n",
+    "compat_aggregation_properties": "........................................................................ [ 43%]\n.................................................................. [ 83%]\n...........................                                              [100%]\n165 passed, 6 subtests passed in 2.43s\n",
+    "lint_ratchet": "lint ratchet passed for 29 changed Python files\n",
+    "final_numeric_compat_regression": ".................................................................... [ 44%]\n.....................................................................................  [100%]\n153 passed, 62 subtests passed in 2.71s\n",
+    "public_api_manifest": "public API manifest is current",
+    "diff_check": "git diff --check: passed"
+  },
+  "pending": [
+    "H24 indexed predicates, candidate pruning, range/multikey, persisted SQLite compatibility and wider numeric boundaries",
+    "H26 decimal arithmetic/promotion and truthiness",
+    "H27 int64 overflow and write failure atomicity",
+    "H33 BSON document ordering, including collation",
+    "B10 distribution and global gates"
+  ],
+  "resources": "Task-owned MongoDB 7/8 containers stopped; temporary mongod 9 terminated."
+}

@@ -1,0 +1,161 @@
+{
+  "date_utc": "2026-10-31T00:47:46.505448+00:00",
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "status": "review_corrections_verified_plan_in_progress",
+  "scope": "B00-B10 implementation review; corrections to already implemented paths. Planned unimplemented requirements remain explicitly pending.",
+  "source_identity": {
+    "path": "docs/evidence/semantic-refactor/review-source-freeze.json",
+    "sha256": "5fff73558ed9bada74d4640b80f8284324f328b9572912ebe061d634846433f7"
+  },
+  "source_patch": {
+    "path": "docs/evidence/semantic-refactor/review-change.patch",
+    "sha256": "a88d4f016475517eb8581b6b0432047dafc09ba3afd2ef34ce916df8a3b40977"
+  },
+  "all_source_fingerprint": "75ad2520f74b86b6aaa0bcb24ef77c5fead6978fadf1f4f55ff37b2324358338",
+  "baseline_reconstruction": "Verified by copying all 276 current src Python files, reverse-applying review-change.patch, checking the aggregate baseline fingerprint and all 13 per-file baseline hashes. This baseline is the pre-review implementation, not Git HEAD.",
+  "support_sha256": {
+    "tests/differential/semantic_object_grammar_cases.py": "a5f61ac6af3be993ac5aada55264f8fff1d7785725e06472744e1ca5e022deb9",
+    "tests/differential/semantic_corpora.py": "e54bc0a6111c17f309302bcd723a5a0261b407d032507e77a343e84ecd892442",
+    "tests/differential/_real_parity_base.py": "464c58922ffc79f1ae2f30ff16a43cc7dea40e84d37840f79973055e2b45f0d8",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/integration/api/test_semantic_group_regressions.py": "8a673660412e46b3db271d8aec3c02178a6a0404b81fa0d10f6cd5f2323c98d4",
+    "tests/unit/core/test_prepared_expression_extensions.py": "4f6828303bc63c710cc9324737e5df2a4ef65c208c2ebf96bd0745267d07dbde",
+    "tests/unit/core/test_aggregation_expression_basics.py": "33ccb49d1a7f714cdf69ac881489d044e12279aca23b8f4d72b73f1744d4bedd",
+    "tests/unit/core/test_aggregation_helper_branches.py": "ff5fea551415d8619824343a93b7c9a55b4e5d9b1381333ca73bb694ae886242",
+    "tests/unit/core/test_aggregation_work_control.py": "15666a5e545c94b634125cfea922d0c536859d5092410373419214b85f64c728",
+    "tests/unit/api/test_aggregation_cursor.py": "2a7d1939bc2148a037baa1b8d7c65c35d1513206cb86e1c040cfb514af302938",
+    "tests/unit/test_compat.py": "991573539c41a27242b0075a745f4293705ba2e9a90b3a4739c9d2f9a3cd3a31",
+    "tests/unit/test_cxp_wire_conservation.py": "5d55ed62bf37a9b91fe663c97436ccf02799bfa2b2d03af85938a4dc4885757e",
+    "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json": "6e304582c1fafe5f998d684664d229941d757bb429f1a06e52059443b6e6d771",
+    "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.md": "d3a8a99bc7852cbf3f1e427eff926ad403e681aa3526e44b211858a394db28d6",
+    "tests/snapshots/compat-current/historical_deltas.json": "2fc15f654968b3a6c8a588ce36e4cb9a26bf570b790c961e0f9176e55b08e17c",
+    "docs/cxp-wire-static-admin-field-conservation.csv": "5bd25f8bfbbb2b26815a8bc84f1ea290bfc9f559082ebb6886b8570955c1f370",
+    "scripts/run_mongodb_real_differential.py": "3212674e70d305b737d96e1197da0508d68dbafd7910bb5db6693323d25c52d9",
+    "scripts/capture_differential_replay_golden.py": "82002e204129df37829389c7ac1eb0d73fd3bd1840f67810197175e634cb1417",
+    "tests/fixtures/semantic_object_grammar_7_0.json": "d6d02cd775282e692c4075cbc7dd5459e63ebaed9f99d0d8cdd5e03e4d234834",
+    "tests/fixtures/semantic_object_grammar_8_0.json": "26b2acf8ba1dd67349e3966fbacc180b8bd1dc95918d02292107230d3a45a2d9",
+    "tests/fixtures/semantic_object_grammar_9_0.json": "bd14f71e62ea52f6cf19d889c16bf233cb96a1282146bde20934e914936a8b22"
+  },
+  "before": {
+    "objects": {
+      "path": "docs/evidence/semantic-refactor/review-objects-before-final-8.json",
+      "sha256": "50fc8a4f1a95352672fd18478511f5b01215b7110c019d60ceaa992f7e3e4e98",
+      "actions": 13,
+      "engine_subfailures": 22,
+      "errors": 0,
+      "skipped": 0
+    },
+    "spill": {
+      "path": "docs/evidence/semantic-refactor/review-spill-before.json",
+      "sha256": "b60f8c76f04144ab8d4d28ce885a55c7c0906a190a7c682f8e463366cd131095"
+    },
+    "registry": {
+      "path": "docs/evidence/semantic-refactor/review-expression-registry-before.json",
+      "sha256": "f8e6049fff0d1bd41d6fc8c3ba68d5065046661a57565043a3e129ff2a4d9ef1"
+    },
+    "note": "Forced-spill baseline raises conversion error 241; registry baseline returns average 0.0 versus independent native 1/3. Intermediate extension regressions and the initial mutable global run are diagnostic evidence only."
+  },
+  "native": [
+    {
+      "path": "docs/evidence/semantic-refactor/review-objects-native-7.json",
+      "sha256": "dbb3e2e99991bc2fd3b0a6280e62cb884c0109f4eccad4e00134325de7c1d50c",
+      "server_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "tests_run": 149,
+      "engine_checks_per_action": [
+        "Memory",
+        "SQLite"
+      ],
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "command": "MONGOECO_REAL_MONGODB_URI=<isolated-7-uri> .venv/bin/python scripts/run_mongodb_real_differential.py 7.0 semantic_* --json-report <report>"
+    },
+    {
+      "path": "docs/evidence/semantic-refactor/review-objects-native-8.json",
+      "sha256": "5b71f39e40f278f84967a698a52157c23c1d6290257648a6311e129c630b8208",
+      "server_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "tests_run": 149,
+      "engine_checks_per_action": [
+        "Memory",
+        "SQLite"
+      ],
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "command": "MONGOECO_REAL_MONGODB_URI=<isolated-8-uri> .venv/bin/python scripts/run_mongodb_real_differential.py 8.0 semantic_* --json-report <report>"
+    },
+    {
+      "path": "docs/evidence/semantic-refactor/review-objects-native-9.json",
+      "sha256": "6cd714f48da7735730ed108a407627f6d42bfe6e64bb4f13bcf581c4c262652a",
+      "server_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "tests_run": 149,
+      "engine_checks_per_action": [
+        "Memory",
+        "SQLite"
+      ],
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "command": "MONGOECO_REAL_MONGODB_URI=<isolated-9-uri> .venv/bin/python scripts/run_mongodb_real_differential.py 9.0 semantic_* --json-report <report>"
+    }
+  ],
+  "full_suite": {
+    "path": "docs/evidence/semantic-refactor/review-full-final.log",
+    "sha256": "36db1517ea2fbd815293b53d14bdb74ec8ca940ee594f39b8441b8bc606d2154",
+    "command": ".venv/bin/python -m pytest -q -rs",
+    "temporary_directory": "fresh private TMPDIR, removed by wrapper after terminal completion",
+    "passed": 49096,
+    "skipped": 180,
+    "subtests_passed": 14466,
+    "seconds": 675.11,
+    "skip_details": [
+      "SKIPPED [179] .venv/lib/python3.14/site-packages/_pytest/unittest.py:523: MONGOECO_REAL_MONGODB_URI is not configured",
+      "SKIPPED [1] tests/unit/core/test_collation.py:325: ICU backend unavailable"
+    ],
+    "candidate": "75ad2520f74b86b6aaa0bcb24ef77c5fead6978fadf1f4f55ff37b2324358338"
+  },
+  "regressions": {
+    "path": "docs/evidence/semantic-refactor/review-regressions-final.log",
+    "sha256": "c6592ca0c1e04a9d83db3c89a1215e2abc0c5900524e6af7163f9472e33170aa",
+    "command": ".venv/bin/python -m pytest tests/unit/core tests/unit/api/test_cursors.py tests/unit/api/test_aggregation_cursor.py tests/integration/api/test_find_preparation_contract.py tests/integration/api/test_aggregation_semantic_context.py tests/unit/test_compat.py tests/unit/test_cxp_wire_conservation.py -q",
+    "passed": 2535,
+    "skipped": 1,
+    "subtests_passed": 1952
+  },
+  "public_manifest": {
+    "path": "docs/evidence/semantic-refactor/review-public-manifest-final.log",
+    "sha256": "9c393bc91fcca292295254583034447f195d9e4cde87ddf9674cf4a8350b8d7d",
+    "passed": 12
+  },
+  "lint": {
+    "path": "docs/evidence/semantic-refactor/review-lint-final.log",
+    "sha256": "d68010719ed578936f48e8976fc798baf0c0d23f1f85e58d26950aa7a32e2e07",
+    "changed_python_files": 101
+  },
+  "review_limits": {
+    "workset_fixed": true,
+    "absence_of_all_other_findings_proven": false,
+    "reason": "Finite differential corpus plus current full suite; not a proof of all MongoDB behavior or completion of the plan.",
+    "remaining": [
+      "B00 complete H/case/boundary inventory and integrated helper provenance",
+      "B03 H24 remaining equality/index consumers",
+      "B04 remaining H14 structures/operators",
+      "B05 paths/broadcast/projection",
+      "B06 lookup/distinct and remaining consumers",
+      "B07 strict BSON boundary",
+      "B08 database aggregate and remaining H35 phases",
+      "B09 external testkit migration",
+      "B10 wheel/sdist, coverage and Python/SDK matrix"
+    ]
+  }
+}

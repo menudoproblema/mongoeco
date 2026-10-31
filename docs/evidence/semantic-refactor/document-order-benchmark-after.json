@@ -1,0 +1,252 @@
+{
+  "schema": "mongoeco-benchmark-report/v2",
+  "environment": {
+    "python": "3.14.5",
+    "pythonImplementation": "CPython",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "sqlite": "3.53.4",
+    "jsonBackend": "stdlib",
+    "mongoeco": "4.11.0",
+    "dependencies": {
+      "mongomock": "4.3.0",
+      "orjson": "3.11.9",
+      "psutil": "7.2.2",
+      "pymongo": "4.19.0",
+      "usearch": "2.25.3"
+    },
+    "executable": "/Users/uve/Proyectos/mongoeco/.venv/bin/python"
+  },
+  "source": {
+    "gitRevision": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+    "gitDirty": true,
+    "mongoecoModule": "/Users/uve/Proyectos/mongoeco/src/mongoeco/__init__.py",
+    "harnessSha256": "sha256:4a6949d179df72d2c7de595975c08afc7819619cb1bbaa37e3c286ab29df827f",
+    "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+  },
+  "config": {
+    "size": 1000,
+    "warmup": 1,
+    "repetitions": 3,
+    "workloads": [
+      "sort_shape_diagnostics"
+    ],
+    "rssPeakSamplingIntervalMs": 5.0
+  },
+  "results": {
+    "memory-sync": {
+      "sort_shape_diagnostics": {
+        "sort_shape_document_full_20": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 1.365,
+          "wall_time_median_sec": 1.3474,
+          "wall_time_min_sec": 1.3423,
+          "wall_time_max_sec": 1.4053,
+          "cpu_user_mean_sec": 1.3533,
+          "cpu_sys_mean_sec": 0.0067,
+          "rss_delta_mean_mb": 0.01,
+          "rss_peak_max_mb": 115.78,
+          "metadata": {
+            "summary": "memory/python scan>filter>sort",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "sort",
+                "detail": null
+              }
+            ],
+            "query_shape": "sort document profile asc with ID tie-breaker",
+            "field_shape": "fixed-key document, numeric and string values",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:9a63331f2814213c8105b35d8b6b4f493eceef24475a0b8f7b13fdca9457e39d",
+            "outcome_items": 20
+          }
+        },
+        "sort_shape_top_level_limit_200": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 0.2558,
+          "wall_time_median_sec": 0.2449,
+          "wall_time_min_sec": 0.2389,
+          "wall_time_max_sec": 0.2836,
+          "cpu_user_mean_sec": 0.2233,
+          "cpu_sys_mean_sec": 0.0033,
+          "rss_delta_mean_mb": 0.0,
+          "rss_peak_max_mb": 115.78,
+          "metadata": {
+            "summary": "memory/python scan>filter>sort>slice",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": 10,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "sort",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "slice",
+                "detail": null
+              }
+            ],
+            "query_shape": "sort top-level score desc + limit 10",
+            "field_shape": "top-level scalar",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:f52f5966e01c84313f6cb53f6b1e537eee3e5bf184b0999cf094f59fdf77d99b",
+            "outcome_items": 200
+          }
+        },
+        "sort_shape_nested_limit_200": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 0.4561,
+          "wall_time_median_sec": 0.455,
+          "wall_time_min_sec": 0.4478,
+          "wall_time_max_sec": 0.4656,
+          "cpu_user_mean_sec": 0.4333,
+          "cpu_sys_mean_sec": 0.01,
+          "rss_delta_mean_mb": -0.33,
+          "rss_peak_max_mb": 115.78,
+          "metadata": {
+            "summary": "memory/python scan>filter>sort>slice",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": 10,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "sort",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "slice",
+                "detail": null
+              }
+            ],
+            "query_shape": "sort nested profile.score desc + limit 10",
+            "field_shape": "nested scalar path",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:f52f5966e01c84313f6cb53f6b1e537eee3e5bf184b0999cf094f59fdf77d99b",
+            "outcome_items": 200
+          }
+        },
+        "sort_shape_top_level_full_50": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 0.7167,
+          "wall_time_median_sec": 0.7108,
+          "wall_time_min_sec": 0.7051,
+          "wall_time_max_sec": 0.7343,
+          "cpu_user_mean_sec": 0.6933,
+          "cpu_sys_mean_sec": 0.0,
+          "rss_delta_mean_mb": 0.39,
+          "rss_peak_max_mb": 115.78,
+          "metadata": {
+            "summary": "memory/python scan>filter>sort",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "sort",
+                "detail": null
+              }
+            ],
+            "query_shape": "sort top-level score desc",
+            "field_shape": "top-level scalar",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:1e3767fe05772b9aea9382fe0a62f802cd13b3fbf46f66ba0e4a3e240fc8ded2",
+            "outcome_items": 50
+          }
+        },
+        "sort_shape_nested_full_50": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 0.7374,
+          "wall_time_median_sec": 0.7274,
+          "wall_time_min_sec": 0.7204,
+          "wall_time_max_sec": 0.7644,
+          "cpu_user_mean_sec": 0.7167,
+          "cpu_sys_mean_sec": 0.01,
+          "rss_delta_mean_mb": 0.34,
+          "rss_peak_max_mb": 115.78,
+          "metadata": {
+            "summary": "memory/python scan>filter>sort",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "sort",
+                "detail": null
+              }
+            ],
+            "query_shape": "sort nested profile.score desc",
+            "field_shape": "nested scalar path",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:1e3767fe05772b9aea9382fe0a62f802cd13b3fbf46f66ba0e4a3e240fc8ded2",
+            "outcome_items": 50
+          }
+        }
+      }
+    }
+  }
+}

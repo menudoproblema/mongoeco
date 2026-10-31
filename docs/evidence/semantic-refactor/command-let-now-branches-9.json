@@ -1,0 +1,90 @@
+{
+  "direct": {
+    "native": {
+      "family": "OperationFailure",
+      "code": 51144,
+      "errmsg": "Builtin variable '$$NOW' is not available"
+    },
+    "local": {
+      "family": "OperationFailure",
+      "code": 51144,
+      "errmsg": "Builtin variable '$$NOW' is not available"
+    }
+  },
+  "inactive_cond": {
+    "native": {
+      "documents": [
+        {
+          "v": 5
+        }
+      ]
+    },
+    "local": {
+      "documents": [
+        {
+          "v": 5
+        }
+      ]
+    }
+  },
+  "inactive_switch": {
+    "native": {
+      "documents": [
+        {
+          "v": 5
+        }
+      ]
+    },
+    "local": {
+      "documents": [
+        {
+          "v": 5
+        }
+      ]
+    }
+  },
+  "literal": {
+    "native": {
+      "documents": [
+        {
+          "v": "$$NOW"
+        }
+      ]
+    },
+    "local": {
+      "documents": [
+        {
+          "v": "$$NOW"
+        }
+      ]
+    }
+  },
+  "unused_lexical": {
+    "native": {
+      "family": "OperationFailure",
+      "code": 51144,
+      "errmsg": "Builtin variable '$$NOW' is not available"
+    },
+    "local": {
+      "family": "OperationFailure",
+      "code": 51144,
+      "errmsg": "Builtin variable '$$NOW' is not available"
+    }
+  },
+  "inactive_lexical": {
+    "native": {
+      "documents": [
+        {
+          "v": 5
+        }
+      ]
+    },
+    "local": {
+      "documents": [
+        {
+          "v": 5
+        }
+      ]
+    }
+  }
+}

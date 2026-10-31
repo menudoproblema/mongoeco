@@ -1,0 +1,161 @@
+{
+  "pipeline_width": {
+    "request": [
+      {
+        "$set": {
+          "a": {
+            "$numberLong": "1"
+          }
+        }
+      }
+    ],
+    "native": {
+      "modified": {
+        "$numberInt": "1"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "1"
+          }
+        }
+      ]
+    },
+    "local": {
+      "modified": {
+        "$numberInt": "0"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "1"
+          }
+        }
+      ]
+    }
+  },
+  "pipeline_cohort": {
+    "request": [
+      {
+        "$set": {
+          "a": {
+            "$numberDecimal": "1.5"
+          }
+        }
+      }
+    ],
+    "native": {
+      "modified": {
+        "$numberInt": "1"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberDecimal": "1.5"
+          }
+        }
+      ]
+    },
+    "local": {
+      "modified": {
+        "$numberInt": "0"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberDecimal": "1.50"
+          }
+        }
+      ]
+    }
+  },
+  "replace_width": {
+    "request": {
+      "_id": {
+        "$numberInt": "1"
+      },
+      "a": {
+        "$numberLong": "1"
+      }
+    },
+    "native": {
+      "modified": {
+        "$numberInt": "1"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "1"
+          }
+        }
+      ]
+    },
+    "local": {
+      "modified": {
+        "$numberInt": "0"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "1"
+          }
+        }
+      ]
+    }
+  },
+  "replace_missing_id": {
+    "request": {
+      "a": {
+        "$numberInt": "1"
+      }
+    },
+    "native": {
+      "modified": {
+        "$numberInt": "1"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "1"
+          }
+        }
+      ]
+    },
+    "local": {
+      "modified": {
+        "$numberInt": "1"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberInt": "1"
+          }
+        }
+      ]
+    }
+  }
+}

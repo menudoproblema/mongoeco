@@ -1,0 +1,230 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "date": "2026-10-31",
+  "block": "B04",
+  "status": "command_let_focally_corrected_B04_in_progress",
+  "findings": [
+    "H30"
+  ],
+  "partial_findings": [
+    "H35"
+  ],
+  "related_regression": "H18 command CURRENT, H14 preparation/precedence, all previous numeric and absence witnesses",
+  "scope": "Ordered closed command programs versus immutable evaluated bindings; read/write frames, statements/bulk, raw rejection, direct clone versus native fresh request. Not complete B04/H14 or B08/H35.",
+  "sources_sha256": {
+    "src/mongoeco/api/_async/_collection_bulk.py": "e4c761b26182db4dabeee0792bb1aacd78eb43f5e92f577721c48d7e529a7132",
+    "src/mongoeco/api/_async/_collection_reads.py": "8624e137fb39e6985f44e5c0311facc2fc0e5959757d1e3d55f109ee4ed68e4e",
+    "src/mongoeco/api/_async/_database_admin_command_compiler.py": "2836e2239cacddf218187eea8947e7b0335a3edd2bd38225221053c2cfbf2bd8",
+    "src/mongoeco/api/_async/_database_admin_read_commands.py": "e73ea576b077b2e34162b15a253c2eb61816b33626c6727d7562365f57c7f92d",
+    "src/mongoeco/api/_async/_database_admin_write_commands.py": "01dd00c481f46c1a43a436b362c5f5749511ac31885227690fe42e55cf65ae10",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "9e4f919a31cda2a513ff18d5e17d49cf450e00f17275ac293a365113910f991a",
+    "src/mongoeco/api/_async/collection.py": "3ab53e513e0e2abb741e66158d39ed15f7e3e03efd01b79c81d94d1a4c3a9076",
+    "src/mongoeco/api/_async/cursor.py": "7e0f10c109e355cebb35b1632ae8896b4f3b9d5aa5fec02ff345139df5cc1653",
+    "src/mongoeco/api/_async/database_commands.py": "304c59f5d0a86551081b730e01d7569492d42b9b73495fd6273eb86d648fb353",
+    "src/mongoeco/api/operations.py": "203c58cc6f640e907ebd254f8b1783736058c6051e283f85e68e82e81c78b87d",
+    "src/mongoeco/compat/_catalog_constants.py": "e1f244a5beb0d54725fce5d6ebbb3cb050150d7197dbf7863ff729b4c721d290",
+    "src/mongoeco/compat/_catalog_dialects.py": "722d04cb71529e6865246c2d0a99b4c2eafb45db9657eb334caa33c082e56e2a",
+    "src/mongoeco/core/aggregation/evaluation_environment.py": "624ec445a31e0abe0335847c46ca3fe34ca9b3a10657b418cfbe2cb614c038c4",
+    "src/mongoeco/core/aggregation/preparation.py": "c824752ccd34acb06053be3d8400cb9f1469d0423d6313e61fb91202b710311a",
+    "src/mongoeco/core/aggregation/runtime.py": "f679c474afc9081ccf580e4b76be9ba3ae952de0771e276f77615c4935637bf1",
+    "src/mongoeco/core/expression_context.py": "6a374a0f9c3292d1434acb18ab82ce6a97a5a5c9f6265681bcb1dd8a422fce74"
+  },
+  "support_sha256": {
+    "tests/differential/semantic_command_let_cases.py": "ef52c3d1a959c77d81338e61c1b454cba902c9b5aef85267c9918d0ae2b8fc06",
+    "tests/differential/semantic_corpora.py": "f0ed45d324863909d394c5651f3a1f27b707af9f37da515ece1d74297552bd39",
+    "tests/differential/_real_parity_base.py": "464c58922ffc79f1ae2f30ff16a43cc7dea40e84d37840f79973055e2b45f0d8",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/integration/api/test_semantic_group_regressions.py": "07e94da249cf713a5f3fe20e4fa916a62472c5478d39c05ad18083fd8d48d53d",
+    "tests/integration/api/test_now_execution_context.py": "8d1697b045421d406c1cdafae84b5d6465fcb2caf5ae5a83b159b39e7051c6b2",
+    "tests/unit/core/test_expression_execution_context.py": "04bd562918c4dbd4c61a19f08313d603a65b7f9d4f1b407fe6346e98ded4e926",
+    "tests/unit/test_compat.py": "f36ebe3ee9331c8f98cb00134ecc41c2f067f26063447b07be69ef61e9d022de",
+    "scripts/capture_differential_replay_golden.py": "82002e204129df37829389c7ac1eb0d73fd3bd1840f67810197175e634cb1417",
+    "scripts/run_mongodb_real_differential.py": "3212674e70d305b737d96e1197da0508d68dbafd7910bb5db6693323d25c52d9",
+    "docs/evidence/semantic-refactor/characterize_command_let_sdk.py": "b143ff87017920c09fcabf682e376bf8b97d69aa4fb8370bd65808f6af30b404",
+    "docs/evidence/semantic-refactor/characterize_command_let_now.py": "f6e7646ad990ad8e5c8eb3caf28ac169f509503493a91f58827668addc4b2aab",
+    "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json": "064bf4a111fc2d1eda241b32091875605170be8ab25ac83a664ee9a5f54ec1c6",
+    "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.md": "3986b874ba15d0c32507835b5b920ca191fe14831de29a0cc777ded2ffb3a348",
+    "tests/snapshots/compat-current/historical_deltas.json": "464e8d994b3c1170789bead399f30ee3bf9a3753957b8a652727e8dc341b280d"
+  },
+  "before": {
+    "report": "command-let-before-final-corpus-8.json",
+    "sha256": "1be3e531f8b9fc76b2e410e59a73c01e6bbb8ff36bebe38993fafbe722023d06",
+    "tests_run": 26,
+    "successful": false,
+    "engine_subfailures": 50,
+    "errors": 2,
+    "skips": 0,
+    "server_version": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "command": "MONGOECO_TEST_INSTALLED_ARTIFACT=1 PYTHONPATH=<pre-H30-src>:. MONGOECO_REAL_MONGODB_URI=<isolated-8-uri> .venv/bin/python scripts/run_mongodb_real_differential.py 8.0 semantic_command_let_* --json-report docs/evidence/semantic-refactor/command-let-before-final-corpus-8.json",
+    "baseline_sources_sha256": {
+      "src/mongoeco/api/_async/_collection_bulk.py": "43f56a9abf93b5fa08a89953c01e7d18f54e91395d18646670fd3b26bb8c82fb",
+      "src/mongoeco/api/_async/_collection_reads.py": "51a96fe1bd9c6fd991c2ae808211fc7bce34ffe6eae56da26337f1734e63b7c2",
+      "src/mongoeco/api/_async/_database_admin_command_compiler.py": "58f83b7212284aa90aac1c68e62b04d201e18287b910ecec33ea8c3c6e2c7226",
+      "src/mongoeco/api/_async/_database_admin_read_commands.py": "b45f2399bf06677b26283c2cf1592e4eb8b84881fd503b0dda7f1f102a5822f9",
+      "src/mongoeco/api/_async/_database_admin_write_commands.py": "129bb61736d3063c0f5d4779682c7b3414d49bbd4a3cf07c06222db2f5536127",
+      "src/mongoeco/api/_async/aggregation_cursor.py": "fea05ad8ee28f8ab0e8d27d1138b9d71e79405f519138c3f4f17422e3adc47bc",
+      "src/mongoeco/api/_async/collection.py": "55796a755ccda9434555056c0241e04c65e8653717894f399fb0918cd2ed2d94",
+      "src/mongoeco/api/_async/cursor.py": "551d759a0adca9bf429b4d5ae8765c6f3d92c2df6f9a4895729249898443f482",
+      "src/mongoeco/api/_async/database_commands.py": "c2da04faf7a1a60d2d1c4f9d8a2e2176dea42f60c7f841e60f43e2209d53b429",
+      "src/mongoeco/api/operations.py": "a4cbc4446411be6b3aa8599414bef306451b3656bd33b77304bab938c4422102",
+      "src/mongoeco/compat/_catalog_constants.py": "292bbee9e683e287480300842f928876806075bdfa77f4e5363bc4389bfcb4ec",
+      "src/mongoeco/compat/_catalog_dialects.py": "36296658c13d64c88185e683cc68d967042451b532e4f9f0a2ed7efd7857c783",
+      "src/mongoeco/core/aggregation/evaluation_environment.py": "265fc95a3f71d5f348196a7e761a0eb75a974fcef1e29a74a9b70164f9936fe5",
+      "src/mongoeco/core/aggregation/preparation.py": "ce0046734080f4498354883d1c6eca15dba95849d98a5bc78f40aec7031388b6",
+      "src/mongoeco/core/aggregation/runtime.py": "363be20fb170faac1593fa435cd55b510f9dcf3049fba5fd982d42d204317898",
+      "src/mongoeco/core/expression_context.py": "3b63f37df07f56ce91fd3a7552d5444213497a0564f78e912933a9b2e9a5d0b7"
+    },
+    "source_patch": "command-let-change.patch",
+    "source_patch_sha256": "25bcab8df963e33b0b6fe068b5f49debcdeb98ba60a726184bc0757f8fd911b1",
+    "errors_explanation": "The old implementation returns raw expression dictionaries in the random-value witness; its numeric-set observation raises TypeError in both engines. The other 25 actions produce 50 engine failures. These are baseline failures, not skips or accepted differences.",
+    "import_origin": {
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-command-let-baseline-em9ozla7/src/mongoeco/core/aggregation/preparation.py",
+      "sha256": "ce0046734080f4498354883d1c6eca15dba95849d98a5bc78f40aec7031388b6"
+    },
+    "reverse_patch_check": "passed against current productive sources; each baseline hash retained"
+  },
+  "native_reports": [
+    {
+      "report": "command-let-final-native-7.json",
+      "sha256": "7b8846b22664cd2b6b60e142d97eb8fdc1a993d05ea747cbe680ec16306c0bf4",
+      "tests_run": 136,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "server_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    },
+    {
+      "report": "command-let-final-native-8.json",
+      "sha256": "6eeb3e36e799206af6e1ac647052a7f664b9d6fe5d6912aeaeaaa3b7063d926e",
+      "tests_run": 136,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "server_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    },
+    {
+      "report": "command-let-final-native-9.json",
+      "sha256": "d45e380fbe183435add396a7e52c8487ddd74ac9ff42526a44ad66db17493550",
+      "tests_run": 136,
+      "successful": true,
+      "engine_subfailures": 0,
+      "errors": 0,
+      "skips": 0,
+      "server_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "pymongo": "4.19.0",
+      "python": "3.14.5"
+    }
+  ],
+  "captures": [
+    {
+      "path": "tests/fixtures/semantic_command_let_7_0.json",
+      "sha256": "5d075803dca06be2abdfee73a43395cdb79766854ed5634353acea0edd9c2396"
+    },
+    {
+      "path": "tests/fixtures/semantic_command_let_8_0.json",
+      "sha256": "746372895b47b684d4f22a47f341a9e64b691e6a3aa50a951e3d0c2c9185c8de"
+    },
+    {
+      "path": "tests/fixtures/semantic_command_let_9_0.json",
+      "sha256": "fc171f83e3854fab78247652af2ebe9956a76281aa8ae61626a2704fb7238de6"
+    }
+  ],
+  "gates": [
+    {
+      "report": "command-let-core-final.log",
+      "sha256": "1cf07b89b2ecda0fc85e1e793d219da48634a87473c20072b9b72cfcdad76e64",
+      "command": ".venv/bin/python -m pytest tests/unit/core tests/unit/test_compat.py -q",
+      "terminal_summary": "2286 passed, 1 skipped, 936 subtests passed in 13.84s",
+      "exit_code": 0
+    },
+    {
+      "report": "command-let-surfaces-final.log",
+      "sha256": "543d4c77185431304b302e69ded20c8a948124896af6bbd09c9ba9403dc16b2a",
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_semantic_group_regressions.py -q",
+      "terminal_summary": "3520 passed in 130.67s (0:02:10)",
+      "exit_code": 0
+    },
+    {
+      "report": "command-let-api-regression-final.log",
+      "sha256": "b515c353f4f587b3b3bcec7c303ed93b94d0d536bacdab4be7858929344c8de4",
+      "command": ".venv/bin/python -m pytest tests/integration/api/test_shared_error_parity.py tests/integration/api/test_write_parity_corpus.py tests/integration/api/test_find_modify_errors.py tests/integration/api/test_write_identity_parity.py tests/integration/api/test_write_histories.py tests/integration/api/test_sync_api.py tests/integration/api/test_async_api.py tests/unit/api/test_find_modify_error_documents.py tests/unit/api/test_collection_write_helpers.py tests/unit/api/test_command_bson_grammar.py tests/unit/api/test_collection_validation_helpers.py tests/integration/api/test_now_execution_context.py -q",
+      "terminal_summary": "17724 passed, 6374 subtests passed in 148.02s (0:02:28)",
+      "exit_code": 0
+    },
+    {
+      "report": "command-let-context-final.log",
+      "sha256": "7a4246fc9a6f3fa4bca359ab54b1cf13744d03ba19e2911f11789f690d28cfd1",
+      "command": ".venv/bin/python -m pytest tests/unit/test_compat.py tests/unit/core/test_expression_execution_context.py tests/unit/core/test_operation_context.py tests/integration/api/test_now_execution_context.py -q",
+      "terminal_summary": "79 passed, 42 subtests passed in 2.51s",
+      "exit_code": 0
+    },
+    {
+      "report": "command-let-lint-final.log",
+      "sha256": "04d8eb77e001059dcbdef73ef66fd024a938b42b23d791bcc3444bbfbdd35108",
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref HEAD",
+      "terminal_summary": "lint ratchet passed for 95 changed Python files",
+      "exit_code": 0
+    },
+    {
+      "report": "command-let-public-manifest.log",
+      "sha256": "9c393bc91fcca292295254583034447f195d9e4cde87ddf9674cf4a8350b8d7d",
+      "command": ".venv/bin/python -m pytest tests/unit/test_public_api_manifest.py -q",
+      "terminal_summary": "12 passed in 0.38s",
+      "exit_code": 0
+    }
+  ],
+  "sdk_observation": {
+    "path": "docs/evidence/semantic-refactor/command-let-sdk-8.json",
+    "sha256": "2be819bd9d979d59ccf4112f73d1a10d698c22a2ae41f03620114c75ceefcff1"
+  },
+  "server_images": {
+    "path": "docs/evidence/semantic-refactor/command-let-server-images.json",
+    "sha256": "d723bd70c75186abd1e1da5e1b158a34cd519d950bc77e0c076aaec3b90b90fa"
+  },
+  "supplemental_now_phase_observation": {
+    "path": "docs/evidence/semantic-refactor/command-let-now-branches-9.json",
+    "sha256": "434691fe110287c5764ce977a5039414364569ca96d37b2a84c240a6e5a716c9"
+  },
+  "native9_binary": "/opt/homebrew/bin/mongod; exact 9.0.2 buildInfo/FCV retained in native report; isolated temporary dbpath, process terminated in finally",
+  "source_notes": "command-let-source-notes.md",
+  "unchanged_history": [
+    "tests/support_write_parity.py",
+    "tests/fixtures/compat_catalog_snapshot.json",
+    "tests/fixtures/compat_catalog_snapshot.md"
+  ],
+  "validation_notes": [
+    "Direct clone uses the native fresh find witness; native PyMongo 4.19 clone omission is observed independently with CommandListener.",
+    "The prior NOW-name test expected a lookup-specific error. It was migrated to native command-let code 9 and validated in the final context and full API gates.",
+    "The earlier focal surface failure was strict corpus hash provenance after formatting; final references were captured anew on all three real servers, not rewritten from local output.",
+    "Final native reports include all 136 actions, 26 command-let actions plus the prior 110, both local engines.",
+    "The exact source tree is identified by per-file hashes and retained reverse-applicable patch, not by unchanged base HEAD alone."
+  ],
+  "pending": [
+    "H14 remaining object/accumulator structures, including required getField input.",
+    "H35 full cursor/getMore phase and clock contracts, other SDK profiles, direct distinct(let) TypeError versus native server 40415.",
+    "B00 complete H/case/frontier registration and imported-helper provenance integrated into captures.",
+    "B03 remaining H24 and B05-B09 consumers/BSON/database.aggregate/external testkit.",
+    "B10 complete immutable wheel/sdist and supported Python/SDK matrices; this receipt validates source, not full distribution."
+  ]
+}

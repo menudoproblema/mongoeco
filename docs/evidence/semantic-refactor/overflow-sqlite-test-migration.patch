@@ -1,0 +1,111 @@
+diff --git a/tests/unit/core/test_sqlite_engine.py b/tests/unit/core/test_sqlite_engine.py
+index 253a1ce..bb73435 100644
+--- a/tests/unit/core/test_sqlite_engine.py
++++ b/tests/unit/core/test_sqlite_engine.py
+@@ -519,16 +519,19 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+         self.assertIn("multikey_entries", in_sql)
+         self.assertIn(" OR ", in_sql)
+ 
++        with self.assertRaisesRegex(NotImplementedError, "Mixed numeric array"):
++            engine._translate_query_plan_with_multikey(
++                "db", "coll", compile_filter({"tags": {"$gt": 2}})
++            )
++        engine._field_has_scalar_or_array_element_type_mismatch_in_collection = Mock(
++            return_value=False
++        )
+         gt_sql, gt_params = engine._translate_query_plan_with_multikey(
+-            "db",
+-            "coll",
+-            compile_filter({"tags": {"$gt": 2}}),
++            "db", "coll", compile_filter({"tags": {"$gt": 2}})
+         )
+-        self.assertIn("multikey_entries", gt_sql)
+-        self.assertIn("collection_id", gt_sql)
+-        self.assertIn("type_score", gt_sql)
+-        self.assertIn("element_key > ?", gt_sql)
+-        self.assertIn(SQLiteEngine._normalize_multikey_number(2), gt_params)
++        self.assertNotIn("multikey_entries", gt_sql)
++        self.assertIn("json_extract", gt_sql)
++        self.assertEqual(gt_params, [2, 2])
+ 
+         engine._find_multikey_index = Mock(return_value=None)
+         fallback_sql, _ = engine._translate_query_plan_with_multikey(
+@@ -4254,7 +4257,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+ 
+         self.assertIn("CASE WHEN", sql)
+ 
+-    async def test_build_select_sql_uses_scalar_index_entries_for_homogeneous_single_field_sort(
++    async def test_build_select_sql_sorts_original_numeric_values_for_indexed_field(
+         self,
+     ):
+         engine = SQLiteEngine()
+@@ -4275,8 +4278,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+         finally:
+             await engine.disconnect()
+ 
+-        self.assertIn("FROM scalar_index_entries", sql)
+-        self.assertIn("ORDER BY scalar_index_entries.element_key DESC", sql)
++        self.assertIn("FROM documents", sql)
++        self.assertNotIn("scalar_index_entries", sql)
++        self.assertIn("json_extract(document", sql)
++        self.assertIn("DESC", sql)
+         self.assertNotIn("CASE WHEN", sql)
+ 
+     async def test_build_select_sql_uses_plain_value_order_for_uniform_unindexed_scalar_sort(
+@@ -4351,7 +4356,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+         self.assertIn("LIMIT 1", plan.sql)
+         self.assertEqual(list(plan.params[-2:]), [3, "ada"])
+ 
+-    async def test_plan_find_semantics_uses_scalar_entries_for_top_level_numeric_range(
++    async def test_plan_find_semantics_compares_original_top_level_numeric_values(
+         self,
+     ):
+         engine = SQLiteEngine()
+@@ -4371,12 +4376,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+ 
+         self.assertTrue(plan.use_sql)
+         self.assertIsNotNone(plan.sql)
+-        self.assertIn("FROM scalar_index_entries", plan.sql)
+-        self.assertIn("scalar_index_entries.type_score = ?", plan.sql)
+-        self.assertIn("scalar_index_entries.element_key >= ?", plan.sql)
+-        self.assertIn("LIMIT 1", plan.sql)
++        self.assertIn("FROM documents", plan.sql)
++        self.assertNotIn("scalar_index_entries", plan.sql)
++        self.assertIn("json_extract(document", plan.sql)
++        self.assertEqual(list(plan.params[-3:]), [20, 20, 1])
++        self.assertIn("LIMIT ?", plan.sql)
+ 
+-    async def test_plan_find_semantics_keeps_generic_sql_for_mixed_type_top_level_numeric_range(
++    async def test_plan_find_semantics_delegates_mixed_top_level_numeric_range(
+         self,
+     ):
+         engine = SQLiteEngine()
+@@ -4394,11 +4400,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+         finally:
+             await engine.disconnect()
+ 
+-        self.assertTrue(plan.use_sql)
+-        self.assertIsNotNone(plan.sql)
+-        self.assertNotIn("FROM scalar_index_entries", plan.sql)
++        self.assertFalse(plan.use_sql)
++        self.assertIsNone(plan.sql)
++        self.assertEqual(
++            plan.fallback_reason,
++            "Mixed numeric array comparisons require Python fallback",
++        )
+ 
+-    async def test_explain_query_plan_uses_scalar_entries_for_top_level_numeric_range(
++    async def test_explain_query_plan_avoids_rounded_numeric_index_entries(
+         self,
+     ):
+         engine = SQLiteEngine()
+@@ -4414,7 +4423,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
+         finally:
+             await engine.disconnect()
+ 
+-        self.assertTrue(any("scalar_index_entries" in row for row in explained))
++        self.assertTrue(any("SEARCH documents" in row for row in explained))
++        self.assertFalse(any("scalar_index_entries" in row for row in explained))
+ 
+     async def test_select_first_document_for_plan_uses_scalar_entries_for_top_level_numeric_range(
+         self,

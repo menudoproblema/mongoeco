@@ -1,0 +1,916 @@
+--- before/src/mongoeco/compat/_catalog_operators.py
++++ after/src/mongoeco/compat/_catalog_operators.py
+@@ -1,4 +1,5 @@
+ from __future__ import annotations
++
+ 
+ SUPPORTED_QUERY_FIELD_OPERATORS = frozenset(
+     {
+@@ -16,26 +17,146 @@
+      "$setOnInsert", "$push", "$addToSet", "$pull", "$pullAll", "$pop"}
+ )
+ 
+-SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
+-    {
+-        "$literal", "$convert", "$eq", "$cmp", "$ne", "$gt", "$gte", "$lt", "$lte", "$and", "$or",
+-        "$in", "$nin", "$all", "$exists", "$elemMatch", "$ifNull", "$cond", "$switch", "$abs", "$add",
+-        "$multiply", "$subtract", "$divide", "$mod", "$sum", "$avg", "$min", "$max", "$exp", "$ln", "$log", "$log10", "$pow", "$round",
+-        "$sqrt", "$stdDevPop", "$stdDevSamp", "$median", "$percentile", "$floor", "$ceil", "$trunc",
+-        "$range", "$slice", "$firstN", "$lastN", "$maxN", "$minN", "$size", "$arrayElemAt",
+-        "$allElementsTrue", "$anyElementTrue", "$objectToArray", "$zip", "$isArray", "$bitAnd", "$bitNot",
+-        "$bitOr", "$bitXor", "$bsonSize", "$concat", "$ltrim", "$replaceOne", "$replaceAll",
+-        "$reverseArray", "$rtrim", "$setDifference", "$setEquals", "$setIntersection", "$setIsSubset",
+-        "$strcasecmp", "$substr", "$substrBytes", "$substrCP", "$strLenBytes", "$strLenCP", "$trim",
+-        "$split", "$toBool", "$toDate", "$toDecimal", "$toInt", "$toDouble", "$toLong", "$toObjectId",
+-        "$toUUID", "$toLower", "$toUpper", "$toString", "$let", "$first", "$concatArrays", "$setUnion",
+-        "$map", "$filter", "$reduce", "$arrayToObject", "$indexOfArray", "$indexOfBytes", "$indexOfCP",
+-        "$regexMatch", "$regexFind", "$regexFindAll", "$sortArray", "$dateTrunc", "$dateAdd",
+-        "$dateSubtract", "$dateDiff", "$dateFromString", "$dateFromParts", "$dateToParts", "$dateToString",
+-        "$year", "$month", "$dayOfMonth", "$dayOfWeek", "$dayOfYear", "$hour", "$minute", "$second",
+-        "$millisecond", "$isoDayOfWeek", "$rand", "$setField", "$unsetField", "$week", "$isoWeek",
+-        "$isoWeekYear", "$mergeObjects", "$getField", "$isNumber", "$type", "$binarySize",
+-    }
++# Argument counts belong to their expression family, never the query grammar.
++CONTROL_EXPRESSION_ARGUMENTS = {
++    **dict.fromkeys(("$eq", "$ne", "$gt", "$gte", "$lt", "$lte", "$in"), (2, 2)),
++    "$and": (0, None),
++    "$or": (0, None),
++    "$not": (1, 1),
++    "$ifNull": (2, None),
++}
++SCALAR_EXPRESSION_ARGUMENTS = {"$cmp": (2, 2)}
++ARRAY_ACCESS_EXPRESSION_ARGUMENTS = {
++    "$size": (1, 1),
++    "$first": (1, 1),
++    "$last": (1, 1),
++    "$arrayElemAt": (2, 2),
++}
++
++SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = (
++    frozenset(
++        {
++            "$literal",
++            "$convert",
++            "$cond",
++            "$switch",
++            "$abs",
++            "$add",
++            "$multiply",
++            "$subtract",
++            "$divide",
++            "$mod",
++            "$sum",
++            "$avg",
++            "$min",
++            "$max",
++            "$exp",
++            "$ln",
++            "$log",
++            "$log10",
++            "$pow",
++            "$round",
++            "$sqrt",
++            "$stdDevPop",
++            "$stdDevSamp",
++            "$median",
++            "$percentile",
++            "$floor",
++            "$ceil",
++            "$trunc",
++            "$range",
++            "$slice",
++            "$firstN",
++            "$lastN",
++            "$maxN",
++            "$minN",
++            "$allElementsTrue",
++            "$anyElementTrue",
++            "$objectToArray",
++            "$zip",
++            "$isArray",
++            "$bitAnd",
++            "$bitNot",
++            "$bitOr",
++            "$bitXor",
++            "$bsonSize",
++            "$concat",
++            "$ltrim",
++            "$replaceOne",
++            "$replaceAll",
++            "$reverseArray",
++            "$rtrim",
++            "$setDifference",
++            "$setEquals",
++            "$setIntersection",
++            "$setIsSubset",
++            "$strcasecmp",
++            "$substr",
++            "$substrBytes",
++            "$substrCP",
++            "$strLenBytes",
++            "$strLenCP",
++            "$trim",
++            "$split",
++            "$toBool",
++            "$toDate",
++            "$toDecimal",
++            "$toInt",
++            "$toDouble",
++            "$toLong",
++            "$toObjectId",
++            "$toUUID",
++            "$toLower",
++            "$toUpper",
++            "$toString",
++            "$let",
++            "$concatArrays",
++            "$setUnion",
++            "$map",
++            "$filter",
++            "$reduce",
++            "$arrayToObject",
++            "$indexOfArray",
++            "$indexOfBytes",
++            "$indexOfCP",
++            "$regexMatch",
++            "$regexFind",
++            "$regexFindAll",
++            "$sortArray",
++            "$dateTrunc",
++            "$dateAdd",
++            "$dateSubtract",
++            "$dateDiff",
++            "$dateFromString",
++            "$dateFromParts",
++            "$dateToParts",
++            "$dateToString",
++            "$year",
++            "$month",
++            "$dayOfMonth",
++            "$dayOfWeek",
++            "$dayOfYear",
++            "$hour",
++            "$minute",
++            "$second",
++            "$millisecond",
++            "$isoDayOfWeek",
++            "$rand",
++            "$setField",
++            "$unsetField",
++            "$week",
++            "$isoWeek",
++            "$isoWeekYear",
++            "$mergeObjects",
++            "$getField",
++            "$isNumber",
++            "$type",
++            "$binarySize",
++        }
++    )
++    | frozenset(CONTROL_EXPRESSION_ARGUMENTS)
++    | frozenset(ARRAY_ACCESS_EXPRESSION_ARGUMENTS)
++    | frozenset(SCALAR_EXPRESSION_ARGUMENTS)
+ )
+ 
+ SUPPORTED_AGGREGATION_STAGES = frozenset(
+--- before/src/mongoeco/core/aggregation/control_object_expressions.py
++++ after/src/mongoeco/core/aggregation/control_object_expressions.py
+@@ -6,13 +6,13 @@
+ from typing import Any
+ 
+ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
++from mongoeco.compat._catalog_operators import CONTROL_EXPRESSION_ARGUMENTS
+ from mongoeco.core.aggregation.evaluation_environment import (
+     scoped_environment,
+ )
+ from mongoeco.core.aggregation.expression_values import expression_values_equal
++from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
+ from mongoeco.core.collation import compare_with_collation
+-from mongoeco.core.filtering import QueryEngine
+-from mongoeco.core.query_operators import is_non_empty_document_clause_list
+ from mongoeco.core.server_errors import server_error
+ from mongoeco.errors import OperationFailure
+ from mongoeco.types import Document, UndefinedType
+@@ -29,21 +29,9 @@
+ 
+ 
+ CONTROL_OBJECT_EXPRESSION_OPERATORS = frozenset(
++    CONTROL_EXPRESSION_ARGUMENTS
++) | frozenset(
+     {
+-        "$eq",
+-        "$ne",
+-        "$gt",
+-        "$gte",
+-        "$lt",
+-        "$lte",
+-        "$and",
+-        "$or",
+-        "$in",
+-        "$nin",
+-        "$all",
+-        "$exists",
+-        "$elemMatch",
+-        "$ifNull",
+         "$cond",
+         "$setField",
+         "$unsetField",
+@@ -57,73 +45,6 @@
+         "$getField",
+     }
+ )
+-
+-
+-def _is_field_path_expression(value: object) -> bool:
+-    return (
+-        isinstance(value, str)
+-        and value.startswith("$")
+-        and not value.startswith("$$")
+-        and value != "$"
+-    )
+-
+-
+-_FIELD_BOUND_ARITY = 2
+-
+-
+-def _field_bound_match_clauses(spec):
+-    if not isinstance(spec, list) or len(spec) != _FIELD_BOUND_ARITY:
+-        return None
+-    field_expression, raw_conditions = spec
+-    if not _is_field_path_expression(
+-        field_expression
+-    ) or not is_non_empty_document_clause_list(raw_conditions):
+-        return None
+-    return [{field_expression[1:]: deepcopy(condition)} for condition in raw_conditions]
+-
+-
+-def _field_bound_query_filter(operator, spec):
+-    if not isinstance(spec, list) or len(spec) != _FIELD_BOUND_ARITY:
+-        return None
+-    field_expression, operand = spec
+-    if not _is_field_path_expression(field_expression):
+-        return None
+-    return {field_expression[1:]: {operator: deepcopy(operand)}}
+-
+-
+-def _evaluate_field_bound_match_expression(
+-    operator: str,
+-    document: Document,
+-    spec: object,
+-    *,
+-    dialect: MongoDialect = MONGODB_DIALECT_70,
+-    collation=None,
+-) -> bool | None:
+-    clauses=_field_bound_match_clauses(spec)
+-    if clauses is None:
+-        return None
+-    return QueryEngine.match(
+-        document, {operator: clauses}, dialect=dialect, collation=collation
+-    )
+-
+-
+-def _evaluate_field_bound_query_operator(
+-    operator: str,
+-    document: Document,
+-    spec: object,
+-    *,
+-    dialect: MongoDialect = MONGODB_DIALECT_70,
+-    collation=None,
+-) -> bool | None:
+-    selector = _field_bound_query_filter(operator, spec)
+-    if selector is None:
+-        return None
+-    return QueryEngine.match(
+-        document,
+-        selector,
+-        dialect=dialect,
+-        collation=collation,
+-    )
+ 
+ 
+ def evaluate_control_object_expression(
+@@ -143,52 +64,41 @@
+     missing_sentinel: object,
+ ) -> Any:
+     if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
+-        args = require_expression_args(operator, spec, 2, 2)
++        args = require_expression_args(
++            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
++        )
+         left = evaluate_expression(document, args[0], variables)
+         right = evaluate_expression(document, args[1], variables)
+         return compare_values(left, right, operator)
+ 
+     if operator == "$and":
+-        field_bound = _evaluate_field_bound_match_expression(
+-            operator,
+-            document,
+-            spec,
+-            dialect=dialect,
+-            collation=getattr(variables, "collation", None),
+-        )
+-        if field_bound is not None:
+-            return field_bound
+-        args = require_expression_args(operator, spec, 0, None)
++        args = require_expression_args(
++            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
++        )
+         return all(
+             expression_truthy(evaluate_expression(document, item, variables))
+             for item in args
+         )
+ 
+     if operator == "$or":
+-        field_bound = _evaluate_field_bound_match_expression(
+-            operator,
+-            document,
+-            spec,
+-            dialect=dialect,
+-            collation=getattr(variables, "collation", None),
+-        )
+-        if field_bound is not None:
+-            return field_bound
+-        args = require_expression_args(operator, spec, 0, None)
++        args = require_expression_args(
++            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
++        )
+         return any(
+             expression_truthy(evaluate_expression(document, item, variables))
+             for item in args
+         )
+ 
+     if operator == "$in":
+-        args = require_expression_args(operator, spec, 2, 2)
++        args = require_expression_args(
++            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
++        )
+         needle = evaluate_expression(document, args[0], variables)
+         haystack = evaluate_expression(document, args[1], variables)
+-        if haystack is None:
+-            return None
+         if not isinstance(haystack, list):
+-            message = "$in requires the second argument to evaluate to a list"
+-            raise server_error(message, code=40081)
++            kind = _aggregation_type_name(haystack, missing_sentinel=missing_sentinel)
++            message = f"$in requires an array as a second argument, found: {kind}"
++            raise server_error(message, code=40081, reason="expression_type")
+         return any(
+             expression_values_equal(
+                 needle,
+@@ -199,22 +109,16 @@
+             for item in haystack
+         )
+ 
+-    if operator in {"$nin", "$all", "$exists", "$elemMatch"}:
+-        field_bound = _evaluate_field_bound_query_operator(
+-            operator,
+-            document,
+-            spec,
+-            dialect=dialect,
+-            collation=getattr(variables, "collation", None),
+-        )
+-        if field_bound is not None:
+-            return field_bound
+-        raise OperationFailure(
+-            f"{operator} only supports the field-bound form inside aggregation expressions"
+-        )
++    if operator == "$not":
++        args = require_expression_args(
++            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
++        )
++        return not expression_truthy(evaluate_expression(document, args[0], variables))
+ 
+     if operator == "$ifNull":
+-        args = require_expression_args(operator, spec, 2, None)
++        args = require_expression_args(
++            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
++        )
+         for item in args[:-1]:
+             value = evaluate_expression(document, item, variables)
+             if (
+--- before/src/mongoeco/core/aggregation/array_string_expressions.py
++++ after/src/mongoeco/core/aggregation/array_string_expressions.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import decimal
++import math
+ import re
+ import uuid
+ 
+@@ -10,17 +11,24 @@
+ from typing import Any
+ 
+ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
++from mongoeco.compat._catalog_operators import ARRAY_ACCESS_EXPRESSION_ARGUMENTS
+ from mongoeco.core.aggregation.evaluation_environment import (
+     scoped_environment,
+ )
+-from mongoeco.core.bson_scalars import INT32_MAX, INT32_MIN, unwrap_bson_numeric
++from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
++from mongoeco.core.bson_scalars import (
++    INT32_MAX,
++    INT32_MIN,
++    unwrap_bson_numeric,
++    wrap_bson_numeric,
++)
+ from mongoeco.core.codec import DocumentCodec
+ from mongoeco.core.collation import compare_with_collation
+ from mongoeco.core.filtering import QueryEngine
+ from mongoeco.core.server_errors import server_error
+ from mongoeco.core.sorting import sort_documents
+ from mongoeco.errors import OperationFailure
+-from mongoeco.types import Decimal128, Document, Regex, SortSpec
++from mongoeco.types import Decimal128, Document, Regex, SortSpec, UndefinedType
+ 
+ 
+ type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
+@@ -28,10 +36,9 @@
+ 
+ 
+ ARRAY_STRING_EXPRESSION_OPERATORS = frozenset(
++    ARRAY_ACCESS_EXPRESSION_ARGUMENTS
++) | frozenset(
+     {
+-        "$size",
+-        "$arrayElemAt",
+-        "$first",
+         "$concat",
+         "$trim",
+         "$ltrim",
+@@ -247,7 +254,7 @@
+     collation = getattr(variables, "collation", None)
+     if operator == "$size":
+         args = require_expression_args(
+-            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
++            operator, spec, *ARRAY_ACCESS_EXPRESSION_ARGUMENTS[operator]
+         )
+         value = evaluate_expression(document, args[0], variables)
+         if not isinstance(value, list):
+@@ -255,32 +262,51 @@
+             raise server_error(message, code=17124)
+         return len(value)
+ 
+-    if operator == "$arrayElemAt":
+-        args = require_expression_args(operator, spec, 2, 2)
++    if operator in {"$arrayElemAt", "$first", "$last"}:
++        args = require_expression_args(
++            operator, spec, *ARRAY_ACCESS_EXPRESSION_ARGUMENTS[operator]
++        )
+         values = evaluate_expression(document, args[0], variables)
+-        index = evaluate_expression(document, args[1], variables)
+-        if values is None or index is None:
++        index = (
++            evaluate_expression(document, args[1], variables)
++            if operator == "$arrayElemAt"
++            else (0 if operator == "$first" else -1)
++        )
++        if (
++            values is None
++            or values is missing_sentinel
++            or isinstance(values, UndefinedType)
++            or index is None
++            or index is missing_sentinel
++        ):
+             return None
+         if not isinstance(values, list):
+-            message = "$arrayElemAt requires an array as first argument"
+-            raise server_error(message, code=28689)
+-        if not isinstance(index, int) or isinstance(index, bool):
+-            message = "$arrayElemAt requires an integer index"
+-            raise server_error(message, code=28690)
++            kind = _aggregation_type_name(values, missing_sentinel=missing_sentinel)
++            message = f"{operator}'s argument must be an array, but is {kind}"
++            raise server_error(message, code=28689, reason="expression_type")
++        numeric = wrap_bson_numeric(index)
++        if numeric is None:
++            kind = _aggregation_type_name(index, missing_sentinel=missing_sentinel)
++            message = (
++                f"$arrayElemAt's second argument must be a numeric value, but is {kind}"
++            )
++            raise server_error(message, code=28690, reason="expression_type")
++        number = numeric.value
++        if (
++            not math.isfinite(number)
++            or not INT32_MIN <= number <= INT32_MAX
++            or number != int(number)
++        ):
++            rendered = format(float(number), ".6g")
++            message = (
++                "$arrayElemAt's second argument must be representable as a "
++                f"32-bit integer: {rendered}"
++            )
++            raise server_error(message, code=28691, reason="expression_type")
++        index = int(number)
+         if index < 0:
+             index += len(values)
+-        if index < 0 or index >= len(values):
+-            return missing_sentinel
+-        return values[index]
+-
+-    if operator == "$first":
+-        args = require_expression_args(
+-            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+-        )
+-        value = evaluate_expression(document, args[0], variables)
+-        if isinstance(value, list):
+-            return value[0] if value else missing_sentinel
+-        return value
++        return values[index] if 0 <= index < len(values) else missing_sentinel
+ 
+     if operator == "$concat":
+         args = require_expression_args(operator, spec, 1, None)
+--- before/src/mongoeco/core/aggregation/scalar_expressions.py
++++ after/src/mongoeco/core/aggregation/scalar_expressions.py
+@@ -13,6 +13,7 @@
+ from typing import Any
+ 
+ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
++from mongoeco.compat._catalog_operators import SCALAR_EXPRESSION_ARGUMENTS
+ from mongoeco.core.aggregation.date_expressions import _to_utc_naive
+ from mongoeco.core.aggregation.expression_values import compare_expression_values
+ from mongoeco.core.bson_scalars import (
+@@ -51,7 +52,7 @@
+ type BsonSizer = Callable[[dict[str, Any]], int]
+ 
+ 
+-SCALAR_EXPRESSION_OPERATORS = frozenset(
++SCALAR_EXPRESSION_OPERATORS = frozenset(SCALAR_EXPRESSION_ARGUMENTS) | frozenset(
+     {
+         "$rand",
+         "$convert",
+@@ -69,7 +70,6 @@
+         "$toObjectId",
+         "$toUUID",
+         "$isArray",
+-        "$cmp",
+         "$min",
+         "$max",
+     }
+@@ -264,7 +264,9 @@
+         return isinstance(value, list)
+ 
+     if operator == "$cmp":
+-        args = require_expression_args(operator, spec, 2, 2)
++        args = require_expression_args(
++            operator, spec, *SCALAR_EXPRESSION_ARGUMENTS[operator]
++        )
+         left = evaluate_expression_with_missing(document, args[0], variables)
+         right = evaluate_expression_with_missing(document, args[1], variables)
+         comparison = compare_expression_values(
+--- before/src/mongoeco/core/aggregation/preparation.py
++++ after/src/mongoeco/core/aggregation/preparation.py
+@@ -6,6 +6,11 @@
+ from dataclasses import dataclass
+ 
+ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
++from mongoeco.compat._catalog_operators import (
++    ARRAY_ACCESS_EXPRESSION_ARGUMENTS,
++    CONTROL_EXPRESSION_ARGUMENTS,
++    SCALAR_EXPRESSION_ARGUMENTS,
++)
+ from mongoeco.core.aggregation.accumulators import _validate_empty_group_fields
+ from mongoeco.core.aggregation.array_string_expressions import (
+     array_variable_names,
+@@ -32,6 +37,7 @@
+ )
+ from mongoeco.core.aggregation.runtime import (
+     _parse_variable_reference,
++    _require_expression_args,
+     _require_lookup_spec,
+     _require_union_with_spec,
+     _validate_variable_path,
+@@ -44,6 +50,7 @@
+ 
+ 
+ _UNSPECIFIED = object()
++_MATCH_EXPRESSION_DOCUMENT_CODE = 15983
+ _FIRST_STAGES = INFORMATION_STAGES | {
+     "$documents",
+     "$geoNear",
+@@ -430,6 +437,29 @@
+         _validate_expression_variables(spec.get("output", {}), dialect, variables)
+ 
+ 
++def _validate_stage_expression_roots(operator, spec, dialect):
++    if operator != "$project" or not isinstance(spec, dict):
++        return
++    for expression in spec.values():
++        if not isinstance(expression, dict) or len(expression) != 1:
++            continue
++        name = next(iter(expression))
++        if (
++            not isinstance(name, str)
++            or not name.startswith("$")
++            or name in {"$const", "$meta"}
++            or dialect.supports_aggregation_expression_operator(name)
++            or get_registered_aggregation_expression_operator(name) is not None
++        ):
++            continue
++        message, code = (
++            ("Cannot use $elemMatch in this context", 168)
++            if name == "$elemMatch"
++            else (f"Unknown expression {name}", 31325)
++        )
++        raise server_error(message, code=code, reason="expression_unknown")
++
++
+ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
+     _validate_placement(operator, address, context.scopes)
+     if operator in {"$lookup", "$unionWith"}:
+@@ -461,6 +491,7 @@
+     if dialect.behavior_flag(
+         "validates_aggregation_syntax_early", default=True
+     ) and operator in {"$set", "$addFields", "$project"}:
++        _validate_stage_expression_roots(operator, spec, dialect)
+         prepare_expression(
+             spec,
+             dialect=dialect,
+@@ -538,9 +569,19 @@
+                     operator, spec, dialect=dialect, address=address, context=context
+                 )
+             except OperationFailure as error:
+-                if error.code != _UNDEFINED_VARIABLE_CODE:
++                diagnostic = getattr(error, "_server_diagnostic", None)
++                parsing = (
++                    diagnostic is not None
++                    and diagnostic.reason in {"expression_unknown", "expression_arity"}
++                    and operator in {"$project", "$set", "$addFields"}
++                )
++                if error.code != _UNDEFINED_VARIABLE_CODE and not parsing:
+                     raise
+                 message = f"Invalid {operator} :: caused by :: {error_message(error)}"
++                if parsing:
++                    raise server_error(
++                        message, code=error.code, reason="expression_parse"
++                    ) from error
+                 details = command_error_document(error)
+                 details["errmsg"] = message
+                 raise OperationFailure(
+@@ -587,20 +628,12 @@
+ _EXPRESSION_ARITIES = {
+     **dict.fromkeys(
+         (
+-            "$eq",
+-            "$ne",
+-            "$gt",
+-            "$gte",
+-            "$lt",
+-            "$lte",
+             "$divide",
+             "$mod",
+             "$subtract",
+             "$pow",
+             "$log",
+-            "$arrayElemAt",
+             "$split",
+-            "$in",
+         ),
+         (2, 2),
+     ),
+@@ -613,7 +646,6 @@
+             "$sqrt",
+             "$floor",
+             "$ceil",
+-            "$size",
+             "$toInt",
+         ),
+         (1, 1),
+@@ -621,6 +653,9 @@
+     "$round": (1, 2),
+     "$trunc": (1, 2),
+     "$range": (2, 3),
++    **SCALAR_EXPRESSION_ARGUMENTS,
++    **CONTROL_EXPRESSION_ARGUMENTS,
++    **ARRAY_ACCESS_EXPRESSION_ARGUMENTS,
+ }
+ _PURE_CONSTANT_OPERATORS = frozenset(_EXPRESSION_ARITIES) - {"$range"} | {
+     "$regexMatch",
+@@ -661,9 +696,27 @@
+     """Validate expression syntax and lexical scope without requiring a row."""
+     if variables is not None:
+         _validate_expression_variables(expression, dialect, frozenset(variables))
+-    _prepare_expression_structure(
+-        expression, dialect, fold_constants=fold_constants, document_code=document_code
+-    )
++    try:
++        _prepare_expression_structure(
++            expression,
++            dialect,
++            fold_constants=fold_constants,
++            document_code=document_code,
++        )
++    except OperationFailure as error:
++        diagnostic = getattr(error, "_server_diagnostic", None)
++        if diagnostic is None or diagnostic.reason != "expression_type":
++            raise
++        prefix = (
++            "Failed to optimize expression :: caused by :: "
++            if document_code == _MATCH_EXPRESSION_DOCUMENT_CODE
++            else "Failed to optimize pipeline :: caused by :: "
++        )
++        raise server_error(
++            prefix + diagnostic.message,
++            code=diagnostic.code,
++            reason="expression_optimization",
++        ) from error
+ 
+ 
+ def _prepare_expression_structure(
+@@ -701,16 +754,14 @@
+         )
+     ):
+         message = f"Unrecognized expression '{operator}'"
+-        raise server_error(message, code=168)
+-    if _prepare_field_bound_expression(expression, operator, dialect):
+-        return
++        raise server_error(message, code=168, reason="expression_unknown")
+     if operator in _EXPRESSION_ARITIES:
+-        operand = expression[operator]
+-        args = operand if isinstance(operand, list) else [operand]
+-        low, high = _EXPRESSION_ARITIES[operator]
+-        if not low <= len(args) <= high:
+-            message = f"{operator} has the wrong number of arguments"
+-            raise server_error(message, code=16020)
++        _require_expression_args(
++            operator,
++            expression[operator],
++            min_args=_EXPRESSION_ARITIES[operator][0],
++            max_args=_EXPRESSION_ARITIES[operator][1],
++        )
+     for value in expression.values():
+         _prepare_expression_structure(
+             value, dialect, fold_constants=fold_constants, document_code=document_code
+@@ -721,33 +772,3 @@
+         and _pure_constant(expression)
+     ):
+         evaluate_expression({}, expression, dialect=dialect)
+-
+-
+-def _prepare_field_bound_expression(expression, operator, dialect):
+-    """Local query-expression extensions reuse the query grammar."""
+-    if operator in {"$and", "$or"}:
+-        from mongoeco.core.aggregation.control_object_expressions import (  # noqa: PLC0415 - expression/query cycle
+-            _field_bound_match_clauses,
+-        )
+-
+-        clauses = _field_bound_match_clauses(expression[operator])
+-        if clauses is not None:
+-            from mongoeco.core.query_plan import (  # noqa: PLC0415 - query/expression cycle
+-                compile_filter,
+-            )
+-
+-            compile_filter({operator: clauses}, dialect=dialect)
+-            return True
+-    if operator in {"$nin", "$all", "$exists", "$elemMatch"}:
+-        from mongoeco.core.aggregation.control_object_expressions import (  # noqa: PLC0415 - query/expression cycle
+-            _field_bound_query_filter,
+-        )
+-        from mongoeco.core.query_plan import (  # noqa: PLC0415 - query/expression cycle
+-            compile_filter,
+-        )
+-
+-        selector = _field_bound_query_filter(operator, expression[operator])
+-        if selector is not None:
+-            compile_filter(selector, dialect=dialect)
+-            return True
+-    return False
+--- before/src/mongoeco/core/aggregation/runtime.py
++++ after/src/mongoeco/core/aggregation/runtime.py
+@@ -429,22 +429,24 @@
+     min_args: int,
+     max_args: int | None = None,
+ ) -> list[object]:
+-    if not isinstance(spec, list):
+-        message = f"{operator} requires a list expression"
+-        raise server_error(message, code=16020)
+-    if len(spec) < min_args:
+-        message = f"{operator} requires at least {min_args} arguments"
+-        raise server_error(
+-            message,
+-            code=16020,
+-        )
+-    if max_args is not None and len(spec) > max_args:
+-        message = f"{operator} accepts at most {max_args} arguments"
+-        raise server_error(
+-            message,
+-            code=16020,
+-        )
+-    return spec
++    args = spec if isinstance(spec, list) else [spec]
++    count = len(args)
++    if count < min_args or (max_args is not None and count > max_args):
++        if operator == "$ifNull":
++            message = f"$ifNull needs at least two arguments, had: {count}"
++            raise server_error(message, code=1257300, reason="expression_arity")
++        if min_args == max_args:
++            requirement = f"exactly {min_args}"
++        elif max_args is None:
++            requirement = f"at least {min_args}"
++        else:
++            requirement = f"at least {min_args} and at most {max_args}"
++        message = (
++            f"Expression {operator} takes {requirement} arguments. "
++            f"{count} were passed in."
++        )
++        raise server_error(message, code=16020, reason="expression_arity")
++    return args
+ 
+ 
+ def _compare_values(
+@@ -918,7 +920,7 @@
+                 )
+             if operator not in {"$literal", "$const"} and not dialect.supports_aggregation_expression_operator(operator):
+                 raise server_error(
+-                    f"Unsupported aggregation expression: {operator}",
++                    f"Unrecognized expression '{operator}'",
+                     code=168,
+                 )
+             if operator in {"$literal", "$const"}:
+@@ -1098,7 +1100,7 @@
+                     missing_sentinel=_MISSING,
+                 )
+             raise server_error(
+-                f"Unsupported aggregation expression: {operator}",
++                f"Unrecognized expression '{operator}'",
+                 code=168,
+             )
+ 
+--- before/src/mongoeco/core/server_errors.py
++++ after/src/mongoeco/core/server_errors.py
+@@ -100,9 +100,46 @@
+     return target
+ 
+ 
+-def operation_error(error, operation, dialect):
++def _expression_operation_error(diagnostic, operation, dialect, namespace):
++    if (
++        diagnostic.reason == "expression_optimization"
++        and operation == "aggregate_match"
++    ):
++        return server_error(
++            "Failed to optimize pipeline :: caused by :: " + diagnostic.message,
++            code=diagnostic.code,
++            reason="expression_optimized_pipeline",
++        )
++    if diagnostic.reason != "expression_type":
++        return None
++    if operation == "aggregate_runtime":
++        prefix = (
++            f"Executor error during aggregate command on namespace: {namespace} "
++            ":: caused by :: "
++            if dialect == "9.0"
++            else "PlanExecutor error during aggregation :: caused by :: "
++        )
++    elif dialect == "9.0" and operation in {"update_one", "update_many"}:
++        prefix = "Plan executor error during update :: caused by :: "
++    else:
++        return None
++    return server_error(
++        prefix + diagnostic.message, code=diagnostic.code, reason="expression_execution"
++    )
++
++
++def operation_error(error, operation, dialect, *, namespace=None):
+     """Resolve a semantic diagnostic using the operation's explicit server context."""
+     diagnostic = getattr(error, "_server_diagnostic", None)
++    if diagnostic is not None and diagnostic.reason in {
++        "expression_type",
++        "expression_optimization",
++    }:
++        resolved = _expression_operation_error(
++            diagnostic, operation, dialect, namespace
++        )
++        if resolved is not None:
++            error = resolved
+     if diagnostic is not None and diagnostic.reason == "arithmetic_overflow":
+         if operation.startswith("find_one_and_"):
+             prefix = "Plan executor error during findAndModify :: caused by :: "
+--- before/src/mongoeco/api/_async/aggregation_cursor.py
++++ after/src/mongoeco/api/_async/aggregation_cursor.py
+@@ -82,6 +82,7 @@
+     search_prefix_output_limit,
+     search_result_limit_hint,
+ )
++from mongoeco.core.server_errors import operation_error
+ from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
+ from mongoeco.engines.adapter import EngineSpiAdapter
+ from mongoeco.errors import OperationFailure
+@@ -2495,6 +2496,17 @@
+             await self.close()
+             raise
+ 
++        except OperationFailure as error:
++            diagnostic = getattr(error, "_server_diagnostic", None)
++            if diagnostic is None or diagnostic.reason != "expression_type":
++                raise
++            raise operation_error(
++                error,
++                "aggregate_runtime",
++                self._collection.mongodb_dialect.key,
++                namespace=self._collection.full_name,
++            ) from error
++
+     def _spill_policy(self) -> AggregationSpillPolicy | None:
+         if self._allow_disk_use is False:
+             return None

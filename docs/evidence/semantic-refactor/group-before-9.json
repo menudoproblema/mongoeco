@@ -1,0 +1,138 @@
+{
+  "case_filter": "semantic_fix_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_fix_group_route_boolean",
+      "seed_documents": [
+        {
+          "_id": 1
+        },
+        {
+          "_id": 2
+        }
+      ],
+      "selector": "semantic_fix_group_route_boolean"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_fix_cache_identity_literals",
+      "seed_documents": [
+        {
+          "_id": 1
+        },
+        {
+          "_id": 2
+        }
+      ],
+      "selector": "semantic_fix_cache_identity_literals"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_fix_compiled_literal_bson",
+      "seed_documents": [
+        {
+          "_id": 1
+        },
+        {
+          "_id": 2
+        }
+      ],
+      "selector": "semantic_fix_compiled_literal_bson"
+    }
+  ],
+  "duration_seconds": 0.6252269744873047,
+  "errors": [
+    {
+      "test": "test_semantic_fix_compiled_literal_bson_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_fix_compiled_literal_bson_matches_real_mongodb) (engine='memory', case='semantic_fix_compiled_literal_bson')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 96, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_group_cases.py\", line 66, in bson_literals\n    list(\n    ~~~~^\n        collection.aggregate(\n        ^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n        )\n        ^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 365, in _stage_facet\n    return _apply_facet(\n        documents,\n    ...<12 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/join_stages.py\", line 203, in _apply_facet\n    faceted[field] = apply_pipeline(\n                     ~~~~~~~~~~~~~~^\n        list(documents),\n        ^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 226, in _stage_group\n    return _apply_group(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 630, in _apply_group\n    return compiled.apply(documents, variables, collation=collation)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_aggregation.py\", line 166, in apply\n    return self._aggregate_func(\n           ~~~~~~~~~~~~~~~~~~~~^\n        documents, aggregation_environment(variables, collation), collation\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"<string>\", line 19, in aggregate_func\nNameError: name 'Decimal128' is not defined\n"
+    },
+    {
+      "test": "test_semantic_fix_compiled_literal_bson_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_fix_compiled_literal_bson_matches_real_mongodb) (engine='sqlite', case='semantic_fix_compiled_literal_bson')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 96, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_group_cases.py\", line 66, in bson_literals\n    list(\n    ~~~~^\n        collection.aggregate(\n        ^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n        )\n        ^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 48, in __next__\n    has_chunk = self._pull_chunk()\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 31, in _pull_chunk\n    self._cursor._sync_buffer = self._cursor._client._run(_pull())\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_sync/aggregation_cursor.py\", line 25, in _pull\n    items.append(await self._async_iterable.__anext__())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/error_documents.py\", line 73, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2487, in __anext__\n    return await self._active_async_iterator.__anext__()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 225, in __anext__\n    delegate = await self._cursor._open_batch_stream()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 2150, in _open_batch_stream\n    return self._stream_materialized_documents(await self._materialize())\n                                               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/aggregation_cursor.py\", line 1422, in _materialize\n    else apply_pipeline(\n         ~~~~~~~~~~~~~~^\n        documents,\n        ^^^^^^^^^^\n        remaining_pipeline,\n        ^^^^^^^^^^^^^^^^^^^\n        **pipeline_kwargs,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 365, in _stage_facet\n    return _apply_facet(\n        documents,\n    ...<12 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/join_stages.py\", line 203, in _apply_facet\n    faceted[field] = apply_pipeline(\n                     ~~~~~~~~~~~~~~^\n        list(documents),\n        ^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n        deadline=deadline,\n        ^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 1264, in apply_pipeline\n    result = stage_spec.handler(\n        result,\n    ...<15 lines>...\n        ),\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/stages.py\", line 226, in _stage_group\n    return _apply_group(\n        documents,\n    ...<4 lines>...\n        deadline=context.deadline,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/grouping_stages.py\", line 630, in _apply_group\n    return compiled.apply(documents, variables, collation=collation)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/src/mongoeco/core/aggregation/compiled_aggregation.py\", line 166, in apply\n    return self._aggregate_func(\n           ~~~~~~~~~~~~~~~~~~~~^\n        documents, aggregation_environment(variables, collation), collation\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"<string>\", line 19, in aggregate_func\nNameError: name 'Decimal128' is not defined\n"
+    }
+  ],
+  "expected_tests": 3,
+  "failures": [
+    {
+      "test": "test_semantic_fix_cache_identity_literals_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_fix_cache_identity_literals_matches_real_mongodb) (engine='memory', case='semantic_fix_cache_identity_literals')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ((('d[214 chars]ass 'bool'>, True)))),))),)),), (('dict', (('r[858 chars])),)) != ((('d[214 chars]ass 'int'>, 1)))),))),)),), (('dict', (('resul[844 chars])),))\n\nFirst differing element 1:\n(('di[55 chars]oneType'>, None)), ('value', (<class 'bool'>, True)))),))),)),)\n(('di[55 chars]oneType'>, None)), ('value', (<class 'int'>, 1)))),))),)),)\n\nDiff is 2372 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_fix_cache_identity_literals_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_fix_cache_identity_literals_matches_real_mongodb) (engine='sqlite', case='semantic_fix_cache_identity_literals')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ((('d[214 chars]ass 'bool'>, True)))),))),)),), (('dict', (('r[858 chars])),)) != ((('d[214 chars]ass 'int'>, 1)))),))),)),), (('dict', (('resul[844 chars])),))\n\nFirst differing element 1:\n(('di[55 chars]oneType'>, None)), ('value', (<class 'bool'>, True)))),))),)),)\n(('di[55 chars]oneType'>, None)), ('value', (<class 'int'>, 1)))),))),)),)\n\nDiff is 2372 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_fix_group_route_boolean_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_fix_group_route_boolean_matches_real_mongodb) (engine='memory', case='semantic_fix_group_route_boolean')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[226 chars]t'>, 2)))),))),)),))), ('extra', ('list', (('d[177 chars]))))) != ('dic[226 chars]t'>, 0)))),))),)),))), ('extra', ('list', (('d[177 chars])))))\n\nFirst differing element 1:\n(('to[217 chars]t'>, 2)))),))),)),))), ('extra', ('list', (('d[176 chars],))))\n(('to[217 chars]t'>, 0)))),))),)),))), ('extra', ('list', (('d[176 chars],))))\n\nDiff is 799 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_fix_group_route_boolean_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_fix_group_route_boolean_matches_real_mongodb) (engine='sqlite', case='semantic_fix_group_route_boolean')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 98, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('dic[226 chars]t'>, 2)))),))),)),))), ('extra', ('list', (('d[177 chars]))))) != ('dic[226 chars]t'>, 0)))),))),)),))), ('extra', ('list', (('d[177 chars])))))\n\nFirst differing element 1:\n(('to[217 chars]t'>, 2)))),))),)),))), ('extra', ('list', (('d[176 chars],))))\n(('to[217 chars]t'>, 0)))),))),)),))), ('extra', ('list', (('d[176 chars],))))\n\nDiff is 799 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 3
+}

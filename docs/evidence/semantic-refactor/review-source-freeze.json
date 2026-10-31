@@ -1,0 +1,37 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "fingerprint_algorithm": "sha256 of sorted path:sha256\\n for every src/**/*.py",
+  "all_source_count": 276,
+  "all_source_fingerprint": "75ad2520f74b86b6aaa0bcb24ef77c5fead6978fadf1f4f55ff37b2324358338",
+  "baseline_all_source_fingerprint": "525aa0d1d4cfa68b400916577d9feff16167b22fee6cc77d113ef6e108ae20c0",
+  "sources_sha256": {
+    "src/mongoeco/api/_async/_collection_reads.py": "f82c59537fbbb29f6aeab4442443dae4cd7b6b6079d2dd92178fe18e24aba6f9",
+    "src/mongoeco/api/_async/_database_admin_read_commands.py": "3714f505e432aef3ba263d3ec5b409e09915f4c1360d5c1c8a7471c58408ae59",
+    "src/mongoeco/api/_async/cursor.py": "1e8cc34b89aa9fe46b61c49d02ec2ed9326ec5fa1ccedd106b899a276c0e043d",
+    "src/mongoeco/compat/_catalog_constants.py": "42c46700919359e14f9d9728ee4b34c18e89b790458c8d6d12a35a9d48ea6e93",
+    "src/mongoeco/compat/_catalog_dialects.py": "d13e0f2c89a6e812a6fc59020ba53c14094168ea7004976461db9a3cbe47f7ea",
+    "src/mongoeco/core/aggregation/accumulators.py": "17cfa3d26951f2b2ebb257d4820aec8b99cf67ae47b957b4062c2198e4d77d66",
+    "src/mongoeco/core/aggregation/control_object_expressions.py": "eb933f9ece36556078c710deffebcaeb4f6adc3c8e08fcc367637575ff345de2",
+    "src/mongoeco/core/aggregation/extensions.py": "944df29126d7163492bd873f3e83ec9b95cb913018a89a34b6c7a0959b550072",
+    "src/mongoeco/core/aggregation/grouping_stages.py": "8e4828dc2fd849e9bd9ca07f308de3d9875acede0628418eaf47479774ae2f6a",
+    "src/mongoeco/core/aggregation/preparation.py": "cc921d05de08698e6526ba9bcaa9664b7fba26208eb93479ae4810213d49429d",
+    "src/mongoeco/core/bson_ordering.py": "3a09e35ca95ecf153bbff876118feac3d872764f9c3268bbc9e4baf003712f27",
+    "src/mongoeco/core/error_documents.py": "1bfb51dd063e41f9a5a67ab70d2ffc30b17ff180fe8aedaa58cde5961527828a",
+    "src/mongoeco/core/server_errors.py": "de30e6b636a601e678881552cb12695a2aa06e0c394a1581c3dea13c1332b07d"
+  },
+  "baseline_sources_sha256": {
+    "src/mongoeco/api/_async/_collection_reads.py": "8624e137fb39e6985f44e5c0311facc2fc0e5959757d1e3d55f109ee4ed68e4e",
+    "src/mongoeco/api/_async/_database_admin_read_commands.py": "e73ea576b077b2e34162b15a253c2eb61816b33626c6727d7562365f57c7f92d",
+    "src/mongoeco/api/_async/cursor.py": "7e0f10c109e355cebb35b1632ae8896b4f3b9d5aa5fec02ff345139df5cc1653",
+    "src/mongoeco/compat/_catalog_constants.py": "e1f244a5beb0d54725fce5d6ebbb3cb050150d7197dbf7863ff729b4c721d290",
+    "src/mongoeco/compat/_catalog_dialects.py": "722d04cb71529e6865246c2d0a99b4c2eafb45db9657eb334caa33c082e56e2a",
+    "src/mongoeco/core/aggregation/accumulators.py": "1d5e4c310cba8b543c98b338415b17d2b349c47c98f3ffde805e8110f86d7f87",
+    "src/mongoeco/core/aggregation/control_object_expressions.py": "41684c13e39457c77d4e71711581726c3829781534c27fdba5bb386e286d6970",
+    "src/mongoeco/core/aggregation/extensions.py": "5e8cf1522fe01334e5d398657b2575dbc651c0984fbc622dd5c41ed2b244742d",
+    "src/mongoeco/core/aggregation/grouping_stages.py": "01ea03a0dfcb5d5f645d76dc73eedd7e4162e9cb672dfd792260c8863a9e35a2",
+    "src/mongoeco/core/aggregation/preparation.py": "c824752ccd34acb06053be3d8400cb9f1469d0423d6313e61fb91202b710311a",
+    "src/mongoeco/core/bson_ordering.py": "adfc4e1171f7344c838c99f5eb8ac99998214d18c6228086c23171cb9d47c2e7",
+    "src/mongoeco/core/error_documents.py": "e62232c980715bc0fcd1bf0c818234c82dce37544e725703aeb270c2cfd2e5da",
+    "src/mongoeco/core/server_errors.py": "6a15e0f04af9348ce85b469bd5281ffc02a32df6a7d0a84de79487f98d356947"
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "schema": "mongoeco-benchmark-report/v2",
+  "environment": {
+    "python": "3.14.5",
+    "pythonImplementation": "CPython",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "sqlite": "3.53.4",
+    "jsonBackend": "stdlib",
+    "mongoeco": "4.11.0",
+    "dependencies": {
+      "mongomock": "4.3.0",
+      "orjson": "3.11.9",
+      "psutil": "7.2.2",
+      "pymongo": "4.19.0",
+      "usearch": "2.25.3"
+    },
+    "executable": "/Users/uve/Proyectos/mongoeco/.venv/bin/python"
+  },
+  "source": {
+    "gitRevision": null,
+    "gitDirty": false,
+    "mongoecoModule": "/private/tmp/mongoeco-group-baseline/src/mongoeco/__init__.py",
+    "harnessSha256": "sha256:a5182bee9d40c4a0c92908263f2825a6c038be00495d771f6b6d29095841be72",
+    "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+  },
+  "config": {
+    "size": 1000,
+    "warmup": 1,
+    "repetitions": 3,
+    "workloads": [
+      "materializing_aggregation",
+      "simple_aggregation"
+    ],
+    "rssPeakSamplingIntervalMs": 5.0
+  },
+  "results": {
+    "memory-sync": {
+      "materializing_aggregation": {
+        "materializing_aggregation_nested_group": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 0.0211,
+          "wall_time_median_sec": 0.0211,
+          "wall_time_min_sec": 0.021,
+          "wall_time_max_sec": 0.0211,
+          "cpu_user_mean_sec": 0.02,
+          "cpu_sys_mean_sec": 0.0,
+          "rss_delta_mean_mb": 0.02,
+          "rss_peak_max_mb": 83.59,
+          "metadata": {
+            "pipeline_shape": "facet-match-group-sort-limit",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:4349394bdd1e3b5cb6b85ec7cab3bf398b9143e0ef4e6ea73c05d124b82896f7",
+            "outcome_items": 1
+          }
+        },
+        "materializing_aggregation_group_sort": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 0.0189,
+          "wall_time_median_sec": 0.0188,
+          "wall_time_min_sec": 0.0188,
+          "wall_time_max_sec": 0.0192,
+          "cpu_user_mean_sec": 0.02,
+          "cpu_sys_mean_sec": 0.0,
+          "rss_delta_mean_mb": 0.0,
+          "rss_peak_max_mb": 83.59,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": true,
+            "remaining_stage_count": 3,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "match-group-sort-limit",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:bfcadf76293d3249ff7bdf55f729ce27497d83628b3630135b51bba39c83d7ba",
+            "outcome_items": 6
+          }
+        }
+      },
+      "simple_aggregation": {
+        "simple_aggregation_topk": {
+          "repetitions": 3,
+          "wall_time_mean_sec": 0.0037,
+          "wall_time_median_sec": 0.0037,
+          "wall_time_min_sec": 0.0036,
+          "wall_time_max_sec": 0.0039,
+          "cpu_user_mean_sec": 0.0033,
+          "cpu_sys_mean_sec": 0.0,
+          "rss_delta_mean_mb": 0.0,
+          "rss_peak_max_mb": 84.7,
+          "metadata": {
+            "summary": "memory/python scan>filter>sort>project>slice",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "sort",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "project",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "slice",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "match-sort-limit-project",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:f08ad404a95c5ff80042ce0b176968e4693e77d11c9552d0233e9bc78c5f1e3e",
+            "outcome_items": 10
+          }
+        }
+      }
+    }
+  }
+}
