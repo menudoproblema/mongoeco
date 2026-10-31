@@ -1,0 +1,2 @@
+/Users/uve/Proyectos/mongoeco/src/mongoeco/_change_streams/hub.py:192:89: E501 Line too long (91 > 88)
+1 Ruff violation(s) introduced in changed files

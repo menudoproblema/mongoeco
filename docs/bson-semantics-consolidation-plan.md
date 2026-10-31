@@ -55,6 +55,12 @@ La sección «Refinamiento de la revisión 10» precisa el siguiente corte de D0
 y sustituye las instrucciones de extracción/DDL ya ejecutadas de revisión 9.
 No constituye nueva aceptación de runtime ni cierre de bloques.
 
+Revisión 11 sobre `f0a14fb` y candidato watch sin commitear: mismo adjunto
+por SHA-256. La [evidencia de revisión 11](evidence/bson-consolidation-review/review11/receipt.json)
+identifica ambos estados. El orden activo y las precisiones de aceptación están
+en «Refinamiento de la revisión 11»; sustituyen instrucciones anteriores solo
+donde se indica, sin cambiar receipts ni aceptar el candidato por inspección.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H56 y su integración con B00–B10 y
@@ -141,7 +147,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
 | H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
 | H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
-| H52 y H53 | D04 sigue abierto: preparación/contexto, imágenes CRUD, efectos de namespace por ámbito y H56 tienen aceptación propia en el registro. Protocolo/reanudación, interacción adicional con imágenes y fixture RS conservan su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
+| H52 y H53 | D04 sigue abierto: preparación/contexto, imágenes CRUD, efectos de namespace por ámbito, H56, decoder, protocolo y checkpoint tienen cortes aceptados en el registro. Primera tanda/opciones, integración adicional con imágenes y fixture RS conservan su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 
@@ -874,9 +880,9 @@ backlog y primer getMore; compartir validación donde corresponda, conservando
 su fase y precedencia. El reloj entero local no pasa a ser un Timestamp nativo
 por compartir el nombre start_at_operation_time.
 
-**Criterio de cierre del corte.** Registrar capacidades públicas reales, sin
+**Criterio de cierre del corte (precisado por revisión 11).** Registrar capacidades públicas reales, sin
 que el adaptador de tests fabrique iteración/context manager/token faltantes.
-El invalidate filtrado debe terminar la lectura y cerrar según referencia;
+El invalidate filtrado debe comportarse según la referencia de su fase concreta;
 la sonda actual cierra pero vuelve al bucle y lanza OperationFailure sin código.
 Un try_next vacío aislado no demuestra que el servidor haya procesado una
 escritura ni que su checkpoint sea igual al token de esa escritura: comprobar
@@ -912,6 +918,70 @@ checkpoint/invalidate no exige migrar el journal. La aceptación distingue los
 veinte escenarios nativos por major de las pruebas locales de intercalados y
 reapertura. Quedan D04 primera tanda/backlog, opciones y precedencias restantes,
 imágenes y fixture RS; no repetir la extracción del decoder, bucle o checkpoint.
+
+### Refinamiento de la revisión 11: reducir el trabajo activo, conservar las fronteras
+
+**Contraste del adjunto.** Es el mismo input de revisiones 3–10. Sus
+retractaciones explican la caracterización histórica, no nuevos fallos del
+runtime actual. Rango/vistas Binary, bytes/subtipo 0, SDK/distinct, fallback
+eq/in SQL y clasificación de tipos tienen aceptación D03a/b; identidad y
+fechas tienen sus cortes propios. La nueva traza conserva 18 observaciones de
+documento/operando en seis pares motor/dialecto. Los 16 hashes oficiales
+r8.0.0 coinciden otra vez. No convertir «retraso TTL irrelevante» en contrato:
+el cutoff actual es entero; residual exacto y auxiliares previos conservan sus
+garantías de D02. D00 sigue siendo transversal desde el primer corte.
+
+**Un solo orden activo.** Esta tabla sustituye las tareas pendientes de las
+revisiones 9/10, no sus resultados históricos. El registro de implementación
+continúa siendo el único owner de aceptación; el árbol sin commitear no es
+una entrega. No repetir decoder, lectura común, checkpoint o entrega DDL ya
+aceptados, ni volver a extraer clasificación, identidad o fechas.
+
+| Prioridad / corte | Trabajo restante mínimo | Dependencia y prueba de cierre |
+| --- | --- | --- |
+| P1 D04, primera tanda y opciones | Completar/revisar el candidato de inicialización y batches en el cursor existente. Separar validación de entrada, evaluación de primera respuesta y getMore; conservar buffer, checkpoint y liberación de recursos ante fallos. | Decoder/bucle/hub aceptados. Capturas y `--check` 7/8/9: backlog, precedencia de argumentos, límites por cantidad/bytes, errores antes/después del límite, token eliminado y anchor filtrado, updateLookup prefetched e invalidación. Sync/async reales en los tres ámbitos; tests deterministas de apertura concurrente, cancelación durante apertura y limpieza de buffer/overflow. |
+| P1 D04, integración | Interacción de imágenes con drop/rename/recreación y fixture replica set de CI. | Cortes aceptados y primera tanda validada. Barreras y continuidad al reanudar, errores/ausencia/null por modo y ámbito, cleanup del job, paquete instalado. Watch wire positivo permanece fuera del subset; no añadirlo para completar artificialmente una matriz. |
+| P1 D06a/b, gramática y raw | Completar contextos/subpipelines DBRef y H55 String/Code sobre las autoridades existentes. | Primitivas D03a/raw entregadas; independiente de terminar D04. `$`/`$$` como String y Code con/sin scope, `$literal` control; orden y extras DBRef en directa/wire, vacío/poblado y fase/clase/código. Validar antes de perder representación; no excepción DBRef global en todo documento. |
+| P1 D06c, consumidores | Completar group/sets/lookup/spill/Search y sus claves, retirando duplicación solo al sustituir también sus guardas. | Vistas/gramática aplicables de D06a/b. Igualdad implica misma clave dentro de cada política; resultados con/sin hash/spill y conservación de candidatos Search. Conservar claves persistidas y desempates; unificar átomos, no todas las políticas. |
+| P2 H53 y conversión | Disponer observabilidad en C03/B08; completar contraste/regresión sNaN 7/8/9 en conversión. | Diferenciar permiso, evaluación y warning. No afirmar que H53 rechaza mal escrituras ni crear un canal de logs implícito. Un diagnóstico local no sustituye al testigo nativo. |
+| D07 / D05 | Decidir continuar/descartar el piloto opcional; cerrar gates integrados de entregas obligatorias. | D07 no bloquea fixes ni fuerza migración schema. D05 conserva wheel inmutable, matrices Python/SDK/pytest, SPI, suite/cobertura, persistencia previa y costes; un replay focal no los sustituye. |
+
+**Tres precisiones que evitan errores espejo de aceptación.**
+
+- La misma invalidación necesita testigos distintos en aggregate inicial y
+  getMore. Las capturas nuevas del candidato 7/8/9 registran `260`, fase lectura
+  y `alive=True` para invalidación filtrada en primera tanda vacía; no exigir
+  cierre universal basándose en el caso de lectura posterior. Fijar también
+  clase/código/nombre y continuidad, conservando la versión del driver.
+- Los helpers de pruebas deben recibir el cliente async real explícitamente.
+  `collection.database.client` puede resolver una colección llamada `client`
+  en la API local y acreditar un ámbito falso. Corregir/repetir los escenarios
+  afectados; no cambiar la API para satisfacer el helper ni invalidar las
+  superficies cuya inyección de cliente ya era correcta. Las capturas antiguas
+  conservan su alcance y no se reescriben.
+- Las transformaciones de una respuesta y su materialización pública tienen
+  momentos distintos. Un error en un documento posterior puede impedir toda
+  la tanda; el límite puede requerir evaluar un documento aún no entregado.
+  Probar que no se decodifica dos veces, no cambia la imagen ya prefetched y
+  no se publica checkpoint sobre filas aún no consumidas. Los casos de 6 MiB
+  separan tandas, pero no acreditan el byte exacto del límite con otro envelope
+  o token opaco: medir esa frontera antes de prometerla.
+
+**Simplificación conjunta.** Conservar `bson_values` para vistas/clasificación,
+`bson_identity` para modificación física, `bson_scalars` para fechas,
+gramática/raw para interpretación y preservación, y preparación/contexto para
+ejecución. Watch solo añade coordinación de respuesta en su cursor, sobre el
+hub existente; los errores aritméticos pertenecen al evaluador compartido,
+no a un traductor especial de watch. No añadir otro normalizador, intérprete,
+jerarquía de valores ni infraestructura diferencial. Antes de extraer otro
+helper, explicitar el invariante común y los testigos de sus callers;
+compartir apariencia no demuestra compartir semántica.
+
+Esta revisión ejecuta regresiones sobre el candidato identificado, reutiliza
+referencias nativas y verifica fuentes; no realiza nuevas sondas físicas,
+no modifica producción/tests ni cierra D04/D05/B07. La aceptación del trabajo
+en curso requiere sus gates y commit propios, incluido el lint pendiente
+observado en `hub.py`; documentación verde no lo subsana.
 
 ## 6. Pruebas y aceptación por garantía
 

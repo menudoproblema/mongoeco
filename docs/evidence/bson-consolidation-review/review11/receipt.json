@@ -1,0 +1,101 @@
+{
+  "status": "review 11; refined plan and diagnostics only; candidate not accepted",
+  "runtime_head": "f0a14fba43ef1bd1ab44596c5f133bfb5a8b4e1b",
+  "runtime_tests_clean_at_start": false,
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_through_10": true,
+  "checks": [
+    {
+      "log": "focal.txt",
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/property/test_sqlite_type_predicates.py tests/unit/core/test_binary_storage_paths.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_watch_batch_contract.py tests/integration/api/test_watch_checkpoint_contract.py --tb=short",
+      "exit_code": 0,
+      "passed": 120
+    },
+    {
+      "log": "replay.txt",
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'binary_edges or dbref_grammar or type_query or watch-' --tb=short",
+      "exit_code": 0,
+      "passed": 408
+    },
+    {
+      "log": "batch-replay.txt",
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k watch_batch --tb=short",
+      "exit_code": 0,
+      "passed": 75
+    },
+    {
+      "log": "protocol.txt",
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_watch_protocol_contract.py --tb=short",
+      "exit_code": 0,
+      "passed": 14
+    }
+  ],
+  "representation": {
+    "pairs": 6,
+    "trace_rows": 18,
+    "script": "representation-probe.py.txt"
+  },
+  "external_sources": {
+    "downloaded": 16,
+    "matched": 16,
+    "manifest": "sources-check.json",
+    "version": "r8.0.0",
+    "initial_restricted_attempt_failed": true
+  },
+  "candidate_gate_pending": {
+    "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref f0a14fb",
+    "exit_code": 1,
+    "log": "candidate-lint.txt",
+    "finding": "hub.py:192 E501"
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": {
+      "sha256": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+      "matches_head": true
+    },
+    "tests/support_bson_observation.py": {
+      "sha256": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+      "matches_head": true
+    },
+    "tests/fixtures/compat_catalog_snapshot.json": {
+      "sha256": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+      "matches_head": true
+    },
+    "tests/fixtures/compat_catalog_snapshot.md": {
+      "sha256": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329",
+      "matches_head": true
+    },
+    "tests/fixtures/legacy_error_emitters.json": {
+      "sha256": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14",
+      "matches_head": true
+    }
+  },
+  "limits": [
+    "No production or test edits by this review; pre-existing candidate remains uncommitted.",
+    "No native captures or --check this review; existing native references reused, including uncommitted watch_batch files identified in candidate-workset.json.",
+    "No TTL/H53/performance, global, wheel, SDK/environment matrix or CI execution.",
+    "No historical receipts, goldens or source manifests modified; no D04/D05/B07 closure."
+  ],
+  "document_checks": {
+    "relative_links_checked": 32,
+    "missing": [],
+    "dedicated_document_checker": "none found in project scripts",
+    "protected_all_match_head": true
+  },
+  "artifacts": {
+    "README.md": "be20ad259100d78c73d519fc43467150f1c5f39786c99840b64bfadca82d81b9",
+    "batch-replay.txt": "886fd7f9048f4a6c669d7736ebe5d5ccb992fd6f2f2816835d3cd69ebad434d7",
+    "candidate-lint.txt": "b1cb53aa5d7a171eb897af86087f6457f73a48ef90feb2c18d5f0322c2b723cb",
+    "candidate-workset.json": "9a29805458c70d4fb9e67d1bb02c65229b096165a91e518edb41d12cc7c67041",
+    "check-sources.py.txt": "e66eb1759dd0c4d616cc1b623e03dfef60162d691e477d79b0bea19e450c2891",
+    "focal.txt": "3ac89d62129cc69b41f7ca9fdf6c1ca951bf16d6c3d765e53b3a1647a2574d79",
+    "protocol.txt": "9d2e29b0bb711a526796811eb1951c44cd8022cb06c2f708e217d00b456c11b9",
+    "replay.txt": "a1c9e7cf73936243f066ecb87493251e489d0acd7b997e04c81d896cebbdb42e",
+    "representation-probe.py.txt": "a896a1e611bf3ccbacf51087d39ddbcd2845ffd75dd3ea4fe6892404abe4309c",
+    "representation.txt": "50dacf680f1e5624176967dd544077f82466a7bc06657a5c797c166bf5409166",
+    "representations.json": "a9ef2bf663ac9da83212e9cccc4c8aa0e60ec54afd7251e91758f5bea946bcf3",
+    "runtime-sources.json": "a374241165eb39c8227fa981c2aedf3b0b73896ba80724c513ab483f8b035430",
+    "source-check.txt": "44295e68dbcde0d024292d4a4bfdd692e6fbd578b8b65499a776d871a072bd8d",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e"
+  }
+}
