@@ -1430,7 +1430,9 @@ NaN/Infinity, valores fuera de rango y divisor cero tras truncar dan error 2,
 incluso sin filas. Los candidatos se convierten al mismo dominio: un valor
 no numérico, no finito o fuera de rango no coincide. El resto conserva el signo
 del dividendo y no usa tolerancia flotante. Decimal128 participa sin perder
-precisión; la frontera pública sigue rechazando Decimal Python crudo.
+precisión. Estas comparaciones se verifican con valores BSON válidos; el rechazo
+general de tipos Python no codificables, incluido Decimal crudo en filtros de la
+API directa, sigue dentro del pendiente histórico B07.
 El operador de agregación conserva su aritmética propia.
 
 SQLite mantiene `%` para enteros escalares representados sin tags. Arrays,
