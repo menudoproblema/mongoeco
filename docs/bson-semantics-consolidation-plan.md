@@ -87,6 +87,12 @@ El usuario ha autorizado la implementación completa del plan refinado. El
 el progreso por bloque y sus pendientes; las caracterizaciones de este plan
 no se convierten en aceptación de runtime por esa autorización.
 
+La relectura del adjunto del 31 de octubre conserva el mismo SHA-256
+`a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`.
+Su disposición frente a HEAD `e0a0ca9` y el candidato sin commitear está en
+«Contraste del adjunto con el candidato en curso», dentro del orden activo de
+la sección 5. Las bases y resultados de las revisiones anteriores son históricos.
+
 ## 1. Evidencia y alcance del contraste
 
 Se contrastaron los dos textos adjuntos, las propuestas previas de este chat,
@@ -1087,6 +1093,51 @@ dialectos; las referencias nativas previas mantienen su alcance.
 Los estados de entrega y gates siguen perteneciendo al registro de implementación.
 D04 ya tiene cierre funcional registrado con el fixture `0b5ac53`; conservar
 sus controles y límites de ejecución local. El siguiente corte es D06a/b.
+
+**Contraste del adjunto con el candidato en curso (31 de octubre).** No abrir
+otro bloque por recibir de nuevo el mismo informe. Su autocrítica corrige la
+atribución de causas y el alcance de pruebas; no demuestra defectos nuevos en
+el runtime actual. El checkpoint D06 del registro de implementación conserva
+su candidato y sus resultados propios, anteriores a los últimos cambios wire.
+
+| Afirmación o sugerencia | Contraste y disposición |
+| --- | --- |
+| H48 cruza decode, normalización y valores públicos; rangos internos y Binary SDK son problemas distintos. | La clasificación actual reconoce wrappers de bytes y el comparador usa `binary_order_key` para ambas clases. Mantener testigos separados de rango y comparación, subtipo 0/5 con idéntico payload y trazas de documento/operando. La propiedad de coherencia ya existe en `test_bson_binary_coherence.py`; no extraer otra tabla de tipos ni volver a implementar D03a. |
+| Eq/in SQL por tag omite bytes equivalentes a Binary 0. | `_is_translatable_equality_value` y `_translate_membership` ya declinan operandos binarios mediante `binary_parts`. Preservar esa renuncia explícita y sus controles de ruta. Un fallback correcto no acredita otro pushdown; no reconstruir equivalencia BSON a partir del tag almacenado. |
+| El parser rechaza el literal DBRef y wire puede ocultarlo. | `is_query_expression_document` ya distingue literales según primer campo/contexto y presencia de campos DBRef; no lo decide el decoder SDK. Conservar los controles básicos y completar D06 por contexto y transporte. El parser nativo comprueba nombres de campos, no exige el mismo criterio de tipos que la decodificación SDK. |
+| Distinct necesita dos Binary SDK de subtipos distintos. | Mantener ese testigo ya aceptado. El candidato D06 añade un caso diferente: BSON distintos que decodifican al mismo DBRef. Deduplicar antes de materializar, reutilizando el colector de distinct entre API y comando. No usar igualdad pública como oráculo de preservación BSON. |
+| TTL solo puede retrasarse un milisegundo y eso es irrelevante. | Esa cota no se deduce de una fórmula flotante sin acotar fechas ni frecuencia del purgado. El código actual calcula enteros tanto para auxiliares/cutoff SQLite como para el residual; D02 conserva reapertura/migración y fronteras temporales. No convertir la antigua observación en tolerancia contractual. |
+| H52 requiere clase, código y fase, además del contexto. | Ya es condición de aceptación de Watch. Mantener preparación compartida y contexto del cursor aceptados; no reabrirlos por el informe histórico. Extender la misma observación a aggregate/getMore alcanzados por D06, incluidos efectos y recursos tras error. |
+| H53 y hashes estaban menos verificados de lo afirmado. | Separar inspección, replay y ejecución nativa. H53 conserva disposición pendiente en C03/B08. Los 16 hashes oficiales tienen verificación en el receipt de revisión 13; esta relectura consulta parser/comparador oficiales, pero no vuelve a acreditar sus hashes ni ejecuta nuevos servidores. |
+
+**Secuencia mínima dentro de D06a/b.** Mantiene el orden entre bloques de la
+tabla siguiente y evita que el trabajo de cursores se convierta en otro motor:
+
+1. Completar clasificación gramatical String/Code y casos DBRef sobre parser,
+   preparación/runtime y vistas actuales. Conservar la distinción entre la
+   sintaxis aceptada por el servidor y las formas que decodifica el SDK.
+2. Mantener valores BSON sin codecs de usuario hasta la frontera de respuesta.
+   Directa y wire comparten evaluación; wire codifica antes de la conversión
+   SDK. Probar orden, extras y `$db: null` con bytes BSON independientes, y
+   callbacks de hijos/contenedor exactamente una vez, sin mutación del input.
+3. Conectar respuestas parciales al almacén de cursores existente conservando
+   la ejecución de comandos y sus validaciones/contexto. Contrastar primera
+   tanda y getMore por cantidad y bytes, etapas materializantes y extensiones
+   que sobrescriben built-ins; el nombre de la etapa no garantiza cardinalidad.
+   Comprobar sesión/principal/namespace, consumo concurrente y cierre en
+   EOF/error/kill/cancelación/teardown. No cambiar la política de ownership por
+   extraer un helper de lectura de tandas.
+4. Congelar el candidato y repetir diferenciales y gates alcanzados. Una mejora
+   local del corpus no modifica el receipt de un checkpoint anterior ni cierra
+   raw, bytes, callbacks, D06c o D05 por asociación.
+
+Esta relectura ejecuta 38 pruebas de coherencia binaria/traducción SQL y 122 de
+materialización, almacenamiento binario y migración TTL. Ambas ejecuciones
+terminan con código 0; la segunda emite un `PytestUnraisableExceptionWarning`
+en el destructor del event loop de asyncio. No se presenta como gate limpio de
+recursos ni se atribuye su causa a este cambio documental. El resto de los
+resultados conserva su procedencia en el registro de implementación. No modifica
+producción, tests o fixtures, ni acepta los cambios preexistentes.
 
 | Prioridad / bloque | Trabajo y dependencia | Evidencia de salida |
 | --- | --- | --- |
