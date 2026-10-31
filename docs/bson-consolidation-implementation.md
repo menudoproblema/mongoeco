@@ -702,10 +702,24 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
   aceptados en su subset de una base, sin extender rename entre bases.
   Preparación/contexto, modos CRUD de imágenes y efectos de namespace tienen
   aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
-  están en revisión 8 del plan; ni publicación TTL ni D01b los cierran.
+  están en el refinamiento de revisión 10 del plan; ni publicación TTL ni D01b los cierran.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre.
 
 Los cortes focales no acreditan el cierre integrado del programa ni D05.
+
+## Revisión 10: plan restante tras repetir la autocrítica
+
+El [receipt documental](evidence/bson-consolidation-review/review10/receipt.json)
+contrasta el mismo input sobre 6ff34d4, con runtime/tests limpios. Pasan 88
+checks focales y 408 de replay existente; se verifican otra vez los 16 hashes
+de fuentes y 18 trazas del matcher. No hubo nuevas capturas físicas ni cambios
+de producción/tests, y no se reabre un corte aceptado.
+
+El plan retira del orden activo la extracción de entrega y DDL ya realizados.
+Concreta el siguiente corte de cursor/reanudación, incluyendo cinco testigos
+locales del decoder y el error tras invalidate filtrado. Estas sondas son
+diagnóstico pendiente de corrección/aceptación, no un cierre D04. Las garantías
+y dependencias permanecen en el plan, sin una segunda lista activa aquí.

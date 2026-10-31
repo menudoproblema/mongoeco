@@ -1,0 +1,72 @@
+{
+  "status": "review 10; documentation and diagnostics only; no new runtime acceptance",
+  "runtime_head": "6ff34d431f00f89527c9d9c6fbc9f808e90ccd6c",
+  "runtime_tests_clean_at_start": true,
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_through_9": true,
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/property/test_sqlite_type_predicates.py tests/unit/core/test_binary_storage_paths.py tests/integration/api/test_watch_context_contract.py",
+      "exit_code": 0,
+      "passed": 88,
+      "seconds": 1.39,
+      "log": "focal.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'binary_edges or dbref_grammar or type_query or watch-' --tb=short",
+      "exit_code": 0,
+      "passed": 408,
+      "deselected": 5767,
+      "seconds": 17.89,
+      "log": "replay.txt",
+      "reference": "existing native fixtures; not recaptured"
+    },
+    {
+      "command": "PYTHONPATH=src .venv/bin/python docs/evidence/bson-consolidation-review/review10/representation-probe.py.txt",
+      "exit_code": 0,
+      "pairs": 6,
+      "trace_rows": 18
+    },
+    {
+      "command": ".venv/bin/python docs/evidence/bson-consolidation-review/review10/check-sources.py.txt",
+      "exit_code": 0,
+      "downloaded": 16,
+      "matched": 16
+    },
+    {
+      "command": "PYTHONPATH=src .venv/bin/python docs/evidence/bson-consolidation-review/review10/cursor-probe.py.txt",
+      "exit_code": 0,
+      "scope": "five malformed local token witnesses and filtered invalidate; diagnostic only"
+    }
+  ],
+  "limits": [
+    "No production/test changes or new physical MongoDB captures.",
+    "No service lifecycle changes; no global, wheel, environment, TTL or performance acceptance.",
+    "No change to historical receipts, goldens, protected observers or source manifests.",
+    "No D04/D05/B07 closure; existing implementation receipts retain authority."
+  ],
+  "document_checks": {
+    "relative_links_checked": 56,
+    "missing": [],
+    "dedicated_document_checker": "none found in project scripts",
+    "git_diff_check": 0
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "artifacts": {
+    "README.md": "005eb19b20c7d85cb006e9b5abfb6ebc6025b2cf1c18b4a1abb3a51f4e6c09ce",
+    "check-sources.py.txt": "c9e93152e6d1db6930b5168643d28a1524088f93f140219c9725847d058a3dc3",
+    "cursor-probe.py.txt": "f9b260563ab0a367516a0fbe661d500377584fb4ac5cf6f309be5f6ac754fb15",
+    "cursor.json": "5511f3dee1cb50814c115410c427512b99c99bbc0895e6bfe310ab23041e9e03",
+    "focal.txt": "ff886f0c22fda30097ce0c8a8674e126eff958a3a20f7f8f588da2ec8d8d4c1d",
+    "replay.txt": "e5e5077eeb51897a7429747fc292bb1a42e92026f45e827b43cd239b96fabc89",
+    "representation-probe.py.txt": "b01f8ef5fa68ddd449b1c6a37dfb0b5d71568e9428da6d67172533c7b4e0fb25",
+    "representations.json": "aa0103f760cb85b892e5c67b9918ca826448f5ddd20c373c9d3fbd14c565258e",
+    "runtime-sources.json": "93566682ee5c6f6e1c884f5d22ead5692f085a2c9a57d0033ac3004f56b9d9fc",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e"
+  }
+}

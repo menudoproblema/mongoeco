@@ -1,0 +1,49 @@
+"""Local diagnostics only: malformed backend tokens and filtered invalidation."""
+import asyncio
+import base64
+import json
+from pathlib import Path
+
+from mongoeco.change_streams import (
+    AsyncChangeStreamCursor, ChangeStreamHub, ChangeStreamScope, _parse_resume_token,
+)
+
+ROOT = Path('docs/evidence/bson-consolidation-review/review10')
+
+
+def encoded(value):
+    return {'_data': base64.urlsafe_b64encode(json.dumps(value).encode()).decode()}
+
+
+report = {'scope': 'local diagnostics, not native token format acceptance', 'tokens': {}}
+for label, token in (
+    ('non_document', []), ('decoded_array', encoded([])),
+    ('unicode_digit', {'_data': '²'}), ('boolean_version', encoded({'v': True, 't': 1})),
+    ('negative_position', encoded({'v': 1, 't': -1})),
+):
+    try:
+        report['tokens'][label] = {'accepted': _parse_resume_token(token)}
+    except Exception as exc:
+        report['tokens'][label] = {'error': type(exc).__name__, 'code': getattr(exc, 'code', None)}
+
+
+async def probe():
+    hub = ChangeStreamHub()
+    stream = AsyncChangeStreamCursor(
+        hub, scope=ChangeStreamScope(db_name='review', coll_name='c'),
+        pipeline=[{'$match': {'operationType': 'insert'}}], max_await_time_ms=1,
+    )
+    hub.publish(operation_type='invalidate', db_name='review', coll_name='c', document_key={})
+    try:
+        result = await asyncio.wait_for(stream.try_next(), timeout=1)
+        report['filtered_invalidate'] = {'result': result, 'alive': stream.alive}
+    except Exception as exc:
+        report['filtered_invalidate'] = {'error': type(exc).__name__, 'code': getattr(exc, 'code', None), 'alive': stream.alive}
+    finally:
+        stream.close()
+        hub.close()
+
+
+asyncio.run(probe())
+(ROOT / 'cursor.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report, indent=2))

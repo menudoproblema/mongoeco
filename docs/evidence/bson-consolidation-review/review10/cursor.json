@@ -1,0 +1,28 @@
+{
+  "scope": "local diagnostics, not native token format acceptance",
+  "tokens": {
+    "non_document": {
+      "error": "AttributeError",
+      "code": null
+    },
+    "decoded_array": {
+      "error": "AttributeError",
+      "code": null
+    },
+    "unicode_digit": {
+      "error": "ValueError",
+      "code": null
+    },
+    "boolean_version": {
+      "accepted": 1
+    },
+    "negative_position": {
+      "accepted": -1
+    }
+  },
+  "filtered_invalidate": {
+    "error": "OperationFailure",
+    "code": null,
+    "alive": false
+  }
+}

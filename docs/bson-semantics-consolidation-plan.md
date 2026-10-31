@@ -49,6 +49,12 @@ e imágenes CRUD de watch ya tienen aceptación propia; siguen pendientes DDL,
 protocolo/reanudación y su integración. El orden vigente se precisa al final
 de la sección 5, sin crear bloques ni reabrir cortes cerrados.
 
+Revisión 10 sobre `6ff34d4`: mismo adjunto por SHA-256. El contraste actual
+se conserva en la [evidencia de revisión 10](evidence/bson-consolidation-review/review10/receipt.json).
+La sección «Refinamiento de la revisión 10» precisa el siguiente corte de D04
+y sustituye las instrucciones de extracción/DDL ya ejecutadas de revisión 9.
+No constituye nueva aceptación de runtime ni cierre de bloques.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H56 y su integración con B00–B10 y
@@ -135,7 +141,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
 | H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
 | H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
-| H52 y H53 | D04 sigue abierto: preparación/contexto y modos CRUD de imágenes tienen aceptación propia en el registro; DDL/cierre por ámbito e interacción con imágenes conservan su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
+| H52 y H53 | D04 sigue abierto: preparación/contexto, imágenes CRUD, efectos de namespace por ámbito y H56 tienen aceptación propia en el registro. Protocolo/reanudación, interacción adicional con imágenes y fixture RS conservan su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 
@@ -822,6 +828,67 @@ existentes; no fueron recaptura fisica, suite global ni cierre del incremento.
 Aquel corte fue solo documental y no cambio produccion/tests/goldens/receipts
 anteriores. Los cortes de implementacion posteriores conservan su aceptacion
 y limites en el registro vigente.
+
+### Refinamiento de la revisión 10: cursor y aceptación sin duplicar autoridades
+
+**Disposición del informe.** Sus retractaciones son correctas respecto de la
+base histórica. Los huecos que señala ya tienen cobertura y owners en este
+plan: representaciones/SDK/distinct en D03a, eq/in SQL en D03a/D03b,
+gramática/raw DBRef en D06a/b y fase/clase/código de watch en D04. Los 16 hashes
+versionados vuelven a coincidir; las trazas actuales observan 18 filas del
+matcher en seis pares. Pasan 88 checks focales y 408 de replay de referencias
+existentes. Esto no es una recaptura física ni amplía su aceptación histórica.
+Mantener D00 desde el primer corte; no añadir otra infraestructura de propiedades.
+
+**Eliminar trabajo ya realizado del orden activo.** La coordinación propuesta
+en revisión 9 ya vive en `api/_change_delivery.py`; colección/base/cliente
+delegan en ella. Efectos de namespace y rename administrativo/dropTarget tienen
+receipts propios. No repetir esa extracción ni introducir otra secuencia,
+outbox, contexto o identidad de encarnación. El orden activo pasa a ser:
+
+| Prioridad y corte | Cambio mínimo | Dependencia y aceptación |
+| --- | --- | --- |
+| P1 D04: protocolo y cierre | Un bucle de lectura compartido para next/try_next; adaptadores sync/async para iteración y context manager. Cierre idempotente, cancelación y liberación de watchers/waiters. | Conservar preparación e imágenes aceptadas. Diferenciales 7/8/9 de cerrado, error de transformación, invalidate visible/filtrado y cancelación. No fijar un único resultado para carreras nativas sin caracterizarlas. |
+| P1 D04: posición y reanudación, mismo corte lógico | Un decoder de token local y un punto coherente de apertura/avance bajo la sincronización existente del hub. Separar offset leído, checkpoint público y token del evento entregado. | Cubrir escritura entre apertura/lectura, filtro que descarta eventos, batch vacío, invalidate, resumeAfter frente a startAfter, retención, gaps y journal reabierto. No adelantar checkpoint sobre eventos no procesados ni cruzar un hueco silenciosamente. |
+| P1 D04: integración | Imágenes más drop/rename/recreación y fixture replica set en CI, usando el mismo registro/capturador/replay. | Capturas y --check 7/8/9, scopes y superficies soportadas, wheel y cleanup del job. Mantener los controles de recreación que ya coinciden; watch wire positivo sigue fuera del subset actual. |
+| P1 D06a/b/c | Completar contextos de gramática/raw, String/Code H55 y consumidores DBRef usando las vistas existentes. | No depende del cierre completo de D04. Resultado con/sin hash/spill; Search mantiene su garantía de candidatos. El literal DBRef básico ya corregido permanece como control. |
+| Después: H53/conversión/D07/D05 | Disposiciones y gates integrados según sus owners y la tabla de revisión 8. | No convertir diagnóstico en aceptación; D07 sigue siendo opcional y requiere decisión continuar/descartar. |
+
+**Robustez del decoder, dentro de D04.** La sonda local actual reproduce tres
+fugas Python: token no documental y payload JSON array producen AttributeError;
+un dígito Unicode produce ValueError. Además acepta versión booleana y posición
+negativa. Añadir estos cinco testigos al contrato local del decoder, incluyendo
+controles de tokens heredados válidos. Validar forma y dominio antes de usar
+`.get`/`int`; no añadir un segundo parser al exponer resume_token. El formato
+opaco nativo no se interpreta como el local y sus bytes no se comparan.
+Cualquier metadato necesario para distinguir invalidate exige comprobar lectura
+de tokens/journals anteriores y conservar los tokens ordinarios existentes;
+no obliga de antemano a cambiar el formato ni la persistencia.
+
+**Argumentos y fases pertenecen a la superficie observada.** El driver puede
+seleccionar startAfter/resumeAfter antes de enviar el comando: PyMongo instalado
+lo hace en `change_stream_shared._change_stream_options`. No trasladar la regla
+del comando sobre combinaciones directamente a watch sin un testigo PyMongo.
+Caracterizar opciones solas y combinadas con pipeline inválido, apertura con
+backlog y primer getMore; compartir validación donde corresponda, conservando
+su fase y precedencia. El reloj entero local no pasa a ser un Timestamp nativo
+por compartir el nombre start_at_operation_time.
+
+**Criterio de cierre del corte.** Registrar capacidades públicas reales, sin
+que el adaptador de tests fabrique iteración/context manager/token faltantes.
+El invalidate filtrado debe terminar la lectura y cerrar según referencia;
+la sonda actual cierra pero vuelve al bucle y lanza OperationFailure sin código.
+Un try_next vacío aislado no demuestra que el servidor haya procesado una
+escritura ni que su checkpoint sea igual al token de esa escritura: comprobar
+continuidad al reanudar y usar barreras. Pruebas deterministas locales cubren
+intercalados, gaps y cleanup; diferenciales nativos cubren el comportamiento
+público. Ninguno sustituye al otro. No cambiar observadores/goldens protegidos
+ni aceptar todo D04 por el éxito de una sola de sus garantías.
+
+La simplificación conjunta continúa siendo conservar información hasta la
+decisión y delegar en owners pequeños. Para este corte basta el bucle del cursor,
+el decoder y la coordinación atómica del hub; una jerarquía universal de valores,
+tokens o contextos aumentaría autoridades sin resolver otra garantía.
 
 ## 6. Pruebas y aceptación por garantía
 
