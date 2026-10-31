@@ -1,0 +1,142 @@
+{
+  "status": "review 8; characterization and documentation only; no runtime acceptance",
+  "runtime_head": "bc8fb1ca7d24f25a20285e8ac7751024da288c92",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_through_7": true,
+  "runtime_and_tests_changed_by_this_review": false,
+  "preexisting_wip": "watch preparation/context plus shared aggregate validation and their tests; preserved without acceptance",
+  "runtime_manifest": {
+    "file": "runtime-sources.json",
+    "sha256": "de210db2268a73b54e2e8cec32cfc958720efee65a14e8e6a1df6d92c821e8d9",
+    "files": 281,
+    "identical_to_preexisting_watch_candidate": true
+  },
+  "tracked_src_tests_diff_sha256": "a42b534ad5df1d2029355ba56cfa412a77736e8f29d6be1ceff84e16b78ae312",
+  "diagnostic_fixture_dependency": {
+    "file": "tests/differential/semantic_watch_cases.py",
+    "sha256": "67fbe0b897b5a647bfea8a2890b582ac3ebcb58e51944954cfe789457621846f",
+    "role": "poll helper only for image diagnostic; candidate fixture not accepted by review"
+  },
+  "native": {
+    "versions": {
+      "7.0": {
+        "version": "7.0.43",
+        "fcv": {
+          "version": "7.0"
+        }
+      },
+      "8.0": {
+        "version": "8.0.32",
+        "fcv": {
+          "version": "8.0"
+        }
+      },
+      "9.0": {
+        "version": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        }
+      }
+    },
+    "topology": "preexisting owned single-member replica sets",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "directConnection": true,
+    "databases": "UUID disposable, dropped in finally",
+    "service_lifecycle": "unchanged"
+  },
+  "observations": {
+    "images": {
+      "per_version_or_local_pair": 16,
+      "native": 48,
+      "local": 96,
+      "divergences_per_local_pair": 8,
+      "native_versions_agree": true
+    },
+    "ddl": {
+      "actions": 2,
+      "scopes": 3,
+      "native": 18,
+      "local": 36,
+      "native_versions_agree_after_namespace_normalization": true
+    },
+    "representation": {
+      "local_pairs": 6,
+      "trace_rows": 18
+    }
+  },
+  "checks": [
+    {
+      "command": "PYTHONPATH=src .venv/bin/python docs/evidence/bson-consolidation-review/review8/representation-probe.py.txt",
+      "exit_code": 0,
+      "scope": "local representation tracing; not a native recapture"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/property/test_sqlite_type_predicates.py tests/unit/core/test_binary_storage_paths.py",
+      "passed": 69,
+      "seconds": 1.36
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'binary_edges or dbref_grammar or type_query'",
+      "passed": 345,
+      "deselected": 5674,
+      "seconds": 18.38,
+      "reference": "existing native fixtures, not recaptured"
+    },
+    {
+      "command": "PYTHONPATH=src:. .venv/bin/python docs/evidence/bson-consolidation-review/review8/full-document-probe.py.txt",
+      "exit_code": 0,
+      "scope": "characterization, mismatches retained"
+    },
+    {
+      "command": "PYTHONPATH=src .venv/bin/python docs/evidence/bson-consolidation-review/review8/invalidate-probe.py.txt",
+      "exit_code": 0,
+      "scope": "characterization, mismatches retained"
+    }
+  ],
+  "sources": {
+    "tag": "r8.0.0",
+    "downloaded": 16,
+    "matched": 16,
+    "historical_manifests_unchanged": true
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "document_checks": {
+    "relative_links_checked": 36,
+    "checker": "relative targets plus git diff --check; no dedicated documentation checker found"
+  },
+  "limits": [
+    "No production/test edits or D04/D05/B07 closure.",
+    "No new native Binary/DBRef/type capture, TTL/H53/performance/global/wheel/environment matrix.",
+    "Images/DDL diagnostics are sync only, not permanent regressions or transactional/persistence acceptance.",
+    "No value-level token/clusterTime assertion; rename, filtered invalidation, invalidate resume/start and cancellation remain characterization obligations.",
+    "Concurrent preexisting implementation gates are not claimed as acceptance by this review."
+  ],
+  "artifacts": {
+    "README.md": "c98513af48a57e71be7f3968f7c14f35a3ea427a9c1adf91b2cd6a1c06710b2e",
+    "check-sources.py.txt": "82ec9e8dae37952f89ad84d6436c2442ef683f094334da19cc383268915d7dd2",
+    "finalize.py.txt": "8e7afa159af7d1049d1ee98eb3168d421cef990dfc6f9574acb62158f58f0b3d",
+    "full-document-probe.json": "74b0e3b3e37e4017ad75f0be709b9ae44d126b3b64165f9bc67e509a5aef7e22",
+    "full-document-probe.py.txt": "50151e5b97869ce43ee2c83e7a8d4050b16d4cc682c65c7887b4cd68cf720c8d",
+    "full-document.log.gz": "984300e31f961b4eadf8ed8528844d80e66d01eeea74486de74ac39f067655ec",
+    "invalidate-probe.py.txt": "714c02a2e1fa314c2681cdf869e6712fca28f4f02dfe17918279ca0af57746ef",
+    "invalidate.json": "7e7be5a1f7ee0a867b5827a61753586e9327b87114fe456b2c1df3db37301ca2",
+    "invalidate.log.gz": "07d4364fd3c82dcda58489e682bbeccb5797dcadea35e65aef11e062f18589ec",
+    "properties.log.gz": "4efacd38f9cbfd429facae777aa1c08235e6d83b6639e4c6b7853233e5719341",
+    "replay.log.gz": "1faa3adee4740f09f4c19a692b4bb021c496a15c0f6b760417f242e800389f1b",
+    "representation-probe.py.txt": "59112b9a4c83b94977d17dd1abfb1266c0a977afcc4cadc7beadfc173966fcc1",
+    "representation.log.gz": "f3ce41717f615a4fe713b3ab3a6c9c14000c29fa2477b33aaaf420243100a73a",
+    "representations.json": "6502d412910dc1a42f18456adc6e490a24ae5ed6f4017614f6b1c0a0aa984684",
+    "runtime-sources.json": "de210db2268a73b54e2e8cec32cfc958720efee65a14e8e6a1df6d92c821e8d9",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e",
+    "sources.log.gz": "b4673747b5686fb9760850394eb83e8a81f3fa5750ebd0caa47bcdf23165aa48"
+  }
+}

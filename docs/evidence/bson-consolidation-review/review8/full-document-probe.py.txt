@@ -1,0 +1,35 @@
+import json,uuid
+from pathlib import Path
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from tests.differential.semantic_watch_cases import _next
+
+def run(client):
+ db=client['watch_image_'+uuid.uuid4().hex];out={}
+ try:
+  for enabled in (False,True):
+   for mode in ('default','updateLookup','whenAvailable','required'):
+    for deleted in (False,True):
+     c=db.create_collection(f'c_{enabled}_{mode}_{deleted}',changeStreamPreAndPostImages={'enabled':enabled})
+     c.insert_one({'_id':1,'v':0,'pad':'x'*1000})
+     s=c.watch(full_document=mode,max_await_time_ms=20)
+     try:
+      c.update_one({}, {'$set':{'v':1}});c.update_one({}, {'$set':{'v':2}})
+      if deleted:c.delete_one({})
+      try:
+       event=_next(s)
+       r={'kind':event['operationType'],'present':'fullDocument' in event,'v':None if event.get('fullDocument') is None else event['fullDocument']['v'],'alive':s.alive}
+      except Exception as e:r={'error':type(e).__name__,'code':getattr(e,'code',None),'alive':s.alive}
+      out[f'{enabled}-{mode}-{deleted}']=r
+     finally:s.close()
+  return out
+ finally:client.drop_database(db.name)
+r={'native':{},'local':{}}
+for version,port in (('7.0',49973),('8.0',49974),('9.0',49975)):
+ with NativeClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as c:r['native'][version]=run(c)
+ for name,factory in (('memory',MemoryEngine),('sqlite',SQLiteEngine)):
+  with MongoClient(factory(),mongodb_dialect=version) as c:r['local'][name+'-'+version]=run(c)
+r['differences']={name:[k for k,v in values.items() if v!=r['native'][name.split('-',1)[1]][k]] for name,values in r['local'].items()}
+Path('docs/evidence/bson-consolidation-review/review8/full-document-probe.json').write_text(json.dumps(r,indent=2)+'\n')
+print(r['native']['9.0']);print(r['differences'])

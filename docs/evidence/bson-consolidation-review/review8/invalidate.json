@@ -1,0 +1,987 @@
+{
+  "native": {
+    "7.0": {
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "observations": {
+        "drop_collection": {
+          "collection": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_bf4c3833e21342cfb7196e8f375d3928",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "database": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_bf4c3833e21342cfb7196e8f375d3928",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_bf4c3833e21342cfb7196e8f375d3928",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          },
+          "client": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_bf4c3833e21342cfb7196e8f375d3928",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_bf4c3833e21342cfb7196e8f375d3928",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          }
+        },
+        "drop_database": {
+          "collection": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_f326a8e7da424d1abf8dc56993032ab0",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "database": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_f326a8e7da424d1abf8dc56993032ab0",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "dropDatabase",
+                "ns": {
+                  "db": "review8_f326a8e7da424d1abf8dc56993032ab0"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "client": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_f326a8e7da424d1abf8dc56993032ab0",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "dropDatabase",
+                "ns": {
+                  "db": "review8_f326a8e7da424d1abf8dc56993032ab0"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_f326a8e7da424d1abf8dc56993032ab0",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          }
+        }
+      }
+    },
+    "8.0": {
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "observations": {
+        "drop_collection": {
+          "collection": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_27a024c72826453b84480877ff24cfda",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "database": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_27a024c72826453b84480877ff24cfda",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_27a024c72826453b84480877ff24cfda",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          },
+          "client": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_27a024c72826453b84480877ff24cfda",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_27a024c72826453b84480877ff24cfda",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          }
+        },
+        "drop_database": {
+          "collection": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_685d0f0944d242b88be650b1975fe4a4",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "database": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_685d0f0944d242b88be650b1975fe4a4",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "dropDatabase",
+                "ns": {
+                  "db": "review8_685d0f0944d242b88be650b1975fe4a4"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "client": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_685d0f0944d242b88be650b1975fe4a4",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "dropDatabase",
+                "ns": {
+                  "db": "review8_685d0f0944d242b88be650b1975fe4a4"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_685d0f0944d242b88be650b1975fe4a4",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          }
+        }
+      }
+    },
+    "9.0": {
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "observations": {
+        "drop_collection": {
+          "collection": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_a068660f081346789e1bd7f7733b9f3a",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "database": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_a068660f081346789e1bd7f7733b9f3a",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_a068660f081346789e1bd7f7733b9f3a",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          },
+          "client": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_a068660f081346789e1bd7f7733b9f3a",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_a068660f081346789e1bd7f7733b9f3a",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          }
+        },
+        "drop_database": {
+          "collection": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_da9ef1ade28646dfa8c327d7fb7eb288",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "database": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_da9ef1ade28646dfa8c327d7fb7eb288",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "dropDatabase",
+                "ns": {
+                  "db": "review8_da9ef1ade28646dfa8c327d7fb7eb288"
+                }
+              },
+              {
+                "operationType": "invalidate"
+              }
+            ],
+            "alive": false
+          },
+          "client": {
+            "events": [
+              {
+                "operationType": "drop",
+                "ns": {
+                  "db": "review8_da9ef1ade28646dfa8c327d7fb7eb288",
+                  "coll": "c"
+                }
+              },
+              {
+                "operationType": "dropDatabase",
+                "ns": {
+                  "db": "review8_da9ef1ade28646dfa8c327d7fb7eb288"
+                }
+              },
+              {
+                "operationType": "insert",
+                "ns": {
+                  "db": "review8_da9ef1ade28646dfa8c327d7fb7eb288",
+                  "coll": "c"
+                },
+                "documentKey": {
+                  "_id": 2
+                }
+              }
+            ],
+            "alive": true
+          }
+        }
+      }
+    }
+  },
+  "local": {
+    "memory-7.0": {
+      "drop_collection": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_bb912354daae4d37b1e6585b499b5c24",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_bb912354daae4d37b1e6585b499b5c24.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_bb912354daae4d37b1e6585b499b5c24",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_bb912354daae4d37b1e6585b499b5c24.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_bb912354daae4d37b1e6585b499b5c24",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_bb912354daae4d37b1e6585b499b5c24.c"
+              }
+            }
+          ],
+          "alive": false
+        }
+      },
+      "drop_database": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_9c7bb0f4957448f5acc142f1bce2d274",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_9c7bb0f4957448f5acc142f1bce2d274",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_9c7bb0f4957448f5acc142f1bce2d274",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        }
+      }
+    },
+    "sqlite-7.0": {
+      "drop_collection": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_d389c03b388e4a06b693d5282c792a83",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_d389c03b388e4a06b693d5282c792a83.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_d389c03b388e4a06b693d5282c792a83",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_d389c03b388e4a06b693d5282c792a83.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_d389c03b388e4a06b693d5282c792a83",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_d389c03b388e4a06b693d5282c792a83.c"
+              }
+            }
+          ],
+          "alive": false
+        }
+      },
+      "drop_database": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_ead8f244d5324202be893484fbc8c054",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_ead8f244d5324202be893484fbc8c054",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_ead8f244d5324202be893484fbc8c054",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        }
+      }
+    },
+    "memory-8.0": {
+      "drop_collection": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_65355eba153d4dc698b5a6ecd9813740",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_65355eba153d4dc698b5a6ecd9813740.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_65355eba153d4dc698b5a6ecd9813740",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_65355eba153d4dc698b5a6ecd9813740.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_65355eba153d4dc698b5a6ecd9813740",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_65355eba153d4dc698b5a6ecd9813740.c"
+              }
+            }
+          ],
+          "alive": false
+        }
+      },
+      "drop_database": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_047afa494757468a8f9ee2c9e2043133",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_047afa494757468a8f9ee2c9e2043133",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_047afa494757468a8f9ee2c9e2043133",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        }
+      }
+    },
+    "sqlite-8.0": {
+      "drop_collection": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_503e0e250b7e4fd092739c19ec75a883",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_503e0e250b7e4fd092739c19ec75a883.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_503e0e250b7e4fd092739c19ec75a883",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_503e0e250b7e4fd092739c19ec75a883.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_503e0e250b7e4fd092739c19ec75a883",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_503e0e250b7e4fd092739c19ec75a883.c"
+              }
+            }
+          ],
+          "alive": false
+        }
+      },
+      "drop_database": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_a6636ca5d350411188d962c4918fcd63",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_a6636ca5d350411188d962c4918fcd63",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_a6636ca5d350411188d962c4918fcd63",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        }
+      }
+    },
+    "memory-9.0": {
+      "drop_collection": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_45772d35c675430b9db8376c23818510",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_45772d35c675430b9db8376c23818510.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_45772d35c675430b9db8376c23818510",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_45772d35c675430b9db8376c23818510.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_45772d35c675430b9db8376c23818510",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_45772d35c675430b9db8376c23818510.c"
+              }
+            }
+          ],
+          "alive": false
+        }
+      },
+      "drop_database": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_54c21d1c6c4643aa82ae57a71ad035d0",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_54c21d1c6c4643aa82ae57a71ad035d0",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_54c21d1c6c4643aa82ae57a71ad035d0",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        }
+      }
+    },
+    "sqlite-9.0": {
+      "drop_collection": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_c120157653f84efb827fb5c6248ec1df",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_c120157653f84efb827fb5c6248ec1df.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_c120157653f84efb827fb5c6248ec1df",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_c120157653f84efb827fb5c6248ec1df.c"
+              }
+            }
+          ],
+          "alive": false
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "invalidate",
+              "ns": {
+                "db": "review8_c120157653f84efb827fb5c6248ec1df",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": "review8_c120157653f84efb827fb5c6248ec1df.c"
+              }
+            }
+          ],
+          "alive": false
+        }
+      },
+      "drop_database": {
+        "collection": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_1a4c1955bcee41fba3d3877b6b7acef6",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "database": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_1a4c1955bcee41fba3d3877b6b7acef6",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        },
+        "client": {
+          "events": [
+            {
+              "operationType": "insert",
+              "ns": {
+                "db": "review8_1a4c1955bcee41fba3d3877b6b7acef6",
+                "coll": "c"
+              },
+              "documentKey": {
+                "_id": 2
+              }
+            }
+          ],
+          "alive": true
+        }
+      }
+    }
+  }
+}

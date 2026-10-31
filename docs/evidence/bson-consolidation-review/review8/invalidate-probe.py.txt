@@ -1,0 +1,44 @@
+import json,time,uuid
+from pathlib import Path
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+
+ROOT=Path('docs/evidence/bson-consolidation-review/review8')
+def drain(stream):
+    events=[]; deadline=time.monotonic()+1
+    while stream.alive and time.monotonic()<deadline:
+        try:
+            event=stream.try_next()
+        except Exception as exc:
+            return {'events':events,'alive':stream.alive,'error':type(exc).__name__,'code':getattr(exc,'code',None)}
+        if event is None: continue
+        events.append({k:event[k] for k in ('operationType','ns','documentKey') if k in event})
+        if event.get('operationType')=='insert': break
+    return {'events':events,'alive':stream.alive}
+
+def run(client):
+    out={}
+    for action in ('drop_collection','drop_database'):
+        db=client['review8_'+uuid.uuid4().hex]; c=db.c
+        streams=[]
+        try:
+            c.insert_one({'_id':1})
+            streams=[c.watch(max_await_time_ms=20),db.watch(max_await_time_ms=20),client.watch(max_await_time_ms=20)]
+            if action=='drop_collection': c.drop()
+            else: client.drop_database(db.name)
+            db.c.insert_one({'_id':2})
+            out[action]={name:drain(s) for name,s in zip(('collection','database','client'),streams)}
+        finally:
+            for s in streams:s.close()
+            client.drop_database(db.name)
+    return out
+report={'native':{},'local':{}}
+for version,port in (('7.0',49973),('8.0',49974),('9.0',49975)):
+    with NativeClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as client:
+        report['native'][version]={'version':client.server_info()['version'],'fcv':client.admin.command({'getParameter':1,'featureCompatibilityVersion':1})['featureCompatibilityVersion'],'observations':run(client)}
+    for name,factory in (('memory',MemoryEngine),('sqlite',SQLiteEngine)):
+        with MongoClient(factory(),mongodb_dialect=version) as client:
+            report['local'][name+'-'+version]=run(client)
+(ROOT/'invalidate.json').write_text(json.dumps(report,indent=2)+'\n')
+print('native versions',list(report['native']),'local pairs',list(report['local']))

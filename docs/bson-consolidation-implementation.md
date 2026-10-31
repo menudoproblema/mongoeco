@@ -496,11 +496,32 @@ contexto, fullDocument soportado y los fixtures replica set de jobs nativos.
 D05 conserva matrices, wheel, global/cobertura/costes finales y el cierre
 integrado de todo el programa. No se cierra B07 general ni los demás bloques.
 
+## Revisión documental 8 — garantía restante de watch
+
+La [revisión 8 del plan](bson-semantics-consolidation-plan.md) contrasta el
+mismo adjunto sobre `bc8fb1c` y el trabajo de watch preexistente sin commitear.
+La [evidencia nueva](evidence/bson-consolidation-review/review8/receipt.json)
+identifica ese árbol y conserva el cierre funcional D01b. Repite 69 checks de
+propiedades/fronteras, 345 de replay Binary/DBRef/type y las trazas de
+representación; verifica 16 hashes r8.0.0. No modifica ni acepta runtime/tests.
+
+D04 conserva tres garantías separadas: preparación/contexto, imágenes y ciclo
+de vida por ámbito. Las sondas de imágenes se repiten contra los replica sets
+7.0.43/8.0.32/9.0.2 y los seis pares locales: updateLookup local devuelve la
+imagen capturada, no la actual; whenAvailable/required no distinguen la
+configuración de imágenes. Las sondas DDL observan drop/invalidate/cierre
+incorrectos por ámbito y el camino rápido drop_database sin eventos. Son
+caracterizaciones públicas, no nuevas regresiones permanentes ni aceptación.
+El plan posee dependencias/testigos de corrección; este registro conserva esos
+pendientes. Los gates del candidato de preparación en curso no los cierran.
+No se acepta distribución, retención nativa ni watch wire por asociación.
+
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
-- D04: preparación/contexto de watch y fixtures de replica set para los jobs
-  nativos que alcanzan watch/TTL; la entrega TTL no cierra esos errores de entrada.
+- D04: preparación/contexto, resolución de fullDocument, DDL/cierre por ámbito
+  y fixtures replica set de jobs nativos. Las obligaciones y testigos concretos
+  están en revisión 8 del plan; ni publicación TTL ni D01b los cierran.
 - H53: caracterización y disposición de observabilidad conforme al plan.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.

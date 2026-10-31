@@ -31,8 +31,16 @@ precisa las obligaciones de D01b con sondas nuevas contra MongoDB 7/8/9.
 Revisión 7: mismo adjunto, contrastado con HEAD `375382a` y el trabajo de
 eventos sin commitear. La [evidencia de revisión 7](evidence/bson-consolidation-review/review7/receipt.json)
 identifica ese árbol, repite regresiones y caracteriza cinco efectos de escritura
-en los tres servidores temporales. El orden vigente está al final de la sección
+en los tres servidores temporales. El orden de revisión 7 se conserva en la sección
 5; las revisiones anteriores conservan su alcance histórico.
+
+Revisión 8: mismo adjunto (SHA-256 idéntico), contrastado con HEAD `bc8fb1c`
+y el trabajo de watch sin commitear, identificados en la
+[evidencia de revisión 8](evidence/bson-consolidation-review/review8/receipt.json).
+D01b ya tiene cierre funcional; no se reabre. Se precisan tres garantías de
+D04 y su aceptación frente a imágenes y DDL observados en MongoDB 7/8/9.
+El orden restante vigente es el de «Refinamiento de la revisión 8» en sección 5.
+Esta revisión solo modifica documentación/evidencia, sin aceptar el candidato.
 
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
@@ -120,7 +128,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
 | H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
 | H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
-| H52 y H53 | Watch/contexto y disposición de observabilidad siguen abiertos. La corrección de publicación TTL no cierra preparación ni contenido de eventos de actualización. |
+| H52 y H53 | D04 sigue abierto: preparación/contexto tiene candidato sin aceptar; imágenes y ciclo de vida por ámbito conservan divergencias observadas en revisión 8. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 
@@ -557,7 +565,7 @@ plan expresan obligaciones y apuntan a él. No se crean IDs para los
 contraejemplos adicionales, ya incluidos en identidad y eventos de D01b. El trabajo
 de tests sin commitear preexistente no se considera aceptado por esta revisión.
 
-### Refinamiento vigente de la revisión 7
+### Refinamiento de la revisión 7 (orden sustituido por revisión 8)
 
 La autocrítica no introduce otra familia de defectos: parser DBRef, fallback
 binario eq/in, SDK Binary, distinct y testigos de representación ya están
@@ -620,8 +628,9 @@ No imponer la captura costosa de rutas/diffs a escrituras sin observador cuando
 su política de publicación no la requiere. Conservar controles de huecos del
 journal y reanudación; la optimización no puede ocultar trabajo pendiente.
 
-**Secuencia restante y garantías de salida.** Esta tabla sustituye el orden
-restante de revisión 6; no crea otros IDs ni cambia los owners de estado:
+**Secuencia restante y garantías de salida.** Esta tabla histórica sustituyó el orden
+restante de revisión 6. Revisión 8 contiene el orden actual; se conservan IDs y
+owners de estado:
 
 | Orden / bloque | Trabajo y dependencia | Aceptación discriminante |
 | --- | --- | --- |
@@ -640,6 +649,73 @@ afectado cuando cambie su fuente/corpus. Cada receipt identifica ese candidato,
 el fallo previo y las dimensiones no ejercidas. Los observadores BSON protegidos
 y goldens históricos permanecen independientes e inalterados.
 
+### Refinamiento de la revisión 8: responsabilidades y aceptación restantes
+
+**Disposición del informe.** No hay un nuevo conjunto de siete hallazgos: el
+texto coincide con el ya contrastado en revisiones 3–7. La causa de H48, la
+presencia de `$in`/distinct y la propiedad desde D00 estaban correctamente
+planteadas. Las precisiones sobre SDK/local/owned, literal DBRef y eq/in SQL
+se conservan como regresión: en este árbol pasan 69 checks de propiedades/
+fronteras y 345 de replay sobre referencias existentes, con 18 filas nuevas
+que observan ambos lados del matcher. No convertir sus clases concretas ni el
+número de llamadas en contrato público. La guarda binaria conserva fallback;
+ese resultado no acredita pushdown. Las 16 fuentes r8.0.0 vuelven a coincidir
+por hash, sin convertir esa etiqueta en contrato de todas las versiones.
+
+La afirmación «solo un retraso TTL irrelevante» sigue sin adoptarse como
+invariante. D02 ya tiene aceptación de coordenadas/migración y no se reabre.
+Esta revisión no repite TTL ni H53: el diagnóstico local de este último por
+inspección no se presenta como reproducción física nueva. Los 167 tests
+históricos conservan únicamente su alcance original.
+
+**La causa común exige conservar decisiones en la frontera correcta.** El
+reconocimiento BSON, la comparación semántica, la identidad física y los efectos
+aplicados ya tienen owners. Las sondas nuevas muestran otra distinción dentro
+de D04: una imagen capturada al escribir, una lectura al consumir y una decisión
+de cierre por ámbito tienen lifetimes diferentes. Ni igualdad BSON ni el
+preparador de expresiones pueden decidir las tres. Se amplían los owners
+existentes únicamente con los datos que les faltan; no otro Value, contexto,
+runner, jerarquía de eventos o intérprete de watch.
+
+| Garantía D04 | Causa y refactorización mínima | Aceptación necesaria |
+| --- | --- | --- |
+| Preparación y contexto | Reutilizar `PreparedPipeline`/compilación y `ExpressionExecutionContext`; capturar dialecto/reloj/codec al abrir. El candidato actual ya lo intenta, pero no está aceptado. Validación estructural compartida con aggregate/update, con política de stages permitidos propia de watch. Reconocimiento sintáctico de un stage y capacidad de ejecutarlo son decisiones distintas: no usar capacidades de dialecto como catálogo gramatical y romper Search/registro de extensiones. | Sin eventos: pipelines válidos/erróneos, colección vacía/poblada, precedencia, fase/familia/código y ningún watcher registrado tras apertura fallida. Error dependiente del evento ocurre al consumir y cierra cuando lo haga el nativo. `$$NOW` estable entre etapas/eventos/getMore vacío y reloj nuevo al reabrir/reanudar; override de dialecto y codec. Handles derivados (`collection.database`, clones/opciones) conservan la inyección del reloj también para agregación ordinaria. Undefined: referencia propia de 7, 8 y 9, sin aplanar diferencias. |
+| Imágenes de actualización | `apply_full_document_mode` trata actualmente todos los modos no default como la postimagen almacenada. Conservar disponibilidad de imagen al escribir cuando corresponda; resolver `updateLookup` al consumir mediante recursos existentes y lookup interno tipado. Separar ese recurso del reloj constante de expresiones. El diseño definitivo y su compatibilidad persistida se revisan antes de cambiar journal/outbox. | Con v0→v1→v2 antes de consumir, `updateLookup` da v2, o null si se borró; no v1. Sin imágenes habilitadas, `whenAvailable` da null y `required` falla con OperationFailure 47 y cursor cerrado. Con imágenes habilitadas, ambos dan v1 incluso tras borrar. Default omite fullDocument en update. Controles insert/replace, filtros/proyecciones sobre fullDocument, opciones cambiadas entre escritura/lectura, scopes y reapertura/journal. Una opción aceptada en create_collection no demuestra que se capturen imágenes. |
+| DDL y ciclo de vida por ámbito | El productor de drop publica solo invalidate y `ChangeStreamScope.matches` lo entrega a todos los ámbitos; drop_database rápido evita esa publicación. Reutilizar enrutamiento/publicación y cursor actuales, distinguiendo metadatos internos para decidir destinatarios/cierre de los campos del evento público. Validar commit/offset/token con los owners actuales: no emitir fuera del orden confirmado ni fabricar documentKey/ns para invalidate. | Drop de colección: colección recibe drop→invalidate y cierra; DB/cliente reciben drop y siguen hasta una inserción barrera. Drop de base: colección recibe drop→invalidate, DB drop→dropDatabase→invalidate, cliente drop→dropDatabase y sigue. En las sondas invalidate carece de ns/documentKey. Añadir pruebas permanentes sync/async, continuidad tras recrear, cierre explícito/error/cancelación, filtro que oculta invalidate, rename soportado, resumeAfter/startAfter de token invalidate y replay persistente. Los últimos casos requieren caracterización adicional: no se dan por verificados con el drop básico. |
+
+Las dos últimas filas tienen sondas nuevas, no aceptación: 16 escenarios de
+imágenes por versión y par local; dos acciones DDL en tres ámbitos por versión
+y par. Se usan bases UUID desechables en replica sets propios 7.0.43/8.0.32/
+9.0.2, FCV correspondiente. Los fallos son compartidos por ambos motores.
+La imagen y los eventos de DDL se observan por API pública, sin usar el helper
+productivo para calcular el esperado. La sonda DDL retiene namespaces UUID;
+solo se sustituyen para comparar estructura entre ejecuciones. No se compara
+el valor opaco de tokens ni se acredita distribución/majority local.
+
+Esta precisión concreta obligaciones dentro de D04; no modifica el contrato
+ADR-006 ni promete retención nativa de pre/postimágenes o semántica distribuida.
+La API ya admite los cuatro modos; no se cierra el bloque eliminando testigos o
+reduciendo silenciosamente ese alcance. Cualquier límite explícito adicional
+necesita disposición documentada antes de aceptar el bloque.
+
+**Orden de trabajo vigente y simplificaciones.** D01a/D01b, D02 y D03a/D03b
+conservan su cierre funcional y receipts; no se repiten sus extracciones.
+
+| Orden | Entrega | Dependencias y salida |
+| --- | --- | --- |
+| 1 | Completar D04 por las tres garantías anteriores | Revisar el candidato de preparación sin confundirlo con imágenes/DDL. Incorporar las sondas pendientes al registro/capturador/replay existentes, capturar y --check en 7/8/9. Un receipt por corte identifica la garantía aceptada; el padre D04 sigue abierto mientras quede alguna obligatoria. |
+| 1, junto a los testigos físicos | Fixture replica set del job nativo | El workflow actual arranca standalone. Reutilizar imágenes fijadas y runner; inicializar/verificar primary/FCV, timeout acotado, cleanup incluso tras fallo, artefacto/wheel y corpus completo alcanzado. No crear otro runner ni llamar ejecución física a un replay de JSON; no cambiar goldens para acomodar la topología. |
+| 2 | Completar D06a/b y D06c | Primitivas/gramática/raw ya entregadas: quedan aceptación de contextos/subpipelines y consumidores, con/sin hash/spill y Search según sus políticas. El éxito de DBRef literal básico no cierra esos caminos; no depende de terminar D04 para avanzar. |
+| 3 | Disponer H53, conversión escalar y D07 | Mantener owners C03/B08 y conversión; contrastar sNaN en 7/8/9 y añadir regresión. D07 es decisión opcional continuar/descartar, sin migración ni logging nuevo implícitos. |
+| 4 | D05 sobre el candidato congelado | Revisar bloques, compatibilidad persistida, matrices contractuales, wheel, costes/gates globales y commits semánticos. Reutilizar evidencia cuyo input no cambió; repetir solo gates afectados y el integrado final. |
+
+Simplificar la documentación también forma parte del cierre: este plan posee
+obligaciones y dependencias; el registro de implementación posee estados/gates;
+los receipts poseen comandos, hashes y resultados. Los apartados de revisiones
+anteriores son historia identificada, no otras listas activas. No crear nuevos
+IDs por cada revisión del mismo adjunto ni copiar todas las matrices en cada
+corte. Este refinamiento no acepta ni modifica el trabajo productivo en curso.
+
 ## 6. Pruebas y aceptación por garantía
 
 | Familia | Casos obligatorios y observación |
@@ -651,7 +727,7 @@ y goldens históricos permanecen independientes e inalterados.
 | Identidad | No-op Binary 0/5, bytes equivalente, int/long/double/decimal, signed zero, NaN/payload, Code scope reordenado/ausente/vacío, tipos numéricos y arrays/documentos anidados en scope. Separar identidad del `_id` y de campos ordinarios. Classic, pipeline, replacement, bulk ordered/unordered, update_many, findAndModify y comandos; contadores, tipo físico/orden, estado y publicación. |
 | Fechas | ±1001 ms, ejemplo 2038, epoch, negativos submilisegundo normalizados, UTC naive/aware y offsets, extremos soportados; toLong/toDate, conversión inversa independiente, subtract/dateDiff. Ventanas derivative/integral con casos nativos propios. TTL a expiración−1/exacta/+1 ms: no borrar antes ni omitir candidatos vencidos; índice nuevo/creado tras datos/reabierto, auxiliares de versión anterior y publicación. No exigir borrado inmediato al monitor nativo. |
 | Claves/consumidores | Desde D03a, distinct sobre bytes/Binary SDK 0/5 con el mismo payload, distintos órdenes de inserción, arrays/anidados y materialización pública: comparar subtipo/contenido, no solo cardinalidad. Después group/addToSet/set/lookup/spill y collation, DBRef/documento y Code scope según política. Mismo resultado con/sin hash/spill; desempates Search y persistencia con controles separados. |
-| Watch | Apertura sin eventos y pipeline inválido, replaceWith válido, filtro de evento, undefined tipado, NOW entre etapas/eventos/batches, now_factory, getMore/reanudación/invalidate. Capturar clase de excepción además de código y fase: TypeError local de replaceWith frente a apertura válida física, y OperationFailure 31325 diferido frente a apertura fallida. Colección/DB/cliente, sync/async y wire soportados, cursor/offset/token/cierre; sin ampliar semántica distribuida. |
+| Watch | Apertura sin eventos y pipeline inválido, replaceWith válido, filtro de evento, undefined tipado, NOW entre etapas/eventos/batches, now_factory, getMore/reanudación/invalidate. Incluir los modos de imagen y ciclo de vida por ámbito concretados en revisión 8, con barrera y controles de ausencia frente a null. Capturar clase de excepción además de código y fase: TypeError local de replaceWith frente a apertura válida física, y OperationFailure 31325 diferido frente a apertura fallida. Colección/DB/cliente, sync/async y wire soportados, cursor/offset/token/cierre; sin ampliar semántica distribuida. |
 | Validators | strict/moderate/off × error/warn/bypass, antiguo/candidato válido/inválido, insert/upsert/bulk/merge y estado tras error; observar errores de evaluación y diagnóstico, no inferirlos del permiso final. Logs físicos se comparan como efecto nativo sin prometer un API de logging local inexistente. |
 
 Las propiedades existentes se amplían: preservación de representación,
