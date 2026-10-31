@@ -1,0 +1,16 @@
+{
+  "mongod": {
+    "port": 49941,
+    "dbpath": "/tmp/mongoeco-predicate-review9",
+    "shutdown": true
+  },
+  "containers_removed": [
+    "mongoeco-predicate-review7",
+    "mongoeco-predicate-review8"
+  ],
+  "ports_closed": [
+    49941,
+    49942,
+    49943
+  ]
+}

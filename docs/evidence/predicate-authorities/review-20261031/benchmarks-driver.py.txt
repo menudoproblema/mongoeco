@@ -1,0 +1,17 @@
+import io,os,subprocess,tarfile,json,hashlib
+from pathlib import Path
+b=Path('/tmp/mongoeco-predicate-review');root=b/'baseline';root.mkdir(exist_ok=True)
+with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git','archive','2671229']))) as arc:arc.extractall(root,filter='data')
+py='/tmp/mongoeco-predicate-c06/py314/bin/python';rows=[];codes=[]
+for cut in ['before','after']:
+ env=dict(os.environ,PYTHONPATH=str(root/'src')+':.' if cut=='before' else '.')
+ identity=subprocess.check_output([py,'-c','import mongoeco; print(mongoeco.__file__)'],env=env,text=True).strip();rows.append({'cut':cut,'subject':identity})
+ for engine in ['memory','sqlite']:
+  command=[py,'-m','benchmarks.run','--engine',engine+'-sync','--size','250','--warmup','0','--repetitions','3','--workload','predicate_diagnostics','--workload','search_diagnostics','--workload','vector_search_diagnostics','--format','json','--output',str(b/f'benchmark-{cut}-{engine}.json')]
+  with (b/f'benchmark-{cut}-{engine}.txt').open('w') as log:r=subprocess.run(command,env=env,stdout=log,stderr=log)
+  codes.append(r.returncode);assert not r.returncode
+ command=[py,'docs/evidence/predicate-authorities/measure_validator_cost.py','--output',str(b/f'benchmark-validator-{cut}.json')]
+ with (b/f'benchmark-validator-{cut}.txt').open('w') as log:r=subprocess.run(command,env=env,stdout=log,stderr=log)
+ codes.append(r.returncode);assert not r.returncode
+(b/'benchmarks.json').write_text(json.dumps({'before_revision':subprocess.check_output(['git','rev-parse','2671229'],text=True).strip(),'after_revision':subprocess.check_output(['git','rev-parse','76aa1cb'],text=True).strip(),'subjects':rows,'protocol':'Sequential; same Python 3.14.5 and dependencies; size250, no warmup, three repetitions. Medians are trends, not CPU gates.','exit_codes':codes},indent=2)+'\n')
+print('Sequential benchmarks complete')

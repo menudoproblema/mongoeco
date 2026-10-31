@@ -1061,3 +1061,54 @@ Diff final revisado y documentación alineada. No se incorporan cambios ajenos.
 Los tres servidores nativos temporales propios se retiraron y sus puertos
 quedaron cerrados. La entrega queda en commits semánticos locales; no se realiza
 push, publicación ni despliegue.
+
+
+### Revisión posterior de C00–C06 / H37–H47
+
+La revisión bloque por bloque sobre `2671229` está cerrada. El
+[informe de revisión](predicate-authorities-implementation-review.md) conserva
+los siete hallazgos corregidos, sus causas, las fronteras y los límites. El
+[receipt de revisión](evidence/predicate-authorities/review-20261031/validation.json)
+posee la identidad y la evidencia actuales; los receipts anteriores mantienen
+su carácter histórico y no acreditan los cambios nuevos por sí solos.
+
+`d80bd24` unifica la clasificación BSON de matching/schema, corrige Code y
+DBRef/SON/documentos escapados, la igualdad del scope y la preparación de límites
+int64, y elimina la doble preparación de schema conservando dialecto. `76aa1cb`
+retira el segundo normalizador de `$type`, corrige BSON 6/undefined y rechaza
+Code en argumentos string de MQL. `4fbf0e0` cierra la conexión del fixture que
+originaba el ResourceWarning; conserva su context manager de transacción.
+
+El runtime de `76aa1cb` se verifica desde un archive limpio y es idéntico a las
+298 fuentes del wheel/sdist reproducidos dos veces, las tres instalaciones de
+suites globales y las doce de la matriz SDK. Las suites completas de
+3.13/3.14/3.15 pasan **50.507 pruebas y 14.471 subpruebas por intérprete**;
+3.14 alcanza **99,00132%** de cobertura sin relajar el mínimo del 99%.
+Los 219 skips nativos de cada suite global no sustituyen los **40 casos físicos
+por versión**, ejecutados en 7/8/9 en ambos motores sin errores ni skips.
+El skip restante corresponde al backend ICU opcional.
+
+Typing, manifiesto, SPI, unittest, propiedades deep, lint, smokes de distribución,
+instalación mínima y las doce celdas SDK están verdes. Los seis replays SDK
+ampliados también pasan. Las capturas mantienen idénticos los resultados de
+todos los casos anteriores, y los observers/snapshots históricos protegidos
+siguen intactos. El contraste con el artefacto previo falla en los 144 testigos
+nuevos de API antes de la corrección.
+
+La advertencia del log global 3.14 corresponde al fixture anterior al cierre
+explícito: tracemalloc/GC atribuyó la asignación a test_sqlite_query.py. La
+corrección de test no altera el paquete ni sus aserciones SQL. Se acredita
+con 431 tests SQLite instrumentados sin warning y los controles de limpieza/
+outbox en los tres intérpretes; los tests outbox sensibles a tiempos se
+verificaron fuera del primer barrido diagnóstico, que no se usa como gate.
+
+Los benchmarks nuevos son secuenciales, comparan `2671229` con `76aa1cb` y
+mantienen intérprete/dependencias. Predicados/Search/vector quedan entre
+0,953× y 1,036× en el protocolo medido; el coste de preparación/validación y bulk
+se detalla en el informe. No se promueven los benchmarks históricos a esta
+base ni se modifica una garantía de plan/coste para obtener un verde.
+
+B00–B10 conservan sus pendientes, incluido B07. No se añaden garantías de Atlas,
+recall ANN, cuantización/fórmulas vectoriales, concurrencia nativa ni change
+streams. Diff y documentación revisados, servidores propios retirados, commits
+semánticos locales y ningún cambio ajeno incorporado.

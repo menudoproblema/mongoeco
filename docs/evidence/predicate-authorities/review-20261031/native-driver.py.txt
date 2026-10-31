@@ -1,0 +1,11 @@
+import concurrent.futures,json,os,subprocess
+from pathlib import Path
+b=Path('/tmp/mongoeco-predicate-review');py='/tmp/mongoeco-predicate-c06/py314/bin/python'
+def run(cell):
+ v,port=cell
+ env=dict(os.environ,MONGOECO_TEST_INSTALLED_ARTIFACT='1',MONGOECO_REAL_MONGODB_URI=f'mongodb://127.0.0.1:{port}');env.pop('PYTHONPATH',None)
+ with (b/f'native-{v}.txt').open('w') as log:
+  result=subprocess.run([py,'scripts/run_mongodb_real_differential.py',v,'semantic_query_matching_*,semantic_schema_*,semantic_search_*,semantic_mod_*','--json-report',str(b/f'native-{v}.json')],env=env,stdout=log,stderr=log)
+ return v,result.returncode
+with concurrent.futures.ThreadPoolExecutor(3) as pool:r=dict(pool.map(run,[('7.0',49942),('8.0',49943),('9.0',49941)]))
+(b/'native-status.json').write_text(json.dumps(r,indent=2)+'\n');print(r)

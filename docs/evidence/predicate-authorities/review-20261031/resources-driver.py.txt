@@ -1,0 +1,13 @@
+import gc,tracemalloc,warnings
+from pathlib import Path
+import pytest
+tracemalloc.start(3)
+warnings.simplefilter('always',ResourceWarning)
+class Collect:
+ @pytest.hookimpl(hookwrapper=True)
+ def pytest_runtest_teardown(self):
+  yield
+  gc.collect()
+paths=[str(p) for p in sorted(Path('tests/unit/core').glob('test_sqlite*.py')) if p.name!='test_sqlite_outbox.py']
+if __name__=='__main__':
+ raise SystemExit(pytest.main([*paths,'-q','-W','always::ResourceWarning'],plugins=[Collect()]))

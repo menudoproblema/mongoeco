@@ -1,0 +1,11 @@
+import concurrent.futures,json,os,subprocess
+from pathlib import Path
+b=Path('/tmp/mongoeco-predicate-review');env=dict(os.environ,PIP_FIND_LINKS='/tmp/mongoeco-predicate-c06/build-wheels')
+def run(v):
+ py=f'/tmp/mongoeco-predicate-c06/py{v}/bin/python';r={}
+ for kind,args in [('wheel',['--wheel',str(b/'dist-a/mongoeco-4.11.0-py3-none-any.whl')]),('sdist',['--sdist',str(b/'dist-a/mongoeco-4.11.0.tar.gz')]),('pytest-kit',['--wheel',str(b/'dist-a/mongoeco-4.11.0-py3-none-any.whl'),'--pytest-kit'])]:
+  with (b/f'smoke-{kind}-{v}.txt').open('w') as log:result=subprocess.run([py,'scripts/smoke_installed_wheel.py',*args],env=env,stdout=log,stderr=log)
+  r[kind]=result.returncode;print(v,kind,result.returncode,flush=True)
+ return v,r
+with concurrent.futures.ThreadPoolExecutor(3) as pool:r=dict(pool.map(run,['313','314','315']))
+(b/'smokes.json').write_text(json.dumps(r,indent=2)+'\n')

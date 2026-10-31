@@ -1,0 +1,10 @@
+Processing /tmp/mongoeco-predicate-review/dist-a/mongoeco-4.11.0-py3-none-any.whl
+Installing collected packages: mongoeco
+  Attempting uninstall: mongoeco
+    Found existing installation: mongoeco 4.11.0
+    Uninstalling mongoeco-4.11.0:
+      Successfully uninstalled mongoeco-4.11.0
+Successfully installed mongoeco-4.11.0
+
+[notice] A new release of pip is available: 26.2 -> 26.2.2
+[notice] To update, run: /private/tmp/mongoeco-predicate-c06/minimal313/bin/python -m pip install --upgrade pip

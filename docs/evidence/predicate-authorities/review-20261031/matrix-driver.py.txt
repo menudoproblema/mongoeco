@@ -1,0 +1,24 @@
+import concurrent.futures,json,os,subprocess
+from pathlib import Path
+b=Path('/tmp/mongoeco-predicate-review');wheel=b/'dist-a/mongoeco-4.11.0-py3-none-any.whl'
+env=dict(os.environ,MONGOECO_TEST_INSTALLED_ARTIFACT='1');env.pop('PYTHONPATH',None)
+paths=['tests/integration/pytest_kit','tests/integration/api/test_error_phases.py::test_wire_error_phases_reuse_connection','tests/integration/wire/test_proxy_lifecycle.py','tests/integration/wire/test_unacknowledged.py','tests/integration/wire/test_diagnostics.py','tests/integration/wire/test_read_reply_parity.py','tests/integration/api/test_write_preflight_parity.py']
+def run(version):
+ rows=[]
+ for pytest in ['8.4.2','9.1.1']:
+  for sdk in ['4.9.2','4.19.0']:
+   name=f'kit-{version}-{pytest}-{sdk}';py=f'/tmp/mongoeco-predicate-c06/matrix-clean/{name}/bin/python'
+   with (b/(name+'.txt')).open('w') as log:
+    subprocess.run([py,'-m','pip','install','--no-deps','--force-reinstall',str(wheel)],env=env,stdout=log,stderr=log,check=True)
+    identity=json.loads(subprocess.check_output([py,'-c','import sys,json,pymongo,pytest,mongoeco; print(json.dumps({"python":sys.version,"pytest":pytest.__version__,"pymongo":pymongo.version,"module":mongoeco.__file__}))'],env=env,text=True))
+    assert identity['python'].startswith(version+'.') and identity['pytest']==pytest and identity['pymongo']==sdk,identity
+    result=subprocess.run([py,'-m','pytest',*paths,'-q','-rs'],env=env,stdout=log,stderr=log)
+   row={'name':name,'kit_exit':result.returncode,'identity':identity}
+   if pytest=='9.1.1':
+    with (b/(name+'-semantics.txt')).open('w') as log:
+     result=subprocess.run([py,'-m','pytest','tests/integration/api/test_semantic_group_regressions.py','tests/integration/api/test_search_predicate_authorities.py','tests/integration/api/test_validator_configuration.py','-k','(query_matching or schema or search_eligibility or mod or search_preserves or search_candidate_mutations or context_survives or share_eligible or coll_mod or universe_rebuilds or nonfinite_query or bson_classification) and 9.0','-q','-rs'],env=env,stdout=log,stderr=log)
+    row['semantics_exit']=result.returncode
+   rows.append(row);print(name,row,flush=True)
+ return rows
+with concurrent.futures.ThreadPoolExecutor(3) as pool:rows=[row for lane in pool.map(run,['3.13','3.14','3.15']) for row in lane]
+(b/'matrix.json').write_text(json.dumps(rows,indent=2)+'\n')

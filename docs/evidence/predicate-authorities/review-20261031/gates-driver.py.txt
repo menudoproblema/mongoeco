@@ -1,0 +1,23 @@
+import concurrent.futures,json,os,subprocess
+from pathlib import Path
+b=Path('/tmp/mongoeco-predicate-review');wheel=b/'dist-a/mongoeco-4.11.0-py3-none-any.whl'
+env=dict(os.environ,MONGOECO_TEST_INSTALLED_ARTIFACT='1');env.pop('PYTHONPATH',None); env['COVERAGE_FILE']=str(b/'coverage-data')
+def run(v):
+ py=f'/tmp/mongoeco-predicate-c06/py{v}/bin/python';results={}
+ commands={
+ 'install':[py,'-m','pip','install','--no-deps','--force-reinstall',str(wheel)],
+ 'pytest':[py,'-m','pytest','-q','-rs',*(['--cov=mongoeco','--cov-report=term','--cov-report=json:'+str(b/'coverage314.json')] if v=='314' else [])],
+ 'unittest':[py,'-m','unittest','discover','-s','tests','-p','test*.py'],
+ 'typing-public':[py,'scripts/check_public_typing.py'],
+ 'typing-strict':[py,'-m','mypy','--strict','--follow-imports=silent','--ignore-missing-imports',*sum([['-m',m] for m in ['mongoeco.pytest_plugin','mongoeco.pytest_asyncio','mongoeco.pytest_anyio','mongoeco._pytest_runtime','mongoeco._pytest_diagnostics','mongoeco.wire._diagnostics','mongoeco.wire._framing','mongoeco.wire._request_state','mongoeco.wire._lifecycle']],[])],
+ 'typing-runtime':[py,'-m','mypy','--follow-imports=silent','--ignore-missing-imports','-m','mongoeco.engines.adapter','-m','mongoeco.api._async._collection_runtime'],
+ 'spi':[py,'scripts/smoke_external_engine.py'],
+ 'manifest':[py,'scripts/update_public_api_manifest.py','--check'],
+ }
+ for name,command in commands.items():
+  with (b/f'{name}{v}.txt').open('w') as log:result=subprocess.run(command,env=env,stdout=log,stderr=log)
+  results[name]=result.returncode;print(v,name,result.returncode,flush=True)
+  if name=='install' and result.returncode:break
+ return v,results
+with concurrent.futures.ThreadPoolExecutor(3) as pool:results=dict(pool.map(run,['313','314','315']))
+(b/'gates.json').write_text(json.dumps(results,indent=2)+'\n')

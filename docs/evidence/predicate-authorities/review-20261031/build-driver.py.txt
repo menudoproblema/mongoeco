@@ -1,0 +1,17 @@
+import io,os,subprocess,tarfile,json,hashlib
+from pathlib import Path
+b=Path('/tmp/mongoeco-predicate-review');source=b/'source';source.mkdir(exist_ok=True)
+revision=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git','archive',revision]))) as archive:archive.extractall(source,filter='data')
+py='/tmp/mongoeco-predicate-c06/py314/bin/python'
+env=dict(os.environ,SOURCE_DATE_EPOCH=subprocess.check_output(['git','show','-s','--format=%ct',revision],text=True).strip())
+with (b/'build.txt').open('w') as log:
+ for cut in ['dist-a','dist-b']:
+  subprocess.run([py,'-m','build','--no-isolation','--sdist','--wheel','--outdir',str(b/cut)],cwd=source,env=env,stdout=log,stderr=log,check=True)
+  subprocess.run([py,'scripts/normalize_sdist.py',str(b/cut/'mongoeco-4.11.0.tar.gz')],env=env,stdout=log,stderr=log,check=True)
+ for name in ['mongoeco-4.11.0-py3-none-any.whl','mongoeco-4.11.0.tar.gz']:assert (b/'dist-a'/name).read_bytes()==(b/'dist-b'/name).read_bytes()
+ subprocess.run([py,'scripts/check_distribution_sources.py',*map(str,(b/'dist-a').iterdir()),*map(str,(b/'dist-b').iterdir())],stdout=log,stderr=log,check=True)
+ subprocess.run([py,'-m','twine','check',*map(str,(b/'dist-a').iterdir())],stdout=log,stderr=log,check=True)
+(b/'build.json').write_text(json.dumps({'revision':revision,'source_date_epoch':env['SOURCE_DATE_EPOCH'],'files':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (b/'dist-a').iterdir()},'exit':0},indent=2)+'\n')
+assert not (b/'installed-wheel.sha256').exists() or hashlib.sha256((b/'dist-a/mongoeco-4.11.0-py3-none-any.whl').read_bytes()).hexdigest()==(b/'installed-wheel.sha256').read_text().strip()
+print(revision,'reproducible distributions verified')
