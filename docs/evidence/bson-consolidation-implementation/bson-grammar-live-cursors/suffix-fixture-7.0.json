@@ -1,0 +1,137 @@
+{
+  "image": "mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72",
+  "target": "7.0",
+  "name": "mongoeco-differential-0ee8cd57debf4f248c13e774d5776d2d",
+  "owner": "0ee8cd57debf4f248c13e774d5776d2d",
+  "status": "succeeded",
+  "cleanup": {
+    "removed": true,
+    "container_id": "cd0befb1427a84140cdfcb8d825148ff9777613112502b754b3ab6e723e71167",
+    "volumes_removed": true
+  },
+  "creation_indeterminate": false,
+  "container_id": "cd0befb1427a84140cdfcb8d825148ff9777613112502b754b3ab6e723e71167",
+  "uri": "mongodb://127.0.0.1:64341/?directConnection=true&serverSelectionTimeoutMS=3000",
+  "server_options": {
+    "net": {
+      "bindIp": "*"
+    },
+    "replication": {
+      "oplogSizeMB": 128,
+      "replSet": "mongoeco"
+    },
+    "setParameter": {
+      "ttlMonitorSleepSecs": "1"
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        7,
+        0,
+        43,
+        0
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": 64,
+      "debug": false,
+      "maxBsonObjectSize": 16777216,
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": 1.0,
+      "$clusterTime": {
+        "clusterTime": "Timestamp(1793483503, 18)",
+        "signature": {
+          "hash": "b'\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00'",
+          "keyId": 0
+        }
+      },
+      "operationTime": "Timestamp(1793483503, 18)"
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "topologyVersion": {
+        "processId": "6ae662ee2dd586ef79f00c97",
+        "counter": 6
+      },
+      "hosts": [
+        "127.0.0.1:27017"
+      ],
+      "setName": "mongoeco",
+      "setVersion": 1,
+      "isWritablePrimary": true,
+      "secondary": false,
+      "primary": "127.0.0.1:27017",
+      "me": "127.0.0.1:27017",
+      "electionId": "7fffffff0000000000000001",
+      "lastWrite": {
+        "opTime": {
+          "ts": "Timestamp(1793483503, 18)",
+          "t": 1
+        },
+        "lastWriteDate": "2026-10-31 21:51:43",
+        "majorityOpTime": {
+          "ts": "Timestamp(1793483503, 18)",
+          "t": 1
+        },
+        "majorityWriteDate": "2026-10-31 21:51:43"
+      },
+      "maxBsonObjectSize": 16777216,
+      "maxMessageSizeBytes": 48000000,
+      "maxWriteBatchSize": 100000,
+      "localTime": "2026-10-31 21:51:43.107000",
+      "logicalSessionTimeoutMinutes": 30,
+      "connectionId": 6,
+      "minWireVersion": 0,
+      "maxWireVersion": 21,
+      "readOnly": false,
+      "ok": 1.0,
+      "$clusterTime": {
+        "clusterTime": "Timestamp(1793483503, 18)",
+        "signature": {
+          "hash": "b'\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00'",
+          "keyId": 0
+        }
+      },
+      "operationTime": "Timestamp(1793483503, 18)"
+    }
+  },
+  "payload": {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+      "/tmp/mongoeco-materializing-suffix-probe.py"
+    ],
+    "exit_code": 0
+  },
+  "anonymous_volumes": [
+    "f97b979b3152618e6de1d95f5821a8df2a01c089a6767a095538b4ce59d3dc33",
+    "c68b471e7de60ddaf2cb5ea35b7887052e2832294fb0691ff401985b4a94e8b7"
+  ]
+}

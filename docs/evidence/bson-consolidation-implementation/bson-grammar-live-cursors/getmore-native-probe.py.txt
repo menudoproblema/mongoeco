@@ -1,0 +1,42 @@
+import json,os,socket,struct,uuid
+from urllib.parse import urlparse
+from bson import BSON,Int64
+from pymongo import MongoClient
+u=os.environ['MONGOECO_REAL_MONGODB_URI']; address=urlparse(u)
+client=MongoClient(u)
+name='cursor_ownership_'+uuid.uuid4().hex
+rows=client[name].rows
+
+def raw(command):
+    message=struct.pack('<i',0)+b'\0'+BSON.encode(command)
+    with socket.create_connection((address.hostname,address.port),timeout=10) as sock:
+        sock.sendall(struct.pack('<iiii',16+len(message),1,0,2013)+message)
+        def take(n):
+            out=b''
+            while len(out)<n:
+                part=sock.recv(n-len(out))
+                if not part: raise RuntimeError('unexpected EOF')
+                out+=part
+            return out
+        header=take(16); size,_,_,opcode=struct.unpack('<iiii',header)
+        payload=take(size-16)
+        assert opcode==2013 and payload[4]==0
+        return BSON(payload[5:]).decode()
+try:
+    rows.insert_many([{'_id':i} for i in range(3)])
+    results={}
+    for case in ['namespace','missing_session','different_session','unexpected_session']:
+        with client.start_session() as s1,client.start_session() as s2:
+            if case=='unexpected_session':
+                opened=raw({'find':'rows','batchSize':1,'$db':name})
+            else:
+                opened=client[name].command({'find':'rows','batchSize':1},session=s1)
+            ident=opened['cursor']['id']
+            command={'getMore':Int64(ident),'collection':'other' if case=='namespace' else 'rows','$db':name}
+            if case!='missing_session':command['lsid']=s1.session_id if case=='namespace' else s2.session_id
+            result=raw(command)
+            results[case]={k:result.get(k) for k in ('ok','code','codeName','errmsg')}
+            client[name].command({'killCursors':'rows','cursors':[Int64(ident)]},session=s1)
+    print(json.dumps(results,indent=2),flush=True)
+finally:
+    client.drop_database(name);client.close()

@@ -1,0 +1,7 @@
+{
+  "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-d06-final-wheel-4722dodz/mongoeco-4.11.0-py3-none-any.whl",
+  "sha256": "2abbc99bca53d49d083691f0e0d9ae1c58cca6e1408b2390e02811d9d660c89a",
+  "site_packages": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-d06-final-wheel-4722dodz/installed/site-packages",
+  "runtime_modules_matched": 283,
+  "installation": "pip install --no-deps --no-index --target"
+}

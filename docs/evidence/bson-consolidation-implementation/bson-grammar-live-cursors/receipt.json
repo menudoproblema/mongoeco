@@ -1,0 +1,215 @@
+{
+  "status": "checkpoint committed; implementation_in_progress; D06a/b not accepted",
+  "base": "57b5faf",
+  "production_commits": [
+    "d237b97",
+    "1420b16"
+  ],
+  "plan_commit": "9987351",
+  "runtime": "runtime-sources.json",
+  "workset": "workset.json",
+  "wheel": "wheel.json",
+  "native": {
+    "archive": "native-eleven-actions.tar.gz",
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "new_actions_captured_and_checked_per_version": 11,
+    "historical_dbref_controls_checked_per_version": 5,
+    "capture_surface": "native sync PyMongo; other surfaces are replay",
+    "getmore_probes_per_version": 4,
+    "merge_zero_diagnostic": "public SDK versus raw command; permanent case uses document form",
+    "suffix_diagnostic": "6 native observations, 12 local observations; mismatch remains required work"
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "exit_code": 0,
+      "passed": 6883,
+      "log": "full-replay.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/unit/api tests/unit/wire tests/integration/api/test_pymongo_bson_boundary.py tests/integration/api/test_api_option_conservation.py --tb=short",
+      "exit_code": 0,
+      "passed": 3183,
+      "skipped": 1,
+      "subtests_passed": 1110,
+      "log": "core-wire.txt.gz"
+    },
+    {
+      "command": "isolated pip-installed wheel, verified import, pytest -q -o pythonpath= tests/integration/api/test_semantic_group_regressions.py -k bson_grammar_context --tb=short",
+      "exit_code": 0,
+      "passed": 267,
+      "deselected": 6616,
+      "log": "wheel-replay.txt.gz"
+    },
+    {
+      "command": "verified 283-module 57b5faf baseline; pytest -q -o pythonpath= tests/integration/api/test_semantic_group_regressions.py -k bson_grammar_merge_zero_batch --tb=short",
+      "exit_code": 1,
+      "failed_expected": 12,
+      "passed": 12,
+      "log": "baseline-merge-zero.txt.gz"
+    },
+    {
+      "command": "extension-mutations.py.txt",
+      "child_exit_codes_expected": [
+        1,
+        1
+      ],
+      "logs": [
+        "extension-mutant-pushdown.txt.gz",
+        "extension-mutant-response.txt.gz"
+      ]
+    },
+    {
+      "command": "Python 3.13 SDK-free smoke from installed final wheel; six engine/dialect pairs, actual sync/async scopes",
+      "exit_code": 0,
+      "log": "wheel-sdk-free.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "exit_code": 0,
+      "log": "public-typing.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --strict --follow-imports=silent --ignore-missing-imports -m mongoeco.pytest_plugin -m mongoeco.pytest_asyncio -m mongoeco.pytest_anyio -m mongoeco._pytest_runtime -m mongoeco._pytest_diagnostics -m mongoeco.wire._diagnostics -m mongoeco.wire._framing -m mongoeco.wire._request_state -m mongoeco.wire._lifecycle",
+      "exit_code": 0,
+      "log": "mypy.txt.gz",
+      "scope": "nine named modules; not whole-program typing"
+    },
+    {
+      "command": ".venv/bin/python scripts/smoke_external_engine.py",
+      "exit_code": 0,
+      "passed": 5,
+      "not_applicable": 5,
+      "log": "spi-smoke.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref 57b5faf",
+      "exit_code": 0,
+      "changed_python_files": 27,
+      "log": "lint.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/update_public_api_manifest.py --check",
+      "exit_code": 1,
+      "preexisting_differences": 11,
+      "log": "public-manifest-drift.txt.gz",
+      "effective_manifest_changes_vs_verified_baseline": 0,
+      "comparison": "public-manifest-vs-base.json",
+      "disposition": "D05 pending; not accepted by baseline equivalence"
+    }
+  ],
+  "benchmark": {
+    "samples": 16,
+    "sequence_per_engine": "ABBAABBA",
+    "rows_per_sample": 3000,
+    "pipeline": "sort/set/project",
+    "candidate_over_base_median": {
+      "MemoryEngine": 1.0090483265745602,
+      "SQLiteEngine": 1.0258165320750452
+    },
+    "outputs": "same BSON SHA per engine and exact expected rows",
+    "log": "stream-benchmark-idle.txt.gz",
+    "no_other_repository_gate_active": true,
+    "scope": "bounded stream diagnostic; not whole D05 performance acceptance"
+  },
+  "cleanup": {
+    "owned_containers_independently_absent": 12,
+    "owned_volumes_independently_absent": 24,
+    "reports": [
+      "getmore-cleanup.json",
+      "native-cleanup.json",
+      "suffix-cleanup.json"
+    ]
+  },
+  "protected_sources": "protected-sources.json",
+  "historical_fixtures_changed": false,
+  "feedback": {
+    "core_before_error_code_fix": "feedback-core-wire.txt.gz",
+    "interrupted_replays": [
+      "interrupted-full-replay.txt.gz",
+      "interrupted-replay2.txt.gz"
+    ],
+    "concurrent_benchmark_not_acceptance": "feedback-concurrent-benchmark.json"
+  },
+  "remaining": [
+    "Response byte boundaries and user-codec ordering/atomicity per response",
+    "Materializing sort/group suffixes; native delivers 101 before code 2, local fails at open",
+    "Direct raw batches and full raw wire representation; current public-value witness is insufficient",
+    "Other typed String consumers and D06c group/sets/lookup/spill/Search key consumers",
+    "D05 public manifest, complete environment/SDK/pytest/SPI/coverage/persistence/performance matrix",
+    "H53 disposition, sNaN conversion, optional D07 decision and general BSON admission B07"
+  ],
+  "limits": [
+    "No D06 closure or full-goal completion.",
+    "Native diagnostics and captures do not imply native async/authenticated multiuser coverage.",
+    "Canonical public manifest check remains red.",
+    "No remote CI, publication or push."
+  ],
+  "document_checks": {
+    "local_links_checked": 63,
+    "missing": []
+  },
+  "artifacts": {
+    "README.md": "1dd6cd533f164c7277d71d6c7eff3d4b923a6f459d5586dd901d01500687b905",
+    "baseline-merge-zero.txt.gz": "8e4bd5d879e4ad906df9b7482f6201ebeecd4eedf2e9a9b795fb564485c4cb2f",
+    "core-wire.txt.gz": "8edcab0bb57d5bc32cdf45fb036775eb754bb156436d507553dc5a326999a0da",
+    "environment.json": "cc280d3179c63596579134316ff0f864f07397c7d12e0387c8c401e7548477be",
+    "extension-mutant-pushdown.txt.gz": "531197c5cbfd2e4e72411d4fdd67e6984181301ea23700fe33ae69d28ee92aa9",
+    "extension-mutant-response.txt.gz": "acd1c827ea26e67e69412671bf0550d54750b108e869b2776c3f397877378916",
+    "extension-mutations.py.txt": "9d80d8712497f59ee8a9eeff870ed6706d6be11beb9e9d001f0ee0882e52d955",
+    "feedback-concurrent-benchmark.json": "0720f7c15585e5a7f686111e2c58c6c1484d4176b0f3902e94e5cb2547d4012c",
+    "feedback-concurrent-benchmark.txt.gz": "580947277b9700b90342fa952954f98a60c943abfeae9443bd1df968b06b2f35",
+    "feedback-core-wire.txt.gz": "3d2b3baee04cee3054050e38542f70b93f067a9900c2d0f03f612f4393022c88",
+    "fixture-7.0.json": "6395e03757ce6b1c7e2d093206ff398a63edf40b29e15265964c2b5dcb06e73d",
+    "fixture-8.0.json": "3eaed73759af240bb5316874fa261765c5d740cf8e1ef5c66c3b77e159500d21",
+    "fixture-9.json": "c9da07a7edab8c3a55e5e96dfecfd7b6df346173c41f2913aa28964f7cf0f449",
+    "full-replay.txt.gz": "7cdb98dc84560c8ac01b33d9f339c5e22d21d13ee3acef2dc676a39ddb468369",
+    "getmore-7.0.json": "0dc7fab2f9dd37f5a78c6af89c693f6827c9c0a24922e5333ddbcba6e2ec752d",
+    "getmore-8.0.json": "c402dccdc52dec0535007041bb23cae331f36ed3586596876492a22a2c7f4dcb",
+    "getmore-9.json": "59fee4dc23f3a8fceb722c7d13a9afbb87ba2e3b2ea706a5fff65fec47f37a25",
+    "getmore-cleanup.json": "a5a9c6c94c91f1869fef16ccdb1c7442623dd09bc84ed22db0157271c9394d4c",
+    "getmore-native-probe.py.txt": "a1e6ea9f31699bbe7213330fc8bf9f4cfff786840f19ec900f890807ea7eff09",
+    "interrupted-full-replay.txt.gz": "86a9eb2df7803a158cb865b54d6f932fdceafcd3f93d69726ffcc974d42e158a",
+    "interrupted-replay2.txt.gz": "0f4c0434e151d52f4f9930001117522d1f094c41c5d65cf5cecfe44f9b05bcd3",
+    "lint.txt.gz": "00d85768217242cb18100cb0ba0c6ebf04dac9c4c5fc266555139af3294a48c1",
+    "merge-zero-7.0.json": "6bfdeaff57aca06d4b603a2e8ebf9e1190a4ad792eb2cb6b57367a6bd502014b",
+    "merge-zero-8.0.json": "ab254deaf6ee40760914b455ee22db631a7d5ccbb0c9576c58af44edb7edcac6",
+    "merge-zero-9.0.json": "1bbc27809df5899be3d0f0e1dbc2f56ed34af22b39d10f67f6dc282755447181",
+    "merge-zero-native-probe.py.txt": "f0094cbf97d12a263cff08f064d9e6cfc04411075e383d81887b5797a67f4194",
+    "mypy.txt.gz": "48b5b7deaa75619f778f8eddfed7d89a19b519d6178d241435c1712d263fb3f7",
+    "native-cleanup.json": "92e9b14f8673cb62a881e7a856e548ade49cb5e23c746ed564047c09452bb83a",
+    "native-eleven-actions.tar.gz": "f0269261db61b048d6067bf62d659a151446bbe03b9ac3dc9bf209e632bf4b56",
+    "native-eleven-matrix.py.txt": "1fcf6bbd2e0fcf00a8a2194339bd55797a3d21fa22a51c6911015b60c62c768c",
+    "native-eleven-matrix.txt.gz": "566cf9443f37f81d494eac2547b565b2bb57634d577929c8de98f5a56d44b0b3",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "public-manifest-drift.txt.gz": "cd366411af0c83f4f63c32be040bc8fbf1a49fb94d17ff5b45f7f58dd3af83b6",
+    "public-manifest-vs-base.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "public-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "runtime-sources.json": "feb5a83993d71d3bc0389341660a9c3e71a5b52910617cdae70e7113d198cf45",
+    "sdk-free.txt.gz": "887863f8f57d6709cd49c06a55539d3faa6460497f73a07ba239862ad6b3bb65",
+    "spi-smoke.txt.gz": "a256763b2c1afab4ee6ea0ea3e3d9fb0ae48f877753ec7e3d965d691632c2c79",
+    "stream-benchmark-idle.json": "bb2d6d4fca225acf68905fb9e57550d8114639cd250a66a676a488f933c82495",
+    "stream-benchmark-idle.txt.gz": "a06be41a34716874f3a087e7c5b9e66865cdbca3ac2c697328aa44687406aeb7",
+    "stream-benchmark.py.txt": "a927b25f5350387b6894c5fe356224994aeb207077f5ceafcc0ae1d58fe7d2c5",
+    "suffix-cleanup.json": "5002994e8903bd1eff985448dd52404adc387167f5202cdd40e0c70283354b72",
+    "suffix-fixture-7.0.json": "ee4a9804069637bb591889a99be60c6336bdf01adcac8919454259fd4a746088",
+    "suffix-fixture-8.0.json": "808d70afa1cf627c16e8da1073013db0f7cf8eee7d0f2636c508b6aadf8fdcd1",
+    "suffix-fixture-9.0.json": "0b4f623835b2bb3f97653139fb23b7c087e3229996c65025d90db61baefd755a",
+    "suffix-local-probe.py.txt": "bb4e1dab29f10796f9513b82a0ea1e582b114561ee0ec9541cc3f70fa3792a16",
+    "suffix-local.json": "2b570bad279319b9ce634b1f66adb10832bc79aecaf53f4f7465097b9cb42cb7",
+    "suffix-native-7.0.json": "c250c9e5d733387228ccb5b7ba1b7b88bd15c2ac9fd8aea2755c8335a53dc89a",
+    "suffix-native-8.0.json": "c250c9e5d733387228ccb5b7ba1b7b88bd15c2ac9fd8aea2755c8335a53dc89a",
+    "suffix-native-9.0.json": "c250c9e5d733387228ccb5b7ba1b7b88bd15c2ac9fd8aea2755c8335a53dc89a",
+    "suffix-native-probe.py.txt": "57551b595bc91f792a97dceac56b788749d8fde67dceafdcabec90a2365a2611",
+    "wheel-build.txt": "aeb00bc1baf50dfc9c197668dfb1a165586c48fce64399040b434ded91150396",
+    "wheel-install.txt": "a6506f94f1fba74c9524dd141467a0ac649b8a9382c642cefb76fef667ed6def",
+    "wheel-replay.txt.gz": "36d03b300f2911c5762d417f36228e0aa7440a79686ebd8fd05f2ce288e13a77",
+    "wheel-sdk-free.txt.gz": "c74aa217af7815bfed3fd39cf616ac9de9f6559caed56a97bc43287be7750fe2",
+    "wheel.json": "7558dc728572d7189e83e196846216eed84172ed32865d61f8517fc2a8c75640",
+    "workset.json": "8660954a50cd68b55e0f4406bb26819b950554777dcbcdf02b46cd22bcb52c71"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "MemoryEngine-7.0-False": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "MemoryEngine-7.0-True": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "MemoryEngine-8.0-False": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "MemoryEngine-8.0-True": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "MemoryEngine-9.0-False": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "MemoryEngine-9.0-True": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "SQLiteEngine-7.0-False": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "SQLiteEngine-7.0-True": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "SQLiteEngine-8.0-False": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "SQLiteEngine-8.0-True": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "SQLiteEngine-9.0-False": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  },
+  "SQLiteEngine-9.0-True": {
+    "phase": "open",
+    "exception": "OperationFailure",
+    "code": 2,
+    "received": []
+  }
+}

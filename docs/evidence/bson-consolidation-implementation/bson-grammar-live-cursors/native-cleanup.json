@@ -1,0 +1,140 @@
+{
+  "/tmp/mongoeco-merge-zero-native-7.0/fixture.json": {
+    "fixture_status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "c241c3022a924d6fc93b4d8ba3e666993cc9594306194af5e6dffe4f44b304d7",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-840afcbf24234fffb1fa98b63f3827de": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:c9479e3c8d6133a826cdfe86d24e20991daf1b16455f75e2049a984c60869eac": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:6fc074eca52575bcbac48c6614871a7fbfcfb44dc4d2e3efe0c3903f1820ce62": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-merge-zero-native-8.0/fixture.json": {
+    "fixture_status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "f51d4bc81be249f79123588bdd6cb4f6a6e28503196542c011a06f1e714317d4",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-84211151bf6841319b5762d57efe66b8": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:afcd9a3c366e424e15c37c3106cabbc4748f63e07760d8dfcd7bae4c78468969": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:dfecc2be5f7ae73010f04a49386bc1dd6a3b67154e3e0c14f4e5d1077e1b1827": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-merge-zero-native-9.0/fixture.json": {
+    "fixture_status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "4ad8bc7e391543be43216279f52b438fa111083939b2566e0bb405a8111c3277",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-671f825b90424d2ab9e7a9f3ec48cc30": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:b1c4dae769dd8617c6d116bf4b84e3a1f999c3d5400bc5b23b1dc332f7aac868": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:4e44c930ec5b511c1e2f014cb8127d9dc76d8bd4fa27fc63eceed373ef7c455c": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-grammar-native-live-final/7.0/fixture.json": {
+    "fixture_status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "5fc1eb8e7a815c3f2c91974648bf78a7af5081605bd8a12614f150c404b24b4d",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-eb4685b68a384f1d8c0d1bc2934b83e6": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:f5598d9a2e9b505ea208282a4b87e1a0d5f4df035b1b404bbe974b4ca4491fab": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:4e3cb28826af2cfc8da1de6a475539cbe6954a41a149838f11782c99c93bdc8e": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-grammar-native-live-final/8.0/fixture.json": {
+    "fixture_status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "2db5d1db3e1593ba8b520423cb80313b516de9edd9cf3470c8944e90388b5874",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-a6456d7f151246f983a780d6b7e07173": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:ae0a883d0f4af3fd9c33545f8558d150f5e8e7df5e881dba1607aa8e1cb78d2f": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:fb5e0dd45ccbbbb7617accb271d8bd50bedd76e074f0d2fede0dc0fabb283f7b": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "/tmp/mongoeco-grammar-native-live-final/9.0/fixture.json": {
+    "fixture_status": "succeeded",
+    "payload_exit_code": 0,
+    "cleanup": {
+      "removed": true,
+      "container_id": "f6f0705b88447384d07722867c96de35bfed29671f5ee06534f61172d8aafa03",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-2bbd50b47de84da8970bcfe030a1e066": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:e57158e1cca1077be794774c5b4517273120282d2e403a14a1c12f8923a6ee9d": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:9bba7142ce8139746aa3e33e3148450e7a57b017edd258534da628077088e11a": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  }
+}

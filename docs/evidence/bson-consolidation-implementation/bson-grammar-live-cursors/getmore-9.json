@@ -1,0 +1,26 @@
+{
+  "namespace": {
+    "ok": 0.0,
+    "code": 13,
+    "codeName": "Unauthorized",
+    "errmsg": "Requested getMore on namespace 'cursor_ownership_4d771075a45d43ccbd469dc82a09ff6d.other', but cursor belongs to a different namespace cursor_ownership_4d771075a45d43ccbd469dc82a09ff6d.rows"
+  },
+  "missing_session": {
+    "ok": 0.0,
+    "code": 50737,
+    "codeName": "Location50737",
+    "errmsg": "Cannot run getMore on cursor 1817076834008483166, which was created in session e7827e9a-bccb-4bff-b329-4e55279d3e82 - 47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU= -  - , without an lsid"
+  },
+  "different_session": {
+    "ok": 0.0,
+    "code": 50738,
+    "codeName": "Location50738",
+    "errmsg": "Cannot run getMore on cursor 6857057217378930869, which was created in session e7827e9a-bccb-4bff-b329-4e55279d3e82 - 47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU= -  - , in session 1dc60071-18e3-4c6e-8485-f5f572559035 - 47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU= -  - "
+  },
+  "unexpected_session": {
+    "ok": 0.0,
+    "code": 50736,
+    "codeName": "Location50736",
+    "errmsg": "Cannot run getMore on cursor 2658649031062309570, which was not created in a session, in session e7827e9a-bccb-4bff-b329-4e55279d3e82 - 47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU= -  - "
+  }
+}

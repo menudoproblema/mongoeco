@@ -1,0 +1,3 @@
+Processing /var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-d06-final-wheel-4722dodz/mongoeco-4.11.0-py3-none-any.whl
+Installing collected packages: mongoeco
+Successfully installed mongoeco-4.11.0

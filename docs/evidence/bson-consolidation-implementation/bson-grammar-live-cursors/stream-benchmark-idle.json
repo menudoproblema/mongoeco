@@ -1,0 +1,130 @@
+[
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.06434425001498312,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.06430679198820144,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.06526829197537154,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.06602941697929054,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  },
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.06376849999651313,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.0654073340119794,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.0662086249794811,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "MemoryEngine",
+    "seconds": 0.06515958299860358,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  },
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.07284541591070592,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.07350283302366734,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.0740750830154866,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.07197162497323006,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  },
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.07149537501391023,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.07397866703104228,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/Users/uve/Proyectos/mongoeco/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.07399891596287489,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "B"
+  },
+  {
+    "source": "/private/tmp/mongoeco-grammar-base-1n4hop5q/src",
+    "engine": "SQLiteEngine",
+    "seconds": 0.07228183397091925,
+    "rows": 3000,
+    "bson_sha256": "d07147597a89963b7f54269854f4443ce9e2f172351064c828890f44aa2d3392",
+    "variant": "A"
+  }
+]

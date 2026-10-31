@@ -1,0 +1,20 @@
+import json
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+pipeline=[{'$set':{'pre':{'$add':['$_id',0]}}},{'$sort':{'pre':1}},{'$project':{'v':{'$divide':['$_id',{'$cond':[{'$eq':['$_id',103]},0,1]}]}}}]
+result={}
+for engine in (MemoryEngine,SQLiteEngine):
+ for dialect in ('7.0','8.0','9.0'):
+  for disk in (False,True):
+   with MongoClient(engine(),mongodb_dialect=dialect) as client:
+    c=client.db.rows;c.insert_many([{'_id':i} for i in range(1,114)])
+    received=[];phase='open';cursor=None
+    try:
+     cursor=c.aggregate(pipeline,allowDiskUse=disk)
+     phase='iterate'
+     for row in cursor:received.append(row['_id'])
+    except Exception as error:
+     result[f'{engine.__name__}-{dialect}-{disk}']={'phase':phase,'exception':type(error).__name__,'code':getattr(error,'code',None),'received':received}
+    finally:
+     if cursor is not None:cursor.close()
+print(json.dumps(result,indent=2))

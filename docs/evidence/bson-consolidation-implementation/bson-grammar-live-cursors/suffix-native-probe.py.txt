@@ -1,0 +1,21 @@
+import json,os,uuid
+from pymongo import MongoClient
+client=MongoClient(os.environ['MONGOECO_REAL_MONGODB_URI'])
+name='suffix_'+uuid.uuid4().hex
+pipeline=[{'$set':{'pre':{'$add':['$_id',0]}}},{'$sort':{'pre':1}},{'$project':{'v':{'$divide':['$_id',{'$cond':[{'$eq':['$_id',103]},0,1]}]}}}]
+try:
+ c=client[name].rows;c.insert_many([{'_id':i} for i in range(1,114)])
+ result={}
+ for disk in (False,True):
+  received=[];phase='open';cursor=None
+  try:
+   cursor=c.aggregate(pipeline,allowDiskUse=disk)
+   phase='iterate'
+   for row in cursor:received.append(row['_id'])
+  except Exception as error:
+   result[str(disk)]={'phase':phase,'exception':type(error).__name__,'code':getattr(error,'code',None),'received':received}
+  finally:
+   if cursor is not None:cursor.close()
+ print(json.dumps(result,indent=2),flush=True)
+finally:
+ client.drop_database(name);client.close()

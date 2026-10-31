@@ -1,0 +1,13 @@
+import subprocess,sys,re
+from pathlib import Path
+for name,module in [('pushdown','mongoeco.core.aggregation.planning'),('response','mongoeco.api._async.aggregation_cursor')]:
+    code=f'''import importlib,pytest
+module=importlib.import_module({module!r})
+module.get_registered_aggregation_stage_registration=lambda _name:None
+raise SystemExit(pytest.main(['-q','tests/unit/api/test_aggregation_cursor.py','-k','builtin_override','--tb=short']))
+'''
+    result=subprocess.run([sys.executable,'-c',code],capture_output=True,text=True)
+    output=result.stdout+result.stderr
+    Path(f'/tmp/mongoeco-d06-extension-mutant-{name}.txt').write_text(output)
+    print(name,result.returncode,flush=True)
+    assert result.returncode==1 and re.search(r'[1-9][0-9]* failed', output) and 'builtin_override_expands_first_response' in output

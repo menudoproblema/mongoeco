@@ -1,0 +1,68 @@
+{
+  "7.0": {
+    "fixture_status": "succeeded",
+    "cleanup": {
+      "removed": true,
+      "container_id": "127c71ba1eca462f128f475710c26591e60e6bf4d9a0ab29ce328b075baf76fc",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-7c270ade387846fa86b742e387310cda": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:50127b1fbfe69fdb9f9ee7c135b85eed294303b98049fe3097837c163665fc0f": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:84e92263532c6311331efbac7683b68365e3aff7fc6dce52b36c150eabcf1859": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "8.0": {
+    "fixture_status": "succeeded",
+    "cleanup": {
+      "removed": true,
+      "container_id": "8fc1f96b0ddd12635e77bd199565a22f938112b56f044351febc010c75d21a3f",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-62eb892949974fb7b200075a4cefd9a9": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:54a1e9b5b3513e39a16ad34752b962894b9d6625391943924bf893bdf268ce90": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:f06fe4cf16ac92c3d2ac28360318a4663694ef7ed6001f95562a99cbeed5cb85": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  },
+  "9": {
+    "fixture_status": "succeeded",
+    "cleanup": {
+      "removed": true,
+      "container_id": "21f37a0764fc45a33a35fb9d279b7d830419c81daac4ebea520d27d77c712642",
+      "volumes_removed": true
+    },
+    "independent_absence": {
+      "container:mongoeco-differential-c1aa630cc30646f3a790036a9ab66f5b": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:1102469d1405d5b54b99e6de8503608d518bd740533c35bf2157d232598a701a": {
+        "absent": true,
+        "returncode": 1
+      },
+      "volume:9c95171cc66a46122593ecdcb5972494fe3e0b1fdb5ac7fc998d03ccf0c07293": {
+        "absent": true,
+        "returncode": 1
+      }
+    }
+  }
+}

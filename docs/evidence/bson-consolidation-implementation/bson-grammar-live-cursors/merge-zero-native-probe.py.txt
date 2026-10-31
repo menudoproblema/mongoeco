@@ -1,0 +1,20 @@
+import json,os,uuid
+from pymongo import MongoClient
+client=MongoClient(os.environ['MONGOECO_REAL_MONGODB_URI'])
+name='merge_zero_'+uuid.uuid4().hex
+try:
+ db=client[name];src=db.src
+ src.insert_many([{'_id':1,'v':1},{'_id':2,'v':2}])
+ result={}
+ for surface in ('collection','command'):
+  target='target_'+surface
+  if surface=='collection':
+   cursor=src.aggregate([{'$merge':target}],batchSize=0)
+   result[surface]={'count_after_open':db[target].count_documents({}),'cursor_id':cursor.cursor_id}
+   cursor.close()
+  else:
+   reply=db.command({'aggregate':'src','pipeline':[{'$merge':target}],'cursor':{'batchSize':0}})
+   result[surface]={'count_after_open':db[target].count_documents({}),'cursor_id':reply['cursor']['id'],'first_batch':reply['cursor']['firstBatch']}
+ print(json.dumps(result,indent=2),flush=True)
+finally:
+ client.drop_database(name);client.close()

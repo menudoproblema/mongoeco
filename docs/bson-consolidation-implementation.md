@@ -696,7 +696,7 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 
 ## Trabajo restante
 
-- D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
+- D06a/D06b/D06c: completar gramática/String tipado, raw y consumidores DBRef. El checkpoint de cursores vivos conserva pendientes de bytes, callbacks y sufijos materializantes; no acredita cierre de D06.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1092,3 +1092,84 @@ Las referencias históricas y observadores protegidos permanecen intactos.
   repetir revisión/gates sobre candidato final, wheel, perfil sin SDK, costes y
   las matrices exigidas por sus owners. H53, conversión, D07, D05 y B07 conservan
   sus pendientes. El código de este checkpoint sigue siendo un candidato.
+
+## D06a/b — Checkpoint de cursores vivos y apertura del driver
+
+Continúa el checkpoint anterior sobre `57b5faf`, sin reescribir su receipt.
+El [nuevo registro de evidencia](evidence/bson-consolidation-implementation/bson-grammar-live-cursors/README.md)
+identifica código, wheel, capturas y diagnósticos. D06 sigue abierto.
+
+Wire conserva ahora fuentes vivas en el almacén existente. Find/aggregate usan
+el mismo parser y ejecutor de comandos, con contexto, failpoints, profiling y
+sesión; un callback interno entrega la respuesta inicial al almacén. La API
+pública de command no adquiere ese callback. GetMore conserva namespace,
+principal y sesión, serializa lecturas por cursor y cierra en EOF/error.
+Kill/teardown comparten cleanup que termina aunque el caller sea cancelado y
+recoge fallos de todas las fuentes. Una lista kill mal formada se valida antes
+de retirar ninguna fuente. No se crea otro parser, runner ni store paralelo.
+
+El transporte pide valores sin codecs del usuario para codificar BSON antes
+del hook SDK de DBRef; la lectura pública conserva su propia materialización.
+Esto no acredita todavía todas las salidas raw. El testigo llamado
+`raw_nested_values` observa valores públicos: su nombre no demuestra igualdad
+de bytes de raw batches ni de envelopes wire.
+
+Las extensiones registradas impiden el pushdown de la etapa sustituida y la
+selección de group/sort incremental que asumía una implementación built-in.
+Los nombres `$skip`/`$limit` tampoco permiten extraer ventanas de un handler
+sustituido. Los tests distinguen siete formas, incluida una especificación de
+group que solo acepta la extensión; las mutaciones de las guardas de pushdown
+y de respuesta fallan. El cálculo de cardinalidad de entrada solo usa garantías
+de built-ins no sustituidos.
+
+La apertura pública reproduce la política PyMongo de omitir el batchSize
+inicial de una escritura `$merge`, también cuando el usuario pide cero. La
+entrada raw conserva el cero y difiere la evaluación. El nuevo corpus tiene
+once acciones: incluye `$merge` con especificación documental, tamaños
+omitido/0/1 y estado del destino antes de consumir el cursor. Los tres nativos
+tienen captura, --check de esas once acciones y --check de los cinco controles
+DBRef históricos. La baseline aislada conserva 283 hashes verificados y falla
+12 de los 24 nodos nuevos; las rutas wire ya pasaban ese testigo.
+
+Las sondas adicionales de getMore fijan 13 para namespace, 50736 para añadir
+sesión a un cursor sin ella, 50737 para omitirla y 50738 para cambiarla en 7/8/9.
+Los tests verifican además rechazo de otro principal sin consumir filas,
+continuidad por otra conexión del mismo principal, getMore concurrentes y
+cleanup cancelado. El código 13 del principal también tiene respaldo en el
+parser de getMore oficial; las sondas sin autenticación no acreditan un
+escenario físico multiusuario. No se modifica el inventario de errores legacy.
+
+Pasan 3.183 pruebas core/API/wire, con 1.110 subtests y un skip separado. El
+wheel instalado sin red coincide por hash con los 283 módulos y pasa los 267
+checks focales. El smoke sin SDK pasa también desde ese wheel en Python 3.13,
+con seis pares motor/dialecto y ámbitos sync/async. Typing público y canario SPI
+pasan. El check canónico de manifiesto público conserva 11 diferencias frente
+al snapshot antiguo; el manifiesto efectivo del candidato coincide con la
+baseline. Es un gate pendiente de D05, no una aceptación ni motivo para cambiar
+un snapshot por conveniencia.
+
+El replay completo del candidato congelado termina con 6.883 checks correctos.
+El benchmark del pipeline ordinario sort/set/project usa 3.000 filas,
+dos secuencias ABBA por motor y salidas BSON idénticas a la baseline. Sin otros
+gates del repositorio activos, las razones de medianas candidato/base son
+1,009 en Memory y 1,026 en SQLite. Es una medida acotada de streaming, no el
+gate completo de costes de D05 ni una conclusión estadística sobre cada carga.
+Los commits de producción son `d237b97` (BSON) y `1420b16` (respuestas/cursores).
+Un commit y un replay verde no cierran los pendientes siguientes.
+
+**Pendientes verificados que impiden aceptar D06:**
+
+- Límite por bytes y codecs de usuario por respuesta, además de número de filas.
+- Sufijos tras etapas materializantes: la sonda nueva de set/sort/project con
+  error en fila 103 entrega 101 filas antes de fallar con código 2 en los tres
+  servidores, con allowDiskUse false/true. El candidato falla al abrir y no
+  entrega filas. Completar el particionado/evaluación de sufijos en los caminos
+  existentes; un bound aplicado solo al pipeline streamable no cubre sort/group.
+- Raw batches directos y otras salidas wire: observar bytes antes del hook SDK,
+  orden/extras/db null y controles Code.scope. No deducir esa garantía de la
+  lectura pública ni corregir la forma BSON después de perderla.
+- Conservar la distinción entre apertura SDK y comandos raw con cero. La API
+  directa database.command no tiene todavía una garantía de cursor vivo por
+  asociación con el store wire.
+- Consumidores String restantes y D06c; después revisión, costes y matrices
+  integradas de D05. H53, sNaN, D07 y B07 conservan sus obligaciones.
