@@ -1,0 +1,648 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_watch_malformed_tokens": {
+      "collection/resume_after/number": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "collection/resume_after/array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "collection/resume_after/missing_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/resume_after/null_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/resume_after/number_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/resume_after/code_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/resume_after/empty_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40649"
+        }
+      },
+      "collection/resume_after/unicode_digit": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collection/resume_after/decoded_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collection/resume_after/boolean_version": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collection/resume_after/negative_position": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collection/start_after/number": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "collection/start_after/array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "collection/start_after/missing_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/start_after/null_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/start_after/number_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/start_after/code_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "collection/start_after/empty_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40649"
+        }
+      },
+      "collection/start_after/unicode_digit": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collection/start_after/decoded_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collection/start_after/boolean_version": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collection/start_after/negative_position": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/resume_after/number": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "database/resume_after/array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "database/resume_after/missing_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/resume_after/null_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/resume_after/number_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/resume_after/code_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/resume_after/empty_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40649"
+        }
+      },
+      "database/resume_after/unicode_digit": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/resume_after/decoded_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/resume_after/boolean_version": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/resume_after/negative_position": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/start_after/number": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "database/start_after/array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "database/start_after/missing_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/start_after/null_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/start_after/number_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/start_after/code_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "database/start_after/empty_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40649"
+        }
+      },
+      "database/start_after/unicode_digit": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/start_after/decoded_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/start_after/boolean_version": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "database/start_after/negative_position": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/resume_after/number": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "client/resume_after/array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "client/resume_after/missing_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/resume_after/null_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/resume_after/number_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/resume_after/code_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/resume_after/empty_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40649"
+        }
+      },
+      "client/resume_after/unicode_digit": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/resume_after/decoded_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/resume_after/boolean_version": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/resume_after/negative_position": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/start_after/number": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "client/start_after/array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "client/start_after/missing_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/start_after/null_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/start_after/number_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/start_after/code_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40647"
+        }
+      },
+      "client/start_after/empty_data": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "40649"
+        }
+      },
+      "client/start_after/unicode_digit": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/start_after/decoded_array": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/start_after/boolean_version": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "client/start_after/negative_position": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      }
+    },
+    "semantic_watch_valid_resume": {
+      "collection/resume_after": {
+        "operationType": "insert",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      },
+      "collection/start_after": {
+        "operationType": "insert",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      },
+      "database/resume_after": {
+        "operationType": "insert",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      },
+      "database/start_after": {
+        "operationType": "insert",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      },
+      "client/resume_after": {
+        "operationType": "insert",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      },
+      "client/start_after": {
+        "operationType": "insert",
+        "documentKey": {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793468307,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793468307,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_watch_token_cases.py",
+    "sha256": "b4cce0543bee230acfd584536ee29339cac11ebef11953449ffeda0cc2a57026"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_watch_malformed_tokens",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_malformed_tokens"
+    },
+    {
+      "name": "semantic_watch_valid_resume",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_valid_resume"
+    }
+  ]
+}

@@ -6,14 +6,16 @@ import threading
 import time
 import weakref
 
-from collections.abc import (  # noqa: TC003 - introspectable signature
+from collections.abc import (
     Awaitable,
     Callable,
+    Mapping,
 )
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import apply_pipeline, compile_pipeline
 from mongoeco.core.bson_identity import same_bson_update_value
+from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
@@ -238,25 +240,40 @@ class ChangeStreamCursor:
         return self._async_cursor.alive
 
 
-def parse_resume_token(token: dict[str, object]) -> int:
+def parse_resume_token(token: object) -> int:
+    """Read legacy decimal and v1 local tokens without leaking Python errors."""
+    if not isinstance(token, Mapping):
+        message = "resume token must be a document"
+        raise server_error(message, code=14)
     raw = token.get("_data")
-    if not isinstance(raw, str):
-        raise OperationFailure("resume token must contain a string _data field")
-    if raw.isdigit():
-        return int(raw)
-    padding = "=" * (-len(raw) % 4)
+    if not matches_bson_type(raw, "string"):
+        message = "resume token must contain a string _data field"
+        raise server_error(message, code=40647)
+    if not raw:
+        message = "resume token _data must not be empty"
+        raise server_error(message, code=40649)
+    invalid_data = "resume token must contain a valid _data field"
     try:
-        payload = base64.urlsafe_b64decode((raw + padding).encode("ascii"))
+        if raw.isascii() and raw.isdecimal():
+            return int(raw)
+        padding = "=" * (-len(raw) % 4)
+        payload = base64.b64decode(
+            (raw + padding).encode("ascii"), altchars=b"-_", validate=True
+        )
         document = json.loads(payload.decode("utf-8"))
-    except Exception as exc:
-        raise OperationFailure("resume token must contain a valid _data field") from exc
-    token_value = document.get("t")
+    except (ValueError, RecursionError) as exc:
+        raise server_error(invalid_data, code=9) from exc
+    token_value = document.get("t") if isinstance(document, dict) else None
     if (
-        document.get("v") != 1
+        not isinstance(document, dict)
+        or not isinstance(document.get("v"), int)
+        or isinstance(document.get("v"), bool)
+        or document["v"] != 1
         or not isinstance(token_value, int)
         or isinstance(token_value, bool)
+        or token_value < 0
     ):
-        raise OperationFailure("resume token must contain a valid _data field")
+        raise server_error(invalid_data, code=9)
     return token_value
 
 

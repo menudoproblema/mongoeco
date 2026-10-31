@@ -147,6 +147,10 @@ from tests.differential.semantic_watch_rename_cases import (
     SEED as WATCH_RENAME_SEED,
     SEMANTIC_WATCH_RENAME_CASES,
 )
+from tests.differential.semantic_watch_token_cases import (
+    SEED as WATCH_TOKEN_SEED,
+    SEMANTIC_WATCH_TOKEN_CASES,
+)
 from tests.differential.semantic_write_effect_cases import (
     SEED as WRITE_EFFECT_SEED,
     SEMANTIC_WRITE_EFFECT_CASES,
@@ -164,6 +168,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "watch_token": SemanticCorpus(
+        "watch-token", "semantic_watch_token_cases", WATCH_TOKEN_SEED,
+        SEMANTIC_WATCH_TOKEN_CASES, surfaces=("sync", "async"),
+    ),
     "rename_command": SemanticCorpus(
         "rename-command", "semantic_rename_command_cases", RENAME_COMMAND_SEED,
         SEMANTIC_RENAME_COMMAND_CASES,

@@ -700,6 +700,8 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 - D04: protocolo/cierre filtrado, interacción con imágenes, continuidad/
   reanudación y fixtures replica set de jobs nativos. H56 y dropTarget quedan
   aceptados en su subset de una base, sin extender rename entre bases.
+  La dependencia del decoder de tokens tiene entrega propia; quedan el
+  checkpoint público, apertura/avance atómicos y precedencia de opciones.
   Preparación/contexto, modos CRUD de imágenes y efectos de namespace tienen
   aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
   están en el refinamiento de revisión 10 del plan; ni publicación TTL ni D01b los cierran.
@@ -723,3 +725,35 @@ Concreta el siguiente corte de cursor/reanudación, incluyendo cinco testigos
 locales del decoder y el error tras invalidate filtrado. Estas sondas son
 diagnóstico pendiente de corrección/aceptación, no un cierre D04. Las garantías
 y dependencias permanecen en el plan, sin una segunda lista activa aquí.
+
+## D04 — Dependencia del decoder de tokens
+
+La [evidencia de admisión](evidence/bson-consolidation-implementation/watch-token-admission/receipt.json)
+documenta el arreglo del parser compartido por colección/base/cliente y por las
+dos APIs. Se conserva el alias privado y el productor ordinario de tokens;
+no hay otro decoder, formato nuevo, cambio de journal, esquema SQL o SPI v2.
+
+El parser exige un documento y un `_data` BSON string, distinguiendo Code.
+Los tipos incorrectos conservan los códigos nativos observados 14/40647;
+cadena vacía usa 40649 y cuerpo inválido 9. Base64/JSON se validan antes de
+acceder a campos; versión y posición son enteros, sin bool ni posición negativa.
+Desaparecen AttributeError/ValueError en los testigos de revisión 10. No se
+interpreta el formato opaco del servidor como si fuera el formato local.
+
+El corpus permanente añade 66 rechazos y seis controles de continuidad por
+major, con capturas físicas y --check 7.0.43/8.0.32/9.0.2. Las seis combinaciones
+motor/dialecto lo ejecutan por sync/async. El control de continuidad mantiene
+el historial disponible: sin journal ni watchers, el subset local conserva
+su rechazo documentado ante huecos. Un archivo/journal realmente creado por
+c7fc668 acredita además reanudación tras cerrar y reabrir con v1 y decimal
+heredados, conservando los bytes del token.
+
+Esta dependencia no cierra D04 ni el corte conjunto de protocolo/checkpoint.
+Iteración/context manager, cancelación, invalidate filtrado, resume_token,
+intercalados, retención/gaps, precedencia y fixture RS conservan su pendiente.
+Pasan 6.202 de replay integrado, 2.730 de core/propiedades/contratos (936
+subtests, un skip), 56 con orjson, typing público/boundary, lint y smoke sin SDK.
+El benchmark ABBA de apertura con token válido mide ratios de medianas 1,11
+Memory y 1,12 SQLite: alrededor de un microsegundo adicional por apertura para
+la validación más estricta. No mide throughput de eventos ni cierra D05.
+Los comandos, fuentes y límites del candidato quedan en el receipt enlazado.

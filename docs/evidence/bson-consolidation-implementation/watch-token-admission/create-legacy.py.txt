@@ -1,0 +1,17 @@
+import json,sys
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+import mongoeco
+root=Path(sys.argv[1]);root.mkdir(exist_ok=True)
+print('producer:',mongoeco.__file__)
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c
+ s=c.watch(max_await_time_ms=1)
+ c.insert_one({'_id':1,'v':'first'})
+ first=s.try_next()
+ s.close()
+ c.insert_one({'_id':2,'v':'second'})
+ record={'token':first['_id'],'position':first['clusterTime'],'expected':{'_id':2,'v':'second'}}
+ (root/'expected.json').write_text(json.dumps(record))
+print('legacy file, token and post-close journal event created')

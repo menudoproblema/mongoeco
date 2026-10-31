@@ -1,0 +1,19 @@
+import json,statistics,time
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+samples={}
+for factory in [MemoryEngine,SQLiteEngine]:
+ with MongoClient(factory(),mongodb_dialect='9.0') as client:
+  c=client.bench.c
+  keeper=c.watch(max_await_time_ms=1)
+  c.insert_one({'_id':1});token=keeper.try_next()['_id']
+  measurements=[];checksum=0
+  for sample in range(5):
+   start=time.perf_counter()
+   for i in range(3000):
+    s=c.watch(resume_after=token,max_await_time_ms=1)
+    checksum+=s.alive;s.close()
+   measurements.append(time.perf_counter()-start)
+  keeper.close()
+  samples[factory.__name__]={'seconds':measurements,'checksum':checksum,'opens_per_sample':3000}
+print(json.dumps(samples))

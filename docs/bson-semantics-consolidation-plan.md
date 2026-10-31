@@ -890,6 +890,14 @@ decisión y delegar en owners pequeños. Para este corte basta el bucle del curs
 el decoder y la coordinación atómica del hub; una jerarquía universal de valores,
 tokens o contextos aumentaría autoridades sin resolver otra garantía.
 
+**Disposición posterior de implementación.** Los cinco testigos del decoder
+de revisión 10 se corrigen en la dependencia registrada en el
+[owner de implementación](bson-consolidation-implementation.md). Su corpus añade
+admisión negativa y continuidad positiva con capturas/--check 7/8/9; conserva
+tokens heredados y no cambia formato/journal. No repetir esa corrección al
+completar el bucle y checkpoint, ni confundirla con el cierre del corte conjunto
+de protocolo/reanudación o con la precedencia de todas las opciones de watch.
+
 ## 6. Pruebas y aceptación por garantía
 
 | Familia | Casos obligatorios y observación |

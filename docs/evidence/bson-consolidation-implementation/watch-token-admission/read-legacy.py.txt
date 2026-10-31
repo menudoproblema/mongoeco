@@ -1,0 +1,16 @@
+import json,sys
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+from mongoeco.types import encode_change_stream_token
+root=Path(sys.argv[1]);record=json.loads((root/'expected.json').read_text())
+assert record['token']['_data']==encode_change_stream_token(record['position'])
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ for token in [record['token'],{'_data':str(record['position'])}]:
+  s=client.legacy.c.watch(resume_after=token,max_await_time_ms=1)
+  try:
+   e=s.try_next()
+   assert e['documentKey']=={'_id':2}
+   assert e['fullDocument']==record['expected']
+  finally:s.close()
+print('previous encoded token bytes unchanged; v1 and decimal replay the journal after reopen')

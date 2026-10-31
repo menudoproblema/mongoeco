@@ -1,0 +1,20 @@
+{
+  "MemoryEngine": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.025456145987845957,
+    "after_median_seconds": 0.028290687478147447,
+    "ratio": 1.1113499856441287,
+    "checksums_equal": true,
+    "checksum_per_run": 15000
+  },
+  "SQLiteEngine": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.025445020524784923,
+    "after_median_seconds": 0.028414166416041553,
+    "ratio": 1.1166886813223245,
+    "checksums_equal": true,
+    "checksum_per_run": 15000
+  }
+}

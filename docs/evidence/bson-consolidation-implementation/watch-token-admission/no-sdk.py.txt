@@ -1,0 +1,29 @@
+import asyncio,base64,json
+from mongoeco import AsyncMongoClient,MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.errors import OperationFailure
+try:import bson
+except ImportError:pass
+else:raise AssertionError('SDK must be absent')
+invalid=[(1,14),({'x':1},40647),({'_data':''},40649),({'_data':'²'},9),({'_data':base64.urlsafe_b64encode(b'[]').decode()},9)]
+async def run():
+ for dialect in ['7.0','8.0','9.0']:
+  for factory in [MemoryEngine,SQLiteEngine]:
+   async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+    for owner in [client.db.c,client.db,client]:
+     for token,code in invalid:
+      try:owner.watch(resume_after=token)
+      except OperationFailure as e:assert e.code==code
+      else:raise AssertionError('invalid token accepted')
+    c=client.db.c;s=c.watch(max_await_time_ms=1)
+    await c.insert_one({'_id':1});event=await s.try_next()
+    await c.insert_one({'_id':2});s.close()
+    resumed=c.watch(resume_after=event['_id'],max_await_time_ms=1)
+    assert (await resumed.try_next())['documentKey']=={'_id':2};resumed.close()
+   with MongoClient(factory(),mongodb_dialect=dialect) as client:
+    for token,code in invalid:
+     try:client.db.c.watch(resume_after=token)
+     except OperationFailure as e:assert e.code==code
+     else:raise AssertionError('invalid token accepted')
+ print('six engine/dialect pairs, sync/async, malformed tokens and valid continuation; no SDK')
+asyncio.run(run())
