@@ -1,0 +1,11 @@
+{
+  "owned_ports_closed": {
+    "49961": true,
+    "49962": true,
+    "49963": true
+  },
+  "docker_containers_removed": [
+    "mongoeco-datetime-7",
+    "mongoeco-datetime-8"
+  ]
+}

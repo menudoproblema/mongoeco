@@ -4,7 +4,7 @@ import decimal
 import math
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from operator import add, mul, sub
 from typing import Any
 
@@ -23,6 +23,7 @@ INT32_MIN = -(1 << 31)
 INT32_MAX = (1 << 31) - 1
 INT64_MIN = -(1 << 63)
 INT64_MAX = (1 << 63) - 1
+_BSON_EPOCH = datetime(1970, 1, 1, tzinfo=UTC).replace(tzinfo=None)
 DECIMAL128_CONTEXT = decimal.Context(prec=34, Emin=-6143, Emax=6144)
 _DECIMAL128_ARITHMETIC_CONTEXT = decimal.Context(
     prec=34, Emin=-6143, Emax=6144, rounding=decimal.ROUND_HALF_EVEN, clamp=1,
@@ -46,6 +47,17 @@ def normalize_utc_bson_datetime(value: datetime) -> datetime:
         value = value.astimezone(UTC).replace(tzinfo=None)
     microsecond = (value.microsecond // 1_000) * 1_000
     return value if microsecond == value.microsecond else value.replace(microsecond=microsecond)
+
+
+def bson_datetime_milliseconds(value: datetime) -> int:
+    """Exact epoch coordinate after UTC/BSON millisecond normalization."""
+    delta = normalize_utc_bson_datetime(value) - _BSON_EPOCH
+    return (delta.days * 86400 + delta.seconds) * 1000 + delta.microseconds // 1000
+
+
+def bson_datetime_from_milliseconds(value: int) -> datetime:
+    """Inverse coordinate within Python datetime's supported range."""
+    return _BSON_EPOCH + timedelta(milliseconds=value)
 
 
 class BsonScalarOverflowError(OverflowError):

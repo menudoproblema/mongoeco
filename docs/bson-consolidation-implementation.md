@@ -101,11 +101,56 @@ eventos/outbox/índices y operaciones múltiples. D03a aún necesita los testigo
 ampliados de longitudes/arrays/gramática y de caminos físicos; la extracción ya
 está hecha. La aceptación global de paquete/matrices permanece en D05.
 
+## D02 — Coordenadas exactas y consumidores tipados; publicación aún abierta
+
+El corte reemplaza timestamp/total_seconds flotantes por coordenadas enteras
+UTC/BSON e inversa común en bson_scalars. Conversión, resta, dateDiff, ventanas
+y TTL consumen esa autoridad; runtime reexporta los helpers aritméticos en vez
+de mantener otra implementación. La inversa conserva truncado hacia cero y la
+aritmética de fechas distingue los empates double y Decimal128 observados en
+MongoDB. Truncado por milisegundos usa el ancla nativa de 2000, también antes
+de epoch y con binSize que no divide esa distancia.
+
+Conservar long al salir de toLong/dateDiff es necesario para toDate anidado.
+La revisión recorre sus consumidores: dateAdd/parts/trunc, arrays/strings,
+range/round/percentile, ventanas, fill y densify usan la vista numérica común
+en sus validaciones. Fill deja de ordenar por comparación Python. El testigo
+de percentiles detecta otro error previo: extremos escalares devueltos como
+int frente a double nativo; se corrige en el owner que comparte con group y
+se contrasta el BSON físico de ambos consumidores. No se declara completa la
+paridad de todos los operadores de ventanas por arreglar estos testigos.
+
+El corpus datetime incorpora seis acciones al registro/runner existentes.
+Capturas 7.0.43, 8.0.32 y 9.0.2, con sus FCV, verificadas mediante --check.
+El runtime archivado 93b9b34 reproduce 144 fallos públicos y tres checks de
+metadata verdes. El candidato pasa los 147 checks focales, también con orjson;
+2.382 checks de core/propiedades/TTL y 936 subtests pasan, con un skip local
+que no se cuenta como ejecución física. Las dos propiedades de coordenadas
+usan el SDK BSON como oráculo, incluyendo fechas aware. Pasan typing público
+y boundary, controles sin SDK y lint sin deuda nueva. La regresión semántica integrada pasa 5.116 checks sobre source/corpus
+congelados. La evidencia queda en el
+[receipt del corte](evidence/bson-consolidation-implementation/exact-dates/receipt.json).
+
+SQLite reconstruye los auxiliares TTL de versión 1 al abrir con coordenadas
+exactas de versión 2. Se conservan storage keys y documentos; se comprueban
+expiración−1/exacta/+1 ms en ambos motores, índice antes/después de datos,
+reapertura, rollback/reintento ante fallo y rechazo de versión futura sin
+reconstrucción. Los controles previos de almacenamiento/publicación transaccional
+no se reinterpretan como entrega a watch.
+
+**D02 sigue abierto para publicación.** La sonda pública local encuentra que
+TTL elimina el documento pero no entrega un evento delete en ninguno de los
+motores. No se ha repetido aún ese testigo contra un replica set nativo ni se
+ha corregido el efecto. El próximo paso es obtener esa referencia y recorrer
+el owner de cambios/outbox, coordinado con D01b/D04. El cálculo correcto y sus
+checks no cierran esa obligación ni D05.
+
 ## Trabajo restante
 
 - D03a: completar testigos de longitudes/arrays/gramática y caminos físicos.
 - D01b: consecuencias públicas de modificación, eventos, índices y operaciones múltiples.
-- D02: milisegundos exactos, ventanas y TTL compatible.
+- D02: completar referencia física y publicación de borrados TTL; el corte de
+  coordenadas, consumidores y auxiliares compatibles está implementado.
 - D03b: tipos/SQL bajo prueba de equivalencia.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
 - D04: preparación/contexto de watch, referencia con replica set.

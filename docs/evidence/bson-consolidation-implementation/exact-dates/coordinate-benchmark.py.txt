@@ -1,0 +1,14 @@
+import json,random,statistics,time
+from datetime import datetime,timedelta
+from bson import BSON
+from mongoeco.core.aggregation.scalar_expressions import _datetime_to_epoch_millis
+rng=random.Random(20261031)
+values=[datetime(1970,1,1)+timedelta(seconds=rng.randint(-2208988800,4102444800)) for _ in range(200)]
+expected=[int.from_bytes(BSON.encode({'d':v})[7:15],'little',signed=True) for v in values]
+assert [_datetime_to_epoch_millis(v) for v in values]==expected
+samples=[]
+for _ in range(5):
+ start=time.perf_counter()
+ for i in range(20000): _datetime_to_epoch_millis(values[i%200])
+ samples.append(time.perf_counter()-start)
+print(json.dumps({'seconds_per_20000_calls':samples,'median':statistics.median(samples),'result_checksum':sum(expected),'reference':'independent SDK BSON encoding, whole-second values'}))

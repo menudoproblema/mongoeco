@@ -14,9 +14,9 @@ from mongoeco.core.aggregation.compiled_pipeline import (
 )
 from mongoeco.core.aggregation.evaluation_environment import (
     EvaluationEnvironment,
+    aggregation_environment,
     environment_for_document,
     scoped_environment,
-    aggregation_environment,
 )
 from mongoeco.core.aggregation.extensions import (
     AggregationStageExecutionMode,
@@ -30,6 +30,7 @@ from mongoeco.core.aggregation.grouping_stages import (
     _apply_set_window_fields,
     _apply_sort_by_count,
 )
+from mongoeco.core.aggregation.information_stages import parse_information_spec
 from mongoeco.core.aggregation.join_stages import (
     _apply_facet,
     _apply_lookup,
@@ -44,10 +45,15 @@ from mongoeco.core.aggregation.planning import (
     _validate_densify_partition_paths,
     _validate_densify_range,
 )
+from mongoeco.core.aggregation.preparation import (
+    _GLOBAL_EXPRESSION_VARIABLES,
+    prepare_pipeline,
+)
+from mongoeco.core.aggregation.resources import AggregationResources
 from mongoeco.core.aggregation.runtime import (
     AggregationStageContext,
-    aggregation_equality_key,
     _apply_unwind,
+    aggregation_equality_key,
     evaluate_expression,
 )
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
@@ -59,12 +65,7 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_sample,
     _apply_unset,
 )
-from mongoeco.core.aggregation.information_stages import parse_information_spec
-from mongoeco.core.aggregation.preparation import (
-    _GLOBAL_EXPRESSION_VARIABLES,
-    prepare_pipeline,
-)
-from mongoeco.core.aggregation.resources import AggregationResources
+from mongoeco.core.bson_scalars import unwrap_bson_numeric
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.geo import (
     parse_geo_geometry,
@@ -636,14 +637,12 @@ def _stage_fill(
         context.deadline,
     ):
 
-        def _fill_sort_key(document: Document) -> object | None:
-            checkpoint()
-            return _partition_value(document, sort_field)
-
-        ordered = sorted(
+        ordered = sort_documents(
             partition_documents,
-            key=_fill_sort_key,
-            reverse=sort_direction == -1,
+            [(sort_field, sort_direction)],
+            dialect=context.dialect,
+            collation=context.collation,
+            deadline=context.deadline,
         )
         for field, field_spec in output.items():
             checkpoint()
@@ -960,6 +959,7 @@ def _require_densify_value(document: Document, field: str) -> object:
         raise OperationFailure(
             "$densify requires the densified field to exist in all input documents"
         )
+    value = unwrap_bson_numeric(value)
     if not isinstance(value, (int, float, datetime.datetime)) or isinstance(
         value, bool
     ):
@@ -1059,8 +1059,9 @@ def _apply_linear_fill(
         if found and current is not None:
             known_points.append((index, current))
     checkpoint = DeadlineCheckpoint(deadline)
-    for point_index, (left_index, left_value) in enumerate(known_points[:-1]):
+    for point_index, (left_index, left_input) in enumerate(known_points[:-1]):
         checkpoint()
+        left_value = unwrap_bson_numeric(left_input)
         right_index, right_value = known_points[point_index + 1]
         gap = right_index - left_index
         if gap <= 1:
@@ -1077,6 +1078,7 @@ def _apply_linear_fill(
                     left_value + datetime.timedelta(seconds=(total * offset) / gap),
                 )
             continue
+        right_value = unwrap_bson_numeric(right_value)
         if not isinstance(left_value, (int, float)) or not isinstance(
             right_value, (int, float)
         ):

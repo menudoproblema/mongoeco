@@ -402,7 +402,7 @@ class AggregationCoreTests(unittest.TestCase):
                 {"created_at": created_at, "updated_at": updated_at},
                 {"$subtract": ["$updated_at", "$created_at"]},
             ),
-            5000,
+            BsonInt64(5000),
         )
 
         with self.assertRaises(OperationFailure):

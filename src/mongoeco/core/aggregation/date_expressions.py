@@ -3,11 +3,18 @@ from __future__ import annotations
 import calendar
 import datetime
 import re
+
 from collections.abc import Callable
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import (
+    BsonInt64,
+    bson_datetime_from_milliseconds,
+    bson_datetime_milliseconds,
+    unwrap_bson_numeric,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
@@ -65,6 +72,7 @@ def evaluate_date_expression(
         if not isinstance(unit, str):
             raise OperationFailure("$dateTrunc unit must be a string")
         bin_size = evaluate_expression(document, spec["binSize"], variables) if "binSize" in spec else 1
+        bin_size = unwrap_bson_numeric(bin_size)
         if not isinstance(bin_size, int) or isinstance(bin_size, bool):
             raise OperationFailure("$dateTrunc binSize must be an integer")
         timezone = evaluate_expression(document, spec["timezone"], variables) if "timezone" in spec else None
@@ -87,6 +95,7 @@ def evaluate_date_expression(
         amount = evaluate_expression(document, spec["amount"], variables)
         if amount is None:
             return None
+        amount = unwrap_bson_numeric(amount)
         if not isinstance(amount, int) or isinstance(amount, bool):
             raise OperationFailure(f"{operator} amount must evaluate to an integer")
         timezone = _resolve_timezone(
@@ -279,7 +288,9 @@ def evaluate_date_expression(
             raise OperationFailure("$dateDiff startOfWeek must be a string")
         localized_start = _localize_datetime(start_date, timezone)
         localized_end = _localize_datetime(end_date, timezone)
-        return _date_diff_units(localized_start, localized_end, unit, start_of_week=start_of_week)
+        return BsonInt64(_date_diff_units(
+            localized_start, localized_end, unit, start_of_week=start_of_week
+        ))
 
     raise OperationFailure(f"Unsupported date expression operator: {operator}")
 
@@ -287,6 +298,13 @@ def evaluate_date_expression(
 def _truncate_datetime(value: datetime.datetime, unit: str, bin_size: int, start_of_week: str) -> datetime.datetime:
     if bin_size <= 0:
         raise OperationFailure("$dateTrunc binSize must be a positive integer")
+
+    if unit == "millisecond":
+        anchor = bson_datetime_milliseconds(
+            datetime.datetime(2000, 1, 1, tzinfo=datetime.UTC)
+        )
+        offset = bson_datetime_milliseconds(value) - anchor
+        return bson_datetime_from_milliseconds(anchor + (offset // bin_size) * bin_size)
 
     if unit == "year":
         year = ((value.year - 1) // bin_size) * bin_size + 1
@@ -419,6 +437,7 @@ def _to_utc_naive(value: datetime.datetime) -> datetime.datetime:
 
 
 def _require_int_part(operator: str, name: str, value: Any) -> int:
+    value = unwrap_bson_numeric(value)
     if not isinstance(value, int) or isinstance(value, bool):
         raise OperationFailure(f"{operator} {name} must evaluate to an integer")
     return value
@@ -634,7 +653,7 @@ def _date_diff_units(
     start_of_week: str,
 ) -> int:
     if unit == "millisecond":
-        return int((end - start).total_seconds() * 1000)
+        return bson_datetime_milliseconds(end) - bson_datetime_milliseconds(start)
     if unit == "second":
         return int(
             (_truncate_datetime(end, "second", 1, start_of_week) - _truncate_datetime(start, "second", 1, start_of_week)).total_seconds()

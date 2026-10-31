@@ -383,8 +383,10 @@ def evaluate_array_string_expression(
             raise OperationFailure(
                 f"{operator} requires the first argument to evaluate to a string"
             )
+        start = unwrap_bson_numeric(start)
         if not isinstance(start, int) or isinstance(start, bool):
             raise OperationFailure(f"{operator} start must be an integer")
+        length = unwrap_bson_numeric(length)
         if not isinstance(length, int) or isinstance(length, bool):
             raise OperationFailure(f"{operator} length must be an integer")
         if operator == "$substrCP":
@@ -748,10 +750,12 @@ def evaluate_array_string_expression(
         end = len(values)
         if len(args) >= 3:
             start = evaluate_expression(document, args[2], variables)
+            start = unwrap_bson_numeric(start)
             if not isinstance(start, int) or isinstance(start, bool):
                 raise OperationFailure("$indexOfArray start must be an integer")
         if len(args) == 4:
             end = evaluate_expression(document, args[3], variables)
+            end = unwrap_bson_numeric(end)
             if not isinstance(end, int) or isinstance(end, bool):
                 raise OperationFailure("$indexOfArray end must be an integer")
         for index, value in enumerate(
@@ -898,6 +902,7 @@ def _slice_array(
 ) -> list[Any]:
     if len(spec) == 2:
         count = evaluate_expression(document, spec[1], variables)
+        count = unwrap_bson_numeric(count)
         if not isinstance(count, int) or isinstance(count, bool):
             raise OperationFailure("$slice count must be an integer")
         if count == 0:
@@ -908,8 +913,10 @@ def _slice_array(
 
     position = evaluate_expression(document, spec[1], variables)
     count = evaluate_expression(document, spec[2], variables)
+    position = unwrap_bson_numeric(position)
     if not isinstance(position, int) or isinstance(position, bool):
         raise OperationFailure("$slice position must be an integer")
+    count = unwrap_bson_numeric(count)
     if not isinstance(count, int) or isinstance(count, bool):
         raise OperationFailure("$slice count must be an integer")
     if count < 0:
@@ -962,6 +969,7 @@ def _normalize_index_bounds(
     if start is None:
         start_index = 0
     else:
+        start = unwrap_bson_numeric(start)
         if not isinstance(start, int) or isinstance(start, bool):
             raise OperationFailure(f"{operator} start must be an integer")
         if start < 0:
@@ -970,6 +978,7 @@ def _normalize_index_bounds(
     if end is None:
         end_index = upper_bound
     else:
+        end = unwrap_bson_numeric(end)
         if not isinstance(end, int) or isinstance(end, bool):
             raise OperationFailure(f"{operator} end must be an integer")
         if end < 0:

@@ -1,0 +1,10 @@
+Final candidate checks:
+.venv/bin/python scripts/check_public_typing.py
+public typing contract passed: positive=1, negative-errors=20
+engine boundary typing contract passed: positive=1, negative-errors=25
+.venv/bin/python scripts/check_lint_ratchet.py --base-ref 849da74
+lint ratchet passed for 16 changed Python files
+SDK-free: Python 3.13 minimal environment, BSON absent; exact coordinates,
+inverse date and nested toDate/toLong and range/toLong passed.
+Native --check: all six actions verified separately for 7.0, 8.0 and 9.0;
+check_final_*.json and tracked golden JSON contents compare identical.

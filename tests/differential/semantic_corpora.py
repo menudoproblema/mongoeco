@@ -18,6 +18,10 @@ from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
 )
+from tests.differential.semantic_datetime_cases import (
+    SEED as DATETIME_SEED,
+    SEMANTIC_DATETIME_CASES,
+)
 from tests.differential.semantic_decimal_advanced_cases import (
     CONTROL_SEED as DECIMAL_CONTROL_SEED,
     EDGE_SEED as DECIMAL_ADVANCED_EDGE_SEED,
@@ -107,6 +111,9 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "datetime": SemanticCorpus(
+        "datetime", "semantic_datetime_cases", DATETIME_SEED, SEMANTIC_DATETIME_CASES,
+    ),
     "update_identity": SemanticCorpus(
         "update-identity", "semantic_update_identity_cases",
         UPDATE_IDENTITY_SEED, SEMANTIC_UPDATE_IDENTITY_CASES,

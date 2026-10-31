@@ -42,7 +42,11 @@ from mongoeco.core.bson_ordering import (
     bson_equality_key,
     bson_numeric_index_key,
 )
-from mongoeco.core.bson_scalars import is_bson_numeric, utc_bson_now
+from mongoeco.core.bson_scalars import (
+    bson_datetime_milliseconds,
+    is_bson_numeric,
+    utc_bson_now,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
     normalize_collation,
@@ -102,6 +106,7 @@ from mongoeco.core.search_models import (
     SearchExecutionTrace,
     SearchExplainVerbosity,
 )
+from mongoeco.core.server_errors import server_error
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
 from mongoeco.engines._executor_admission import (
@@ -253,11 +258,11 @@ from mongoeco.engines.semantic_core import (
     EngineReadExecutionPlan,
     FiniteDocumentScan,
     build_query_plan_explanation,
+    compile_collection_validation_semantics,
     compile_find_semantics,
     compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
-    compile_collection_validation_semantics,
     finalize_documents,
     iter_filtered_documents,
     stream_finalize_documents,
@@ -288,7 +293,6 @@ from mongoeco.engines.virtual_indexes import (
     normalize_partial_filter_expression,
     query_can_use_index,
 )
-from mongoeco.core.server_errors import server_error
 from mongoeco.errors import (
     DuplicateKeyError,
     ExecutionTimeout,
@@ -1157,7 +1161,7 @@ class SQLiteEngine(AsyncStorageEngine):
         collection_id = self._lookup_collection_id(conn, db_name, coll_name)
         if collection_id is None:
             return 0
-        cutoff = int(now.timestamp() * 1_000)
+        cutoff = bson_datetime_milliseconds(now)
         candidate_rows = conn.execute(
             """
             SELECT storage_key
@@ -4121,7 +4125,7 @@ class SQLiteEngine(AsyncStorageEngine):
             QueryEngine.extract_values(document, index.fields[0]),
             expire_after_seconds=index.expire_after_seconds,
         )
-        return None if expiration is None else int(expiration.timestamp() * 1_000)
+        return None if expiration is None else bson_datetime_milliseconds(expiration)
 
     def _replace_ttl_entries_for_document(  # noqa: PLR0913, PLR0917
         self,
@@ -4291,10 +4295,12 @@ class SQLiteEngine(AsyncStorageEngine):
             (component,),
         ).fetchone()
         if row is not None:
-            if int(row[0]) != 1:
+            if int(row[0]) not in {1, 2}:
                 message = f"unsupported TTL index schema version {row[0]}"
                 raise OperationFailure(message)
-            return
+            current_version = 2
+            if int(row[0]) == current_version:
+                return
         conn.execute("DELETE FROM ttl_index_entries")
         namespaces = conn.execute(
             """
@@ -4317,7 +4323,8 @@ class SQLiteEngine(AsyncStorageEngine):
         conn.execute(
             """
             INSERT INTO mongoeco_schema_migrations (component, version)
-            VALUES (?, 1)
+            VALUES (?, 2)
+            ON CONFLICT(component) DO UPDATE SET version = excluded.version
             """,
             (component,),
         )
@@ -4455,7 +4462,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     WHERE component = 'ttl_index_entries'
                     """,
                 ).fetchone()
-                if ttl_schema_row is not None and int(ttl_schema_row[0]) != 1:
+                if ttl_schema_row is not None and int(ttl_schema_row[0]) not in {1, 2}:
                     message = (
                         f"unsupported TTL index schema version {ttl_schema_row[0]}"
                     )

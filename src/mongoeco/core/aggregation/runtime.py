@@ -40,7 +40,8 @@ from mongoeco.core.aggregation.extensions import (
 )
 from mongoeco.core.aggregation.numeric_expressions import (
     NUMERIC_EXPRESSION_OPERATORS,
-    _require_numeric,
+    _add_milliseconds as _add_milliseconds,  # noqa: PLC0414 - private compatibility export
+    _subtract_values as _subtract_values,  # noqa: PLC0414 - private compatibility export
     evaluate_numeric_expression,
 )
 from mongoeco.core.aggregation.planning import Pipeline
@@ -774,28 +775,6 @@ def _bson_document_size(document: dict[str, Any]) -> int:
     return total
 
 
-def _add_milliseconds(
-    value: datetime.datetime,
-    milliseconds: float,
-) -> datetime.datetime:
-    return value + datetime.timedelta(milliseconds=milliseconds)
-
-
-def _subtract_values(left: Any, right: Any) -> Any:
-    if isinstance(left, datetime.datetime):
-        if isinstance(right, datetime.datetime):
-            delta = left - right
-            return int(delta.total_seconds() * 1000)
-        if isinstance(right, (int, float)) and not isinstance(right, bool):
-            return _add_milliseconds(left, -right)
-    if isinstance(right, datetime.datetime):
-        raise OperationFailure(
-            "$subtract only supports number-number, date-date, or date-number",
-        )
-    return _require_numeric("$subtract", left) - _require_numeric(
-        "$subtract",
-        right,
-    )
 
 
 def _evaluate_expression_with_missing(

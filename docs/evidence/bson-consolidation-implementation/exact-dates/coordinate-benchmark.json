@@ -1,0 +1,27 @@
+{
+  "before": {
+    "seconds_per_20000_calls": [
+      0.005064999917522073,
+      0.005045500001870096,
+      0.005079041002318263,
+      0.005163250025361776,
+      0.00519916694611311
+    ],
+    "median": 0.005079041002318263,
+    "result_checksum": 179817316757000,
+    "reference": "independent SDK BSON encoding, whole-second values"
+  },
+  "candidate": {
+    "seconds_per_20000_calls": [
+      0.005317625007592142,
+      0.005341417039744556,
+      0.005370832979679108,
+      0.0054694999707862735,
+      0.005427415948361158
+    ],
+    "median": 0.005370832979679108,
+    "result_checksum": 179817316757000,
+    "reference": "independent SDK BSON encoding, whole-second values"
+  },
+  "median_ratio": 1.0574502110196906
+}

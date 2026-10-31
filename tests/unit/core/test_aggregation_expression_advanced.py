@@ -855,10 +855,13 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         self.assertTrue(evaluate_expression(document, {"$toBool": "$neg"}))
         self.assertTrue(evaluate_expression(document, {"$toBool": "$nested"}))
         self.assertEqual(evaluate_expression(document, {"$toInt": "$flag"}), 1)
-        self.assertEqual(evaluate_expression(document, {"$toLong": "$long_text"}), 1 << 40)
+        self.assertEqual(
+            evaluate_expression(document, {"$toLong": "$long_text"}),
+            BsonInt64(1 << 40),
+        )
         self.assertEqual(
             evaluate_expression(document, {"$toLong": "$created_at"}),
-            int(created_at.timestamp() * 1000),
+            BsonInt64(int(created_at.timestamp() * 1000)),
         )
         self.assertEqual(evaluate_expression(document, {"$toDouble": "$flag"}), 1.0)
         self.assertEqual(evaluate_expression(document, {"$toDouble": "$float_text"}), 10.5)
@@ -875,7 +878,7 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         )
         self.assertEqual(
             evaluate_expression(document, {"$convert": {"input": "$created_at", "to": "long"}}),
-            int(created_at.timestamp() * 1000),
+            BsonInt64(int(created_at.timestamp() * 1000)),
         )
         self.assertEqual(
             evaluate_expression(document, {"$convert": {"input": "$oid", "to": "objectId"}}),
@@ -933,7 +936,10 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
             )
         )
         self.assertEqual(evaluate_expression(document, {"$toInt": "$fractional"}), 10)
-        self.assertEqual(evaluate_expression(document, {"$toLong": "$fractional"}), 10)
+        self.assertEqual(
+            evaluate_expression(document, {"$toLong": "$fractional"}),
+            BsonInt64(10),
+        )
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$toDouble": "$blank"})
         with self.assertRaises(OperationFailure):
@@ -1097,28 +1103,28 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
                 document,
                 {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "second"}},
             ),
-            int((document["end"] - document["start"]).total_seconds()),
+            BsonInt64(int((document["end"] - document["start"]).total_seconds())),
         )
         self.assertEqual(
             evaluate_expression(
                 document,
                 {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "month"}},
             ),
-            14,
+            BsonInt64(14),
         )
         self.assertEqual(
             evaluate_expression(
                 document,
                 {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "quarter"}},
             ),
-            4,
+            BsonInt64(4),
         )
         self.assertEqual(
             evaluate_expression(
                 document,
                 {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "year"}},
             ),
-            1,
+            BsonInt64(1),
         )
 
     def test_evaluate_expression_date_math_and_timezone_reject_additional_invalid_values(self):
@@ -1270,7 +1276,7 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "week", "startOfWeek": "noday"}})
         with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "millisecond"}})
+            evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "nanosecond"}})
 
     def test_apply_pipeline_project_treats_bool_flags_as_inclusion_and_exclusion(self):
         documents = [{"_id": "1", "name": "Ada", "role": "admin"}]

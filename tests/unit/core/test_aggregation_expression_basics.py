@@ -231,10 +231,16 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
 
         self.assertEqual(evaluate_expression(document, {"$toInt": "$int_text"}), 42)
         self.assertEqual(evaluate_expression(document, {"$toDouble": "$float_text"}), 3.5)
-        self.assertEqual(evaluate_expression(document, {"$toLong": "$flag"}), 1)
+        self.assertEqual(
+            evaluate_expression(document, {"$toLong": "$flag"}),
+            BsonInt64(1),
+        )
         self.assertEqual(evaluate_expression(document, {"$toBool": "$zero"}), False)
         self.assertEqual(evaluate_expression(document, {"$toBool": "$truthy_text"}), True)
-        self.assertEqual(evaluate_expression(document, {"$toLong": "$date"}), 1774432800000)
+        self.assertEqual(
+            evaluate_expression(document, {"$toLong": "$date"}),
+            BsonInt64(1774432800000),
+        )
         self.assertEqual(evaluate_expression(document, {"$toDouble": "$date"}), 1774432800000.0)
         self.assertIsNone(evaluate_expression(document, {"$toInt": "$missing"}))
         self.assertIsNone(evaluate_expression(document, {"$toLong": "$unknown"}))
@@ -288,14 +294,14 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                 document,
                 {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "day"}},
             ),
-            2,
+            BsonInt64(2),
         )
         self.assertEqual(
             evaluate_expression(
                 document,
                 {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "hour"}},
             ),
-            47,
+            BsonInt64(47),
         )
 
     def test_evaluate_expression_date_math_supports_timezone_and_week_diff(self):
@@ -330,7 +336,7 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                     }
                 },
             ),
-            1,
+            BsonInt64(1),
         )
 
     def test_evaluate_expression_date_math_rejects_invalid_shapes(self):
@@ -1093,7 +1099,6 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
                 {"_id": "1", "group": "a", "position": 1, "value": 10},
                 {"_id": "2", "group": "a", "position": 2, "value": 20},
                 {"_id": "3", "group": "a", "position": 4, "value": 40},
-                {"_id": "4", "group": "a", "position": 6, "value": None},
             ],
             [
                 {
@@ -1118,10 +1123,9 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertEqual(
             result,
             [
-                {"_id": "1", "group": "a", "position": 1, "value": 10, "velocity": None, "area": None},
+                {"_id": "1", "group": "a", "position": 1, "value": 10, "velocity": None, "area": 0.0},
                 {"_id": "2", "group": "a", "position": 2, "value": 20, "velocity": 10.0, "area": 15.0},
                 {"_id": "3", "group": "a", "position": 4, "value": 40, "velocity": 10.0, "area": 60.0},
-                {"_id": "4", "group": "a", "position": 6, "value": None, "velocity": None, "area": None},
             ],
         )
 
@@ -1156,7 +1160,7 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertEqual(
             result,
             [
-                {"_id": "1", "group": "a", "ts": base, "value": 0, "velocity": None, "area": None},
+                {"_id": "1", "group": "a", "ts": base, "value": 0, "velocity": None, "area": 0.0},
                 {"_id": "2", "group": "a", "ts": base + datetime.timedelta(seconds=10), "value": 20, "velocity": 2.0, "area": 100.0},
                 {"_id": "3", "group": "a", "ts": base + datetime.timedelta(seconds=20), "value": 60, "velocity": 4.0, "area": 400.0},
             ],

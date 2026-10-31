@@ -25,6 +25,8 @@ from mongoeco.core.bson_scalars import (
     BsonDouble,
     BsonInt32,
     BsonInt64,
+    bson_datetime_from_milliseconds,
+    bson_datetime_milliseconds,
     bson_numeric_alias,
     is_bson_numeric,
     unwrap_bson_numeric,
@@ -371,12 +373,7 @@ def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:
 
 
 def _datetime_to_epoch_millis(value: datetime.datetime) -> int:
-    normalized = (
-        value.astimezone(datetime.UTC)
-        if value.tzinfo is not None
-        else value.replace(tzinfo=datetime.UTC)
-    )
-    return int(normalized.timestamp() * 1000)
+    return bson_datetime_milliseconds(value)
 
 
 def _parse_base10_int_string(operator: str, value: str) -> int:
@@ -520,13 +517,14 @@ def _convert_extended_scalar(
 
 
 def _typed_conversion_result(value: Any, target: str, variables: object) -> Any:
+    if value is not None and target == "long":
+        return BsonInt64(unwrap_bson_numeric(value))
     if value is None or not getattr(
         variables, "preserve_numeric_conversion_types", False
     ):
         return value
     constructors = {
         "int": int,
-        "long": BsonInt64,
         "double": float,
         "decimal": Decimal128,
     }
@@ -546,6 +544,7 @@ def _convert_aggregation_scalar(
     preserve_numeric_wrappers = isinstance(
         value, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128
     )
+    source_value = value
     value = unwrap_bson_numeric(value)
 
     if target == "bool":
@@ -644,15 +643,13 @@ def _convert_aggregation_scalar(
         if isinstance(value, datetime.datetime):
             return _to_utc_naive(value)
         if isinstance(value, ObjectId):
-            return datetime.datetime.fromtimestamp(
-                value.generation_time, tz=datetime.UTC
-            ).replace(tzinfo=None)
+            return bson_datetime_from_milliseconds(int(value.generation_time) * 1000)
         if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if bson_numeric_alias(source_value) == "int":
+                raise server_error(f"{operator} cannot convert int to date", code=241)
             if not math.isfinite(value):
                 raise OperationFailure(f"{operator} cannot convert the value")
-            return datetime.datetime.fromtimestamp(
-                value / 1000, tz=datetime.UTC
-            ).replace(tzinfo=None)
+            return bson_datetime_from_milliseconds(int(value))
         if isinstance(value, str):
             try:
                 return _to_utc_naive(
@@ -734,4 +731,4 @@ def _convert_aggregation_scalar(
     if target == "string":
         return stringify_value(value)
 
-    raise OperationFailure(f"Unsupported conversion target for {operator}")
+    raise OperationFailure(f"Unsupported conversion target for {operator}")  # noqa: EM102 - unchanged legacy emitter

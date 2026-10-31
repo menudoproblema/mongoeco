@@ -24,6 +24,8 @@ from mongoeco.core.bson_scalars import (
     _wrap_float_result,
     bson_add,
     bson_bitwise,
+    bson_datetime_from_milliseconds,
+    bson_datetime_milliseconds,
     bson_divide,
     bson_mod,
     bson_multiply,
@@ -149,7 +151,12 @@ def evaluate_numeric_expression(
         if left_raw is None or right_raw is None:
             return None
         if operator == "$subtract":
-            return _subtract_values(left_raw, right_raw)
+            result = _subtract_values(left_raw, right_raw)
+            if isinstance(left_raw, datetime.datetime) and isinstance(
+                right_raw, datetime.datetime
+            ):
+                return BsonInt64(result)
+            return result
         left = _require_numeric(operator, left_raw, position=0)
         right = _require_numeric(operator, right_raw, position=1)
         if operator == "$divide":
@@ -380,6 +387,7 @@ def evaluate_numeric_expression(
             evaluate_expression(document, step_expression[0], variables)
             if step_expression else 1
         )
+        start, end, step = map(unwrap_bson_numeric, (start, end, step))
         for position, value in enumerate((start, end, step)):
             if not isinstance(value, int) or isinstance(value, bool):
                 message = "$range requires integer arguments"
@@ -561,7 +569,8 @@ def _normalize_percentile_probabilities(
     if not probabilities_value:
         raise OperationFailure(f"{operator} p must not be an empty array")
     normalized: list[float] = []
-    for item in probabilities_value:
+    for raw_item in probabilities_value:
+        item = unwrap_bson_numeric(raw_item)
         if not isinstance(item, (int, float, decimal.Decimal)) or isinstance(
             item, bool
         ):
@@ -632,7 +641,7 @@ def _compute_percentiles(
         index = math.ceil(probability * length) - 1
         index = min(max(index, 0), length - 1)
         results.append(deepcopy(ordered[index]))
-    return results
+    return [float(unwrap_bson_numeric(value)) for value in results]
 
 
 def _mongo_mod(left: float, right: float) -> int | float:
@@ -643,6 +652,7 @@ def _mongo_mod(left: float, right: float) -> int | float:
 
 
 def _normalize_numeric_place(operator: str, place: Any) -> int:
+    place = unwrap_bson_numeric(place)
     if not isinstance(place, int) or isinstance(place, bool):
         message = f"{operator} place must be an integer"
         raise server_error(message, code=16004)
@@ -687,18 +697,29 @@ def _require_integral_numeric(operator: str, value: Any) -> int:
 
 
 def _add_milliseconds(
-    value: datetime.datetime, milliseconds: float
+    value: datetime.datetime, milliseconds: float | decimal.Decimal
 ) -> datetime.datetime:
-    return value + datetime.timedelta(milliseconds=milliseconds)
+    # Server date arithmetic rounds doubles away from zero at ties, while
+    # Decimal128 uses ties-to-even. Keep integral operands out of float entirely.
+    if isinstance(milliseconds, decimal.Decimal):
+        rounded = int(milliseconds.to_integral_value(rounding=decimal.ROUND_HALF_EVEN))
+    elif isinstance(milliseconds, float):
+        fraction, whole = math.modf(milliseconds)
+        rounded = int(whole)
+        half_millisecond = 0.5
+        if abs(fraction) >= half_millisecond:
+            rounded += 1 if fraction > 0 else -1
+    else:
+        rounded = milliseconds
+    return bson_datetime_from_milliseconds(bson_datetime_milliseconds(value) + rounded)
 
 
 def _subtract_values(left: Any, right: Any) -> Any:
     if isinstance(left, datetime.datetime):
         if isinstance(right, datetime.datetime):
-            delta = left - right
-            return int(delta.total_seconds() * 1000)
-        if isinstance(right, (int, float)) and not isinstance(right, bool):
-            return _add_milliseconds(left, -right)
+            return bson_datetime_milliseconds(left) - bson_datetime_milliseconds(right)
+        numeric = unwrap_bson_numeric(_require_numeric("$subtract", right))
+        return _add_milliseconds(left, -numeric)
     if isinstance(right, datetime.datetime):
         raise OperationFailure(
             "$subtract only supports number-number, date-date, or date-number"

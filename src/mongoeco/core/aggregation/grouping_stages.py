@@ -37,10 +37,11 @@ from mongoeco.core.aggregation.runtime import (
     aggregation_equality_key,
     evaluate_expression,
 )
-from mongoeco.core.bson_scalars import unwrap_bson_numeric
+from mongoeco.core.bson_scalars import bson_datetime_milliseconds, unwrap_bson_numeric
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.paths import get_document_value, set_document_value
+from mongoeco.core.server_errors import server_error
 from mongoeco.core.sorting import sort_documents
 from mongoeco.core.work_control import DeadlineCheckpoint, iter_with_deadline
 from mongoeco.errors import OperationFailure
@@ -102,8 +103,9 @@ def _apply_linear_fill(
         if value is not None
     ]
     checkpoint = DeadlineCheckpoint(deadline)
-    for point_index, (left_index, left_value) in enumerate(known_points[:-1]):
+    for point_index, (left_index, left_input) in enumerate(known_points[:-1]):
         checkpoint()
+        left_value = unwrap_bson_numeric(left_input)
         right_index, right_value = known_points[point_index + 1]
         gap = right_index - left_index
         if gap <= 1:
@@ -118,6 +120,7 @@ def _apply_linear_fill(
                     seconds=(total * offset) / gap
                 )
             continue
+        right_value = unwrap_bson_numeric(right_value)
         if not isinstance(left_value, (int, float)) or isinstance(left_value, bool):
             raise OperationFailure(
                 "$linearFill currently supports only numeric or date values"
@@ -173,6 +176,7 @@ def _apply_exp_moving_avg(
         value = evaluate_expression(
             document, input_expression, variables, dialect=dialect
         )
+        value = unwrap_bson_numeric(value)
         if value is None:
             results.append(current_average)
             continue
@@ -215,12 +219,8 @@ def _parse_window_rate_expression(
     return expression["input"], unit
 
 
-def _datetime_to_epoch_milliseconds(value: datetime.datetime) -> float:
-    if value.tzinfo is None:
-        epoch = datetime.datetime(1970, 1, 1)
-        return (value - epoch).total_seconds() * 1000.0
-    epoch_utc = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
-    return (value.astimezone(datetime.UTC) - epoch_utc).total_seconds() * 1000.0
+def _datetime_to_epoch_milliseconds(value: datetime.datetime) -> int:
+    return bson_datetime_milliseconds(value)
 
 
 def _extract_window_rate_points(
@@ -241,6 +241,7 @@ def _extract_window_rate_points(
             raise OperationFailure(
                 f"{operator} requires sortBy values for all window documents"
             )
+        sort_value = unwrap_bson_numeric(sort_value)
         if isinstance(sort_value, datetime.datetime):
             next_axis_kind = "datetime"
             axis_value = _datetime_to_epoch_milliseconds(sort_value)
@@ -264,16 +265,18 @@ def _extract_window_rate_points(
         input_value = evaluate_expression(
             candidate_document, input_expression, variables, dialect=dialect
         )
+        input_value = unwrap_bson_numeric(input_value)
         if input_value is None:
-            continue
+            code = 5423900 if operator == "$integral" else 5624903
+            raise server_error(f"{operator} requires numeric input", code=code)
         if (
             not isinstance(input_value, (int, float))
             or isinstance(input_value, bool)
             or not math.isfinite(float(input_value))
         ):
-            raise OperationFailure(
-                f"{operator} input must evaluate to finite numeric values"
-            )
+            code = 5423900 if operator == "$integral" else 14
+            message = f"{operator} input must evaluate to finite numeric values"
+            raise server_error(message, code=code)
         points.append((axis_value, float(input_value)))
     return points, axis_kind
 
@@ -1244,18 +1247,22 @@ def _apply_set_window_fields(  # noqa: PLR0913
                         deadline=deadline,
                     )
                     if len(points) < 2:
-                        set_document_value(enriched, field, None)
+                        set_document_value(
+                            enriched, field,
+                            0.0 if operator == "$integral" and points else None,
+                        )
                         continue
                     axis_scale = _window_rate_axis_scale(operator, axis_kind, unit)
                     if operator == "$derivative":
                         first_axis, first_value = points[0]
                         last_axis, last_value = points[-1]
-                        delta_axis = (last_axis - first_axis) / axis_scale
+                        delta_axis = last_axis - first_axis
                         if delta_axis == 0:
                             set_document_value(enriched, field, None)
                         else:
                             set_document_value(
-                                enriched, field, (last_value - first_value) / delta_axis
+                                enriched, field,
+                                ((last_value - first_value) / delta_axis) * axis_scale,
                             )
                         continue
                     integral_total = 0.0
