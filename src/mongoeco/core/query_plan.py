@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_support import compile_bson_regex, compile_regex
+from mongoeco.core.bson_ordering import Code
 from mongoeco.core.bson_scalars import (
     INT32_MAX,
     _is_infinite_numeric_value,
@@ -384,7 +385,7 @@ def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
             3: ("object",),
             4: ("array",),
             5: ("binData",),
-            6: ("dbPointer",),
+            6: ("undefined",),
             7: ("objectId",),
             8: ("bool",),
             9: ("date",),
@@ -402,6 +403,9 @@ def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
         if type_spec not in numeric_mapping:
             raise ValueError("$type usa un codigo BSON no soportado")
         return numeric_mapping[type_spec]
+    if isinstance(type_spec, Code):
+        message = "type must be represented as a number or a string"
+        raise server_error(message, code=14)
     if not isinstance(type_spec, str):
         raise ValueError("$type necesita alias string o codigo entero BSON")
     alias_mapping = {
@@ -640,6 +644,9 @@ def _compile_field_condition(
                 raise server_error(message, code=2)
             clauses.append(ModCondition(field, divisor, remainder))
         elif operator == "$regex":
+            if isinstance(value, Code):
+                message = "$regex has to be a string"
+                raise server_error(message, code=2)
             if isinstance(value, Regex):
                 regex_value = value.pattern
                 regex_options += value.flags
@@ -653,6 +660,9 @@ def _compile_field_condition(
                     )
                 regex_value = value
         elif operator == "$options":
+            if isinstance(value, Code):
+                message = "$options has to be a string"
+                raise server_error(message, code=2)
             if not isinstance(value, str):
                 raise ValueError("$options necesita un string")
             regex_options += value

@@ -4,7 +4,9 @@ from copy import deepcopy
 from datetime import datetime
 from functools import partial
 
-from bson import SON, Code, DBRef, Decimal128, Int64, MaxKey, MinKey, Regex
+from bson import BSON, SON, Code, DBRef, Decimal128, Int64, MaxKey, MinKey, Regex
+from bson.raw_bson import RawBSONDocument
+from pymongo.errors import OperationFailure
 
 from tests.differential.semantic_expression_grammar_cases import _reset
 
@@ -244,7 +246,46 @@ def bson_representations(collection):
     return output
 
 
+def bson_argument_preparation(collection):
+    output = {}
+    for populated in (False, True):
+        _reset(collection, [{"_id": 1, "a": "abc"}] if populated else [])
+        for label, condition in {
+            "type": {"$type": Code("string")},
+            "type_array": {"$type": [Code("string")]},
+            "regex": {"$regex": Code("abc")},
+            "options": {"$regex": "abc", "$options": Code("i")},
+        }.items():
+            try:
+                list(collection.find({"a": condition}))
+                result = {"ok": True}
+            except OperationFailure as error:
+                result = {
+                    "ok": False,
+                    "code": error.code,
+                    "message": error.details.get("errmsg"),
+                }
+            output[f"{populated}_{label}"] = result
+    return output
+
+
+def type_aliases(collection):
+    _reset(collection, [{"_id": 0}, {"_id": 1, "a": None}])
+    raw = BSON.encode({"_id": 2, "a": None}).replace(b"\x0aa\x00", b"\x06a\x00")
+    collection.database.command(
+        {"insert": collection.name, "documents": [RawBSONDocument(raw)]}
+    )
+    return {
+        label: [
+            r["_id"] for r in collection.find({"a": {"$type": spec}}, sort=[("_id", 1)])
+        ]
+        for label, spec in {"numeric": 6, "string": "undefined", "null": 10}.items()
+    }
+
+
 SEMANTIC_QUERY_MATCHING_CASES = (
+    ("semantic_query_matching_type_aliases", type_aliases),
+    ("semantic_query_matching_bson_preparation", bson_argument_preparation),
     ("semantic_query_matching_bson_representations", bson_representations),
     *(
         (

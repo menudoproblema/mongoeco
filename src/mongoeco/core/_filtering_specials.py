@@ -33,6 +33,7 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
 )
 from mongoeco.core.query_operators import query_operator_keys
+from mongoeco.core.query_plan import _normalize_type_specifier
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     Binary,
@@ -57,66 +58,7 @@ class FilteringSpecialOperatorsMixin:
 
     @classmethod
     def _normalize_type_specifier(cls, type_spec: Any) -> tuple[str, ...]:
-        if isinstance(type_spec, bool):
-            message = "$type no acepta booleanos como identificadores de tipo"
-            raise ValueError(message)
-        if isinstance(type_spec, int):
-            numeric_mapping = {
-                1: ("double",),
-                2: ("string",),
-                3: ("object",),
-                4: ("array",),
-                5: ("binData",),
-                6: ("dbPointer",),
-                7: ("objectId",),
-                8: ("bool",),
-                9: ("date",),
-                10: ("null",),
-                11: ("regex",),
-                13: ("javascript",),
-                14: ("symbol",),
-                15: ("javascriptWithScope",),
-                16: ("int",),
-                17: ("timestamp",),
-                18: ("long",),
-                19: ("decimal",),
-            }
-            if type_spec not in numeric_mapping:
-                message = "$type usa un codigo BSON no soportado"
-                raise ValueError(message)
-            return numeric_mapping[type_spec]
-        if not isinstance(type_spec, str):
-            message = "$type necesita alias string o codigo entero BSON"
-            raise ValueError(message)
-        alias_mapping = {
-            "double": ("double",),
-            "string": ("string",),
-            "object": ("object",),
-            "array": ("array",),
-            "bindata": ("binData",),
-            "objectid": ("objectId",),
-            "bool": ("bool",),
-            "date": ("date",),
-            "null": ("null",),
-            "regex": ("regex",),
-            "dbpointer": ("dbPointer",),
-            "javascript": ("javascript",),
-            "symbol": ("symbol",),
-            "javascriptwithscope": ("javascriptWithScope",),
-            "minkey": ("minKey",),
-            "maxkey": ("maxKey",),
-            "int": ("int",),
-            "timestamp": ("timestamp",),
-            "long": ("long",),
-            "decimal": ("decimal",),
-            "undefined": ("undefined",),
-            "number": ("double", "int", "long", "decimal"),
-        }
-        normalized = type_spec.strip().casefold()
-        if normalized not in alias_mapping:
-            message = "$type usa un alias BSON no soportado"
-            raise ValueError(message)
-        return alias_mapping[normalized]
+        return _normalize_type_specifier(type_spec)
 
     @classmethod
     def _matches_bson_type(cls, candidate: Any, alias: str) -> bool:

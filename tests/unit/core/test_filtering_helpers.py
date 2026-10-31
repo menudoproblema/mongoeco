@@ -446,7 +446,7 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertEqual(QueryEngine._normalize_type_specifier(" number "), ("double", "int", "long", "decimal"))
         with self.assertRaises(ValueError):
             QueryEngine._normalize_type_specifier(True)
-        self.assertEqual(QueryEngine._normalize_type_specifier(6), ("dbPointer",))
+        self.assertEqual(QueryEngine._normalize_type_specifier(6), ("undefined",))
         self.assertEqual(QueryEngine._normalize_type_specifier(13), ("javascript",))
         self.assertEqual(QueryEngine._normalize_type_specifier(15), ("javascriptWithScope",))
         with self.assertRaises(ValueError):
