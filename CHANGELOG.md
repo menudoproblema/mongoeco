@@ -125,6 +125,11 @@ usa Semantic Versioning.
 
 ### Changed
 
+- Partition MongoDB differential cases by declared topology requirements and
+  run replica-set cases through owned, bounded fixtures using the existing
+  pinned image matrix, capturer and replay. Preserve installed-wheel checks
+  and clean up fixture containers, volumes and payload process groups.
+
 - Remove `$exists`, `$elemMatch`, `$all` and `$nin` from aggregation expressions.
   Use query predicates outside `$expr` or valid aggregation expressions instead.
   Field-bound `$and`/`$or` shortcuts now follow the server's expression grammar;

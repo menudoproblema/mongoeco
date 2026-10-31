@@ -54,7 +54,7 @@ MONGOECO_REAL_MONGODB_URI=mongodb://localhost:27017 \
   python -m pytest tests/differential/test_positional_update_parity.py -q
 
 MONGOECO_REAL_MONGODB_URI=mongodb://localhost:27017 \
-  python scripts/run_mongodb_real_differential.py 8.0
+  python scripts/run_mongodb_real_differential.py 8.0 --partition standalone
 ```
 
 ## Initial diagnostic evidence

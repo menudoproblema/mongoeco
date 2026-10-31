@@ -153,14 +153,15 @@ python scripts/capture_differential_replay_golden.py \
   --check tests/fixtures/mongodb_version_deltas_9_0.json
 
 MONGOECO_REAL_MONGODB_URI=mongodb://localhost:27017 \
-python scripts/run_mongodb_real_differential.py 9.0 \
+python scripts/run_mongodb_real_differential.py 9.0 --partition standalone \
   --json-report artifacts/mongodb9.json
 ```
 
 La captura usa bases con UUID y las elimina en `finally`. El runner falla
 ante suite vacía, conexión fallida, versión o FCV incorrectas, transición FCV
 y cualquier omisión inesperada. El filtro por glob nunca convierte cero
-casos en éxito. La suite común comprende 29 casos por versión.
+casos en éxito. El corpus inicial descrito aquí comprendía 29 casos por versión. La selección
+y topología vigentes se documentan en [testing real](testing-real-mongodb.md).
 
 CI fija imágenes oficiales por digest para las tres versiones y establece y
 verifica su FCV. La release ejecuta el diferencial contra el mismo wheel

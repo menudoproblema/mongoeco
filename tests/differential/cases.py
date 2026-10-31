@@ -15,6 +15,7 @@ class RealParityCase:
     seed_documents: list[dict[str, Any]]
     action: RealParityAction
     min_version: tuple[int, int] = (7, 0)
+    requires_replica_set: bool = False
 
     def supports(self, target_version: tuple[int, int]) -> bool:
         return target_version >= self.min_version
@@ -1025,7 +1026,10 @@ from tests.differential.semantic_corpora import SEMANTIC_CORPORA  # noqa: E402
 
 
 REAL_PARITY_CASES += tuple(
-    RealParityCase(name=name, seed_documents=corpus.seed, action=action)
+    RealParityCase(
+        name=name, seed_documents=corpus.seed, action=action,
+        requires_replica_set=corpus.requires_replica_set,
+    )
     for corpus in SEMANTIC_CORPORA.values()
     for name, action in corpus.cases
 )

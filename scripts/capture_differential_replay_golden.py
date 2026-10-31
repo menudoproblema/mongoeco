@@ -143,7 +143,12 @@ def main() -> None:
     output_path = args.output or Path("tests/fixtures/differential_replay_golden.json")
     if args.check is not None and args.check.resolve() == output_path.resolve():
         parser.error("--check must remain distinct from the capture output")
-    runtime = inspect_server_runtime(uri, target)
+    runtime = inspect_server_runtime(
+        uri, target, require_replica_set=any(
+            corpus.requires_replica_set and corpus.case_set == args.case_set
+            for corpus in SEMANTIC_CORPORA.values()
+        ),
+    )
 
     corpora = {
         "parity": (REAL_PARITY_CASES, "cases"),

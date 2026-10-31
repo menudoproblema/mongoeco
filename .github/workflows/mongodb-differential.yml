@@ -32,7 +32,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'mongodb-differential')
     name: MongoDB ${{ matrix.target }} differential
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -98,6 +98,30 @@ jobs:
           assert 'site-packages' in Path(mongoeco.__file__).resolve().parts, mongoeco.__file__
           PY
 
+      - name: Resolve and verify topology partitions
+        shell: bash
+        env:
+          CASE_FILTER: ${{ inputs.case_filter }}
+        run: |
+          set -euo pipefail
+          mkdir -p "artifacts/${MONGOECO_REAL_MONGODB_TARGET}"
+          for PARTITION in all standalone replica-set; do
+            python scripts/run_mongodb_real_differential.py \
+              "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" \
+              --partition "$PARTITION" --list-cases \
+              > "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/selection-${PARTITION}.txt"
+          done
+          python - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          root = Path("artifacts") / os.environ["MONGOECO_REAL_MONGODB_TARGET"]
+          selected = {name: set((root / f"selection-{name}.txt").read_text().splitlines()) for name in ("all", "standalone", "replica-set")}
+          assert selected["all"], "case filter selected no differential cases"
+          assert not selected["standalone"] & selected["replica-set"]
+          assert selected["all"] == selected["standalone"] | selected["replica-set"]
+          (root / "selection.json").write_text(json.dumps({key: sorted(value) for key, value in selected.items()}, indent=2) + "\n")
+          PYTHON
+
       - name: Establish and verify the requested FCV
         run: |
           python - <<'PY'
@@ -110,22 +134,23 @@ jobs:
               assert client.admin.command({"getParameter": 1, "featureCompatibilityVersion": 1})["featureCompatibilityVersion"] == {"version": target}
           PY
 
-      - name: Run reproducible differential suite
+      - name: Run standalone differential partition
         shell: bash
         env:
           CASE_FILTER: ${{ inputs.case_filter }}
         run: |
-          mkdir -p "artifacts/${{ matrix.target }}/junit"
-          args=("${{ matrix.target }}")
-          if [ -n "$CASE_FILTER" ]; then
-            args+=("$CASE_FILTER")
+          set -euo pipefail
+          if [ ! -s "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/selection-standalone.txt" ]; then
+            echo "Standalone partition empty by requested selection; no physical execution claimed."
+            exit 0
           fi
+          mkdir -p "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/junit"
           timeout 20m python scripts/run_mongodb_real_differential.py \
-            "${args[@]}" \
+            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition standalone \
             --seed "$MONGOECO_DIFFERENTIAL_SEED" \
-            --json-report "artifacts/${{ matrix.target }}/report.json" \
-            --junit-dir "artifacts/${{ matrix.target }}/junit" \
-              2>&1 | tee "artifacts/${{ matrix.target }}/run.log"
+            --json-report "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/report.json" \
+            --junit-dir "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/junit" \
+              2>&1 | tee "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/run.log"
 
       - name: Verify positional update error codes and document atomicity
         shell: bash
@@ -233,6 +258,55 @@ jobs:
             --output "artifacts/${{ matrix.target }}/error-phases-sdk49.json" \
             --baseline "tests/fixtures/error_phases_mongodb_${TARGET_SUFFIX}.json" \
             --check tests/fixtures/error_phases_pymongo49_deltas.json
+
+      - name: Verify replica-set differential partition and captures
+        shell: bash
+        env:
+          CASE_FILTER: ${{ inputs.case_filter }}
+          MONGOECO_RS_IMAGE: ${{ matrix.image }}
+        run: |
+          set -euo pipefail
+          if [ ! -s "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/selection-replica-set.txt" ]; then
+            echo "Replica-set partition empty by requested selection; no physical execution claimed."
+            exit 0
+          fi
+          cat > "$RUNNER_TEMP/mongoeco-rs-payload.sh" <<'BASH'
+          set -euo pipefail
+          RS_ARTIFACTS="artifacts/${MONGOECO_REAL_MONGODB_TARGET}/replica-set"
+          mkdir -p "$RS_ARTIFACTS/junit"
+          python scripts/run_mongodb_real_differential.py \
+            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition replica-set \
+            --seed "$MONGOECO_DIFFERENTIAL_SEED" \
+            --json-report "$RS_ARTIFACTS/report.json" --junit-dir "$RS_ARTIFACTS/junit" \
+            2>&1 | tee "$RS_ARTIFACTS/run.log"
+          python scripts/run_mongodb_real_differential.py \
+            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition replica-set \
+            --list-corpora > "$RS_ARTIFACTS/corpora.json"
+          python - <<'PYTHON'
+          import json, os, subprocess, sys
+          from pathlib import Path
+          target = os.environ["MONGOECO_REAL_MONGODB_TARGET"]
+          root = Path("artifacts") / target / "replica-set"
+          for corpus in json.loads((root / "corpora.json").read_text()):
+              subprocess.run([
+                  sys.executable, "scripts/capture_differential_replay_golden.py",
+                  "--target", target, "--case-set", corpus["case_set"],
+                  "--output", str(root / (corpus["case_set"] + "-capture.json")),
+                  "--check", f"tests/fixtures/semantic_{corpus['fixture_key']}_{target.replace('.', '_')}.json",
+              ], check=True)
+          names = (root.parent / "selection-replica-set.txt").read_text().splitlines()
+          assert names, "replica-set replay must not be empty"
+          subprocess.run([
+              sys.executable, "-m", "pytest", "-q", "-o", "pythonpath=",
+              "tests/integration/api/test_semantic_group_regressions.py",
+              "-k", f"({' or '.join(names)}) and {target}", "--tb=short",
+          ], check=True)
+          PYTHON
+          BASH
+          python scripts/with_mongodb_replica_set.py \
+            --image "$MONGOECO_RS_IMAGE" --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --artifacts "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/replica-set/fixture" \
+            --timeout 1200 -- bash "$RUNNER_TEMP/mongoeco-rs-payload.sh"
 
       - name: Record exact MongoDB runtime
         if: always()

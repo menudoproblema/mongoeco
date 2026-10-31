@@ -64,7 +64,9 @@ candidatos, scans y dominios de metricas. Los benchmarks temporales se guardan
 como evidencia de tendencia y son obligatorios antes de aceptar una nueva regla
 SQLite, pero una fluctuacion pequena no bloquea por si sola.
 
-Los casos diferenciales reales se ejecutan contra Community Server 7 y 8. El
+Los casos diferenciales reales se ejecutan contra Community Server 7, 8 y 9.
+[Testing real](../testing-real-mongodb.md) posee la selección por requisitos de
+topología y el ciclo de vida de las fixtures; no son capacidades del engine local. El
 catalogo ejecutable puede crecer antes de una captura local, pero esos nombres
 permanecen en `REAL_CAPTURE_PENDING_CASES` hasta incorporar en el mismo cambio
 un golden obtenido de MongoDB real. La paridad Memory/SQLite nunca sustituye esa

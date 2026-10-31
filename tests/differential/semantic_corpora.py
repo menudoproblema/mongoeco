@@ -189,6 +189,7 @@ class SemanticCorpus:
     cases: tuple
     observation_encoding: str = "bson"
     surfaces: tuple[str, ...] = ("sync", "async", "wire-sync", "wire-async")
+    requires_replica_set: bool = False
 
 
 SEMANTIC_CORPORA = {
@@ -204,22 +205,27 @@ SEMANTIC_CORPORA = {
         "watch-namespace-image", "semantic_watch_namespace_image_cases",
         WATCH_NAMESPACE_IMAGE_SEED, SEMANTIC_WATCH_NAMESPACE_IMAGE_CASES,
         surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "watch_batch": SemanticCorpus(
         "watch-batch", "semantic_watch_batch_cases", WATCH_BATCH_SEED,
         SEMANTIC_WATCH_BATCH_CASES, surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "watch_checkpoint": SemanticCorpus(
         "watch-checkpoint", "semantic_watch_checkpoint_cases", WATCH_CHECKPOINT_SEED,
         SEMANTIC_WATCH_CHECKPOINT_CASES, surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "watch_protocol": SemanticCorpus(
         "watch-protocol", "semantic_watch_protocol_cases", WATCH_PROTOCOL_SEED,
         SEMANTIC_WATCH_PROTOCOL_CASES, surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "watch_token": SemanticCorpus(
         "watch-token", "semantic_watch_token_cases", WATCH_TOKEN_SEED,
         SEMANTIC_WATCH_TOKEN_CASES, surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "rename_command": SemanticCorpus(
         "rename-command", "semantic_rename_command_cases", RENAME_COMMAND_SEED,
@@ -228,14 +234,17 @@ SEMANTIC_CORPORA = {
     "watch_rename": SemanticCorpus(
         "watch-rename", "semantic_watch_rename_cases", WATCH_RENAME_SEED,
         SEMANTIC_WATCH_RENAME_CASES, surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "watch_lifecycle": SemanticCorpus(
         "watch-lifecycle", "semantic_watch_lifecycle_cases", WATCH_LIFECYCLE_SEED,
         SEMANTIC_WATCH_LIFECYCLE_CASES, surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "watch_image": SemanticCorpus(
         "watch-image", "semantic_watch_image_cases", WATCH_IMAGE_SEED,
         SEMANTIC_WATCH_IMAGE_CASES, surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "watch": SemanticCorpus(
         "watch",
@@ -243,6 +252,7 @@ SEMANTIC_CORPORA = {
         WATCH_SEED,
         SEMANTIC_WATCH_CASES,
         surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "update_entrypoint": SemanticCorpus(
         "update-entrypoint",
@@ -250,6 +260,7 @@ SEMANTIC_CORPORA = {
         UPDATE_ENTRYPOINT_SEED,
         SEMANTIC_UPDATE_ENTRYPOINT_CASES,
         surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "update_event": SemanticCorpus(
         "update-event",
@@ -257,6 +268,7 @@ SEMANTIC_CORPORA = {
         UPDATE_EVENT_SEED,
         SEMANTIC_UPDATE_EVENT_CASES,
         surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "bson_size": SemanticCorpus(
         "bson-size",
@@ -294,6 +306,7 @@ SEMANTIC_CORPORA = {
         TTL_PUBLICATION_SEED,
         SEMANTIC_TTL_PUBLICATION_CASES,
         surfaces=("sync", "async"),
+        requires_replica_set=True,
     ),
     "datetime": SemanticCorpus(
         "datetime",

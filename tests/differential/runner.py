@@ -32,43 +32,56 @@ def resolve_case_filter(argv: list[str]) -> str | None:
     return os.getenv("MONGOECO_REAL_MONGODB_CASE")
 
 
-def available_case_names(
-    target_version: tuple[int, int] | None = None,
-) -> list[str]:
-    selected = [
-        case.name
-        for case in REAL_PARITY_CASES
-        if target_version is None or case.supports(target_version)
+def select_cases(target_version=None, case_filter=None, *, partition="all"):
+    """Canonical selection for listing, execution, capture inventory and reports."""
+    if partition not in {"all", "standalone", "replica-set"}:
+        message = f"unknown differential partition: {partition}"
+        raise ValueError(message)
+    patterns = [
+        value.strip() for value in (case_filter or "*").split(",") if value.strip()
     ]
-    return sorted(selected)
+    return tuple(
+        case
+        for case in REAL_PARITY_CASES
+        if (target_version is None or case.supports(target_version))
+        and (
+            partition == "all"
+            or case.requires_replica_set == (partition == "replica-set")
+        )
+        and any(fnmatch.fnmatch(case.name, pattern) for pattern in patterns)
+    )
+
+
+def available_case_names(target_version=None, case_filter=None, *, partition="all"):
+    return sorted(
+        case.name
+        for case in select_cases(target_version, case_filter, partition=partition)
+    )
 
 
 def build_suite(
-    target: str,
-    case_filter: str | None = None,
+    target: str, case_filter=None, *, partition="all"
 ) -> unittest.TestSuite:
-    suite = unittest.defaultTestLoader.loadTestsFromName(
-        TARGET_MODULES[target],
+    suite = unittest.defaultTestLoader.loadTestsFromName(TARGET_MODULES[target])
+    target_version = tuple(int(part) for part in target.split("."))
+    applicable = set(
+        available_case_names(target_version, case_filter, partition=partition)
     )
     filtered = unittest.TestSuite()
-    major, minor = (int(part) for part in target.split("."))
-    applicable = set(available_case_names((major, minor)))
-    patterns = [
-        fragment.strip()
-        for fragment in (case_filter or "*").split(",")
-        if fragment.strip()
-    ]
     for test in _iter_cases(suite):
         method_name = getattr(test, "_testMethodName", "")
         case_name = method_name.removeprefix("test_").removesuffix(
-            "_matches_real_mongodb",
+            "_matches_real_mongodb"
         )
-        if case_name in applicable and any(
-            fnmatch.fnmatch(case_name, pattern) for pattern in patterns
-        ):
+        if case_name in applicable:
             filtered.addTest(test)
     if filtered.countTestCases() == 0:
-        message = f"case filter matched no differential cases: {case_filter}"
+        message = (
+            f"case filter matched no differential cases: {case_filter} ({partition})"
+        )
+        raise ValueError(message)
+    if filtered.countTestCases() != len(applicable):
+        message = "differential suite did not load every selected case"
         raise ValueError(message)
     return filtered
 

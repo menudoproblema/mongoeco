@@ -1,5 +1,4 @@
 import argparse
-import fnmatch
 import importlib
 import json
 import os
@@ -34,7 +33,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("target", choices=tuple(_differential_runner.TARGET_MODULES))
     parser.add_argument("case_filter", nargs="?")
-    parser.add_argument("--list-cases", action="store_true")
+    listing = parser.add_mutually_exclusive_group()
+    listing.add_argument("--list-cases", action="store_true")
+    listing.add_argument("--list-corpora", action="store_true")
+    parser.add_argument(
+        "--partition", choices=("all", "standalone", "replica-set"), default="all"
+    )
     parser.add_argument("--json-report", type=Path)
     parser.add_argument("--junit-dir", type=Path)
     parser.add_argument(
@@ -50,11 +54,15 @@ def _failure_document(item: tuple[object, str]) -> dict[str, str]:
     return {"test": str(test), "traceback": traceback}
 
 
-def inspect_server_runtime(uri: str, target: str) -> dict[str, object]:
+def inspect_server_runtime(
+    uri: str, target: str, *, require_replica_set: bool = False
+) -> dict[str, object]:
     """Require the actual server and FCV, never just a configured target."""
     import pymongo  # noqa: PLC0415 - optional dependency only needed for real integration
 
-    with pymongo.MongoClient(uri, serverSelectionTimeoutMS=3000) as client:
+    with pymongo.MongoClient(
+        uri, serverSelectionTimeoutMS=3000, socketTimeoutMS=3000
+    ) as client:
         client.admin.command("ping")
         build_info = client.server_info()
         version = build_info.get("versionArray", [])
@@ -70,22 +78,49 @@ def inspect_server_runtime(uri: str, target: str) -> dict[str, object]:
         ):
             message = f"requires stable FCV {target}, got {fcv!r}"
             raise RuntimeError(message)
-    return {
+        hello = client.admin.command("hello") if require_replica_set else None
+        if require_replica_set and not (
+            hello.get("setName") and hello.get("isWritablePrimary")
+        ):
+            message = "requires a writable replica-set primary"
+            raise RuntimeError(message)
+    runtime = {
         "build_info": build_info,
         "fcv": fcv,
         "pymongo": pymongo.version,
         "python": platform.python_version(),
     }
+    if hello is not None:
+        runtime["hello"] = hello
+    return runtime
 
 
 def main(argv: list[str] | None = None) -> int:
     args = sys.argv if argv is None else argv
     parsed = _parse_args(args)
+    version = tuple(int(part) for part in parsed.target.split("."))
+    selected = _differential_runner.select_cases(
+        version, parsed.case_filter, partition=parsed.partition
+    )
     if parsed.list_cases:
-        target = parsed.target
-        major, minor = (int(part) for part in target.split(".", 1))
-        for case_name in available_case_names((major, minor)):
+        for case_name in sorted(case.name for case in selected):
             sys.stdout.write(f"{case_name}\n")
+        return 0
+    if parsed.list_corpora:
+        corpora = importlib.import_module(
+            "tests.differential.semantic_corpora"
+        ).SEMANTIC_CORPORA
+        names = {case.name for case in selected}
+        json.dump(
+            [
+                {"case_set": corpus.case_set, "fixture_key": key}
+                for key, corpus in corpora.items()
+                if names.intersection(name for name, _ in corpus.cases)
+            ],
+            sys.stdout,
+            indent=2,
+        )
+        sys.stdout.write("\n")
         return 0
 
     if not os.getenv("MONGOECO_REAL_MONGODB_URI"):
@@ -95,7 +130,9 @@ def main(argv: list[str] | None = None) -> int:
     random.seed(parsed.seed)
     started_at = time.time()
     try:
-        suite = build_suite(parsed.target, parsed.case_filter)
+        suite = build_suite(
+            parsed.target, parsed.case_filter, partition=parsed.partition
+        )
     except ValueError as error:
         sys.stderr.write(f"{error}\n")
         return 2
@@ -107,7 +144,9 @@ def main(argv: list[str] | None = None) -> int:
     preflight_error = None
     try:
         runtime = inspect_server_runtime(
-            os.environ["MONGOECO_REAL_MONGODB_URI"], parsed.target
+            os.environ["MONGOECO_REAL_MONGODB_URI"],
+            parsed.target,
+            require_replica_set=any(case.requires_replica_set for case in selected),
         )
     except Exception as error:
         preflight_error = {"error_type": type(error).__name__, "error": str(error)}
@@ -144,25 +183,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     if parsed.json_report is not None:
         parsed.json_report.parent.mkdir(parents=True, exist_ok=True)
-        major, minor = (int(part) for part in parsed.target.split(".", 1))
-        manifests = [
-            case.to_manifest()
-            for case in REAL_PARITY_CASES
-            if case.supports((major, minor))
-            and (
-                parsed.case_filter is None
-                or any(
-                    fnmatch.fnmatch(case.name, pattern.strip())
-                    for pattern in parsed.case_filter.split(",")
-                    if pattern.strip()
-                )
-            )
-        ]
+        manifests = [case.to_manifest() for case in selected]
         parsed.json_report.write_text(
             json.dumps(
                 {
                     "target": parsed.target,
                     "case_filter": parsed.case_filter,
+                    "partition": parsed.partition,
                     "seed": parsed.seed,
                     "duration_seconds": time.time() - started_at,
                     "expected_tests": expected_tests,
