@@ -1,0 +1,79 @@
+import hashlib,json,os,struct
+from bson import BSON
+from bson.codec_options import CodecOptions,TypeDecoder,TypeRegistry
+from pymongo import MongoClient
+
+limit=16*1024*1024
+result={}
+
+def observe(open_cursor,raw):
+    cursor=None
+    seen=[]
+    phase='open'
+    try:
+        cursor=open_cursor()
+        phase='iterate'
+        for page in cursor:
+            if raw:
+                n=0;offset=0
+                while offset<len(page):
+                    size=struct.unpack_from('<i',page,offset)[0]
+                    offset+=size;n+=1
+                assert offset==len(page)
+                seen.append({'documents':n,'bytes':len(page)})
+            else:seen.append(page['_id'])
+        return {'ok':True,'seen':seen}
+    except Exception as error:
+        return {'ok':False,'seen':seen,'class':type(error).__name__,'code':getattr(error,'code',None),'phase':phase}
+    finally:
+        if cursor is not None:cursor.close()
+
+with MongoClient(os.environ['MONGOECO_REAL_MONGODB_URI']) as client:
+    db=client.raw_byte_probe
+    collection=db.rows
+    base=len(BSON.encode({'_id':1,'p':''}))
+    for delta in (-32,-16,-8,-7,-6,-5,-4,-3):
+        size=limit//4+delta
+        collection.delete_many({})
+        collection.insert_many([{'_id':i,'p':'x'*(size-base)} for i in range(1,6)])
+        for kind in ('find','aggregate'):
+            for batch in (None,2):
+                def open_cursor():
+                    if kind=='find':return collection.find_raw_batches({},sort=[('_id',1)],**({} if batch is None else {'batch_size':batch}))
+                    return collection.aggregate_raw_batches([{'$sort':{'_id':1}}],**({} if batch is None else {'batchSize':batch}))
+                result[f'counts/{size}/{kind}/{batch}']=observe(open_cursor,True)
+    # One materialized sort prefix, errors around the byte boundary and eager
+    # user codecs. A response error and a client decoder error are separate.
+    for bad in (3,4,5):
+        pipeline=[{'$sort':{'_id':1}},{'$project':{'p':1,'v':{'$divide':[1,{'$cond':[{'$eq':['$_id',bad]},0,1]}]}}}]
+        for raw in (False,True):
+            for batch in (None,0,2):
+                calls=[]
+                class IdentityInt(TypeDecoder):
+                    bson_type=int
+                    def transform_bson(self,value):calls.append(value);return value
+                decoded=collection.with_options(codec_options=CodecOptions(type_registry=TypeRegistry([IdentityInt()])))
+                def open_cursor():
+                    method=decoded.aggregate_raw_batches if raw else decoded.aggregate
+                    return method(pipeline,**({} if batch is None else {'batchSize':batch}))
+                observed=observe(open_cursor,raw)
+                observed['decoder_calls']=calls
+                result[f'errors/{bad}/{raw}/{batch}']=observed
+    collection.delete_many({})
+    collection.insert_one({'_id':1,'v':[1,0]})
+    for raw in (False,True):
+        for batch in (None,1,2):
+            calls=[]
+            class ExpansionInt(TypeDecoder):
+                bson_type=int
+                def transform_bson(self,value):calls.append(value);return value
+            decoded=collection.with_options(codec_options=CodecOptions(type_registry=TypeRegistry([ExpansionInt()])))
+            pipeline=[{'$unwind':'$v'},{'$project':{'x':{'$divide':[1,'$v']}}}]
+            def open_cursor():
+                method=decoded.aggregate_raw_batches if raw else decoded.aggregate
+                return method(pipeline,**({} if batch is None else {'batchSize':batch}))
+            observed=observe(open_cursor,raw)
+            observed['decoder_calls']=calls
+            result[f'expansion/{raw}/{batch}']=observed
+    collection.drop()
+print(json.dumps(result,indent=2))

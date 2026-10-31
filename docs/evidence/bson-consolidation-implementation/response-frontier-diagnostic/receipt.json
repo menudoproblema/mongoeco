@@ -1,0 +1,67 @@
+{
+  "status": "Native characterization and local reproduction; not correction acceptance",
+  "runtime_identity": "../raw-response/runtime-sources.json",
+  "native_versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "fcv": "matching major; owned single-member replica sets",
+  "matrix_exit_codes": {
+    "bytes": [
+      0,
+      0,
+      0
+    ],
+    "bytes-boundary": [
+      0,
+      0,
+      0
+    ],
+    "callbacks-two-inputs": [
+      0,
+      0,
+      0
+    ]
+  },
+  "local_surface": "sync MongoClient default MemoryEngine; public codec options adapted; no production observation helpers",
+  "callbacks_agree_across_three_majors": true,
+  "observations": {
+    "size_case": "Five documents of 4194288 BSON bytes each. First raw find batch: 4 in 7.0, 3 in 8.0/9.0; aggregate_raw_batches: 3 in all majors. Local find/aggregate return all 5.",
+    "error_after_byte_cut": "With five documents near 4 MiB and error at id 5, native returns 3 documents before getMore error; local delivers none.",
+    "decoder_side_effect": "Two input documents v=[1] and v=[0], unwind then divide. Default/batchSize=2 aggregate fails on open. Native invokes no int decoder; local invokes it for id 1 before failing.",
+    "controls": "batchSize=1 nonraw returns first row then fails on iteration with exactly one decoder call. Raw decoder calls remain zero in these int-decoder witnesses."
+  },
+  "sources_consulted": [
+    "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/query/find_common.h",
+    "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/query/find_common.cpp",
+    "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/query/cursor_response.h",
+    "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/query/cursor_response.cpp"
+  ],
+  "cleanup": "../raw-response/native-cleanup.json; all 15 fixture containers and 30 volumes from raw + diagnostic cohorts independently absent",
+  "limits": [
+    "Not permanent registered regression corpora yet.",
+    "No byte/codec production fix or acceptance in this diagnostic.",
+    "Does not establish a universal constant for response overhead.",
+    "Local reproduction only Memory/sync, not SQLite/async/wire acceptance."
+  ],
+  "artifacts": {
+    "README.md": "2550b2b8cd4a9ab9295b565d48d02627faf4d17dcbe53c92a9a3fb763fb0fd0c",
+    "mongoeco-response-bytes-local-v2.json": "26e45158b65d9d78ebf8c63a43d8665f4b05cb0d2de4b5d99ef3106b62c03880",
+    "mongoeco-response-bytes-local-v2.py.txt": "1ce686f4421e6dd64f46c2ac0dfcd073e2acd67502db2840556c8d697ea8a50e",
+    "mongoeco-response-bytes-local.json": "d9627a16f32e5b951cf35c09e8116360fc568b2a47f28af64d6c8bcd44358b9f",
+    "mongoeco-response-bytes-local.py.txt": "070b041df367fe386a5ecc24605e48feb733aa8bf2f0ec7c8d7a330d1fcf05d6",
+    "mongoeco-response-bytes-matrix-v2.py.txt": "23db298deb31f997139d460535b13bb650887a62b2a0760d85fdebe91f2f7b44",
+    "mongoeco-response-bytes-matrix-v2.txt": "d4097bc061fc9ae49a7f0e4c973bb103f3f18c12e154a3a39e98ac33c86c717b",
+    "mongoeco-response-bytes-matrix.py.txt": "615e1cfda094130a62b89577061fad5104f5bb3e4e0e7ff92f7c1052ecdc51b9",
+    "mongoeco-response-bytes-matrix.txt": "d4097bc061fc9ae49a7f0e4c973bb103f3f18c12e154a3a39e98ac33c86c717b",
+    "mongoeco-response-bytes-probe-v2.py.txt": "09555563f7b172382302cef602810ae261fc172e0f7f35c1dfa3f69e4a8cb3ff",
+    "mongoeco-response-bytes-probe.py.txt": "35a9f3872bf84562b851978827fbdae65bbd2b77763d3a3e6505107412527b8e",
+    "mongoeco-response-callbacks-local.json": "367d3cc9896d7d5d1332f53f670ec9d226a8c3813ea512ce0a302c7e65ec1218",
+    "mongoeco-response-callbacks-local.py.txt": "b32883093a5b6db6dca4fc22792aadbf548d84203bb63e0248bdc79f2a36c996",
+    "mongoeco-response-callbacks-matrix.py.txt": "03595f936b89448e74efd28aacf2c8d80e3197dd7fa958beb8f6bcbf21d1a80d",
+    "mongoeco-response-callbacks-matrix.txt": "d4097bc061fc9ae49a7f0e4c973bb103f3f18c12e154a3a39e98ac33c86c717b",
+    "mongoeco-response-callbacks-probe.py.txt": "de59644def2bb5573bb25b98cec6a9889a8fcf002c83b791b491812dd1b87ea8",
+    "native.tar.gz": "06bc1da3498dff96319b4efc043242f8847687788e071bf96cb092c74d005d09"
+  }
+}

@@ -89,7 +89,7 @@ no se convierten en aceptación de runtime por esa autorización.
 
 La relectura del adjunto del 31 de octubre conserva el mismo SHA-256
 `a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`.
-Su disposición actual frente a HEAD `7f8110a` y el candidato raw sin commitear
+Su disposición en esta relectura frente a HEAD `7f8110a` y el candidato raw sin commitear
 está en «Contraste actual y orden mínimo de ejecución», dentro de la sección 5.
 La [evidencia de esta relectura](evidence/bson-consolidation-review/response-frontier-plan/receipt.json)
 identifica los inputs, las verificaciones y el trabajo preexistente sin aceptarlo. Las bases y resultados de las revisiones anteriores son históricos.
@@ -1120,9 +1120,17 @@ poseyendo el estado y aceptación de cada corte.
 gramática auxiliar, traductor SQL, migración TTL y contexto watch. Se inspeccionan
 además las rutas de respuesta/raw y sus codecs. No se ejecutan servidores MongoDB
 ni nuevas capturas en esta revisión. Las 167 pruebas citadas por el informe son
-históricas. El candidato raw preexistente sigue sin aceptación: ni su presencia
-ni sus referencias nuevas acreditan que el replay final pase. El corte de sufijos
+históricas. En esa relectura el candidato raw preexistente seguía sin aceptación: ni su
+presencia ni sus referencias nuevas acreditaban que el replay final pasase. El corte de sufijos
 por cantidad ya aceptado conserva su receipt y no acredita bytes/callbacks.
+
+**Actualización de ejecución.** El corte raw de contenido/apertura/cantidades
+`30c8ae2` ya tiene su aceptación acotada en el [registro](bson-consolidation-implementation.md#d06ab--lecturas-raw-apertura-y-cantidades).
+Conservar sus controles; la siguiente modificación productiva es el paso 2.
+Las [sondas nativas posteriores](evidence/bson-consolidation-implementation/response-frontier-diagnostic/README.md)
+reproducen cortes por bytes distintos por ruta/major y callbacks antes de un
+error que invalida la respuesta. Incorporarlas al corpus antes de corregir el
+coordinador. No declarar resuelto ese comportamiento por el replay verde raw.
 
 **Causa conjunta y refactorización.** Los defectos comparten pérdida de información
 antes de que su consumidor decida: subtipo al comparar, orden al decodificar,
@@ -1144,7 +1152,7 @@ no obliga a una nueva jerarquía de clases.
 
 | Orden / prioridad | Trabajo, dependencia y simplificación | Aceptación necesaria |
 | --- | --- | --- |
-| 1 / P1 — D06a/b, raw y representación | Terminar el candidato sobre cursor/materializador/bridge actuales. Conservar los cortes de gramática y sufijos aceptados; completar los contextos String/Code/DBRef que falten. No llamar a la apertura normal de aggregate y asumir que raw tiene la misma primera tanda. | Diferenciales 7/8/9 de find/aggregate raw y decodificado, sync/async y wire soportado. BSON exacto independiente del decoder productivo; orden/extras/`$db:null`, Binary 0/5 y Code scope anidados. Codec mutante con control decodificado activo y cero callbacks en raw. Batch ausente/0/1/2, fase de error y ejecución de `$merge` al abrir observadas por superficie. Fuente final congelada y `--check` de las referencias nuevas; no regenerar goldens para ocultar fallos. |
+| 1 / P1 — D06a/b, raw y representación | Conservar el corte raw de contenido/cantidades aceptado y completar contextos String/Code/DBRef/raw que falten sobre cursor/materializador/bridge actuales. No llamar a la apertura normal de aggregate y asumir que raw tiene la misma primera tanda. | Diferenciales 7/8/9 de find/aggregate raw y decodificado, sync/async y wire soportado. BSON exacto independiente del decoder productivo; orden/extras/`$db:null`, Binary 0/5 y Code scope anidados. Codec mutante con control decodificado activo y cero callbacks en raw. Batch ausente/0/1/2, fase de error y ejecución de `$merge` al abrir observadas por superficie. Fuente final congelada y `--check` de las referencias nuevas; no regenerar goldens para ocultar fallos. |
 | 2 / P1 — D06a/b, bytes y callbacks | Sobre la misma formación de respuesta, incorporar límites por bytes y conservar salida pendiente sin reevaluar. Reusar `bson_size`; distinguir límite de documento, tanda y mensaje. Caracterizar antes de fijar constantes, lookahead o prioridad de errores. | Casos alrededor de cada frontera de tamaño, con cantidad simultánea, documento grande y expansión/materialización. Error antes/en/después del corte: documentos/tandas entregados, fase/clase/código, orden y ausencia de pérdida/duplicación. Contrastar find y aggregate por separado. Un fallo del servidor que invalida una respuesta no debe activar decoders de esa respuesta; si falla un decoder del cliente, observar lo que hizo el SDK sin prometer rollback de efectos externos de callbacks anteriores. |
 | 3 / P1 — D06c, consumidores y claves | Después de las vistas disponibles y preservación necesarias, revisar group/sets/lookup/spill/Search según equivalencia propia. Compartir átomos, retirar duplicación junto con sus guardas; no cambiar storage keys ni desempates persistidos. | Mismo resultado BSON con/sin hash/spill y bajo collation. Clave exclusiva: equivalencia en ambos sentidos; hash: colisiones permitidas solo con comparación posterior. Prefiltros Search conservan candidatos antes de residual y ventana. Contextos de subpipeline y persistencia tienen testigos propios. |
 | 4 / P2 — H53, conversión y D07 | H53 permanece en C03/B08, sin logging nuevo implícito. String sNaN conserva su owner de conversión. Resolver continuar/descartar el piloto schema con hipótesis medible; D07 puede descartarse. | Separar evaluación, permiso y warning en strict/moderate/off × error/warn/bypass, antiguo/candidato. Captura/regresión sNaN 7/8/9 con clase/código/fase y controles válidos. No deducir rechazo de escrituras por ausencia de warning. |

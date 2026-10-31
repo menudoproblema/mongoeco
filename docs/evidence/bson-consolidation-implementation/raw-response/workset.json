@@ -1,0 +1,17 @@
+{
+  "tests/differential/semantic_raw_response_cases.py": "aae195bb06bbf6cd606649e24938c597bea76afaeb0df2eb6bf5cd0ada1dd047",
+  "tests/fixtures/semantic_raw_response_7_0.json": "e26f37ee0eb896e5690bf0c37ced49b84a796b6f01c750c1b17c2e11aa6aa988",
+  "tests/fixtures/semantic_raw_response_8_0.json": "826fee1668e393238b7ee13c7ddbc510fead9046a896ee72a3dd36f5d1911ef0",
+  "tests/fixtures/semantic_raw_response_9_0.json": "8a56729bf5cea20cfd6f0d79626ed533d47050a5cb615f18bd242a91fa90c501",
+  "src/mongoeco/api/_async/collection.py": "6ca3586867d9f6da23f7abd1546b01c8fc40418030aa282f43863138f1c9e12c",
+  "src/mongoeco/api/_async/raw_batch_cursor.py": "7e595af80b5c6a5a7271651ad7ba7395f4d877b629d900a35023ec70a00fc2f8",
+  "src/mongoeco/api/_sync/collection.py": "a813842d921a5738b0ab52b72b9341579a380952e1ce6398bed9412661c3a7e0",
+  "src/mongoeco/wire/_executor_support.py": "0c770b70c297faba429fac263cca0975e06e4a758c30b27ec2bd709325a44937",
+  "src/mongoeco/wire/protocol.py": "6be753d396d53bb3ab09da3c8afa111da4d58fde3008f3faddd5af7f86c31edc",
+  "tests/differential/semantic_corpora.py": "d81bfdecc8988ce192aca75cf28b36390841de2bbc773334fc188d322637bf0f",
+  "tests/integration/api/test_semantic_group_regressions.py": "80ed93a922fb06a3853ffee36c8704581de962f818fa9df123a3ac53ce4edf1d",
+  "tests/unit/api/test_collection_management_helpers.py": "bb24fb66ce15dc7a5d8558ed79d0f4c07aa2f6bacac61544e4dc05cf6ebb90e7",
+  "tests/unit/test_raw_batch_cursors.py": "7877f6c1d75b35d2386e3f1ca6e58e6f061dca98cc21057f8a633dccf8fe39b7",
+  "tests/unit/wire/test_executor_helpers.py": "91379e30ab55210312b2db6d590828a201efd6cab043163e61e3474162977a4b",
+  "tests/unit/wire/test_protocol.py": "bd036ce550b7a6c9159c3bcab5fe9474a5f323e64457f42ed8d2f669dd3c7ab4"
+}

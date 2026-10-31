@@ -1,0 +1,37 @@
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting pyuca<2,>=1.2
+  Using cached pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+Collecting rpds-py<2027,>=0.27
+  Using cached rpds_py-2026.9.1-cp313-cp313-macosx_11_0_arm64.whl.metadata (4.1 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting shapely<3,>=2.2
+  Using cached shapely-2.2.0-cp313-cp313-macosx_11_0_arm64.whl.metadata (6.7 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting usearch<3,>=2.26.4
+  Using cached usearch-2.26.6-cp313-cp313-macosx_11_0_arm64.whl.metadata (35 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting numpy>=1.26 (from shapely<3,>=2.2)
+  Downloading numpy-2.5.4-cp313-cp313-macosx_11_0_arm64.whl.metadata (6.6 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting tqdm (from usearch<3,>=2.26.4)
+  Using cached tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting numkong>=7.8.6 (from usearch<3,>=2.26.4)
+  Using cached numkong-7.8.6-cp313-cp313-macosx_11_0_arm64.whl.metadata (87 kB)
+Using cached pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+Using cached rpds_py-2026.9.1-cp313-cp313-macosx_11_0_arm64.whl (340 kB)
+Using cached shapely-2.2.0-cp313-cp313-macosx_11_0_arm64.whl (1.6 MB)
+Using cached usearch-2.26.6-cp313-cp313-macosx_11_0_arm64.whl (455 kB)
+Using cached numkong-7.8.6-cp313-cp313-macosx_11_0_arm64.whl (817 kB)
+Downloading numpy-2.5.4-cp313-cp313-macosx_11_0_arm64.whl (12.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.0/12.0 MB 48.1 MB/s  0:00:00
+Using cached tqdm-4.70.1-py3-none-any.whl (80 kB)
+Installing collected packages: pyuca, tqdm, rpds-py, numpy, numkong, usearch, shapely
+
+Successfully installed numkong-7.8.6 numpy-2.5.4 pyuca-1.2 rpds-py-2026.9.1 shapely-2.2.0 tqdm-4.70.1 usearch-2.26.6
+WARNING: Target directory /var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-raw-wheel-vu7alvd0/sdk-free-deps/rpds already exists. Specify --upgrade to force replacement.
+WARNING: Target directory /var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-raw-wheel-vu7alvd0/sdk-free-deps/rpds_py-2026.9.1.dist-info already exists. Specify --upgrade to force replacement.
+WARNING: Target directory /var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-raw-wheel-vu7alvd0/sdk-free-deps/bin already exists. Specify --upgrade to force replacement.
+
+[notice] A new release of pip is available: 26.1.1 -> 26.2.2
+[notice] To update, run: /Users/uve/Proyectos/mongoeco/.venv/bin/python -m pip install --upgrade pip

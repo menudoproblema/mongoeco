@@ -1,0 +1,18 @@
+from pathlib import Path
+import json,subprocess
+reports=[]
+for root in ('/tmp/mongoeco-raw-native-v1','/tmp/mongoeco-raw-native-v2','/tmp/mongoeco-response-bytes-probe','/tmp/mongoeco-response-bytes-probe-v2','/tmp/mongoeco-response-callbacks-probe'):
+ for version in ('7.0','8.0','9.0'):
+  path=Path(root)/version/'fixture.json'
+  row=json.loads(path.read_text())
+  targets=[('container',row['name']),*[('volume',v) for v in row['anonymous_volumes']]]
+  checks=[]
+  for kind,name in targets:
+   command=['docker',*(['volume'] if kind=='volume' else []),'inspect',name]
+   result=subprocess.run(command,capture_output=True,text=True)
+   absent=result.returncode!=0 and 'no such' in (result.stdout+result.stderr).lower()
+   checks.append({'kind':kind,'name':name,'absent':absent,'exit_code':result.returncode})
+   assert absent,(kind,name,result.stdout,result.stderr)
+  reports.append({'fixture':str(path),'reported_cleanup':row['cleanup'],'checks':checks})
+Path('/tmp/mongoeco-raw-native-cleanup.json').write_text(json.dumps(reports,indent=2)+'\n')
+print('verified absent',len(reports),'containers',sum(len(r['checks'])-1 for r in reports),'volumes')

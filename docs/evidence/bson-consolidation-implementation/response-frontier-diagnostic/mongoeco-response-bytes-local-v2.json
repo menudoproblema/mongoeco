@@ -1,0 +1,655 @@
+{
+  "counts/4194272/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971360
+      }
+    ]
+  },
+  "counts/4194272/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388544
+      },
+      {
+        "documents": 2,
+        "bytes": 8388544
+      },
+      {
+        "documents": 1,
+        "bytes": 4194272
+      }
+    ]
+  },
+  "counts/4194272/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971360
+      }
+    ]
+  },
+  "counts/4194272/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388544
+      },
+      {
+        "documents": 2,
+        "bytes": 8388544
+      },
+      {
+        "documents": 1,
+        "bytes": 4194272
+      }
+    ]
+  },
+  "counts/4194288/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971440
+      }
+    ]
+  },
+  "counts/4194288/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388576
+      },
+      {
+        "documents": 2,
+        "bytes": 8388576
+      },
+      {
+        "documents": 1,
+        "bytes": 4194288
+      }
+    ]
+  },
+  "counts/4194288/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971440
+      }
+    ]
+  },
+  "counts/4194288/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388576
+      },
+      {
+        "documents": 2,
+        "bytes": 8388576
+      },
+      {
+        "documents": 1,
+        "bytes": 4194288
+      }
+    ]
+  },
+  "counts/4194296/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971480
+      }
+    ]
+  },
+  "counts/4194296/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388592
+      },
+      {
+        "documents": 2,
+        "bytes": 8388592
+      },
+      {
+        "documents": 1,
+        "bytes": 4194296
+      }
+    ]
+  },
+  "counts/4194296/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971480
+      }
+    ]
+  },
+  "counts/4194296/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388592
+      },
+      {
+        "documents": 2,
+        "bytes": 8388592
+      },
+      {
+        "documents": 1,
+        "bytes": 4194296
+      }
+    ]
+  },
+  "counts/4194297/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971485
+      }
+    ]
+  },
+  "counts/4194297/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388594
+      },
+      {
+        "documents": 2,
+        "bytes": 8388594
+      },
+      {
+        "documents": 1,
+        "bytes": 4194297
+      }
+    ]
+  },
+  "counts/4194297/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971485
+      }
+    ]
+  },
+  "counts/4194297/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388594
+      },
+      {
+        "documents": 2,
+        "bytes": 8388594
+      },
+      {
+        "documents": 1,
+        "bytes": 4194297
+      }
+    ]
+  },
+  "counts/4194298/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971490
+      }
+    ]
+  },
+  "counts/4194298/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388596
+      },
+      {
+        "documents": 2,
+        "bytes": 8388596
+      },
+      {
+        "documents": 1,
+        "bytes": 4194298
+      }
+    ]
+  },
+  "counts/4194298/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971490
+      }
+    ]
+  },
+  "counts/4194298/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388596
+      },
+      {
+        "documents": 2,
+        "bytes": 8388596
+      },
+      {
+        "documents": 1,
+        "bytes": 4194298
+      }
+    ]
+  },
+  "counts/4194299/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971495
+      }
+    ]
+  },
+  "counts/4194299/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388598
+      },
+      {
+        "documents": 2,
+        "bytes": 8388598
+      },
+      {
+        "documents": 1,
+        "bytes": 4194299
+      }
+    ]
+  },
+  "counts/4194299/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971495
+      }
+    ]
+  },
+  "counts/4194299/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388598
+      },
+      {
+        "documents": 2,
+        "bytes": 8388598
+      },
+      {
+        "documents": 1,
+        "bytes": 4194299
+      }
+    ]
+  },
+  "counts/4194300/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971500
+      }
+    ]
+  },
+  "counts/4194300/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388600
+      },
+      {
+        "documents": 2,
+        "bytes": 8388600
+      },
+      {
+        "documents": 1,
+        "bytes": 4194300
+      }
+    ]
+  },
+  "counts/4194300/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971500
+      }
+    ]
+  },
+  "counts/4194300/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388600
+      },
+      {
+        "documents": 2,
+        "bytes": 8388600
+      },
+      {
+        "documents": 1,
+        "bytes": 4194300
+      }
+    ]
+  },
+  "counts/4194301/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971505
+      }
+    ]
+  },
+  "counts/4194301/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388602
+      },
+      {
+        "documents": 2,
+        "bytes": 8388602
+      },
+      {
+        "documents": 1,
+        "bytes": 4194301
+      }
+    ]
+  },
+  "counts/4194301/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971505
+      }
+    ]
+  },
+  "counts/4194301/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388602
+      },
+      {
+        "documents": 2,
+        "bytes": 8388602
+      },
+      {
+        "documents": 1,
+        "bytes": 4194301
+      }
+    ]
+  },
+  "errors/3/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "errors/3/False/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/3/False/2": {
+    "ok": false,
+    "seen": [
+      1,
+      2
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1,
+      2
+    ]
+  },
+  "errors/3/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/3/True/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/3/True/2": {
+    "ok": false,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388624
+      }
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "errors/4/False/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/False/2": {
+    "ok": false,
+    "seen": [
+      1,
+      2
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1,
+      2
+    ]
+  },
+  "errors/4/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/True/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/True/2": {
+    "ok": false,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388624
+      }
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "errors/5/False/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/False/2": {
+    "ok": false,
+    "seen": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "errors/5/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/True/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/True/2": {
+    "ok": false,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388624
+      },
+      {
+        "documents": 2,
+        "bytes": 8388624
+      }
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "expansion/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "expansion/False/1": {
+    "ok": false,
+    "seen": [
+      1
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1
+    ]
+  },
+  "expansion/False/2": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "expansion/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "expansion/True/1": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "expansion/True/2": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  }
+}

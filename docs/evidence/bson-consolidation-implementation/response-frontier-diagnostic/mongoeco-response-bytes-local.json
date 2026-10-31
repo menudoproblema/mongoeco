@@ -1,0 +1,343 @@
+{
+  "counts/4194303/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971515
+      }
+    ]
+  },
+  "counts/4194303/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388606
+      },
+      {
+        "documents": 2,
+        "bytes": 8388606
+      },
+      {
+        "documents": 1,
+        "bytes": 4194303
+      }
+    ]
+  },
+  "counts/4194303/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971515
+      }
+    ]
+  },
+  "counts/4194303/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388606
+      },
+      {
+        "documents": 2,
+        "bytes": 8388606
+      },
+      {
+        "documents": 1,
+        "bytes": 4194303
+      }
+    ]
+  },
+  "counts/4194304/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971520
+      }
+    ]
+  },
+  "counts/4194304/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388608
+      },
+      {
+        "documents": 2,
+        "bytes": 8388608
+      },
+      {
+        "documents": 1,
+        "bytes": 4194304
+      }
+    ]
+  },
+  "counts/4194304/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971520
+      }
+    ]
+  },
+  "counts/4194304/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388608
+      },
+      {
+        "documents": 2,
+        "bytes": 8388608
+      },
+      {
+        "documents": 1,
+        "bytes": 4194304
+      }
+    ]
+  },
+  "counts/4194305/find/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971525
+      }
+    ]
+  },
+  "counts/4194305/find/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388610
+      },
+      {
+        "documents": 2,
+        "bytes": 8388610
+      },
+      {
+        "documents": 1,
+        "bytes": 4194305
+      }
+    ]
+  },
+  "counts/4194305/aggregate/None": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 5,
+        "bytes": 20971525
+      }
+    ]
+  },
+  "counts/4194305/aggregate/2": {
+    "ok": true,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388610
+      },
+      {
+        "documents": 2,
+        "bytes": 8388610
+      },
+      {
+        "documents": 1,
+        "bytes": 4194305
+      }
+    ]
+  },
+  "errors/3/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "errors/3/False/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/3/False/2": {
+    "ok": false,
+    "seen": [
+      1,
+      2
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1,
+      2
+    ]
+  },
+  "errors/3/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/3/True/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/3/True/2": {
+    "ok": false,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388632
+      }
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "errors/4/False/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/False/2": {
+    "ok": false,
+    "seen": [
+      1,
+      2
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1,
+      2
+    ]
+  },
+  "errors/4/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/True/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/4/True/2": {
+    "ok": false,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388632
+      }
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": []
+  },
+  "errors/5/False/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/False/2": {
+    "ok": false,
+    "seen": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "errors/5/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/True/0": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "errors/5/True/2": {
+    "ok": false,
+    "seen": [
+      {
+        "documents": 2,
+        "bytes": 8388632
+      },
+      {
+        "documents": 2,
+        "bytes": 8388632
+      }
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  }
+}

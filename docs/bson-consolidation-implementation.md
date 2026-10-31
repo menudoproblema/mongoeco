@@ -696,7 +696,7 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 
 ## Trabajo restante
 
-- D06a/D06b/D06c: completar gramática/String tipado, raw y consumidores DBRef. El corte de sufijos entrega demanda por número de documentos y conservación de tipos internos; quedan bytes/callbacks, raw y el resto de contextos/consumidores. No acredita cierre de D06.
+- D06a/D06b/D06c: completar contextos de gramática/String/DBRef/raw y consumidores. Los cortes de sufijos y raw por cantidades/contenido tienen aceptación acotada; siguen bytes/callbacks y el resto de contextos/consumidores. El diagnóstico nativo siguiente ya reproduce ambos fallos de respuesta. No acredita cierre de D06.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1243,3 +1243,61 @@ la demanda por número de documentos de estos siete testigos y la conservación
 del tipo interno entre prefijo/sufijo, manteniendo las regresiones anteriores.
 Bytes/callbacks por respuesta, raw y los demás contextos/consumidores de D06,
 H53, sNaN, D07, D05 y B07 conservan sus pendientes y sus owners.
+
+
+## D06a/b — Lecturas raw, apertura y cantidades
+
+Base `7f8110a`; implementación `30c8ae2`. La [evidencia del corte](evidence/bson-consolidation-implementation/raw-response/README.md)
+registra seis acciones nuevas con capturas y comprobación 7.0.43/8.0.32/9.0.2,
+FCV correspondiente. Son testigos de contenido BSON, cantidades y apertura;
+no aceptación de bytes/callbacks ni de todos los contextos raw.
+
+Find raw reutiliza el iterador y no vuelve a consultar por offset ni aplica
+codecs de contenido. La primera tanda por defecto conserva el máximo 101;
+getMore sin cantidad fijada puede entregar más. Aggregate raw usa la preparación
+existente y abre con primera tanda vacía; su getMore solicitado a 1 se promueve
+a 2, como el driver. El `$merge` soportado ejecuta al abrir en sync/async,
+incluso con batchSize 0. No se amplía el conjunto de etapas de escritura soportadas.
+
+El testigo de codecs encontró un error compartido de transporte: `cursor.id`
+pequeño se emitía como int32 y activaba el decoder de int del usuario sobre
+metadatos. La respuesta lo codifica como int64, incluido cero; la entrada
+normaliza getMore/killCursors como controles, conservando los anchos en datos
+BSON. Las pruebas comprueban bytes/tipo y que no se muta el input ni el documento
+anidado que también contiene un campo cursor. Un fallo de apertura no permite
+consumir; cleanup conserva el error original y termina bajo cancelación repetida.
+El close explícito fallido sigue permitiendo reintento.
+
+La baseline aislada verifica 283 módulos e import real: falla 84 checks y pasa
+63 controles. Candidato y wheel instalado pasan 147. El replay integrado final
+pasa 7.201; core/wire/API 3.202 con un skip y 1.842 subtests; opciones/fronteras
+466 y 108 subtests. Python 3.13 realmente sin SDK pasa 120 escenarios: 96 de
+respuesta/tipos anteriores y 24 guardas raw de dependencia opcional. Pasan typing,
+SPI y lint; el manifiesto público efectivo coincide con la base. Los logs de
+setup y la expectativa antigua de aggregate raw a 1 se conservan como feedback.
+Observadores protegidos y goldens históricos permanecen intactos.
+
+## D06a/b — Diagnóstico para el siguiente corte de bytes y codecs
+
+La [caracterización](evidence/bson-consolidation-implementation/response-frontier-diagnostic/README.md)
+separa los pendientes de los gates anteriores. En los tres servidores, cinco
+documentos cercanos a 4 MiB se dividen por bytes; local los devuelve juntos.
+Con error en el documento 5, los servidores pueden entregar tres antes del error
+de getMore y local no entrega ninguno. En una frontera más estrecha, documentos
+de 4.194.288 bytes producen primero cuatro en find raw de MongoDB 7 y tres en
+8/9; aggregate raw produce tres en todos. No basta sumar tamaños ni suponer una
+única sobrecarga para rutas/dialectos.
+
+Dos documentos `v=[1]` y `v=[0]`, unwind y divide, prueban la falta de atomicidad
+de codecs: ante error de apertura, local invoca el decoder de `_id=1` y los tres
+servidores no lo hacen. El control de un único documento `v=[1,0]` sí coincide;
+el control no-raw a batchSize 1 entrega una fila y ejecuta un callback antes del
+error de getMore. No se trata de prohibir callbacks tras toda ejecución parcial.
+
+Sigue: registrar estos testigos en el capturador/replay existente, fijar la
+frontera exacta por ruta/dialecto y corregir el coordinador de respuesta sobre
+el cálculo BSON/contexto actuales. Conservar el documento pendiente sin
+reevaluarlo y separar evaluación de respuesta de codecs públicos. Después,
+resto de contextos/consumidores D06c. La inspección independiente confirma que
+los 15 contenedores y 30 volúmenes propios de estos cohorts ya no existen.
+H53, sNaN, decisión D07, D05 y admisión B07 conservan sus pendientes.

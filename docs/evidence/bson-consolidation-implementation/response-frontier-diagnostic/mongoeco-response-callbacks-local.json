@@ -1,0 +1,58 @@
+{
+  "expansion/False/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": [
+      1
+    ]
+  },
+  "expansion/False/1": {
+    "ok": false,
+    "seen": [
+      1
+    ],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": [
+      1
+    ]
+  },
+  "expansion/False/2": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "open",
+    "decoder_calls": [
+      1
+    ]
+  },
+  "expansion/True/None": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "expansion/True/1": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  },
+  "expansion/True/2": {
+    "ok": false,
+    "seen": [],
+    "class": "OperationFailure",
+    "code": 2,
+    "phase": "iterate",
+    "decoder_calls": []
+  }
+}

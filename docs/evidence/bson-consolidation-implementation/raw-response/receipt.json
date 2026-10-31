@@ -1,0 +1,155 @@
+{
+  "status": "Bounded functional slice accepted; D06 and full objective remain open",
+  "production_base": "7f8110a",
+  "production_commit": "30c8ae24d8b4ae6fd0d25ac768658ffc003a804b",
+  "scope": "Raw BSON/DBRef/Code/Binary witnesses, count batching, aggregate opening/write effects and cursor-id transport typing; not byte/codec atomicity acceptance",
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": "matching major",
+    "actions": 6,
+    "capture_and_check_exit_codes": [
+      0,
+      0,
+      0
+    ],
+    "final": "native-final.tar.gz",
+    "matrix": "native-matrix.py.txt"
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k raw_response --tb=short",
+      "exit_code": 0,
+      "passed": 147,
+      "log": "focal.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "exit_code": 0,
+      "passed": 7201,
+      "seconds": 509.34,
+      "log": "full-replay.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/unit/wire tests/unit/test_raw_batch_cursors.py tests/integration/api/test_sync_api.py tests/integration/api/test_async_api.py --tb=short",
+      "exit_code": 0,
+      "passed": 3202,
+      "skipped": 1,
+      "subtests_passed": 1842,
+      "log": "core-wire-api.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/unit/api tests/integration/api/test_pymongo_bson_boundary.py tests/integration/api/test_api_option_conservation.py --tb=short",
+      "exit_code": 0,
+      "passed": 466,
+      "subtests_passed": 108,
+      "log": "api-boundaries.txt.gz"
+    },
+    {
+      "command": "verified isolated 7f8110a import and all 283 module hashes; pytest raw_response using baseline-run.py.txt",
+      "exit_code": 1,
+      "failed": 84,
+      "passed": 63,
+      "log": "baseline.txt.gz",
+      "purpose": "Witnesses detect prior product defects; final observer/fixtures shared with candidate"
+    },
+    {
+      "command": "verified pip-installed final wheel import and all 283 runtime module hashes; pytest raw_response using wheel-run.py.txt",
+      "exit_code": 0,
+      "passed": 147,
+      "log": "wheel-replay.txt.gz"
+    },
+    {
+      "command": "Python 3.13.15, SDK genuinely absent; final wheel and required dependency target; sdk-free.py.txt",
+      "exit_code": 0,
+      "phase_and_spill_scenarios": 72,
+      "type_scenarios": 24,
+      "raw_missing_sdk_scenarios": 24,
+      "log": "wheel-sdk-free.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "exit_code": 0,
+      "log": "typing.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/smoke_external_engine.py",
+      "exit_code": 0,
+      "log": "spi.txt.gz"
+    },
+    {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref 7f8110a",
+      "exit_code": 0,
+      "log": "lint.txt.gz"
+    }
+  ],
+  "review": {
+    "preexisting_raw_codecs_bypassed": true,
+    "cursor_id_always_int64_on_transport": true,
+    "control_fields_normalized_without_changing_user_bson_widths": true,
+    "cleanup_preserves_primary_error_and_repeated_cancellation": true,
+    "failed_close_retriable": true,
+    "failed_open_not_consumable": true,
+    "public_api_manifest_unchanged_from_base": true
+  },
+  "feedback": [
+    "First observer passed SDK CodecOptions to the distinct local API. Final construction adapts only the public registry shape; native queries and independent byte observer stay shared.",
+    "Typing cursor.id as int64 exposed missing normalization of getMore/killCursors control fields. Final request path normalizes only those fields; source documents retain widths.",
+    "Old API unit assertion expected two aggregate raw batches for batchSize=1 over two documents. Native captures show one getMore batch of two; assertion updated with provenance.",
+    "Initial SDK-free environment lacked mandatory shapely dependency; complete dependency install then 120 final scenarios pass. Setup failure is not a product divergence."
+  ],
+  "resources": {
+    "independent_absence_audit": "native-cleanup.json",
+    "containers": 15,
+    "volumes": 30,
+    "includes_next_slice_diagnostic_cohorts": true
+  },
+  "historical_fixture_changes": [],
+  "remaining": [
+    "D06 bytes/codec response atomicity; native/local counterexamples archived in ../response-frontier-diagnostic/.",
+    "Other typed String/Code/DBRef/raw contexts and D06c group/sets/lookup/spill/Search keys.",
+    "H53 disposition C03/B08, scalar string sNaN, optional D07 decision, D05 integrated gates and B07 general BSON admission.",
+    "No remote CI, full Python/SDK/pytest matrix, 99% global coverage or global performance acceptance."
+  ],
+  "artifacts": {
+    "README.md": "feb69a843f8481ba9359525cd5d4183d6157819b3c9c5dc5aa94911b5410ef9c",
+    "api-boundaries.txt.gz": "a9382ddd3ae0793a2729b82be50aa8346ba1d903c5db5a0b24b2dd52e49d546f",
+    "baseline-run.py.txt": "fd89c9d45acb15c5bb8586f1e3926600666a76611241ef91cb7e92ade2c2bd5e",
+    "baseline-runtime.json": "28d55db82e377557aabe0511651b0802f1f9baf231e28c8e6324293f459371e1",
+    "baseline.json": "de4bd4180018f3c9b4c25ed04a189694265ec9e2e716aee73c2254a9e555aa69",
+    "baseline.txt.gz": "ce276f8505d088c2063859ae7e90e7ea8bd9b73b3336656c3c8e6b07209e6e63",
+    "cleanup-audit.py.txt": "19208a9e361aec8a63bc7039dcd0790e10e49c52973d22498256fb623f831cc9",
+    "core-wire-api.txt.gz": "fe77399ca016ff28544f6c4b182314d65bffe6b1cf81cae823734f708623c6a2",
+    "environment.json": "39dd3799b26eefb3ca6229b96e8618ff9da0e7b57be93cf16526cacfa6d079df",
+    "feedback-api-old-batch-expectation.txt.gz": "f786ef1382fd617b166dacf4ba3066fcd8df78524aed3dc58af3f48b45033e08",
+    "feedback-cursor-id-request.txt.gz": "d28f8018cd7c883b9deb375246220d3bc7c4b4cb4fe1e5c027100eb431da86fe",
+    "feedback-initial-observer.txt.gz": "fe43c3a44f299f1a49d7046d2659bd582d3627af14b72f0f254fb39e29ef8234",
+    "feedback-native-initial.tar.gz": "9c8dfd411ac22c61dcaa8604c3157ec14b404b0df95d00b9eb78a92c995acb80",
+    "feedback-sdk-free-deps.txt.gz": "fb610b35b6fa19d3e1e27efb1a907b3e232b774b231d058c8dfee4ebc92a5e54",
+    "focal.txt.gz": "9629d978784625d2088653e94e766be2a57ce2a9adbc2ad7e7195872bccc06dc",
+    "full-replay.txt.gz": "f8e9929a561097cd84038693dd2b00d0996612083fbb26e2fb3025ec721596a9",
+    "lint.txt.gz": "dffe1963b740c01eddfaf553047436fcce5a1de86d3b45a4b4286cb829628a95",
+    "native-cleanup.json": "8e3d603a362d259a19c610129f218ed7607871c69076434a9a1205889cfad569",
+    "native-final.tar.gz": "767539ec30881a0c837a465499e7d98886baa254f29fb6b115e38c2800287f42",
+    "native-matrix.py.txt": "95488eba5a92fdb8c9527842b18adf40f2a6ac3a25333509a6f071e82e0d3abd",
+    "native-matrix.txt": "d4097bc061fc9ae49a7f0e4c973bb103f3f18c12e154a3a39e98ac33c86c717b",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "public-manifest-vs-base.json": "d66e7f1aa0d46a994d98f92fb795925e80242c7fac0b7aa4d2e8df0c34a6471c",
+    "runtime-sources.json": "842a172c4a2c61e3ae05a22ce57a612b56e20a0378c3c4e26c149a1a660e344b",
+    "sdk-free-deps-complete.txt": "4d21075eade9ec31f43ba00fb4837e8048784d9a81254c3a39976233d371349f",
+    "sdk-free-deps.txt": "070d9b325f6a366ac837867031e8084e547030f342380287ca7d2c3808b56b32",
+    "sdk-free.py.txt": "d7b6d42231b76a0a72d0bb54c4e9ef2a586892dac7dc6401c97dcff64e8305de",
+    "spi.txt.gz": "a256763b2c1afab4ee6ea0ea3e3d9fb0ae48f877753ec7e3d965d691632c2c79",
+    "typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "wheel-build.txt": "c286f26829a7102e8327caa80ac72748617298a62b04056a48fc3f8f82ef2f48",
+    "wheel-install.txt": "7e7e01ff017433d77ecbab2096df76ce9dcf6de52b97a1c9cc9529361bdd8755",
+    "wheel-replay.txt.gz": "08917da663157dd737d54e175df333476ee4ccaa8184989c6124cc1056f70bd4",
+    "wheel-run.py.txt": "307d78e2039b6722398fff2b91a95e267969379dd544ba15d8e9668a12c62413",
+    "wheel-sdk-free.txt.gz": "dc8d9719f35611770aeff55fb2a921661a1ac89e46d09c087f9078957d9cec26",
+    "wheel.json": "edac1ab5149d770b00cfeab31e3150304cb1139689d4f68d5b5cd289b15cf9f9",
+    "workset.json": "e5949db5a84c0945d55e6c785d1fc1575c6f48e4db263ed2e8e7fbd8ef2d9e19"
+  }
+}

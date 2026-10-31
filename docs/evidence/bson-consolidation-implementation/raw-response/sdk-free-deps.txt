@@ -1,0 +1,39 @@
+WARNING: Cache entry deserialization failed, entry ignored
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting cxp==5.0.0 (from cxp[exchange]==5.0.0)
+  Using cached cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting msgspec==0.21.1
+  Using cached msgspec-0.21.1-cp313-cp313-macosx_11_0_arm64.whl.metadata (5.8 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting jsonschema<5,>=4.23 (from cxp[exchange]==5.0.0)
+  Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting referencing<1,>=0.35 (from cxp[exchange]==5.0.0)
+  Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]==5.0.0)
+  Using cached rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting attrs>=22.2.0 (from jsonschema<5,>=4.23->cxp[exchange]==5.0.0)
+  Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.23->cxp[exchange]==5.0.0)
+  Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting rpds-py>=0.25.0 (from jsonschema<5,>=4.23->cxp[exchange]==5.0.0)
+  Using cached rpds_py-2026.9.1-cp313-cp313-macosx_11_0_arm64.whl.metadata (4.1 kB)
+Using cached cxp-5.0.0-py3-none-any.whl (58 kB)
+Using cached msgspec-0.21.1-cp313-cp313-macosx_11_0_arm64.whl (188 kB)
+Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+Using cached rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Using cached rpds_py-2026.9.1-cp313-cp313-macosx_11_0_arm64.whl (340 kB)
+Installing collected packages: rpds-py, rfc8785, msgspec, attrs, referencing, cxp, jsonschema-specifications, jsonschema
+
+Successfully installed attrs-26.1.0 cxp-5.0.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 msgspec-0.21.1 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.9.1
+
+[notice] A new release of pip is available: 26.1.1 -> 26.2.2
+[notice] To update, run: /Users/uve/Proyectos/mongoeco/.venv/bin/python -m pip install --upgrade pip

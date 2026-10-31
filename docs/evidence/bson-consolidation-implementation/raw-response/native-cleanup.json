@@ -1,0 +1,422 @@
+[
+  {
+    "fixture": "/tmp/mongoeco-raw-native-v1/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "ca35ac68a474945872622280be8eafeca706f4a7e3d3fb08107fd0d4f5aec534",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-cb1afd6d5a744b2d93191c9566c54135",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "0b423016fb049b5ba6cdddd2d51bfc7053ab5bdbbf48d282636f640ddb392eea",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "df482e914b16df3ad50596f7b875014be4c50701f4296b41ffaaad8be39b004b",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-raw-native-v1/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "2d7dfc742e7b3dd725a3e8ae9557b1f97d0ae56bed3f8e9def37620eacda9f70",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-c2554bdc48b94551ad419d94a7bc6d21",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "fa652dba9b94d1f7ce0a2fd611f4ccc47988f709444b4af0d4e5521154899a6d",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "8e7475fe98b4738fe00f7019e625ef1e5eb1549c185c24b48785723294a4eb20",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-raw-native-v1/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "7958109a9eb8ef3bc128896ecabfff8c64dd3b8f39d0bddd258349dbe64be103",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-0c2da83c98b848ee8ecb5ebe4f6fa0f6",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "61c737edf08ce0f9d4709d04ca99d528ecfaa60dfbb1d0bb7852e2d8278541b2",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "b5b977dbed809ce755a77bc15aa413e251641d227d2ebd3e2b30eaef8fe3a953",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-raw-native-v2/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "e9f2f0d2d768f8eb2102e4fd7102fbf26956fdf77c27236de88673dce7f831a0",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-2051b1d2ba9840ed859aede7e0071a4f",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "b0fae195c2ccc5f9c11ff43f99cba05e434797a48eabd4922a01a8156c8a3110",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "6f871a65884f37b1dd7a47d5e82004b595b356225ad30f0dfee033e8bb63f14a",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-raw-native-v2/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "4890449746e41931260e270df3f348cf5cbdced66be9a8fc7f9bb9729dfb1216",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-d0ad5356b3554f9f920f346d3f9c486f",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "eb8e2ab5cf66dedccdccff591f67e1583f891958486c780f52f65621e377d351",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "6898fb5c0a31d727d62013040c593b520550d23b62fdc5733daefb99112006b4",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-raw-native-v2/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "916b5d5c1e20f98af95fe0c05c26270efa2871fc28fb09911175ed8dfb622f44",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-1006bf797e9b4f278cc189262597121b",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "8d6718ac05e3643bcb1a842aecd761b9ef6a8a6565e83b101a0046a74b266f08",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c3a0282e191cad6d0bd5c84aab0e9bf0a664e2daf1bcc6c62f0fc56ab5f05623",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-bytes-probe/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "edfdfe6bc554f34eb2469b109362a6a6fc267cfdb034030af9dac6a7b1002448",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-a483c323ac2b4c46bac67c12b6a8014f",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "cee52c777ff9e99a2ebc12a235288e409ca7fd91c9419c11089f0baba629bcf6",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "7b6ac2eb59ca5e3c7286d7ece99c07c86ab1d4d123bee4691d0bb4137ed8ff90",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-bytes-probe/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "50b2d8bfbd2824f7328b6f7b8f08ba74cf0d96a63bf57abe45d2e2bc3cdb9573",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-957a39bee5dd4c169c7671506bc7cbf5",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "9926319d7356b5e9ce0bc58ebe56cfb848d08e35eeba5b7c0f395eeb9dc1abaa",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "bb7d1cbe5074f3e3b122e8836e90c63ffcb2bb17ba5d47c0e6ea131d4759f76c",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-bytes-probe/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "e885e4ed8a551f861decea9991765dae168384239862250e0dfdecd45a6cedf9",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-a7ca44ad46794cdf8057b6dfdc68bb31",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "d9027b5a4d5630c804bb25141632f30b2ebcf9ad544598976d0d2ea4ca086123",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "d84b664a77a4a4ec79de40b583fae2ebbeff43b4afd8e3898419f83cccd87aaa",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-bytes-probe-v2/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "31c7d21ea3a5aaa0058eb1da0c23d695a3825ecc3ef3c45f214153f9d9116bea",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-4796e0eacde64328b6bc81bf340acd07",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "863c29e70d8f179d0b6365a08564a89f246b1a1414894c537a3015a4ef75b7a9",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "f3fa1ed4f8f34602efaff1fb3fc9eddb95a552394c65246cac20c12609bee122",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-bytes-probe-v2/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "c3d6aa0ed35f2e17865d468ec9b74aba5b97eea2925be9d5f9090b99b73304ef",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-d7b4ee8925764393a2e56f75ea9aeb6b",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "698e7fb0035b38ca72e4ad87d23cc5880740a05d469da47fc5496963f7b4f2bd",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "a3318cc4314c2aa197abb7445dd80325ff4825aacd787aa0f99d91192c930027",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-bytes-probe-v2/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "b999e782edddab56bc3355a0e075cb23e1ebf606016fc40436f663a9857e4132",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-df691406a4d944afbde4581daed46f9e",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "482fa054ac40faa579dbb8562bcfbd5a5ce196f7da8efd0c6c861a3fe7b11ee4",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "23396e8662d2446be2bb7a1ddc95ded371bb93b3c842ef37bc025243cd7893ad",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-callbacks-probe/7.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "6fc1b7249387fc8f137ecb9048e1bd8f63e8400cf3cafd0cf2df7b8e5fb7537a",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-db130db2d3834b2d96beaef7d2be4350",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "c30f6bdff189c4248f649e6cdbd504b909a1d21f1734b5365aa2b9fa76cf3d3c",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "db0840f9270abfa34113e17fe1ebaa4cd5cc49ec983d988c11b3cf4950dc5f64",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-callbacks-probe/8.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "074627ecaa86db7f838ba38ba196da6cb3298f8612e3498a01f0facf9b37c45e",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-7524d03da1c341f0ada513b0497ba1c1",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "21d242e3efeb05ac0b8b9c49b525adc4e4f121c7b695b18a171d054a8aa688fa",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "7e73efb54d3160747049a90d106ea1266ed1df33a1520a2dd748419a6327e511",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  {
+    "fixture": "/tmp/mongoeco-response-callbacks-probe/9.0/fixture.json",
+    "reported_cleanup": {
+      "removed": true,
+      "container_id": "f3cdef5d83b003efa5514946b3735a867c574e3f2f0522f37fbceeb61b6e0bd7",
+      "volumes_removed": true
+    },
+    "checks": [
+      {
+        "kind": "container",
+        "name": "mongoeco-differential-0ef3b0a41f234d3faf4b1f975e637c6a",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "1781f0752c23ff3c27d5d1f9ae5c901415932e820fd46b2d8525cf2ad216d744",
+        "absent": true,
+        "exit_code": 1
+      },
+      {
+        "kind": "volume",
+        "name": "ec4523a2061f100e6606fb05c8f0db28c7c3b7e23a6d2eb34951e02799001c02",
+        "absent": true,
+        "exit_code": 1
+      }
+    ]
+  }
+]

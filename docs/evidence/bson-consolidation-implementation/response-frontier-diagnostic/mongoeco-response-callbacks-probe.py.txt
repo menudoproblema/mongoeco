@@ -1,0 +1,50 @@
+import hashlib,json,os,struct
+from bson import BSON
+from bson.codec_options import CodecOptions,TypeDecoder,TypeRegistry
+from pymongo import MongoClient
+
+limit=16*1024*1024
+result={}
+
+def observe(open_cursor,raw):
+    cursor=None
+    seen=[]
+    phase='open'
+    try:
+        cursor=open_cursor()
+        phase='iterate'
+        for page in cursor:
+            if raw:
+                n=0;offset=0
+                while offset<len(page):
+                    size=struct.unpack_from('<i',page,offset)[0]
+                    offset+=size;n+=1
+                assert offset==len(page)
+                seen.append({'documents':n,'bytes':len(page)})
+            else:seen.append(page['_id'])
+        return {'ok':True,'seen':seen}
+    except Exception as error:
+        return {'ok':False,'seen':seen,'class':type(error).__name__,'code':getattr(error,'code',None),'phase':phase}
+    finally:
+        if cursor is not None:cursor.close()
+
+with MongoClient(os.environ['MONGOECO_REAL_MONGODB_URI']) as client:
+    collection=client.raw_callback_probe.rows
+    collection.delete_many({})
+    collection.insert_many([{'_id':1,'v':[1]},{'_id':2,'v':[0]}])
+    for raw in (False,True):
+        for batch in (None,1,2):
+            calls=[]
+            class ExpansionInt(TypeDecoder):
+                bson_type=int
+                def transform_bson(self,value):calls.append(value);return value
+            decoded=collection.with_options(codec_options=CodecOptions(type_registry=TypeRegistry([ExpansionInt()])))
+            pipeline=[{'$unwind':'$v'},{'$project':{'x':{'$divide':[1,'$v']}}}]
+            def open_cursor():
+                method=decoded.aggregate_raw_batches if raw else decoded.aggregate
+                return method(pipeline,**({} if batch is None else {'batchSize':batch}))
+            observed=observe(open_cursor,raw)
+            observed['decoder_calls']=calls
+            result[f'expansion/{raw}/{batch}']=observed
+    collection.drop()
+print(json.dumps(result,indent=2))

@@ -1,0 +1,8 @@
+from pathlib import Path
+import json,sys
+site=Path(json.loads((Path(Path('/tmp/mongoeco-raw-wheel-location.txt').read_text().strip())/'wheel.json').read_text())['site_packages'])
+sys.path.insert(0,str(site))
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site.resolve()),mongoeco.__file__
+print('verified installed wheel import',mongoeco.__file__,flush=True)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/integration/api/test_semantic_group_regressions.py','-k','raw_response','--tb=short']))
