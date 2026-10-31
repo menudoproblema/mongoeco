@@ -29,6 +29,13 @@ conservan el residual; los postings textuales no prueban ausencia/null ni la
 presencia de campos vacíos. Los operadores propios de search-v1 mantienen su
 contrato local (incluidos exists, rangos y facets), sin afirmar paridad Atlas.
 
+El universo vectorial contiene listas no vacías de coordenadas numéricas
+finitas, sin booleanos, con las dimensiones del índice. Materialización y
+scoring reutilizan la misma coerción; una query no finita falla antes de leer
+filas. Los slots USearch enumeran solo las filas válidas y corresponden uno a
+uno con sus storage keys. Cambiar datos o dimensiones reconstruye ese universo.
+Esto no modifica la cuantización ni las fórmulas de score existentes.
+
 Los índices de filtros vectoriales son estado materializado reconstruible bajo
 la versión de colección; estas correcciones no cambian un formato de disco.
 

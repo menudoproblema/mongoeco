@@ -8,7 +8,11 @@ import numpy as np
 
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.bson_ordering import bson_engine_key
-from mongoeco.core.search import SearchVectorQuery, vector_field_specs
+from mongoeco.core.search import (
+    SearchVectorQuery,
+    coerce_search_vector,
+    vector_field_specs,
+)
 from mongoeco.core.search_filter_prefilter import (
     collect_filterable_values,
     evaluate_candidate_filter,
@@ -98,16 +102,8 @@ def build_materialized_vector_index(
         vectors_by_path: dict[str, tuple[float, ...]] = {}
         for path, field_spec in specs.items():
             found, value = get_document_value(document, path)
-            if not found or not isinstance(value, list):
-                continue
-            candidate = tuple(
-                float(item)
-                for item in value
-                if isinstance(item, (int, float)) and not isinstance(item, bool)
-            )
-            if len(candidate) != len(value):
-                continue
-            if len(candidate) != int(field_spec["numDimensions"]):
+            candidate = coerce_search_vector(value) if found else None
+            if candidate is None or len(candidate) != int(field_spec["numDimensions"]):
                 continue
             vectors_by_path[path] = candidate
             valid_vector_counts[path] += 1

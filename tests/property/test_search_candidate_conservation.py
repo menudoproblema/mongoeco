@@ -10,6 +10,11 @@ from mongoeco.engines._memory_vector_runtime import (
     candidate_positions_for_vector_filter,
     candidate_rows_for_vector_filter,
 )
+from mongoeco.engines._sqlite_vector_backend import (
+    build_sqlite_vector_backend,
+    search_sqlite_vector_backend,
+    vector_filter_candidate_storage_keys,
+)
 from mongoeco.types import SearchIndexDefinition
 
 from tests.differential._real_parity_base import _decode_capture
@@ -54,6 +59,24 @@ def test_candidates_conserve_native_matches_in_the_same_phase_domain(
     index = build_materialized_vector_index(documents, DEFINITION)
     vector_positions = index.vector_row_positions.get("embedding", ())
     vector_universe = selected - invalid_vectors
+    sqlite = build_sqlite_vector_backend(
+        db_name="property",
+        coll_name="records",
+        definition=DEFINITION,
+        physical_name="vectors",
+        path="embedding",
+        collection_version=1,
+        documents=[(doc["_id"], doc) for doc in documents],
+    )
+    assert {
+        key
+        for key, _distance in search_sqlite_vector_backend(
+            sqlite,
+            query_vector=(1.0, 0.0),
+            count=len(IDS),
+            exact=True,
+        )
+    } == vector_universe
     for name, query in FILTERS.items():
         truth = set(NATIVE[name])
         positions, metadata = candidate_positions_for_vector_filter(
@@ -72,3 +95,10 @@ def test_candidates_conserve_native_matches_in_the_same_phase_domain(
             else [documents[vector_positions[row]]["_id"] for row in rows]
         )
         assert_conservation(truth & vector_universe, vector_universe, row_ids, metadata)
+
+        storage_keys, metadata = vector_filter_candidate_storage_keys(
+            sqlite, filter_spec=query
+        )
+        assert_conservation(
+            truth & vector_universe, vector_universe, storage_keys, metadata
+        )

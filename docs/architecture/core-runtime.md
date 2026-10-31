@@ -187,9 +187,10 @@ La regla arquitectonica es la misma:
 - `MemoryEngine` actua como baseline observable y reutiliza una materializacion
   textual por indice para no repetir tokenizacion por documento en cada search;
 - `SQLiteEngine` usa FTS5 cuando la traduccion sigue siendo defendible
-  (`text`, `phrase`, `autocomplete`) y, en `wildcard`, `exists` y parte de
+  (`text`, `phrase`, `autocomplete`) y, en `wildcard` y parte de
   `compound`, usa la tabla materializada como prefilter de candidatos antes
-  del matching Python exacto;
+  del matching Python exacto. `exists` necesita presencia documental: las
+  entradas textuales no cubren null, objetos y arrays vacíos;
 - `in`, `equals` y `range` entran ya como operadores locales explicitos sobre paths
   escalares, con matching baseline compartido y explain coherente aunque no
   intenten fingir una traduccion Atlas-like al backend;
@@ -211,8 +212,9 @@ La regla arquitectonica es la misma:
   estimando el siguiente prefijo a partir de la tasa real de descarte observada
   en iteraciones previas.
 - cuando esa pipeline `prefix-monotonic` empieza con uno o varios `$match`,
-  el runtime puede pasarlos al engine como `downstreamFilterPrefilter` exacto
-  para reducir candidatos antes del ranking final. Ese prefilter no se intenta
+  el runtime puede pasarlos al engine como `downstreamFilterPrefilter`
+  conservador para reducir candidatos antes del ranking final. Cuando la prueba
+  no es exacta, el residual se aplica antes de ventanas y collectors. Ese prefilter no se intenta
   si el `match` aparece despues de stages transformadores.
 - `near` entra como operador local para numericos y fecha/datetime con
   `path`, `origin` y `pivot`, y mantiene explain/backends explicitos en vez de
@@ -429,7 +431,7 @@ estructurados del engine cuando la ruta cae a hibrido o Python (`scope="engine"`
 y el conjunto de operadores simples empujables a SQL sigue creciendo de forma
 incremental; por ejemplo, `$size` simple ya no obliga a fallback cuando la ruta
 puede resolverse con `json_array_length(...)`, y `$mod` entero sobre campos
-escalares puede empujarse a SQL cuando la coleccion no mezcla arrays ni reales
+escalares puede empujarse a SQL cuando la coleccion no mezcla arrays, reales ni numerics BSON etiquetados
 en ese path. Del mismo modo, SQLite puede empujar un subconjunto seguro de
 `$regex` literal (`contains`, `prefix`, `suffix`, `exact`) cuando el field es
 escalar string y no requiere semantica de arrays, opciones o evaluacion regex

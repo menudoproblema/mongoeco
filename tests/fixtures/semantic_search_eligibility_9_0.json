@@ -20,6 +20,34 @@
         "$numberInt": "15"
       }
     },
+    "semantic_search_collation": {
+      "binary": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "collated": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "warm": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "binary_again": [
+        {
+          "$numberInt": "2"
+        }
+      ]
+    },
     "semantic_search_eligibility": {
       "scalar_large": [
         "b"
@@ -163,6 +191,18 @@
         "o",
         "p"
       ]
+    },
+    "semantic_search_hybrid_filters": {
+      "exact_intersection": [
+        "a"
+      ],
+      "downstream_residual": [
+        "b"
+      ],
+      "query_residual": [
+        "b"
+      ],
+      "empty_intersection": []
     },
     "semantic_search_post_lookup": {
       "exists_ne": [
@@ -2036,9 +2076,661 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_search_eligibility_cases.py",
-    "sha256": "7145dc539a6e9e33c578c84b226b10ee7b3fdff212b3aeef769fdd2edf41f330"
+    "sha256": "762718cd562fa72f6235e4291ee5f1b0ea997edc806f96eceec681521cd37eb6"
   },
   "case_manifests": [
+    {
+      "name": "semantic_search_hybrid_filters",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740992"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740992"
+          }
+        },
+        {
+          "_id": "b",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": "c",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "d",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberInt": "7"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "e",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "f",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": null,
+          "a": null,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "g",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "items": [
+            {
+              "x": {
+                "$numberInt": "7"
+              }
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "h",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": {},
+          "a": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "i",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": [],
+          "a": [],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "j",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": true,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "k",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": "z",
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "l",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "m",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "n",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {},
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "o",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "p",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "items": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_search_hybrid_filters"
+    },
+    {
+      "name": "semantic_search_collation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740992"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740992"
+          }
+        },
+        {
+          "_id": "b",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": "c",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "d",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberInt": "7"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "e",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "f",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": null,
+          "a": null,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "g",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "items": [
+            {
+              "x": {
+                "$numberInt": "7"
+              }
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "h",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": {},
+          "a": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "i",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": [],
+          "a": [],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "j",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": true,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "k",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": "z",
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "l",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "m",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "n",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {},
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "o",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "p",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "items": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_search_collation"
+    },
     {
       "name": "semantic_search_post_lookup",
       "min_version": [

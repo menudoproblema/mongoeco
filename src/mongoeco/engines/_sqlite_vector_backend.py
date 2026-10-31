@@ -10,6 +10,7 @@ import numpy as np
 from usearch.index import Index, MetricKind
 
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.search import coerce_search_vector
 from mongoeco.core.search_filter_prefilter import (
     collect_filterable_values,
     evaluate_candidate_filter,
@@ -75,20 +76,18 @@ def build_sqlite_vector_backend(
         expansion_search=expansion_search,
     )
 
-    keys: list[int] = []
     vectors: list[tuple[float, ...]] = []
     storage_keys: list[str] = []
     invalid_vectors = 0
     scalar_filter_index: dict[str, dict[_FilterValueKey, list[str]]] = {}
     exists_filter_index: dict[str, list[str]] = {}
     unrepresented_paths: set[str] = set()
-    for slot, (storage_key, document) in enumerate(documents):
+    for storage_key, document in documents:
         vector = _extract_vector(document, path=path, num_dimensions=num_dimensions)
         if vector is None:
             invalid_vectors += 1
             continue
         unrepresented_paths.update(unrepresented_filter_paths(document))
-        keys.append(slot)
         vectors.append(vector)
         storage_keys.append(storage_key)
         _index_filterable_document(
@@ -98,9 +97,9 @@ def build_sqlite_vector_backend(
             exists_filter_index=exists_filter_index,
         )
 
-    if keys:
+    if storage_keys:
         index.add(
-            np.asarray(keys, dtype=np.uint64),
+            np.arange(len(storage_keys), dtype=np.uint64),
             np.asarray(vectors, dtype=np.float32),
         )
 
@@ -221,14 +220,8 @@ def _extract_vector(
     num_dimensions: int,
 ) -> tuple[float, ...] | None:
     found, value = get_document_value(document, path)
-    if not found or not isinstance(value, list) or len(value) != num_dimensions:
-        return None
-    vector: list[float] = []
-    for item in value:
-        if not isinstance(item, (int, float)) or isinstance(item, bool):
-            return None
-        vector.append(float(item))
-    return tuple(vector)
+    vector = coerce_search_vector(value) if found else None
+    return vector if vector is not None and len(vector) == num_dimensions else None
 
 
 def _index_filterable_document(

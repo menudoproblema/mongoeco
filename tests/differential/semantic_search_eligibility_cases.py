@@ -240,7 +240,61 @@ def post_lookup(collection):
     }
 
 
+def collation_eligibility(collection, *, select=None):
+    _reset(
+        collection,
+        [
+            {"_id": 1, "kind": "A", "title": "Ada", "embedding": [1.0, 0.0]},
+            {"_id": 2, "kind": "a", "title": "Ada", "embedding": [1.0, 0.0]},
+            {"_id": 3, "kind": "b", "title": "Ada", "embedding": [1.0, 0.0]},
+        ],
+    )
+    if select is None:
+
+        def select(collation):
+            return [
+                row["_id"]
+                for row in collection.find(
+                    {"kind": "a"},
+                    sort=[("_id", 1)],
+                    **({"collation": collation} if collation else {}),
+                )
+            ]
+
+    return {
+        "binary": select(None),
+        "collated": select({"locale": "en", "strength": 2}),
+        "warm": select({"locale": "en", "strength": 2}),
+        "binary_again": select(None),
+    }
+
+
+HYBRID_FILTERS = {
+    "exact_intersection": ({"scalar": {"$gte": 2**53}}, {"scalar": {"$lte": 2**53}}),
+    "downstream_residual": ({"scalar": {"$gte": 2**53}}, {"a": {"$gt": 2**53}}),
+    "query_residual": ({"a": {"$gt": 2**53}}, {"scalar": {"$gte": 2**53}}),
+    "empty_intersection": ({"scalar": {"$gte": 2**53}}, {"kind": "absent"}),
+}
+
+
+def hybrid_eligibility(collection, *, select=None):
+    _reset(collection, SEED)
+    if select is None:
+
+        def select(stage_filter, downstream_filter):
+            return [
+                row["_id"]
+                for row in collection.find(
+                    {"$and": [stage_filter, downstream_filter]}, sort=[("_id", 1)]
+                )
+            ]
+
+    return {name: select(*queries) for name, queries in HYBRID_FILTERS.items()}
+
+
 SEMANTIC_SEARCH_ELIGIBILITY_CASES = (
+    ("semantic_search_hybrid_filters", hybrid_eligibility),
+    ("semantic_search_collation", collation_eligibility),
     ("semantic_search_post_lookup", post_lookup),
     ("semantic_search_candidate_mutations", mutations),
     ("semantic_search_traversal_partial_indexes", traversal_partial_indexes),

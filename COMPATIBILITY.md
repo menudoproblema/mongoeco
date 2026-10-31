@@ -452,8 +452,8 @@ Esto implica:
 * esa expansion iterativa usa crecimiento adaptativo por tasa de retencion
   observada (`searchTopKGrowthStrategy`), no una heuristica fija opaca.
 * cuando el tramo posterior a `$search` empieza por `$match`, el runtime puede
-  usar ese filtro como `downstreamFilterPrefilter` exacto antes del ranking
-  final; no se promete lo mismo para filtros colocados despues de stages que
+  usar ese filtro como `downstreamFilterPrefilter` conservador antes del ranking
+  final, con residual MQL cuando no sea exacto; no se promete lo mismo para filtros colocados despues de stages que
   transformen documentos.
 * en SQLite, un `$match` simple sobre paths textuales realmente indexados puede
   volverse candidateable dentro de `compoundPrefilter.downstreamFilter`, no solo
@@ -883,7 +883,8 @@ Límites conscientes:
 * `SQLiteEngine` usa FTS5 directo para `text`, `phrase` con `slop=0` y
   `autocomplete`, y
   usa el backend materializado como prefilter de candidatos para `wildcard`,
-  `exists` y parte de `compound` antes del matching Python exacto; `in`,
+  y parte de `compound` antes del matching Python exacto; `exists` conserva
+  evaluación documental cuando los postings no demuestran presencia. `in`,
   `equals` y `range` siguen entrando como operadores locales honestos sobre el runtime
   Python cuando no hay una traducción candidateable defendible; cuando
   `phrase.slop > 0`, SQLite puede usar FTS5 como prefilter candidato, pero la
@@ -1423,7 +1424,8 @@ verifica lectura/hint, unicidad parcial y reapertura sin imponer una migración.
 
 ## `$mod` de consulta
 
-Los argumentos numéricos se truncan hacia cero a int64 durante preparación;
+Primero se comprueba el tipo numérico de ambos argumentos. Después se
+truncan hacia cero a int64 durante preparación;
 NaN/Infinity, valores fuera de rango y divisor cero tras truncar dan error 2,
 incluso sin filas. Los candidatos se convierten al mismo dominio: un valor
 no numérico, no finito o fuera de rango no coincide. El resto conserva el signo
@@ -1436,3 +1438,9 @@ doubles y numerics BSON etiquetados usan el matcher común. `$pull` aplica un
 predicado de campo al elemento, incluyendo un nivel de traversal; elemMatch
 liga el elemento atómicamente. Sus controles de escritura conservan estado y
 recuperación mediante el observador común de paridad.
+
+El universo vectorial local exige coordenadas numéricas finitas y dimensiones
+compatibles. Memory, scoring de referencia y SQLite comparten la extracción;
+USearch enumera slots compactos sobre vectores válidos. Los controles incluyen
+embeddings inválidos, reparación y recreación del índice con otras dimensiones.
+Las reglas de cuantización y score permanecen separadas de los filtros BSON.

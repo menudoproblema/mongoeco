@@ -10,6 +10,11 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Keep vector validity consistent across materialization and reference scoring;
+  reject nonfinite query coordinates and use dense USearch slots after invalid
+  documents are skipped. Preserve eligibility through binary/collated cache use,
+  internal/downstream filter intersections and index dimension changes.
+
 - Prepare query `$mod` operands as signed int64 with truncation toward zero;
   reject invalid operands before rows and use exact signed integer remainders.
   Support Decimal128 candidates, decline nonfinite/out-of-range values and

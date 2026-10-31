@@ -667,26 +667,20 @@ def _sqlite_leaf_candidate_storage_keys(
         params = [sqlite_fts5_query(query)]
         backend = "fts5"
         exact = not isinstance(query, SearchPhraseQuery) or query.slop == 0
-    elif isinstance(query, SearchWildcardQuery):
-        if query.allow_analyzed_field:
-            # Token fallback semantics for analyzed fields cannot be represented as a
-            # single SQLite GLOB predicate over raw content.
-            sql = f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)}"
-            params = []
-            backend = "fts5-path"
-            exact = False
-        else:
-            sql = (
-                f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
-                "WHERE lower(content) GLOB ?"
-            )
-            params = [query.normalized_pattern]
-            backend = "fts5-glob"
-            exact = True
-    else:
+    elif query.allow_analyzed_field:
+        # The remaining leaf is wildcard. Token fallback cannot be represented
+        # as a single SQLite GLOB predicate over raw content.
         sql = f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)}"
         params = []
         backend = "fts5-path"
+        exact = False
+    else:
+        sql = (
+            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
+            "WHERE lower(content) GLOB ?"
+        )
+        params = [query.normalized_pattern]
+        backend = "fts5-glob"
         exact = True
     if query.paths is not None:
         path_clauses: list[str] = []

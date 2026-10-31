@@ -9,10 +9,8 @@ from typing import TYPE_CHECKING, Protocol
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.paths import get_document_value
 from mongoeco.core.runtime_metadata import RuntimeDocumentState
 from mongoeco.core.search import (
-    VECTOR_SEARCH_SCORE_FIELD,
     SearchCompoundQuery,
     SearchNearQuery,
     SearchQuery,
@@ -89,21 +87,6 @@ def _document_tie_break_key(
         document.document if isinstance(document, RuntimeDocumentState) else document
     )
     return repr(bson_engine_key(source.get("_id")))
-
-
-def _sort_vector_scored_documents(
-    documents: list[Document | RuntimeDocumentState],
-) -> None:
-    def score(document: Document | RuntimeDocumentState) -> float:
-        found, value = get_document_value(document, VECTOR_SEARCH_SCORE_FIELD)
-        return float(value) if found else float("-inf")
-
-    documents.sort(
-        key=lambda document: (
-            -score(document),
-            _document_tie_break_key(document),
-        ),
-    )
 
 
 def _vector_filter_residual_description(

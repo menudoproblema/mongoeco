@@ -1244,12 +1244,11 @@ def compile_vector_search_query(spec: object) -> SearchVectorQuery:
         raise OperationFailure(
             "$vectorSearch.queryVector must be a non-empty array",
         )
-    if not all(
-        isinstance(value, (int, float)) and not isinstance(value, bool)
-        for value in raw_query_vector
-    ):
+    query_vector = coerce_search_vector(raw_query_vector)
+    if query_vector is None:
         raise OperationFailure(
-            "$vectorSearch.queryVector must contain only numeric values",
+            "$vectorSearch.queryVector must contain only finite numeric values",
+            code=2,
         )
     limit = spec.get("limit")
     if not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
@@ -1282,7 +1281,7 @@ def compile_vector_search_query(spec: object) -> SearchVectorQuery:
     return SearchVectorQuery(
         index_name=index_name,
         path=path,
-        query_vector=tuple(float(value) for value in raw_query_vector),
+        query_vector=query_vector,
         limit=limit,
         num_candidates=num_candidates,
         filter_spec=deepcopy(filter_spec),
@@ -2083,6 +2082,24 @@ def search_compound_ranking(
     return matched_should, total_score, best_near_distance
 
 
+def coerce_search_vector(value: object) -> tuple[float, ...] | None:
+    """Finite numeric coordinates in the local vector domain, without quantization."""
+    if not isinstance(value, list) or not value:
+        return None
+    vector = []
+    for item in value:
+        if not isinstance(item, (int, float)) or isinstance(item, bool):
+            return None
+        try:
+            coordinate = float(item)
+        except OverflowError:
+            return None
+        if not math.isfinite(coordinate):
+            return None
+        vector.append(coordinate)
+    return tuple(vector)
+
+
 def score_vector_document(
     document: Document,
     *,
@@ -2096,15 +2113,11 @@ def score_vector_document(
     found, value = get_document_value(document, query.path)
     if not found:
         return None
-    if not isinstance(value, list) or not value:
-        return None
-    if not all(
-        isinstance(item, (int, float)) and not isinstance(item, bool) for item in value
-    ):
-        return None
-    candidate = tuple(float(item) for item in value)
-    if len(candidate) != field_spec["numDimensions"] or len(candidate) != len(
-        query.query_vector,
+    candidate = coerce_search_vector(value)
+    if (
+        candidate is None
+        or len(candidate) != field_spec["numDimensions"]
+        or len(candidate) != len(query.query_vector)
     ):
         return None
     similarity = str(field_spec.get("similarity", query.similarity))
