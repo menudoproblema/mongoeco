@@ -67,7 +67,9 @@ async def find_one(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
-    expressions = collection._new_execution_context().with_bindings(operation.let)
+    expressions = collection._new_execution_context().with_command_let(
+        operation.let, dialect=collection._mongodb_dialect
+    )
     operation_context = collection._new_operation_context(
         session=options.get("session"),
         collation=operation.collation,
@@ -274,14 +276,16 @@ async def distinct(
         comment=options.get("comment"),
         max_time_ms=options.get("max_time_ms"),
     ):
-        async for document in collection.find(
+        cursor = collection.find(
             options.get("filter_spec"),
             collation=options.get("collation"),
             hint=options.get("hint"),
             comment=options.get("comment"),
             max_time_ms=options.get("max_time_ms"),
             session=options.get("session"),
-        ):
+        )
+        cursor._expression_error_operation = "distinct"
+        async for document in cursor:
             values = QueryEngine.extract_values(document, options["key"])
             found, value = QueryEngine._get_field_value(document, options["key"])
             candidates = resolve_distinct_candidates(

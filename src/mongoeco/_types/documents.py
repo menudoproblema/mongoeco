@@ -405,7 +405,12 @@ class WriteErrorEntry:
             document["code"] = self.code
         if self.operation is not None:
             document["op"] = deepcopy(self.operation)
-        return document
+        # Preserve field precedence while rendering the native envelope order.
+        ordered = {
+            key: document[key] for key in ("index", "code", "errmsg") if key in document
+        }
+        ordered.update(document)
+        return ordered
 
 
 @dataclass(frozen=True, slots=True)

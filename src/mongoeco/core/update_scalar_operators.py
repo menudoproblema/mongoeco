@@ -3,14 +3,20 @@ from __future__ import annotations
 from collections.abc import Mapping
 from copy import deepcopy
 from datetime import UTC
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.core.bson_scalars import (
+    BsonScalarOverflowError,
     bson_add,
     bson_bitwise,
     bson_multiply,
+    bson_numeric_alias,
     unwrap_bson_numeric,
+    wrap_bson_numeric,
 )
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.error_documents import render_bson_diagnostic
 from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.paths import (
     delete_document_value,
@@ -131,11 +137,43 @@ def apply_inc(
                     "$inc requires the target field to be numeric",
                     code=14,
                 )
-            if set_document_value(
-                doc, target.concrete_path, bson_add(current, increment)
+            if _apply_numeric_update(
+                doc, target.concrete_path, current, increment, "$inc"
             ):
                 modified = True
     return modified
+
+
+def _apply_numeric_update(document, path, current, operand, operator):
+    try:
+        result = (
+            bson_add(current, operand) if operator == "$inc"
+            else bson_multiply(current, operand)
+        )
+    except BsonScalarOverflowError as error:
+        identifier = render_bson_diagnostic(
+            DocumentCodec.to_public(document.get("_id"))
+        )
+        message = (
+            f"Failed to apply {operator} operations to current value "
+            f"((NumberLong){unwrap_bson_numeric(current)}) "
+            f"for document {{_id: {identifier}}}"
+        )
+        raise server_error(message, code=2, reason="arithmetic_overflow") from error
+
+    numeric_current = wrap_bson_numeric(current)
+    numeric_result = wrap_bson_numeric(result)
+    if (numeric_current is not None and numeric_result is not None
+            and bson_numeric_alias(current) == bson_numeric_alias(result)):
+        left, right = numeric_current.value, numeric_result.value
+        # Arithmetic equality intentionally differs from $set's BSON identity:
+        # cohorts/signed zero can be unchanged, while NaN arithmetic is a write.
+        decimal_nan = (isinstance(left, Decimal) and isinstance(right, Decimal)
+                       and (left.is_nan() or right.is_nan()))
+        if not decimal_nan and left == right:
+            return False
+    set_document_value(document, path, result)
+    return True
 
 
 def apply_min(
@@ -215,8 +253,8 @@ def apply_mul(
             if not helpers._is_numeric(current):
                 message = "$mul requires the target field to be numeric"
                 raise server_error(message, code=2)
-            if set_document_value(
-                doc, target.concrete_path, bson_multiply(current, factor)
+            if _apply_numeric_update(
+                doc, target.concrete_path, current, factor, "$mul"
             ):
                 modified = True
     return modified

@@ -361,6 +361,9 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(AUTO_INSTALLED_PYMONGO_PROFILE, 'auto-installed')
         self.assertEqual(STRICT_AUTO_INSTALLED_PYMONGO_PROFILE, 'strict-auto-installed')
         self.assertEqual(MONGODB_DIALECT_HOOK_NAMES, (
+            'supports_dynamic_get_field',
+            'supports_now_in_read_command_let',
+            'uses_distinct_command_request_field_name',
             'null_query_matches_undefined', 'rejects_empty_group_fields',
             'validates_densify_partition_paths', 'validates_aggregation_syntax_early',
             'documents_join_omits_collection_namespace',

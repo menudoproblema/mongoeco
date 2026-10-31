@@ -246,7 +246,7 @@ def compile_sqlite_read_execution_plan(  # noqa: PLR0911, PLR0913
     plan_requires_python_for_array_comparisons: Callable[[str, str, object], bool],
     plan_requires_python_for_undefined: Callable[[str, str, object], bool],
     plan_requires_python_for_bytes: Callable[[str, str, object], bool],
-    plan_requires_python_for_decimal_numeric: Callable[
+    plan_requires_python_for_tagged_numeric: Callable[
         [str, str, object], bool
     ] = lambda *_args: False,
     sort_requires_python: Callable[[str, str, object, object], bool],
@@ -331,15 +331,15 @@ def compile_sqlite_read_execution_plan(  # noqa: PLR0911, PLR0913
             use_sql=False,
             fallback_reason="Tagged bytes require Python fallback",
         )
-    if plan_requires_python_for_decimal_numeric(
+    if plan_requires_python_for_tagged_numeric(
         db_name, coll_name, semantics.query_plan
     ):
-        reason = "Decimal BSON equality requires Python fallback"
+        reason = "Tagged BSON numeric comparison requires Python fallback"
         return SQLiteReadExecutionPlan(
             semantics=semantics,
             strategy="python",
             execution_lineage=_python_lineage(semantics, reason),
-            physical_plan=_python_physical_plan(semantics, "decimal-numeric"),
+            physical_plan=_python_physical_plan(semantics, "tagged-numeric"),
             use_sql=False,
             fallback_reason=reason,
         )

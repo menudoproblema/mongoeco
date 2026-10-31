@@ -1,0 +1,963 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_missing_arrays": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": [
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    "semantic_missing_compare": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "eq": true,
+          "ne": false,
+          "cmp": {
+            "$numberInt": "0"
+          },
+          "gte": true,
+          "lt": false,
+          "in": true,
+          "absent_equal": true,
+          "getfield_cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "eq": false,
+          "ne": true,
+          "cmp": {
+            "$numberInt": "-1"
+          },
+          "gte": false,
+          "lt": true,
+          "in": false,
+          "absent_equal": true,
+          "getfield_cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": {
+          "eq": false,
+          "ne": true,
+          "cmp": {
+            "$numberInt": "1"
+          },
+          "gte": true,
+          "lt": false,
+          "in": false,
+          "absent_equal": true,
+          "getfield_cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": {
+          "eq": false,
+          "ne": true,
+          "cmp": {
+            "$numberInt": "1"
+          },
+          "gte": true,
+          "lt": false,
+          "in": false,
+          "absent_equal": true,
+          "getfield_cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      }
+    ],
+    "semantic_missing_composition": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "object": {},
+          "map": [
+            {}
+          ],
+          "merge": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "setfield": {}
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "object": {},
+          "map": [
+            {}
+          ],
+          "merge": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "setfield": {}
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": {
+          "object": {},
+          "map": [
+            {}
+          ],
+          "merge": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "setfield": {}
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": {
+          "object": {},
+          "map": [
+            {}
+          ],
+          "merge": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "setfield": {}
+        }
+      }
+    ],
+    "semantic_missing_current_scope": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "implicit": {
+            "$numberInt": "8"
+          },
+          "explicit": {
+            "$numberInt": "8"
+          },
+          "root": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "implicit": {
+            "$numberInt": "8"
+          },
+          "explicit": {
+            "$numberInt": "8"
+          },
+          "root": {
+            "$numberInt": "2"
+          }
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": {
+          "implicit": {
+            "$numberInt": "8"
+          },
+          "explicit": {
+            "$numberInt": "8"
+          },
+          "root": {
+            "$numberInt": "3"
+          }
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": {
+          "implicit": {
+            "$numberInt": "8"
+          },
+          "explicit": {
+            "$numberInt": "8"
+          },
+          "root": {
+            "$numberInt": "4"
+          }
+        }
+      }
+    ],
+    "semantic_missing_producers": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "index": "missing",
+          "first": "missing"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "index": "missing",
+          "first": "missing"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": {
+          "index": "null",
+          "first": "missing"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": {
+          "index": "null",
+          "first": "missing"
+        }
+      }
+    ],
+    "semantic_missing_references": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "field": "missing",
+          "root": "missing",
+          "current": "missing",
+          "lexical": "missing",
+          "getfield": "missing"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "field": "missing",
+          "root": "missing",
+          "current": "missing",
+          "lexical": "missing",
+          "getfield": "missing"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": {
+          "field": "missing",
+          "root": "missing",
+          "current": "missing",
+          "lexical": "missing",
+          "getfield": "missing"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": {
+          "field": "missing",
+          "root": "missing",
+          "current": "missing",
+          "lexical": "missing",
+          "getfield": "missing"
+        }
+      }
+    ],
+    "semantic_missing_remove_object": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {}
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {}
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": {}
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": {}
+      }
+    ],
+    "semantic_missing_truth": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "cond": "no",
+          "and": false,
+          "or": false,
+          "filter": []
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "cond": "no",
+          "and": false,
+          "or": false,
+          "filter": []
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "value": {
+          "cond": "no",
+          "and": false,
+          "or": false,
+          "filter": []
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "value": {
+          "cond": "no",
+          "and": false,
+          "or": false,
+          "filter": []
+        }
+      }
+    ]
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_missing_cases.py",
+    "sha256": "d6893eb44e632285bca733761162c0f4a7dcc43644dea6ed38741063218265d8"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_missing_compare",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_compare"
+    },
+    {
+      "name": "semantic_missing_references",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_references"
+    },
+    {
+      "name": "semantic_missing_producers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_producers"
+    },
+    {
+      "name": "semantic_missing_composition",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_composition"
+    },
+    {
+      "name": "semantic_missing_arrays",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_arrays"
+    },
+    {
+      "name": "semantic_missing_remove_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_remove_object"
+    },
+    {
+      "name": "semantic_missing_truth",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_truth"
+    },
+    {
+      "name": "semantic_missing_current_scope",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": null,
+          "arr": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "arr": [],
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberInt": "5"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": [
+            null
+          ],
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_missing_current_scope"
+    }
+  ]
+}

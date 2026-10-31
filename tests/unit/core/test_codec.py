@@ -5,10 +5,11 @@ import uuid
 
 from unittest.mock import patch
 
+import pytest
+
+from bson.decimal128 import Decimal128 as PublicDecimal128
 from bson.int64 import Int64
 from bson.son import SON as BSONSON
-
-import pytest
 
 
 try:
@@ -222,6 +223,17 @@ class DocumentCodecTests(unittest.TestCase):
 
         self.assertIs(type(public["value"]), Int64)
         self.assertEqual(public["value"], 7)
+
+    def test_computed_decimal_materializes_as_a_bson_value(self):
+        public = DocumentCodec.to_public(
+            {"value": BsonDecimal128(decimal.Decimal("1.25"))}
+        )
+        self.assertIs(type(public["value"]), PublicDecimal128)
+        self.assertEqual(public["value"].to_decimal(), decimal.Decimal("1.25"))
+        with patch("mongoeco.core.codec.BsonDecimal128Public", None):
+            fallback = DocumentCodec.to_public(BsonDecimal128(decimal.Decimal("1.25")))
+        self.assertIs(type(fallback), Decimal128)
+        self.assertEqual(fallback.to_decimal(), decimal.Decimal("1.25"))
 
     def test_document_codec_falls_back_to_int64_value_without_bson_surface(self):
         with patch("mongoeco.core.codec.BsonInt64Public", None):

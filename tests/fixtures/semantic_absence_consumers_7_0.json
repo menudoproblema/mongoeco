@@ -1,0 +1,1737 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_absence_ifnull": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "type": "missing",
+          "null": null,
+          "zero": {
+            "$numberInt": "0"
+          },
+          "false": false
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "type": "missing",
+          "null": null,
+          "zero": {
+            "$numberInt": "0"
+          },
+          "false": false
+        }
+      }
+    ],
+    "semantic_absence_lookup_scope": [
+      {
+        "rows": [
+          {
+            "foreignRoot": {
+              "$numberInt": "1"
+            },
+            "implicit": {
+              "$numberInt": "1"
+            },
+            "outerType": "missing",
+            "nullType": "null",
+            "nullPathType": "missing",
+            "removePathType": "missing",
+            "same": true,
+            "equalsNull": false
+          },
+          {
+            "foreignRoot": {
+              "$numberInt": "2"
+            },
+            "implicit": {
+              "$numberInt": "2"
+            },
+            "outerType": "missing",
+            "nullType": "null",
+            "nullPathType": "missing",
+            "removePathType": "missing",
+            "same": true,
+            "equalsNull": false
+          }
+        ]
+      }
+    ],
+    "semantic_absence_reduce": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "value": {
+          "type": "missing",
+          "initial": "missing"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "value": {
+          "type": "missing",
+          "initial": "missing"
+        }
+      }
+    ],
+    "semantic_absence_replace_replaceRoot": [
+      {
+        "kept": {
+          "$numberInt": "1"
+        },
+        "items": [
+          null,
+          null
+        ]
+      },
+      {
+        "kept": {
+          "$numberInt": "2"
+        },
+        "items": [
+          null,
+          null
+        ]
+      }
+    ],
+    "semantic_absence_replace_replaceWith": [
+      {
+        "kept": {
+          "$numberInt": "1"
+        },
+        "items": [
+          null,
+          null
+        ]
+      },
+      {
+        "kept": {
+          "$numberInt": "2"
+        },
+        "items": [
+          null,
+          null
+        ]
+      }
+    ],
+    "semantic_absence_subpipeline_groups": {
+      "lookup": [
+        {
+          "rows": [
+            {
+              "_id": null,
+              "value": {
+                "$numberInt": "0"
+              },
+              "decimal": {
+                "$numberDecimal": "1.25"
+              },
+              "oid": {
+                "$oid": "000000000000000000000001"
+              }
+            }
+          ]
+        }
+      ],
+      "union": [
+        {
+          "_id": null,
+          "value": {
+            "$numberInt": "0"
+          },
+          "decimal": {
+            "$numberDecimal": "1.25"
+          },
+          "oid": {
+            "$oid": "000000000000000000000001"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_ordered_array": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_ordered_fallback": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_ordered_field": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_ordered_object": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {}
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_unordered_array": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_unordered_fallback": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_unordered_field": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_bulk_unordered_object": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {}
+        }
+      ]
+    },
+    "semantic_absence_write_command_array": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_command_fallback": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_command_field": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_command_object": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_find_one_and_update_array": {
+      "result": {
+        "returned": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_find_one_and_update_fallback": {
+      "result": {
+        "returned": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_find_one_and_update_field": {
+      "result": {
+        "returned": {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_find_one_and_update_object": {
+      "result": {
+        "returned": {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {}
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_update_many_array": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "semantic_absence_write_update_many_fallback": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_update_many_field": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_update_many_object": {
+      "result": {
+        "matched": {
+          "$numberInt": "2"
+        },
+        "modified": {
+          "$numberInt": "2"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {}
+        }
+      ]
+    },
+    "semantic_absence_write_update_one_array": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": [
+            null,
+            null
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_update_one_fallback": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_update_one_field": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    },
+    "semantic_absence_write_update_one_object": {
+      "result": {
+        "matched": {
+          "$numberInt": "1"
+        },
+        "modified": {
+          "$numberInt": "1"
+        }
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_absence_consumer_cases.py",
+    "sha256": "ee203de9fdee8d63e24c9f6cd5b5825d1550815f1d2c4587a433bbd2d608ece1"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_absence_lookup_scope",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_lookup_scope"
+    },
+    {
+      "name": "semantic_absence_subpipeline_groups",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_subpipeline_groups"
+    },
+    {
+      "name": "semantic_absence_reduce",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_reduce"
+    },
+    {
+      "name": "semantic_absence_ifnull",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_ifnull"
+    },
+    {
+      "name": "semantic_absence_replace_replaceRoot",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_replace_replaceRoot"
+    },
+    {
+      "name": "semantic_absence_replace_replaceWith",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_replace_replaceWith"
+    },
+    {
+      "name": "semantic_absence_write_update_one_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_one_field"
+    },
+    {
+      "name": "semantic_absence_write_update_one_fallback",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_one_fallback"
+    },
+    {
+      "name": "semantic_absence_write_update_one_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_one_array"
+    },
+    {
+      "name": "semantic_absence_write_update_one_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_one_object"
+    },
+    {
+      "name": "semantic_absence_write_update_many_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_many_field"
+    },
+    {
+      "name": "semantic_absence_write_update_many_fallback",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_many_fallback"
+    },
+    {
+      "name": "semantic_absence_write_update_many_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_many_array"
+    },
+    {
+      "name": "semantic_absence_write_update_many_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_update_many_object"
+    },
+    {
+      "name": "semantic_absence_write_find_one_and_update_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_find_one_and_update_field"
+    },
+    {
+      "name": "semantic_absence_write_find_one_and_update_fallback",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_find_one_and_update_fallback"
+    },
+    {
+      "name": "semantic_absence_write_find_one_and_update_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_find_one_and_update_array"
+    },
+    {
+      "name": "semantic_absence_write_find_one_and_update_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_find_one_and_update_object"
+    },
+    {
+      "name": "semantic_absence_write_bulk_ordered_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_ordered_field"
+    },
+    {
+      "name": "semantic_absence_write_bulk_ordered_fallback",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_ordered_fallback"
+    },
+    {
+      "name": "semantic_absence_write_bulk_ordered_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_ordered_array"
+    },
+    {
+      "name": "semantic_absence_write_bulk_ordered_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_ordered_object"
+    },
+    {
+      "name": "semantic_absence_write_bulk_unordered_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_unordered_field"
+    },
+    {
+      "name": "semantic_absence_write_bulk_unordered_fallback",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_unordered_fallback"
+    },
+    {
+      "name": "semantic_absence_write_bulk_unordered_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_unordered_array"
+    },
+    {
+      "name": "semantic_absence_write_bulk_unordered_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_bulk_unordered_object"
+    },
+    {
+      "name": "semantic_absence_write_command_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_command_field"
+    },
+    {
+      "name": "semantic_absence_write_command_fallback",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_command_fallback"
+    },
+    {
+      "name": "semantic_absence_write_command_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_command_array"
+    },
+    {
+      "name": "semantic_absence_write_command_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "keep": {
+            "$numberInt": "7"
+          }
+        }
+      ],
+      "selector": "semantic_absence_write_command_object"
+    }
+  ]
+}

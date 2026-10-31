@@ -1,5 +1,6 @@
 import copy
 import importlib.util
+import json
 import os
 import unittest
 import uuid
@@ -7,19 +8,34 @@ import uuid
 from typing import Any
 
 from mongoeco import MongoClient
-from mongoeco.core.identity import canonical_document_id
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 
 from tests.differential.cases import REAL_PARITY_CASES, RealParityCase
+from tests.support_bson_observation import bson_comparison_value
 
 
 def _normalize(value: Any) -> Any:
-    if isinstance(value, tuple):
-        return tuple(_normalize(item) for item in value)
-    if isinstance(value, list):
-        return tuple(_normalize(item) for item in value)
-    return canonical_document_id(value)
+    return bson_comparison_value(value)
+
+
+def _decode_capture(text):
+    from bson.json_util import loads  # noqa: PLC0415 - test-only BSON dependency
+
+    document = loads(text)
+    encoding = document.get("corpus", {}).get("observationEncoding", "bson")
+    if encoding == "canonical-json":
+        # Canonical write observations are JSON strings inside the BSON envelope.
+        # This keeps ordinary counters distinct from literal EJSON type tags;
+        # metadata/seed manifests still decode as native BSON.
+        document["cases"] = {
+            name: json.loads(observation)
+            for name, observation in document["cases"].items()
+        }
+    elif encoding != "bson":
+        message = f"unknown capture observation encoding: {encoding}"
+        raise ValueError(message)
+    return document
 
 
 class MongoRealParityBase(unittest.TestCase):

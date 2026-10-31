@@ -1,0 +1,771 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_decimal_edge_arithmetic": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "add": {
+          "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+        },
+        "subtract": {
+          "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+        },
+        "multiply": {
+          "$numberDecimal": "Infinity"
+        },
+        "divide": {
+          "$numberDecimal": "5.000000000000000000000000000000000E+6144"
+        },
+        "mod": {
+          "$numberDecimal": "0"
+        },
+        "sum": {
+          "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+        },
+        "avg": {
+          "$numberDecimal": "5.000000000000000000000000000000000E+6144"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "add": {
+          "$numberDecimal": "2.000000000000000000000000000000000"
+        },
+        "subtract": {
+          "$numberDecimal": "-2.000000000000000000000000000000000"
+        },
+        "multiply": {
+          "$numberDecimal": "2E-6176"
+        },
+        "divide": {
+          "$numberDecimal": "0E-6176"
+        },
+        "mod": {
+          "$numberDecimal": "1E-6176"
+        },
+        "sum": {
+          "$numberDecimal": "2.000000000000000000000000000000000"
+        },
+        "avg": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "add": {
+          "$numberDecimal": "2"
+        },
+        "subtract": {
+          "$numberDecimal": "-2"
+        },
+        "multiply": {
+          "$numberDecimal": "-0"
+        },
+        "divide": {
+          "$numberDecimal": "-0"
+        },
+        "mod": {
+          "$numberDecimal": "-0"
+        },
+        "sum": {
+          "$numberDecimal": "2"
+        },
+        "avg": {
+          "$numberDecimal": "1"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "add": {
+          "$numberDecimal": "Infinity"
+        },
+        "subtract": {
+          "$numberDecimal": "Infinity"
+        },
+        "multiply": {
+          "$numberDecimal": "Infinity"
+        },
+        "divide": {
+          "$numberDecimal": "Infinity"
+        },
+        "mod": {
+          "$numberDecimal": "NaN"
+        },
+        "sum": {
+          "$numberDecimal": "Infinity"
+        },
+        "avg": {
+          "$numberDecimal": "Infinity"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "add": {
+          "$numberDecimal": "Infinity"
+        },
+        "subtract": {
+          "$numberDecimal": "-Infinity"
+        },
+        "multiply": {
+          "$numberDecimal": "NaN"
+        },
+        "divide": {
+          "$numberDecimal": "0E-6176"
+        },
+        "mod": {
+          "$numberDecimal": "0"
+        },
+        "sum": {
+          "$numberDecimal": "Infinity"
+        },
+        "avg": {
+          "$numberDecimal": "Infinity"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "add": {
+          "$numberDecimal": "NaN"
+        },
+        "subtract": {
+          "$numberDecimal": "NaN"
+        },
+        "multiply": {
+          "$numberDecimal": "NaN"
+        },
+        "divide": {
+          "$numberDecimal": "NaN"
+        },
+        "mod": {
+          "$numberDecimal": "NaN"
+        },
+        "sum": {
+          "$numberDecimal": "NaN"
+        },
+        "avg": {
+          "$numberDecimal": "NaN"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      }
+    ],
+    "semantic_decimal_edge_write": {
+      "matched": {
+        "$numberInt": "6"
+      },
+      "modified": {
+        "$numberInt": "6"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          },
+          "add": {
+            "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+          },
+          "subtract": {
+            "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+          },
+          "multiply": {
+            "$numberDecimal": "Infinity"
+          },
+          "divide": {
+            "$numberDecimal": "5.000000000000000000000000000000000E+6144"
+          },
+          "mod": {
+            "$numberDecimal": "0"
+          },
+          "sum": {
+            "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+          },
+          "avg": {
+            "$numberDecimal": "5.000000000000000000000000000000000E+6144"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1E-6176"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          },
+          "add": {
+            "$numberDecimal": "2.000000000000000000000000000000000"
+          },
+          "subtract": {
+            "$numberDecimal": "-2.000000000000000000000000000000000"
+          },
+          "multiply": {
+            "$numberDecimal": "2E-6176"
+          },
+          "divide": {
+            "$numberDecimal": "0E-6176"
+          },
+          "mod": {
+            "$numberDecimal": "1E-6176"
+          },
+          "sum": {
+            "$numberDecimal": "2.000000000000000000000000000000000"
+          },
+          "avg": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "-0"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          },
+          "add": {
+            "$numberDecimal": "2"
+          },
+          "subtract": {
+            "$numberDecimal": "-2"
+          },
+          "multiply": {
+            "$numberDecimal": "-0"
+          },
+          "divide": {
+            "$numberDecimal": "-0"
+          },
+          "mod": {
+            "$numberDecimal": "-0"
+          },
+          "sum": {
+            "$numberDecimal": "2"
+          },
+          "avg": {
+            "$numberDecimal": "1"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "Infinity"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          },
+          "add": {
+            "$numberDecimal": "Infinity"
+          },
+          "subtract": {
+            "$numberDecimal": "Infinity"
+          },
+          "multiply": {
+            "$numberDecimal": "Infinity"
+          },
+          "divide": {
+            "$numberDecimal": "Infinity"
+          },
+          "mod": {
+            "$numberDecimal": "NaN"
+          },
+          "sum": {
+            "$numberDecimal": "Infinity"
+          },
+          "avg": {
+            "$numberDecimal": "Infinity"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0"
+          },
+          "y": {
+            "$numberDecimal": "Infinity"
+          },
+          "add": {
+            "$numberDecimal": "Infinity"
+          },
+          "subtract": {
+            "$numberDecimal": "-Infinity"
+          },
+          "multiply": {
+            "$numberDecimal": "NaN"
+          },
+          "divide": {
+            "$numberDecimal": "0E-6176"
+          },
+          "mod": {
+            "$numberDecimal": "0"
+          },
+          "sum": {
+            "$numberDecimal": "Infinity"
+          },
+          "avg": {
+            "$numberDecimal": "Infinity"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "NaN"
+          },
+          "y": {
+            "$numberDecimal": "1"
+          },
+          "add": {
+            "$numberDecimal": "NaN"
+          },
+          "subtract": {
+            "$numberDecimal": "NaN"
+          },
+          "multiply": {
+            "$numberDecimal": "NaN"
+          },
+          "divide": {
+            "$numberDecimal": "NaN"
+          },
+          "mod": {
+            "$numberDecimal": "NaN"
+          },
+          "sum": {
+            "$numberDecimal": "NaN"
+          },
+          "avg": {
+            "$numberDecimal": "NaN"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_decimal_cases.py",
+    "sha256": "35a1560e6b6a565b3d5a84dd495203df9495f24fa22e09f29c096f03c305de87"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_decimal_edge_arithmetic",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1E-6176"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "-0"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "Infinity"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0"
+          },
+          "y": {
+            "$numberDecimal": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "NaN"
+          },
+          "y": {
+            "$numberDecimal": "1"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_edge_arithmetic"
+    },
+    {
+      "name": "semantic_decimal_edge_write",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "9.999999999999999999999999999999999E+6144"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1E-6176"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "-0"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "Infinity"
+          },
+          "y": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0"
+          },
+          "y": {
+            "$numberDecimal": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "NaN"
+          },
+          "y": {
+            "$numberDecimal": "1"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_edge_write"
+    }
+  ]
+}

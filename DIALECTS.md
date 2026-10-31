@@ -105,6 +105,27 @@ caminos.
 | `"$nin": [null]` con campo ausente | no match | match | `null_query_matches_undefined()` | sí | `tests/unit/core/test_filtering.py` |
 | `$lookup` simple con `null` vs `UNDEFINED` | iguala | no iguala | `null_query_matches_undefined()` | sí | `tests/unit/core/test_aggregation.py`, `tests/differential/*` |
 
+La separación actual entre consulta y expresión y sus formas admitidas se
+describe en [COMPATIBILITY](COMPATIBILITY.md). Las
+[capturas de gramática 7/8/9](docs/evidence/semantic-refactor/expression-grammar-validation.json)
+conservan también los diagnósticos por fase y el namespace de ejecución de 9.0.
+Su presentación se resuelve en el adaptador común de errores, manteniendo una
+sola regla semántica por familia y los contratos de sintaxis separados.
+
+En `let` de comando, `supports_now_in_read_command_let` es true en 7 y false en
+8/9: solo limita la preparación de bindings de lectura; las escrituras y el
+cuerpo conservan NOW. `uses_distinct_command_request_field_name` selecciona el
+nombre IDL `distinctCommandRequest.let` en 8 frente a `distinct.let` en 7/9
+para el rechazo 40415. Ambos son datos/hooks registrados del dialecto. Las
+[referencias y límites](docs/evidence/semantic-refactor/command-let-source-notes.md)
+separan estas reglas del comportamiento de clone propio del SDK.
+
+`supports_dynamic_get_field` es false en 7 y true en 8/9. El parser de getField
+en 7 exige un nombre constante; en 8/9 el tipo del nombre se comprueba al
+evaluarlo. SetField y unsetField conservan su requisito de nombre constante.
+El hook pertenece al catálogo; la estructura de los argumentos y sus handlers
+comparten un owner, sin interpretar el dialecto como perfil del SDK.
+
 ### Regla de implementación
 
 El resto del core **no debe conocer números de versión**.

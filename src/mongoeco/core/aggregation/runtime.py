@@ -28,6 +28,12 @@ from mongoeco.core.aggregation.evaluation_environment import (
     aggregation_environment,
     environment_for_document,
 )
+from mongoeco.core.aggregation.expression_values import (
+    MISSING as _MISSING,
+    compare_expression_values,
+    expression_values_equal,
+    null_if_missing,
+)
 from mongoeco.core.aggregation.extensions import (
     AggregationExpressionExtensionContext,
     get_registered_aggregation_expression_operator,
@@ -51,7 +57,6 @@ from mongoeco.core.bson_scalars import (
 )
 from mongoeco.core.collation import (
     CollationSpec,
-    compare_with_collation,
     string_equality_key,
 )
 from mongoeco.core.filtering import QueryEngine
@@ -153,9 +158,11 @@ class AggregationStageContext:
     lookup_hash_max_associations: int | None = None
     deadline: float | None = None
 
+    group_average_uses_sum: bool = False
 
 def aggregation_equality_key(value: Any, collation: CollationSpec | None = None) -> Any:
     """Semantic group identity, independent of physical numeric representation."""
+    value = null_if_missing(value)
     if is_bson_numeric(value):
         return bson_equality_key(value)
     if isinstance(value, Code):
@@ -422,22 +429,24 @@ def _require_expression_args(
     min_args: int,
     max_args: int | None = None,
 ) -> list[object]:
-    if not isinstance(spec, list):
-        message = f"{operator} requires a list expression"
-        raise server_error(message, code=16020)
-    if len(spec) < min_args:
-        message = f"{operator} requires at least {min_args} arguments"
-        raise server_error(
-            message,
-            code=16020,
+    args = spec if isinstance(spec, list) else [spec]
+    count = len(args)
+    if count < min_args or (max_args is not None and count > max_args):
+        if operator == "$ifNull":
+            message = f"$ifNull needs at least two arguments, had: {count}"
+            raise server_error(message, code=1257300, reason="expression_arity")
+        if min_args == max_args:
+            requirement = f"exactly {min_args}"
+        elif max_args is None:
+            requirement = f"at least {min_args}"
+        else:
+            requirement = f"at least {min_args} and at most {max_args}"
+        message = (
+            f"Expression {operator} takes {requirement} arguments. "
+            f"{count} were passed in."
         )
-    if max_args is not None and len(spec) > max_args:
-        message = f"{operator} accepts at most {max_args} arguments"
-        raise server_error(
-            message,
-            code=16020,
-        )
-    return spec
+        raise server_error(message, code=16020, reason="expression_arity")
+    return args
 
 
 def _compare_values(
@@ -448,15 +457,12 @@ def _compare_values(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> bool:
-    if operator == "$eq":
-        return QueryEngine._values_equal(
+    if operator in {"$eq", "$ne"}:
+        equal = expression_values_equal(
             left, right, dialect=dialect, collation=collation
         )
-    if operator == "$ne":
-        return not QueryEngine._values_equal(
-            left, right, dialect=dialect, collation=collation
-        )
-    comparison = compare_with_collation(
+        return equal if operator == "$eq" else not equal
+    comparison = compare_expression_values(
         left, right, dialect=dialect, collation=collation
     )
     return {
@@ -478,7 +484,7 @@ def _require_array(operator: str, value: object) -> list[Any]:
 
 
 def _expression_truthy(value: Any, *, dialect: MongoDialect) -> bool:
-    return dialect.policy.expression_truthy(value)
+    return value is not _MISSING and dialect.policy.expression_truthy(value)
 
 
 def _append_unique_values(
@@ -553,6 +559,9 @@ def _resolve_variable_expression(
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Any:
     name, path = _parse_variable_reference(expression)
+    if name in getattr(variables, "unavailable_system_variables", ()):
+        message = f"Builtin variable '$${name}' is not available"
+        raise server_error(message, code=51144)
     if name == "CLUSTER_TIME":
         message = (
             "Builtin variable '$$CLUSTER_TIME' is not available on a standalone runtime"
@@ -580,10 +589,7 @@ def _resolve_variable_expression(
     value = variables[name]
     if not path:
         return value
-    if value is None:
-        return None
-    resolved = _resolve_aggregation_field_path(value, path)
-    return None if resolved is _MISSING else resolved
+    return _resolve_aggregation_field_path(value, path)
 
 
 def _variables_for_document(
@@ -598,8 +604,8 @@ def _variables_for_document(
     )
 
 
-_MISSING = object()
-_REMOVE = object()
+# $$REMOVE evaluates to the same missing value as an absent field.
+_REMOVE = _MISSING
 
 
 def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
@@ -799,17 +805,12 @@ def _evaluate_expression_with_missing(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Any:
-    variables = _variables_for_document(document, variables)
-    if isinstance(expression, str):
-        if expression.startswith("$$"):
-            return _resolve_variable_expression(expression, variables, dialect=dialect)
-        if expression.startswith("$"):
-            return _resolve_aggregation_field_path(document, expression[1:])
-    return evaluate_expression(
-        document,
-        expression,
-        variables,
-        dialect=dialect,
+    return evaluate_expression(document, expression, variables, dialect=dialect)
+
+
+def _evaluate_nullable_expression(document, expression, variables=None, *, dialect):
+    return null_if_missing(
+        evaluate_expression(document, expression, variables, dialect=dialect)
     )
 
 
@@ -827,16 +828,14 @@ def evaluate_expression(
 
     if isinstance(expression, str):
         if expression.startswith("$$"):
-            value = _resolve_variable_expression(expression, variables, dialect=dialect)
-            return None if value is _MISSING else value
+            return _resolve_variable_expression(expression, variables, dialect=dialect)
         if expression.startswith("$"):
-            value = _resolve_aggregation_field_path(document, expression[1:])
-            return None if value is _MISSING else value
+            return _resolve_aggregation_field_path(variables["CURRENT"], expression[1:])
         return expression
 
     if isinstance(expression, list):
         return [
-            evaluate_expression(document, item, variables, dialect=dialect)
+            null_if_missing(evaluate_expression(document, item, variables, dialect=dialect))
             for item in expression
         ]
 
@@ -924,7 +923,7 @@ def evaluate_expression(
                 )
             if operator not in {"$literal", "$const"} and not dialect.supports_aggregation_expression_operator(operator):
                 raise server_error(
-                    f"Unsupported aggregation expression: {operator}",
+                    f"Unrecognized expression '{operator}'",
                     code=168,
                 )
             if operator in {"$literal", "$const"}:
@@ -936,13 +935,8 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
-                        evaluate_expression(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
-                        )
+                    evaluate_expression=lambda d, e, v=None: (
+                        _evaluate_nullable_expression(d, e, v, dialect=dialect)
                     ),
                     evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
                         _evaluate_expression_with_missing(
@@ -971,13 +965,8 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
-                        evaluate_expression(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
-                        )
+                    evaluate_expression=lambda d, e, v=None: (
+                        _evaluate_nullable_expression(d, e, v, dialect=dialect)
                     ),
                     evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
                         _evaluate_expression_with_missing(
@@ -1077,13 +1066,8 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
-                        evaluate_expression(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
-                        )
+                    evaluate_expression=lambda d, e, v=None: (
+                        _evaluate_nullable_expression(d, e, v, dialect=dialect)
                     ),
                     evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
                         _evaluate_expression_with_missing(
@@ -1110,13 +1094,8 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
-                        evaluate_expression(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
-                        )
+                    evaluate_expression=lambda d, e, v=None: (
+                        _evaluate_nullable_expression(d, e, v, dialect=dialect)
                     ),
                     evaluate_expression_with_missing=lambda *args: (
                         _evaluate_expression_with_missing(*args, dialect=dialect)
@@ -1124,7 +1103,7 @@ def evaluate_expression(
                     missing_sentinel=_MISSING,
                 )
             raise server_error(
-                f"Unsupported aggregation expression: {operator}",
+                f"Unrecognized expression '{operator}'",
                 code=168,
             )
 

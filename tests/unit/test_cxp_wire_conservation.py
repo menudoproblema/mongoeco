@@ -245,7 +245,13 @@ def test_static_admin_wire_field_matrix_covers_five_command_contracts() -> None:
         assert row["product"] == "Mongoeco"
         assert row["owner"] == "Mongoeco"
         assert row["source"] == expected_source
-        assert row["source_revision"] == "6935227c2830d6de453f19c079d3556ef747164b"
+        scope = "\n".join(
+            str(path.relative_to(PROJECT_ROOT)) + ":"
+            + hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sources.values()
+        )
+        revision = "sha256:" + hashlib.sha256(scope.encode()).hexdigest()
+        assert row["source_revision"] == revision
         assert row["disposition"] == "owner_operational"
         assert row["status"] == "bounded_behavior_verified"
         assert row["meaning"]

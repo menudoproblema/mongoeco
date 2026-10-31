@@ -1,0 +1,223 @@
+{
+  "server": "9.0.2",
+  "fcv": {
+    "version": "9.0"
+  },
+  "pymongo": "4.19.0",
+  "cases": {
+    "semantic_fix_group_route_boolean": {
+      "seed": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "expected": {
+        "top": [
+          {
+            "_id": null,
+            "value": {
+              "$numberInt": "0"
+            }
+          }
+        ],
+        "facet": [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberInt": "0"
+                }
+              }
+            ]
+          }
+        ],
+        "extra": [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberInt": "0"
+                },
+                "extra": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_fix_cache_identity_literals": {
+      "seed": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "expected": [
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": true
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberDouble": "1.0"
+                }
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": false
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberInt": "0"
+                }
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberDouble": "0.0"
+                }
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberDouble": "1.0"
+                }
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": true
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    "semantic_fix_compiled_literal_bson": {
+      "seed": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "expected": [
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$numberDecimal": "1.25"
+                }
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "result": [
+              {
+                "_id": null,
+                "value": {
+                  "$oid": "000000000000000000000001"
+                }
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  }
+}

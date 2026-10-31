@@ -7,8 +7,8 @@ name = "mongoeco"
 dynamic = ["version"]
 description = "Local MongoDB testing and embedded persistence for Python, with PyMongo-style sync and async APIs."
 readme = {file = "README.md", content-type = "text/markdown"}
-license = "Apache-2.0 AND ICU"
-license-files = ["LICENSE", "src/mongoeco/core/resources/ICU-LICENSE.txt"]
+license = "Apache-2.0 AND ICU AND BSD-3-Clause"
+license-files = ["LICENSE", "src/mongoeco/core/resources/ICU-LICENSE.txt", "src/mongoeco/core/resources/Intel-Decimal-Math-LICENSE.txt"]
 authors = [{name = "Vicente Ruiz"}]
 requires-python = ">=3.13"
 dependencies = [

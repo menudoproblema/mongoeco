@@ -1021,9 +1021,23 @@ REAL_PARITY_CASES: tuple[RealParityCase, ...] = (
 )
 
 
+from tests.differential.semantic_corpora import SEMANTIC_CORPORA  # noqa: E402
+
+
+REAL_PARITY_CASES += tuple(
+    RealParityCase(name=name, seed_documents=corpus.seed, action=action)
+    for corpus in SEMANTIC_CORPORA.values()
+    for name, action in corpus.cases
+)
+
 # Keep this boundary explicit whenever executable cases precede a real-server
 # replay capture. Names may leave it only with their checked-in golden.
 REAL_CAPTURE_PENDING_CASES: frozenset[str] = frozenset()
+
+# Versioned supplemental fixtures are replayed by the public surface matrix.
+REAL_SUPPLEMENTAL_CAPTURE_CASES = frozenset(
+    name for corpus in SEMANTIC_CORPORA.values() for name, _ in corpus.cases
+)
 
 
 def get_real_parity_case(name: str) -> RealParityCase:

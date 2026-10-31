@@ -11,11 +11,8 @@ from mongoeco.core.bson_scalars import (
     BsonInt64,
     BsonScalarOverflowError,
     _coerce_integral,
-    _numeric_template_metadata,
     _numeric_to_decimal,
-    _try_fast_float_arithmetic,
     _wrap_from_templates,
-    _wrap_numeric_result,
     bson_add,
     bson_bitwise,
     bson_divide,
@@ -175,7 +172,7 @@ class BsonScalarTests(unittest.TestCase):
         self.assertEqual(bson_mod(BsonDecimal128(decimal.Decimal("5.5")), 2), BsonDecimal128(decimal.Decimal("1.5")))
         self.assertEqual(bson_mod(BsonInt32(-7), BsonInt32(3)), BsonInt32(-1))
         self.assertTrue(math.isnan(bson_mod(float("inf"), 3.0)))
-        self.assertTrue(math.isnan(bson_mod(3.0, float("inf"))))
+        self.assertEqual(bson_mod(3.0, float("inf")), 3.0)
 
     def test_bson_divide_and_mod_reject_zero_divisors(self):
         with self.assertRaisesRegex(OperationFailure, "divide by zero"):
@@ -198,37 +195,15 @@ class BsonScalarTests(unittest.TestCase):
             _coerce_integral(1 << 80)
 
     def test_bson_internal_wrapping_helpers_cover_template_and_result_paths(self):
-        self.assertEqual(_try_fast_float_arithmetic(1, 2, "add"), None)
-        self.assertEqual(_try_fast_float_arithmetic(Decimal128("1.5"), 2.0, "add"), None)
-        self.assertEqual(_try_fast_float_arithmetic(BsonDouble(1.5), 2, "add"), BsonDouble(3.5))
-        self.assertEqual(_try_fast_float_arithmetic(1.5, 2, "multiply"), 3.0)
-        with self.assertRaises(ValueError):
-            _try_fast_float_arithmetic(1.5, 2, "divide")
+        self.assertEqual(bson_add(1, 2), 3)
+        self.assertEqual(bson_add(Decimal128("1.5"), 2.0), BsonDecimal128(decimal.Decimal("3.5")))
+        self.assertEqual(bson_add(BsonDouble(1.5), 2), BsonDouble(3.5))
+        self.assertEqual(bson_multiply(1.5, 2), 3.0)
         with self.assertRaises(TypeError):
-            _try_fast_float_arithmetic("x", 2, "add")
+            bson_add("x", 2)
 
-        self.assertEqual(_numeric_template_metadata(BsonDecimal128(decimal.Decimal("1.5"))), ("decimal", True))
-        self.assertEqual(_numeric_template_metadata(BsonDouble(1.5)), ("double", True))
-        self.assertEqual(_numeric_template_metadata(BsonInt64(1 << 40)), ("long", True))
-        self.assertEqual(_numeric_template_metadata(BsonInt32(1)), ("int", True))
-        self.assertEqual(_numeric_template_metadata(Decimal128("1.5")), ("decimal", False))
-        self.assertEqual(_numeric_template_metadata(1.5), ("double", False))
-        self.assertEqual(_numeric_template_metadata(1), ("int", False))
-        self.assertEqual(_numeric_template_metadata(1 << 40), ("long", False))
-        self.assertEqual(_numeric_template_metadata(True), (None, False))
         with self.assertRaises(BsonScalarOverflowError):
-            _numeric_template_metadata(1 << 80)
-
-        self.assertEqual(_wrap_numeric_result(Decimal128("1.5"), 2, decimal.Decimal("3.5")), decimal.Decimal("3.5"))
-        self.assertEqual(_wrap_numeric_result(BsonDouble(1.5), 2, decimal.Decimal("3.5")), BsonDouble(3.5))
-        self.assertEqual(_wrap_numeric_result(BsonInt32(2), 2, decimal.Decimal("3")), BsonInt32(3))
-        self.assertEqual(_wrap_numeric_result(BsonInt64(1 << 40), 2, decimal.Decimal(str(1 << 40))), BsonInt64(1 << 40))
-        self.assertEqual(_wrap_numeric_result(1, 2, decimal.Decimal("3")), 3)
-        self.assertEqual(_wrap_numeric_result(BsonInt32(2), 2, decimal.Decimal("3.5")), BsonDouble(3.5))
-        with self.assertRaises(TypeError):
-            _wrap_numeric_result("x", 1, decimal.Decimal("1"))
-        with self.assertRaises(BsonScalarOverflowError):
-            _wrap_numeric_result(BsonInt64(1 << 40), 2, decimal.Decimal(1 << 80))
+            bson_add(1 << 80, 1)
 
         self.assertEqual(_wrap_from_templates(3, 1, 2), 3)
         self.assertEqual(_wrap_from_templates(2, BsonDecimal128(decimal.Decimal("1"))), BsonDecimal128(decimal.Decimal("2")))

@@ -5,17 +5,32 @@ import math
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from operator import add, mul, sub
 from typing import Any
 
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Decimal128
 
 
+try:
+    from bson.decimal128 import Decimal128 as _PublicDecimal128
+    from bson.int64 import Int64 as _PublicInt64
+except ImportError:  # pragma: no cover - optional BSON
+    _PublicInt64 = None
+    _PublicDecimal128 = None
+
 INT32_MIN = -(1 << 31)
 INT32_MAX = (1 << 31) - 1
 INT64_MIN = -(1 << 63)
 INT64_MAX = (1 << 63) - 1
 DECIMAL128_CONTEXT = decimal.Context(prec=34, Emin=-6143, Emax=6144)
+_DECIMAL128_ARITHMETIC_CONTEXT = decimal.Context(
+    prec=34, Emin=-6143, Emax=6144, rounding=decimal.ROUND_HALF_EVEN, clamp=1,
+    traps=[],
+)
+_DOUBLE_TO_DECIMAL_CONTEXT = decimal.Context(
+    prec=15, rounding=decimal.ROUND_HALF_EVEN, traps=[],
+)
 
 
 def utc_bson_now() -> datetime:
@@ -97,6 +112,8 @@ def wrap_bson_numeric(value: object) -> BsonNumeric | None:
         return None
     if isinstance(value, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128):
         return value
+    if _PublicInt64 is not None and isinstance(value, _PublicInt64):
+        return BsonInt64(int(value))
     if isinstance(value, int):
         if value < INT64_MIN or value > INT64_MAX:
             raise BsonScalarOverflowError("integer exceeds BSON int64 range")
@@ -105,6 +122,8 @@ def wrap_bson_numeric(value: object) -> BsonNumeric | None:
         return BsonInt64(value)
     if isinstance(value, float):
         return BsonDouble(value)
+    if _PublicDecimal128 is not None and isinstance(value, _PublicDecimal128):
+        return BsonDecimal128(value.to_decimal())
     if isinstance(value, Decimal128):
         return BsonDecimal128(_normalize_decimal128(value.to_decimal()))
     if isinstance(value, decimal.Decimal):
@@ -119,6 +138,10 @@ def unwrap_bson_numeric(value: object) -> object:
 
 
 def bson_numeric_alias(value: object) -> str | None:
+    if _PublicDecimal128 is not None and isinstance(value, _PublicDecimal128):
+        return "decimal"
+    if _PublicInt64 is not None and isinstance(value, _PublicInt64):
+        return "long"
     if isinstance(value, BsonInt32):
         return "int"
     if isinstance(value, BsonInt64):
@@ -185,11 +208,23 @@ def compare_bson_numeric(left: object, right: object) -> int:
             return 0
         return -1 if left_value < right_value else 1
 
-    left_decimal = _numeric_to_decimal(left_value)
-    right_decimal = _numeric_to_decimal(right_value)
+    left_decimal = numeric_comparison_decimal(left_value)
+    right_decimal = numeric_comparison_decimal(right_value)
     if left_decimal == right_decimal:
         return 0
     return -1 if left_decimal < right_decimal else 1
+
+
+def numeric_comparison_decimal(value: float | decimal.Decimal) -> decimal.Decimal:
+    """Preserve the exact finite numeric value, independently of decimal context.
+
+    Arithmetic promotion has a separate conversion: rounding a double for an
+    operation must not change which stored decimal it compares equal to.
+    """
+    if isinstance(value, float):
+        # Decimal(float) obeys the ambient FloatOperation trap and sets its flag.
+        return decimal.Decimal.from_float(value)  # noqa: FURB164
+    return decimal.Decimal(value)
 
 
 def _numeric_to_decimal(value: int | float | decimal.Decimal) -> decimal.Decimal:
@@ -198,7 +233,14 @@ def _numeric_to_decimal(value: int | float | decimal.Decimal) -> decimal.Decimal
     if isinstance(value, decimal.Decimal):
         return _normalize_decimal128(value)
     if isinstance(value, float):
-        return decimal.Decimal(str(value))
+        with decimal.localcontext(_DOUBLE_TO_DECIMAL_CONTEXT) as context:
+            converted = context.create_decimal_from_float(value)
+            if not value or not math.isfinite(value):
+                return converted
+            # MongoDB arithmetic conversion retains exactly 15 significant digits,
+            # including trailing zeros. Accumulator conversion stays separate.
+            quantum = decimal.Decimal(1).scaleb(converted.adjusted() - 14)
+            return context.quantize(converted, quantum)
     return decimal.Decimal(value)
 
 
@@ -222,55 +264,64 @@ def validate_bson_value(value: object) -> None:
             _normalize_decimal128(wrapped.value)
 
 
-def bson_add(left: object, right: object) -> object:
-    if (
-        isinstance(left, int)
-        and not isinstance(left, bool)
-        and isinstance(right, int)
-        and not isinstance(right, bool)
+def bson_add(left: object, right: object, *, promote_overflow: bool = False) -> object:
+    return _bson_arithmetic(left, right, add, promote_overflow=promote_overflow)
+
+
+def bson_multiply(left: object, right: object, *, promote_overflow: bool = False) -> object:
+    return _bson_arithmetic(left, right, mul, promote_overflow=promote_overflow)
+
+
+def bson_subtract(left: object, right: object, *, promote_overflow: bool = False) -> object:
+    return _bson_arithmetic(left, right, sub, promote_overflow=promote_overflow)
+
+
+def _bson_arithmetic(left, right, operation, *, promote_overflow):
+    numeric_left, numeric_right = wrap_bson_numeric(left), wrap_bson_numeric(right)
+    if numeric_left is None or numeric_right is None:
+        message = "BSON arithmetic requires numeric values"
+        raise TypeError(message)
+    if isinstance(numeric_left, (BsonInt32, BsonInt64)) and isinstance(
+        numeric_right, (BsonInt32, BsonInt64)
     ):
-        result = left + right
-        if result < INT64_MIN or result > INT64_MAX:
-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
-        return result
-    float_result = _try_fast_float_arithmetic(left, right, "add")
-    if float_result is not None:
-        return float_result
-    return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) + _numeric_to_decimal(unwrap_bson_numeric(right)))
-
-
-def bson_multiply(left: object, right: object) -> object:
-    if (
-        isinstance(left, int)
-        and not isinstance(left, bool)
-        and isinstance(right, int)
-        and not isinstance(right, bool)
+        result = operation(numeric_left.value, numeric_right.value)
+        if not INT64_MIN <= result <= INT64_MAX:
+            if promote_overflow:
+                # Promotion converts operands before performing the operation.
+                # Rounding the exact overflowing integer gives different tie results.
+                return _wrap_float_result(
+                    operation(float(numeric_left.value), float(numeric_right.value)),
+                    left, right,
+                )
+            message = "integer exceeds BSON int64 range"
+            raise BsonScalarOverflowError(message)
+        if not INT32_MIN <= result <= INT32_MAX:
+            return BsonInt64(result)
+        return bson_rewrap_numeric(result, left, right)
+    if isinstance(numeric_left, BsonDecimal128) or isinstance(
+        numeric_right, BsonDecimal128
     ):
-        result = left * right
-        if result < INT64_MIN or result > INT64_MAX:
-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
-        return result
-    float_result = _try_fast_float_arithmetic(left, right, "multiply")
-    if float_result is not None:
-        return float_result
-    return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) * _numeric_to_decimal(unwrap_bson_numeric(right)))
+        with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT):
+            result = operation(
+                _numeric_to_decimal(numeric_left.value),
+                _numeric_to_decimal(numeric_right.value),
+            )
+            return BsonDecimal128(_normalize_decimal128(result))
+    return _wrap_float_result(
+        operation(float(numeric_left.value), float(numeric_right.value)), left, right
+    )
 
 
-def bson_subtract(left: object, right: object) -> object:
-    if (
-        isinstance(left, int)
-        and not isinstance(left, bool)
-        and isinstance(right, int)
-        and not isinstance(right, bool)
-    ):
-        result = left - right
-        if result < INT64_MIN or result > INT64_MAX:
-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
-        return result
-    float_result = _try_fast_float_arithmetic(left, right, "subtract")
-    if float_result is not None:
-        return float_result
-    return _wrap_numeric_result(left, right, _numeric_to_decimal(unwrap_bson_numeric(left)) - _numeric_to_decimal(unwrap_bson_numeric(right)))
+def _wrap_float_result(result, *templates):
+    return (
+        BsonDouble(result)
+        if any(
+            isinstance(value, (BsonInt32, BsonInt64, BsonDouble, BsonDecimal128))
+            or (_PublicInt64 is not None and isinstance(value, _PublicInt64))
+            for value in templates
+        )
+        else result
+    )
 
 
 def bson_divide(left: object, right: object) -> object:
@@ -283,16 +334,19 @@ def bson_divide(left: object, right: object) -> object:
     if isinstance(wrapped_left, BsonDecimal128) or isinstance(
         wrapped_right, BsonDecimal128
     ):
-        result = _normalize_decimal128(
-            _numeric_to_decimal(wrapped_left.value)
-            / _numeric_to_decimal(wrapped_right.value)
-        )
-        return _wrap_from_templates(result, left, right)
-    result = float(unwrap_bson_numeric(left)) / float(unwrap_bson_numeric(right))
-    return _wrap_from_templates(result, left, right)
+        with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT):
+            result = (
+                _numeric_to_decimal(wrapped_left.value)
+                / _numeric_to_decimal(wrapped_right.value)
+            )
+            return BsonDecimal128(_normalize_decimal128(result))
+    result = float(wrapped_left.value) / float(wrapped_right.value)
+    return _wrap_float_result(result, left, right)
 
 
-def bson_mod(left: object, right: object) -> object:
+def bson_mod(
+    left: object, right: object, *, integral_double_divisor: bool = False,
+) -> object:
     wrapped_left = wrap_bson_numeric(left)
     wrapped_right = wrap_bson_numeric(right)
     if wrapped_left is None or wrapped_right is None:
@@ -302,13 +356,31 @@ def bson_mod(left: object, right: object) -> object:
     if isinstance(wrapped_left, BsonDecimal128) or isinstance(
         wrapped_right, BsonDecimal128
     ):
-        left_decimal = _numeric_to_decimal(wrapped_left.value)
-        right_decimal = _numeric_to_decimal(wrapped_right.value)
-        quotient = decimal.Decimal(int(left_decimal / right_decimal))
-        result = _normalize_decimal128(left_decimal - (right_decimal * quotient))
-        return _wrap_from_templates(result, left, right)
-    left_value = unwrap_bson_numeric(left)
-    right_value = unwrap_bson_numeric(right)
+        with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+            left_decimal = _numeric_to_decimal(wrapped_left.value)
+            right_decimal = _numeric_to_decimal(wrapped_right.value)
+            if left_decimal.is_finite() and right_decimal.is_finite():
+                # MongoDB remainder is valid even when the integer quotient
+                # needs more than 34 digits. Retain that quotient internally;
+                # only the final remainder is a Decimal128 result.
+                context.prec = max(
+                    context.prec, left_decimal.adjusted() - right_decimal.adjusted() + 1
+                )
+            result = left_decimal % right_decimal
+            return BsonDecimal128(_normalize_decimal128(result))
+    left_value = wrapped_left.value
+    right_value = wrapped_right.value
+    result_templates = (left, right)
+    if (
+        integral_double_divisor
+        and isinstance(wrapped_left, (BsonInt32, BsonInt64))
+        and isinstance(wrapped_right, BsonDouble)
+        and math.isfinite(right_value)
+        and right_value.is_integer()
+        and INT64_MIN <= right_value < (1 << 63)
+    ):
+        right_value = int(right_value)
+        result_templates = (left,)  # Retain the dividend's BSON numeric type.
     if (
         isinstance(left_value, int)
         and not isinstance(left_value, bool)
@@ -319,14 +391,14 @@ def bson_mod(left: object, right: object) -> object:
         if (left_value < 0) != (right_value < 0):
             quotient = -quotient
         result = left_value - right_value * quotient
-        return _wrap_from_templates(result, left, right)
-    if isinstance(left_value, float) and not math.isfinite(left_value):
-        return math.nan
-    if isinstance(right_value, float) and not math.isfinite(right_value):
-        return math.nan
-    quotient = int(left_value / right_value)
-    result = left_value - right_value * quotient
-    return _wrap_from_templates(result, left, right)
+        return _wrap_from_templates(result, *result_templates)
+    left_double, right_double = float(left_value), float(right_value)
+    result = (
+        math.fmod(left_double, right_double)
+        if math.isfinite(left_double) and not math.isnan(right_double)
+        else math.nan
+    )
+    return _wrap_float_result(result, *result_templates)
 
 
 def bson_rewrap_numeric(result: object, *templates: object) -> object:
@@ -361,93 +433,16 @@ def _coerce_integral(value: object) -> int:
     return unwrapped
 
 
-def _try_fast_float_arithmetic(left: object, right: object, operator: str) -> object | None:
-    wrapped_left = wrap_bson_numeric(left)
-    wrapped_right = wrap_bson_numeric(right)
-    if wrapped_left is None or wrapped_right is None:
-        raise TypeError("BSON arithmetic requires numeric values")
-    if isinstance(wrapped_left, BsonDecimal128) or isinstance(wrapped_right, BsonDecimal128):
-        return None
-    if not isinstance(wrapped_left, BsonDouble) and not isinstance(wrapped_right, BsonDouble):
-        return None
-
-    left_value = float(unwrap_bson_numeric(left))
-    right_value = float(unwrap_bson_numeric(right))
-    if operator == "add":
-        result = left_value + right_value
-    elif operator == "subtract":
-        result = left_value - right_value
-    elif operator == "multiply":
-        result = left_value * right_value
-    else:
-        raise ValueError(f"unsupported BSON float arithmetic operator: {operator}")
-
-    preserve_wrappers = isinstance(left, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128) or isinstance(
-        right,
-        BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128,
-    )
-    return BsonDouble(result) if preserve_wrappers else result
-
-
-def _numeric_template_metadata(value: object) -> tuple[str | None, bool]:
-    if isinstance(value, BsonDecimal128):
-        return "decimal", True
-    if isinstance(value, BsonDouble):
-        return "double", True
-    if isinstance(value, BsonInt64):
-        return "long", True
-    if isinstance(value, BsonInt32):
-        return "int", True
-    if isinstance(value, bool):
-        return None, False
-    if isinstance(value, Decimal128 | decimal.Decimal):
-        return "decimal", False
-    if isinstance(value, float):
-        return "double", False
-    if isinstance(value, int):
-        if value < INT64_MIN or value > INT64_MAX:
-            raise BsonScalarOverflowError("integer exceeds BSON int64 range")
-        return ("int" if INT32_MIN <= value <= INT32_MAX else "long"), False
-    return None, False
-
-
-def _wrap_numeric_result(left: object, right: object, result: decimal.Decimal) -> object:
-    left_kind, preserve_left = _numeric_template_metadata(left)
-    right_kind, preserve_right = _numeric_template_metadata(right)
-    if left_kind is None or right_kind is None:
-        raise TypeError("BSON arithmetic requires numeric values")
-
-    preserve_wrappers = preserve_left or preserve_right
-
-    if left_kind == "decimal" or right_kind == "decimal":
-        normalized = _normalize_decimal128(result)
-        return BsonDecimal128(normalized) if preserve_wrappers else normalized
-
-    if left_kind == "double" or right_kind == "double":
-        normalized = float(result)
-        return BsonDouble(normalized) if preserve_wrappers else normalized
-
-    integer_result = int(result)
-    if result != decimal.Decimal(integer_result):
-        normalized = float(result)
-        return BsonDouble(normalized) if preserve_wrappers else normalized
-
-    if integer_result < INT64_MIN or integer_result > INT64_MAX:
-        raise BsonScalarOverflowError("integer exceeds BSON int64 range")
-    if not preserve_wrappers:
-        return integer_result
-    if INT32_MIN <= integer_result <= INT32_MAX:
-        return BsonInt32(integer_result)
-    return BsonInt64(integer_result)
-
-
 def _wrap_from_templates(result: object, *templates: object) -> object:
     preserve_wrappers = False
     has_decimal = False
     has_double = False
     has_int64 = False
     for template in templates:
-        if isinstance(template, BsonDecimal128):
+        if _PublicInt64 is not None and isinstance(template, _PublicInt64):
+            preserve_wrappers = True
+            has_int64 = True
+        elif isinstance(template, BsonDecimal128):
             preserve_wrappers = True
             has_decimal = True
         elif isinstance(template, BsonDouble):
@@ -458,13 +453,17 @@ def _wrap_from_templates(result: object, *templates: object) -> object:
             has_int64 = True
         elif isinstance(template, BsonInt32):
             preserve_wrappers = True
-    if not preserve_wrappers:
-        return result
+        elif isinstance(template, (Decimal128, decimal.Decimal)):
+            has_decimal = True
+        elif isinstance(template, float):
+            has_double = True
     unwrapped = unwrap_bson_numeric(result)
     if has_decimal:
         return BsonDecimal128(_normalize_decimal128(_numeric_to_decimal(unwrapped)))
     if has_double:
-        return BsonDouble(float(unwrapped))
+        return BsonDouble(float(unwrapped)) if preserve_wrappers else float(unwrapped)
+    if not preserve_wrappers:
+        return result
     if isinstance(unwrapped, decimal.Decimal):
         integer_result = int(unwrapped)
         if unwrapped != decimal.Decimal(integer_result):

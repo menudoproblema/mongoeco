@@ -1503,8 +1503,9 @@ class AsyncDatabaseCommandService:
             operation = command.operation
             if operation is not None and hasattr(operation, "with_overrides"):
                 operation = operation.with_overrides(
-                    let=execution_context.with_bindings(
-                        getattr(operation, "let", None) or {}
+                    let=execution_context.with_command_let(
+                        getattr(operation, "let", None),
+                        dialect=self._admin._mongodb_dialect,
                     )
                 )
                 return replace(command, operation=operation)
@@ -1516,7 +1517,11 @@ class AsyncDatabaseCommandService:
                 command,
                 options=replace(
                     command.options,
-                    let=execution_context.with_bindings(command.options.let or {}),
+                    let=execution_context.with_command_let(
+                        command.options.let,
+                        dialect=self._admin._mongodb_dialect,
+                        write=True,
+                    ),
                 ),
             )
         return command

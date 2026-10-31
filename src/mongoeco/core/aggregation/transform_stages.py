@@ -135,10 +135,8 @@ def _apply_add_fields(
             for path, expression in spec.items()
         }
         for path in spec:
-            if evaluated[path] is _REMOVE:
-                delete_document_value(enriched, path)
-                continue
             if evaluated[path] is _MISSING:
+                delete_document_value(enriched, path)
                 continue
             set_document_value(
                 enriched,
@@ -213,10 +211,8 @@ def _apply_project(
             value = _evaluate_expression_with_missing(
                 document, expression, variables, dialect=dialect
             )
-            if value is _REMOVE:
-                delete_document_value(projected, path)
-                continue
             if value is _MISSING:
+                delete_document_value(projected, path)
                 continue
             set_document_value(projected, path, deepcopy(value))
         result.append(projected)
@@ -247,4 +243,4 @@ def _apply_replace_root(
     return result
 
 
-from mongoeco.core.aggregation.runtime import _MISSING, _REMOVE  # noqa: E402
+from mongoeco.core.aggregation.runtime import _MISSING  # noqa: E402

@@ -11,7 +11,6 @@ from bson.json_util import loads
 
 from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.compat import MONGODB_DIALECT_90
-from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.aggregation.grouping_stages import _apply_group, _IncrementalGroup
 from mongoeco.core.aggregation.preparation import prepare_pipeline
 from mongoeco.engines.memory import MemoryEngine
@@ -127,7 +126,7 @@ def test_invalid_pipeline_is_rejected_before_cursor_creation(
 
 def test_group_validation_is_shared_with_direct_compiled_and_runtime_paths():
     for action in (
-        lambda: CompiledGroup(GROUP["$group"], dialect=DIALECT9),
+        lambda: _IncrementalGroup(GROUP["$group"], dialect=DIALECT9),
         lambda: _apply_group([], GROUP["$group"], dialect=DIALECT9),
         lambda: _IncrementalGroup(GROUP["$group"], dialect=DIALECT9),
         lambda: prepare_pipeline([GROUP], dialect=DIALECT9),

@@ -274,8 +274,12 @@ class NowExecutionContextIntegrationTests(unittest.IsolatedAsyncioTestCase):
             await collection.insert_one({'_id': 'a'})
             with self.assertRaisesRegex(TypeError, 'let must be a dict'):
                 await collection.find({}, let=[]).to_list()
-            with self.assertRaisesRegex(OperationFailure, r'\$lookup let variable names'):
+            with self.assertRaisesRegex(
+                OperationFailure,
+                "Invalid 'let' parameter :: caused by :: 'Invalid' starts",
+            ) as caught:
                 await collection.find({}, let={'Invalid': 1}).to_list()
+            self.assertEqual(caught.exception.code, 9)
 
     async def test_modify_selection_paths_preserve_user_let_and_now(self):
         for engine_name in ENGINE_FACTORIES:

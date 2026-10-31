@@ -100,9 +100,73 @@ def retain_diagnostic(source, target):
     return target
 
 
-def operation_error(error, operation, dialect):
+def _expression_operation_error(diagnostic, operation, dialect, namespace):
+    if (
+        diagnostic.reason == "expression_optimization"
+        and operation == "aggregate_match"
+    ):
+        return server_error(
+            "Failed to optimize pipeline :: caused by :: " + diagnostic.message,
+            code=diagnostic.code,
+            reason="expression_optimized_pipeline",
+        )
+    if diagnostic.reason != "expression_type":
+        return None
+    if operation in {"aggregate_runtime", "count_documents"}:
+        prefix = (
+            f"Executor error during aggregate command on namespace: {namespace} "
+            ":: caused by :: "
+            if dialect == "9.0"
+            else "PlanExecutor error during aggregation :: caused by :: "
+        )
+    elif operation in {"find_runtime", "find_one"}:
+        prefix = (
+            "Executor error during find command :: caused by :: "
+            if dialect == "7.0"
+            else f"Executor error during find command: {namespace} :: caused by :: "
+        )
+    elif operation == "distinct":
+        prefix = (
+            "Executor error during distinct command on namespace: "
+            f"{namespace} :: caused by :: "
+            if dialect == "9.0"
+            else "Executor error during distinct command :: caused by :: "
+        )
+    elif dialect == "9.0" and operation in {"update_one", "update_many"}:
+        prefix = "Plan executor error during update :: caused by :: "
+    else:
+        return None
+    return server_error(
+        prefix + diagnostic.message, code=diagnostic.code, reason="expression_execution"
+    )
+
+
+def operation_error(error, operation, dialect, *, namespace=None):
     """Resolve a semantic diagnostic using the operation's explicit server context."""
     diagnostic = getattr(error, "_server_diagnostic", None)
+    if diagnostic is not None and diagnostic.reason in {
+        "expression_type",
+        "expression_optimization",
+    }:
+        resolved = _expression_operation_error(
+            diagnostic, operation, dialect, namespace
+        )
+        if resolved is not None:
+            error = resolved
+    if diagnostic is not None and diagnostic.reason == "arithmetic_overflow":
+        if operation.startswith("find_one_and_"):
+            prefix = "Plan executor error during findAndModify :: caused by :: "
+        elif dialect == "9.0" and operation in {"update_one", "update_many"}:
+            prefix = "Plan executor error during update :: caused by :: "
+        else:
+            return error
+        if diagnostic.message.startswith(prefix):
+            return error
+        return server_error(
+            prefix + diagnostic.message,
+            code=diagnostic.code, scope=diagnostic.scope,
+            context=diagnostic.context, reason=diagnostic.reason,
+        )
     if diagnostic is None or diagnostic.reason != "cluster_time_unavailable":
         return error
     code = diagnostic.code

@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import math
+import re
+import uuid
+
+from datetime import UTC, datetime
 from functools import wraps
 
 from mongoeco.core.server_errors import operation_error, retain_diagnostic
@@ -77,7 +83,12 @@ def command_errors(method):
                 if args
                 else None
             )
-            resolved = operation_error(error, method.__name__, dialect)
+            resolved = operation_error(
+                error,
+                method.__name__,
+                dialect,
+                namespace=getattr(args[0], "full_name", None) if args else None,
+            )
             raise _complete_command_error(resolved) from error
 
     return invoke
@@ -96,7 +107,103 @@ def sync_command_errors(method):
                 if args
                 else None
             )
-            resolved = operation_error(error, method.__name__, dialect)
+            resolved = operation_error(
+                error,
+                method.__name__,
+                dialect,
+                namespace=getattr(args[0], "full_name", None) if args else None,
+            )
             raise _complete_command_error(resolved) from error
 
     return invoke
+
+
+_UUID_SUBTYPE = 4
+_UUID_BYTES = 16
+_BINARY_DISPLAY_LIMIT = 80
+
+
+def render_bson_diagnostic(value):  # noqa: PLR0911, PLR0912 - explicit BSON display dispatch
+    kind = type(value).__name__
+    if kind == "Code":
+        code = str(value)
+        if value.scope is not None:
+            return f"CodeWScope( {code}, {render_bson_diagnostic(value.scope)})"
+        return _truncate_text(code, 79, 70)
+    if kind in {"MinKey", "MaxKey"}:
+        return kind
+    if isinstance(value, uuid.UUID):
+        return f'UUID("{value}")'
+    if isinstance(value, str):
+        return f'"{_truncate_text(value, 159, 150)}"'
+    if isinstance(value, bytes):
+        subtype = getattr(value, "subtype", 0)
+        if subtype == _UUID_SUBTYPE and len(value) == _UUID_BYTES:
+            return f'UUID("{uuid.UUID(bytes=bytes(value))}")'
+        binary = (
+            value[:70].hex().upper() + "..."
+            if len(value) > _BINARY_DISPLAY_LIMIT
+            else value.hex().upper()
+        )
+        return f"BinData({subtype}, {binary})"
+    if isinstance(value, float) and not math.isfinite(value):
+        return "nan.0" if math.isnan(value) else "-inf.0" if value < 0 else "inf.0"
+    if isinstance(value, datetime):
+        normalized = value.replace(tzinfo=UTC) if value.tzinfo is None else value
+        delta = normalized - datetime(1970, 1, 1, tzinfo=UTC)
+        milliseconds = (
+            delta.days * 86400000 + delta.seconds * 1000 + delta.microseconds // 1000
+        )
+        return f"new Date({milliseconds})"
+    kind = type(value).__name__
+    renderers = {
+        "ObjectId": lambda: f"ObjectId('{value}')",
+        "Binary": lambda: f"BinData({value.subtype}, {bytes(value).hex().upper()})",
+        "Timestamp": lambda: f"Timestamp({value.time}, {value.inc})",
+        "Decimal128": lambda: str(value),
+        "Regex": lambda: _regex_diagnostic(value),
+    }
+    if kind in renderers:
+        return renderers[kind]()
+    if isinstance(value, dict):
+        if not value:
+            return "{}"
+        return (
+            "{ "
+            + ", ".join(
+                f"{key}: {render_bson_diagnostic(item)}" for key, item in value.items()
+            )
+            + " }"
+        )
+    if isinstance(value, list):
+        if not value:
+            return "[]"
+        return "[ " + ", ".join(render_bson_diagnostic(item) for item in value) + " ]"
+    try:
+        rendered = json.dumps(value, ensure_ascii=False)
+    except TypeError:
+        rendered = str(value)
+    return rendered
+
+
+def _regex_diagnostic(value):
+    flags = "".join(
+        letter
+        for flag, letter in (
+            (re.IGNORECASE, "i"),
+            (re.LOCALE, "l"),
+            (re.MULTILINE, "m"),
+            (re.DOTALL, "s"),
+            (re.UNICODE, "u"),
+            (re.VERBOSE, "x"),
+        )
+        if value.flags & flag
+    )
+    return f"/{value.pattern}/{flags}"
+
+
+def _truncate_text(value, threshold, length):
+    encoded = value.encode("utf-8")
+    if len(encoded) <= threshold:
+        return value
+    return encoded[:length].decode("utf-8", errors="replace") + "..."

@@ -82,6 +82,7 @@ from mongoeco.core.search_planning import (
     search_prefix_output_limit,
     search_result_limit_hint,
 )
+from mongoeco.core.server_errors import operation_error
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import OperationFailure
@@ -125,6 +126,7 @@ class _IncrementalGroupPlan:
     prefix_limit: int | None
     group_spec: object
     suffix: Pipeline
+    group_average_uses_sum: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -360,7 +362,12 @@ class AsyncAggregationCursor:
                     collation=self._collation,
                     expressions=ExpressionExecutionContext(
                         now=utc_bson_now(),
-                    ).with_bindings(self._let),
+                    ).with_command_let(
+                        self._let,
+                        dialect=getattr(
+                            collection, "mongodb_dialect", MONGODB_DIALECT_70
+                        ),
+                    ),
                 )
             self._operation_context = context
             self._execution_context = context.expressions
@@ -835,6 +842,9 @@ class AsyncAggregationCursor:
                     prefix_limit=prefix_limit,
                     group_spec=spec,
                     suffix=pipeline[index + 1 :],
+                    group_average_uses_sum=getattr(
+                        stage, "group_average_uses_sum", False
+                    ),
                 )
             if operator not in _LOCAL_STREAM_PREFIX_OPERATORS:
                 return None
@@ -1542,6 +1552,7 @@ class AsyncAggregationCursor:
             dialect=dialect,
             collation=self._collation,
             deadline=deadline,
+            group_average_uses_sum=plan.group_average_uses_sum,
         )
         group_spool = None
         try:
@@ -1731,6 +1742,7 @@ class AsyncAggregationCursor:
                     dialect=dialect,
                     collation=self._collation,
                     deadline=deadline,
+                    group_average_uses_sum=plan.group_average_uses_sum,
                 )
                 for record in partition:
                     if record[0] == "state":
@@ -2488,6 +2500,17 @@ class AsyncAggregationCursor:
         except StopAsyncIteration:
             await self.close()
             raise
+
+        except OperationFailure as error:
+            diagnostic = getattr(error, "_server_diagnostic", None)
+            if diagnostic is None or diagnostic.reason != "expression_type":
+                raise
+            raise operation_error(
+                error,
+                "aggregate_runtime",
+                self._collection.mongodb_dialect.key,
+                namespace=self._collection.full_name,
+            ) from error
 
     def _spill_policy(self) -> AggregationSpillPolicy | None:
         if self._allow_disk_use is False:

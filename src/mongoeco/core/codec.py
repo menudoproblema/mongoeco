@@ -784,6 +784,9 @@ class DocumentCodec:
 
     @staticmethod
     def _to_public_numeric(data: Any) -> Any:
+        if isinstance(data, BsonDecimal128):
+            constructor = BsonDecimal128Public or Decimal128
+            return constructor(data.value)
         materialized = _materialize_public_int64(data)
         if materialized is not data:
             return materialized

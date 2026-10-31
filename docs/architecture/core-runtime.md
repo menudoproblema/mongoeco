@@ -250,6 +250,11 @@ su frontera de callbacks. El descubrimiento estructural de dependencias tambien
 reconoce las formas builtin cuando una extension delega en ellas; no ejecuta el
 handler ni impone su parser. Los stages informativos comparten un parser puro
 entre preparacion y ejecucion, sin callbacks ficticios durante la validacion.
+El registro de extensiones conserva una generacion comun para stages y
+expresiones, protegida por el mismo lock. Una mutacion invalida la preparacion
+y la estrategia numerica derivada; no conserva una decision de promedio tomada
+con un handler ya retirado. Un override de expresion tambien conserva su parser
+opaco frente a las comprobaciones de la familia builtin correspondiente.
 La extension local de `$unionWith` sin `coll` ni
 `$documents` conserva compatibilidad y utiliza la coleccion del ambito actual.
 

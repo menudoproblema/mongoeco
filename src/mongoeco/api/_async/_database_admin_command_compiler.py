@@ -26,7 +26,7 @@ from mongoeco.api.operations import (
     compile_find_selection_from_update_operation,
     compile_update_operation,
 )
-from mongoeco.core.server_errors import operation_error
+from mongoeco.core.server_errors import ErrorScope, operation_error, server_error
 from mongoeco.errors import OperationFailure
 
 
@@ -225,6 +225,9 @@ class DatabaseAdminCommandCompiler:
     def compile_count_operation(
         self, spec: dict[str, object]
     ) -> tuple[str, FindOperation]:
+        if "let" in spec:
+            message = "BSON field 'count.let' is an unknown field."
+            raise server_error(message, code=40415, scope=ErrorScope.COMMAND)
         return self.compile_find_operation(
             spec,
             collection_field="count",
@@ -236,6 +239,16 @@ class DatabaseAdminCommandCompiler:
     def compile_distinct_operation(
         self, spec: dict[str, object]
     ) -> tuple[str, str, FindOperation]:
+        if "let" in spec:
+            field = (
+                "distinctCommandRequest"
+                if self._admin._mongodb_dialect.behavior_flag(
+                    "uses_distinct_command_request_field_name", default=False
+                )
+                else "distinct"
+            )
+            message = f"BSON field '{field}.let' is an unknown field."
+            raise server_error(message, code=40415, scope=ErrorScope.COMMAND)
         collection_name = self.require_collection_name(
             spec.get("distinct"),
             "distinct",

@@ -1,0 +1,3739 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_document_compare_collation": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "10"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "11"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "12"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "13"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "14"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "15"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "16"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "17"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ]
+      }
+    ],
+    "semantic_document_compare_simple": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "10"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "11"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "12"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "13"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "14"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "15"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "16"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "17"
+        },
+        "comparisons": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "-1"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ]
+      }
+    ],
+    "semantic_document_partial_index": [
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        }
+      ],
+      [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        }
+      ],
+      [
+        {
+          "$numberInt": "4"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "16"
+        }
+      ],
+      [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        }
+      ],
+      [
+        {
+          "$numberInt": "4"
+        }
+      ]
+    ],
+    "semantic_document_sort_collation": {
+      "find": [
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ],
+      "aggregate": [
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ],
+      "filter": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ]
+    },
+    "semantic_document_sort_simple": {
+      "find": [
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ],
+      "aggregate": [
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "17"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ],
+      "filter": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "13"
+        },
+        {
+          "$numberInt": "16"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "14"
+        },
+        {
+          "$numberInt": "15"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_document_order_cases.py",
+    "sha256": "b0eb4f795cf3d8cee962ab59696693721dc2e9171e8df06d0f231bfed66831b5"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_document_compare_simple",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "z": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "2"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "a": {
+              "a": {
+                "$numberInt": "1"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "A": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            },
+            "b": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "v": {
+            "b": {
+              "$numberInt": "0"
+            },
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "v": {
+            "a": [
+              {
+                "a": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "v": {
+            "z": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "v": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_document_compare_simple"
+    },
+    {
+      "name": "semantic_document_compare_collation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "z": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "2"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "a": {
+              "a": {
+                "$numberInt": "1"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "A": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            },
+            "b": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "v": {
+            "b": {
+              "$numberInt": "0"
+            },
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "v": {
+            "a": [
+              {
+                "a": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "v": {
+            "z": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "v": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_document_compare_collation"
+    },
+    {
+      "name": "semantic_document_sort_simple",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "z": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "2"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "a": {
+              "a": {
+                "$numberInt": "1"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "A": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            },
+            "b": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "v": {
+            "b": {
+              "$numberInt": "0"
+            },
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "v": {
+            "a": [
+              {
+                "a": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "v": {
+            "z": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "v": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_document_sort_simple"
+    },
+    {
+      "name": "semantic_document_sort_collation",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "z": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "2"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "a": {
+              "a": {
+                "$numberInt": "1"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "A": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            },
+            "b": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "v": {
+            "b": {
+              "$numberInt": "0"
+            },
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "v": {
+            "a": [
+              {
+                "a": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "v": {
+            "z": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "v": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_document_sort_collation"
+    },
+    {
+      "name": "semantic_document_partial_index",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "z": null
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "z": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "2"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "a": true
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "a": {
+              "z": null
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "a": {
+              "a": {
+                "$numberInt": "1"
+              }
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "a": "A"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": {
+            "a": "a"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "A": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "a": {
+              "$numberInt": "1"
+            },
+            "b": {
+              "$numberInt": "0"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "v": {
+            "b": {
+              "$numberInt": "0"
+            },
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "v": {
+            "a": [
+              {
+                "z": null
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "v": {
+            "a": [
+              {
+                "a": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "v": {
+            "z": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "v": {
+            "a": {
+              "$numberDouble": "0.1"
+            }
+          }
+        }
+      ],
+      "selector": "semantic_document_partial_index"
+    }
+  ]
+}

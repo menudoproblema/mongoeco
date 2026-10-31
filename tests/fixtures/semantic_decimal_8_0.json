@@ -1,0 +1,586 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "8.0",
+  "cases": {
+    "semantic_decimal_arithmetic": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "add": {
+          "$numberDecimal": "4.234567890123456789012345678901234"
+        },
+        "subtract": {
+          "$numberDecimal": "-1.765432109876543210987654321098766"
+        },
+        "multiply": {
+          "$numberDecimal": "3.703703670370370367037037036703702"
+        },
+        "divide": {
+          "$numberDecimal": "0.4115226300411522630041152263004113"
+        },
+        "mod": {
+          "$numberDecimal": "1.234567890123456789012345678901234"
+        },
+        "sum": {
+          "$numberDecimal": "4.234567890123456789012345678901234"
+        },
+        "avg": {
+          "$numberDecimal": "2.117283945061728394506172839450617"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "add": {
+          "$numberDecimal": "9"
+        },
+        "subtract": {
+          "$numberDecimal": "-5"
+        },
+        "multiply": {
+          "$numberDecimal": "14"
+        },
+        "divide": {
+          "$numberDecimal": "0.2857142857142857142857142857142857"
+        },
+        "mod": {
+          "$numberDecimal": "2"
+        },
+        "sum": {
+          "$numberDecimal": "9"
+        },
+        "avg": {
+          "$numberDecimal": "4.5"
+        },
+        "doublePromotion": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleMultiply": {
+          "$numberDecimal": "1.23456789012346"
+        },
+        "doubleDivide": {
+          "$numberDecimal": "0.8100000072899979596099626824949692"
+        },
+        "doubleSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "doubleAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        }
+      }
+    ],
+    "semantic_decimal_bool_conversion": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "cast": [
+          false,
+          false,
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "cast": [
+          false,
+          false,
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "semantic_decimal_group": [
+      {
+        "_id": null,
+        "sum": {
+          "$numberDecimal": "3.234567890123456789012345678901234"
+        },
+        "avg": {
+          "$numberDecimal": "1.617283945061728394506172839450617"
+        },
+        "mixedAvg": {
+          "$numberDecimal": "0.6172839450617283452160677370557095"
+        },
+        "mixedSum": {
+          "$numberDecimal": "1.234567890123456690432135474111419"
+        },
+        "avgType": "decimal",
+        "sumType": "decimal"
+      }
+    ],
+    "semantic_decimal_pipeline_write": {
+      "matched": {
+        "$numberInt": "2"
+      },
+      "modified": {
+        "$numberInt": "2"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "y": {
+            "$numberDecimal": "3"
+          },
+          "add": {
+            "$numberDecimal": "4.234567890123456789012345678901234"
+          },
+          "subtract": {
+            "$numberDecimal": "-1.765432109876543210987654321098766"
+          },
+          "multiply": {
+            "$numberDecimal": "3.703703670370370367037037036703702"
+          },
+          "divide": {
+            "$numberDecimal": "0.4115226300411522630041152263004113"
+          },
+          "mod": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "sum": {
+            "$numberDecimal": "4.234567890123456789012345678901234"
+          },
+          "avg": {
+            "$numberDecimal": "2.117283945061728394506172839450617"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "y": {
+            "$numberDecimal": "7"
+          },
+          "add": {
+            "$numberDecimal": "9"
+          },
+          "subtract": {
+            "$numberDecimal": "-5"
+          },
+          "multiply": {
+            "$numberDecimal": "14"
+          },
+          "divide": {
+            "$numberDecimal": "0.2857142857142857142857142857142857"
+          },
+          "mod": {
+            "$numberDecimal": "2"
+          },
+          "sum": {
+            "$numberDecimal": "9"
+          },
+          "avg": {
+            "$numberDecimal": "4.5"
+          },
+          "doublePromotion": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleMultiply": {
+            "$numberDecimal": "1.23456789012346"
+          },
+          "doubleDivide": {
+            "$numberDecimal": "0.8100000072899979596099626824949692"
+          },
+          "doubleSum": {
+            "$numberDecimal": "1.234567890123456690432135474111419"
+          },
+          "doubleAvg": {
+            "$numberDecimal": "0.6172839450617283452160677370557095"
+          }
+        }
+      ]
+    },
+    "semantic_decimal_truth": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "truth": [
+          false,
+          false,
+          true,
+          true,
+          true
+        ],
+        "and": [
+          false,
+          false,
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "truth": [
+          false,
+          false,
+          true,
+          true,
+          true
+        ],
+        "and": [
+          false,
+          false,
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "semantic_decimal_window": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "avg": {
+          "$numberDecimal": "1.234567890123456789012345678901234"
+        },
+        "sum": {
+          "$numberDecimal": "1.234567890123456789012345678901234"
+        },
+        "avgType": "decimal"
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "avg": {
+          "$numberDecimal": "1.617283945061728394506172839450617"
+        },
+        "sum": {
+          "$numberDecimal": "3.234567890123456789012345678901234"
+        },
+        "avgType": "decimal"
+      }
+    ]
+  },
+  "runtime": {
+    "build_info": {
+      "version": "8.0.32",
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "modules": [],
+      "allocator": "tcmalloc-google",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "32"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.13 30 Jan 2024",
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2404",
+        "distarch": "aarch64",
+        "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_decimal_cases.py",
+    "sha256": "35a1560e6b6a565b3d5a84dd495203df9495f24fa22e09f29c096f03c305de87"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_decimal_arithmetic",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "y": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "y": {
+            "$numberDecimal": "7"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_arithmetic"
+    },
+    {
+      "name": "semantic_decimal_group",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "y": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "y": {
+            "$numberDecimal": "7"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_group"
+    },
+    {
+      "name": "semantic_decimal_window",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "y": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "y": {
+            "$numberDecimal": "7"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_window"
+    },
+    {
+      "name": "semantic_decimal_pipeline_write",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "y": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "y": {
+            "$numberDecimal": "7"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_pipeline_write"
+    },
+    {
+      "name": "semantic_decimal_truth",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "y": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "y": {
+            "$numberDecimal": "7"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_truth"
+    },
+    {
+      "name": "semantic_decimal_bool_conversion",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "y": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "y": {
+            "$numberDecimal": "7"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_bool_conversion"
+    }
+  ]
+}

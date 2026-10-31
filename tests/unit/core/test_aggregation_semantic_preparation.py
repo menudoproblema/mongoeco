@@ -8,11 +8,11 @@ from itertools import product
 from unittest.mock import Mock, patch
 
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
-from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.aggregation.extensions import (
     register_aggregation_stage,
     unregister_aggregation_stage,
 )
+from mongoeco.core.aggregation.grouping_stages import _apply_group
 from mongoeco.core.aggregation.preparation import prepare_pipeline
 from mongoeco.core.aggregation.resources import AggregationResources
 from mongoeco.core.aggregation.runtime import (
@@ -431,13 +431,13 @@ class AggregationSemanticPreparationTests(unittest.TestCase):
                     [], spec, AggregationStageContext(stage_index=1)
                 )
 
-    def test_compiled_and_interpreted_group_extrema_use_the_same_collation(self):
+    def test_group_entrypoints_extrema_use_the_same_collation(self):
         spec = {"_id": None, "lo": {"$min": "$x"}, "hi": {"$max": "$x"}}
         collation = CollationSpec(locale="en", strength=2)
         documents = [{"x": "a"}, {"x": "Z"}]
         expected = [{"_id": None, "lo": "a", "hi": "Z"}]
         self.assertEqual(
-            CompiledGroup(spec).apply(documents, collation=collation), expected
+            _apply_group(documents, spec, collation=collation), expected
         )
         self.assertEqual(
             apply_pipeline(documents, [{"$group": spec}], collation=collation), expected

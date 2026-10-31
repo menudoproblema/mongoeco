@@ -5,6 +5,7 @@ import sqlite3
 from typing import TYPE_CHECKING, Any, Protocol
 
 from mongoeco.core.json_compat import json_loads
+from mongoeco.core.bson_scalars import is_bson_numeric
 from mongoeco.core.paths import get_document_value
 from mongoeco.engines._sqlite_fast_paths import (
     select_first_document_for_plan as _sqlite_select_first_document_for_plan,
@@ -63,9 +64,12 @@ def can_use_scalar_range_fast_path(
     field: str,
     value: object,
 ) -> tuple[EngineIndexRecord, int, str] | None:
-    if "." in field:
+    # Persisted numeric entries use rounded decimal text, not exact BSON order.
+    if is_bson_numeric(value):
         return None
-    if engine._field_is_top_level_array_in_collection(db_name, coll_name, field):
+    if "." in field or engine._field_is_top_level_array_in_collection(
+        db_name, coll_name, field
+    ):
         return None
     signature = engine._scalar_range_signature(value)
     if signature is None:
@@ -96,6 +100,8 @@ def build_scalar_indexed_top_level_equals_sql(
     limit: int | None = None,
     null_matches_undefined: bool = False,
 ) -> tuple[str, tuple[object, ...]] | None:
+    if is_bson_numeric(value):
+        return None
     return _sqlite_build_scalar_indexed_top_level_equals_sql(
         db_name=db_name,
         coll_name=coll_name,
@@ -164,6 +170,8 @@ def select_first_document_for_scalar_index(
     value: Any,
     null_matches_undefined: bool = False,
 ) -> tuple[str, Document] | None:
+    if is_bson_numeric(value):
+        return None
     conn = engine._require_connection()
     selected = _sqlite_select_first_document_for_scalar_index(
         db_name=db_name,

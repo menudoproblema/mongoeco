@@ -23,6 +23,7 @@ from mongoeco.core.operation_context import (
     resolve_operation_session,
 )
 from mongoeco.core.query_plan import QueryNode
+from mongoeco.core.server_errors import operation_error
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.semantic_core import EngineFindSemantics
@@ -159,8 +160,9 @@ class _AsyncCursorIterator:
                 self._cursor._exhausted = True
                 await self.close()
                 raise
-            except BaseException:
+            except BaseException as error:
                 await self._close_after_failure()
+                self._cursor._raise_expression_diagnostic(error)
                 raise
         if not self._buffer:
             if self._cursor._exhausted:
@@ -195,8 +197,9 @@ class _AsyncCursorIterator:
                     if not items:
                         await self.close()
                     break
-                except BaseException:
+                except BaseException as error:
                     await self._close_after_failure()
+                    self._cursor._raise_expression_diagnostic(error)
                     raise
             if not self._buffer:
                 if self._cursor._exhausted:
@@ -218,8 +221,9 @@ class _AsyncCursorIterator:
         )
         try:
             page = await self._cursor._fetch_batch(self._position, target_size)
-        except BaseException:
+        except BaseException as error:
             await self._close_after_failure()
+            self._cursor._raise_expression_diagnostic(error)
             raise
         if not page:
             self._cursor._exhausted = True
@@ -403,6 +407,21 @@ class AsyncCursor:
             operation_context=operation.context,
         )
 
+    _expression_error_operation = "find_runtime"
+
+    def _raise_expression_diagnostic(self, error):
+        """Render expression diagnostics once, preserving unrelated failures."""
+        if not isinstance(error, OperationFailure):
+            return
+        resolved = operation_error(
+            error,
+            self._expression_error_operation,
+            self._current_dialect().key,
+            namespace=getattr(self._collection, "full_name", None),
+        )
+        if resolved is not error:
+            raise resolved from error
+
     def _materialize_document(self, document: Document) -> Document:
         applier = getattr(self._collection, "_apply_codec_options_to_document", None)
         if callable(applier):
@@ -450,9 +469,10 @@ class AsyncCursor:
                 await self._close_batch_source()
                 self._exhausted = True
                 break
-            except BaseException:
+            except BaseException as error:
                 self._exhausted = True
                 await self._close_batch_source()
+                self._raise_expression_diagnostic(error)
                 raise
             page.append(
                 self._materialize_document(document)
@@ -724,23 +744,61 @@ class AsyncCursor:
         self._started = False
         self._exhausted = False
         self._semantics_cache = None
+        if (
+            isinstance(self._let, ExpressionExecutionContext)
+            and self._let.command_let is not None
+        ):
+            expressions = ExpressionExecutionContext(
+                self._let.command_let_base or {}, now=self._let.now
+            ).with_command_let(
+                self._let.command_let,
+                dialect=self._operation_context.dialect,
+            )
+            self._operation_context = replace(
+                self._operation_context, expressions=expressions
+            )
+            self._execution_variables = expressions
+            self._let = expressions
+            self._invalidate_execution_cache()
         return self
 
-    def clone(self) -> "AsyncCursor":
+    def _fresh_operation_context(self):
         create_context = getattr(self._collection, "_new_operation_context", None)
-        operation_context = (
-            create_context(
-                session=self._session,
-                collation=self._collation,
-                bindings=(
-                    self._let.bindings
-                    if isinstance(self._let, ExpressionExecutionContext)
-                    else self._let
-                ),
+        if not callable(create_context):
+            return None
+        if isinstance(self._let, ExpressionExecutionContext):
+            create_expressions = getattr(
+                self._collection, "_new_execution_context", None
             )
-            if callable(create_context)
-            else None
+            if callable(create_expressions):
+                base = (
+                    self._let.command_let_base
+                    if self._let.command_let is not None
+                    else self._let.bindings
+                )
+                expressions = create_expressions().with_bindings(base)
+                if self._let.command_let is not None:
+                    expressions = expressions.with_command_let(
+                        self._let.command_let, dialect=self._operation_context.dialect
+                    )
+                return create_context(
+                    session=self._session,
+                    collation=self._collation,
+                    expressions=expressions,
+                )
+            bindings = (
+                self._let.command_let
+                if self._let.command_let is not None
+                else self._let.bindings
+            )
+        else:
+            bindings = self._let
+        return create_context(
+            session=self._session, collation=self._collation, bindings=bindings
         )
+
+    def clone(self) -> "AsyncCursor":
+        operation_context = self._fresh_operation_context()
         execution_variables = (
             operation_context.expressions if operation_context is not None else None
         )

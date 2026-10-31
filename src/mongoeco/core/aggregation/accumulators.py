@@ -10,15 +10,21 @@ from functools import cmp_to_key, partial
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.expression_values import null_if_missing
+from mongoeco.core.aggregation.numeric_accumulation import NumericSum
 from mongoeco.core.aggregation.numeric_expressions import (
     _compute_percentiles,
     _parse_percentile_spec,
     _require_integral_numeric,
 )
 from mongoeco.core.bson_ordering import Code
-from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
+from mongoeco.core.bson_scalars import (
+    is_bson_numeric,
+    unwrap_bson_numeric,
+)
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.server_errors import server_error
 from mongoeco.error_catalog import EMPTY_GROUP_FIELD_ERROR
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SortSpec, UndefinedType
@@ -58,7 +64,7 @@ def _normalize_remove_value(value: Any) -> Any:
 
 @dataclass(slots=True)
 class _AverageAccumulator:
-    total: object = 0
+    total: NumericSum = field(default_factory=NumericSum)
     count: int = 0
 
 
@@ -98,6 +104,7 @@ class _AccumulatorBucket:
     values: dict[str, Any]
     flags: dict[str, bool] = field(default_factory=dict)
     include_bucket_id: bool = True
+    group_average_uses_sum: bool = False
 
 
 def _accumulator_flags(bucket: dict[object, Any] | _AccumulatorBucket) -> dict[str, bool]:
@@ -111,7 +118,21 @@ def _accumulator_flags(bucket: dict[object, Any] | _AccumulatorBucket) -> dict[s
     return new_flags
 
 
-def _validate_accumulator_expression(operator: str, expression: object) -> None:
+def _validate_unary_accumulator_operand(operator, expression, allow_array_operand):
+    if (
+        not allow_array_operand
+        and isinstance(expression, list)
+        and operator
+        in {"$sum", "$avg", "$first", "$last", "$min", "$max", "$push", "$addToSet"}
+    ):
+        message = f"The {operator} accumulator is a unary operator"
+        raise server_error(message, code=40237)
+
+
+def _validate_accumulator_expression(
+    operator: str, expression: object, *, allow_array_operand: bool = False
+) -> None:
+    _validate_unary_accumulator_operand(operator, expression, allow_array_operand)
     if operator == "$count":
         if not isinstance(expression, dict) or expression:
             raise OperationFailure("$count accumulator requires an empty document")
@@ -134,20 +155,6 @@ def _validate_accumulator_expression(operator: str, expression: object) -> None:
 
 def _is_numeric(value: object) -> bool:
     return is_bson_numeric(value) or (isinstance(value, (int, float, decimal.Decimal)) and not isinstance(value, bool))
-
-
-def _sum_accumulator_operand(value: Any) -> object | None:
-    if _is_numeric(value):
-        return value
-    if isinstance(value, list):
-        numeric_items = [item for item in value if _is_numeric(item)]
-        if not numeric_items:
-            return None
-        total: object = 0
-        for item in numeric_items:
-            total = bson_add(total, item)
-        return total
-    return None
 
 
 def _stddev_accumulator_operand(value: Any) -> float | None:
@@ -329,10 +336,11 @@ def _validate_empty_group_fields(spec: object, *, dialect: MongoDialect) -> None
         raise OperationFailure(message, descriptor=EMPTY_GROUP_FIELD_ERROR)
 
 
-def _prepare_accumulator_specs(
+def _prepare_accumulator_specs(  # noqa: PLR0913 - group/window grammar and runtime context
     accumulator_specs: dict[str, object] | None,
     *,
     default_sum: bool = False,
+    allow_array_operand: bool = False,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     support_checker: Callable[[str], bool] | None = None,
     unsupported_message: str = "Unsupported accumulator",
@@ -347,7 +355,9 @@ def _prepare_accumulator_specs(
         operator, expression = next(iter(accumulator.items()))
         if not support_checker(operator):
             raise OperationFailure(f"{unsupported_message}: {operator}")
-        _validate_accumulator_expression(operator, expression)
+        _validate_accumulator_expression(
+            operator, expression, allow_array_operand=allow_array_operand
+        )
         prepared.append((field, operator, expression))
     return tuple(prepared)
 
@@ -360,7 +370,7 @@ def _create_accumulator_state(
     initialized: dict[str, Any] = {}
     for field, operator, _expression in prepared_specs:
         if operator in {"$sum", "$count"}:
-            initialized[field] = 0
+            initialized[field] = NumericSum() if operator == "$sum" else 0
         elif operator in {"$min", "$max", "$first", "$last"}:
             initialized[field] = None
         elif operator in {"$firstN", "$lastN", "$maxN", "$minN"}:
@@ -507,12 +517,7 @@ def _apply_accumulators(
             if operator == "$count":
                 values[field] += 1
                 continue
-            if value is None:
-                continue
-            numeric_value = _sum_accumulator_operand(value)
-            if numeric_value is None:
-                continue
-            values[field] = bson_add(values[field], numeric_value)
+            values[field].add(value)
         elif operator == "$min":
             if value is None:
                 continue
@@ -526,11 +531,8 @@ def _apply_accumulators(
                 values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$avg":
-            if value is None or isinstance(value, bool) or not isinstance(value, (int, float, decimal.Decimal)):
-                if not is_bson_numeric(value):
-                    continue
-            values[field].total = bson_add(values[field].total, value)
-            values[field].count += 1
+            if values[field].total.add(value):
+                values[field].count += 1
         elif operator in {"$stdDevPop", "$stdDevSamp"}:
             operand = _stddev_accumulator_operand(value)
             if operand is None:
@@ -651,6 +653,7 @@ def _apply_accumulators(
 
 
 def _group_output_id(value, *, dialect):
+    value = null_if_missing(value)
     if dialect.key == "7.0":
         return deepcopy(value)
     # MongoDB 8/9 materializes JavaScript without scope as a string in group IDs,
@@ -686,15 +689,15 @@ def _finalize_accumulators(
             and field == _ACCUMULATOR_FLAGS_KEY
         ):
             continue
-        if isinstance(value, _AverageAccumulator):
-            if value.count == 0:
-                document[field] = None
-            else:
-                total = unwrap_bson_numeric(value.total)
-                if isinstance(total, decimal.Decimal):
-                    document[field] = total / decimal.Decimal(value.count)
-                else:
-                    document[field] = total / value.count
+        if isinstance(value, NumericSum):
+            document[field] = value.sum()
+        elif isinstance(value, _AverageAccumulator):
+            document[field] = value.total.average(
+                value.count, finalize_sum=(
+                    isinstance(bucket, _AccumulatorBucket)
+                    and bucket.group_average_uses_sum
+                ),
+            )
         elif isinstance(value, _StdDevAccumulator):
             if value.invalid or value.count == 0:
                 document[field] = None

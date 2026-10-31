@@ -45,6 +45,14 @@ def _fail_on_check(check_number: int):
 
 
 class AggregationWorkControlTests(TestCase):
+    def setUp(self):
+        super().setUp()
+        # Observe files owned by this test, not concurrent native/replay runs.
+        temporary = self.enterContext(
+            tempfile.TemporaryDirectory(prefix="mongoeco-work-control-")
+        )
+        self.enterContext(patch.object(tempfile, "tempdir", temporary))
+
     def test_incremental_group_rejects_invalid_spec_and_duplicate_seed_state(self):
         with self.assertRaisesRegex(OperationFailure, "requires a document"):
             _IncrementalGroup([])

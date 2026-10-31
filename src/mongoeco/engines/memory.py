@@ -42,13 +42,13 @@ from mongoeco.core.identity import (
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
     assert_valid_upsert_document_id,
-    document_id_bson_type_changed,
     document_matches_root_id_lookup,
     id_contains_numeric_value,
     materialize_merge_insert_document,
     materialize_merge_update_document,
     materialize_replacement_document,
     preserve_and_validate_pipeline_id,
+    replacement_document_changed,
 )
 from mongoeco.core.operation_context import (
     ChangePublicationPolicy,
@@ -4052,11 +4052,8 @@ class MemoryEngine(AsyncStorageEngine):
                         original_document, document, dialect=semantics.dialect
                     )
                 modified = (
-                    ("_id" not in replacement_document and "_id" in original_document)
-                    or document_id_bson_type_changed(original_document, document)
-                    or not semantics.dialect.values_equal(
-                        document,
-                        original_document,
+                    replacement_document_changed(
+                        original_document, document, replacement_document
                     )
                     if replacement_document is not None
                     else semantics.compiled_update_plan.apply(

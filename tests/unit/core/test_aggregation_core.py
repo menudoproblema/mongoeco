@@ -11,7 +11,6 @@ from mongoeco.compat import MongoDialect
 import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
-from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
 from mongoeco.core.aggregation.runtime import (
@@ -198,7 +197,7 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$size": "$tags"}), 3)
         self.assertEqual(evaluate_expression(document, {"$arrayElemAt": ["$tags", 1]}), "b")
         self.assertEqual(evaluate_expression(document, {"$arrayElemAt": ["$tags", -1]}), "c")
-        self.assertIsNone(evaluate_expression(document, {"$arrayElemAt": ["$tags", 20]}))
+        self.assertIs(evaluate_expression(document, {"$arrayElemAt": ["$tags", 20]}), _MISSING)
         self.assertIsNone(evaluate_expression(document, {"$arrayElemAt": ["$missing", 0]}))
         self.assertIsNone(evaluate_expression(document, {"$arrayElemAt": ["$tags", "$missing"]}))
         self.assertEqual(evaluate_expression(document, {"$toString": "$score"}), "10")
@@ -242,8 +241,12 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual(
             grouped,
             [
-                {"_id": "a", "total": BsonInt32(5), "avg": 2.5},
-                {"_id": "b", "total": BsonDecimal128(decimal.Decimal("4.0")), "avg": decimal.Decimal("2.0")},
+                {"_id": "a", "total": 5, "avg": 2.5},
+                {
+                    "_id": "b",
+                    "total": BsonDecimal128(decimal.Decimal("4.0")),
+                    "avg": BsonDecimal128(decimal.Decimal("2.0")),
+                },
             ],
         )
 
@@ -281,7 +284,9 @@ class AggregationCoreTests(unittest.TestCase):
             15,
         )
         self.assertEqual(evaluate_expression(document, {"$first": "$tags"}), "a")
-        self.assertEqual(evaluate_expression(document, {"$first": "$score"}), 10)
+        with self.assertRaises(OperationFailure) as caught:
+            evaluate_expression(document, {"$first": "$score"})
+        self.assertEqual(caught.exception.code, 28689)
         self.assertEqual(evaluate_expression(document, {"$concat": ["$tags.0", "-", "$tags.1"]}), "a-b")
         self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$toLower": "$text"}), "ada lovelace")
         self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$toUpper": "$text"}), "ADA LOVELACE")
@@ -369,7 +374,9 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertTrue(math.isinf(evaluate_expression(document, {"$ceil": [float("-inf")]})))
         self.assertTrue(math.isnan(evaluate_expression(document, {"$floor": [float("nan")]})))
         self.assertTrue(math.isnan(evaluate_expression(document, {"$ceil": [float("nan")]})))
-        self.assertIsNone(evaluate_expression(document, {"$in": ["$bonus", "$missing"]}))
+        with self.assertRaises(OperationFailure) as error:
+            evaluate_expression(document, {"$in": ["$bonus", "$missing"]})
+        self.assertEqual(error.exception.code, 40081)
         with self.assertRaises(OperationFailure) as error:
             evaluate_expression(document, {"$size": "$missing"})
         self.assertEqual(error.exception.code, 17124)
@@ -544,7 +551,9 @@ class AggregationCoreTests(unittest.TestCase):
         finally:
             unregister_aggregation_expression_operator("$echo")
 
-    def test_group_rejects_unsupported_accumulator_for_default_and_custom_dialects(self):
+    def test_group_rejects_unsupported_accumulator_for_default_and_custom_dialects(
+        self,
+    ):
         with self.assertRaises(OperationFailure):
             apply_pipeline(
                 [{"value": 1}],
@@ -553,7 +562,11 @@ class AggregationCoreTests(unittest.TestCase):
 
         class _FutureGroupDialect(MongoDialect):
             def supports_group_accumulator(self, name: str) -> bool:
-                return True if name == "$futureAccumulator" else super().supports_group_accumulator(name)
+                return (
+                    True
+                    if name == "$futureAccumulator"
+                    else super().supports_group_accumulator(name)
+                )
 
         with self.assertRaises(OperationFailure):
             apply_pipeline(
@@ -582,16 +595,8 @@ class AggregationCoreTests(unittest.TestCase):
 
         self.assertEqual(grouped, [{"_id": "a", "__has_total": 1}])
 
-    def test_compiled_group_supports_only_implemented_accumulators(self):
-        self.assertTrue(
-            CompiledGroup.supports(
-                {"_id": "$kind", "total": {"$sum": "$value"}, "first": {"$first": "$value"}}
-            )
-        )
-        self.assertTrue(CompiledGroup.supports({"_id": "$kind", "roles": {"$addToSet": "$role"}}))
-        self.assertFalse(CompiledGroup.supports({"_id": "$kind", "items": {"$push": "$role"}}))
 
-    def test_apply_group_compiles_add_to_set_without_changing_uniqueness_or_order(self):
+    def test_apply_group_add_to_set_without_changing_uniqueness_or_order(self):
         grouped = _apply_group(
             [
                 {"kind": "a", "tag": {"code": 1}},
@@ -625,21 +630,20 @@ class AggregationCoreTests(unittest.TestCase):
 
         self.assertEqual(grouped, [{"_id": "a", "tags": ["Ada", "Grace"]}])
 
-    def test_compiled_group_add_to_set_respects_collation(self):
-        grouped = CompiledGroup(
-            {"_id": "$kind", "tags": {"$addToSet": "$tag"}}
-        ).apply(
+    def test_group_add_to_set_respects_collation(self):
+        grouped = _apply_group(
             [
                 {"kind": "a", "tag": "Ada"},
                 {"kind": "a", "tag": "ada"},
                 {"kind": "a", "tag": "Grace"},
             ],
+            {"_id": "$kind", "tags": {"$addToSet": "$tag"}},
             collation=CollationSpec(locale="en", strength=2),
         )
 
         self.assertEqual(grouped, [{"_id": "a", "tags": ["Ada", "Grace"]}])
 
-    def test_apply_group_falls_back_for_accumulators_not_supported_by_compiler(self):
+    def test_apply_group_supports_mixed_accumulators(self):
         grouped = _apply_group(
             [
                 {"kind": "a", "role": "admin"},
@@ -657,34 +661,22 @@ class AggregationCoreTests(unittest.TestCase):
             [{"_id": "a", "roles": ["admin", "user"], "items": ["admin", "user"]}],
         )
 
-    def test_apply_group_falls_back_when_compiler_raises(self):
-        with patch("mongoeco.core.aggregation.grouping_stages.CompiledGroup") as compiled_group:
-            compiled_group.supports.return_value = True
-            compiled_group.side_effect = OperationFailure("boom")
+    def test_apply_group_consumes_single_pass_source(self):
+        documents = iter([{"kind": "a", "value": 1}, {"kind": "a", "value": 2}])
+        grouped = _apply_group(documents, {"_id": "$kind", "total": {"$sum": "$value"}})
+        self.assertEqual(grouped, [{"_id": "a", "total": 3}])
+        self.assertEqual(list(documents), [])
 
-            grouped = _apply_group(
-                [
-                    {"kind": "a", "value": 1},
-                    {"kind": "a", "value": 2},
-                ],
+    def test_apply_group_does_not_retry_execution_errors(self):
+        with patch(
+            "mongoeco.core.aggregation.grouping_stages._IncrementalGroup.consume",
+            side_effect=RuntimeError("boom"),
+        ) as consume, self.assertRaisesRegex(RuntimeError, "boom"):
+            _apply_group(
+                iter([{"kind": "a", "value": 1}]),
                 {"_id": "$kind", "total": {"$sum": "$value"}},
             )
-
-        self.assertEqual(grouped, [{"_id": "a", "total": 3}])
-
-    def test_apply_group_propagates_unexpected_compiler_errors(self):
-        with patch("mongoeco.core.aggregation.grouping_stages.CompiledGroup") as compiled_group:
-            compiled_group.supports.return_value = True
-            compiled_group.side_effect = RuntimeError("boom")
-
-            with self.assertRaises(RuntimeError):
-                _apply_group(
-                    [
-                        {"kind": "a", "value": 1},
-                        {"kind": "a", "value": 2},
-                    ],
-                    {"_id": "$kind", "total": {"$sum": "$value"}},
-                )
+        consume.assert_called_once()
 
     def test_set_window_fields_does_not_mutate_input_documents(self):
         documents = [{"_id": "1", "partition": "a", "value": 2}, {"_id": "2", "partition": "a", "value": 3}]
@@ -833,7 +825,7 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual([document["runningTotal"] for document in result], [2, 5])
         self.assertEqual(validate_expression.call_count, 1)
 
-    def test_compiled_group_preserves_sum_add_null_semantics(self):
+    def test_group_preserves_sum_add_null_semantics(self):
         spec = {"_id": "$kind", "total": {"$sum": {"$add": ["$left", "$right"]}}}
         documents = [
             {"kind": "a", "left": 2, "right": 3},
@@ -841,18 +833,23 @@ class AggregationCoreTests(unittest.TestCase):
             {"kind": "b", "left": None, "right": 1},
         ]
 
-        self.assertTrue(CompiledGroup.supports(spec))
         self.assertEqual(
-            CompiledGroup(spec).apply(documents),
+            _apply_group(documents, spec),
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
-    def test_compiled_group_compiles_common_arithmetic_expressions(self):
-        created_at = datetime.datetime(2026, 3, 29, 12, 0, 0)
+    def test_group_preserves_common_arithmetic_expressions(self):
+        created_at = datetime.datetime(
+            2026, 3, 29, 12, 0, 0, tzinfo=datetime.UTC
+        ).replace(tzinfo=None)
         spec = {
             "_id": "$kind",
-            "sumValue": {"$sum": {"$multiply": [{"$add": ["$left", "$right"]}, "$factor"]}},
-            "shiftedDate": {"$first": {"$subtract": [{"$add": ["$createdAt", 1000]}, 500]}},
+            "sumValue": {
+                "$sum": {"$multiply": [{"$add": ["$left", "$right"]}, "$factor"]}
+            },
+            "shiftedDate": {
+                "$first": {"$subtract": [{"$add": ["$createdAt", 1000]}, 500]}
+            },
         }
         documents = [
             {"kind": "a", "left": 2, "right": 3, "factor": 2, "createdAt": created_at},
@@ -860,81 +857,68 @@ class AggregationCoreTests(unittest.TestCase):
         ]
 
         self.assertEqual(
-            CompiledGroup(spec).apply(documents),
+            _apply_group(documents, spec),
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
-    def test_compiled_group_ifnull_evaluates_fallback_expression_once(self):
-        spec = {"_id": "$kind", "total": {"$sum": {"$ifNull": [{"$unsupported": "$value"}, 1]}}}
-        documents = [{"kind": "a", "value": 7}]
-        calls: list[object] = []
 
-        def fake_evaluate_expression(document, expression, variables=None, *, dialect):
-            calls.append(expression)
-            if expression == {"$unsupported": "$value"}:
-                return None
-            raise AssertionError(f"unexpected expression: {expression!r}")
-
-        with patch(
-            "mongoeco.core.aggregation.compiled_aggregation.evaluate_expression",
-            side_effect=fake_evaluate_expression,
-        ):
-            self.assertEqual(CompiledGroup(spec).apply(documents), [{"_id": "a", "total": 1}])
-
-        self.assertEqual(calls, [{"$unsupported": "$value"}])
-
-    def test_compiled_group_cond_uses_mongo_truthiness(self):
+    def test_group_cond_uses_mongo_truthiness(self):
         spec = {"_id": "$kind", "total": {"$sum": {"$cond": ["$flag", 1, 0]}}}
         documents = [{"kind": "a", "flag": ""}]
 
         self.assertEqual(
-            CompiledGroup(spec).apply(documents),
+            _apply_group(documents, spec),
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
-    def test_compiled_group_supports_cond_dict_form(self):
-        spec = {"_id": "$kind", "total": {"$sum": {"$cond": {"if": "$flag", "then": "$value", "else": 0}}}}
+    def test_group_supports_cond_dict_form(self):
+        spec = {
+            "_id": "$kind",
+            "total": {"$sum": {"$cond": {"if": "$flag", "then": "$value", "else": 0}}},
+        }
         documents = [
             {"kind": "a", "flag": True, "value": 3},
             {"kind": "a", "flag": False, "value": 5},
         ]
 
         self.assertEqual(
-            CompiledGroup(spec).apply(documents),
+            _apply_group(documents, spec),
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
-    def test_compiled_group_uses_distinct_context_keys_for_variables(self):
-        spec = {"_id": "$kind", "chosen": {"$first": {"$cond": ["$$flag", "$$yes", "$$no"]}}}
+    def test_group_uses_distinct_context_keys_for_variables(self):
+        spec = {
+            "_id": "$kind",
+            "chosen": {"$first": {"$cond": ["$$flag", "$$yes", "$$no"]}},
+        }
         documents = [{"kind": "a"}]
         variables = {"flag": True, "yes": "A", "no": "B"}
 
         self.assertEqual(
-            CompiledGroup(spec).apply(documents, variables),
+            _apply_group(documents, spec, variables=variables),
             apply_pipeline(documents, [{"$group": spec}], variables=variables),
         )
 
-    def test_compiled_group_uses_distinct_context_keys_for_dotted_paths(self):
-        spec = {"_id": "$kind", "chosen": {"$first": {"$cond": ["$left.flag", "$left.value", "$right.value"]}}}
+    def test_group_uses_distinct_context_keys_for_dotted_paths(self):
+        spec = {
+            "_id": "$kind",
+            "chosen": {
+                "$first": {"$cond": ["$left.flag", "$left.value", "$right.value"]}
+            },
+        }
         documents = [
-            {"kind": "a", "left": {"flag": True, "value": "L"}, "right": {"value": "R"}},
+            {
+                "kind": "a",
+                "left": {"flag": True, "value": "L"},
+                "right": {"value": "R"},
+            },
         ]
 
         self.assertEqual(
-            CompiledGroup(spec).apply(documents),
+            _apply_group(documents, spec),
             apply_pipeline(documents, [{"$group": spec}]),
         )
 
-    def test_compiled_group_reuses_cached_compilation_for_same_spec_and_dialect(self):
-        CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
-        spec = {"_id": "$kind", "cache_probe_total": {"$sum": "$value"}}
-
-        with patch.object(CompiledGroup, "_compile", autospec=True, wraps=CompiledGroup._compile) as compile_method:
-            first = CompiledGroup(spec)
-            second = CompiledGroup(spec)
-
-        self.assertEqual(compile_method.call_count, 1)
-        self.assertIs(first._aggregate_func, second._aggregate_func)
 
     def test_finalize_accumulators_preserves_user_fields_with_has_prefix(self):
         bucket = _initialize_accumulators({"__has_total": {"$first": "$value"}})
@@ -944,7 +928,7 @@ class AggregationCoreTests(unittest.TestCase):
 
     def test_apply_accumulators_accepts_prepared_specs(self):
         prepared_specs = accumulators_module._prepare_accumulator_specs({"total": {"$sum": "$value"}})
-        bucket = _AccumulatorBucket(bucket_id=None, values={"total": 0}, include_bucket_id=False)
+        bucket = _AccumulatorBucket(bucket_id=None, values=accumulators_module._create_accumulator_state(prepared_specs), include_bucket_id=False)
 
         _apply_accumulators(bucket, prepared_specs, {"value": 2})
         _apply_accumulators(bucket, prepared_specs, {"value": 3})

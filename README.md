@@ -191,3 +191,6 @@ keeps v2 and shelves v3; no engine migration is planned for the next release.
 ## License
 
 [Apache License 2.0](https://github.com/menudoproblema/mongoeco/blob/main/LICENSE).
+Bundled resources and adapted numerical algorithms retain their
+[ICU notice](src/mongoeco/core/resources/ICU-LICENSE.txt) and
+[Intel BSD notice](src/mongoeco/core/resources/Intel-Decimal-Math-LICENSE.txt).

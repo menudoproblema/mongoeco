@@ -90,6 +90,12 @@ class ExpressionExecutionContext(Mapping[str, Any]):
 
     bindings: Mapping[str, Any] = field(default_factory=dict)
     now: datetime = field(default_factory=utc_bson_now)
+    command_let: Mapping[str, Any] | None = field(
+        default=None, repr=False, compare=False
+    )
+    command_let_base: Mapping[str, Any] | None = field(
+        default=None, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         source = self.bindings
@@ -101,6 +107,14 @@ class ExpressionExecutionContext(Mapping[str, Any]):
         immutable_bindings = MappingProxyType(normalized)
         object.__setattr__(self, "bindings", immutable_bindings)
         object.__setattr__(self, 'now', normalize_utc_bson_datetime(self.now))
+        if self.command_let is not None:
+            object.__setattr__(
+                self, "command_let", _freeze_bson(dict(self.command_let))
+            )
+        if self.command_let_base is not None:
+            object.__setattr__(
+                self, "command_let_base", _freeze_bson(dict(self.command_let_base))
+            )
 
     def __getitem__(self, key: str) -> Any:
         if key == "NOW":
@@ -134,7 +148,19 @@ class ExpressionExecutionContext(Mapping[str, Any]):
         combined_bindings = DocumentCodec.mark_internal(
             {**self.bindings, **normalized_inherited},
         )
-        return ExpressionExecutionContext(combined_bindings, now=self.now)
+        return ExpressionExecutionContext(
+            combined_bindings,
+            now=self.now,
+            command_let=self.command_let,
+            command_let_base=self.command_let_base,
+        )
+
+    def with_command_let(self, bindings, *, dialect, write=False):
+        from mongoeco.core.aggregation import preparation  # noqa: PLC0415
+
+        return preparation.prepare_command_let(
+            bindings, context=self, dialect=dialect, write=write
+        )
 
 
 def ensure_expression_context(

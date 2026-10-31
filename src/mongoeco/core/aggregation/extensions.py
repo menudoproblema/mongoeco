@@ -40,17 +40,18 @@ class AggregationStageExtensionRegistration:
 
 
 @dataclass(slots=True)
-class _AggregationStageRegistry:
-    handlers: dict[str, AggregationStageExtensionRegistration] = field(
+class _AggregationExtensionRegistry:
+    expression_handlers: dict[str, AggregationExpressionExtensionHandler] = field(
+        default_factory=dict
+    )
+    stage_handlers: dict[str, AggregationStageExtensionRegistration] = field(
         default_factory=dict
     )
     version: int = 0
 
 
-_expression_lock = RLock()
-_stage_lock = RLock()
-_expression_handlers: dict[str, AggregationExpressionExtensionHandler] = {}
-_stage_registry = _AggregationStageRegistry()
+_registry_lock = RLock()
+_registry = _AggregationExtensionRegistry()
 
 
 def _require_operator_name(name: str) -> str:
@@ -66,21 +67,23 @@ def register_aggregation_expression_operator(
     operator = _require_operator_name(name)
     if not callable(handler):
         raise TypeError("handler must be callable")
-    with _expression_lock:
-        _expression_handlers[operator] = handler
+    with _registry_lock:
+        _registry.expression_handlers[operator] = handler
+        _registry.version += 1
 
 
 def unregister_aggregation_expression_operator(name: str) -> None:
     operator = _require_operator_name(name)
-    with _expression_lock:
-        _expression_handlers.pop(operator, None)
+    with _registry_lock:
+        _registry.expression_handlers.pop(operator, None)
+        _registry.version += 1
 
 
 def get_registered_aggregation_expression_operator(
     name: str,
 ) -> AggregationExpressionExtensionHandler | None:
-    with _expression_lock:
-        return _expression_handlers.get(name)
+    with _registry_lock:
+        return _registry.expression_handlers.get(name)
 
 
 def registered_aggregation_expression_operator(
@@ -106,25 +109,25 @@ def register_aggregation_stage(
         raise TypeError("handler must be callable")
     if execution_mode not in {"streamable", "materializing"}:
         raise ValueError("execution_mode must be 'streamable' or 'materializing'")
-    with _stage_lock:
-        _stage_registry.handlers[operator] = AggregationStageExtensionRegistration(
+    with _registry_lock:
+        _registry.stage_handlers[operator] = AggregationStageExtensionRegistration(
             handler=handler,
             execution_mode=execution_mode,
         )
-        _stage_registry.version += 1
+        _registry.version += 1
 
 
 def unregister_aggregation_stage(name: str) -> None:
     operator = _require_operator_name(name)
-    with _stage_lock:
-        _stage_registry.handlers.pop(operator, None)
-        _stage_registry.version += 1
+    with _registry_lock:
+        _registry.stage_handlers.pop(operator, None)
+        _registry.version += 1
 
 
-def _aggregation_stage_registry_version() -> int:
-    """Invalidate prepared semantics when extension registrations change."""
-    with _stage_lock:
-        return _stage_registry.version
+def _aggregation_registry_version() -> int:
+    """Invalidate prepared syntax and numeric strategy after any extension change."""
+    with _registry_lock:
+        return _registry.version
 
 
 def get_registered_aggregation_stage(
@@ -139,8 +142,8 @@ def get_registered_aggregation_stage(
 def get_registered_aggregation_stage_registration(
     name: str,
 ) -> AggregationStageExtensionRegistration | None:
-    with _stage_lock:
-        return _stage_registry.handlers.get(name)
+    with _registry_lock:
+        return _registry.stage_handlers.get(name)
 
 
 def registered_aggregation_stage(

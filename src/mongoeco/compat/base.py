@@ -29,6 +29,7 @@ from mongoeco.compat.catalog import (
     SUPPORTED_WINDOW_ACCUMULATORS,
     MongoBehaviorPolicySpec,
 )
+from mongoeco.core.bson_ordering import bson_type_rank, compare_bson_documents
 from mongoeco.core.bson_scalars import (
     compare_bson_numeric,
     unwrap_bson_numeric,
@@ -36,10 +37,8 @@ from mongoeco.core.bson_scalars import (
 )
 from mongoeco.types import (
     Binary,
-    ObjectId,
     Timestamp,
     UndefinedType,
-    is_object_id_like,
     normalize_object_id,
 )
 
@@ -82,8 +81,9 @@ def _expression_truthy_default(value: object) -> bool:
         return False
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return value != 0
+    numeric = wrap_bson_numeric(value)
+    if numeric is not None:
+        return numeric.value != 0
     return True
 
 
@@ -137,6 +137,8 @@ def _compare_values_default(
     left: Any,
     right: Any,
     bson_type_order: MappingProxyType,
+    *,
+    compare_nested: Callable[[Any, Any], int] | None = None,
 ) -> int:
     wrapped_left = wrap_bson_numeric(left)
     wrapped_right = wrap_bson_numeric(right)
@@ -146,44 +148,36 @@ def _compare_values_default(
     comparable_left = unwrap_bson_numeric(left)
     comparable_right = unwrap_bson_numeric(right)
 
-    type_left = _bson_type_rank(left, comparable_left, bson_type_order)
-    type_right = _bson_type_rank(right, comparable_right, bson_type_order)
+    type_left = bson_type_rank(left, bson_type_order)
+    type_right = bson_type_rank(right, bson_type_order)
     if type_left != type_right:
         return -1 if type_left < type_right else 1
 
     normalized_left = normalize_object_id(comparable_left)
     normalized_right = normalize_object_id(comparable_right)
 
+    if compare_nested is None:
+        def compare_nested(left, right):
+            return _compare_values_default(left, right, bson_type_order)
+
     code_comparison = _compare_code_values(
         normalized_left,
         normalized_right,
-        lambda left, right: _compare_values_default(left, right, bson_type_order),
+        compare_nested,
     )
     if code_comparison is not None:
         return code_comparison
 
     if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
-        left_items = list(normalized_left.items())
-        right_items = list(normalized_right.items())
-        for (left_key, left_value), (right_key, right_value) in zip(
-            left_items, right_items
-        ):
-            if left_key != right_key:
-                return -1 if left_key < right_key else 1
-            value_comparison = _compare_values_default(
-                left_value, right_value, bson_type_order
-            )
-            if value_comparison != 0:
-                return value_comparison
-        if len(left_items) == len(right_items):
-            return 0
-        return -1 if len(left_items) < len(right_items) else 1
+        return compare_bson_documents(
+            normalized_left, normalized_right,
+            type_order=bson_type_order,
+            compare_values=compare_nested,
+        )
 
     if isinstance(normalized_left, list) and isinstance(normalized_right, list):
         for left_value, right_value in zip(normalized_left, normalized_right):
-            comparison = _compare_values_default(
-                left_value, right_value, bson_type_order
-            )
+            comparison = compare_nested(left_value, right_value)
             if comparison != 0:
                 return comparison
         if len(normalized_left) == len(normalized_right):
@@ -232,16 +226,6 @@ def _compare_values_default(
         if left_repr == right_repr:
             return 0
         return -1 if left_repr < right_repr else 1
-
-
-def _bson_type_rank(
-    original_value: Any,
-    comparable_value: Any,
-    bson_type_order: MappingProxyType,
-) -> int:
-    if is_object_id_like(original_value) or is_object_id_like(comparable_value):
-        return bson_type_order.get(ObjectId, 100)
-    return bson_type_order.get(type(original_value), bson_type_order.get(type(comparable_value), 100))
 
 
 def _values_equal_default(
@@ -485,73 +469,9 @@ class MongoDialect:
             raise ValueError(
                 f"unsupported comparison strategy: {self.policy_spec.comparison_mode}"
             )
-        wrapped_left = wrap_bson_numeric(left)
-        wrapped_right = wrap_bson_numeric(right)
-        if wrapped_left is not None and wrapped_right is not None:
-            return compare_bson_numeric(wrapped_left, wrapped_right)
-
-        normalized_left = normalize_object_id(unwrap_bson_numeric(left))
-        normalized_right = normalize_object_id(unwrap_bson_numeric(right))
-
-        type_left = self.bson_type_order.get(type(normalized_left), 100)
-        type_right = self.bson_type_order.get(type(normalized_right), 100)
-        if type_left != type_right:
-            return -1 if type_left < type_right else 1
-
-        code_comparison = _compare_code_values(
-            normalized_left, normalized_right, self.compare_values
+        return _compare_values_default(
+            left, right, self.bson_type_order, compare_nested=self.compare_values
         )
-        if code_comparison is not None:
-            return code_comparison
-
-        if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
-            left_items = list(normalized_left.items())
-            right_items = list(normalized_right.items())
-            for (left_key, left_value), (right_key, right_value) in zip(
-                left_items, right_items
-            ):
-                if left_key != right_key:
-                    return -1 if left_key < right_key else 1
-                value_comparison = self.compare_values(left_value, right_value)
-                if value_comparison != 0:
-                    return value_comparison
-            if len(left_items) == len(right_items):
-                return 0
-            return -1 if len(left_items) < len(right_items) else 1
-
-        if isinstance(normalized_left, list) and isinstance(normalized_right, list):
-            for left_value, right_value in zip(normalized_left, normalized_right):
-                comparison = self.compare_values(left_value, right_value)
-                if comparison != 0:
-                    return comparison
-            if len(normalized_left) == len(normalized_right):
-                return 0
-            return -1 if len(normalized_left) < len(normalized_right) else 1
-
-        if isinstance(normalized_left, float) and math.isnan(normalized_left):
-            return (
-                0
-                if isinstance(normalized_right, float) and math.isnan(normalized_right)
-                else -1
-            )
-        if isinstance(normalized_right, float) and math.isnan(normalized_right):
-            return 1
-
-        if normalized_left == normalized_right:
-            return 0
-
-        try:
-            if normalized_left < normalized_right:
-                return -1
-            if normalized_left > normalized_right:
-                return 1
-            return 0
-        except TypeError:
-            left_repr = str(normalized_left)
-            right_repr = str(normalized_right)
-            if left_repr == right_repr:
-                return 0
-            return -1 if left_repr < right_repr else 1
 
     def behavior_flags(self) -> MappingProxyType:
         """Expone metadata declarativa derivada del catálogo del dialecto."""

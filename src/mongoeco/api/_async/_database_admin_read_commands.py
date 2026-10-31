@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import socket
 import time
+
 from hashlib import md5
 from typing import TYPE_CHECKING
 
@@ -24,9 +25,10 @@ from mongoeco.types import (
     ListDatabasesCommandResult,
 )
 
+
 if TYPE_CHECKING:
-    from mongoeco.api.operations import AggregateOperation, FindOperation
     from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+    from mongoeco.api.operations import AggregateOperation, FindOperation
     from mongoeco.session import ClientSession
 
 
@@ -114,7 +116,9 @@ class DatabaseAdminReadCommandService:
         collection_name, operation = self._admin._command_compiler.compile_count_operation(spec)
         if execution_context is not None:
             operation = operation.with_overrides(
-                let=execution_context.with_bindings(operation.let)
+                let=execution_context.with_command_let(
+                    operation.let, dialect=self._admin._mongodb_dialect
+                )
             )
         return await self.execute_count_command(
             collection_name,
@@ -132,7 +136,9 @@ class DatabaseAdminReadCommandService:
         collection_name, key, operation = self._admin._command_compiler.compile_distinct_operation(spec)
         if execution_context is not None:
             operation = operation.with_overrides(
-                let=execution_context.with_bindings(operation.let)
+                let=execution_context.with_command_let(
+                    operation.let, dialect=self._admin._mongodb_dialect
+                )
             )
         return await self.execute_distinct_command(
             collection_name,
@@ -174,10 +180,13 @@ class DatabaseAdminReadCommandService:
     ) -> DistinctCommandResult:
         distinct_values: list[object] = []
         normalized_collation = normalize_collation(operation.collation)
-        async for document in self._admin._database.get_collection(collection_name)._build_cursor(
+        cursor = self._admin._database.get_collection(collection_name)._build_cursor(
             operation,
             session=session,
-        ):
+        )
+        # This command reuses find semantics, but owns distinct diagnostics.
+        cursor._expression_error_operation = "distinct"
+        async for document in cursor:
             values = QueryEngine.extract_values(document, key)
             if not values:
                 found, value = QueryEngine._get_field_value(document, key)
@@ -288,7 +297,9 @@ class DatabaseAdminReadCommandService:
         )
         if execution_context is not None:
             operation = operation.with_overrides(
-                let=execution_context.with_bindings(operation.let)
+                let=execution_context.with_command_let(
+                    operation.let, dialect=self._admin._mongodb_dialect
+                )
             )
         return await self.execute_find_command(
             collection_name,
@@ -322,7 +333,9 @@ class DatabaseAdminReadCommandService:
         collection_name, operation = self._admin._command_compiler.compile_aggregate_operation(spec)
         if execution_context is not None:
             operation = operation.with_overrides(
-                let=execution_context.with_bindings(operation.let)
+                let=execution_context.with_command_let(
+                    operation.let, dialect=self._admin._mongodb_dialect
+                )
             )
         return await self.execute_aggregate_command(
             collection_name,

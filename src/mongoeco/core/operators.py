@@ -22,9 +22,9 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import (
     assert_classic_update_preserves_id,
     assert_valid_root_document_id,
-    document_id_bson_type_changed,
     preserve_and_validate_pipeline_id,
 )
+from mongoeco.core.paths import same_bson_update_value
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.update_array_operators import (
@@ -192,9 +192,7 @@ class CompiledUpdatePipelinePlan:
                 "Update pipeline must produce a single document",
             )
         replacement = result[0]
-        modified = document_id_bson_type_changed(
-            original, replacement
-        ) or not self.context.dialect.values_equal(original, replacement)
+        modified = not same_bson_update_value(original, replacement)
         preserve_and_validate_pipeline_id(
             original,
             replacement,

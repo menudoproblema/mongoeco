@@ -11,7 +11,6 @@ from mongoeco.compat import MongoDialect
 import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
-from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
 from mongoeco.core.aggregation.scalar_expressions import (
@@ -757,13 +756,13 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
                 [{"$group": {"_id": None, "percentiles": {"$percentile": {"input": "$value", "p": [0.5], "method": "exact"}}}}],
             )
 
-    def test_sum_accumulator_sums_numeric_array_elements(self):
+    def test_sum_accumulator_ignores_array_operands(self):
         result = apply_pipeline(
             [{"scores": [10, 20, 30]}, {"scores": [5, "x"]}],
             [{"$group": {"_id": None, "total": {"$sum": "$scores"}}}],
         )
 
-        self.assertEqual(result, [{"_id": None, "total": 65}])
+        self.assertEqual(result, [{"_id": None, "total": 0}])
 
     def test_evaluate_expression_supports_date_trunc_across_units(self):
         value = datetime.datetime(2026, 3, 24, 10, 37, 52, 123456)
@@ -907,7 +906,7 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$ceil": ["$dbl"]}), BsonDouble(10.0))
         self.assertEqual(evaluate_expression(document, {"$round": ["$dbl", 1]}), BsonDouble(9.2))
         self.assertEqual(evaluate_expression(document, {"$trunc": ["$dec"]}), BsonDecimal128(decimal.Decimal("12")))
-        self.assertEqual(evaluate_expression(document, {"$pow": ["$i32", 2]}), BsonDouble(49.0))
+        self.assertEqual(evaluate_expression(document, {"$pow": ["$i32", 2]}), BsonInt32(49))
 
     def test_evaluate_expression_scalar_conversion_edge_cases_and_errors(self):
         huge_decimal = "9" * 7000

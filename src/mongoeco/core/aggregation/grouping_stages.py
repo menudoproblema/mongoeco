@@ -24,9 +24,9 @@ from mongoeco.core.aggregation.accumulators import (
     _window_sort_key_values,
     _window_sort_keys_equal,
 )
-from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.aggregation.date_expressions import _require_date_unit
 from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
+from mongoeco.core.aggregation.numeric_accumulation import RemovableNumericSum
 from mongoeco.core.aggregation.numeric_expressions import _require_integral_numeric
 from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.runtime import (
@@ -390,6 +390,7 @@ def _resolve_set_window_documents(
     lower_bound = _require_range_bound(range_window[0])
     upper_bound = _require_range_bound(range_window[1])
     found_current, current_value = get_document_value(document, sort_field)
+    current_value = unwrap_bson_numeric(current_value)
     if (
         not found_current
         or not isinstance(current_value, (int, float))
@@ -404,6 +405,7 @@ def _resolve_set_window_documents(
     window_documents: list[Document] = []
     for candidate in iter_with_deadline(ordered, deadline):
         found_candidate, candidate_value = get_document_value(candidate, sort_field)
+        candidate_value = unwrap_bson_numeric(candidate_value)
         if (
             not found_candidate
             or not isinstance(candidate_value, (int, float))
@@ -618,18 +620,12 @@ def _apply_group(  # noqa: PLR0913
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
     deadline: float | None = None,
+    group_average_uses_sum: bool = False,
 ) -> list[Document]:
     if not isinstance(spec, dict) or "_id" not in spec:
         raise OperationFailure("$group requires a document specification with _id")
 
     _validate_empty_group_fields(spec, dialect=dialect)
-
-    if deadline is None and CompiledGroup.supports(spec):
-        try:
-            compiled = CompiledGroup(spec, dialect=dialect)
-            return compiled.apply(documents, variables, collation=collation)
-        except (OperationFailure, SyntaxError, TypeError, ValueError):
-            pass
 
     accumulator = _IncrementalGroup(
         spec,
@@ -637,6 +633,7 @@ def _apply_group(  # noqa: PLR0913
         dialect=dialect,
         collation=collation,
         deadline=deadline,
+        group_average_uses_sum=group_average_uses_sum,
     )
     accumulator.consume(documents)
     return accumulator.finish()
@@ -645,7 +642,7 @@ def _apply_group(  # noqa: PLR0913
 class _IncrementalGroup:
     """Own group accumulator state without retaining its input documents."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - prepared numeric finalization and execution context
         self,
         spec: object,
         variables: dict[str, Any] | None = None,
@@ -653,6 +650,7 @@ class _IncrementalGroup:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
         deadline: float | None = None,
+        group_average_uses_sum: bool = False,
     ) -> None:
         if not isinstance(spec, dict) or "_id" not in spec:
             message = "$group requires a document specification with _id"
@@ -660,6 +658,7 @@ class _IncrementalGroup:
         self._id_expression = spec["_id"]
         _validate_empty_group_fields(spec, dialect=dialect)
         self._variables = aggregation_environment(variables, collation)
+        self._group_average_uses_sum = group_average_uses_sum
         self._dialect = dialect
         self._collation = collation
         self._deadline = deadline
@@ -713,6 +712,7 @@ class _IncrementalGroup:
         if group_key not in self._groups:
             self._groups[group_key] = _AccumulatorBucket(
                 bucket_id=_copy_if_mutable(group_id),
+                group_average_uses_sum=self._group_average_uses_sum,
                 values=_create_accumulator_state(
                     self._prepared,
                     unsupported_message="Unsupported $group accumulator",
@@ -818,21 +818,8 @@ def _apply_bucket(  # noqa: PLR0913
     accumulator_runtime = _build_accumulator_runtime(
         dialect=dialect, collation=collation
     )
-    buckets: list[_AccumulatorBucket] = []
-    for lower in iter_with_deadline(boundaries[:-1], deadline):
-        buckets.append(
-            _AccumulatorBucket(
-                bucket_id=_copy_if_mutable(lower),
-                values=_create_accumulator_state(prepared_output),
-            )
-        )
-
+    buckets: list[_AccumulatorBucket | None] = [None for _ in boundaries[:-1]]
     default_state: _AccumulatorBucket | None = None
-    if "default" in spec:
-        default_state = _AccumulatorBucket(
-            bucket_id=_copy_if_mutable(default_bucket),
-            values=_create_accumulator_state(prepared_output),
-        )
 
     for document in iter_with_deadline(documents, deadline):
         value = evaluate_expression(
@@ -842,8 +829,15 @@ def _apply_bucket(  # noqa: PLR0913
             value, boundaries, dialect=dialect, collation=collation
         )
         if bucket_index is not None:
+            bucket = buckets[bucket_index]
+            if bucket is None:
+                bucket = _AccumulatorBucket(
+                    bucket_id=_copy_if_mutable(boundaries[bucket_index]),
+                    values=_create_accumulator_state(prepared_output),
+                )
+                buckets[bucket_index] = bucket
             _apply_accumulators(
-                buckets[bucket_index],
+                bucket,
                 prepared_output,
                 document,
                 variables,
@@ -852,7 +846,12 @@ def _apply_bucket(  # noqa: PLR0913
                 **accumulator_runtime,
             )
             continue
-        if default_state is not None:
+        if "default" in spec:
+            if default_state is None:
+                default_state = _AccumulatorBucket(
+                    bucket_id=_copy_if_mutable(default_bucket),
+                    values=_create_accumulator_state(prepared_output),
+                )
             _apply_accumulators(
                 default_state,
                 prepared_output,
@@ -870,6 +869,7 @@ def _apply_bucket(  # noqa: PLR0913
     result = [
         _finalize_accumulators(bucket)
         for bucket in iter_with_deadline(buckets, deadline)
+        if bucket is not None
     ]
     if default_state is not None:
         result.append(_finalize_accumulators(default_state))
@@ -1018,6 +1018,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
             continue
         prepared_specs = _prepare_accumulator_specs(
             {field: {operator: expression}},
+            allow_array_operand=True,
             dialect=dialect,
             support_checker=dialect.supports_window_accumulator,
             unsupported_message="Unsupported $setWindowFields accumulator",
@@ -1071,6 +1072,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
             collation=collation,
             deadline=deadline,
         )
+        removable_sums: dict[str, tuple[RemovableNumericSum, list[Document]]] = {}
         last_index = len(ordered) - 1
         for current_index, document in enumerate(
             iter_with_deadline(ordered, deadline),
@@ -1184,6 +1186,43 @@ def _apply_set_window_fields(  # noqa: PLR0913
                     deadline=deadline,
                     dialect=dialect,
                 )
+                bounds = (
+                    None if window is None
+                    else window.get("documents", window.get("range"))
+                )
+                if (
+                    operator in {"$sum", "$avg"}
+                    and bounds is not None
+                    and bounds[0] != "unbounded"
+                ):
+                    numeric_state, previous_documents = removable_sums.setdefault(
+                        field, (RemovableNumericSum(), [])
+                    )
+                    previous_ids = {id(item) for item in previous_documents}
+                    current_ids = {id(item) for item in window_documents}
+                    for candidate in window_documents:
+                        checkpoint()
+                        if id(candidate) not in previous_ids:
+                            numeric_state.update(
+                                evaluate_expression(
+                                    candidate, expression, variables, dialect=dialect
+                                ), 1,
+                            )
+                    for candidate in previous_documents:
+                        checkpoint()
+                        if id(candidate) not in current_ids:
+                            numeric_state.update(
+                                evaluate_expression(
+                                    candidate, expression, variables, dialect=dialect
+                                ), -1,
+                            )
+                    removable_sums[field] = (numeric_state, window_documents)
+                    set_document_value(
+                        enriched, field,
+                        numeric_state.sum() if operator == "$sum"
+                        else numeric_state.average(),
+                    )
+                    continue
                 if operator in {"$derivative", "$integral"}:
                     if sort_spec is None:
                         raise OperationFailure(f"{operator} requires sortBy")

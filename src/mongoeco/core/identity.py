@@ -5,6 +5,7 @@ from typing import Any
 
 from mongoeco.core.bson_scalars import bson_numeric_alias, is_bson_numeric
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.paths import same_bson_update_value
 from mongoeco.errors import WriteError
 from mongoeco.types import Regex
 
@@ -131,6 +132,14 @@ def assert_document_kept_storage_key(
 ) -> None:
     if storage_key_for_id(document.get("_id")) != storage_key:
         raise WriteError(UPDATED_DOCUMENT_STORAGE_MISMATCH_MESSAGE, code=66)
+
+
+def replacement_document_changed(original, materialized, replacement):
+    """Native replacement no-op rule, including implicit _id insertion."""
+    return (
+        ("_id" not in replacement and "_id" in original)
+        or not same_bson_update_value(original, materialized)
+    )
 
 
 def materialize_replacement_document(

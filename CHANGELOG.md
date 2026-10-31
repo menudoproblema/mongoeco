@@ -8,6 +8,96 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Validate structured get/set/unsetField arguments before reading rows, retain
+  MongoDB 7 constant-field rules versus dynamic getField in 8/9, and preserve
+  CURRENT and missing results. Reject unary group/bucket array operands while
+  retaining window array semantics. Emit only occupied buckets. Render runtime
+  find/find_one/count/distinct diagnostics at their command boundary.
+- Canonicalize numeric equality-key encoding for spill without ambient decimal
+  rounding, so signed zero and decimal cohorts stay in one group. Preserve the
+  prepared operation and deferred planning issues on rewind without command let.
+- Preserve opaque expression overrides during preparation. Invalidate prepared
+  syntax and native average strategy after expression registrations change,
+  sharing one registry generation and lock with stage registrations.
+
+- Evaluate command `let` expressions in definition order before documents,
+  preserve literal/evaluated bindings and closed CURRENT scopes, and reject
+  document dependencies even without rows. Keep per-statement bulk errors and
+  preceding effects. Reject unsupported raw count/distinct let; retain the
+  captured read/write NOW and distinct diagnostic differences in MongoDB 7/8/9.
+  Preserve direct cursor options separately from PyMongo 4.19 clone behavior.
+
+- Separate aggregation expressions from field-bound query extensions. Support
+  boolean `$not`, scalar `$and`/`$or`, `$last` and integral numeric array indexes;
+  share argument counts between preparation, runtime and catalog for the migrated
+  families. Reject invalid `$in` inputs and scalar first/last operands. Preserve
+  native parse/optimization/execution diagnostics, including empty inputs,
+  inactive branches, nested pipelines and MongoDB 9 namespace diagnostics.
+
+- Promote overflowing int64 aggregation arithmetic to double while preserving
+  strict `$inc`/`$mul` write errors, per-document atomicity and partial bulk
+  effects. Retain native diagnostic prefixes by operation/version and share
+  BSON diagnostic rendering. Keep assignment/replacement BSON identity separate
+  from arithmetic no-op rules, including numeric width, decimal cohorts,
+  signed zero and NaN writes. Preserve nondecimal division/transcendental result
+  types and fifteen significant digits in arithmetic double-to-decimal
+  conversion. Correct double remainder for signed zero, extreme quotients and
+  infinite divisors, with the captured MongoDB 7 integral-divisor delta.
+- Compare differential results independently of production identity helpers;
+  retain BSON widths, decimal cohorts and signed zero. Keep canonical write
+  observations separate from the Extended JSON capture envelope during replay.
+
+- Share fixed-size compensated numeric state for sum/average, retain separate
+  decimal totals, ignore group array operands and preserve aggregation sum
+  promotion past int64. Keep bounded-window removal/type rules explicit and
+  recognize public Decimal128 values after pipeline writes. Native captures
+  preserve average-finalization differences between SBE and classic groups
+  through prepared metadata, including the MongoDB 8/9 prefix delta. Keep that
+  metadata through physical slicing, provenance execution and real group spill.
+
+- Preserve Decimal128 values and native rounding through abs, roots,
+  exponentials, logarithms, powers and quantization using portable BID-style
+  intermediate steps. Keep the captured MongoDB 7/8 versus 9 logarithm delta,
+  Int64 widths and integer-power result types. Compare NaN observations without
+  erasing their BSON type. Include the Intel BSD notice for adapted algorithms.
+- Isolate Decimal128 arithmetic from the application's decimal precision,
+  rounding, traps and flags. Preserve decimal averages through group/window
+  finalization and materialize computed values as BSON Decimal128. Respect
+  zero truthiness and boolean conversion, and distinguish arithmetic double
+  promotion from accumulator promotion. Native witnesses cover exponent limits,
+  signed zero, NaN, infinity and pipeline-write effects; broader numeric work
+  remains tracked in the implementation record.
+- Compare double/decimal values exactly and use the same representation for
+  semantic equality keys. Preserve Int64's numeric BSON rank against other types
+  and avoid ambient decimal-context rounding when generating equality keys.
+- Stop using rounded SQLite auxiliary numeric keys as exact predicates or sort
+  order. Compare original values and delegate tagged numeric operands and array
+  elements to the shared evaluator. Preserve legacy index storage and isolate
+  auxiliary-key normalization from the ambient decimal context.
+- Share BSON document ordering across dialect and collation paths: compare
+  value type before field name, preserve key order and recursive dialect
+  overrides, and treat internal ownership markers as transparent containers.
+  Native witnesses cover comparisons, find/aggregation sort, filters and partial
+  indexes on MongoDB 7/8/9.
+- Use the shared group evaluator in top-level and nested aggregation pipelines;
+  remove divergent group code generation and its literal cache.
+- Preserve missing expression values through comparisons, lexical references,
+  ROOT/CURRENT, composition, reduce and terminal ifNull replacements. Omit absent
+  object fields and materialize absent array positions as null; remove existing
+  pipeline-update targets when their expression produces missing. Native
+  MongoDB 7/8/9 witnesses cover both engines and direct/wire sync/async APIs.
+  See [bounded implementation evidence](docs/semantic-parity-implementation.md).
+
+### Changed
+
+- Remove `$exists`, `$elemMatch`, `$all` and `$nin` from aggregation expressions.
+  Use query predicates outside `$expr` or valid aggregation expressions instead.
+  Field-bound `$and`/`$or` shortcuts now follow the server's expression grammar;
+  literal objects retain their native truthiness. Existing query operators are
+  preserved. See the bounded validation in the semantic implementation record.
+
 ## [4.11.0] - 2026-10-17
 
 ### Added

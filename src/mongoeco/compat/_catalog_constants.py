@@ -1,4 +1,7 @@
 MONGODB_DIALECT_HOOK_NAMES = (
+    "supports_dynamic_get_field",
+    "supports_now_in_read_command_let",
+    "uses_distinct_command_request_field_name",
     "null_query_matches_undefined",
     "rejects_empty_group_fields",
     "validates_densify_partition_paths",

@@ -1,0 +1,2313 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_sum_stream_groups": [
+      {
+        "_id": "cancel",
+        "s": {
+          "$numberDouble": "0.0"
+        },
+        "a": {
+          "$numberDouble": "0.0"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "cancel_reversed",
+        "s": {
+          "$numberDouble": "0.0"
+        },
+        "a": {
+          "$numberDouble": "0.0"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "decimal_cancel",
+        "s": {
+          "$numberDecimal": "1"
+        },
+        "a": {
+          "$numberDecimal": "0.3333333333333333333333333333333333"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "decimal_double",
+        "s": {
+          "$numberDecimal": "0.3000000000000000166533453693773481"
+        },
+        "a": {
+          "$numberDecimal": "0.1000000000000000055511151231257827"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "decimal_first",
+        "s": {
+          "$numberDecimal": "1"
+        },
+        "a": {
+          "$numberDecimal": "0.25"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "decimal_infinity",
+        "s": {
+          "$numberDecimal": "Infinity"
+        },
+        "a": {
+          "$numberDecimal": "Infinity"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "decimal_last",
+        "s": {
+          "$numberDecimal": "1"
+        },
+        "a": {
+          "$numberDecimal": "0.25"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "decimal_long",
+        "s": {
+          "$numberDecimal": "9223372036854775807"
+        },
+        "a": {
+          "$numberDecimal": "4611686018427387903.5"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "decimal_nan",
+        "s": {
+          "$numberDecimal": "NaN"
+        },
+        "a": {
+          "$numberDecimal": "NaN"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "decimal_round",
+        "s": {
+          "$numberDecimal": "0"
+        },
+        "a": {
+          "$numberDecimal": "0"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "double_overflow",
+        "s": {
+          "$numberDouble": "Infinity"
+        },
+        "a": {
+          "$numberDouble": "Infinity"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "generated_0",
+        "s": {
+          "$numberDecimal": "2.000000000000000922337203685477581E+34"
+        },
+        "a": {
+          "$numberDecimal": "2222222222222223247041337428308423"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "generated_1",
+        "s": {
+          "$numberDecimal": "-2.899999999999999911182158029987477"
+        },
+        "a": {
+          "$numberDecimal": "-0.322222222222222212353573114443053"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "generated_2",
+        "s": {
+          "$numberDecimal": "9999999999999990766627963145224190"
+        },
+        "a": {
+          "$numberDecimal": "1111111111111110085180884793913799"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "generated_3",
+        "s": {
+          "$numberDecimal": "-1.999999999999999077662796314522419E+34"
+        },
+        "a": {
+          "$numberDecimal": "-2222222222222221197403107016136021"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "generated_4",
+        "s": {
+          "$numberDecimal": "-1.000000000000000920337203685477581E+34"
+        },
+        "a": {
+          "$numberDecimal": "-1.11111111111111213370800409497509E+33"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "generated_5",
+        "s": {
+          "$numberDecimal": "1.000000000000001844674407370955161E+34"
+        },
+        "a": {
+          "$numberDecimal": "1111111111111113160749341523283512"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "generated_6",
+        "s": {
+          "$numberDecimal": "18446744073709551616.10000000000000"
+        },
+        "a": {
+          "$numberDecimal": "2049638230412172401.788888888888889"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "generated_7",
+        "s": {
+          "$numberDecimal": "-1.999999999999999076662796314522419E+34"
+        },
+        "a": {
+          "$numberDecimal": "-2.22222222222222119629199590502491E+33"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "ignored",
+        "s": {
+          "$numberInt": "0"
+        },
+        "a": null,
+        "sType": "int",
+        "aType": "null"
+      },
+      {
+        "_id": "infinities",
+        "s": {
+          "$numberDouble": "NaN"
+        },
+        "a": {
+          "$numberDouble": "NaN"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "infinity",
+        "s": {
+          "$numberDouble": "Infinity"
+        },
+        "a": {
+          "$numberDouble": "Infinity"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "int_cancel",
+        "s": {
+          "$numberInt": "1"
+        },
+        "a": {
+          "$numberDouble": "0.3333333333333333"
+        },
+        "sType": "int",
+        "aType": "double"
+      },
+      {
+        "_id": "int_promote",
+        "s": {
+          "$numberLong": "2147483648"
+        },
+        "a": {
+          "$numberDouble": "1073741824.0"
+        },
+        "sType": "long",
+        "aType": "double"
+      },
+      {
+        "_id": "long_exact",
+        "s": {
+          "$numberLong": "1"
+        },
+        "a": {
+          "$numberDouble": "0.3333333333333333"
+        },
+        "sType": "long",
+        "aType": "double"
+      },
+      {
+        "_id": "long_overflow",
+        "s": {
+          "$numberDouble": "9.223372036854776e+18"
+        },
+        "a": {
+          "$numberDouble": "4.611686018427388e+18"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "long_overflow_cancel",
+        "s": {
+          "$numberLong": "1"
+        },
+        "a": {
+          "$numberDouble": "0.3333333333333333"
+        },
+        "sType": "long",
+        "aType": "double"
+      },
+      {
+        "_id": "long_small",
+        "s": {
+          "$numberLong": "0"
+        },
+        "a": {
+          "$numberDouble": "0.0"
+        },
+        "sType": "long",
+        "aType": "double"
+      },
+      {
+        "_id": "long_underflow",
+        "s": {
+          "$numberDouble": "-9.223372036854776e+18"
+        },
+        "a": {
+          "$numberDouble": "-4.611686018427388e+18"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "low_parts",
+        "s": {
+          "$numberDouble": "0.0"
+        },
+        "a": {
+          "$numberDouble": "0.0"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "mixed_cancel",
+        "s": {
+          "$numberDecimal": "0.21"
+        },
+        "a": {
+          "$numberDecimal": "0.0525"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "nan",
+        "s": {
+          "$numberDouble": "NaN"
+        },
+        "a": {
+          "$numberDouble": "NaN"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "negative_zero",
+        "s": {
+          "$numberDouble": "0.0"
+        },
+        "a": {
+          "$numberDouble": "0.0"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "operands",
+        "s": {
+          "$numberInt": "2"
+        },
+        "a": {
+          "$numberDouble": "1.0"
+        },
+        "sType": "int",
+        "aType": "double"
+      },
+      {
+        "_id": "remove_decimal",
+        "s": {
+          "$numberDecimal": "10.1"
+        },
+        "a": {
+          "$numberDecimal": "2.02"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "remove_decimal_nan",
+        "s": {
+          "$numberDecimal": "NaN"
+        },
+        "a": {
+          "$numberDecimal": "NaN"
+        },
+        "sType": "decimal",
+        "aType": "decimal"
+      },
+      {
+        "_id": "remove_infinities",
+        "s": {
+          "$numberDouble": "NaN"
+        },
+        "a": {
+          "$numberDouble": "NaN"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "remove_int_min",
+        "s": {
+          "$numberInt": "-2147483638"
+        },
+        "a": {
+          "$numberDouble": "-429496727.6"
+        },
+        "sType": "int",
+        "aType": "double"
+      },
+      {
+        "_id": "remove_long_min",
+        "s": {
+          "$numberLong": "-9223372036854775798"
+        },
+        "a": {
+          "$numberDouble": "-1.8446744073709553e+18"
+        },
+        "sType": "long",
+        "aType": "double"
+      },
+      {
+        "_id": "remove_low_parts",
+        "s": {
+          "$numberDouble": "1.0"
+        },
+        "a": {
+          "$numberDouble": "0.125"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "remove_nan",
+        "s": {
+          "$numberDouble": "NaN"
+        },
+        "a": {
+          "$numberDouble": "NaN"
+        },
+        "sType": "double",
+        "aType": "double"
+      },
+      {
+        "_id": "tenths",
+        "s": {
+          "$numberDouble": "1.0"
+        },
+        "a": {
+          "$numberDouble": "0.1"
+        },
+        "sType": "double",
+        "aType": "double"
+      }
+    ]
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_sum_cases.py",
+    "sha256": "d9eb5161d8556d8754b3efc21d1e5842172a435fe91eca87281fcab00f7bd8d6"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_sum_stream_groups",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "g": "cancel",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "g": "cancel_reversed",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "g": "low_parts",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "g": "long_exact",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "g": "long_overflow",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "g": "long_overflow_cancel",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "g": "long_underflow",
+          "v": {
+            "$numberLong": "-9223372036854775808"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "g": "long_small",
+          "v": {
+            "$numberLong": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "g": "int_promote",
+          "v": {
+            "$numberInt": "2147483647"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "g": "int_cancel",
+          "v": {
+            "$numberInt": "2147483647"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "g": "mixed_cancel",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "g": "decimal_cancel",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "13"
+          },
+          "g": "decimal_round",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "14"
+          },
+          "g": "decimal_last",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "15"
+          },
+          "g": "decimal_first",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "16"
+          },
+          "g": "decimal_double",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "17"
+          },
+          "g": "decimal_long",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "18"
+          },
+          "g": "nan",
+          "v": {
+            "$numberDouble": "NaN"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "19"
+          },
+          "g": "infinity",
+          "v": {
+            "$numberDouble": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "20"
+          },
+          "g": "infinities",
+          "v": {
+            "$numberDouble": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "21"
+          },
+          "g": "double_overflow",
+          "v": {
+            "$numberDouble": "1e+308"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "22"
+          },
+          "g": "decimal_infinity",
+          "v": {
+            "$numberDouble": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "23"
+          },
+          "g": "decimal_nan",
+          "v": {
+            "$numberDecimal": "NaN"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "24"
+          },
+          "g": "negative_zero",
+          "v": {
+            "$numberDouble": "-0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "25"
+          },
+          "g": "operands",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "26"
+          },
+          "g": "ignored",
+          "v": null
+        },
+        {
+          "_id": {
+            "$numberInt": "28"
+          },
+          "g": "remove_nan",
+          "v": {
+            "$numberDouble": "NaN"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "29"
+          },
+          "g": "remove_infinities",
+          "v": {
+            "$numberDouble": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "30"
+          },
+          "g": "remove_decimal_nan",
+          "v": {
+            "$numberDecimal": "NaN"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "31"
+          },
+          "g": "remove_decimal",
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "32"
+          },
+          "g": "remove_long_min",
+          "v": {
+            "$numberLong": "-9223372036854775808"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "33"
+          },
+          "g": "remove_int_min",
+          "v": {
+            "$numberInt": "-2147483648"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "34"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "35"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "36"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "37"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberDouble": "-1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "38"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "39"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "40"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "41"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "42"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "43"
+          },
+          "g": "cancel",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "44"
+          },
+          "g": "cancel_reversed",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "45"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "46"
+          },
+          "g": "low_parts",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "47"
+          },
+          "g": "long_exact",
+          "v": {
+            "$numberLong": "-9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "48"
+          },
+          "g": "long_overflow",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "49"
+          },
+          "g": "long_overflow_cancel",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "50"
+          },
+          "g": "long_underflow",
+          "v": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "51"
+          },
+          "g": "long_small",
+          "v": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "52"
+          },
+          "g": "int_promote",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "53"
+          },
+          "g": "int_cancel",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "54"
+          },
+          "g": "mixed_cancel",
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "55"
+          },
+          "g": "decimal_cancel",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "56"
+          },
+          "g": "decimal_round",
+          "v": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "57"
+          },
+          "g": "decimal_last",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "58"
+          },
+          "g": "decimal_first",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "59"
+          },
+          "g": "decimal_double",
+          "v": {
+            "$numberDouble": "0.2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "60"
+          },
+          "g": "decimal_long",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "61"
+          },
+          "g": "nan",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "62"
+          },
+          "g": "infinity",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "63"
+          },
+          "g": "infinities",
+          "v": {
+            "$numberDouble": "-Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "64"
+          },
+          "g": "double_overflow",
+          "v": {
+            "$numberDouble": "1e+308"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "65"
+          },
+          "g": "decimal_infinity",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "66"
+          },
+          "g": "decimal_nan",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "67"
+          },
+          "g": "negative_zero",
+          "v": {
+            "$numberDouble": "-0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "68"
+          },
+          "g": "operands",
+          "v": [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "69"
+          },
+          "g": "ignored",
+          "v": false
+        },
+        {
+          "_id": {
+            "$numberInt": "71"
+          },
+          "g": "remove_nan",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "72"
+          },
+          "g": "remove_infinities",
+          "v": {
+            "$numberDouble": "-Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "73"
+          },
+          "g": "remove_decimal_nan",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "74"
+          },
+          "g": "remove_decimal",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "75"
+          },
+          "g": "remove_long_min",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "76"
+          },
+          "g": "remove_int_min",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "77"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "78"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "79"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberLong": "-9223372036854775808"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "80"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberDouble": "-1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "81"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "82"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "83"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "84"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "85"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "86"
+          },
+          "g": "cancel",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "87"
+          },
+          "g": "cancel_reversed",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "88"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "89"
+          },
+          "g": "low_parts",
+          "v": {
+            "$numberDouble": "0.2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "90"
+          },
+          "g": "long_exact",
+          "v": {
+            "$numberLong": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "92"
+          },
+          "g": "long_overflow_cancel",
+          "v": {
+            "$numberLong": "-9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "96"
+          },
+          "g": "int_cancel",
+          "v": {
+            "$numberInt": "-2147483647"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "97"
+          },
+          "g": "mixed_cancel",
+          "v": {
+            "$numberDecimal": "0.11"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "98"
+          },
+          "g": "decimal_cancel",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "99"
+          },
+          "g": "decimal_round",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "100"
+          },
+          "g": "decimal_last",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "101"
+          },
+          "g": "decimal_first",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "102"
+          },
+          "g": "decimal_double",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "107"
+          },
+          "g": "double_overflow",
+          "v": {
+            "$numberDouble": "-1e+308"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "111"
+          },
+          "g": "operands",
+          "v": null
+        },
+        {
+          "_id": {
+            "$numberInt": "112"
+          },
+          "g": "ignored",
+          "v": []
+        },
+        {
+          "_id": {
+            "$numberInt": "114"
+          },
+          "g": "remove_nan",
+          "v": {
+            "$numberDouble": "2.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "115"
+          },
+          "g": "remove_infinities",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "116"
+          },
+          "g": "remove_decimal_nan",
+          "v": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "117"
+          },
+          "g": "remove_decimal",
+          "v": {
+            "$numberDouble": "2.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "118"
+          },
+          "g": "remove_long_min",
+          "v": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "119"
+          },
+          "g": "remove_int_min",
+          "v": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "120"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "121"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "122"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "123"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "124"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "125"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "126"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "127"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "128"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "131"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "132"
+          },
+          "g": "low_parts",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "140"
+          },
+          "g": "mixed_cancel",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "143"
+          },
+          "g": "decimal_last",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "144"
+          },
+          "g": "decimal_first",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "154"
+          },
+          "g": "operands",
+          "v": false
+        },
+        {
+          "_id": {
+            "$numberInt": "155"
+          },
+          "g": "ignored",
+          "v": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "157"
+          },
+          "g": "remove_nan",
+          "v": {
+            "$numberDouble": "3.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "158"
+          },
+          "g": "remove_infinities",
+          "v": {
+            "$numberDouble": "2.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "159"
+          },
+          "g": "remove_decimal_nan",
+          "v": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "160"
+          },
+          "g": "remove_decimal",
+          "v": {
+            "$numberDouble": "3.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "161"
+          },
+          "g": "remove_long_min",
+          "v": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "162"
+          },
+          "g": "remove_int_min",
+          "v": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "163"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "164"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "165"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberDouble": "1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "166"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "167"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "168"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDouble": "1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "169"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "170"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "171"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "174"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "197"
+          },
+          "g": "operands",
+          "v": {}
+        },
+        {
+          "_id": {
+            "$numberInt": "198"
+          },
+          "g": "ignored",
+          "v": "x"
+        },
+        {
+          "_id": {
+            "$numberInt": "200"
+          },
+          "g": "remove_nan",
+          "v": {
+            "$numberDouble": "4.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "201"
+          },
+          "g": "remove_infinities",
+          "v": {
+            "$numberDouble": "3.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "202"
+          },
+          "g": "remove_decimal_nan",
+          "v": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "203"
+          },
+          "g": "remove_decimal",
+          "v": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "204"
+          },
+          "g": "remove_long_min",
+          "v": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "205"
+          },
+          "g": "remove_int_min",
+          "v": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "206"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "1e-16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "207"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "208"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberDouble": "-1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "209"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "210"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "211"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "212"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "213"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "214"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "217"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "240"
+          },
+          "g": "operands",
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "244"
+          },
+          "g": "remove_infinities",
+          "v": {
+            "$numberDouble": "4.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "249"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "2.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "250"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDouble": "1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "251"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberDouble": "-1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "252"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberLong": "-9223372036854775808"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "253"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDouble": "-1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "254"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "255"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "256"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberDouble": "1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "257"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "260"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "292"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "-2.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "293"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDouble": "-1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "294"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "295"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "296"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "297"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDouble": "1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "298"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "299"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "300"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "303"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "335"
+          },
+          "g": "remove_low_parts",
+          "v": {
+            "$numberDouble": "0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "336"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDouble": "-1e+16"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "337"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberDouble": "-1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "338"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberLong": "-9223372036854775808"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "339"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "340"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberLong": "-9223372036854775808"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "341"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberDouble": "-1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "342"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "343"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDouble": "-1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "346"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "379"
+          },
+          "g": "generated_0",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "380"
+          },
+          "g": "generated_1",
+          "v": {
+            "$numberDecimal": "1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "381"
+          },
+          "g": "generated_2",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "382"
+          },
+          "g": "generated_3",
+          "v": {
+            "$numberLong": "9223372036854775807"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "383"
+          },
+          "g": "generated_4",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "384"
+          },
+          "g": "generated_5",
+          "v": {
+            "$numberDecimal": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "385"
+          },
+          "g": "generated_6",
+          "v": {
+            "$numberDecimal": "-1E+34"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "386"
+          },
+          "g": "generated_7",
+          "v": {
+            "$numberDouble": "-1e-300"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "389"
+          },
+          "g": "tenths",
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        }
+      ],
+      "selector": "semantic_sum_stream_groups"
+    }
+  ]
+}

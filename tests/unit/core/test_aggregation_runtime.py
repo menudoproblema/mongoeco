@@ -70,7 +70,7 @@ class AggregationRuntimeTests(unittest.TestCase):
                 {"name": "Ada"},
                 {"present": "$name", "missing": "$unknown"},
             ),
-            {"present": "Ada", "missing": None},
+            {"present": "Ada"},
         )
         self.assertIs(
             _evaluate_expression_with_missing(
@@ -85,7 +85,7 @@ class AggregationRuntimeTests(unittest.TestCase):
                 {"name": "Ada"},
                 {"kept": "$name", "dropped": "$missing.value"},
             ),
-            {"kept": "Ada", "dropped": None},
+            {"kept": "Ada"},
         )
         self.assertEqual(
             evaluate_expression({}, {"kept": 1, "dropped": _MISSING}),

@@ -13,7 +13,9 @@ from copy import deepcopy
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.compat._catalog_operators import SCALAR_EXPRESSION_ARGUMENTS
 from mongoeco.core.aggregation.date_expressions import _to_utc_naive
+from mongoeco.core.aggregation.expression_values import compare_expression_values
 from mongoeco.core.bson_scalars import (
     INT32_MAX,
     INT32_MIN,
@@ -23,9 +25,11 @@ from mongoeco.core.bson_scalars import (
     BsonDouble,
     BsonInt32,
     BsonInt64,
+    bson_numeric_alias,
     is_bson_numeric,
     unwrap_bson_numeric,
     validate_bson_value,
+    wrap_bson_numeric,
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
@@ -48,7 +52,7 @@ type Stringifier = Callable[[Any], str]
 type BsonSizer = Callable[[dict[str, Any]], int]
 
 
-SCALAR_EXPRESSION_OPERATORS = frozenset(
+SCALAR_EXPRESSION_OPERATORS = frozenset(SCALAR_EXPRESSION_ARGUMENTS) | frozenset(
     {
         "$rand",
         "$convert",
@@ -66,7 +70,6 @@ SCALAR_EXPRESSION_OPERATORS = frozenset(
         "$toObjectId",
         "$toUUID",
         "$isArray",
-        "$cmp",
         "$min",
         "$max",
     }
@@ -261,10 +264,12 @@ def evaluate_scalar_expression(
         return isinstance(value, list)
 
     if operator == "$cmp":
-        args = require_expression_args(operator, spec, 2, 2)
-        left = evaluate_expression(document, args[0], variables)
-        right = evaluate_expression(document, args[1], variables)
-        comparison = compare_with_collation(
+        args = require_expression_args(
+            operator, spec, *SCALAR_EXPRESSION_ARGUMENTS[operator]
+        )
+        left = evaluate_expression_with_missing(document, args[0], variables)
+        right = evaluate_expression_with_missing(document, args[1], variables)
+        comparison = compare_expression_values(
             left,
             right,
             dialect=dialect,
@@ -341,24 +346,11 @@ def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:
         return "undefined"
     if value is None:
         return "null"
-    if isinstance(value, BsonInt32):
-        return "int"
-    if isinstance(value, BsonInt64):
-        return "long"
-    if isinstance(value, BsonDouble):
-        return "double"
-    if isinstance(value, BsonDecimal128):
-        return "decimal"
-    if isinstance(value, Decimal128):
-        return "decimal"
+    numeric_alias = bson_numeric_alias(value)
+    if numeric_alias is not None:
+        return numeric_alias
     if isinstance(value, bool):
         return "bool"
-    if isinstance(value, int):
-        return "long" if value < -(1 << 31) or value > (1 << 31) - 1 else "int"
-    if isinstance(value, float):
-        return "double"
-    if isinstance(value, decimal.Decimal):
-        return "decimal"
     if isinstance(value, str):
         return "string"
     if isinstance(value, dict):
@@ -559,8 +551,9 @@ def _convert_aggregation_scalar(
     if target == "bool":
         if isinstance(value, bool):
             return value
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return value != 0
+        numeric = wrap_bson_numeric(value)
+        if numeric is not None:
+            return numeric.value != 0
         if isinstance(
             value,
             (

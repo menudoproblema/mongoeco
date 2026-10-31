@@ -298,7 +298,6 @@ from mongoeco.types import (
     ArrayFilters,
     CollationDocument,
     DBRef,
-    Decimal128,
     Document,
     DocumentId,
     EngineIndexRecord,
@@ -2191,6 +2190,10 @@ class SQLiteEngine(AsyncStorageEngine):
         plan: EqualsCondition,
         index: EngineIndexRecord,
     ) -> tuple[str, list[object]]:
+        # Old and current auxiliary numeric keys are decimal approximations.
+        # Query the stored values instead; a residual cannot recover omissions.
+        if is_bson_numeric(plan.value):
+            return translate_query_plan(plan)
         scalar_sql, scalar_params = _translate_scalar_equals(
             plan.field,
             plan.value,
@@ -2344,6 +2347,21 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         operator: str,
     ) -> tuple[str, list[object]]:
+        if is_bson_numeric(plan.value):
+            has_type_mismatch = (
+                self._field_has_scalar_or_array_element_type_mismatch_in_collection
+            )
+            if (
+                "." not in plan.field
+                and not has_type_mismatch(
+                    db_name, coll_name, plan.field, "number"
+                )
+            ):
+                return _translate_scalar_or_array_same_type_comparison(
+                    operator, plan.field, plan.value
+                )
+            message = "Mixed numeric array comparisons require Python fallback"
+            raise NotImplementedError(message)
         signature = self._multikey_value_signature(plan.value)
         if signature is None or signature[0] != "number":
             return translate_query_plan(plan)
@@ -2840,19 +2858,20 @@ class SQLiteEngine(AsyncStorageEngine):
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
         conn = self._require_connection()
-        tagged_type_path = (
-            json_path_for_field(field)
-            + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
-        )
+        tagged_type_path = f'$."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
         row = conn.execute(
             """
             SELECT 1
-            FROM documents
+            FROM documents, json_tree(documents.document, ?) AS candidate
             WHERE db_name = ? AND coll_name = ?
-              AND json_extract(document, ?) = ?
+              AND CASE WHEN candidate.type = 'object'
+                       THEN json_extract(candidate.value, ?) END = ?
             LIMIT 1
             """,
-            (db_name, coll_name, tagged_type_path, value_type),
+            (
+                json_path_for_field(field), db_name, coll_name,
+                tagged_type_path, value_type,
+            ),
         ).fetchone()
         result = row is not None
         self._collection_features_cache[feature_key] = result
@@ -2913,7 +2932,7 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @staticmethod
-    def _plan_contains_decimal_operand(plan: object) -> bool:
+    def _plan_contains_tagged_numeric_operand(plan: object) -> bool:
         pending = [plan]
         seen: set[int] = set()
         while pending:
@@ -2921,35 +2940,34 @@ class SQLiteEngine(AsyncStorageEngine):
             if id(current) in seen:
                 continue
             seen.add(id(current))
-            if isinstance(current, (Decimal, Decimal128)):
-                return True
+            if is_bson_numeric(current):
+                encoded = DocumentCodec.encode(current)
+                if DocumentCodec._is_tagged_value(encoded):
+                    return True
+                continue
             if isinstance(current, dict):
                 pending.extend(current.values())
                 continue
             if isinstance(current, (list, tuple, set, frozenset)):
                 pending.extend(current)
                 continue
-            for attribute in (
-                "value",
-                "values",
-                "clause",
-                "clauses",
-                "lower",
-                "upper",
-                "divisor",
-                "remainder",
-            ):
-                if hasattr(current, attribute):
-                    pending.append(getattr(current, attribute))
+            pending.extend(
+                getattr(current, attribute)
+                for attribute in (
+                    "value", "values", "clause", "clauses", "lower", "upper",
+                    "divisor", "remainder",
+                )
+                if hasattr(current, attribute)
+            )
         return False
 
-    def _plan_requires_python_for_decimal_numeric(
+    def _plan_requires_python_for_tagged_numeric(
         self,
         db_name: str,
         coll_name: str,
         plan: QueryNode,
     ) -> bool:
-        if self._plan_contains_decimal_operand(plan):
+        if self._plan_contains_tagged_numeric_operand(plan):
             return True
         try:
             return any(
@@ -2961,6 +2979,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
                 for field in self._plan_fields(plan)
                 for value_type in (
+                    "int64",
                     "decimal",
                     "decimal128",
                     "decimal128_public",

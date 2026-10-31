@@ -6,15 +6,32 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.aggregation.accumulators import _validate_empty_group_fields
+from mongoeco.compat._catalog_operators import (
+    ARRAY_ACCESS_EXPRESSION_ARGUMENTS,
+    CONTROL_EXPRESSION_ARGUMENTS,
+    SCALAR_EXPRESSION_ARGUMENTS,
+)
+from mongoeco.core.aggregation.accumulators import (
+    _prepare_accumulator_specs,
+    _validate_empty_group_fields,
+)
 from mongoeco.core.aggregation.array_string_expressions import (
     array_variable_names,
     validate_trim_chars,
 )
+from mongoeco.core.aggregation.control_object_expressions import (
+    parse_field_expression,
+    prepare_field_expression,
+)
+from mongoeco.core.aggregation.evaluation_environment import environment_for_document
 from mongoeco.core.aggregation.extensions import (
-    _aggregation_stage_registry_version,
+    _aggregation_registry_version,
     get_registered_aggregation_expression_operator,
     get_registered_aggregation_stage_registration,
+)
+from mongoeco.core.aggregation.group_average import (
+    group_average_prefix_compatible,
+    group_average_uses_sum,
 )
 from mongoeco.core.aggregation.grouping_stages import validate_date_range_window
 from mongoeco.core.aggregation.information_stages import (
@@ -27,21 +44,23 @@ from mongoeco.core.aggregation.planning import (
     _validate_densify_range,
 )
 from mongoeco.core.aggregation.runtime import (
-    _MISSING,
-    _REMOVE,
     _parse_variable_reference,
+    _require_expression_args,
     _require_lookup_spec,
     _require_union_with_spec,
     _validate_variable_path,
     evaluate_expression,
 )
 from mongoeco.core.aggregation.scalar_expressions import validate_convert_spec
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.error_documents import command_error_document, error_message
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.server_errors import operation_error, server_error
 from mongoeco.errors import OperationFailure
 
 
 _UNSPECIFIED = object()
+_MATCH_EXPRESSION_DOCUMENT_CODE = 15983
 _FIRST_STAGES = INFORMATION_STAGES | {
     "$documents",
     "$geoNear",
@@ -80,6 +99,7 @@ class PreparedStage(dict):
         super().__init__({operator: spec})
         self.address = address
         self.context = context
+        self.group_average_uses_sum = False
 
 
 class PreparedPipeline(list):
@@ -131,7 +151,7 @@ def _copy_spec(value):
         return {key: _copy_spec(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_copy_spec(item) for item in value]
-    return deepcopy(value, {id(_MISSING): _MISSING, id(_REMOVE): _REMOVE})
+    return deepcopy(value)
 
 
 def _validate_placement(operator, address, scopes):
@@ -277,13 +297,19 @@ _GLOBAL_EXPRESSION_VARIABLES = frozenset(
 
 def _validate_array_expression_scope(operator, spec, dialect, variables):
     names = array_variable_names(operator, spec, dialect=dialect)
-    _validate_expression_variables(spec["input"], dialect, variables)
+    requires_document = _validate_expression_variables(
+        spec["input"], dialect, variables
+    )
     if operator == "$reduce":
-        _validate_expression_variables(spec["initialValue"], dialect, variables)
+        requires_document |= _validate_expression_variables(
+            spec["initialValue"], dialect, variables
+        )
     if operator == "$filter" and "limit" in spec:
-        _validate_expression_variables(spec["limit"], dialect, variables)
+        requires_document |= _validate_expression_variables(
+            spec["limit"], dialect, variables
+        )
     body = spec["cond"] if operator == "$filter" else spec["in"]
-    _validate_expression_variables(
+    return requires_document | _validate_expression_variables(
         body,
         dialect,
         variables
@@ -324,44 +350,72 @@ def _validate_variable_reference(expression, variables, dialect):
         _validate_variable_path(expression, path)
 
 
-def _validate_expression_variables(expression, dialect, variables):
-    if isinstance(expression, str):
-        _validate_variable_reference(expression, variables, dialect)
-        return
+def _validate_expression_values(values, dialect, variables):
+    requires_document = False
+    for value in values:
+        requires_document |= _validate_expression_variables(value, dialect, variables)
+    return requires_document
+
+
+def _expression_scalar_requires_document(expression, dialect, variables):
+    if not isinstance(expression, str):
+        return False
+    _validate_variable_reference(expression, variables, dialect)
+    if expression.startswith("$$"):
+        name, _path = _parse_variable_reference(expression)
+        return name in {"ROOT", "CURRENT"} and name not in variables
+    return expression.startswith("$") and "CURRENT" not in variables
+
+
+def _validate_expression_variables(expression, dialect, variables):  # noqa: PLR0911 - distinct expression grammars and lexical scopes
+    if not isinstance(expression, (dict, list)):
+        return _expression_scalar_requires_document(expression, dialect, variables)
     if isinstance(expression, list):
-        for item in expression:
-            _validate_expression_variables(item, dialect, variables)
-        return
-    if not isinstance(expression, dict):
-        return
+        return _validate_expression_values(expression, dialect, variables)
     if len(expression) == 1:
         operator, spec = next(iter(expression.items()))
         if (
             operator in {"$literal", "$const"}
             or get_registered_aggregation_expression_operator(operator) is not None
         ):
-            return
+            return False
+        if operator in {"$getField", "$setField", "$unsetField"}:
+            dependencies = []
+            parse_field_expression(
+                operator,
+                spec,
+                parse_operand=lambda operand: dependencies.append(
+                    prepare_expression(
+                        operand,
+                        dialect=dialect,
+                        variables=variables,
+                        fold_constants=False,
+                    )
+                ),
+            )
+            return any(dependencies)
         if operator in {"$map", "$filter", "$reduce"}:
-            _validate_array_expression_scope(operator, spec, dialect, variables)
-            return
+            return _validate_array_expression_scope(operator, spec, dialect, variables)
         if (
             operator == "$let"
             and isinstance(spec, dict)
             and isinstance(spec.get("vars"), dict)
         ):
-            for value in spec["vars"].values():
-                _validate_expression_variables(value, dialect, variables)
-            _validate_expression_variables(
+            requires_document = _validate_expression_values(
+                spec["vars"].values(), dialect, variables
+            )
+            return requires_document | _validate_expression_variables(
                 spec.get("in"), dialect, variables | frozenset(spec["vars"])
             )
-            return
-    for value in expression.values():
-        _validate_expression_variables(value, dialect, variables)
+    requires_document = _validate_expression_values(
+        expression.values(), dialect, variables
+    )
     if "$convert" in expression and dialect.behavior_flag(
         "uses_extended_conversions", default=False
     ):
         validate_convert_spec(expression["$convert"])
     _validate_static_trim_expression(expression, dialect)
+    return requires_document
 
 
 def _validate_static_trim_expression(expression, dialect):
@@ -427,6 +481,29 @@ def _validate_stage_expression_variables(operator, spec, dialect, variables):
         _validate_expression_variables(spec.get("output", {}), dialect, variables)
 
 
+def _validate_stage_expression_roots(operator, spec, dialect):
+    if operator != "$project" or not isinstance(spec, dict):
+        return
+    for expression in spec.values():
+        if not isinstance(expression, dict) or len(expression) != 1:
+            continue
+        name = next(iter(expression))
+        if (
+            not isinstance(name, str)
+            or not name.startswith("$")
+            or name in {"$const", "$meta"}
+            or dialect.supports_aggregation_expression_operator(name)
+            or get_registered_aggregation_expression_operator(name) is not None
+        ):
+            continue
+        message, code = (
+            ("Cannot use $elemMatch in this context", 168)
+            if name == "$elemMatch"
+            else (f"Unknown expression {name}", 31325)
+        )
+        raise server_error(message, code=code, reason="expression_unknown")
+
+
 def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
     _validate_placement(operator, address, context.scopes)
     if operator in {"$lookup", "$unionWith"}:
@@ -439,6 +516,11 @@ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
         parse_information_spec(operator, spec)
     elif operator == "$group":
         _validate_empty_group_fields(spec, dialect=dialect)
+        if isinstance(spec, dict):
+            _prepare_accumulator_specs(
+                {name: value for name, value in spec.items() if name != "_id"},
+                dialect=dialect,
+            )
     elif operator == "$densify":
         _validate_densify_partition_paths(spec, dialect=dialect)
         if isinstance(spec, dict):
@@ -458,6 +540,7 @@ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
     if dialect.behavior_flag(
         "validates_aggregation_syntax_early", default=True
     ) and operator in {"$set", "$addFields", "$project"}:
+        _validate_stage_expression_roots(operator, spec, dialect)
         prepare_expression(
             spec,
             dialect=dialect,
@@ -502,7 +585,7 @@ def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope bound
         collection,
         scopes,
         path,
-        _aggregation_stage_registry_version(),
+        _aggregation_registry_version(),
         frozenset(variables),
     )
     relocating = previous is not None and (
@@ -517,6 +600,10 @@ def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope bound
     ):
         return pipeline
     stages, addresses, requests = [], [], []
+    average_prefix_compatible = (
+        dialect.server_version in {"8.0", "9.0"}
+        and not ({"$facet", "$lookup"} & set(scopes))
+    )
     for index, stage in enumerate(pipeline):
         operator, raw_spec = _require_stage(stage)
         spec = _copy_spec(raw_spec)
@@ -531,16 +618,46 @@ def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope bound
                     operator, spec, dialect=dialect, address=address, context=context
                 )
             except OperationFailure as error:
-                if error.code != _UNDEFINED_VARIABLE_CODE:
+                diagnostic = getattr(error, "_server_diagnostic", None)
+                parsing = (
+                    diagnostic is not None
+                    and diagnostic.reason
+                    in {
+                        "expression_unknown",
+                        "expression_arity",
+                        "expression_structure",
+                    }
+                    and operator in {"$project", "$set", "$addFields"}
+                )
+                if (
+                    error.code != _UNDEFINED_VARIABLE_CODE or operator == "$match"
+                ) and not parsing:
                     raise
                 message = f"Invalid {operator} :: caused by :: {error_message(error)}"
+                if parsing:
+                    raise server_error(
+                        message, code=error.code, reason="expression_parse"
+                    ) from error
                 details = command_error_document(error)
                 details["errmsg"] = message
                 raise OperationFailure(
                     message, code=error.code, details=details
                 ) from error
         requests.extend(_discover_stage_requests(operator, spec, collection))
-        stages.append(PreparedStage(operator, spec, address, context))
+        prepared_stage = PreparedStage(operator, spec, address, context)
+        if operator == "$group":
+            prepared_stage.group_average_uses_sum = (
+                stage.group_average_uses_sum
+                if isinstance(stage, PreparedStage) and not relocating
+                and stage.context == context
+                else average_prefix_compatible
+                and group_average_uses_sum(spec, dialect=dialect)
+            )
+        average_prefix_compatible = (
+            average_prefix_compatible
+            and group_average_prefix_compatible(operator, spec, dialect=dialect)
+        )
+        stages.append(prepared_stage)
         addresses.append(address)
     return PreparedPipeline(
         stages, addresses, requests, dialect=dialect, context=context
@@ -567,20 +684,12 @@ def _validate_documents_namespace(
 _EXPRESSION_ARITIES = {
     **dict.fromkeys(
         (
-            "$eq",
-            "$ne",
-            "$gt",
-            "$gte",
-            "$lt",
-            "$lte",
             "$divide",
             "$mod",
             "$subtract",
             "$pow",
             "$log",
-            "$arrayElemAt",
             "$split",
-            "$in",
         ),
         (2, 2),
     ),
@@ -593,7 +702,6 @@ _EXPRESSION_ARITIES = {
             "$sqrt",
             "$floor",
             "$ceil",
-            "$size",
             "$toInt",
         ),
         (1, 1),
@@ -601,6 +709,9 @@ _EXPRESSION_ARITIES = {
     "$round": (1, 2),
     "$trunc": (1, 2),
     "$range": (2, 3),
+    **SCALAR_EXPRESSION_ARGUMENTS,
+    **CONTROL_EXPRESSION_ARGUMENTS,
+    **ARRAY_ACCESS_EXPRESSION_ARGUMENTS,
 }
 _PURE_CONSTANT_OPERATORS = frozenset(_EXPRESSION_ARITIES) - {"$range"} | {
     "$regexMatch",
@@ -639,11 +750,33 @@ def prepare_expression(
     expression, *, dialect, variables=(), fold_constants=False, document_code=40181
 ):
     """Validate expression syntax and lexical scope without requiring a row."""
+    requires_document = False
     if variables is not None:
-        _validate_expression_variables(expression, dialect, frozenset(variables))
-    _prepare_expression_structure(
-        expression, dialect, fold_constants=fold_constants, document_code=document_code
-    )
+        requires_document = _validate_expression_variables(
+            expression, dialect, frozenset(variables)
+        )
+    try:
+        _prepare_expression_structure(
+            expression,
+            dialect,
+            fold_constants=fold_constants,
+            document_code=document_code,
+        )
+    except OperationFailure as error:
+        diagnostic = getattr(error, "_server_diagnostic", None)
+        if diagnostic is None or diagnostic.reason != "expression_type":
+            raise
+        prefix = (
+            "Failed to optimize expression :: caused by :: "
+            if document_code == _MATCH_EXPRESSION_DOCUMENT_CODE
+            else "Failed to optimize pipeline :: caused by :: "
+        )
+        raise server_error(
+            prefix + diagnostic.message,
+            code=diagnostic.code,
+            reason="expression_optimization",
+        ) from error
+    return requires_document
 
 
 def _prepare_expression_structure(
@@ -681,16 +814,24 @@ def _prepare_expression_structure(
         )
     ):
         message = f"Unrecognized expression '{operator}'"
-        raise server_error(message, code=168)
-    if _prepare_field_bound_expression(expression, operator, dialect):
-        return
+        raise server_error(message, code=168, reason="expression_unknown")
     if operator in _EXPRESSION_ARITIES:
-        operand = expression[operator]
-        args = operand if isinstance(operand, list) else [operand]
-        low, high = _EXPRESSION_ARITIES[operator]
-        if not low <= len(args) <= high:
-            message = f"{operator} has the wrong number of arguments"
-            raise server_error(message, code=16020)
+        _require_expression_args(
+            operator,
+            expression[operator],
+            min_args=_EXPRESSION_ARITIES[operator][0],
+            max_args=_EXPRESSION_ARITIES[operator][1],
+        )
+    if operator in {"$getField", "$setField", "$unsetField"}:
+        parse_field_expression(
+            operator,
+            expression[operator],
+            parse_operand=lambda operand: _prepare_expression_structure(
+                operand, dialect, fold_constants=False, document_code=document_code
+            ),
+        )
+        prepare_field_expression(operator, expression[operator], dialect=dialect)
+        return
     for value in expression.values():
         _prepare_expression_structure(
             value, dialect, fold_constants=fold_constants, document_code=document_code
@@ -703,31 +844,85 @@ def _prepare_expression_structure(
         evaluate_expression({}, expression, dialect=dialect)
 
 
-def _prepare_field_bound_expression(expression, operator, dialect):
-    """Local query-expression extensions reuse the query grammar."""
-    if operator in {"$and", "$or"}:
-        from mongoeco.core.aggregation.control_object_expressions import (  # noqa: PLC0415 - expression/query cycle
-            _field_bound_match_clauses,
-        )
-
-        clauses = _field_bound_match_clauses(expression[operator])
-        if clauses is not None:
-            from mongoeco.core.query_plan import (  # noqa: PLC0415 - query/expression cycle
-                compile_filter,
+def normalize_command_let(bindings):
+    """Check command-variable names without interpreting evaluated internal frames."""
+    if bindings is None or isinstance(bindings, ExpressionExecutionContext):
+        return bindings
+    if not isinstance(bindings, dict):
+        message = "let must be a dict"
+        raise TypeError(message)
+    for name in bindings:
+        if name in {"NOW", "CLUSTER_TIME"}:
+            message = f"Attempt to set internal constant: {name}"
+            raise server_error(message, code=4738901)
+        if not isinstance(name, str) or not name:
+            reason = "empty variable names are not allowed"
+        elif name != "CURRENT" and not ("a" <= name[0] <= "z" or not name[0].isascii()):
+            reason = (
+                f"'{name}' starts with an invalid character for a user variable name"
             )
+        else:
+            invalid = next(
+                (
+                    char
+                    for char in name[1:]
+                    if char.isascii() and not (char.isalnum() or char == "_")
+                ),
+                None,
+            )
+            if invalid is None:
+                continue
+            reason = (
+                f"'{name}' contains an invalid character for a variable name: "
+                f"'{invalid}'"
+            )
+        raise server_error("Invalid 'let' parameter :: caused by :: " + reason, code=9)
+    return DocumentCodec.to_internal(bindings)
 
-            compile_filter({operator: clauses}, dialect=dialect)
-            return True
-    if operator in {"$nin", "$all", "$exists", "$elemMatch"}:
-        from mongoeco.core.aggregation.control_object_expressions import (  # noqa: PLC0415 - query/expression cycle
-            _field_bound_query_filter,
-        )
-        from mongoeco.core.query_plan import (  # noqa: PLC0415 - query/expression cycle
-            compile_filter,
-        )
 
-        selector = _field_bound_query_filter(operator, expression[operator])
-        if selector is not None:
-            compile_filter(selector, dialect=dialect)
-            return True
-    return False
+def _command_let_expressions(bindings, *, variables, dialect):
+    for name, expression in bindings.items():
+        if prepare_expression(expression, dialect=dialect, variables=variables):
+            message = (
+                "Command let Expression tried to access a field, "
+                "but this is not allowed because"
+                "Command let Expressions run before the query examines any documents."
+            )
+            raise server_error(message, code=4890500)
+        yield name, expression
+        variables = variables | {name}
+
+
+def validate_command_let_dependencies(bindings, *, dialect):
+    if bindings is None or isinstance(bindings, ExpressionExecutionContext):
+        return
+    for _name, _expression in _command_let_expressions(
+        bindings, variables=frozenset(), dialect=dialect
+    ):
+        pass
+
+
+def prepare_command_let(bindings, *, context, dialect, write=False):
+    """Evaluate a closed command program once; overlays remain literal values."""
+    bindings = normalize_command_let(bindings)
+    if isinstance(bindings, ExpressionExecutionContext):
+        return bindings
+    if not bindings:
+        return context
+    result = context
+    for name, expression in _command_let_expressions(
+        bindings, variables=frozenset(context.bindings), dialect=dialect
+    ):
+        frame = environment_for_document({}, result)
+        if not write and not dialect.behavior_flag(
+            "supports_now_in_read_command_let", default=True
+        ):
+            frame.unavailable_system_variables = frozenset({"NOW"})
+        value = evaluate_expression({}, expression, frame, dialect=dialect)
+        result = result.with_bindings({name: value})
+    return ExpressionExecutionContext(
+        result.bindings,
+        now=context.now,
+        command_let=bindings,
+        command_let_base=context.bindings,
+    )

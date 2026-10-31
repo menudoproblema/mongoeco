@@ -22,6 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from scripts.run_mongodb_real_differential import inspect_server_runtime  # noqa: E402
 
 from tests.differential.cases import REAL_PARITY_CASES  # noqa: E402
+from tests.differential.semantic_corpora import SEMANTIC_CORPORA  # noqa: E402
 from tests.differential.index_guarantee_cases import INDEX_GUARANTEE_CASES  # noqa: E402
 from tests.differential.review_improvement_cases import REVIEW_IMPROVEMENT_CASES  # noqa: E402
 from tests.differential.semantic_guarantee_cases import SEMANTIC_GUARANTEE_CASES  # noqa: E402
@@ -93,6 +94,15 @@ def _capture_expectation(value):
     return value
 
 
+def _encode_observation(observation, *, encoding):
+    if encoding == "canonical-json":
+        return json.dumps(observation, ensure_ascii=False)
+    if encoding == "bson":
+        return observation
+    message = f"unknown capture observation encoding: {encoding}"
+    raise ValueError(message)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -107,6 +117,7 @@ def main() -> None:
             "version-deltas",
             "review-improvements",
             "semantic-guarantees",
+            *(corpus.case_set for corpus in SEMANTIC_CORPORA.values()),
             "index-guarantees",
         ),
         default="parity",
@@ -141,8 +152,19 @@ def main() -> None:
         "semantic-guarantees": (SEMANTIC_GUARANTEE_CASES, "semantic_guarantee_cases"),
         "index-guarantees": (INDEX_GUARANTEE_CASES, "index_guarantee_cases"),
     }
+    for corpus in SEMANTIC_CORPORA.values():
+        names = {name for name, _ in corpus.cases}
+        corpora[corpus.case_set] = (
+            tuple(case for case in REAL_PARITY_CASES if case.name in names),
+            corpus.module,
+        )
     selected_cases, corpus_module = corpora[args.case_set]
     corpus_path = f"tests/differential/{corpus_module}.py"
+    registration = next(
+        (corpus for corpus in SEMANTIC_CORPORA.values()
+         if corpus.case_set == args.case_set),
+        None,
+    )
 
     target_version = tuple(int(part) for part in target.split("."))
     selected_cases = tuple(
@@ -159,7 +181,12 @@ def main() -> None:
             try:
                 for document in copy.deepcopy(case.seed_documents):
                     collection.insert_one(document)
-                cases[case.name] = _to_jsonable(case.action(collection))
+                cases[case.name] = _encode_observation(
+                    _to_jsonable(case.action(collection)),
+                    encoding=(
+                        registration.observation_encoding if registration else "bson"
+                    ),
+                )
             finally:
                 client.drop_database(database_name)
 
@@ -176,6 +203,8 @@ def main() -> None:
         },
         "case_manifests": [case.to_manifest() for case in selected_cases],
     }
+    if registration is not None and registration.observation_encoding != "bson":
+        payload["corpus"]["observationEncoding"] = registration.observation_encoding
     output_path.write_text(
         dumps(
             payload,

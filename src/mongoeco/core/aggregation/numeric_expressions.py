@@ -10,22 +10,31 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.numeric_accumulation import NumericSum
 from mongoeco.core.bson_scalars import (
+    _DECIMAL128_ARITHMETIC_CONTEXT,
+    INT32_MAX,
+    INT32_MIN,
     INT64_MIN,
     BsonDecimal128,
     BsonDouble,
     BsonInt32,
     BsonInt64,
+    _numeric_to_decimal,
+    _wrap_float_result,
     bson_add,
     bson_bitwise,
     bson_divide,
     bson_mod,
     bson_multiply,
+    bson_numeric_alias,
     bson_rewrap_numeric,
     bson_subtract,
     is_bson_numeric,
     unwrap_bson_numeric,
+    wrap_bson_numeric,
 )
+from mongoeco.core.decimal_math import decimal_exp, decimal_log, decimal_pow
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, UndefinedType
@@ -90,10 +99,10 @@ def evaluate_numeric_expression(
         )
         if not values:
             return 0 if operator == "$sum" else None
-        total: object = 0
+        total = NumericSum()
         for value in values:
-            total = bson_add(total, value)
-        return total if operator == "$sum" else bson_divide(total, len(values))
+            total.add(value)
+        return total.sum() if operator == "$sum" else total.average(len(values))
 
     if operator in {"$add", "$multiply"}:
         args = require_expression_args(operator, spec, 2, None)
@@ -119,10 +128,18 @@ def evaluate_numeric_expression(
         result = values[0]
         for value in values[1:]:
             result = (
-                bson_add(result, value)
+                bson_add(result, value, promote_overflow=True)
                 if operator == "$add"
-                else bson_multiply(result, value)
+                else bson_multiply(result, value, promote_overflow=True)
             )
+        # N-ary arithmetic keeps an int64 working total, but int32-only inputs
+        # finalize as int32 when the final value fits, unlike a binary reduction.
+        if (
+            isinstance(result, BsonInt64)
+            and INT32_MIN <= result.value <= INT32_MAX
+            and all(bson_numeric_alias(value) == "int" for value in values)
+        ):
+            return BsonInt32(result.value)
         return result
 
     if operator in {"$subtract", "$divide", "$mod"}:
@@ -141,7 +158,9 @@ def evaluate_numeric_expression(
             return bson_divide(left, right)
         if unwrap_bson_numeric(right) == 0:
             raise OperationFailure("can't $mod by zero", code=16610)
-        return bson_mod(left, right)
+        return bson_mod(
+            left, right, integral_double_divisor=dialect.server_version == "7.0"
+        )
 
     if operator in {"$bitAnd", "$bitOr", "$bitXor"}:
         args = require_expression_args(operator, spec, 2, None)
@@ -177,6 +196,8 @@ def evaluate_numeric_expression(
         if raw_value is missing_sentinel or raw_value is None:
             return None
         value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
+        if isinstance(value, decimal.Decimal):
+            return _decimal_unary(operator, value)
         if operator == "$abs":
             if (
                 isinstance(value, int)
@@ -193,13 +214,13 @@ def evaluate_numeric_expression(
                 result = math.exp(value)
             except OverflowError:
                 result = math.inf
-            return bson_rewrap_numeric(result, raw_value)
+            return _wrap_float_result(result, raw_value)
         if operator == "$sqrt":
             if value < 0:
                 raise OperationFailure(
                     "$sqrt cannot operate on negative numbers", code=28714
                 )
-            return bson_rewrap_numeric(math.sqrt(value), raw_value)
+            return _wrap_float_result(math.sqrt(value), raw_value)
         if value <= 0:
             message = f"{operator} requires a positive numeric argument"
             raise server_error(
@@ -207,7 +228,7 @@ def evaluate_numeric_expression(
                 code=28766 if operator == "$ln" else 28761,
             )
         result = math.log(value) if operator == "$ln" else math.log10(value)
-        return bson_rewrap_numeric(result, raw_value)
+        return _wrap_float_result(result, raw_value)
 
     if operator in {"$stdDevPop", "$stdDevSamp"}:
         values = _stddev_expression_values(
@@ -249,10 +270,19 @@ def evaluate_numeric_expression(
             return None
         left = unwrap_bson_numeric(_require_numeric(operator, left_raw, position=0))
         right = unwrap_bson_numeric(_require_numeric(operator, right_raw, position=1))
+        if isinstance(left, decimal.Decimal) or isinstance(right, decimal.Decimal):
+            return _decimal_binary(operator, left, right, dialect=dialect)
         if operator == "$pow":
             if left == 0 and right < 0:
                 message = "$pow cannot raise zero to a negative exponent"
                 raise server_error(message, code=28764)
+            if (
+                isinstance(left, int) and isinstance(right, int)
+                and 0 <= right <= 63
+            ):
+                exact = pow(left, right)
+                if INT64_MIN <= exact <= (1 << 63) - 1:
+                    return bson_rewrap_numeric(exact, left_raw, right_raw)
             try:
                 result = math.pow(left, right)
             except ValueError:
@@ -298,6 +328,16 @@ def evaluate_numeric_expression(
         if place_raw is None:
             return None
         place = _normalize_numeric_place(operator, place_raw)
+        if isinstance(value, decimal.Decimal):
+            with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+                if not value.is_finite():
+                    return BsonDecimal128(value)
+                context.rounding = (
+                    decimal.ROUND_HALF_EVEN
+                    if operator == "$round" else decimal.ROUND_DOWN
+                )
+                quantum = decimal.Decimal((0, (1,), max(-place, value.adjusted() - 33)))
+                return BsonDecimal128(context.quantize(value, quantum))
         if math.isnan(value) or math.isinf(value):
             return value
         result = (
@@ -315,6 +355,13 @@ def evaluate_numeric_expression(
         if raw_value is None:
             return None
         value = unwrap_bson_numeric(_require_numeric(operator, raw_value))
+        if isinstance(value, decimal.Decimal):
+            with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+                context.rounding = (
+                    decimal.ROUND_FLOOR
+                    if operator == "$floor" else decimal.ROUND_CEILING
+                )
+                return BsonDecimal128(context.quantize(value, decimal.Decimal(1)))
         if math.isnan(value) or math.isinf(value):
             return value
         integer = int(value)
@@ -326,10 +373,12 @@ def evaluate_numeric_expression(
 
     if operator == "$range":
         args = require_expression_args(operator, spec, 2, 3)
-        start = evaluate_expression(document, args[0], variables)
-        end = evaluate_expression(document, args[1], variables)
+        start_expression, end_expression, *step_expression = args
+        start = evaluate_expression(document, start_expression, variables)
+        end = evaluate_expression(document, end_expression, variables)
         step = (
-            evaluate_expression(document, args[2], variables) if len(args) == 3 else 1
+            evaluate_expression(document, step_expression[0], variables)
+            if step_expression else 1
         )
         for position, value in enumerate((start, end, step)):
             if not isinstance(value, int) or isinstance(value, bool):
@@ -346,9 +395,53 @@ def evaluate_numeric_expression(
     raise OperationFailure(f"Unsupported numeric expression operator: {operator}")
 
 
+def _decimal_unary(operator: str, value: decimal.Decimal) -> object:
+    with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+        if operator == "$abs":
+            return BsonDecimal128(value.copy_abs())
+        if operator == "$exp":
+            return BsonDecimal128(decimal_exp(value))
+        if operator == "$sqrt":
+            if not value.is_nan() and value < 0:
+                message = "$sqrt cannot operate on negative numbers"
+                raise server_error(message, code=28714)
+            return BsonDecimal128(context.sqrt(value))
+        if value.is_nan():
+            return math.nan
+        if value <= 0:
+            message = f"{operator} requires a positive numeric argument"
+            raise server_error(message, code=28766 if operator == "$ln" else 28761)
+        return BsonDecimal128(
+            decimal_log(value, base=10 if operator == "$log10" else 0)
+        )
+
+
+def _decimal_binary(operator, left, right, *, dialect):
+    with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+        left = _numeric_to_decimal(left)
+        right = _numeric_to_decimal(right)
+        if operator == "$pow":
+            if not right.is_nan() and left.is_zero() and right < 0:
+                message = "$pow cannot raise zero to a negative exponent"
+                raise server_error(message, code=28764)
+            return BsonDecimal128(decimal_pow(left, right))
+        if left.is_nan() or right.is_nan():
+            return math.nan
+        if left <= 0 or right <= 0 or right == 1:
+            message = "$log requires a positive argument and base where base != 1"
+            raise server_error(message, code=28758 if left <= 0 else 28759)
+        result = (
+            decimal_log(left, base=int(right))
+            if right in (2, 10) and dialect.server_version in {"7.0", "8.0"}
+            else context.divide(decimal_log(left), decimal_log(right))
+        )
+        return BsonDecimal128(result)
+
+
 def _require_numeric(operator: str, value: object, *, position=0) -> object:
     if not isinstance(value, bool) and is_bson_numeric(value):
-        return value
+        wrapped = wrap_bson_numeric(value)
+        return wrapped if isinstance(wrapped, BsonDecimal128) else value
     codes = {
         "$divide": 14,
         "$add": 14,
@@ -559,27 +652,27 @@ def _normalize_numeric_place(operator: str, place: Any) -> int:
     return place
 
 
-def _round_numeric(value: float, place: int) -> int | float:
+def _quantize_numeric(value, place, rounding):
     unwrapped = unwrap_bson_numeric(value)
     if isinstance(unwrapped, int) and place >= 0:
         return unwrapped
-    quantizer = decimal.Decimal(f"1e{-place}")
-    rounded = decimal.Decimal(str(unwrapped)).quantize(
-        quantizer, rounding=decimal.ROUND_HALF_EVEN
-    )
-    return int(rounded) if place <= 0 else float(rounded)
+    with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
+        context.rounding = rounding
+        decimal_value = (
+            context.create_decimal_from_float(unwrapped)
+            if isinstance(unwrapped, float) else decimal.Decimal(unwrapped)
+        )
+        quantum = decimal.Decimal((0, (1,), max(-place, decimal_value.adjusted() - 33)))
+        result = context.quantize(decimal_value, quantum)
+        return int(result) if isinstance(unwrapped, int) else float(result)
+
+
+def _round_numeric(value: float, place: int) -> int | float:
+    return _quantize_numeric(value, place, decimal.ROUND_HALF_EVEN)
 
 
 def _trunc_numeric(value: float, place: int) -> int | float:
-    unwrapped = unwrap_bson_numeric(value)
-    if isinstance(unwrapped, int) and place >= 0:
-        return unwrapped
-    factor = 10**place if place >= 0 else 10 ** (-place)
-    if place >= 0:
-        truncated = math.trunc(unwrapped * factor) / factor
-        return int(truncated) if place == 0 else truncated
-    truncated = math.trunc(unwrapped / factor) * factor
-    return int(truncated)
+    return _quantize_numeric(value, place, decimal.ROUND_DOWN)
 
 
 def _require_integral_numeric(operator: str, value: Any) -> int:
@@ -611,5 +704,6 @@ def _subtract_values(left: Any, right: Any) -> Any:
             "$subtract only supports number-number, date-date, or date-number"
         )
     return bson_subtract(
-        _require_numeric("$subtract", left), _require_numeric("$subtract", right)
+        _require_numeric("$subtract", left), _require_numeric("$subtract", right),
+        promote_overflow=True,
     )

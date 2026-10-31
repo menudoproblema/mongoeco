@@ -81,11 +81,100 @@ además de las operaciones de escritura y `aggregate` que ya las declaraban. No
 se declara `let` en `distinct`; aun así, `distinct` captura su propio `$$NOW`.
 Una variable no definida falla con `OperationFailure` código `17276`.
 
-`$$REMOVE.path` conserva el estado interno *missing* únicamente durante el
-cálculo de campos de `$project`, `$addFields` y `$set`, donde omite el campo.
-En expresiones de valor se normaliza a `null`, por lo que mantiene la
-veracidad, comparación y persistencia de un valor ausente. El centinela
-interno de `$$REMOVE` tampoco puede escapar a `$ifNull` ni a acumuladores.
+`let` de comando evalúa sus expresiones en orden antes de examinar documentos;
+un binding posterior puede usar uno anterior. Rechaza acceso al documento incluso
+sin filas o en ramas inactivas, y conserva los valores de `$literal`. Los bindings
+internos ya evaluados no se reinterpretan. En bulk, el rechazo respeta la frontera
+de cada sentencia y sus efectos previos; un lote de solo inserts ignora let.
+Raw `count` y `distinct` rechazan la opción con 40415; `count_documents` sí la
+admite mediante aggregate. En lecturas, `let: {x: '$$NOW'}` funciona en 7 y falla
+con 51144 en 8/9; las escrituras lo admiten en los tres dialectos. Esta diferencia
+no afecta a `$$NOW` en el cuerpo. Las
+[capturas y límites de H30](docs/evidence/semantic-refactor/command-let-source-notes.md)
+separan también el contrato de clone directo de la omisión de let observada en
+PyMongo 4.19. Las fases completas de cursor y otros perfiles siguen pendientes.
+
+La [corrección de ausencia](docs/semantic-parity-implementation.md) está en curso;
+no declara todavía paridad de todos los consumidores. En los testigos ya
+validados, los campos ausentes y `$$REMOVE` conservan *missing* durante
+la evaluación, incluidas referencias por ROOT/CURRENT, variables y expresiones
+compuestas. `$type` devuelve `"missing"`; comparar un ausente con null explícito
+no da igualdad. Las posiciones de arrays materializan ausencia como null; los
+campos de objetos la omiten. Los operadores que propagan null convierten la
+ausencia en esa frontera, sin destruirla antes en las referencias. El estado
+interno tiene copia estable y no puede salir como objeto Python en resultados.
+
+La comparación numérica conserva el valor exacto del double: double `0.1` y
+Decimal128 `0.1` son distintos; double `0.5` y Decimal128 `0.5` son iguales.
+Comparación y claves semánticas de igualdad comparten esta regla. Los testigos
+nativos cubren group, lookup e índices unique; el cierre ampliado de lectores
+indexados y sus límites sigue en el
+[registro de implementación](docs/semantic-parity-implementation.md).
+
+La corrección Decimal128 está verificada en testigos de suma, resta, producto,
+división, resto y promedio, incluidas proyección, group, ventanas y escritura por
+pipeline. Usa contextos propios y conserva Decimal128 hasta la salida pública.
+Las expresiones aritméticas y los acumuladores mantienen conversiones distintas
+desde double; Decimal128 cero es falso y `$toBool` lo admite. Los límites incluyen
+subnormales, overflow decimal, infinitos y NaN. La revisión de funciones numéricas
+avanzadas tiene capturas nativas de abs, raíces, exponenciales, logaritmos,
+potencias y cuantización, incluidos límites y operandos generados. Los pasos
+intermedios de redondeo y el delta de logaritmos de bases 2/10 entre dialectos
+7/8 y 9 se conservan. La suma y el promedio comparten un estado compensado de
+memoria constante y acumulan decimales por separado. Los testigos cubren
+cancelación, promociones, arrays ignorados por group y ventanas con eliminación
+de miembros. La preparación conserva la finalización distinta de promedios
+int64 entre grupos SBE y clásicos, incluido el delta de prefijos entre 8 y 9.
+Las capturas cubren 31 contextos y la regla se conserva al dividir el pipeline,
+usarlo con provenance o serializar el estado de grupo por spill. El cierre de
+H26 es focal; H24 y los consumidores pendientes siguen en el registro.
+No se declara paridad completa de toda la familia numérica.
+
+Los testigos de H27 verifican promoción int64 a double en expresiones de
+agregación y rechazo código 2 en `$inc`/`$mul`, con atomicidad por documento y
+efectos parciales de update-many/bulk. La división no decimal y las funciones
+exp/sqrt/ln/log10 devuelven double también con entradas int64. La conversión
+aritmética double a decimal conserva quince cifras, incluidos ceros finales.
+El resto double conserva cero con signo y valores finitos con divisor infinito;
+MongoDB 7 conserva su regla distinta para divisor double integral sobre entero.
+Asignación y replacement observan tipo/ancho, cohorte y cero con signo; los
+modificadores aritméticos aplican su regla propia de no-op y NaN. Esta cobertura
+no cierra paths/broadcast, gramática ni toda la frontera BSON pública.
+
+La gramática de expresión rechaza `$exists`, `$elemMatch`, `$all` y `$nin`,
+también sin filas y dentro de subpipelines. Sus formas de consulta siguen
+funcionando fuera de `$expr`; no se reinterpretan como expresiones. Las formas
+field-bound de `$and`/`$or` deben expresarse mediante operadores de agregación
+válidos. Los objetos literales conservan su veracidad nativa. `$not` admite
+argumento directo o array unario; `$and`/`$or` admiten argumento escalar. `$last`
+y `$first` sobre arrays comparten las reglas de ausencia/null, array vacío y
+rechazo de escalares; `$arrayElemAt` admite índices numéricos integrales que
+quepan en int32, incluidos double/decimal/int64.
+
+Las familias migradas validan aridad antes de leer filas y conservan las
+diferencias nativas entre parseo, optimización de constantes y evaluación.
+`$in` con segundo argumento null/ausente o no array falla con código 40081.
+Los updates por pipeline no optimizan indiscriminadamente constantes antes de
+saber si hay documentos que actualizar. El alcance y los pendientes de
+validación restante y `let` de comando están en el registro de B04; no se
+declara completada toda la gramática ni el transporte de errores de B08.
+
+La forma objeto de getField exige `field` e `input`; su forma abreviada usa
+CURRENT y conserva la ausencia cuando el input no contiene el campo o no es un
+objeto. El nombre debe ser constante en 7 y puede ser dinámico en 8/9; los
+nombres no string se rechazan en su fase nativa. SetField/unsetField validan
+estructura y nombre constante incluso sin filas. Los acumuladores unarios
+migrados rechazan arrays sintácticos en group/bucket (40237); un array literal
+se expresa con `$literal`. Las ventanas conservan su contrato distinto.
+Las claves numéricas de igualdad también tienen codificación canónica: spill
+no separa valores iguales por cero con signo o escala decimal. Esto no cambia
+la identidad física BSON ni las reglas de no-op de escritura.
+
+El orden BSON de documentos compara, para cada posición, el tipo del valor,
+el nombre del campo y después su valor recursivo. Conserva el orden de inserción
+de claves; la collation modifica valores de texto, no nombres de campos. La
+misma regla sirve a expresiones, ordenación, filtros e índices parciales, sin
+confundir las marcas internas de ownership con tipos BSON distintos.
 
 `$currentDate` conserva su evaluación por documento y su contador de
 `timestamp`; las fechas de tipo `date` se truncan a milisegundos para respetar
@@ -417,9 +506,12 @@ Esto implica:
   el indice parcial exige la misma collation efectiva en la operacion, incluida
   la seleccion explicita mediante `hint`;
 * los indices de igualdad de Memory canonizan la familia numerica con semantica
-  BSON, sin confundir booleanos con numeros. SQLite evita el pushdown cuando un
-  operando o valor decimal no puede conservar esa semantica en SQLite y evalua
-  el predicado con el comparador comun de Python.
+  BSON, sin confundir booleanos con numeros. SQLite compara los valores JSON
+  originales cuando puede conservar su semántica numérica; las claves auxiliares
+  de texto decimal aproximado no se usan como igualdad u orden numérico exactos.
+  Los operandos y campos con números BSON etiquetados (Decimal128/Int64), también
+  dentro de arrays, delegan en el comparador común de Python. Se mantiene el
+  formato de almacenamiento y se verifican archivos creados con 4.11.0.
 
 ## 2. Configuración explícita recomendada
 

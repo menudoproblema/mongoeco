@@ -16,7 +16,6 @@ from mongoeco.core.bson_scalars import (
     BsonInt32,
     BsonInt64,
 )
-from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import (
     _AccumulatorBucket,
@@ -1596,7 +1595,7 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
             [{'_id': None, 'first': None, 'pushed': [None], 'unique': [None]}],
         )
 
-    def test_remove_path_is_null_like_outside_a_field_transformation(self):
+    def test_remove_path_preserves_absence_in_expressions(self):
         self.assertEqual(
             evaluate_expression({}, {'$cond': ['$$REMOVE.path', 'yes', 'no']}),
             'no',
@@ -1613,7 +1612,7 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
             ),
             'no',
         )
-        self.assertTrue(
+        self.assertFalse(
             evaluate_expression({}, {'$eq': ['$$REMOVE.path', None]})
         )
         self.assertEqual(
@@ -1621,7 +1620,7 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
                 [{'_id': '1'}],
                 [{'$match': {'$expr': {'$eq': ['$$REMOVE.path', None]}}}],
             ),
-            [{'_id': '1'}],
+            [],
         )
 
     def test_bucket_rejects_non_strictly_increasing_boundaries(self):
@@ -1703,7 +1702,7 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
         self.assertEqual(result[0]['top_one'], 'first')
         self.assertEqual(result[0]['top_two'], ['first', 'second'])
 
-    def test_compiled_group_matches_slow_path_when_add_operand_is_missing(
+    def test_group_entrypoints_agree_when_add_operand_is_missing(
         self,
     ):
         spec = {
@@ -1716,11 +1715,11 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
         ]
 
         self.assertEqual(
-            CompiledGroup(spec).apply(documents),
+            _apply_group(documents, spec),
             apply_pipeline(documents, [{'$group': spec}]),
         )
 
-    def test_compiled_group_matches_slow_path_for_constant_numeric_sum_literals(
+    def test_group_entrypoints_agree_for_constant_numeric_sum_literals(
         self,
     ):
         documents = [{'kind': 'x'}, {'kind': 'x'}]
@@ -1729,7 +1728,7 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
             with self.subTest(literal=literal):
                 spec = {'_id': '$kind', 'total': {'$sum': literal}}
                 self.assertEqual(
-                    CompiledGroup(spec).apply(documents),
+                    _apply_group(documents, spec),
                     apply_pipeline(documents, [{'$group': spec}]),
                 )
 
@@ -1775,15 +1774,13 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
         self.assertEqual(_resolve_aggregation_field_path([], 'name'), [])
         self.assertEqual(_resolve_aggregation_field_path([{}], 'name'), [])
 
-    def test_pow_expression_returns_double_wrapper_for_integral_bson_inputs(
+    def test_pow_expression_preserves_integer_wrapper_without_overflow(
         self,
     ):
-        from mongoeco.core.bson_scalars import BsonDouble, BsonInt32
-
         result = evaluate_expression(
             {'base': BsonInt32(2), 'exp': BsonInt32(10)},
             {'$pow': ['$base', '$exp']},
         )
 
-        self.assertIsInstance(result, BsonDouble)
-        self.assertEqual(result.value, 1024.0)
+        self.assertIsInstance(result, BsonInt32)
+        self.assertEqual(result.value, 1024)

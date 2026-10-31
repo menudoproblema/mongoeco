@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any
 
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import (
-    _same_value_for_update,
     get_document_value,
+    same_bson_update_value,
     set_document_value,
 )
 from mongoeco.core.query_operators import (
@@ -341,7 +341,7 @@ def apply_pull(
                 for candidate in current
                 if not _pull_candidate_matches(candidate, value, context=context)
             ]
-            if not _same_value_for_update(filtered, current):
+            if not same_bson_update_value(filtered, current):
                 if set_document_value(doc, target.concrete_path, filtered):
                     modified = True
     return modified
@@ -385,7 +385,7 @@ def apply_pull_all(
                     for removal in value
                 )
             ]
-            if not _same_value_for_update(filtered, current):
+            if not same_bson_update_value(filtered, current):
                 if set_document_value(doc, target.concrete_path, filtered):
                     modified = True
     return modified

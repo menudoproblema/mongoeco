@@ -1,6 +1,13 @@
-import math
+import struct
+
 from typing import Any
 
+from mongoeco.core.bson_scalars import (
+    BsonDecimal128,
+    BsonDouble,
+    bson_numeric_alias,
+    wrap_bson_numeric,
+)
 from mongoeco.core.runtime_metadata import (
     RuntimeDocumentState,
 )
@@ -33,27 +40,36 @@ def _path_mapping(value: Any) -> dict[str, Any] | None:
     return None
 
 
-def _same_value_for_update(left: Any, right: Any) -> bool:
-    if type(left) is not type(right):
-        return False
-    if isinstance(left, dict):
-        if list(left.keys()) != list(right.keys()):
+def same_bson_update_value(left: Any, right: Any) -> bool:
+    """BSON identity for assignment, distinct from query/arithmetic equality."""
+    left_kind, right_kind = bson_numeric_alias(left), bson_numeric_alias(right)
+    if left_kind is not None or right_kind is not None:
+        numeric_left, numeric_right = wrap_bson_numeric(left), wrap_bson_numeric(right)
+        if left_kind != right_kind or numeric_left is None or numeric_right is None:
             return False
-        return all(_same_value_for_update(left[key], right[key]) for key in left)
-    if isinstance(left, list):
-        if len(left) != len(right):
-            return False
-        return all(
-            _same_value_for_update(left_item, right_item)
-            for left_item, right_item in zip(left, right)
+        if isinstance(numeric_left, BsonDouble) and isinstance(
+            numeric_right, BsonDouble
+        ):
+            identical = struct.pack("!d", numeric_left.value) == struct.pack(
+                "!d", numeric_right.value
+            )
+        elif isinstance(numeric_left, BsonDecimal128) and isinstance(
+            numeric_right, BsonDecimal128
+        ):
+            identical = numeric_left.value.as_tuple() == numeric_right.value.as_tuple()
+        else:
+            identical = numeric_left.value == numeric_right.value
+        return identical
+    if isinstance(left, dict) and isinstance(right, dict):
+        return list(left.keys()) == list(right.keys()) and all(
+            same_bson_update_value(left[key], right[key]) for key in left
         )
-    if isinstance(left, float):
-        return (
-            math.isnan(left) and math.isnan(right)
-            if isinstance(right, float)
-            else False
+    if isinstance(left, list) and isinstance(right, list):
+        return len(left) == len(right) and all(
+            same_bson_update_value(left_item, right_item)
+            for left_item, right_item in zip(left, right, strict=True)
         )
-    return left == right
+    return type(left) is type(right) and left == right
 
 
 def get_max_array_index() -> int:
@@ -123,7 +139,7 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
             _ensure_array_index_within_limit(index)
             if index >= len(doc):
                 doc.extend([None] * (index - len(doc) + 1))
-            if not _same_value_for_update(doc[index], value):
+            if not same_bson_update_value(doc[index], value):
                 doc[index] = value
                 return True
             return False
@@ -146,7 +162,7 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
         return set_document_value(doc[index], rest, value)
 
     if "." not in path:
-        if path not in doc or not _same_value_for_update(doc[path], value):
+        if path not in doc or not same_bson_update_value(doc[path], value):
             doc[path] = value
             return True
         return False

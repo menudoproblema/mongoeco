@@ -1,0 +1,10 @@
+{
+  "base": "b38ef96764ce4a976883005ade83f82f7b3ef547",
+  "version": "4.11.0",
+  "sha256": "c3de6740b0f168c53630ab40046e88ae276cc13872e88fc06a5b7cf7a4360cde",
+  "corpus": {
+    "path": "tests/differential/semantic_numeric_predicate_cases.py",
+    "sha256": "393eccb2527a52cfa63f6046256f470532c79aee7ced98d5b6c0f24c1b5bb138"
+  },
+  "generator": "docs/evidence/semantic-refactor/create_numeric_index_fixture.py"
+}

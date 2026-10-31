@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.identity import document_matches_root_id_lookup
@@ -17,7 +17,8 @@ from mongoeco.core.query_plan import (
     AndCondition,
     QueryNode,
 )
-from mongoeco.types import Document, IndexKeySpec
+if TYPE_CHECKING:
+    from mongoeco.types import Document, IndexKeySpec
 
 
 def plan_fields(plan: QueryNode) -> set[str]:
@@ -120,14 +121,21 @@ def build_scalar_sort_select_sql(
         return None
     if field_contains_tagged_undefined_in_collection(db_name, coll_name, field):
         return None
-    if field_has_uniform_scalar_sort_type_in_collection(db_name, coll_name, field) is None:
+    sort_type = field_has_uniform_scalar_sort_type_in_collection(db_name, coll_name, field)
+    if sort_type is None:
         return None
 
     order = "ASC" if direction == 1 else "DESC"
     where_fragment = translate_query_plan_with_multikey(db_name, coll_name, plan)
 
     index = find_scalar_sort_index(db_name, coll_name, field)
-    if index is not None and index.get("scalar_physical_name"):
+    # Rounded auxiliary numeric text cannot establish BSON order. The SQL
+    # fallback below orders original JSON numeric values instead.
+    if (
+        sort_type != "number"
+        and index is not None
+        and index.get("scalar_physical_name")
+    ):
         collection_id = lookup_collection_id(db_name, coll_name)
         if collection_id is not None:
             return build_select_statement_with_custom_order(

@@ -272,6 +272,13 @@ class _FailingAsyncAggregationCursorStub(_AsyncAggregationCursorStub):
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        super().setUp()
+        temporary = self.enterContext(
+            tempfile.TemporaryDirectory(prefix="mongoeco-cursor-work-control-")
+        )
+        self.enterContext(patch.object(tempfile, "tempdir", temporary))
+
     def test_remaining_window_consumes_whole_pages_before_partial_page(self):
         window = _RemainingWindow(skip=3, limit=2)
 

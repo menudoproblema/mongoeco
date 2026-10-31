@@ -11,7 +11,6 @@ from mongoeco.compat import MongoDialect
 import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
-from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
 from mongoeco.core.aggregation import (
@@ -1284,7 +1283,9 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, "$$item.name", variables), "Ada")
         self.assertEqual(evaluate_expression(document, "$$item.profile.city", variables), "Madrid")
         self.assertEqual(evaluate_expression(document, "$$ROOT.profile.city", variables), "Sevilla")
-        self.assertIsNone(evaluate_expression(document, "$$item.missing", variables))
+        self.assertIs(
+            evaluate_expression(document, "$$item.missing", variables), _MISSING
+        )
         with self.assertRaisesRegex(OperationFailure, "Use of undefined variable: missing") as raised:
             evaluate_expression(document, "$$missing.name", variables)
         self.assertEqual(raised.exception.code, 17276)
@@ -1586,7 +1587,7 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "Use of undefined variable: missing") as raised:
             evaluate_expression(document, "$$missing")
         self.assertEqual(raised.exception.code, 17276)
-        self.assertIsNone(evaluate_expression(document, "$missing"))
+        self.assertIs(evaluate_expression(document, "$missing"), _MISSING)
         self.assertIsNone(evaluate_expression(document, {"$toString": None}))
         self.assertEqual(
             evaluate_expression(
@@ -1600,37 +1601,38 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertEqual(
             evaluate_expression(
                 {"literal": "$score", "score": 10},
-                {"$getField": {"field": "literal"}},
+                {"$getField": {"field": "literal", "input": "$$CURRENT"}},
             ),
             "$score",
         )
         self.assertEqual(
             evaluate_expression(
                 {"a.b.c": 1, "$price": 2, "x..y": 3},
-                {"$getField": {"field": "a.b.c"}},
+                {"$getField": {"field": "a.b.c", "input": "$$CURRENT"}},
             ),
             1,
         )
         self.assertEqual(
             evaluate_expression(
                 {"a.b.c": 1, "$price": 2, "x..y": 3},
-                {"$getField": {"field": {"$literal": "$price"}}},
+                {"$getField": {"field": {"$literal": "$price"}, "input": "$$CURRENT"}},
             ),
             2,
         )
         self.assertEqual(
             evaluate_expression(
                 {"a.b.c": 1, "$price": 2, "x..y": 3},
-                {"$getField": {"field": "x..y"}},
+                {"$getField": {"field": "x..y", "input": "$$CURRENT"}},
             ),
             3,
         )
-        self.assertIsNone(
+        with self.assertRaisesRegex(
+            OperationFailure, "field path reference"
+        ):
             evaluate_expression(
                 {"profile": {"name": "Ada"}},
                 {"$getField": {"field": "$missing", "input": "$$CURRENT"}},
             )
-        )
         self.assertEqual(
             evaluate_expression(
                 {"profile": {}},

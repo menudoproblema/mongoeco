@@ -8,6 +8,7 @@ import pytest
 import mongoeco.core.filtering as filtering_module
 import mongoeco.core.operators as operators_module
 
+from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.aggregation import (
     apply_pipeline,
     compile_pipeline,
@@ -140,3 +141,31 @@ def test_nested_expression_scopes_preserve_root_and_current_explicitly():
         {'root': 'root', 'current': 'root', 'item': 1},
         {'root': 'root', 'current': 'root', 'item': 2},
     ]
+
+
+def test_command_program_and_literal_overlay_are_separate_and_immutable():
+    program = {'x': {'$literal': {'$add': [2, 3]}}}
+    base = ExpressionExecutionContext({'inherited': '$field'})
+    prepared = base.with_command_let(program, dialect=MONGODB_DIALECT_70)
+    program['x']['$literal']['$add'].append(4)
+    overlay = prepared.with_bindings({'value': {'$literal': '$field'}})
+
+    assert prepared['x'] == {'$add': [2, 3]}
+    assert prepared['inherited'] == '$field'
+    assert overlay['value'] == {'$literal': '$field'}
+    assert overlay.command_let == prepared.command_let
+    assert overlay.command_let_base == {'inherited': '$field'}
+    assert overlay.now is base.now
+    with pytest.raises(TypeError, match='immutable'):
+        overlay.command_let['x']['$literal']['$add'].append(4)
+    with pytest.raises(TypeError, match='immutable'):
+        overlay.command_let_base['inherited'] = 'changed'
+
+
+def test_evaluated_command_frame_is_not_interpreted_as_a_second_program():
+    prepared = ExpressionExecutionContext().with_command_let(
+        {'x': {'$literal': '$field'}}, dialect=MONGODB_DIALECT_70
+    )
+    assert ExpressionExecutionContext().with_command_let(
+        prepared, dialect=MONGODB_DIALECT_70
+    ) is prepared

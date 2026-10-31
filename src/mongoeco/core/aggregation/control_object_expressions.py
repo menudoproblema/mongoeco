@@ -6,12 +6,13 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.compat._catalog_operators import CONTROL_EXPRESSION_ARGUMENTS
 from mongoeco.core.aggregation.evaluation_environment import (
     scoped_environment,
 )
+from mongoeco.core.aggregation.expression_values import expression_values_equal
+from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
 from mongoeco.core.collation import compare_with_collation
-from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.query_operators import is_non_empty_document_clause_list
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, UndefinedType
@@ -28,21 +29,9 @@ type PickNInputEvaluator = Callable[
 
 
 CONTROL_OBJECT_EXPRESSION_OPERATORS = frozenset(
+    CONTROL_EXPRESSION_ARGUMENTS
+) | frozenset(
     {
-        "$eq",
-        "$ne",
-        "$gt",
-        "$gte",
-        "$lt",
-        "$lte",
-        "$and",
-        "$or",
-        "$in",
-        "$nin",
-        "$all",
-        "$exists",
-        "$elemMatch",
-        "$ifNull",
         "$cond",
         "$setField",
         "$unsetField",
@@ -58,71 +47,93 @@ CONTROL_OBJECT_EXPRESSION_OPERATORS = frozenset(
 )
 
 
-def _is_field_path_expression(value: object) -> bool:
-    return (
-        isinstance(value, str)
-        and value.startswith("$")
-        and not value.startswith("$$")
-        and value != "$"
-    )
+def parse_field_expression(operator, spec, *, parse_operand=None):
+    """Own the syntax of field expressions without evaluating input documents."""
+    getter = operator == "$getField"
+    if getter and not isinstance(spec, dict):
+        parsed = {"field": spec, "input": "$$CURRENT"}
+        if parse_operand is not None:
+            for operand in parsed.values():
+                parse_operand(operand)
+    else:
+        if not isinstance(spec, dict):
+            message = f"{operator} only supports an object as its argument"
+            raise server_error(message, code=4161100, reason="expression_structure")
+        allowed = {"field", "input"} | ({"value"} if operator == "$setField" else set())
+        for key, operand in spec.items():
+            if key not in allowed:
+                message = f"{operator} found an unknown argument: {key}"
+                raise server_error(
+                    message,
+                    code=3041701 if getter else 4161101,
+                    reason="expression_structure",
+                )
+            if parse_operand is not None:
+                parse_operand(operand)
+        required = (
+            ("field", 3041702 if getter else 4161102),
+            ("value", 4161103),
+            ("input", 3041703 if getter else 4161109),
+        )
+        for name, code in required:
+            if name not in allowed:
+                continue
+            if name not in spec:
+                message = f"{operator} requires '{name}' to be specified"
+                raise server_error(message, code=code, reason="expression_structure")
+        parsed = spec
+    return parsed
 
 
-_FIELD_BOUND_ARITY = 2
+def prepare_field_expression(operator, spec, *, dialect):
+    parsed = parse_field_expression(operator, spec)
+    getter = operator == "$getField"
+    if not getter or not dialect.behavior_flag(
+        "supports_dynamic_get_field", default=False
+    ):
+        _prepare_constant_field(parsed["field"], getter=getter)
+    return parsed
 
 
-def _field_bound_match_clauses(spec):
-    if not isinstance(spec, list) or len(spec) != _FIELD_BOUND_ARITY:
-        return None
-    field_expression, raw_conditions = spec
-    if not _is_field_path_expression(
-        field_expression
-    ) or not is_non_empty_document_clause_list(raw_conditions):
-        return None
-    return [{field_expression[1:]: deepcopy(condition)} for condition in raw_conditions]
-
-
-def _field_bound_query_filter(operator, spec):
-    if not isinstance(spec, list) or len(spec) != _FIELD_BOUND_ARITY:
-        return None
-    field_expression, operand = spec
-    if not _is_field_path_expression(field_expression):
-        return None
-    return {field_expression[1:]: {operator: deepcopy(operand)}}
-
-
-def _evaluate_field_bound_match_expression(
-    operator: str,
-    document: Document,
-    spec: object,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-    collation=None,
-) -> bool | None:
-    clauses=_field_bound_match_clauses(spec)
-    if clauses is None:
-        return None
-    return QueryEngine.match(
-        document, {operator: clauses}, dialect=dialect, collation=collation
-    )
-
-
-def _evaluate_field_bound_query_operator(
-    operator: str,
-    document: Document,
-    spec: object,
-    *,
-    dialect: MongoDialect = MONGODB_DIALECT_70,
-    collation=None,
-) -> bool | None:
-    selector = _field_bound_query_filter(operator, spec)
-    if selector is None:
-        return None
-    return QueryEngine.match(
-        document,
-        selector,
-        dialect=dialect,
-        collation=collation,
-    )
+def _prepare_constant_field(expression, *, getter):
+    name = "$getField" if getter else "$setField"
+    if isinstance(expression, str) and expression.startswith("$"):
+        path = (
+            "$" + expression[2:]
+            if expression.startswith("$$")
+            else "$CURRENT." + expression[1:]
+        )
+        message = (
+            f"'{path}' is a field path reference which is not allowed in this context. "
+            f"Did you mean {{$literal: '{path}'}}?"
+        )
+        raise server_error(
+            message, code=5654600 if getter else 4161108, reason="expression_structure"
+        )
+    if (
+        isinstance(expression, dict)
+        and len(expression) == 1
+        and next(iter(expression)) in {"$literal", "$const"}
+    ):
+        value = next(iter(expression.values()))
+    elif isinstance(expression, (dict, list)):
+        message = (
+            f"{name} requires 'field' to evaluate to a constant, "
+            "but got a non-constant argument"
+        )
+        raise server_error(
+            message, code=5654601 if getter else 4161106, reason="expression_structure"
+        )
+    else:
+        value = expression
+    if not isinstance(value, str):
+        kind = _aggregation_type_name(value, missing_sentinel=None)
+        # null is a BSON value here, never the internal missing sentinel.
+        kind = "null" if value is None else kind
+        message = f"{name} requires 'field' to evaluate to type String, but got {kind}"
+        raise server_error(
+            message, code=5654602 if getter else 4161107, reason="expression_structure"
+        )
 
 
 def evaluate_control_object_expression(
@@ -142,54 +153,43 @@ def evaluate_control_object_expression(
     missing_sentinel: object,
 ) -> Any:
     if operator in {"$eq", "$ne", "$gt", "$gte", "$lt", "$lte"}:
-        args = require_expression_args(operator, spec, 2, 2)
+        args = require_expression_args(
+            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
+        )
         left = evaluate_expression(document, args[0], variables)
         right = evaluate_expression(document, args[1], variables)
         return compare_values(left, right, operator)
 
     if operator == "$and":
-        field_bound = _evaluate_field_bound_match_expression(
-            operator,
-            document,
-            spec,
-            dialect=dialect,
-            collation=getattr(variables, "collation", None),
+        args = require_expression_args(
+            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
         )
-        if field_bound is not None:
-            return field_bound
-        args = require_expression_args(operator, spec, 0, None)
         return all(
             expression_truthy(evaluate_expression(document, item, variables))
             for item in args
         )
 
     if operator == "$or":
-        field_bound = _evaluate_field_bound_match_expression(
-            operator,
-            document,
-            spec,
-            dialect=dialect,
-            collation=getattr(variables, "collation", None),
+        args = require_expression_args(
+            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
         )
-        if field_bound is not None:
-            return field_bound
-        args = require_expression_args(operator, spec, 0, None)
         return any(
             expression_truthy(evaluate_expression(document, item, variables))
             for item in args
         )
 
     if operator == "$in":
-        args = require_expression_args(operator, spec, 2, 2)
+        args = require_expression_args(
+            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
+        )
         needle = evaluate_expression(document, args[0], variables)
         haystack = evaluate_expression(document, args[1], variables)
-        if haystack is None:
-            return None
         if not isinstance(haystack, list):
-            message = "$in requires the second argument to evaluate to a list"
-            raise server_error(message, code=40081)
+            kind = _aggregation_type_name(haystack, missing_sentinel=missing_sentinel)
+            message = f"$in requires an array as a second argument, found: {kind}"
+            raise server_error(message, code=40081, reason="expression_type")
         return any(
-            QueryEngine._values_equal(
+            expression_values_equal(
                 needle,
                 item,
                 dialect=dialect,
@@ -198,34 +198,25 @@ def evaluate_control_object_expression(
             for item in haystack
         )
 
-    if operator in {"$nin", "$all", "$exists", "$elemMatch"}:
-        field_bound = _evaluate_field_bound_query_operator(
-            operator,
-            document,
-            spec,
-            dialect=dialect,
-            collation=getattr(variables, "collation", None),
+    if operator == "$not":
+        args = require_expression_args(
+            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
         )
-        if field_bound is not None:
-            return field_bound
-        raise OperationFailure(
-            f"{operator} only supports the field-bound form inside aggregation expressions"
-        )
+        return not expression_truthy(evaluate_expression(document, args[0], variables))
 
     if operator == "$ifNull":
-        from mongoeco.core.aggregation.runtime import _REMOVE
-
-        args = require_expression_args(operator, spec, 2, None)
-        for item in args:
+        args = require_expression_args(
+            operator, spec, *CONTROL_EXPRESSION_ARGUMENTS[operator]
+        )
+        for item in args[:-1]:
             value = evaluate_expression(document, item, variables)
             if (
                 value is not None
                 and value is not missing_sentinel
-                and value is not _REMOVE
                 and not isinstance(value, UndefinedType)
             ):
                 return value
-        return None
+        return evaluate_expression(document, args[-1], variables)
 
     if operator == "$cond":
         if isinstance(spec, list):
@@ -243,18 +234,11 @@ def evaluate_control_object_expression(
         branch = when_true if expression_truthy(condition_value) else when_false
         return evaluate_expression(document, branch, variables)
 
-    if operator == "$setField":
-        if not isinstance(spec, dict) or not {
-            "field",
-            "input",
-            "value",
-        } <= set(spec):
-            raise OperationFailure("$setField requires field, input, and value")
-        field_name = evaluate_expression(document, spec["field"], variables)
-        if not isinstance(field_name, str):
-            raise OperationFailure("$setField field must resolve to a string")
+    if operator in {"$setField", "$unsetField"}:
+        parsed = prepare_field_expression(operator, spec, dialect=dialect)
+        field_name = evaluate_expression(document, parsed["field"], variables)
         input_value = evaluate_expression_with_missing(
-            document, spec["input"], variables
+            document, parsed["input"], variables
         )
         if (
             input_value is missing_sentinel
@@ -263,30 +247,18 @@ def evaluate_control_object_expression(
         ):
             return None
         if not isinstance(input_value, dict):
-            raise OperationFailure("$setField input must resolve to an object")
+            message = "$setField requires 'input' to evaluate to type Object"
+            raise server_error(message, code=4161105, reason="expression_type")
         result = deepcopy(input_value)
-        result[field_name] = evaluate_expression(document, spec["value"], variables)
-        return result
-
-    if operator == "$unsetField":
-        if not isinstance(spec, dict) or not {"field", "input"} <= set(spec):
-            raise OperationFailure("$unsetField requires field and input")
-        field_name = evaluate_expression(document, spec["field"], variables)
-        if not isinstance(field_name, str):
-            raise OperationFailure("$unsetField field must resolve to a string")
-        input_value = evaluate_expression_with_missing(
-            document, spec["input"], variables
+        value = (
+            evaluate_expression(document, parsed["value"], variables)
+            if operator == "$setField"
+            else missing_sentinel
         )
-        if (
-            input_value is missing_sentinel
-            or input_value is None
-            or isinstance(input_value, UndefinedType)
-        ):
-            return None
-        if not isinstance(input_value, dict):
-            raise OperationFailure("$unsetField input must resolve to an object")
-        result = deepcopy(input_value)
-        result.pop(field_name, None)
+        if value is missing_sentinel:
+            result.pop(field_name, None)
+        else:
+            result[field_name] = value
         return result
 
     if operator == "$switch":
@@ -361,7 +333,7 @@ def evaluate_control_object_expression(
         allow_array_operand = not isinstance(spec, list)
         for item in args:
             value = evaluate_expression(document, item, variables)
-            if value is None:
+            if value is None or value is missing_sentinel:
                 continue
             if allow_array_operand and isinstance(value, list):
                 for element in value:
@@ -379,33 +351,18 @@ def evaluate_control_object_expression(
         return merged
 
     if operator == "$getField":
-        if isinstance(spec, str):
-            field_name = spec
-            source = document
-        elif isinstance(spec, dict):
-            if "field" not in spec:
-                raise OperationFailure("$getField requires field")
-            field_name = evaluate_expression(document, spec["field"], variables)
-            source = evaluate_expression_with_missing(
-                document, spec.get("input", "$$CURRENT"), variables
-            )
-        else:
-            raise OperationFailure(
-                "$getField requires a string or document specification"
-            )
-        if field_name is None:
-            return None
+        parsed = prepare_field_expression(operator, spec, dialect=dialect)
+        field_name = evaluate_expression(document, parsed["field"], variables)
         if not isinstance(field_name, str):
-            raise OperationFailure("$getField field must evaluate to a string")
-        if (
-            source is missing_sentinel
-            or source is None
-            or isinstance(source, UndefinedType)
-        ):
+            kind = _aggregation_type_name(field_name, missing_sentinel=missing_sentinel)
+            message = (
+                f"$getField requires 'field' to evaluate to type String, but got {kind}"
+            )
+            raise server_error(message, code=3041704, reason="expression_type")
+        source = evaluate_expression_with_missing(document, parsed["input"], variables)
+        if source is None or isinstance(source, UndefinedType):
             return None
-        if not isinstance(source, dict):
-            return None
-        if field_name not in source:
+        if not isinstance(source, dict) or field_name not in source:
             return missing_sentinel
         return deepcopy(source[field_name])
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import time
 
 from collections.abc import (
@@ -80,6 +79,7 @@ from mongoeco.core._public_materialization import materialize_public_document
 from mongoeco.core.aggregation import (
     Pipeline,  # noqa: TC001 - runtime public annotations
 )
+from mongoeco.core.aggregation.preparation import normalize_command_let
 from mongoeco.core.bson_scalars import (
     normalize_utc_bson_datetime,
     utc_bson_now,
@@ -116,7 +116,7 @@ from mongoeco.engines.results import (
     InsertOutcome,
     MutationOutcome,
 )
-from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.errors import DuplicateKeyError
 from mongoeco.session import ClientSession  # noqa: TC001
 from mongoeco.types import (
     ArrayFilters,
@@ -156,7 +156,6 @@ from mongoeco.types import (
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
-_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
 _resolve_distinct_candidates = _collection_reads.resolve_distinct_candidates
 
 
@@ -325,7 +324,11 @@ class AsyncCollection:
             bindings = None
         execution_context = expressions or self._new_execution_context()
         if bindings is not None:
-            execution_context = execution_context.with_bindings(bindings)
+            execution_context = execution_context.with_command_let(
+                bindings,
+                dialect=self._mongodb_dialect,
+                write=change_operation_type is not None,
+            )
         return OperationContext.create(
             dialect=self._mongodb_dialect,
             codec_options=self._codec_options,
@@ -451,21 +454,8 @@ class AsyncCollection:
         return max_time_ms
 
     @staticmethod
-    def _normalize_let(
-        let: object | None,
-    ) -> dict[str, object] | ExpressionExecutionContext | None:
-        if let is None:
-            return None
-        if isinstance(let, ExpressionExecutionContext):
-            return let
-        if not isinstance(let, dict):
-            raise TypeError("let must be a dict")
-        for name in let:
-            if not isinstance(name, str) or not _LET_VARIABLE_RE.match(name):
-                raise OperationFailure(
-                    "$lookup let variable names must begin with a lowercase letter or non-ascii character"
-                )
-        return DocumentCodec.to_internal(let)
+    def _normalize_let(let):
+        return normalize_command_let(let)
 
     @staticmethod
     def _normalize_array_filters(
@@ -1023,7 +1013,9 @@ class AsyncCollection:
         requests = self._require_write_requests(requests)
         if not isinstance(ordered, bool):
             raise TypeError("ordered must be a bool")
-        let = self._normalize_let(let)
+        if let is not None and not isinstance(let, (dict, ExpressionExecutionContext)):
+            message = "let must be a dict"
+            raise TypeError(message)
         result = await execute_bulk_write(
             self,
             requests,

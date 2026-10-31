@@ -16,6 +16,7 @@ except Exception:  # pragma: no cover - optional dependency
     _pyuca = None
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_ordering import compare_bson_documents
 from mongoeco.types import CollationDocument
 
 
@@ -184,17 +185,13 @@ def compare_with_collation(
 
 
 def _compare_collated_documents(left, right, dialect, collation):
-    for (left_key, left_value), (right_key, right_value) in zip(
-        left.items(), right.items(), strict=False
-    ):
-        if left_key != right_key:
-            return -1 if left_key < right_key else 1
-        comparison = compare_with_collation(
-            left_value, right_value, dialect=dialect, collation=collation
-        )
-        if comparison:
-            return comparison
-    return (len(left) > len(right)) - (len(left) < len(right))
+    return compare_bson_documents(
+        left, right,
+        type_order=dialect.bson_type_order,
+        compare_values=lambda left, right: compare_with_collation(
+            left, right, dialect=dialect, collation=collation
+        ),
+    )
 
 
 def _compare_collated_arrays(left, right, dialect, collation):

@@ -3,12 +3,25 @@
 import copy
 import json
 
+from datetime import UTC, datetime
 from itertools import permutations
 from pathlib import Path
 
 import pytest
 
+from bson import Binary, Decimal128, Int64
+from bson.errors import InvalidDocument
+from pymongo.errors import OperationFailure
 from scripts.capture_differential_replay_golden import _capture_expectation
+
+from mongoeco.core import bson_scalars, identity, paths
+
+from tests.differential._real_parity_base import _decode_capture, _normalize
+from tests.differential.semantic_expression_grammar_cases import _observe
+
+
+NAIVE_DATE = datetime(2026, 1, 1, tzinfo=UTC).replace(tzinfo=None)
+IN_TYPE_ERROR_CODE = 40081
 
 
 def _densify_type_error(
@@ -94,3 +107,98 @@ def test_type_list_order_is_not_ignored_in_other_fields_or_successful_data():
     assert _capture_expectation(original | {"message": other_field}) != (
         _capture_expectation(original | {"message": changed_field})
     )
+
+
+def test_canonical_write_observations_decode_once_without_changing_seed_types():
+    payload = {
+        "corpus": {"observationEncoding": "canonical-json"},
+        "cases": {"write": json.dumps({"value": {"$numberLong": "1"}, "counter": 2})},
+        "case_manifests": [{"seed_documents": [{"x": {"$numberLong": "1"}}]}],
+    }
+    decoded = _decode_capture(json.dumps(payload))
+    assert decoded["cases"]["write"] == {"value": {"$numberLong": "1"}, "counter": 2}
+    assert isinstance(decoded["case_manifests"][0]["seed_documents"][0]["x"], Int64)
+    assert _normalize(decoded["cases"]["write"]["value"]) != _normalize(
+        {"$numberInt": "1"}
+    )
+    payload["corpus"]["observationEncoding"] = "bson"
+    payload["cases"]["write"] = {"value": {"$numberLong": "1"}}
+    assert isinstance(
+        _decode_capture(json.dumps(payload))["cases"]["write"]["value"], Int64
+    )
+    payload["corpus"]["observationEncoding"] = "unsupported"
+    with pytest.raises(ValueError, match="unknown capture observation encoding"):
+        _decode_capture(json.dumps(payload))
+
+
+@pytest.mark.parametrize(
+    ["left", "right"],
+    [
+        (True, 1),
+        (False, 0),
+        (1, Int64(1)),
+        (Int64(1), 1.0),
+        (1.0, Decimal128("1")),
+        (0.0, -0.0),
+        (Decimal128("1"), Decimal128("1.00")),
+        (Decimal128("0"), Decimal128("-0")),
+        (float("nan"), "NaN"),
+        (float("nan"), Decimal128("NaN")),
+        ({}, {"value": None}),
+        ({"a": 1, "b": 2}, {"b": 2, "a": 1}),
+        ([1, 2], [2, 1]),
+        ({"code": 2}, {}),
+        ({"modified": 0}, {"modified": 1}),
+        ({"value": 1}, {"value": Int64(1)}),
+        (2**40, Int64(2**40)),
+        (b"value", Binary(b"value", 0)),
+        (NAIVE_DATE, datetime(2026, 1, 1, tzinfo=UTC)),
+        (NAIVE_DATE, NAIVE_DATE.replace(microsecond=1)),
+    ],
+)
+def test_result_comparison_preserves_observable_bson_distinctions(left, right):
+    assert _normalize(left) != _normalize(right)
+    assert _normalize({"nested": [left]}) != _normalize({"nested": [right]})
+
+
+def test_result_comparison_keeps_only_declared_transport_equivalences():
+    assert _normalize((1, {"value": Int64(1)})) == _normalize([1, {"value": Int64(1)}])
+    assert _normalize(float("nan")) == _normalize(-float("nan"))
+    assert _normalize(Decimal128("1.00")) == _normalize(Decimal128("1.00"))
+
+
+def test_result_comparison_is_independent_of_production_value_rules(monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("a production equality/identity rule reached the oracle")
+
+    monkeypatch.setattr(identity, "canonical_document_id", forbidden)
+    monkeypatch.setattr(bson_scalars, "compare_bson_numeric", forbidden)
+    monkeypatch.setattr(paths, "same_bson_update_value", forbidden)
+    assert _normalize({"a": [Int64(1), -0.0]}) != _normalize({"a": [1, 0.0]})
+
+
+def test_result_comparison_rejects_unencodable_objects_instead_of_using_repr():
+    with pytest.raises(InvalidDocument):
+        _normalize({"nested": [object()]})
+
+
+@pytest.mark.parametrize("namespace", ["actual.records", "wrong.records"])
+def test_grammar_observation_normalizes_only_its_actual_namespace(namespace):
+    prefix = "Executor error during aggregate command on namespace: "
+    suffix = " :: caused by :: invalid input"
+    message = prefix + namespace + suffix
+
+    def reject():
+        raise OperationFailure(
+            message, code=IN_TYPE_ERROR_CODE, details={"errmsg": message}
+        )
+
+    observed = _observe(reject, "actual.records")
+    expected = (
+        prefix + "<namespace>" + suffix if namespace == "actual.records" else message
+    )
+    assert observed["message"] == expected
+    assert observed["code"] == IN_TYPE_ERROR_CODE
+    assert _observe(lambda: {"message": message}, "actual.records")["result"] == {
+        "message": message
+    }

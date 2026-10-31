@@ -386,7 +386,7 @@ async def execute_bulk_write(
     prepared_requests = await BulkWritePreparationContext(
         collection, list(requests), source_requests
     ).prepare()
-    normalized_bulk_let = collection._normalize_let(let)
+    normalized_bulk_let = let
 
     inserted_count = 0
     matched_count = 0
@@ -435,12 +435,18 @@ async def execute_bulk_write(
                 continue
             if batch_context is None:
                 batch_context = collection._new_execution_context()
-            variables = batch_context.with_bindings(
-                request.let
-                if getattr(request, "let", None) is not None
-                else normalized_bulk_let
-            )
             try:
+                variables = (
+                    batch_context
+                    if isinstance(request, InsertOne)
+                    else batch_context.with_command_let(
+                        request.let
+                        if getattr(request, "let", None) is not None
+                        else normalized_bulk_let,
+                        dialect=collection._mongodb_dialect,
+                        write=True,
+                    )
+                )
                 if isinstance(request, InsertOne):
                     insert_kwargs = {"session": session}
                     if bypass_document_validation:

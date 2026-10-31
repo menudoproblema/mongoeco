@@ -2073,16 +2073,16 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             ],
         )
 
-    def test_pipeline_supports_field_bound_logical_expr_conditions_inside_lookup(
+    def test_pipeline_supports_logical_expr_conditions_inside_lookup(
         self,
     ):
-        documents = [{'_id': '1', 'tenant': 'a'}]
+        documents = [{"_id": "1", "tenant": "a"}]
         foreign = {
-            'users': [
-                {'_id': 'u1', 'tenant': 'a', 'role': 'admin', 'score': 3},
-                {'_id': 'u2', 'tenant': 'a', 'role': 'staff', 'score': 4},
-                {'_id': 'u3', 'tenant': 'a', 'role': 'guest', 'score': 4},
-                {'_id': 'u4', 'tenant': 'a', 'role': 'admin', 'score': 7},
+            "users": [
+                {"_id": "u1", "tenant": "a", "role": "admin", "score": 3},
+                {"_id": "u2", "tenant": "a", "role": "staff", "score": 4},
+                {"_id": "u3", "tenant": "a", "role": "guest", "score": 4},
+                {"_id": "u4", "tenant": "a", "role": "admin", "score": 7},
             ]
         }
 
@@ -2090,38 +2090,35 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             documents,
             [
                 {
-                    '$lookup': {
-                        'from': 'users',
-                        'let': {'tenantId': '$tenant'},
-                        'pipeline': [
+                    "$lookup": {
+                        "from": "users",
+                        "let": {"tenantId": "$tenant"},
+                        "pipeline": [
                             {
-                                '$match': {
-                                    '$expr': {
-                                        '$and': [
-                                            {'$eq': ['$tenant', '$$tenantId']},
+                                "$match": {
+                                    "$expr": {
+                                        "$and": [
+                                            {"$eq": ["$tenant", "$$tenantId"]},
                                             {
-                                                '$or': [
-                                                    '$role',
-                                                    [
-                                                        {'$eq': 'admin'},
-                                                        {'$eq': 'staff'},
-                                                    ],
+                                                "$or": [
+                                                    {"$eq": ["$role", "admin"]},
+                                                    {"$eq": ["$role", "staff"]},
                                                 ]
                                             },
                                             {
-                                                '$and': [
-                                                    '$score',
-                                                    [{'$gte': 3}, {'$lt': 5}],
+                                                "$and": [
+                                                    {"$gte": ["$score", 3]},
+                                                    {"$lt": ["$score", 5]},
                                                 ]
                                             },
                                         ]
                                     }
                                 }
                             },
-                            {'$project': {'_id': 0, 'role': 1, 'score': 1}},
-                            {'$sort': {'role': 1}},
+                            {"$project": {"_id": 0, "role": 1, "score": 1}},
+                            {"$sort": {"role": 1}},
                         ],
-                        'as': 'users',
+                        "as": "users",
                     }
                 }
             ],
@@ -2132,11 +2129,11 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             result,
             [
                 {
-                    '_id': '1',
-                    'tenant': 'a',
-                    'users': [
-                        {'role': 'admin', 'score': 3},
-                        {'role': 'staff', 'score': 4},
+                    "_id": "1",
+                    "tenant": "a",
+                    "users": [
+                        {"role": "admin", "score": 3},
+                        {"role": "staff", "score": 4},
                     ],
                 }
             ],
@@ -2160,30 +2157,30 @@ class AggregationPipelineCoreTests(unittest.TestCase):
 
         self.assertEqual(result, [{'and_result': True, 'or_result': True}])
 
-    def test_pipeline_supports_field_bound_query_filter_expr_conditions_inside_lookup(
+    def test_pipeline_supports_query_filter_conditions_inside_lookup(
         self,
     ):
-        documents = [{'_id': '1', 'tenant': 'a'}]
+        documents = [{"_id": "1", "tenant": "a"}]
         foreign = {
-            'users': [
+            "users": [
                 {
-                    '_id': 'u1',
-                    'tenant': 'a',
-                    'tags': ['a', 'b'],
-                    'status': 'active',
-                    'items': [
-                        {'kind': 'x', 'qty': 1},
-                        {'kind': 'y', 'qty': 3},
+                    "_id": "u1",
+                    "tenant": "a",
+                    "tags": ["a", "b"],
+                    "status": "active",
+                    "items": [
+                        {"kind": "x", "qty": 1},
+                        {"kind": "y", "qty": 3},
                     ],
                 },
                 {
-                    '_id': 'u2',
-                    'tenant': 'a',
-                    'tags': ['a'],
-                    'status': 'archived',
-                    'items': [{'kind': 'y', 'qty': 1}],
+                    "_id": "u2",
+                    "tenant": "a",
+                    "tags": ["a"],
+                    "status": "archived",
+                    "items": [{"kind": "y", "qty": 1}],
                 },
-                {'_id': 'u3', 'tenant': 'a', 'status': 'active'},
+                {"_id": "u3", "tenant": "a", "status": "active"},
             ]
         }
 
@@ -2191,39 +2188,23 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             documents,
             [
                 {
-                    '$lookup': {
-                        'from': 'users',
-                        'let': {'tenantId': '$tenant'},
-                        'pipeline': [
+                    "$lookup": {
+                        "from": "users",
+                        "let": {"tenantId": "$tenant"},
+                        "pipeline": [
                             {
-                                '$match': {
-                                    '$expr': {
-                                        '$and': [
-                                            {'$eq': ['$tenant', '$$tenantId']},
-                                            {'$exists': ['$tags', True]},
-                                            {'$all': ['$tags', ['a', 'b']]},
-                                            {
-                                                '$nin': [
-                                                    '$status',
-                                                    ['archived'],
-                                                ]
-                                            },
-                                            {
-                                                '$elemMatch': [
-                                                    '$items',
-                                                    {
-                                                        'kind': 'y',
-                                                        'qty': {'$gte': 2},
-                                                    },
-                                                ]
-                                            },
-                                        ]
-                                    }
+                                "$match": {
+                                    "$expr": {"$eq": ["$tenant", "$$tenantId"]},
+                                    "tags": {"$exists": True, "$all": ["a", "b"]},
+                                    "status": {"$nin": ["archived"]},
+                                    "items": {
+                                        "$elemMatch": {"kind": "y", "qty": {"$gte": 2}}
+                                    },
                                 }
                             },
-                            {'$project': {'_id': 1}},
+                            {"$project": {"_id": 1}},
                         ],
-                        'as': 'users',
+                        "as": "users",
                     }
                 }
             ],
@@ -2232,7 +2213,7 @@ class AggregationPipelineCoreTests(unittest.TestCase):
 
         self.assertEqual(
             result,
-            [{'_id': '1', 'tenant': 'a', 'users': [{'_id': 'u1'}]}],
+            [{"_id": "1", "tenant": "a", "users": [{"_id": "u1"}]}],
         )
 
     def test_pipeline_supports_correlated_list_lookup_with_in_and_dotted_variable_path(

@@ -1,0 +1,2083 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_numeric_comparisons": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "v": {
+          "$numberDouble": "0.1"
+        },
+        "comparisons": [
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "v": {
+          "$numberDecimal": "0.1"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "v": {
+          "$numberDouble": "0.5"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "v": {
+          "$numberDecimal": "0.5"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "v": {
+          "$numberLong": "9007199254740993"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "v": {
+          "$numberDouble": "9007199254740992.0"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "v": {
+          "$numberDecimal": "9007199254740993"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "v": {
+          "$numberInt": "1"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "v": {
+          "$numberDouble": "1.0"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "v": {
+          "$numberDecimal": "1"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "10"
+        },
+        "v": true,
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "11"
+        },
+        "v": {
+          "$numberDouble": "-0.0"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "12"
+        },
+        "v": {
+          "$numberDecimal": "-0"
+        },
+        "comparisons": [
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": false,
+            "cmp": {
+              "$numberInt": "-1"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "eq": true,
+            "cmp": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    ],
+    "semantic_numeric_groups": [
+      {
+        "_id": {
+          "$numberDouble": "0.1"
+        },
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberDecimal": "0.1"
+        },
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberDouble": "0.5"
+        },
+        "ids": [
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberLong": "9007199254740993"
+        },
+        "ids": [
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberDouble": "9007199254740992.0"
+        },
+        "ids": [
+          {
+            "$numberInt": "5"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "ids": [
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      {
+        "_id": true,
+        "ids": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberDouble": "-0.0"
+        },
+        "ids": [
+          {
+            "$numberInt": "11"
+          },
+          {
+            "$numberInt": "12"
+          }
+        ]
+      }
+    ],
+    "semantic_numeric_lookups": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "ids": [
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "ids": [
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "ids": [
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "ids": [
+          {
+            "$numberInt": "5"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "ids": [
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "ids": [
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "ids": [
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "ids": [
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "10"
+        },
+        "ids": [
+          {
+            "$numberInt": "10"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "11"
+        },
+        "ids": [
+          {
+            "$numberInt": "11"
+          },
+          {
+            "$numberInt": "12"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "12"
+        },
+        "ids": [
+          {
+            "$numberInt": "11"
+          },
+          {
+            "$numberInt": "12"
+          }
+        ]
+      }
+    ],
+    "semantic_numeric_unique_index": [
+      {
+        "outcome": {
+          "ok": true
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberDouble": "0.1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberDecimal": "0.1"
+            }
+          }
+        ]
+      },
+      {
+        "outcome": {
+          "error": "DuplicateKeyError",
+          "code": {
+            "$numberInt": "11000"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberDouble": "0.5"
+            }
+          }
+        ]
+      },
+      {
+        "outcome": {
+          "ok": true
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberLong": "9007199254740993"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberDouble": "9007199254740992.0"
+            }
+          }
+        ]
+      },
+      {
+        "outcome": {
+          "error": "DuplicateKeyError",
+          "code": {
+            "$numberInt": "11000"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberLong": "9007199254740993"
+            }
+          }
+        ]
+      },
+      {
+        "outcome": {
+          "error": "DuplicateKeyError",
+          "code": {
+            "$numberInt": "11000"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "outcome": {
+          "ok": true
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": true
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "outcome": {
+          "error": "DuplicateKeyError",
+          "code": {
+            "$numberInt": "11000"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberDouble": "-0.0"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_numeric_cases.py",
+    "sha256": "de5bbb26e432fc432be81e948468d184085e437d9540f4283580ca8a413e98a8"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_numeric_comparisons",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$numberDouble": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$numberDecimal": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {
+            "$numberDouble": "9007199254740992.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "$numberDecimal": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": true
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "$numberDouble": "-0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "$numberDecimal": "-0"
+          }
+        }
+      ],
+      "selector": "semantic_numeric_comparisons"
+    },
+    {
+      "name": "semantic_numeric_groups",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$numberDouble": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$numberDecimal": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {
+            "$numberDouble": "9007199254740992.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "$numberDecimal": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": true
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "$numberDouble": "-0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "$numberDecimal": "-0"
+          }
+        }
+      ],
+      "selector": "semantic_numeric_groups"
+    },
+    {
+      "name": "semantic_numeric_lookups",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$numberDouble": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$numberDecimal": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {
+            "$numberDouble": "9007199254740992.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "$numberDecimal": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": true
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "$numberDouble": "-0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "$numberDecimal": "-0"
+          }
+        }
+      ],
+      "selector": "semantic_numeric_lookups"
+    },
+    {
+      "name": "semantic_numeric_unique_index",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberDouble": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$numberDouble": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$numberDecimal": "0.5"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "v": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "v": {
+            "$numberDouble": "9007199254740992.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "v": {
+            "$numberDecimal": "9007199254740993"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "v": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "v": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "v": true
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "v": {
+            "$numberDouble": "-0.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "v": {
+            "$numberDecimal": "-0"
+          }
+        }
+      ],
+      "selector": "semantic_numeric_unique_index"
+    }
+  ]
+}

@@ -1,0 +1,743 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_decimal_advanced_edge_logs": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "ln": {
+          "$numberDouble": "NaN"
+        },
+        "log10": {
+          "$numberDouble": "NaN"
+        },
+        "log": {
+          "$numberDouble": "NaN"
+        },
+        "log2": {
+          "$numberDouble": "NaN"
+        },
+        "logBase10": {
+          "$numberDouble": "NaN"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "ln": {
+          "$numberDecimal": "Infinity"
+        },
+        "log10": {
+          "$numberDecimal": "Infinity"
+        },
+        "log": {
+          "$numberDecimal": "Infinity"
+        },
+        "log2": {
+          "$numberDecimal": "Infinity"
+        },
+        "logBase10": {
+          "$numberDecimal": "Infinity"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "ln": {
+          "$numberDecimal": "14147.08281135541668260653949758073"
+        },
+        "log10": {
+          "$numberDecimal": "6144"
+        },
+        "log": {
+          "$numberDecimal": "12877.22971723397900879811085529948"
+        },
+        "log2": {
+          "$numberDecimal": "20409.92621498795426531524257478281"
+        },
+        "logBase10": {
+          "$numberDecimal": "6144"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "ln": {
+          "$numberDecimal": "-14220.76553433122614449511522413063"
+        },
+        "log10": {
+          "$numberDecimal": "-6176"
+        },
+        "log": {
+          "$numberDecimal": "-12944.29862201123931613560101600417"
+        },
+        "log2": {
+          "$numberDecimal": "-20516.22791402434986044709279652647"
+        },
+        "logBase10": {
+          "$numberDecimal": "-6176"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "ln": {
+          "$numberDecimal": "9.392661928770137362283683843891972"
+        },
+        "log10": {
+          "$numberDecimal": "4.079181246047624827722505692704102"
+        },
+        "log": {
+          "$numberDecimal": "8.549569330011068687088756794749724"
+        },
+        "log2": {
+          "$numberDecimal": "13.55074678538324322506469723241599"
+        },
+        "logBase10": {
+          "$numberDecimal": "4.079181246047624827722505692704102"
+        }
+      }
+    ],
+    "semantic_decimal_advanced_edges": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "exp": {
+          "$numberDecimal": "NaN"
+        },
+        "pow": {
+          "$numberDecimal": "NaN"
+        },
+        "powOdd": {
+          "$numberDecimal": "NaN"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "NaN"
+        },
+        "trunc": {
+          "$numberDecimal": "NaN"
+        },
+        "roundInteger": {
+          "$numberDecimal": "NaN"
+        },
+        "floor": {
+          "$numberDecimal": "NaN"
+        },
+        "ceil": {
+          "$numberDecimal": "NaN"
+        },
+        "abs": {
+          "$numberDecimal": "NaN"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "NaN"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "exp": {
+          "$numberDecimal": "Infinity"
+        },
+        "pow": {
+          "$numberDecimal": "Infinity"
+        },
+        "powOdd": {
+          "$numberDecimal": "Infinity"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "Infinity"
+        },
+        "trunc": {
+          "$numberDecimal": "Infinity"
+        },
+        "roundInteger": {
+          "$numberDecimal": "Infinity"
+        },
+        "floor": {
+          "$numberDecimal": "NaN"
+        },
+        "ceil": {
+          "$numberDecimal": "NaN"
+        },
+        "abs": {
+          "$numberDecimal": "Infinity"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "Infinity"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "exp": {
+          "$numberDecimal": "0"
+        },
+        "pow": {
+          "$numberDecimal": "Infinity"
+        },
+        "powOdd": {
+          "$numberDecimal": "-Infinity"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "-Infinity"
+        },
+        "trunc": {
+          "$numberDecimal": "-Infinity"
+        },
+        "roundInteger": {
+          "$numberDecimal": "-Infinity"
+        },
+        "floor": {
+          "$numberDecimal": "NaN"
+        },
+        "ceil": {
+          "$numberDecimal": "NaN"
+        },
+        "abs": {
+          "$numberDecimal": "Infinity"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "Infinity"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "exp": {
+          "$numberDecimal": "1"
+        },
+        "pow": {
+          "$numberDecimal": "0E-6176"
+        },
+        "powOdd": {
+          "$numberDecimal": "0E-6176"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "-0E-25"
+        },
+        "trunc": {
+          "$numberDecimal": "-0E-25"
+        },
+        "roundInteger": {
+          "$numberDecimal": "-0"
+        },
+        "floor": {
+          "$numberDecimal": "-0"
+        },
+        "ceil": {
+          "$numberDecimal": "-0"
+        },
+        "abs": {
+          "$numberDecimal": "0"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "0"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "exp": {
+          "$numberDecimal": "Infinity"
+        },
+        "pow": {
+          "$numberDecimal": "Infinity"
+        },
+        "powOdd": {
+          "$numberDecimal": "Infinity"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+        },
+        "trunc": {
+          "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+        },
+        "roundInteger": {
+          "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+        },
+        "floor": {
+          "$numberDecimal": "NaN"
+        },
+        "ceil": {
+          "$numberDecimal": "NaN"
+        },
+        "abs": {
+          "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "1.00000000000000000E+3072"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "exp": {
+          "$numberDecimal": "1"
+        },
+        "pow": {
+          "$numberDecimal": "0E-6176"
+        },
+        "powOdd": {
+          "$numberDecimal": "0E-6176"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "0E-25"
+        },
+        "trunc": {
+          "$numberDecimal": "0E-25"
+        },
+        "roundInteger": {
+          "$numberDecimal": "0"
+        },
+        "floor": {
+          "$numberDecimal": "0"
+        },
+        "ceil": {
+          "$numberDecimal": "1"
+        },
+        "abs": {
+          "$numberDecimal": "1E-6176"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "1E-3088"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "exp": {
+          "$numberDecimal": "0.2909604620972042292063187202576388"
+        },
+        "pow": {
+          "$numberDecimal": "1.524157875323883675049535156256667"
+        },
+        "powOdd": {
+          "$numberDecimal": "-1.881676372353657772546716040595284"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "-1.2345678901234567890123457"
+        },
+        "trunc": {
+          "$numberDecimal": "-1.2345678901234567890123456"
+        },
+        "roundInteger": {
+          "$numberDecimal": "-1"
+        },
+        "floor": {
+          "$numberDecimal": "-2"
+        },
+        "ceil": {
+          "$numberDecimal": "-1"
+        },
+        "abs": {
+          "$numberDecimal": "1.234567890123456789012345678901234"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "1.111111106111111099361111058186111"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "exp": {
+          "$numberDecimal": "3.418084847210553614682469551547374E+5211"
+        },
+        "pow": {
+          "$numberDecimal": "144000000.0000000000000000000000000"
+        },
+        "powOdd": {
+          "$numberDecimal": "1728000000000.000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "12000.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "12000.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "12000"
+        },
+        "floor": {
+          "$numberDecimal": "12000"
+        },
+        "ceil": {
+          "$numberDecimal": "12000"
+        },
+        "abs": {
+          "$numberDecimal": "12000"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "109.5445115010332226913939565601604"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "exp": {
+          "$numberDecimal": "2.925614912152004050318842167924113E-5212"
+        },
+        "pow": {
+          "$numberDecimal": "144000000.0000000000000000000000000"
+        },
+        "powOdd": {
+          "$numberDecimal": "-1728000000000.000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "-12000.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "-12000.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "-12000"
+        },
+        "floor": {
+          "$numberDecimal": "-12000"
+        },
+        "ceil": {
+          "$numberDecimal": "-12000"
+        },
+        "abs": {
+          "$numberDecimal": "12000"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "109.5445115010332226913939565601604"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "exp": {
+          "$numberDecimal": "0E-6176"
+        },
+        "pow": {
+          "$numberDecimal": "Infinity"
+        },
+        "powOdd": {
+          "$numberDecimal": "Infinity"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "-1.000000000000000000000000000000000E+6144"
+        },
+        "trunc": {
+          "$numberDecimal": "-1.000000000000000000000000000000000E+6144"
+        },
+        "roundInteger": {
+          "$numberDecimal": "-1.000000000000000000000000000000000E+6144"
+        },
+        "floor": {
+          "$numberDecimal": "NaN"
+        },
+        "ceil": {
+          "$numberDecimal": "NaN"
+        },
+        "abs": {
+          "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+        },
+        "sqrtAbs": {
+          "$numberDecimal": "1.00000000000000000E+3072"
+        }
+      }
+    ]
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_decimal_advanced_cases.py",
+    "sha256": "4a5e3184ede9516a3c192182c90e13860d87ff2ad628bfcbc68d6b7dfaf000d7"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_decimal_advanced_edges",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "NaN"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "-Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "-0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "1E-6176"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "-1.234567890123456789012345678901234"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "12000"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "-12000"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "-1.000000000000000000000000000000000E+6144"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_advanced_edges"
+    },
+    {
+      "name": "semantic_decimal_advanced_edge_logs",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "NaN"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "-Infinity"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "-0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "1E-6176"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "-1.234567890123456789012345678901234"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "12000"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "-12000"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "-1.000000000000000000000000000000000E+6144"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_advanced_edge_logs"
+    }
+  ]
+}

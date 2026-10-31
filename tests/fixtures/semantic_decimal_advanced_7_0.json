@@ -1,0 +1,1774 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_decimal_advanced_domains": [
+      {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "28714"
+        }
+      },
+      {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "28766"
+        }
+      },
+      {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "28761"
+        }
+      },
+      {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "28759"
+        }
+      },
+      {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "28764"
+        }
+      },
+      [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "10"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "100"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "0.000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "10000"
+          }
+        }
+      ]
+    ],
+    "semantic_decimal_advanced_functions": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "abs": {
+          "$numberDecimal": "1.234567890123456789012345678901234"
+        },
+        "exp": {
+          "$numberDecimal": "3.436893084346008004591424314762274"
+        },
+        "ln": {
+          "$numberDecimal": "0.2107210223156525610550017104886234"
+        },
+        "log10": {
+          "$numberDecimal": "0.09151497721269989571083027823432098"
+        },
+        "sqrt": {
+          "$numberDecimal": "1.111111106111111099361111058186111"
+        },
+        "log": {
+          "$numberDecimal": "0.1918065403866161312676942905205795"
+        },
+        "log2": {
+          "$numberDecimal": "0.3040061739058445421974373617545367"
+        },
+        "logBase10": {
+          "$numberDecimal": "0.09151497721269989571083027823432098"
+        },
+        "pow": {
+          "$numberDecimal": "1.524157875323883675049535156256667"
+        },
+        "powOdd": {
+          "$numberDecimal": "1.881676372353657772546716040595284"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.111111106111111099361111058186110"
+        },
+        "round": {
+          "$numberDecimal": "1.2345678901234567890123457"
+        },
+        "trunc": {
+          "$numberDecimal": "1.2345678901234567890123456"
+        },
+        "roundInteger": {
+          "$numberDecimal": "1"
+        },
+        "floor": {
+          "$numberDecimal": "1"
+        },
+        "ceil": {
+          "$numberDecimal": "2"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "abs": {
+          "$numberDecimal": "2"
+        },
+        "exp": {
+          "$numberDecimal": "7.389056098930650227230427460575008"
+        },
+        "ln": {
+          "$numberDecimal": "0.6931471805599453094172321214581766"
+        },
+        "log10": {
+          "$numberDecimal": "0.3010299956639811952137388947244930"
+        },
+        "sqrt": {
+          "$numberDecimal": "1.414213562373095048801688724209698"
+        },
+        "log": {
+          "$numberDecimal": "0.6309297535714574370995271143427607"
+        },
+        "log2": {
+          "$numberDecimal": "1"
+        },
+        "logBase10": {
+          "$numberDecimal": "0.3010299956639811952137388947244930"
+        },
+        "pow": {
+          "$numberDecimal": "4.000000000000000000000000000000000"
+        },
+        "powOdd": {
+          "$numberDecimal": "8.000000000000000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.414213562373095048801688724209698"
+        },
+        "round": {
+          "$numberDecimal": "2.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "2.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "2"
+        },
+        "floor": {
+          "$numberDecimal": "2"
+        },
+        "ceil": {
+          "$numberDecimal": "2"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "abs": {
+          "$numberDecimal": "3"
+        },
+        "exp": {
+          "$numberDecimal": "20.08553692318766774092852965458172"
+        },
+        "ln": {
+          "$numberDecimal": "1.098612288668109691395245236922526"
+        },
+        "log10": {
+          "$numberDecimal": "0.4771212547196624372950279032551153"
+        },
+        "sqrt": {
+          "$numberDecimal": "1.732050807568877293527446341505872"
+        },
+        "log": {
+          "$numberDecimal": "1"
+        },
+        "log2": {
+          "$numberDecimal": "1.584962500721156181453738943947817"
+        },
+        "logBase10": {
+          "$numberDecimal": "0.4771212547196624372950279032551153"
+        },
+        "pow": {
+          "$numberDecimal": "9.000000000000000000000000000000001"
+        },
+        "powOdd": {
+          "$numberDecimal": "27.00000000000000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.732050807568877293527446341505872"
+        },
+        "round": {
+          "$numberDecimal": "3.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "3.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "3"
+        },
+        "floor": {
+          "$numberDecimal": "3"
+        },
+        "ceil": {
+          "$numberDecimal": "3"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "abs": {
+          "$numberDecimal": "10"
+        },
+        "exp": {
+          "$numberDecimal": "22026.46579480671651695790064528425"
+        },
+        "ln": {
+          "$numberDecimal": "2.302585092994045684017991454684364"
+        },
+        "log10": {
+          "$numberDecimal": "1"
+        },
+        "sqrt": {
+          "$numberDecimal": "3.162277660168379331998893544432719"
+        },
+        "log": {
+          "$numberDecimal": "2.095903274289384604296567522021400"
+        },
+        "log2": {
+          "$numberDecimal": "3.321928094887362347870319429489390"
+        },
+        "logBase10": {
+          "$numberDecimal": "1"
+        },
+        "pow": {
+          "$numberDecimal": "100.0000000000000000000000000000000"
+        },
+        "powOdd": {
+          "$numberDecimal": "1000.000000000000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "0E-6176"
+        },
+        "powFraction": {
+          "$numberDecimal": "3.162277660168379331998893544432719"
+        },
+        "round": {
+          "$numberDecimal": "10.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "10.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "10"
+        },
+        "floor": {
+          "$numberDecimal": "10"
+        },
+        "ceil": {
+          "$numberDecimal": "10"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "4"
+        },
+        "abs": {
+          "$numberDecimal": "0.1"
+        },
+        "exp": {
+          "$numberDecimal": "1.105170918075647624811707826490247"
+        },
+        "ln": {
+          "$numberDecimal": "-2.302585092994045684017991454684364"
+        },
+        "log10": {
+          "$numberDecimal": "-1"
+        },
+        "sqrt": {
+          "$numberDecimal": "0.3162277660168379331998893544432719"
+        },
+        "log": {
+          "$numberDecimal": "-2.095903274289384604296567522021400"
+        },
+        "log2": {
+          "$numberDecimal": "-3.321928094887362347870319429489390"
+        },
+        "logBase10": {
+          "$numberDecimal": "-1"
+        },
+        "pow": {
+          "$numberDecimal": "0.009999999999999999999999999999999996"
+        },
+        "powOdd": {
+          "$numberDecimal": "0.001000000000000000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "0.3162277660168379331998893544432718"
+        },
+        "round": {
+          "$numberDecimal": "0.1000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "0.1000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "0"
+        },
+        "floor": {
+          "$numberDecimal": "0"
+        },
+        "ceil": {
+          "$numberDecimal": "1"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "5"
+        },
+        "abs": {
+          "$numberDecimal": "0.9999999999999999999999999999999999"
+        },
+        "exp": {
+          "$numberDecimal": "2.718281828459045235360287471352662"
+        },
+        "ln": {
+          "$numberDecimal": "-1.000000000000000000000000000000000E-34"
+        },
+        "log10": {
+          "$numberDecimal": "-4.342944819032518276511289189166051E-35"
+        },
+        "sqrt": {
+          "$numberDecimal": "0.9999999999999999999999999999999999"
+        },
+        "log": {
+          "$numberDecimal": "-9.102392266268373936142401657361068E-35"
+        },
+        "log2": {
+          "$numberDecimal": "-1.442695040888963407359924681001892E-34"
+        },
+        "logBase10": {
+          "$numberDecimal": "-4.342944819032518276511289189166051E-35"
+        },
+        "pow": {
+          "$numberDecimal": "0.9999999999999999999999999999999998"
+        },
+        "powOdd": {
+          "$numberDecimal": "0.9999999999999999999999999999999997"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "0.9999999999999999999999999999999999"
+        },
+        "round": {
+          "$numberDecimal": "1.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "0.9999999999999999999999999"
+        },
+        "roundInteger": {
+          "$numberDecimal": "1"
+        },
+        "floor": {
+          "$numberDecimal": "0"
+        },
+        "ceil": {
+          "$numberDecimal": "1"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "6"
+        },
+        "abs": {
+          "$numberDecimal": "1.000000000000000000000000000000001"
+        },
+        "exp": {
+          "$numberDecimal": "2.718281828459045235360287471352665"
+        },
+        "ln": {
+          "$numberDecimal": "9.999999999999999999999999999999996E-34"
+        },
+        "log10": {
+          "$numberDecimal": "4.342944819032518276511289189166049E-34"
+        },
+        "sqrt": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "log": {
+          "$numberDecimal": "9.102392266268373936142401657361064E-34"
+        },
+        "log2": {
+          "$numberDecimal": "1.442695040888963407359924681001892E-33"
+        },
+        "logBase10": {
+          "$numberDecimal": "4.342944819032518276511289189166049E-34"
+        },
+        "pow": {
+          "$numberDecimal": "1.000000000000000000000000000000002"
+        },
+        "powOdd": {
+          "$numberDecimal": "1.000000000000000000000000000000003"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.000000000000000000000000000000001"
+        },
+        "round": {
+          "$numberDecimal": "1.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "1.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "1"
+        },
+        "floor": {
+          "$numberDecimal": "1"
+        },
+        "ceil": {
+          "$numberDecimal": "2"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "7"
+        },
+        "abs": {
+          "$numberDecimal": "100"
+        },
+        "exp": {
+          "$numberDecimal": "2.688117141816135448412625551580013E+43"
+        },
+        "ln": {
+          "$numberDecimal": "4.605170185988091368035982909368728"
+        },
+        "log10": {
+          "$numberDecimal": "2"
+        },
+        "sqrt": {
+          "$numberDecimal": "10"
+        },
+        "log": {
+          "$numberDecimal": "4.191806548578769208593135044042801"
+        },
+        "log2": {
+          "$numberDecimal": "6.643856189774724695740638858978781"
+        },
+        "logBase10": {
+          "$numberDecimal": "2"
+        },
+        "pow": {
+          "$numberDecimal": "10000.00000000000000000000000000000"
+        },
+        "powOdd": {
+          "$numberDecimal": "1000000.000000000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "9.999999999999999999999999999999999"
+        },
+        "round": {
+          "$numberDecimal": "100.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "100.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "100"
+        },
+        "floor": {
+          "$numberDecimal": "100"
+        },
+        "ceil": {
+          "$numberDecimal": "100"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "8"
+        },
+        "abs": {
+          "$numberDecimal": "0.000001"
+        },
+        "exp": {
+          "$numberDecimal": "1.000001000000500000166666708333342"
+        },
+        "ln": {
+          "$numberDecimal": "-13.81551055796427410410794872810619"
+        },
+        "log10": {
+          "$numberDecimal": "-6"
+        },
+        "sqrt": {
+          "$numberDecimal": "0.001"
+        },
+        "log": {
+          "$numberDecimal": "-12.57541964573630762577940513212841"
+        },
+        "log2": {
+          "$numberDecimal": "-19.93156856932417408722191657693634"
+        },
+        "logBase10": {
+          "$numberDecimal": "-6"
+        },
+        "pow": {
+          "$numberDecimal": "9.999999999999999999999999999999995E-13"
+        },
+        "powOdd": {
+          "$numberDecimal": "1.000000000000000000000000000000000E-18"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "0.001000000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "0.0000010000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "0.0000010000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "0"
+        },
+        "floor": {
+          "$numberDecimal": "0"
+        },
+        "ceil": {
+          "$numberDecimal": "1"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "9"
+        },
+        "abs": {
+          "$numberDecimal": "10000"
+        },
+        "exp": {
+          "$numberDecimal": "8.806818225662921587261496007644561E+4342"
+        },
+        "ln": {
+          "$numberDecimal": "9.210340371976182736071965818737457"
+        },
+        "log10": {
+          "$numberDecimal": "4"
+        },
+        "sqrt": {
+          "$numberDecimal": "100"
+        },
+        "log": {
+          "$numberDecimal": "8.383613097157538417186270088085603"
+        },
+        "log2": {
+          "$numberDecimal": "13.28771237954944939148127771795756"
+        },
+        "logBase10": {
+          "$numberDecimal": "4"
+        },
+        "pow": {
+          "$numberDecimal": "100000000.0000000000000000000000000"
+        },
+        "powOdd": {
+          "$numberDecimal": "1000000000000.000000000000000000000"
+        },
+        "powZero": {
+          "$numberDecimal": "1.000000000000000000000000000000000"
+        },
+        "powFraction": {
+          "$numberDecimal": "100.0000000000000000000000000000000"
+        },
+        "round": {
+          "$numberDecimal": "10000.0000000000000000000000000"
+        },
+        "trunc": {
+          "$numberDecimal": "10000.0000000000000000000000000"
+        },
+        "roundInteger": {
+          "$numberDecimal": "10000"
+        },
+        "floor": {
+          "$numberDecimal": "10000"
+        },
+        "ceil": {
+          "$numberDecimal": "10000"
+        }
+      }
+    ],
+    "semantic_decimal_advanced_power_limits": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "values": [
+          {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          {
+            "$numberDecimal": "NaN"
+          },
+          {
+            "$numberDecimal": "-8.000000000000000000000000000000000"
+          },
+          {
+            "$numberDecimal": "-0.1250000000000000000000000000000000"
+          },
+          {
+            "$numberDecimal": "Infinity"
+          },
+          {
+            "$numberDecimal": "Infinity"
+          },
+          {
+            "$numberDecimal": "0E-6176"
+          },
+          {
+            "$numberDecimal": "2.817960879631397637428637785383221E+4515"
+          },
+          {
+            "$numberDecimal": "0E-6176"
+          },
+          {
+            "$numberDecimal": "1.000000000000000000000000000000000E+6144"
+          },
+          {
+            "$numberDecimal": "1E-6176"
+          },
+          {
+            "$numberDecimal": "3.162277660168379331998893544432719"
+          }
+        ]
+      }
+    ],
+    "semantic_decimal_advanced_write": {
+      "matched": {
+        "$numberInt": "10"
+      },
+      "modified": {
+        "$numberInt": "10"
+      },
+      "documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "abs": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          },
+          "exp": {
+            "$numberDecimal": "3.436893084346008004591424314762274"
+          },
+          "ln": {
+            "$numberDecimal": "0.2107210223156525610550017104886234"
+          },
+          "log10": {
+            "$numberDecimal": "0.09151497721269989571083027823432098"
+          },
+          "sqrt": {
+            "$numberDecimal": "1.111111106111111099361111058186111"
+          },
+          "log": {
+            "$numberDecimal": "0.1918065403866161312676942905205795"
+          },
+          "log2": {
+            "$numberDecimal": "0.3040061739058445421974373617545367"
+          },
+          "logBase10": {
+            "$numberDecimal": "0.09151497721269989571083027823432098"
+          },
+          "pow": {
+            "$numberDecimal": "1.524157875323883675049535156256667"
+          },
+          "powOdd": {
+            "$numberDecimal": "1.881676372353657772546716040595284"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "1.111111106111111099361111058186110"
+          },
+          "round": {
+            "$numberDecimal": "1.2345678901234567890123457"
+          },
+          "trunc": {
+            "$numberDecimal": "1.2345678901234567890123456"
+          },
+          "roundInteger": {
+            "$numberDecimal": "1"
+          },
+          "floor": {
+            "$numberDecimal": "1"
+          },
+          "ceil": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          },
+          "abs": {
+            "$numberDecimal": "2"
+          },
+          "exp": {
+            "$numberDecimal": "7.389056098930650227230427460575008"
+          },
+          "ln": {
+            "$numberDecimal": "0.6931471805599453094172321214581766"
+          },
+          "log10": {
+            "$numberDecimal": "0.3010299956639811952137388947244930"
+          },
+          "sqrt": {
+            "$numberDecimal": "1.414213562373095048801688724209698"
+          },
+          "log": {
+            "$numberDecimal": "0.6309297535714574370995271143427607"
+          },
+          "log2": {
+            "$numberDecimal": "1"
+          },
+          "logBase10": {
+            "$numberDecimal": "0.3010299956639811952137388947244930"
+          },
+          "pow": {
+            "$numberDecimal": "4.000000000000000000000000000000000"
+          },
+          "powOdd": {
+            "$numberDecimal": "8.000000000000000000000000000000000"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "1.414213562373095048801688724209698"
+          },
+          "round": {
+            "$numberDecimal": "2.0000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "2.0000000000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "2"
+          },
+          "floor": {
+            "$numberDecimal": "2"
+          },
+          "ceil": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "3"
+          },
+          "abs": {
+            "$numberDecimal": "3"
+          },
+          "exp": {
+            "$numberDecimal": "20.08553692318766774092852965458172"
+          },
+          "ln": {
+            "$numberDecimal": "1.098612288668109691395245236922526"
+          },
+          "log10": {
+            "$numberDecimal": "0.4771212547196624372950279032551153"
+          },
+          "sqrt": {
+            "$numberDecimal": "1.732050807568877293527446341505872"
+          },
+          "log": {
+            "$numberDecimal": "1"
+          },
+          "log2": {
+            "$numberDecimal": "1.584962500721156181453738943947817"
+          },
+          "logBase10": {
+            "$numberDecimal": "0.4771212547196624372950279032551153"
+          },
+          "pow": {
+            "$numberDecimal": "9.000000000000000000000000000000001"
+          },
+          "powOdd": {
+            "$numberDecimal": "27.00000000000000000000000000000000"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "1.732050807568877293527446341505872"
+          },
+          "round": {
+            "$numberDecimal": "3.0000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "3.0000000000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "3"
+          },
+          "floor": {
+            "$numberDecimal": "3"
+          },
+          "ceil": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "10"
+          },
+          "abs": {
+            "$numberDecimal": "10"
+          },
+          "exp": {
+            "$numberDecimal": "22026.46579480671651695790064528425"
+          },
+          "ln": {
+            "$numberDecimal": "2.302585092994045684017991454684364"
+          },
+          "log10": {
+            "$numberDecimal": "1"
+          },
+          "sqrt": {
+            "$numberDecimal": "3.162277660168379331998893544432719"
+          },
+          "log": {
+            "$numberDecimal": "2.095903274289384604296567522021400"
+          },
+          "log2": {
+            "$numberDecimal": "3.321928094887362347870319429489390"
+          },
+          "logBase10": {
+            "$numberDecimal": "1"
+          },
+          "pow": {
+            "$numberDecimal": "100.0000000000000000000000000000000"
+          },
+          "powOdd": {
+            "$numberDecimal": "1000.000000000000000000000000000000"
+          },
+          "powZero": {
+            "$numberDecimal": "0E-6176"
+          },
+          "powFraction": {
+            "$numberDecimal": "3.162277660168379331998893544432719"
+          },
+          "round": {
+            "$numberDecimal": "10.0000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "10.0000000000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "10"
+          },
+          "floor": {
+            "$numberDecimal": "10"
+          },
+          "ceil": {
+            "$numberDecimal": "10"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0.1"
+          },
+          "abs": {
+            "$numberDecimal": "0.1"
+          },
+          "exp": {
+            "$numberDecimal": "1.105170918075647624811707826490247"
+          },
+          "ln": {
+            "$numberDecimal": "-2.302585092994045684017991454684364"
+          },
+          "log10": {
+            "$numberDecimal": "-1"
+          },
+          "sqrt": {
+            "$numberDecimal": "0.3162277660168379331998893544432719"
+          },
+          "log": {
+            "$numberDecimal": "-2.095903274289384604296567522021400"
+          },
+          "log2": {
+            "$numberDecimal": "-3.321928094887362347870319429489390"
+          },
+          "logBase10": {
+            "$numberDecimal": "-1"
+          },
+          "pow": {
+            "$numberDecimal": "0.009999999999999999999999999999999996"
+          },
+          "powOdd": {
+            "$numberDecimal": "0.001000000000000000000000000000000000"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "0.3162277660168379331998893544432718"
+          },
+          "round": {
+            "$numberDecimal": "0.1000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "0.1000000000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "0"
+          },
+          "floor": {
+            "$numberDecimal": "0"
+          },
+          "ceil": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          },
+          "abs": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          },
+          "exp": {
+            "$numberDecimal": "2.718281828459045235360287471352662"
+          },
+          "ln": {
+            "$numberDecimal": "-1.000000000000000000000000000000000E-34"
+          },
+          "log10": {
+            "$numberDecimal": "-4.342944819032518276511289189166051E-35"
+          },
+          "sqrt": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          },
+          "log": {
+            "$numberDecimal": "-9.102392266268373936142401657361068E-35"
+          },
+          "log2": {
+            "$numberDecimal": "-1.442695040888963407359924681001892E-34"
+          },
+          "logBase10": {
+            "$numberDecimal": "-4.342944819032518276511289189166051E-35"
+          },
+          "pow": {
+            "$numberDecimal": "0.9999999999999999999999999999999998"
+          },
+          "powOdd": {
+            "$numberDecimal": "0.9999999999999999999999999999999997"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          },
+          "round": {
+            "$numberDecimal": "1.0000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "0.9999999999999999999999999"
+          },
+          "roundInteger": {
+            "$numberDecimal": "1"
+          },
+          "floor": {
+            "$numberDecimal": "0"
+          },
+          "ceil": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          },
+          "abs": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          },
+          "exp": {
+            "$numberDecimal": "2.718281828459045235360287471352665"
+          },
+          "ln": {
+            "$numberDecimal": "9.999999999999999999999999999999996E-34"
+          },
+          "log10": {
+            "$numberDecimal": "4.342944819032518276511289189166049E-34"
+          },
+          "sqrt": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "log": {
+            "$numberDecimal": "9.102392266268373936142401657361064E-34"
+          },
+          "log2": {
+            "$numberDecimal": "1.442695040888963407359924681001892E-33"
+          },
+          "logBase10": {
+            "$numberDecimal": "4.342944819032518276511289189166049E-34"
+          },
+          "pow": {
+            "$numberDecimal": "1.000000000000000000000000000000002"
+          },
+          "powOdd": {
+            "$numberDecimal": "1.000000000000000000000000000000003"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          },
+          "round": {
+            "$numberDecimal": "1.0000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "1.0000000000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "1"
+          },
+          "floor": {
+            "$numberDecimal": "1"
+          },
+          "ceil": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "100"
+          },
+          "abs": {
+            "$numberDecimal": "100"
+          },
+          "exp": {
+            "$numberDecimal": "2.688117141816135448412625551580013E+43"
+          },
+          "ln": {
+            "$numberDecimal": "4.605170185988091368035982909368728"
+          },
+          "log10": {
+            "$numberDecimal": "2"
+          },
+          "sqrt": {
+            "$numberDecimal": "10"
+          },
+          "log": {
+            "$numberDecimal": "4.191806548578769208593135044042801"
+          },
+          "log2": {
+            "$numberDecimal": "6.643856189774724695740638858978781"
+          },
+          "logBase10": {
+            "$numberDecimal": "2"
+          },
+          "pow": {
+            "$numberDecimal": "10000.00000000000000000000000000000"
+          },
+          "powOdd": {
+            "$numberDecimal": "1000000.000000000000000000000000000"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "9.999999999999999999999999999999999"
+          },
+          "round": {
+            "$numberDecimal": "100.0000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "100.0000000000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "100"
+          },
+          "floor": {
+            "$numberDecimal": "100"
+          },
+          "ceil": {
+            "$numberDecimal": "100"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "0.000001"
+          },
+          "abs": {
+            "$numberDecimal": "0.000001"
+          },
+          "exp": {
+            "$numberDecimal": "1.000001000000500000166666708333342"
+          },
+          "ln": {
+            "$numberDecimal": "-13.81551055796427410410794872810619"
+          },
+          "log10": {
+            "$numberDecimal": "-6"
+          },
+          "sqrt": {
+            "$numberDecimal": "0.001"
+          },
+          "log": {
+            "$numberDecimal": "-12.57541964573630762577940513212841"
+          },
+          "log2": {
+            "$numberDecimal": "-19.93156856932417408722191657693634"
+          },
+          "logBase10": {
+            "$numberDecimal": "-6"
+          },
+          "pow": {
+            "$numberDecimal": "9.999999999999999999999999999999995E-13"
+          },
+          "powOdd": {
+            "$numberDecimal": "1.000000000000000000000000000000000E-18"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "0.001000000000000000000000000000000000"
+          },
+          "round": {
+            "$numberDecimal": "0.0000010000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "0.0000010000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "0"
+          },
+          "floor": {
+            "$numberDecimal": "0"
+          },
+          "ceil": {
+            "$numberDecimal": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "10000"
+          },
+          "abs": {
+            "$numberDecimal": "10000"
+          },
+          "exp": {
+            "$numberDecimal": "8.806818225662921587261496007644561E+4342"
+          },
+          "ln": {
+            "$numberDecimal": "9.210340371976182736071965818737457"
+          },
+          "log10": {
+            "$numberDecimal": "4"
+          },
+          "sqrt": {
+            "$numberDecimal": "100"
+          },
+          "log": {
+            "$numberDecimal": "8.383613097157538417186270088085603"
+          },
+          "log2": {
+            "$numberDecimal": "13.28771237954944939148127771795756"
+          },
+          "logBase10": {
+            "$numberDecimal": "4"
+          },
+          "pow": {
+            "$numberDecimal": "100000000.0000000000000000000000000"
+          },
+          "powOdd": {
+            "$numberDecimal": "1000000000000.000000000000000000000"
+          },
+          "powZero": {
+            "$numberDecimal": "1.000000000000000000000000000000000"
+          },
+          "powFraction": {
+            "$numberDecimal": "100.0000000000000000000000000000000"
+          },
+          "round": {
+            "$numberDecimal": "10000.0000000000000000000000000"
+          },
+          "trunc": {
+            "$numberDecimal": "10000.0000000000000000000000000"
+          },
+          "roundInteger": {
+            "$numberDecimal": "10000"
+          },
+          "floor": {
+            "$numberDecimal": "10000"
+          },
+          "ceil": {
+            "$numberDecimal": "10000"
+          }
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_decimal_advanced_cases.py",
+    "sha256": "4a5e3184ede9516a3c192182c90e13860d87ff2ad628bfcbc68d6b7dfaf000d7"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_decimal_advanced_functions",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "10"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "100"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "0.000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "10000"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_advanced_functions"
+    },
+    {
+      "name": "semantic_decimal_advanced_write",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "10"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "100"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "0.000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "10000"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_advanced_write"
+    },
+    {
+      "name": "semantic_decimal_advanced_domains",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "10"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "100"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "0.000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "10000"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_advanced_domains"
+    },
+    {
+      "name": "semantic_decimal_advanced_power_limits",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberDecimal": "1.234567890123456789012345678901234"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDecimal": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberDecimal": "3"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDecimal": "10"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "x": {
+            "$numberDecimal": "0.1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "x": {
+            "$numberDecimal": "0.9999999999999999999999999999999999"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "x": {
+            "$numberDecimal": "1.000000000000000000000000000000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "x": {
+            "$numberDecimal": "100"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "x": {
+            "$numberDecimal": "0.000001"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "x": {
+            "$numberDecimal": "10000"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_advanced_power_limits"
+    }
+  ]
+}

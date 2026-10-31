@@ -247,7 +247,9 @@ class DatabaseAdminWriteCommandService:
                 array_filters = update_spec.get("arrayFilters")
                 hint = self._admin._normalize_hint_from_command(update_spec.get("hint"))
                 let = command_let
-                variables = command_context.with_bindings(let or {})
+                variables = command_context.with_command_let(
+                    let, dialect=self._admin._mongodb_dialect, write=True
+                )
 
                 is_operator_update = self.is_operator_update(update_document)
                 if multi and not is_operator_update:
@@ -325,7 +327,9 @@ class DatabaseAdminWriteCommandService:
                 limit = delete_spec.get("limit", 0)
                 hint = self._admin._normalize_hint_from_command(delete_spec.get("hint"))
                 let = command_let
-                variables = command_context.with_bindings(let or {})
+                variables = command_context.with_command_let(
+                    let, dialect=self._admin._mongodb_dialect, write=True
+                )
                 result = await _collection_modify.execute_server_delete(
                     collection,
                     query,

@@ -8264,7 +8264,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
-    async def test_aggregate_supports_field_bound_logical_expr_conditions_inside_lookup(
+    async def test_aggregate_supports_logical_expr_conditions_inside_lookup(
         self,
     ):
         for engine_name in ENGINE_FACTORIES:
@@ -8325,27 +8325,25 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                                         },
                                                         {
                                                             "$or": [
-                                                                "$role",
-                                                                [
-                                                                    {
-                                                                        "$eq": "admin",
-                                                                    },
-                                                                    {
-                                                                        "$eq": "staff",
-                                                                    },
-                                                                ],
-                                                            ],
+                                                                {
+                                                                    "$eq": [
+                                                                        "$role",
+                                                                        "admin",
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "$eq": [
+                                                                        "$role",
+                                                                        "staff",
+                                                                    ]
+                                                                },
+                                                            ]
                                                         },
                                                         {
                                                             "$and": [
-                                                                "$score",
-                                                                [
-                                                                    {
-                                                                        "$gte": 3,
-                                                                    },
-                                                                    {"$lt": 5},
-                                                                ],
-                                                            ],
+                                                                {"$gte": ["$score", 3]},
+                                                                {"$lt": ["$score", 5]},
+                                                            ]
                                                         },
                                                     ],
                                                 },
@@ -8380,7 +8378,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
-    async def test_aggregate_supports_field_bound_query_filter_expr_conditions_inside_lookup(
+    async def test_aggregate_supports_query_filter_conditions_inside_lookup(
         self,
     ):
         for engine_name in ENGINE_FACTORIES:
@@ -8424,45 +8422,20 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                         {
                                             "$match": {
                                                 "$expr": {
-                                                    "$and": [
-                                                        {
-                                                            "$eq": [
-                                                                "$tenant",
-                                                                "$$tenantId",
-                                                            ],
-                                                        },
-                                                        {
-                                                            "$exists": [
-                                                                "$tags",
-                                                                True,
-                                                            ],
-                                                        },
-                                                        {
-                                                            "$all": [
-                                                                "$tags",
-                                                                ["a", "b"],
-                                                            ],
-                                                        },
-                                                        {
-                                                            "$nin": [
-                                                                "$status",
-                                                                ["archived"],
-                                                            ],
-                                                        },
-                                                        {
-                                                            "$elemMatch": [
-                                                                "$items",
-                                                                {
-                                                                    "kind": "y",
-                                                                    "qty": {
-                                                                        "$gte": 2,
-                                                                    },
-                                                                },
-                                                            ],
-                                                        },
-                                                    ],
+                                                    "$eq": ["$tenant", "$$tenantId"]
                                                 },
-                                            },
+                                                "tags": {
+                                                    "$exists": True,
+                                                    "$all": ["a", "b"],
+                                                },
+                                                "status": {"$nin": ["archived"]},
+                                                "items": {
+                                                    "$elemMatch": {
+                                                        "kind": "y",
+                                                        "qty": {"$gte": 2},
+                                                    }
+                                                },
+                                            }
                                         },
                                         {"$project": {"_id": 1}},
                                     ],

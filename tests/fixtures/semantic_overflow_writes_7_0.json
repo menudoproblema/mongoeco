@@ -1,0 +1,1404 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_overflow_array_write": "{\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 5}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}",
+    "semantic_overflow_bulk_write": "{\"True\": {\"error\": {\"family\": \"BulkWriteError\", \"code\": 65, \"codeName\": null, \"labels\": [], \"write_errors\": [[1, 2]], \"write_concern_errors\": {\"present\": true, \"value\": []}, \"write_error_messages\": [{\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}], \"write_error_operations\": [{\"index\": 1, \"present\": true, \"value\": {\"$document\": [[\"multi\", false], [\"q\", {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}]]}], [\"u\", {\"$document\": [[\"$set\", {\"$document\": [[\"b\", {\"$numberInt\": \"1\"}]]}], [\"$inc\", {\"$document\": [[\"a\", {\"$numberInt\": \"1\"}]]}]]}], [\"upsert\", false]]}}], \"partial\": {\"nInserted\": 0, \"nMatched\": 1, \"nModified\": 1, \"nRemoved\": 0, \"nUpserted\": 0, \"upserted\": []}, \"details\": {\"state\": \"document\", \"fields\": {\"nInserted\": {\"$numberInt\": \"0\"}, \"nMatched\": {\"$numberInt\": \"1\"}, \"nModified\": {\"$numberInt\": \"1\"}, \"nRemoved\": {\"$numberInt\": \"0\"}, \"nUpserted\": {\"$numberInt\": \"0\"}, \"upserted\": [], \"writeConcernErrors\": [], \"writeErrors\": [{\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"1\"}, \"op\": {\"$document\": [[\"q\", {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}]]}], [\"u\", {\"$document\": [[\"$set\", {\"$document\": [[\"b\", {\"$numberInt\": \"1\"}]]}], [\"$inc\", {\"$document\": [[\"a\", {\"$numberInt\": \"1\"}]]}]]}], [\"multi\", false], [\"upsert\", false]]}}}]}}}, \"diagnostics\": [\"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\"], \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"2\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"False\": {\"error\": {\"family\": \"BulkWriteError\", \"code\": 65, \"codeName\": null, \"labels\": [], \"write_errors\": [[1, 2]], \"write_concern_errors\": {\"present\": true, \"value\": []}, \"write_error_messages\": [{\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}], \"write_error_operations\": [{\"index\": 1, \"present\": true, \"value\": {\"$document\": [[\"multi\", false], [\"q\", {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}]]}], [\"u\", {\"$document\": [[\"$set\", {\"$document\": [[\"b\", {\"$numberInt\": \"1\"}]]}], [\"$inc\", {\"$document\": [[\"a\", {\"$numberInt\": \"1\"}]]}]]}], [\"upsert\", false]]}}], \"partial\": {\"nInserted\": 0, \"nMatched\": 2, \"nModified\": 2, \"nRemoved\": 0, \"nUpserted\": 0, \"upserted\": []}, \"details\": {\"state\": \"document\", \"fields\": {\"nInserted\": {\"$numberInt\": \"0\"}, \"nMatched\": {\"$numberInt\": \"2\"}, \"nModified\": {\"$numberInt\": \"2\"}, \"nRemoved\": {\"$numberInt\": \"0\"}, \"nUpserted\": {\"$numberInt\": \"0\"}, \"upserted\": [], \"writeConcernErrors\": [], \"writeErrors\": [{\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"1\"}, \"op\": {\"$document\": [[\"q\", {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}]]}], [\"u\", {\"$document\": [[\"$set\", {\"$document\": [[\"b\", {\"$numberInt\": \"1\"}]]}], [\"$inc\", {\"$document\": [[\"a\", {\"$numberInt\": \"1\"}]]}]]}], [\"multi\", false], [\"upsert\", false]]}}}]}}}, \"diagnostics\": [\"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\"], \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"2\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"2\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}}",
+    "semantic_overflow_identifiers": "[{\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: \\\"a\\\"b\\\"}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: { k: 1 }}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 99}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1.5}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: ObjectId('000000000000000000000001')}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}]",
+    "semantic_overflow_individual_writes": "{\"update_one_$inc_1\": {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_update_one_$inc_1\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"update_one_$inc_3\": {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)-9223372036854775808) for document {_id: 3}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_update_one_$inc_3\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"update_one_$mul_1\": {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $mul operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_update_one_$mul_1\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"update_one_$mul_3\": {\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $mul operations to current value ((NumberLong)-9223372036854775808) for document {_id: 3}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_update_one_$mul_3\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"find_one_and_update_$inc_1\": {\"error\": {\"family\": \"OperationFailure\", \"code\": 2, \"codeName\": \"BadValue\", \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"codeName\": \"BadValue\", \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"ok\": {\"$numberDouble\": \"0.0\"}}}}, \"diagnostics\": \"Plan executor error during findAndModify :: caused by :: Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_find_one_and_update_$inc_1\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"find_one_and_update_$inc_3\": {\"error\": {\"family\": \"OperationFailure\", \"code\": 2, \"codeName\": \"BadValue\", \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"codeName\": \"BadValue\", \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"ok\": {\"$numberDouble\": \"0.0\"}}}}, \"diagnostics\": \"Plan executor error during findAndModify :: caused by :: Failed to apply $inc operations to current value ((NumberLong)-9223372036854775808) for document {_id: 3}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_find_one_and_update_$inc_3\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"find_one_and_update_$mul_1\": {\"error\": {\"family\": \"OperationFailure\", \"code\": 2, \"codeName\": \"BadValue\", \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"codeName\": \"BadValue\", \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"ok\": {\"$numberDouble\": \"0.0\"}}}}, \"diagnostics\": \"Plan executor error during findAndModify :: caused by :: Failed to apply $mul operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_find_one_and_update_$mul_1\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"find_one_and_update_$mul_3\": {\"error\": {\"family\": \"OperationFailure\", \"code\": 2, \"codeName\": \"BadValue\", \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"codeName\": \"BadValue\", \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"ok\": {\"$numberDouble\": \"0.0\"}}}}, \"diagnostics\": \"Plan executor error during findAndModify :: caused by :: Failed to apply $mul operations to current value ((NumberLong)-9223372036854775808) for document {_id: 3}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"recovery_find_one_and_update_$mul_3\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}}",
+    "semantic_overflow_many_write": "{\"error\": {\"family\": \"WriteError\", \"code\": 2, \"codeName\": null, \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"index\": {\"$numberInt\": \"0\"}}}}, \"diagnostics\": \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"2\"}], [\"b\", {\"$numberInt\": \"1\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}",
+    "semantic_overflow_numeric_noops": "{\"set_decimal_cohort\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDecimal\": \"1.5\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"set_zero_sign\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"0.0\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"set_nan\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"NaN\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"inc_zero\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"2.0\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_one\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"2.0\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"inc_decimal_zero\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDecimal\": \"1.50\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_decimal_zero\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDecimal\": \"0\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"inc_negative_zero\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"-0.0\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"inc_nan\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"NaN\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_nan\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"NaN\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"set_width\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberLong\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"inc_width\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberLong\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"set_boolean\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"set_object\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$document\": [[\"x\", {\"$numberDouble\": \"2.0\"}]]}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"set_array\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", [{\"$numberDouble\": \"2.0\"}]], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"set_key_order\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$document\": [[\"b\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}]]}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"inc_mixed_decimal\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDecimal\": \"3.50000000000000\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_mixed_decimal\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDecimal\": \"3.000000000000000\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_missing_nan\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDouble\": \"NaN\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_missing_infinity\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDouble\": \"NaN\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_missing_decimal_nan\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDecimal\": \"NaN\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"mul_missing_decimal_scaled\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDecimal\": \"0.00\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}}",
+    "semantic_overflow_raw_commands": "{\"update\": {\"result\": {\"document\": {\"$document\": [[\"n\", {\"$numberInt\": \"0\"}], [\"nModified\", {\"$numberInt\": \"0\"}], [\"ok\", {\"$numberDouble\": \"1.0\"}], [\"writeErrors\", [{\"$document\": [[\"index\", {\"$numberInt\": \"0\"}], [\"code\", {\"$numberInt\": \"2\"}], [\"errmsg\", \"Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\"]]}]]]}}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"findAndModify\": {\"error\": {\"family\": \"OperationFailure\", \"code\": 2, \"codeName\": \"BadValue\", \"labels\": [], \"write_errors\": [], \"details\": {\"state\": \"document\", \"fields\": {\"code\": {\"$numberInt\": \"2\"}, \"codeName\": \"BadValue\", \"errmsg\": {\"present\": true, \"type\": \"str\", \"nonempty\": true, \"formatted_exception\": false}, \"ok\": {\"$numberDouble\": \"0.0\"}}}}, \"diagnostics\": \"Plan executor error during findAndModify :: caused by :: Failed to apply $inc operations to current value ((NumberLong)9223372036854775807) for document {_id: 1}\", \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}}",
+    "semantic_overflow_write_controls": "{\"$inc_double\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDouble\": \"9.223372036854776e+18\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$inc_double_missing\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDouble\": \"9.223372036854776e+18\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDouble\": \"2.0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$inc_decimal\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDecimal\": \"9223372036854775809\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$inc_decimal_missing\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDecimal\": \"9223372036854775809\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDecimal\": \"2\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$inc_long\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775806\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$inc_long_missing\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775806\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberLong\": \"-1\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$mul_double\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDouble\": \"1.8446744073709552e+19\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$mul_double_missing\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDouble\": \"1.8446744073709552e+19\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDouble\": \"0.0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$mul_decimal\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDecimal\": \"18446744073709551614\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$mul_decimal_missing\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberDecimal\": \"18446744073709551614\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberDecimal\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$mul_long\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"-9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"$mul_long_missing\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"-9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"4\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"missing\", {\"$numberLong\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}}",
+    "semantic_overflow_write_identity": "{\"pipeline_width\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberLong\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"pipeline_cohort\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDecimal\": \"1.5\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"pipeline_same\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"2.0\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"replace_width\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberLong\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"replace_missing_id\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 1, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}, \"replace_same\": {\"result\": {\"acknowledged\": true, \"matched_count\": 1, \"modified_count\": 0, \"upserted_id\": null, \"did_upsert\": false}, \"state\": [{\"$document\": [[\"_id\", {\"$numberInt\": \"0\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"1\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberDecimal\": \"1.5\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"2\"}], [\"a\", {\"$numberInt\": \"1\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"zone\", \"many\"]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"3\"}], [\"a\", {\"$numberLong\": \"-9223372036854775808\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"4\"}], [\"a\", {\"$numberDouble\": \"2.0\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$numberInt\": \"5\"}], [\"b\", {\"$numberInt\": \"0\"}], [\"items\", [{\"$document\": [[\"n\", {\"$numberInt\": \"1\"}]]}, {\"$document\": [[\"n\", {\"$numberLong\": \"9223372036854775807\"}]]}]]]}, {\"$document\": [[\"_id\", {\"$numberLong\": \"99\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", \"a\\\"b\"], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$document\": [[\"k\", {\"$numberInt\": \"1\"}]]}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}, {\"$document\": [[\"_id\", {\"$oid\": \"000000000000000000000001\"}], [\"a\", {\"$numberLong\": \"9223372036854775807\"}], [\"b\", {\"$numberInt\": \"0\"}]]}]}}"
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_overflow_write_cases.py",
+    "sha256": "6fc1413ed372efef3cdb15c172a80a79cb91dca55ea4b996b004484d614f8861",
+    "observationEncoding": "canonical-json"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_overflow_individual_writes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_individual_writes"
+    },
+    {
+      "name": "semantic_overflow_many_write",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_many_write"
+    },
+    {
+      "name": "semantic_overflow_bulk_write",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_bulk_write"
+    },
+    {
+      "name": "semantic_overflow_array_write",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_array_write"
+    },
+    {
+      "name": "semantic_overflow_raw_commands",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_raw_commands"
+    },
+    {
+      "name": "semantic_overflow_identifiers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_identifiers"
+    },
+    {
+      "name": "semantic_overflow_write_controls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_write_controls"
+    },
+    {
+      "name": "semantic_overflow_numeric_noops",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_numeric_noops"
+    },
+    {
+      "name": "semantic_overflow_write_identity",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": {
+            "$numberInt": "1"
+          },
+          "b": {
+            "$numberInt": "0"
+          },
+          "zone": "many"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": {
+            "$numberLong": "-9223372036854775808"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "a": {
+            "$numberInt": "4"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "items": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberLong": "9223372036854775807"
+              }
+            }
+          ],
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "a\"b",
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberLong": "99"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberDecimal": "1.5"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$oid": "000000000000000000000001"
+          },
+          "a": {
+            "$numberLong": "9223372036854775807"
+          },
+          "b": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_overflow_write_identity"
+    }
+  ]
+}

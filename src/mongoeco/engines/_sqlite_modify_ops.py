@@ -4,14 +4,15 @@ import sqlite3
 
 from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
     assert_valid_upsert_document_id,
-    document_id_bson_type_changed,
-    preserve_and_validate_pipeline_id,
     materialize_replacement_document,
+    preserve_and_validate_pipeline_id,
+    replacement_document_changed,
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
@@ -24,7 +25,7 @@ from mongoeco.types import (
     Filter,
     UpdateResult,
 )
-from typing import TYPE_CHECKING
+
 
 if TYPE_CHECKING:
     from mongoeco.compat import MongoDialect
@@ -324,9 +325,9 @@ def update_with_operation(
                 original_document, document, dialect=semantics.dialect
             )
         modified = (
-            ("_id" not in replacement_document and "_id" in original_document)
-            or document_id_bson_type_changed(original_document, document)
-            or not semantics.dialect.values_equal(document, original_document)
+            replacement_document_changed(
+                original_document, document, replacement_document
+            )
             if replacement_document is not None
             else semantics.compiled_update_plan.apply(
                 document,

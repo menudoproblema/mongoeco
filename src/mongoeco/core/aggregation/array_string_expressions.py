@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import decimal
+import math
 import re
 import uuid
 
@@ -10,17 +11,24 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.compat._catalog_operators import ARRAY_ACCESS_EXPRESSION_ARGUMENTS
 from mongoeco.core.aggregation.evaluation_environment import (
     scoped_environment,
 )
-from mongoeco.core.bson_scalars import INT32_MAX, INT32_MIN, unwrap_bson_numeric
+from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
+from mongoeco.core.bson_scalars import (
+    INT32_MAX,
+    INT32_MIN,
+    unwrap_bson_numeric,
+    wrap_bson_numeric,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.server_errors import server_error
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Decimal128, Document, Regex, SortSpec
+from mongoeco.types import Decimal128, Document, Regex, SortSpec, UndefinedType
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
@@ -28,10 +36,9 @@ type ExpressionArgValidator = Callable[[str, object, int, int | None], list[Any]
 
 
 ARRAY_STRING_EXPRESSION_OPERATORS = frozenset(
+    ARRAY_ACCESS_EXPRESSION_ARGUMENTS
+) | frozenset(
     {
-        "$size",
-        "$arrayElemAt",
-        "$first",
         "$concat",
         "$trim",
         "$ltrim",
@@ -247,7 +254,7 @@ def evaluate_array_string_expression(
     collation = getattr(variables, "collation", None)
     if operator == "$size":
         args = require_expression_args(
-            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+            operator, spec, *ARRAY_ACCESS_EXPRESSION_ARGUMENTS[operator]
         )
         value = evaluate_expression(document, args[0], variables)
         if not isinstance(value, list):
@@ -255,32 +262,51 @@ def evaluate_array_string_expression(
             raise server_error(message, code=17124)
         return len(value)
 
-    if operator == "$arrayElemAt":
-        args = require_expression_args(operator, spec, 2, 2)
+    if operator in {"$arrayElemAt", "$first", "$last"}:
+        args = require_expression_args(
+            operator, spec, *ARRAY_ACCESS_EXPRESSION_ARGUMENTS[operator]
+        )
         values = evaluate_expression(document, args[0], variables)
-        index = evaluate_expression(document, args[1], variables)
-        if values is None or index is None:
+        index = (
+            evaluate_expression(document, args[1], variables)
+            if operator == "$arrayElemAt"
+            else (0 if operator == "$first" else -1)
+        )
+        if (
+            values is None
+            or values is missing_sentinel
+            or isinstance(values, UndefinedType)
+            or index is None
+            or index is missing_sentinel
+        ):
             return None
         if not isinstance(values, list):
-            message = "$arrayElemAt requires an array as first argument"
-            raise server_error(message, code=28689)
-        if not isinstance(index, int) or isinstance(index, bool):
-            message = "$arrayElemAt requires an integer index"
-            raise server_error(message, code=28690)
+            kind = _aggregation_type_name(values, missing_sentinel=missing_sentinel)
+            message = f"{operator}'s argument must be an array, but is {kind}"
+            raise server_error(message, code=28689, reason="expression_type")
+        numeric = wrap_bson_numeric(index)
+        if numeric is None:
+            kind = _aggregation_type_name(index, missing_sentinel=missing_sentinel)
+            message = (
+                f"$arrayElemAt's second argument must be a numeric value, but is {kind}"
+            )
+            raise server_error(message, code=28690, reason="expression_type")
+        number = numeric.value
+        if (
+            not math.isfinite(number)
+            or not INT32_MIN <= number <= INT32_MAX
+            or number != int(number)
+        ):
+            rendered = format(float(number), ".6g")
+            message = (
+                "$arrayElemAt's second argument must be representable as a "
+                f"32-bit integer: {rendered}"
+            )
+            raise server_error(message, code=28691, reason="expression_type")
+        index = int(number)
         if index < 0:
             index += len(values)
-        if index < 0 or index >= len(values):
-            return None
-        return values[index]
-
-    if operator == "$first":
-        args = require_expression_args(
-            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
-        )
-        value = evaluate_expression(document, args[0], variables)
-        if isinstance(value, list):
-            return value[0] if value else None
-        return value
+        return values[index] if 0 <= index < len(values) else missing_sentinel
 
     if operator == "$concat":
         args = require_expression_args(operator, spec, 1, None)
@@ -614,14 +640,16 @@ def evaluate_array_string_expression(
         if source is None:
             return None
         source = _require_array(operator, source)
-        accumulated = evaluate_expression(document, spec["initialValue"], variables)
+        accumulated = evaluate_expression_with_missing(
+            document, spec["initialValue"], variables
+        )
         for index, item in enumerate(source):
             scoped = scoped_environment(variables)
             scoped[names.get("valueAs", "value")] = accumulated
             scoped[names.get("as", "this")] = item
             if names:
                 scoped[names["arrayIndexAs"]] = index
-            accumulated = evaluate_expression(document, spec["in"], scoped)
+            accumulated = evaluate_expression_with_missing(document, spec["in"], scoped)
         return accumulated
 
     if operator == "$objectToArray":

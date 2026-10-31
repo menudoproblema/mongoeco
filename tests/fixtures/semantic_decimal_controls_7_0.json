@@ -1,0 +1,343 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_decimal_advanced_numeric_controls": [
+      {
+        "_id": {
+          "$numberInt": "0"
+        },
+        "abs": {
+          "$numberInt": "2"
+        },
+        "exp": {
+          "$numberDouble": "7.38905609893065"
+        },
+        "ln": {
+          "$numberDouble": "0.6931471805599453"
+        },
+        "log10": {
+          "$numberDouble": "0.3010299956639812"
+        },
+        "sqrt": {
+          "$numberDouble": "1.4142135623730951"
+        },
+        "log": {
+          "$numberDecimal": "0.6309297535714574370995271143427607"
+        },
+        "log2": {
+          "$numberDouble": "1.0"
+        },
+        "logBase10": {
+          "$numberDouble": "0.30102999566398114"
+        },
+        "pow": {
+          "$numberInt": "4"
+        },
+        "powOdd": {
+          "$numberInt": "8"
+        },
+        "powZero": {
+          "$numberInt": "1"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.414213562373095048801688724209698"
+        },
+        "round": {
+          "$numberInt": "2"
+        },
+        "trunc": {
+          "$numberInt": "2"
+        },
+        "roundInteger": {
+          "$numberInt": "2"
+        },
+        "floor": {
+          "$numberInt": "2"
+        },
+        "ceil": {
+          "$numberInt": "2"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "abs": {
+          "$numberDouble": "2.0"
+        },
+        "exp": {
+          "$numberDouble": "7.38905609893065"
+        },
+        "ln": {
+          "$numberDouble": "0.6931471805599453"
+        },
+        "log10": {
+          "$numberDouble": "0.3010299956639812"
+        },
+        "sqrt": {
+          "$numberDouble": "1.4142135623730951"
+        },
+        "log": {
+          "$numberDecimal": "0.6309297535714574370995271143427607"
+        },
+        "log2": {
+          "$numberDouble": "1.0"
+        },
+        "logBase10": {
+          "$numberDouble": "0.30102999566398114"
+        },
+        "pow": {
+          "$numberDouble": "4.0"
+        },
+        "powOdd": {
+          "$numberDouble": "8.0"
+        },
+        "powZero": {
+          "$numberDouble": "1.0"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.414213562373095048801688724209698"
+        },
+        "round": {
+          "$numberDouble": "2.0"
+        },
+        "trunc": {
+          "$numberDouble": "2.0"
+        },
+        "roundInteger": {
+          "$numberDouble": "2.0"
+        },
+        "floor": {
+          "$numberDouble": "2.0"
+        },
+        "ceil": {
+          "$numberDouble": "2.0"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "abs": {
+          "$numberLong": "2"
+        },
+        "exp": {
+          "$numberDouble": "7.38905609893065"
+        },
+        "ln": {
+          "$numberDouble": "0.6931471805599453"
+        },
+        "log10": {
+          "$numberDouble": "0.3010299956639812"
+        },
+        "sqrt": {
+          "$numberDouble": "1.4142135623730951"
+        },
+        "log": {
+          "$numberDecimal": "0.6309297535714574370995271143427607"
+        },
+        "log2": {
+          "$numberDouble": "1.0"
+        },
+        "logBase10": {
+          "$numberDouble": "0.30102999566398114"
+        },
+        "pow": {
+          "$numberLong": "4"
+        },
+        "powOdd": {
+          "$numberLong": "8"
+        },
+        "powZero": {
+          "$numberLong": "1"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.414213562373095048801688724209698"
+        },
+        "round": {
+          "$numberLong": "2"
+        },
+        "trunc": {
+          "$numberLong": "2"
+        },
+        "roundInteger": {
+          "$numberLong": "2"
+        },
+        "floor": {
+          "$numberLong": "2"
+        },
+        "ceil": {
+          "$numberLong": "2"
+        }
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "abs": {
+          "$numberDouble": "2.675"
+        },
+        "exp": {
+          "$numberDouble": "14.512349839590913"
+        },
+        "ln": {
+          "$numberDouble": "0.9839493803479697"
+        },
+        "log10": {
+          "$numberDouble": "0.4273237863572472"
+        },
+        "sqrt": {
+          "$numberDouble": "1.6355427233796125"
+        },
+        "log": {
+          "$numberDecimal": "0.8956293230078919705771650721167365"
+        },
+        "log2": {
+          "$numberDouble": "1.4195388915137845"
+        },
+        "logBase10": {
+          "$numberDouble": "0.42732378635724716"
+        },
+        "pow": {
+          "$numberDouble": "7.155624999999999"
+        },
+        "powOdd": {
+          "$numberDouble": "19.141296874999995"
+        },
+        "powZero": {
+          "$numberDouble": "1.0"
+        },
+        "powFraction": {
+          "$numberDecimal": "1.635542723379612606076782461801701"
+        },
+        "round": {
+          "$numberDouble": "2.675"
+        },
+        "trunc": {
+          "$numberDouble": "2.675"
+        },
+        "roundInteger": {
+          "$numberDouble": "3.0"
+        },
+        "floor": {
+          "$numberDouble": "2.0"
+        },
+        "ceil": {
+          "$numberDouble": "3.0"
+        }
+      }
+    ]
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_decimal_advanced_cases.py",
+    "sha256": "4a5e3184ede9516a3c192182c90e13860d87ff2ad628bfcbc68d6b7dfaf000d7"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_decimal_advanced_numeric_controls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "x": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "x": {
+            "$numberDouble": "2.0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "x": {
+            "$numberLong": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "x": {
+            "$numberDouble": "2.675"
+          }
+        }
+      ],
+      "selector": "semantic_decimal_advanced_numeric_controls"
+    }
+  ]
+}

@@ -1,4 +1,3 @@
-import re
 import threading
 
 from collections import OrderedDict
@@ -14,7 +13,12 @@ from mongoeco.api.argument_validation import (
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
-from mongoeco.core.aggregation.preparation import PreparedPipeline, prepare_pipeline
+from mongoeco.core.aggregation.preparation import (
+    PreparedPipeline,
+    normalize_command_let,
+    prepare_pipeline,
+    validate_command_let_dependencies,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import error_message
@@ -292,7 +296,6 @@ _UPDATE_PLAN_TEMPLATE_CACHE: OrderedDict[
     tuple["_UpdatePlanTemplate", "_UpdatePlanTemplate"],
 ] = OrderedDict()
 
-_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -446,7 +449,7 @@ def compile_find_operation(
     normalized_batch_size = _normalize_batch_size(batch_size)
     normalized_skip = _normalize_skip(skip)
     normalized_limit = _normalize_limit(limit)
-    normalized_let = _normalize_let(variables)
+    normalized_let = _normalize_let(variables, dialect=dialect)
     if text_query is None:
         if _projection_requests_text_score(normalized_projection):
             raise OperationFailure("$meta textScore projection requires a $text query")
@@ -509,7 +512,7 @@ def compile_update_operation(
     normalized_array_filters = _normalize_array_filters(array_filters)
     normalized_hint = _normalize_hint(hint)
     normalized_max_time_ms = _normalize_max_time_ms(max_time_ms)
-    normalized_let = _normalize_let(let)
+    normalized_let = _normalize_let(let, dialect=dialect)
     compiled_update_plan, compiled_upsert_plan = _compile_update_plans(
         normalized_update_spec,
         dialect=dialect,
@@ -578,6 +581,7 @@ def compile_aggregate_operation(
         if isinstance(pipeline, PreparedPipeline)
         else DocumentCodec.to_internal(pipeline)
     )
+    normalized_let = _normalize_let(let, dialect=dialect)
     validate_search_stage_pipeline(normalized_pipeline)
     if planning_mode is PlanningMode.STRICT and dialect.behavior_flag(
         "validates_aggregation_syntax_early", default=True
@@ -586,7 +590,7 @@ def compile_aggregate_operation(
             normalized_pipeline,
             dialect=dialect,
             collection=collection,
-            variables=frozenset(_normalize_let(let) or {}),
+            variables=frozenset(normalized_let or {}),
         )
     return AggregateOperation(
         pipeline=normalized_pipeline,
@@ -596,7 +600,7 @@ def compile_aggregate_operation(
         max_time_ms=_normalize_max_time_ms(max_time_ms),
         batch_size=_normalize_batch_size(batch_size),
         allow_disk_use=_normalize_allow_disk_use(allow_disk_use),
-        let=_normalize_let(let),
+        let=normalized_let,
         planning_mode=planning_mode,
         planning_issues=_collect_aggregate_planning_issues(
             normalized_pipeline,
@@ -1049,19 +1053,12 @@ def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | Non
     return normalized
 
 
-def _normalize_let(let: object | None) -> Mapping[str, object] | None:
-    if let is None:
-        return None
-    if isinstance(let, ExpressionExecutionContext):
-        return let
-    if not isinstance(let, dict):
-        raise TypeError("let must be a dict")
-    for name in let:
-        if not isinstance(name, str) or not _LET_VARIABLE_RE.match(name):
-            raise OperationFailure(
-                "$lookup let variable names must begin with a lowercase letter or non-ascii character"
-            )
-    return DocumentCodec.to_internal(let)
+def _normalize_let(
+    let: object | None, *, dialect=MONGODB_DIALECT_70
+) -> Mapping[str, object] | None:
+    result = normalize_command_let(let)
+    validate_command_let_dependencies(result, dialect=dialect)
+    return result
 
 
 def _normalize_batch_size(batch_size: object | None) -> int | None:

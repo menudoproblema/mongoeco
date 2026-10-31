@@ -9,7 +9,6 @@ from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
 from mongoeco.core.aggregation import evaluate_expression
 from mongoeco.core.aggregation import accumulators as accumulators_module
 from mongoeco.core.aggregation import array_string_expressions as array_module
-from mongoeco.core.aggregation import compiled_aggregation as compiled_module
 from mongoeco.core.aggregation import (
     control_object_expressions as control_module,
 )
@@ -777,7 +776,7 @@ class NumericHelperBranchTests(unittest.TestCase):
                 {'left': BsonInt32(2), 'right': BsonInt64(3)},
                 {'$pow': ['$left', '$right']},
             ),
-            BsonDouble(8.0),
+            BsonInt64(8),
         )
         self.assertTrue(
             math.isinf(
@@ -940,10 +939,6 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
                         operator, expression
                     )
 
-        self.assertIsNone(accumulators_module._sum_accumulator_operand(['x']))
-        self.assertEqual(
-            accumulators_module._sum_accumulator_operand([1, 2, 'x']), 3
-        )
         self.assertTrue(
             math.isnan(
                 accumulators_module._stddev_accumulator_operand(float('inf'))
@@ -1104,10 +1099,12 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
             accumulators_module._window_sort_keys_equal([1], [1, 2])
         )
 
+        decimal_total = accumulators_module.NumericSum()
+        decimal_total.add(decimal.Decimal('9'))
         finalized = accumulators_module._finalize_accumulators(
             {
                 'avg': accumulators_module._AverageAccumulator(
-                    total=decimal.Decimal('9'), count=2
+                    total=decimal_total, count=2
                 ),
                 'std_invalid': accumulators_module._StdDevAccumulator(
                     population=True,
@@ -1131,7 +1128,9 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
                 ),
             }
         )
-        self.assertEqual(finalized['avg'], decimal.Decimal('4.5'))
+        self.assertEqual(
+            finalized['avg'], BsonDecimal128(decimal.Decimal('4.5'))
+        )
         self.assertIsNone(finalized['std_invalid'])
         self.assertEqual(finalized['ordered_empty'], [])
         self.assertEqual(finalized['ordered_scalar'], 'x')
@@ -1140,94 +1139,6 @@ class AccumulatorHelperBranchTests(unittest.TestCase):
         self.assertIsNone(finalized['percentile_list'])
 
 
-class CompiledAggregationHelperBranchTests(unittest.TestCase):
-    def test_compiled_group_private_helpers_cover_cache_freezing_and_simple_arithmetic(
-        self,
-    ):
-        self.assertIsNone(compiled_module._compiled_multiply([None, 2]))
-        self.assertIsNone(compiled_module._compiled_subtract(None, 2))
-        with self.assertRaisesRegex(OperationFailure, 'single date argument'):
-            compiled_module._compiled_add(
-                [
-                    datetime.datetime(2026, 1, 1, 0, 0, 0),
-                    datetime.datetime(2026, 1, 2, 0, 0, 0),
-                ]
-            )
-
-        self.assertFalse(
-            compiled_module.CompiledGroup.supports(
-                {'total': {'$sum': '$value'}}
-            )
-        )
-        self.assertEqual(
-            compiled_module.CompiledGroup._freeze_cache_value((1, 2)),
-            ('tuple', (1, 2)),
-        )
-        self.assertEqual(
-            compiled_module.CompiledGroup._freeze_cache_value({2, 1}),
-            ('set', (1, 2)),
-        )
-        frozen_regex = compiled_module.CompiledGroup._freeze_cache_value(
-            re.compile('^ad', re.IGNORECASE)
-        )
-        self.assertEqual(frozen_regex[:2], ('regex', '^ad'))
-
-        class _Unhashable:
-            __hash__ = None
-
-            def __repr__(self) -> str:
-                return '<unhashable>'
-
-        self.assertEqual(
-            compiled_module.CompiledGroup._freeze_cache_value(_Unhashable()),
-            ('repr', '<unhashable>'),
-        )
-
-    def test_compiled_group_private_branches_cover_cache_eviction_and_expression_codegen(
-        self,
-    ):
-        original_maxsize = (
-            compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE
-        )
-        compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
-        compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE = 1
-        try:
-            compiled_module.CompiledGroup(
-                {'_id': '$kind', 'total': {'$sum': '$value'}}
-            )
-            compiled_module.CompiledGroup(
-                {'_id': '$other', 'total': {'$sum': '$value'}}
-            )
-            self.assertEqual(
-                len(compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE), 1
-            )
-        finally:
-            compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE.clear()
-            compiled_module.CompiledGroup._COMPILED_FUNCTION_CACHE_MAXSIZE = (
-                original_maxsize
-            )
-
-        compiled = compiled_module.CompiledGroup(
-            {'_id': '$kind', 'total': {'$sum': '$value'}}
-        )
-        self.assertEqual(compiled._compile_expression('plain', 'x'), "'plain'")
-        self.assertEqual(
-            compiled._compile_expression({'$literal': 'value'}, 'x'), "'value'"
-        )
-        self.assertEqual(
-            compiled._compile_expression({'nested': True}, 'x').startswith(
-                '_evaluate('
-            ),
-            True,
-        )
-        self.assertIn(
-            'state[0] += 1',
-            '\n'.join(
-                compiled_module.CompiledGroup(
-                    {'_id': '$kind', 'count': {'$count': {}}}
-                )._compile_logic_only()
-            ),
-        )
 
 
 class GroupingHelperBranchTests(unittest.TestCase):
@@ -1276,28 +1187,8 @@ class ControlObjectHelperBranchTests(unittest.TestCase):
         eval_missing = lambda _doc, expr, _vars=None: expr
         require_args = lambda _op, spec, _mn, _mx: list(spec)
 
-        self.assertIsNone(
-            control_module._evaluate_field_bound_match_expression(
-                '$and', document, ['$items', []]
-            )
-        )
-        self.assertIsNone(
-            control_module._evaluate_field_bound_match_expression(
-                '$or', document, ['$items', [1]]
-            )
-        )
-        self.assertIsNone(
-            control_module._evaluate_field_bound_query_operator(
-                '$in', document, 'bad'
-            )
-        )
-        self.assertIsNone(
-            control_module._evaluate_field_bound_query_operator(
-                '$in', document, ['name', []]
-            )
-        )
         with self.assertRaisesRegex(
-            OperationFailure, 'only supports the field-bound form'
+            OperationFailure, 'Unsupported control/object expression operator'
         ):
             control_module.evaluate_control_object_expression(
                 '$nin',
@@ -1314,8 +1205,8 @@ class ControlObjectHelperBranchTests(unittest.TestCase):
                 missing_sentinel=object(),
             )
         for operator, spec, expected in (
-            ('$setField', {}, 'field, input, and value'),
-            ('$unsetField', {}, 'field and input'),
+            ('$setField', {}, "requires 'field' to be specified"),
+            ('$unsetField', {}, "requires 'field' to be specified"),
             ('$switch', {}, 'requires branches'),
         ):
             with self.subTest(operator=operator):
@@ -1373,44 +1264,31 @@ class ControlObjectHelperBranchTests(unittest.TestCase):
                 evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
                 missing_sentinel=object(),
             )
-        self.assertIsNone(
+        arguments = {
+            "evaluate_expression": eval_expr,
+            "evaluate_expression_with_missing": eval_missing,
+            "require_expression_args": require_args,
+            "compare_values": lambda left, right, operator: left == right,
+            "expression_truthy": bool,
+            "require_array": lambda _op, value: value,
+            "evaluate_pick_n_input": lambda *_args, **_kwargs: ([], 1),
+        }
+        with self.assertRaises(OperationFailure) as invalid_field:
             control_module.evaluate_control_object_expression(
-                '$getField',
-                document,
-                {'field': None, 'input': '$$CURRENT'},
-                None,
-                evaluate_expression=lambda _doc, expr, _vars=None: (
-                    None if expr is None else document
-                ),
-                evaluate_expression_with_missing=lambda _doc, expr, _vars=None: (
-                    document
-                ),
-                require_expression_args=require_args,
-                compare_values=lambda left, right, operator: left == right,
-                expression_truthy=bool,
-                require_array=lambda _op, value: value,
-                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
-                missing_sentinel=object(),
+                '$getField', document,
+                {'field': None, 'input': '$$CURRENT'}, None,
+                missing_sentinel=object(), **arguments,
             )
-        )
-        self.assertIsNone(
+        self.assertEqual(invalid_field.exception.code, 5654602)
+        absent = object()
+        self.assertIs(
             control_module.evaluate_control_object_expression(
-                '$getField',
-                document,
-                {'field': 'name', 'input': 'not-an-object'},
-                None,
-                evaluate_expression=lambda _doc, expr, _vars=None: expr,
-                evaluate_expression_with_missing=lambda _doc, expr, _vars=None: (
-                    expr
-                ),
-                require_expression_args=require_args,
-                compare_values=lambda left, right, operator: left == right,
-                expression_truthy=bool,
-                require_array=lambda _op, value: value,
-                evaluate_pick_n_input=lambda *_args, **_kwargs: ([], 1),
-                missing_sentinel=object(),
-            )
+                '$getField', document,
+                {'field': 'name', 'input': 'not-an-object'}, None,
+                missing_sentinel=absent, **arguments,
+            ), absent,
         )
+
         with self.assertRaisesRegex(
             OperationFailure, 'Unsupported control/object expression operator'
         ):

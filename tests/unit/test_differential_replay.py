@@ -1,20 +1,27 @@
 import copy
-from pathlib import Path
 import unittest
 import uuid
 
-from bson.json_util import loads
+from pathlib import Path
+
 
 from mongoeco import MongoClient
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from tests.differential._real_parity_base import _normalize
-from tests.differential.cases import REAL_CAPTURE_PENDING_CASES, REAL_PARITY_CASES
+
+from tests.differential._real_parity_base import _decode_capture, _normalize
+from tests.differential.cases import (
+    REAL_CAPTURE_PENDING_CASES,
+    REAL_PARITY_CASES,
+    REAL_SUPPLEMENTAL_CAPTURE_CASES,
+)
+
+from tests.differential.semantic_corpora import SEMANTIC_CORPORA
 
 
 class DifferentialReplayGoldenTests(unittest.TestCase):
     def test_local_engines_match_replay_golden_fixture(self):
-        fixture = loads(
+        fixture = _decode_capture(
             Path("tests/fixtures/differential_replay_golden.json").read_text(
                 encoding="utf-8"
             )
@@ -25,8 +32,20 @@ class DifferentialReplayGoldenTests(unittest.TestCase):
         captured_case_names = set(expected_by_case)
         executable_case_names = {case.name for case in REAL_PARITY_CASES}
         self.assertFalse(captured_case_names & REAL_CAPTURE_PENDING_CASES)
+        for dialect in ("7_0", "8_0", "9_0"):
+            supplemental_names = set()
+            for corpus in SEMANTIC_CORPORA:
+                supplemental = _decode_capture(
+                    Path(f"tests/fixtures/semantic_{corpus}_{dialect}.json").read_text()
+                )
+                self.assertFalse(supplemental_names & set(supplemental["cases"]))
+                supplemental_names.update(supplemental["cases"])
+            self.assertEqual(supplemental_names, REAL_SUPPLEMENTAL_CAPTURE_CASES)
+        self.assertFalse(captured_case_names & REAL_SUPPLEMENTAL_CAPTURE_CASES)
         self.assertEqual(
-            captured_case_names | REAL_CAPTURE_PENDING_CASES,
+            captured_case_names
+            | REAL_CAPTURE_PENDING_CASES
+            | REAL_SUPPLEMENTAL_CAPTURE_CASES,
             executable_case_names,
         )
 
