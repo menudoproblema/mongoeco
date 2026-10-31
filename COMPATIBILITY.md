@@ -962,6 +962,14 @@ Matriz práctica de capacidades:
   * solo `simple`
 
 Los change streams locales mantienen además un historial en memoria acotado.
+Sus cursores admiten iteración y context manager sync/async. Tras el cierre,
+`try_next()` devuelve `None`; `next()` termina con `StopIteration` en sync y
+`StopAsyncIteration` en async. El cierre async tiene efecto inmediato para
+los callers existentes y también admite `await cursor.close()`. Cancelar una
+lectura pendiente propaga la cancelación y cierra el cursor, liberando sus
+recursos. Sin `max_await_time_ms`, la espera de `try_next()` usa un timeout de
+un segundo; un resultado vacío mantiene vivo el stream salvo invalidación.
+
 El tamaño de esa retención es configurable desde cliente y determina hasta qué
 token o `startAtOperationTime` se puede reanudar sin error.
 

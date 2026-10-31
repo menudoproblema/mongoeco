@@ -1,0 +1,14 @@
+import json,time,uuid
+from pymongo import MongoClient
+report={}
+for major,port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+ with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000&socketTimeoutMS=3000') as client:
+  name='mongoeco_empty_protocol_'+uuid.uuid4().hex;c=client[name].c
+  try:
+   c.insert_one({'_id':1});s=c.watch()
+   try:
+    start=time.monotonic();value=s.try_next();elapsed=time.monotonic()-start
+    report[major]={'empty':value is None,'alive':s.alive,'elapsed_seconds':elapsed}
+   finally:s.close()
+  finally:client.drop_database(name)
+print(json.dumps(report,indent=2))

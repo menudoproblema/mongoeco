@@ -1,0 +1,14 @@
+import json,os,statistics,subprocess,sys
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/watch-protocol');runs={}
+for label,source in [('before0','/tmp/mongoeco-protocol-base/src'),('after0','src'),('after1','src'),('before1','/tmp/mongoeco-protocol-base/src')]:
+ completed=subprocess.run([sys.executable,'/tmp/mongoeco-protocol-benchmark.py'],env=dict(os.environ,PYTHONPATH=source),check=True,capture_output=True,text=True,timeout=120)
+ data=json.loads(completed.stdout);runs[label]=data
+ (root/f'benchmark-{label}.json').write_text(json.dumps(data,indent=2)+'\n');print('completed',label,flush=True)
+summary={}
+for case in runs['before0']:
+ before=[x for label,data in runs.items() if label.startswith('before') for x in data[case]['seconds']]
+ after=[x for label,data in runs.items() if label.startswith('after') for x in data[case]['seconds']]
+ checksums={tuple(data[case]['checksums']) for data in runs.values()};assert len(checksums)==1
+ summary[case]={'before_samples':len(before),'after_samples':len(after),'before_median_seconds':statistics.median(before),'after_median_seconds':statistics.median(after),'ratio':statistics.median(after)/statistics.median(before),'checksums_equal':True}
+(root/'benchmark-paired-summary.json').write_text(json.dumps(summary,indent=2)+'\n');print(json.dumps(summary,indent=2))

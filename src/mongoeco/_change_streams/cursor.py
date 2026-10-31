@@ -9,8 +9,10 @@ import weakref
 from collections.abc import (
     Awaitable,
     Callable,
+    Generator,
     Mapping,
 )
+from typing import Self
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import apply_pipeline, compile_pipeline
@@ -39,6 +41,16 @@ from .pipeline import (
     normalize_full_document_mode,
     pre_image_match,
 )
+
+
+class _CompletedClose(Awaitable[None]):
+    """Close immediately for existing callers and remain safely awaitable."""
+
+    def __await__(self) -> Generator[None]:
+        yield from ()
+
+
+_COMPLETED_CLOSE = _CompletedClose()
 
 
 class AsyncChangeStreamCursor:
@@ -93,12 +105,8 @@ class AsyncChangeStreamCursor:
         hub.register_watcher()
         self._watcher_finalizer = weakref.finalize(self, hub.unregister_watcher)
 
-    def _ensure_open(self) -> None:
-        if self._closed:
-            raise OperationFailure("cannot use change stream after it has been closed")
-
-    def __await__(self):
-        async def _resolve():
+    def __await__(self) -> Generator[None, None, Self]:
+        async def _resolve() -> Self:
             return self
 
         return _resolve().__await__()
@@ -107,114 +115,121 @@ class AsyncChangeStreamCursor:
         if not self._scope.matches(event):
             return None
         document = event.to_document()
-        try:
-            if self._pre_image_match is not None and not QueryEngine.match_plan(
-                document,
-                self._pre_image_match,
-                dialect=self._dialect,
-                variables=self._execution_context,
-            ):
+        if self._pre_image_match is not None and not QueryEngine.match_plan(
+            document,
+            self._pre_image_match,
+            dialect=self._dialect,
+            variables=self._execution_context,
+        ):
+            return None
+        lookup_document = None
+        if (
+            event.operation_type == "update"
+            and self._full_document == "updateLookup"
+            and self._lookup_full_document is not None
+        ):
+            lookup_document = await self._lookup_full_document(event)
+            if self._closed:
                 return None
-            lookup_document = None
-            if (
-                event.operation_type == "update"
-                and self._full_document == "updateLookup"
-                and self._lookup_full_document is not None
-            ):
-                lookup_document = await self._lookup_full_document(event)
-                self._ensure_open()
-            document = apply_full_document_mode(
-                document,
-                self._full_document,
-                post_image_available=event.post_image_available,
-                lookup_document=lookup_document,
-            )
-            if self._pipeline is not None:
-                token = document["_id"]
-                transformed = (
-                    self._compiled_pipeline.execute(
-                        [document],
-                        variables=self._execution_context,
-                    )
-                    if self._compiled_pipeline is not None
-                    else apply_pipeline(
-                        [document],
-                        self._pipeline,
-                        dialect=self._dialect,
-                        variables=self._execution_context,
-                    )
+        document = apply_full_document_mode(
+            document,
+            self._full_document,
+            post_image_available=event.post_image_available,
+            lookup_document=lookup_document,
+        )
+        if self._pipeline is not None:
+            token = document["_id"]
+            transformed = (
+                self._compiled_pipeline.execute(
+                    [document],
+                    variables=self._execution_context,
                 )
-                if not transformed:
-                    return None
-                document = transformed[0]
-                if "_id" not in document or not same_bson_update_value(
-                    document["_id"], token
-                ):
-                    message = (
-                        "Change stream pipeline must preserve the event resume token"
-                    )
-                    raise server_error(message, code=280)
-        except OperationFailure:
-            self.close()
-            raise
+                if self._compiled_pipeline is not None
+                else apply_pipeline(
+                    [document],
+                    self._pipeline,
+                    dialect=self._dialect,
+                    variables=self._execution_context,
+                )
+            )
+            if not transformed:
+                return None
+            document = transformed[0]
+            if "_id" not in document or not same_bson_update_value(
+                document["_id"], token
+            ):
+                message = (
+                    "Change stream pipeline must preserve the event resume token"
+                )
+                raise server_error(message, code=280)
         return self._materialize_document(document)
 
-    async def try_next(self) -> ChangeEventDocument | None:
-        self._ensure_open()
+    async def _read(self, *, blocking: bool) -> ChangeEventDocument | None:
         deadline = None
-        if self._max_await_time_ms is not None:
-            deadline = time.monotonic() + (self._max_await_time_ms / 1000.0)
-        while True:
-            timeout_seconds = None
-            if deadline is not None:
-                timeout_seconds = max(0.0, deadline - time.monotonic())
-            next_offset, event = await self._hub.wait_for_event_async(
-                self._offset,
-                timeout_seconds=timeout_seconds,
-                stop_event=self._stop_event,
+        if not blocking:
+            timeout = (
+                1.0 if self._max_await_time_ms is None
+                else self._max_await_time_ms / 1000.0
             )
-            self._ensure_open()
-            self._offset = next_offset
-            if event is None:
-                return None
-            transformed = await self._transform(event)
-            if event.operation_type == "invalidate" and self._scope.matches(event):
-                self.close()
-            if transformed is not None:
-                return transformed
+            deadline = time.monotonic() + timeout
+        try:
+            while not self._closed:
+                timeout_seconds = (
+                    None if deadline is None
+                    else max(0.0, deadline - time.monotonic())
+                )
+                next_offset, event = await self._hub.wait_for_event_async(
+                    self._offset,
+                    timeout_seconds=timeout_seconds,
+                    stop_event=self._stop_event,
+                )
+                if self._closed:
+                    return None
+                self._offset = next_offset
+                if event is None:
+                    if not blocking:
+                        return None
+                    continue
+                transformed = await self._transform(event)
+                if self._closed:
+                    return None
+                if event.operation_type == "invalidate" and self._scope.matches(event):
+                    self.close()
+                if transformed is not None:
+                    return transformed
+        except BaseException:
+            self.close()
+            raise
+        return None
+
+    async def try_next(self) -> ChangeEventDocument | None:
+        return await self._read(blocking=False)
 
     async def next(self) -> ChangeEventDocument:
-        self._ensure_open()
-        while True:
-            document = await self._hub.wait_for_event_async(
-                self._offset,
-                timeout_seconds=None,
-                stop_event=self._stop_event,
-            )
-            self._ensure_open()
-            self._offset, event = document
-            if event is None:
-                continue
-            transformed = await self._transform(event)
-            if event.operation_type == "invalidate" and self._scope.matches(event):
-                self.close()
-            if transformed is not None:
-                return transformed
+        document = await self._read(blocking=True)
+        if document is None:
+            raise StopAsyncIteration
+        return document
 
-    def __aiter__(self):
-        async def _iterate():
-            while not self._closed:
-                yield await self.next()
+    def __aiter__(self) -> Self:
+        return self
 
-        return _iterate()
+    async def __anext__(self) -> ChangeEventDocument:
+        return await self.next()
 
-    def close(self) -> None:
-        if self._closed:
-            return
-        self._closed = True
-        self._stop_event.set()
-        self._hub.wake_waiters()
-        self._watcher_finalizer()
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        await self.close()
+
+    def close(self) -> Awaitable[None]:
+        if not self._closed:
+            self._closed = True
+            self._stop_event.set()
+            self._hub.wake_waiters()
+            self._watcher_finalizer()
+        return _COMPLETED_CLOSE
 
     @property
     def alive(self) -> bool:
@@ -230,7 +245,22 @@ class ChangeStreamCursor:
         return self._client._run(self._async_cursor.try_next())
 
     def next(self) -> ChangeEventDocument:
-        return self._client._run(self._async_cursor.next())
+        try:
+            return self._client._run(self._async_cursor.next())
+        except StopAsyncIteration:
+            raise StopIteration from None
+
+    def __iter__(self) -> Self:
+        return self
+
+    def __next__(self) -> ChangeEventDocument:
+        return self.next()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.close()
 
     def close(self) -> None:
         self._async_cursor.close()

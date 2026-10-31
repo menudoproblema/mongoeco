@@ -1,0 +1,21 @@
+import asyncio,json
+from bson.json_util import dumps, CANONICAL_JSON_OPTIONS
+from pymongo import AsyncMongoClient
+from scripts.run_mongodb_real_differential import inspect_server_runtime
+from tests.integration.api.test_watch_protocol_contract import async_lifecycle
+from pathlib import Path
+import hashlib,uuid
+report={}
+for major,port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+ uri=f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000&socketTimeoutMS=3000'
+ async def run():
+  async with AsyncMongoClient(uri) as client:
+   name='mongoeco_async_protocol_'+uuid.uuid4().hex
+   c=client[name].c
+   try:
+    await c.insert_one({'_id':1})
+    return await async_lifecycle(c)
+   finally:await client.drop_database(name)
+ report[major]={'runtime':inspect_server_runtime(uri,major),'observations':asyncio.run(run())}
+report['witness_sha256']=hashlib.sha256(Path('tests/integration/api/test_watch_protocol_contract.py').read_bytes()).hexdigest()
+print(dumps(report,indent=2,json_options=CANONICAL_JSON_OPTIONS))

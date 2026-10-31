@@ -882,8 +882,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         cursor.close()
-        with self.assertRaises(OperationFailure):
-            await cursor.try_next()
+        self.assertIsNone(await cursor.try_next())
 
     async def test_cursor_can_resume_after_token_and_start_at_operation_time(self):
         hub = ChangeStreamHub()
@@ -1005,7 +1004,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
 
         cursor.close()
 
-        with self.assertRaisesRegex(OperationFailure, "closed"):
+        with self.assertRaises(StopAsyncIteration):
             await asyncio.wait_for(pending, timeout=0.1)
         hub.publish(
             operation_type="insert",
@@ -1032,8 +1031,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(event["operationType"], "invalidate")
         self.assertFalse(cursor.alive)
-        with self.assertRaises(OperationFailure):
-            await cursor.try_next()
+        self.assertIsNone(await cursor.try_next())
 
     async def test_cursor_next_closes_after_invalidate_event(self):
         hub = ChangeStreamHub()

@@ -697,11 +697,13 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
-- D04: protocolo/cierre filtrado, interacción con imágenes, continuidad/
+- D04: checkpoint, opciones, interacción con imágenes, continuidad/
   reanudación y fixtures replica set de jobs nativos. H56 y dropTarget quedan
   aceptados en su subset de una base, sin extender rename entre bases.
   La dependencia del decoder de tokens tiene entrega propia; quedan el
   checkpoint público, apertura/avance atómicos y precedencia de opciones.
+  Iteración/context manager, lectura terminal y cancelación tienen el corte
+  de protocolo descrito abajo; no repetir su implementación al añadir checkpoint.
   Preparación/contexto, modos CRUD de imágenes y efectos de namespace tienen
   aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
   están en el refinamiento de revisión 10 del plan; ni publicación TTL ni D01b los cierran.
@@ -757,3 +759,39 @@ El benchmark ABBA de apertura con token válido mide ratios de medianas 1,11
 Memory y 1,12 SQLite: alrededor de un microsegundo adicional por apertura para
 la validación más estricta. No mide throughput de eventos ni cierra D05.
 Los comandos, fuentes y límites del candidato quedan en el receipt enlazado.
+
+## D04 — Bucle común, protocolos y cierre del cursor
+
+El [receipt del cursor](evidence/bson-consolidation-implementation/watch-protocol/receipt.json)
+registra un único bucle para next/try_next y una única limpieza ante error o
+cancelación, incluidos errores de lookup y materialización. El filtro puede
+ocultar invalidate sin ocultar su efecto de cierre. Los cursores cerrados
+devuelven None en try_next y terminan iteración con StopIteration/StopAsyncIteration.
+El timeout vacío por defecto es un segundo, contrastado en los tres nativos.
+
+Sync/async implementan iteración con identidad del cursor y context manager.
+Close async sigue teniendo efecto inmediato para callers previos; un resultado
+completado sin dependencia de loop permite await sin crear coroutines olvidadas.
+No se añade un contexto nuevo ni un segundo estado de cierre. La fachada
+tipada conserva ChangeEventDocument y await watch conserva el tipo del cursor.
+
+Tres casos permanentes del corpus watch-protocol tienen capturas y --check
+7/8/9. La base 1b8705a falla sus 36 checks públicos y pasa tres de metadata.
+El adaptador async verifica los métodos reales; no fabrica iteración/contexto.
+El escenario async de cancelación/contexto se ejecuta sin cambios por PyMongo
+en los nueve pares major/ámbito y por la API local en seis pares motor/dialecto.
+Las pruebas deterministas añaden cierre/cancelación durante lookup y fallos de
+callbacks sin watcher/waiter residual. El receipt conserva resultados y límites.
+
+Un SQLite/journal realmente producido por 1b8705a conserva token, datos de la
+colección recreada y replay drop/invalidate; los cursores visible/filtrado
+terminan sin entregar una inserción posterior a invalidate. No hay cambio
+de token, esquema SQL, journal o SPI v2 ni promesa de watch wire positivo.
+
+D04 permanece abierto para resume_token/checkpoint, posición inicial/avance
+atómicos, retención/gaps, opciones y precedencia, integración restante con
+imágenes y fixture replica set de CI. Este corte no acepta esas garantías ni
+el cierre amplio D05. Pasan 6.241 de replay integrado, 2.744 de core/contratos
+(936 subtests, un skip), 53 con orjson, typing, lint y smoke sin SDK. El ABBA
+secuencial de lectura default/updateLookup conserva checksums, con ratios de
+medianas entre 0,99 y 1,01 en ambos motores; no es el coste global de D05.

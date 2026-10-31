@@ -1,0 +1,34 @@
+{
+  "MemoryEngine/default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.08047458349028602,
+    "after_median_seconds": 0.08012391644297168,
+    "ratio": 0.9956425118080087,
+    "checksums_equal": true
+  },
+  "MemoryEngine/updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.10936049954034388,
+    "after_median_seconds": 0.10850716644199565,
+    "ratio": 0.9921970629072207,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.18442593794316053,
+    "after_median_seconds": 0.18401049997191876,
+    "ratio": 0.9977473994391732,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.2920561039354652,
+    "after_median_seconds": 0.29448462498839945,
+    "ratio": 1.0083152552547605,
+    "checksums_equal": true
+  }
+}

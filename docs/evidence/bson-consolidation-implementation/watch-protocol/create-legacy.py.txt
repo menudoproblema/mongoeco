@@ -1,0 +1,13 @@
+import json,sys
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path(sys.argv[1]);root.mkdir(exist_ok=True)
+print('producer:',mongoeco.__file__)
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c;s=c.watch(max_await_time_ms=1)
+ c.insert_one({'_id':1});event=s.try_next()
+ c.drop();s.close();c.insert_one({'_id':2})
+ (root/'expected.json').write_text(json.dumps({'token':event['_id'],'position':event['clusterTime']}))
+print('previous SQLite and drop/invalidate/recreate journal created')

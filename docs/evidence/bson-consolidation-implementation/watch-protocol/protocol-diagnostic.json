@@ -1,0 +1,347 @@
+{
+  "49973": {
+    "iter_self": true,
+    "initial_present": true,
+    "owned": true,
+    "after_event_equal": true,
+    "closed_try": {
+      "value": null
+    },
+    "closed_next": {
+      "class": "StopIteration",
+      "code": null
+    },
+    "none_mode": {
+      "opened": true
+    },
+    "bad_mode": {
+      "class": "OperationFailure",
+      "code": 2
+    },
+    "empty_mode": {
+      "class": "OperationFailure",
+      "code": 2
+    },
+    "number_mode": {
+      "class": "TypeError",
+      "code": null
+    },
+    "empty_resume": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "number_resume": {
+      "class": "OperationFailure",
+      "code": 14
+    },
+    "list_resume": {
+      "class": "OperationFailure",
+      "code": 14
+    },
+    "no_data": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "data_number": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "bad_data": {
+      "class": "OperationFailure",
+      "code": 9
+    },
+    "both": {
+      "opened": true
+    },
+    "both_bad": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "negative_await": {
+      "opened": true
+    },
+    "float_await": {
+      "class": "TypeError",
+      "code": null
+    },
+    "bool_await": {
+      "opened": true
+    },
+    "filtered_empty": true,
+    "filtered_advanced": false,
+    "filtered_resume_id": {
+      "_id": 2
+    },
+    "start_time_initial_present": false,
+    "start_time_first": {
+      "_id": 1
+    },
+    "hidden_result": {
+      "value": null
+    },
+    "hidden_alive": false,
+    "hidden_token_equal": true,
+    "hidden_token_present": true,
+    "resume_invalidate": {
+      "class": "OperationFailure",
+      "code": 260
+    },
+    "resume_hidden": {
+      "class": "OperationFailure",
+      "code": 260
+    },
+    "start_invalidate": {
+      "opened": true,
+      "id": {
+        "_id": 4
+      },
+      "initial_token_changes": true
+    },
+    "async": {
+      "iter_self": true,
+      "cancelled": true,
+      "alive_after_cancel": false,
+      "after_cancel_error": {
+        "class": "StopAsyncIteration",
+        "code": null
+      },
+      "closed_try": null,
+      "close_pending": {
+        "class": "OperationFailure",
+        "code": 237
+      },
+      "context_alive": true,
+      "context_closed": true
+    }
+  },
+  "49974": {
+    "iter_self": true,
+    "initial_present": true,
+    "owned": true,
+    "after_event_equal": true,
+    "closed_try": {
+      "value": null
+    },
+    "closed_next": {
+      "class": "StopIteration",
+      "code": null
+    },
+    "none_mode": {
+      "opened": true
+    },
+    "bad_mode": {
+      "class": "OperationFailure",
+      "code": 2
+    },
+    "empty_mode": {
+      "class": "OperationFailure",
+      "code": 2
+    },
+    "number_mode": {
+      "class": "TypeError",
+      "code": null
+    },
+    "empty_resume": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "number_resume": {
+      "class": "OperationFailure",
+      "code": 14
+    },
+    "list_resume": {
+      "class": "OperationFailure",
+      "code": 14
+    },
+    "no_data": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "data_number": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "bad_data": {
+      "class": "OperationFailure",
+      "code": 9
+    },
+    "both": {
+      "opened": true
+    },
+    "both_bad": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "negative_await": {
+      "opened": true
+    },
+    "float_await": {
+      "class": "TypeError",
+      "code": null
+    },
+    "bool_await": {
+      "opened": true
+    },
+    "filtered_empty": true,
+    "filtered_advanced": false,
+    "filtered_resume_id": {
+      "_id": 2
+    },
+    "start_time_initial_present": false,
+    "start_time_first": {
+      "_id": 1
+    },
+    "hidden_result": {
+      "value": null
+    },
+    "hidden_alive": false,
+    "hidden_token_equal": true,
+    "hidden_token_present": true,
+    "resume_invalidate": {
+      "class": "OperationFailure",
+      "code": 260
+    },
+    "resume_hidden": {
+      "class": "OperationFailure",
+      "code": 260
+    },
+    "start_invalidate": {
+      "opened": true,
+      "id": {
+        "_id": 4
+      },
+      "initial_token_changes": true
+    },
+    "async": {
+      "iter_self": true,
+      "cancelled": true,
+      "alive_after_cancel": false,
+      "after_cancel_error": {
+        "class": "StopAsyncIteration",
+        "code": null
+      },
+      "closed_try": null,
+      "close_pending": {
+        "class": "StopAsyncIteration",
+        "code": null
+      },
+      "context_alive": true,
+      "context_closed": true
+    }
+  },
+  "49975": {
+    "iter_self": true,
+    "initial_present": true,
+    "owned": true,
+    "after_event_equal": true,
+    "closed_try": {
+      "value": null
+    },
+    "closed_next": {
+      "class": "StopIteration",
+      "code": null
+    },
+    "none_mode": {
+      "opened": true
+    },
+    "bad_mode": {
+      "class": "OperationFailure",
+      "code": 2
+    },
+    "empty_mode": {
+      "class": "OperationFailure",
+      "code": 2
+    },
+    "number_mode": {
+      "class": "TypeError",
+      "code": null
+    },
+    "empty_resume": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "number_resume": {
+      "class": "OperationFailure",
+      "code": 14
+    },
+    "list_resume": {
+      "class": "OperationFailure",
+      "code": 14
+    },
+    "no_data": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "data_number": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "bad_data": {
+      "class": "OperationFailure",
+      "code": 9
+    },
+    "both": {
+      "opened": true
+    },
+    "both_bad": {
+      "class": "OperationFailure",
+      "code": 40647
+    },
+    "negative_await": {
+      "opened": true
+    },
+    "float_await": {
+      "class": "TypeError",
+      "code": null
+    },
+    "bool_await": {
+      "opened": true
+    },
+    "filtered_empty": true,
+    "filtered_advanced": false,
+    "filtered_resume_id": {
+      "_id": 2
+    },
+    "start_time_initial_present": false,
+    "start_time_first": {
+      "_id": 1
+    },
+    "hidden_result": {
+      "value": null
+    },
+    "hidden_alive": false,
+    "hidden_token_equal": true,
+    "hidden_token_present": true,
+    "resume_invalidate": {
+      "class": "OperationFailure",
+      "code": 260
+    },
+    "resume_hidden": {
+      "class": "OperationFailure",
+      "code": 260
+    },
+    "start_invalidate": {
+      "opened": true,
+      "id": {
+        "_id": 4
+      },
+      "initial_token_changes": true
+    },
+    "async": {
+      "iter_self": true,
+      "cancelled": true,
+      "alive_after_cancel": false,
+      "after_cancel_error": {
+        "class": "StopAsyncIteration",
+        "code": null
+      },
+      "closed_try": null,
+      "close_pending": {
+        "class": "OperationFailure",
+        "code": 237
+      },
+      "context_alive": true,
+      "context_closed": true
+    }
+  }
+}

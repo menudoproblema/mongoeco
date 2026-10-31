@@ -1,0 +1,60 @@
+import json,time,uuid,asyncio
+from pymongo import MongoClient,AsyncMongoClient
+
+def error(e):return {'class':type(e).__name__,'code':getattr(e,'code',None)}
+def attempt(f):
+ try:return {'value':f()}
+ except Exception as e:return error(e)
+report={}
+for port in (49973,49974,49975):
+ uri=f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000&socketTimeoutMS=3000'
+ with MongoClient(uri) as c:
+  name='protocol_'+uuid.uuid4().hex;x=c[name].source;x.insert_one({'_id':0});r={}
+  try:
+   s=x.watch(max_await_time_ms=10);r['iter_self']=iter(s)is s;r['initial_present']=s.resume_token is not None
+   saved=s.resume_token;s.resume_token['_data']='mutated';r['owned']=s.resume_token==saved
+   x.insert_one({'_id':1});event=s.next();r['after_event_equal']=s.resume_token==event['_id'];t=event['_id'];s.close()
+   r['closed_try']=attempt(lambda:s.try_next());r['closed_next']=attempt(lambda:s.next())
+   for label,kwargs in [('none_mode',{'full_document':None}),('bad_mode',{'full_document':'bad'}),('empty_mode',{'full_document':''}),('number_mode',{'full_document':1}),('empty_resume',{'resume_after':{}}),('number_resume',{'resume_after':1}),('list_resume',{'resume_after':[]}),('no_data',{'resume_after':{'x':1}}),('data_number',{'resume_after':{'_data':1}}),('bad_data',{'resume_after':{'_data':'bad'}}),('both',{'resume_after':t,'start_after':t}),('both_bad',{'resume_after':{},'start_after':{}}),('negative_await',{'max_await_time_ms':-1}),('float_await',{'max_await_time_ms':1.5}),('bool_await',{'max_await_time_ms':True})]:
+    try:
+     s=x.watch(max_await_time_ms=10,**kwargs) if 'max_await_time_ms' not in kwargs else x.watch(**kwargs)
+     r[label]={'opened':True};s.close()
+    except Exception as e:r[label]=error(e)
+   s=x.watch([{'$match':{'operationType':'update'}}],max_await_time_ms=10);before=s.resume_token
+   x.insert_one({'_id':2});r['filtered_empty']=s.try_next()is None;r['filtered_advanced']=s.resume_token!=before;after=s.resume_token;s.close()
+   s=x.watch(resume_after=after,max_await_time_ms=10);x.insert_one({'_id':3});r['filtered_resume_id']=s.next()['documentKey'];s.close()
+   s=x.watch(start_at_operation_time=event['clusterTime'],max_await_time_ms=10);r['start_time_initial_present']=s.resume_token is not None;r['start_time_first']=s.next()['documentKey'];s.close()
+   hidden=x.watch([{'$match':{'operationType':'insert'}}],max_await_time_ms=10);plain=x.watch(max_await_time_ms=10)
+   x.drop();drop=plain.next();inv=plain.next();r['hidden_result']=attempt(lambda:hidden.try_next());r['hidden_alive']=hidden.alive;r['hidden_token_equal']=hidden.resume_token==inv['_id']
+   r['hidden_token_present']=hidden.resume_token is not None
+   for label,token,which in [('resume_invalidate',inv['_id'],'resume_after'),('resume_hidden',hidden.resume_token,'resume_after'),('start_invalidate',inv['_id'],'start_after')]:
+    try:
+     s=x.watch(max_await_time_ms=10,**{which:token});r[label]={'opened':True}
+     if which=='start_after':x.insert_one({'_id':4});r[label]['id']=s.next()['documentKey'];r[label]['initial_token_changes']=s.resume_token!=token
+     s.close()
+    except Exception as e:r[label]=error(e)
+   plain.close();hidden.close()
+  finally:c.drop_database(name)
+  report[str(port)]=r
+ async def async_probe():
+  async with AsyncMongoClient(uri) as c:
+   name='async_protocol_'+uuid.uuid4().hex;x=c[name].source;await x.insert_one({'_id':0});out={}
+   try:
+    s=await x.watch(max_await_time_ms=10);out['iter_self']=s.__aiter__()is s
+    task=asyncio.create_task(s.next());await asyncio.sleep(.02);task.cancel()
+    try:await task
+    except asyncio.CancelledError:out['cancelled']=True
+    out['alive_after_cancel']=s.alive
+    await x.insert_one({'_id':1})
+    try:out['after_cancel_id']=(await asyncio.wait_for(s.next(),2))['documentKey']
+    except Exception as e:out['after_cancel_error']=error(e)
+    await s.close();out['closed_try']=await s.try_next()
+    s=await x.watch(max_await_time_ms=10);task=asyncio.create_task(s.next());await asyncio.sleep(.02);await s.close()
+    try:await asyncio.wait_for(task,2);out['close_pending']='returned'
+    except Exception as e:out['close_pending']=error(e)
+    async with await x.watch(max_await_time_ms=10) as scoped:out['context_alive']=scoped.alive
+    out['context_closed']=not scoped.alive
+   finally:await c.drop_database(name)
+   return out
+ report[str(port)]['async']=asyncio.run(async_probe())
+print(json.dumps(report,indent=2))

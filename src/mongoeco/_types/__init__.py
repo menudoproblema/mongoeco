@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from mongoeco._types.documents import ChangeEventDocument as ChangeEventDocument
     from mongoeco._types.writes import UpdateResult as UpdateResult
 
 

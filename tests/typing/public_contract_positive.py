@@ -19,6 +19,7 @@ from mongoeco.compat import (
     deprecation_entries,
     public_api_manifest,
 )
+from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamCursor
 from mongoeco.conformance import (
     ConformanceCliExit,
     ConformanceReport,
@@ -45,6 +46,7 @@ from mongoeco.engines import (
     SearchRequest,
     SnapshotMetadata,
 )
+from mongoeco.types import ChangeEventDocument
 
 from tests.consumer.engine_canary import ExternalCanaryEngine
 
@@ -180,3 +182,20 @@ async def validate_upsert_presence(
         {"_id": None}, {"$set": {"n": 1}}, upsert=True
     )
     assert_type(result.did_upsert, bool)
+
+
+async def validate_change_stream_protocols(
+    sync_collection: Collection,
+    async_collection: AsyncCollection,
+) -> None:
+    with sync_collection.watch() as stream:
+        assert_type(stream, ChangeStreamCursor)
+        assert_type(stream.__iter__(), ChangeStreamCursor)
+        assert_type(next(stream), ChangeEventDocument)
+        assert_type(stream.try_next(), ChangeEventDocument | None)
+    async with await async_collection.watch() as async_stream:
+        assert_type(async_stream, AsyncChangeStreamCursor)
+        assert_type(async_stream.__aiter__(), AsyncChangeStreamCursor)
+        assert_type(await anext(async_stream), ChangeEventDocument)
+        assert_type(await async_stream.try_next(), ChangeEventDocument | None)
+        await async_stream.close()

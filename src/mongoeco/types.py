@@ -5,7 +5,7 @@ from mongoeco._types import (
     BuildInfoDocument,
     BulkWriteErrorDetails,
     BulkWriteResult,
-    ChangeEventDocument,
+    ChangeEventDocument as ChangeEventDocument,  # noqa: PLC0414 - public type re-export
     ChangeEventSnapshot,
     ChangeNamespaceDocument,
     CodecOptions,

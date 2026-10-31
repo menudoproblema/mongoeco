@@ -87,6 +87,37 @@ class _AsyncCursorView:
         return self._invoke("close")
 
 
+class _AsyncChangeStreamView(_AsyncCursorView):
+    """Bridge actual async stream protocols without inventing missing methods."""
+
+    def __iter__(self):
+        if self._invoke("__aiter__") is not self.cursor:
+            message = "async change stream iteration must retain cursor identity"
+            raise AssertionError(message)
+        return self
+
+    def next(self):
+        try:
+            return self._invoke("next")
+        except StopAsyncIteration:
+            raise StopIteration from None
+
+    def __next__(self):
+        try:
+            return self._invoke("__anext__")
+        except StopAsyncIteration:
+            raise StopIteration from None
+
+    def __enter__(self):
+        if self._invoke("__aenter__") is not self.cursor:
+            message = "async change stream context must retain cursor identity"
+            raise AssertionError(message)
+        return self
+
+    def __exit__(self, *args):
+        return self._invoke("__aexit__", *args)
+
+
 class _AsyncView:
     """Run the unchanged synchronous witness against an async collection."""
 
@@ -183,7 +214,7 @@ class _AsyncView:
         return self._call("count_documents", *args, **kwargs)
 
     def watch(self, *args, **kwargs):
-        return _AsyncCursorView(self._call("watch", *args, **kwargs), self.loop)
+        return _AsyncChangeStreamView(self._call("watch", *args, **kwargs), self.loop)
 
     def find_one(self, *args, **kwargs):
         return self._call("find_one", *args, **kwargs)

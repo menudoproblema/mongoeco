@@ -1,0 +1,22 @@
+import asyncio,json,time
+from mongoeco import AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+async def run():
+ results={}
+ for factory in [MemoryEngine,SQLiteEngine]:
+  for mode in ['default','updateLookup']:
+   measurements=[];checksums=[]
+   async with AsyncMongoClient(factory(),mongodb_dialect='9.0') as client:
+    c=client.bench.c;await c.insert_one({'_id':0,'v':0})
+    for sample in range(5):
+     s=c.watch(max_await_time_ms=1,full_document=mode);checksum=0
+     start=time.perf_counter()
+     for value in range(1,401):
+      await c.update_one({'_id':0},{'$set':{'v':sample*400+value}})
+      event=await s.try_next();assert event['operationType']=='update'
+      checksum+=event['updateDescription']['updatedFields']['v']
+      if mode=='updateLookup':assert event['fullDocument']['v']==sample*400+value
+     measurements.append(time.perf_counter()-start);checksums.append(checksum);s.close()
+   results[factory.__name__+'/'+mode]={'seconds':measurements,'checksums':checksums,'updates_per_sample':400}
+ print(json.dumps(results))
+asyncio.run(run())

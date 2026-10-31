@@ -143,6 +143,10 @@ from tests.differential.semantic_watch_lifecycle_cases import (
     SEED as WATCH_LIFECYCLE_SEED,
     SEMANTIC_WATCH_LIFECYCLE_CASES,
 )
+from tests.differential.semantic_watch_protocol_cases import (
+    SEED as WATCH_PROTOCOL_SEED,
+    SEMANTIC_WATCH_PROTOCOL_CASES,
+)
 from tests.differential.semantic_watch_rename_cases import (
     SEED as WATCH_RENAME_SEED,
     SEMANTIC_WATCH_RENAME_CASES,
@@ -168,6 +172,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "watch_protocol": SemanticCorpus(
+        "watch-protocol", "semantic_watch_protocol_cases", WATCH_PROTOCOL_SEED,
+        SEMANTIC_WATCH_PROTOCOL_CASES, surfaces=("sync", "async"),
+    ),
     "watch_token": SemanticCorpus(
         "watch-token", "semantic_watch_token_cases", WATCH_TOKEN_SEED,
         SEMANTIC_WATCH_TOKEN_CASES, surfaces=("sync", "async"),

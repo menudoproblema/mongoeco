@@ -1,0 +1,20 @@
+import json,sys
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+from mongoeco.types import encode_change_stream_token
+root=Path(sys.argv[1]);record=json.loads((root/'expected.json').read_text())
+assert record['token']['_data']==encode_change_stream_token(record['position'])
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c
+ with c.watch(resume_after=record['token'],max_await_time_ms=1) as s:
+  assert next(s)['operationType']=='drop'
+  assert next(s)['operationType']=='invalidate'
+  assert s.try_next()is None
+  try:next(s)
+  except StopIteration:pass
+  else:raise AssertionError('closed iteration')
+ with c.watch([{'$match':{'operationType':'insert'}}],resume_after=record['token'],max_await_time_ms=1) as s:
+  assert s.try_next()is None;assert not s.alive
+ assert c.find_one({'_id':2})=={'_id':2}
+print('legacy token unchanged, visible/filtered invalidate terminate, recreated data retained')

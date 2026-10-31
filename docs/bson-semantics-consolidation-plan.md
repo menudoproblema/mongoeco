@@ -898,6 +898,13 @@ tokens heredados y no cambia formato/journal. No repetir esa corrección al
 completar el bucle y checkpoint, ni confundirla con el cierre del corte conjunto
 de protocolo/reanudación o con la precedencia de todas las opciones de watch.
 
+El corte posterior de protocolos concentra lectura/limpieza en el cursor y
+añade iteración/context manager, cierre tras invalidate filtrado y cancelación.
+Conserva su aceptación acotada en el mismo registro. El siguiente trabajo D04
+se apoya en ese bucle y en el decoder ya entregados: checkpoint público,
+apertura/avance atómicos, retención/gaps y precedencia de opciones. No repetir
+las dos extracciones ni presentar esos cimientos como cierre de reanudación.
+
 ## 6. Pruebas y aceptación por garantía
 
 | Familia | Casos obligatorios y observación |
