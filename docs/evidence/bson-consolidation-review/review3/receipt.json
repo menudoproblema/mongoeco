@@ -1,0 +1,89 @@
+{
+  "status": "review 3 characterization and refined proposal; no runtime corrections",
+  "plan_base": "e04e2851e1218efbf26d5fab30809fc9e0011754",
+  "runtime_base": "734c57f4026c602491bdc6f62aa5dc44369dfcb4",
+  "runtime_source_sha256": "e92a22923e78a88aecdb358cc8ce05054cf0b986db77487a70a4fcd9a7ba2b91",
+  "runtime_hashes_verified": true,
+  "previous_receipts_sha256": {
+    "receipt.json": "5f814484d6098198f8d796dfce4e9be08c98d4100df261be1387c54c42e205b7",
+    "refinement/receipt.json": "5f27e935d662eb15b5bc63b7f457d40f08cf47f02d0a0b83b29a68d4b84feee9"
+  },
+  "previous_artifacts_hashes_verified": true,
+  "python": "3.14.5",
+  "pymongo": "4.19.0",
+  "input": {
+    "title": "Self-audit of prior plan review",
+    "sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+    "bytes": 7557
+  },
+  "native": {
+    "version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "topology": "owned standalone",
+    "port": 49953
+  },
+  "characterization": {
+    "query_shapes": 8,
+    "direct_pairs": [
+      "memory-7.0",
+      "sqlite-7.0",
+      "memory-8.0",
+      "sqlite-8.0",
+      "memory-9.0",
+      "sqlite-9.0"
+    ],
+    "wire_pairs": [
+      "memory-7.0",
+      "sqlite-7.0",
+      "memory-8.0",
+      "sqlite-8.0",
+      "memory-9.0",
+      "sqlite-9.0"
+    ],
+    "sql_path_cases": 9,
+    "new_findings": [
+      "Implicit DBRef literal parser mismatch",
+      "Wire canonicalization loses literal document field order",
+      "SQLite bytes eq/in omits Binary subtype 0 without calling matcher in dialects 7/8"
+    ],
+    "repeated_source_hash_matches": 14,
+    "source_count": 14
+  },
+  "limits": [
+    "No new native 7/8 captures or SDK-async acceptance.",
+    "No new replica-set/watch, package/global suite, or runtime correction acceptance.",
+    "Earlier regression and TTL results are unchanged historical evidence.",
+    "SQL executed paths and matcher counts characterize current behavior, not future implementation equivalence."
+  ],
+  "artifacts": {
+    "README.md": "098050339e8ab5c1f8e35bc6e5aa13c9adf07f4707482c1ecd96360aefc8dcbd",
+    "cleanup.json": "fb1c131caa1dd297646f0f1adb82ec08809ba8cacea014121aa47da08a7e2b72",
+    "observations.json": "d96447e1d74c1f0f8fb0befdc8e686b9551a0e5b9895bcd0c3c66a7f5365c308",
+    "probe.py.txt": "4dca8f2c733789b2bf7215fd951353c186c6595f2691864bc6906ae627041287",
+    "sources-check.json": "f8defeeaf8f31f84d26cf6b73b5862381bf68fa8ab7e253f982775da0bca1341"
+  },
+  "document_checks": {
+    "stable_unique_block_and_cut_ids": [
+      "D00",
+      "D01",
+      "D02",
+      "D03",
+      "D04",
+      "D05",
+      "D06",
+      "D07",
+      "D03a",
+      "D01a",
+      "D03b",
+      "D01b",
+      "D06a",
+      "D06b",
+      "D06c"
+    ],
+    "relative_links": "passed",
+    "historical_artifacts": "unchanged",
+    "runtime_and_tests_diff": "none"
+  }
+}

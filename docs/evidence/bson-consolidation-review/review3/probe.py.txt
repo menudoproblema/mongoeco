@@ -1,0 +1,78 @@
+import asyncio
+import json
+from pathlib import Path
+from unittest.mock import patch
+
+from bson import BSON, Binary, DBRef
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.wire import AsyncMongoEcoProxyServer
+
+ROOT = Path('/tmp/mongoeco-bson-review3')
+SEED = [{'_id': 1, 'v': DBRef('c', 1)}, {'_id': 2, 'v': {'$ref': 'c', '$id': 1}}, {'_id': 3, 'v': DBRef('c', 1, tenant='t')}]
+QUERIES = {
+    'implicit': {'v': {'$ref': 'c', '$id': 1}},
+    'explicit_eq': {'v': {'$eq': {'$ref': 'c', '$id': 1}}},
+    'sdk': {'v': DBRef('c', 1)},
+    'reordered': {'v': {'$id': 1, '$ref': 'c'}},
+    'extras': {'v': {'$ref': 'c', '$id': 1, 'tenant': 't'}},
+    'wrong_ref_type': {'v': {'$ref': 1, '$id': 1}},
+    'incomplete': {'v': {'$ref': 'c'}},
+    'ordinary_first': {'v': {'x': 1, '$unknown': 2}},
+}
+
+
+def observe(fn):
+    try:
+        return {'ok': True, 'ids': fn()}
+    except Exception as exc:
+        return {'ok': False, 'exception': type(exc).__name__, 'code': getattr(exc, 'code', None), 'message': str(exc)}
+
+
+def run(collection):
+    collection.insert_many(SEED)
+    return {name: observe(lambda query=query: sorted(doc['_id'] for doc in collection.find(query))) for name, query in QUERIES.items()}
+
+
+report = {'plan_base': 'e04e285', 'direct': {}, 'wire': {}, 'sqlite_paths': {}, 'sdk_decode': {}}
+for name, query in QUERIES.items():
+    decoded = BSON.encode(query).decode()['v']
+    report['sdk_decode'][name] = {'class': type(decoded).__module__ + '.' + type(decoded).__qualname__, 'repr': repr(decoded)}
+
+for dialect in ['7.0', '8.0', '9.0']:
+    for name, factory in [('memory', MemoryEngine), ('sqlite', SQLiteEngine)]:
+        engine = factory()
+        with MongoClient(engine, mongodb_dialect=dialect) as client:
+            report['direct'][name + '-' + dialect] = run(client.review3.refs)
+            if name == 'sqlite':
+                coll = client.review3.binary
+                coll.insert_many([{'_id': 1, 'v': b'ab'}, {'_id': 2, 'v': Binary(b'ab', 0)}, {'_id': 3, 'v': Binary(b'ab', 5)}])
+                paths = {}
+                for label, query in [('bytes_eq', {'v': b'ab'}), ('bytes_in', {'v': {'$in': [b'ab']}}), ('binary_eq', {'v': Binary(b'ab', 0)})]:
+                    statements = []
+                    engine._connection.set_trace_callback(statements.append)
+                    original = QueryEngine.match_plan
+                    with patch.object(QueryEngine, 'match_plan', side_effect=original) as spy:
+                        result = observe(lambda: sorted(doc['_id'] for doc in coll.find(query)))
+                    engine._connection.set_trace_callback(None)
+                    paths[label] = {'result': result, 'matcher_calls': spy.call_count, 'document_selects': [stmt for stmt in statements if 'SELECT' in stmt.upper() and 'FROM DOCUMENTS' in stmt.upper()]}
+                report['sqlite_paths'][dialect] = paths
+
+
+async def wire():
+    for dialect in ['7.0', '8.0', '9.0']:
+        for name, factory in [('memory', MemoryEngine), ('sqlite', SQLiteEngine)]:
+            async with AsyncMongoEcoProxyServer(engine=factory(), mongodb_dialect=dialect) as proxy:
+                def client_run():
+                    with NativeClient(proxy.address.uri, serverSelectionTimeoutMS=2000) as client:
+                        return run(client.review3.refs)
+                report['wire'][name + '-' + dialect] = await asyncio.to_thread(client_run)
+
+
+asyncio.run(wire())
+with NativeClient('mongodb://127.0.0.1:49953/?directConnection=true', serverSelectionTimeoutMS=2000) as native:
+    report['native'] = {'version': native.admin.command('buildInfo')['version'], 'fcv': native.admin.command({'getParameter': 1, 'featureCompatibilityVersion': 1})['featureCompatibilityVersion'], 'queries': run(native.review3.refs)}
+(ROOT / 'observations.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report, indent=2))
