@@ -57,6 +57,7 @@ from mongoeco.core.aggregation.runtime import (
     evaluate_expression,
 )
 from mongoeco.core.aggregation.scalar_expressions import validate_convert_spec
+from mongoeco.core.aggregation.write_validation import validate_merge_mode_pair
 from mongoeco.core.bson_values import binary_parts, code_parts, document_mapping
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.error_documents import command_error_document, error_message
@@ -529,8 +530,6 @@ def _validate_stage_structure(operator, spec, dialect):
 
 
 def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
-    _validate_stage_structure(operator, spec, dialect)
-    _validate_placement(operator, address, context.scopes)
     if operator in {"$lookup", "$unionWith"}:
         spec = _prepare_join(
             operator, spec, dialect=dialect, address=address, context=context
@@ -582,6 +581,25 @@ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
     return spec
 
 
+def _parse_stage_containers(pipeline, dialect, context, relocating):
+    parsed = []
+    for index, stage in enumerate(pipeline):
+        operator, raw_spec = _require_stage(stage)
+        address = (
+            StageAddress((*context.path, index), index)
+            if relocating
+            else getattr(stage, "address", StageAddress((*context.path, index), index))
+        )
+        builtin = get_registered_aggregation_stage_registration(operator) is None
+        if builtin:
+            _validate_stage_structure(operator, raw_spec, dialect)
+            _validate_placement(operator, address, context.scopes)
+            if operator == "$merge":
+                validate_merge_mode_pair(raw_spec)
+        parsed.append((stage, operator, raw_spec, address, builtin))
+    return parsed
+
+
 def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
     pipeline,
     *,
@@ -631,20 +649,17 @@ def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope bound
         and pipeline.context == context
     ):
         return pipeline
+    # Parse every stage container before optimizing any stage expression.
+    # In particular, a later invalid write policy precedes a constant-fold error.
+    parsed = _parse_stage_containers(pipeline, dialect, context, relocating)
     stages, addresses, requests = [], [], []
     average_prefix_compatible = (
         dialect.server_version in {"8.0", "9.0"}
         and not ({"$facet", "$lookup"} & set(scopes))
     )
-    for index, stage in enumerate(pipeline):
-        operator, raw_spec = _require_stage(stage)
+    for stage, operator, raw_spec, address, builtin in parsed:
         spec = _copy_spec(raw_spec)
-        address = (
-            StageAddress((*path, index), index)
-            if relocating
-            else getattr(stage, "address", StageAddress((*path, index), index))
-        )
-        if get_registered_aggregation_stage_registration(operator) is None:
+        if builtin:
             try:
                 spec = _prepare_builtin_stage(
                     operator, spec, dialect=dialect, address=address, context=context

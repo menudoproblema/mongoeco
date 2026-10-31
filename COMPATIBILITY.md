@@ -374,6 +374,8 @@ Esto implica:
 * `vectorSearch` usa ya ANN local con `usearch` en `SQLiteEngine` y baseline
   exacta en `MemoryEngine`;
 * `$merge`, `$densify` y `$fill` existen como subset explícito;
+  `$merge` rechaza combinaciones incompatibles de modos con 51181 al preparar
+  el pipeline, incluso vacío, y claves `_id` array con 51185 al procesarlas.
   `$densify` conserva originales en 7/8/9 y usa límites globales para `full`.
   Sus correcciones intencionales y deltas de bounds iguales/particiones vacías
   se detallan en [la guía 9.0/4.18](docs/mongodb9-pymongo418.md);

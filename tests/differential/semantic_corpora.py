@@ -63,6 +63,10 @@ from tests.differential.semantic_expression_grammar_cases import (
     SEMANTIC_EXPRESSION_GRAMMAR_CASES,
 )
 from tests.differential.semantic_group_cases import SEMANTIC_GROUP_CASES
+from tests.differential.semantic_merge_key_cases import (
+    SEED as MERGE_KEY_SEED,
+    SEMANTIC_MERGE_KEY_CASES,
+)
 from tests.differential.semantic_missing_cases import (
     SEED as MISSING_SEED,
     SEMANTIC_MISSING_CASES,
@@ -188,6 +192,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "merge_key": SemanticCorpus(
+        "merge-key", "semantic_merge_key_cases", MERGE_KEY_SEED,
+        SEMANTIC_MERGE_KEY_CASES,
+    ),
     "binary_surface": SemanticCorpus(
         "binary-surface", "semantic_binary_surface_cases", BINARY_SURFACE_SEED,
         SEMANTIC_BINARY_SURFACE_CASES,

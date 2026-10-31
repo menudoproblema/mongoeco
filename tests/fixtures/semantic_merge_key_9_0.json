@@ -1,0 +1,774 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_array_merge_keys": {
+      "merge/insert/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "merge/insert/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "merge/discard/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "merge/discard/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "merge/fail/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "merge/fail/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "replace/insert/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "replace/insert/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "replace/discard/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "replace/discard/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "replace/fail/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "replace/fail/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "keepExisting/insert/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "keepExisting/insert/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "keepExisting/discard/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "keepExisting/fail/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "fail/insert/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": []
+      },
+      "fail/insert/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51185"
+        },
+        "code_name": "Location51185",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "fail/discard/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      },
+      "fail/fail/False": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/True": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": "target"
+          }
+        ]
+      }
+    },
+    "semantic_invalid_merge_modes": {
+      "keepExisting/discard/False/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/False/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/False/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/False/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/False/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/True/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/True/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/True/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/True/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/discard/True/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/False/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/False/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/False/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/False/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/False/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/True/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/True/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/True/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/True/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "keepExisting/fail/True/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/False/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/False/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/False/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/False/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/False/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/True/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/True/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/True/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/True/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/discard/True/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/False/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/False/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/False/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/False/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/False/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/True/plain": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/True/constant_divide": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/True/unknown_expression": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/True/wrong_arity": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      },
+      "fail/fail/True/undefined_variable": {
+        "phase": "open",
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "51181"
+        },
+        "code_name": "Location51181",
+        "target": []
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793476218,
+            "i": 12
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793476218,
+          "i": 12
+        }
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_merge_key_cases.py",
+    "sha256": "4e05e555e5e6306fe73c7ef932542c48bba571bffbc6fb455986226f33d982c5"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_array_merge_keys",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_array_merge_keys"
+    },
+    {
+      "name": "semantic_invalid_merge_modes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_invalid_merge_modes"
+    }
+  ]
+}

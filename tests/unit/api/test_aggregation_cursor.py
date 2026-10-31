@@ -44,7 +44,6 @@ from mongoeco.errors import (
     ExecutionTimeout,
     InvalidOperation,
     OperationFailure,
-    WriteError,
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import PlanningIssue, PlanningMode, SearchIndexModel
@@ -2288,12 +2287,12 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(
             await database.get_collection("archive").find_one({"_id": "1"})
         )
-        with self.assertRaises(WriteError) as array_id_context:
+        with self.assertRaises(OperationFailure) as array_id_context:
             await cursor._apply_merge_stage(
                 [{"_id": [1], "value": 1}],
                 {"into": "archive", "whenNotMatched": "discard"},
             )
-        self.assertEqual(array_id_context.exception.code, 53)
+        self.assertEqual(array_id_context.exception.code, 51185)
         with self.assertRaisesRegex(OperationFailure, "whenNotMatched=fail"):
             await cursor._apply_merge_stage(
                 [{"_id": "1", "value": 1}],
@@ -2370,7 +2369,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                         conn.commit()
 
                 cursor = AsyncAggregationCursor(source, [])
-                with self.assertRaises(WriteError) as context:
+                with self.assertRaises(OperationFailure) as context:
                     await cursor._apply_merge_stage(
                         [{"_id": "new", "value": "incoming"}],
                         {"into": "target", "whenMatched": "keepExisting"},

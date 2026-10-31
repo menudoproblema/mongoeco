@@ -42,6 +42,7 @@ from mongoeco.core.aggregation.preparation import prepare_pipeline
 from mongoeco.core.aggregation.resources import AggregationResources
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
 from mongoeco.core.aggregation.spill import _AggregationGroupStateSerializationError
+from mongoeco.core.aggregation.write_validation import validate_merge_mode_pair
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
@@ -82,7 +83,7 @@ from mongoeco.core.search_planning import (
     search_prefix_output_limit,
     search_result_limit_hint,
 )
-from mongoeco.core.server_errors import operation_error, retain_diagnostic
+from mongoeco.core.server_errors import operation_error, retain_diagnostic, server_error
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import DuplicateKeyError, OperationFailure, WriteError
@@ -566,6 +567,7 @@ class AsyncAggregationCursor:
             raise OperationFailure(
                 "$merge whenNotMatched currently supports insert, discard or fail",
             )
+        validate_merge_mode_pair(spec)
 
         target_collection = self._target_database(
             target_db_name,
@@ -594,6 +596,9 @@ class AsyncAggregationCursor:
                 ),
             )
             try:
+                if isinstance(candidate["_id"], (list, tuple)):
+                    message = "$merge write error: 'on' field '_id' is an array"
+                    raise server_error(message, code=51185)
                 assert_valid_root_document_id(candidate["_id"])
                 internal_candidate = DocumentCodec.to_internal(candidate)
                 outcome = await target_collection._runtime.engine_merge_document(
