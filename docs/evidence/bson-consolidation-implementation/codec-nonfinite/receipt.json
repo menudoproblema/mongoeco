@@ -1,0 +1,26 @@
+{
+  "status": "isolated codec correction; companion identity cut and final gates pending",
+  "base": "b661e7a",
+  "mechanism": "Nonfinite doubles retain IEEE bits in an extended payload of the existing double tag; raw versus wrapped ownership is retained. Finite encoding and legacy decoding remain supported.",
+  "validation": {
+    "isolated_new_tests": 22,
+    "isolated_codec_json_regression": 67,
+    "backends": [
+      "stdlib",
+      "orjson"
+    ],
+    "runtime": "archived b661e7a src plus only candidate codec.py"
+  },
+  "source_sha256": {
+    "src/mongoeco/core/codec.py": "dda58ce432340e6898131d243cb7211087d404fc7d2cc08fca2751c8bdf393ef",
+    "tests/unit/core/test_double_codec_identity.py": "ba76fb0aa88eb82d2ae9c76c6f19123178607e0724b8a76391d777e6b141fa02"
+  },
+  "limits": [
+    "Does not reconstruct payloads lost in previously stored JSON.",
+    "No claim of global, distribution or complete identity block acceptance."
+  ],
+  "artifacts": {
+    "codec-isolated-regression.txt.gz": "6c95ea9bde59f4611f54623696d584ee7b5b471aed4219bb9900a280d4688b7a",
+    "codec-isolated.txt.gz": "cf0f4d368c993924fb3e5f7c43b0620d128504f191f71c117fb9e44738663e12"
+  }
+}

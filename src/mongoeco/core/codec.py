@@ -3,7 +3,9 @@ from __future__ import annotations
 import binascii
 import datetime
 import decimal
+import math
 import re
+import struct
 import uuid
 
 from typing import Any, Self
@@ -402,8 +404,18 @@ class DocumentCodec:
         if isinstance(data, BsonInt64):
             return DocumentCodec._tagged_value("int64", data.value)
 
-        if isinstance(data, BsonDouble):
-            return DocumentCodec._tagged_value("double", data.value)
+        if isinstance(data, (BsonDouble, float)):
+            number = data.value if isinstance(data, BsonDouble) else data
+            if not math.isfinite(number):
+                # JSON NaN loses payload/sign (or becomes null in some backends).
+                # Keep the existing double tag and remember ownership separately
+                # so legacy float storage keys retain their Python representation.
+                return DocumentCodec._tagged_value("double", {
+                    "bits": struct.pack("<d", number).hex(),
+                    "wrapped": isinstance(data, BsonDouble),
+                })
+            if isinstance(data, BsonDouble):
+                return DocumentCodec._tagged_value("double", number)
 
         if isinstance(data, BsonDecimal128):
             return DocumentCodec._tagged_value("decimal128", str(data.value))
@@ -467,6 +479,12 @@ class DocumentCodec:
             if value_type == "int64":
                 return BsonInt64(int(value)) if preserve_bson_wrappers else int(value)
             if value_type == "double":
+                if isinstance(value, dict):
+                    number = struct.unpack("<d", bytes.fromhex(value["bits"]))[0]
+                    return (
+                        BsonDouble(number)
+                        if value["wrapped"] and preserve_bson_wrappers else number
+                    )
                 return BsonDouble(float(value)) if preserve_bson_wrappers else float(value)
             if value_type == "decimal128":
                 return BsonDecimal128(decimal.Decimal(value)) if preserve_bson_wrappers else decimal.Decimal(value)
