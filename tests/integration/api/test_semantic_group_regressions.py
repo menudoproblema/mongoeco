@@ -219,10 +219,15 @@ def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest a
 
                     await asyncio.to_thread(run)
                 else:
-                    async with pymongo.AsyncMongoClient(
-                        uri, serverSelectionTimeoutMS=3000
-                    ) as client:
-                        await async_action(client)
+                    # Older SDKs can perform blocking socket reads in async bulk
+                    # writes. Keep their loop separate from the server's loop.
+                    async def run_client():
+                        async with pymongo.AsyncMongoClient(
+                            uri, serverSelectionTimeoutMS=3000
+                        ) as client:
+                            await async_action(client)
+
+                    await asyncio.to_thread(asyncio.run, run_client())
 
     asyncio.run(exercise())
 
