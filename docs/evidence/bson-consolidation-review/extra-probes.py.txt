@@ -1,0 +1,51 @@
+import json
+import random
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from bson import Code
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.core.aggregation.scalar_expressions import _datetime_to_epoch_millis
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+path = Path('/tmp/mongoeco-bson-review/observations.json')
+report = json.loads(path.read_text())
+report['ttl'] = {}
+for name, engine in [('memory', MemoryEngine()), ('sqlite', SQLiteEngine())]:
+    with MongoClient(engine, now_factory=lambda: datetime(2038, 4, 22, 20, 55, 58, 686000)) as client:
+        coll = client.ttl_review.c
+        coll.create_index('v', expire_after_seconds=0)
+        coll.insert_one({'_id': 1, 'v': datetime(2038, 4, 22, 20, 55, 58, 687000)})
+        report['ttl'][name] = {'find_ids': [doc['_id'] for doc in coll.find({})]}
+
+rng = random.Random(20261031)
+start, epoch = datetime(1900, 1, 1), datetime(1970, 1, 1)
+span = (datetime(2100, 1, 1) - start) // timedelta(milliseconds=1)
+wrong = 0
+for _ in range(20000):
+    value = start + timedelta(milliseconds=rng.randrange(span))
+    delta = value - epoch
+    exact = (delta.days * 86400 + delta.seconds) * 1000 + delta.microseconds // 1000
+    wrong += _datetime_to_epoch_millis(value) != exact
+report['date_sample'] = {'n': 20000, 'seed': 20261031, 'mismatches': wrong, 'fraction': wrong / 20000, 'oracle': 'independent integer timedelta arithmetic; not native population sampling'}
+
+native = NativeClient('mongodb://127.0.0.1:49951/?directConnection=true')
+coll = native.bson_review.identity_extra
+coll.delete_many({})  # Owned disposable fixture only.
+report['identity_extra'] = {}
+cases = [('signed_zero', 0.0, -0.0), ('code_scope_order', Code('x', {'a': 1, 'b': 2}), Code('x', {'b': 2, 'a': 1})), ('code_no_scope_empty', Code('x'), Code('x', {}))]
+for name, old, new in cases:
+    coll.insert_one({'_id': name, 'v': old})
+    changed = coll.update_one({'_id': name}, {'$set': {'v': new}}).modified_count
+    report['identity_extra'][name] = {'native_modified': changed, 'native_value': repr(coll.find_one({'_id': name})['v'])}
+    for backend, engine in [('memory', MemoryEngine()), ('sqlite', SQLiteEngine())]:
+        with MongoClient(engine, mongodb_dialect='9.0') as client:
+            for mode, update in [('classic', {'$set': {'v': new}}), ('pipeline', [{'$set': {'v': {'$literal': new}}}])]:
+                local = client.identity_review[mode]
+                local.insert_one({'_id': name, 'v': old})
+                count = local.update_one({'_id': name}, update).modified_count
+                report['identity_extra'][name][backend + '_' + mode] = {'modified': count, 'value': repr(local.find_one({'_id': name})['v'])}
+native.close()
+path.write_text(json.dumps(report, indent=2))
+print(json.dumps({key: report[key] for key in ['ttl', 'date_sample', 'identity_extra']}, indent=2))

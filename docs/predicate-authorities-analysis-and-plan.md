@@ -16,6 +16,11 @@ adicionales comprobados aquí. El progreso de implementación se conserva en el
 [registro de ejecución](semantic-parity-implementation.md), separado de esta
 caracterización inicial.
 
+El segundo informe y las críticas posteriores ya tienen una
+[caracterización y propuesta propias H48–H54](bson-semantics-consolidation-plan.md).
+El párrafo anterior conserva el estado de entrada de este incremento H37–H47;
+no describe una ausencia actual ni reabre su aceptación.
+
 Revisión de simplicidad del plan sobre `1f9c794`: se reducen barreras de
 ejecución y construcciones previstas, conservando H37–H47, los testigos,
 las fronteras de aceptación y los gates del owner. La evidencia de análisis

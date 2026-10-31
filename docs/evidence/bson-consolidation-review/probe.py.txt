@@ -1,0 +1,112 @@
+import json
+import pathlib
+import time
+from datetime import datetime, timedelta
+
+from bson import BSON, Binary, Code, DBRef, ObjectId
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.compat import MONGODB_DIALECT_90 as DIALECT
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.core.bson_ordering import bson_equality_key, bson_type_rank
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.paths import same_bson_update_value
+from mongoeco.core.schema_validation import schema_equal
+from mongoeco.types import Binary as LocalBinary
+
+ROOT = pathlib.Path('/tmp/mongoeco-bson-review')
+OUT = {'base': '734c57f4026c602491bdc6f62aa5dc44369dfcb4', 'observations': {}}
+
+
+def observe(fn):
+    try:
+        return {'ok': True, 'value': fn()}
+    except Exception as exc:
+        return {'ok': False, 'exception': type(exc).__name__, 'code': getattr(exc, 'code', None), 'message': str(exc)}
+
+
+def run(client):
+    db = client.bson_review
+    coll = db.binary
+    coll.insert_many([{'_id': 1, 'v': b'ab'}, {'_id': 2, 'v': Binary(b'ab', 0)}, {'_id': 3, 'v': Binary(b'ab', 5)}])
+    filters = {
+        'eq0': {'v': Binary(b'ab', 0)}, 'eq5': {'v': Binary(b'ab', 5)},
+        'eq_bytes': {'v': b'ab'}, 'ne0': {'v': {'$ne': Binary(b'ab', 0)}},
+        'gt0': {'v': {'$gt': Binary(b'a', 0)}},
+        'expr_eq0': {'$expr': {'$eq': ['$v', Binary(b'ab', 0)]}},
+    }
+    r = {name: observe(lambda query=query: sorted(doc['_id'] for doc in coll.find(query))) for name, query in filters.items()}
+    r['set_identical_binary'] = observe(lambda: coll.update_one({'_id': 3}, {'$set': {'v': Binary(b'ab', 5)}}).modified_count)
+    coll = db.arrays
+    oid = ObjectId('012345678901234567890123')
+    coll.insert_many([{'_id': 1, 'v': [Binary(b'ab', 5)]}, {'_id': 2, 'v': [oid]}, {'_id': 3, 'v': [datetime(2000, 1, 1)]}])
+    for alias in ['binData', 'objectId', 'date']:
+        r['array_type_' + alias] = observe(lambda alias=alias: sorted(doc['_id'] for doc in coll.find({'v': {'$type': alias}})))
+    coll = db.refs
+    coll.insert_many([{'_id': 1, 'v': DBRef('c', 1)}, {'_id': 2, 'v': {'$ref': 'c', '$id': 1}}])
+    for name, value in [('ref', DBRef('c', 1)), ('doc', {'$ref': 'c', '$id': 1})]:
+        r['dbref_eq_' + name] = observe(lambda value=value: sorted(doc['_id'] for doc in coll.find({'v': {'$eq': value}})))
+    r['group_dbref'] = observe(lambda: list(coll.aggregate([{'$group': {'_id': '$v', 'n': {'$sum': 1}}}])))
+    coll = db.dates
+    epoch = datetime(1970, 1, 1)
+    coll.insert_many([{'_id': i, 'v': value} for i, value in enumerate([epoch + timedelta(milliseconds=1001), epoch - timedelta(milliseconds=1001), datetime(2038, 4, 22, 20, 55, 58, 687000)])])
+    r['dates'] = observe(lambda: list(coll.aggregate([{'$project': {'_id': 1, 'long': {'$toLong': '$v'}, 'subtract': {'$subtract': ['$v', epoch]}, 'diff': {'$dateDiff': {'startDate': epoch, 'endDate': '$v', 'unit': 'millisecond'}}, 'roundtrip': {'$toDate': {'$toLong': '$v'}}}}])))
+    for name, value in [('bad_expression', [{'$project': {'x': {'$notAnOperator': 1}}}]), ('replace_field_path', [{'$replaceWith': '$fullDocument'}])]:
+        def opening(value=value):
+            cursor = db.events.watch(value, max_await_time_ms=5)
+            cursor.close()
+            return 'opened'
+        r['watch_open_' + name] = observe(opening)
+    return r
+
+
+native = NativeClient('mongodb://127.0.0.1:49951/?directConnection=true', serverSelectionTimeoutMS=2000)
+if not native.admin.command('hello').get('setName'):
+    native.admin.command({'replSetInitiate': {'_id': 'bsonReview', 'members': [{'_id': 0, 'host': '127.0.0.1:49951'}]}})
+for _ in range(100):
+    if native.admin.command('hello').get('isWritablePrimary'):
+        break
+    time.sleep(.1)
+OUT['native'] = {'version': native.admin.command('buildInfo')['version'], 'fcv': native.admin.command({'getParameter': 1, 'featureCompatibilityVersion': 1})['featureCompatibilityVersion'], 'replica_set': native.admin.command('hello').get('setName')}
+native.drop_database('bson_review')  # Only the database owned by this disposable fixture.
+OUT['observations']['native'] = run(native)
+db = native.bson_review
+db.create_collection('moderate_warn', validator={'a': {'$type': 'string'}}, validationLevel='moderate', validationAction='warn')
+db.moderate_warn.insert_one({'_id': 1, 'a': 1}, bypass_document_validation=True)
+OUT['native']['moderate_bad_bad_modified'] = db.moderate_warn.update_one({'_id': 1}, {'$set': {'a': 2}}).modified_count
+logs = native.admin.command({'getLog': 'global'})['log']
+OUT['native']['moderate_warn_logs'] = [json.loads(line) for line in logs if '20294' in line and 'moderate_warn' in line][-1:]
+stream = db.clock.watch([{'$set': {'reviewNow': '$$NOW'}}], max_await_time_ms=5)
+now_values = []
+for i in range(2):
+    db.clock.insert_one({'_id': i})
+    event = None
+    for _ in range(100):
+        event = stream.try_next()
+        if event is not None:
+            break
+    now_values.append(None if event is None else event['reviewNow'])
+    time.sleep(.02)
+stream.close()
+OUT['native']['watch_now_values'] = now_values
+for name, engine, dialect in [(name + '-' + dialect, factory(), dialect) for dialect in ('7.0', '8.0', '9.0') for name, factory in [('memory', MemoryEngine), ('sqlite', SQLiteEngine)]]:
+    with MongoClient(engine, mongodb_dialect=dialect, now_factory=lambda: datetime(2001, 1, 1)) as client:
+        OUT['observations'][name] = run(client)
+        client.bson_review.create_collection('moderate_warn', validator={'a': {'$type': 'string'}}, validationLevel='moderate', validationAction='warn')
+        client.bson_review.moderate_warn.insert_one({'_id': 1, 'a': 1}, bypass_document_validation=True)
+        OUT['observations'][name]['moderate_bad_bad_modified'] = observe(lambda: client.bson_review.moderate_warn.update_one({'_id': 1}, {'$set': {'a': 2}}).modified_count)
+        stream = client.bson_review.clock.watch([{'$set': {'reviewNow': '$$NOW'}}], max_await_time_ms=0)
+        values = []
+        for i in range(2):
+            client.bson_review.clock.insert_one({'_id': i})
+            values.append(stream.try_next()['reviewNow'])
+            time.sleep(.02)
+        stream.close()
+        OUT['observations'][name]['watch_now_values'] = values
+OUT['helpers'] = {}
+for name, left, right in [('raw_local', b'ab', LocalBinary(b'ab', 0)), ('raw_sdk', b'ab', Binary(b'ab', 0)), ('internal_local', DocumentCodec.to_internal({'v': b'ab'})['v'], DocumentCodec.to_internal({'v': LocalBinary(b'ab', 0)})['v'])]:
+    OUT['helpers'][name] = {'types': [type(left).__name__, type(right).__name__], 'ranks': [bson_type_rank(v, DIALECT.bson_type_order) for v in (left, right)], 'compare': DIALECT.compare_values(left, right), 'equal_key': bson_equality_key(left) == bson_equality_key(right), 'schema_equal': schema_equal(left, right), 'same_update': same_bson_update_value(left, right)}
+OUT['binary_same_wire'] = BSON.encode({'v': b'ab'}) == BSON.encode({'v': Binary(b'ab', 0)})
+native.close()
+(ROOT / 'observations.json').write_text(json.dumps(OUT, indent=2, default=repr))
+print(json.dumps(OUT, indent=2, default=repr))

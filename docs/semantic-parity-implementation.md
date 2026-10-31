@@ -3,6 +3,10 @@
 Contrato: [plan revisado](plan-semantic-parity-refactor.md). Base: `b38ef967`.
 Estado del plan histórico B00–B10: implementación en curso; B01/B02 completados con validación focal; B00/B03/B04 abiertos. La ampliación C00–C06 / H37–H47 está completada; véase su aceptación integrada al final.
 
+La [revisión de consolidación BSON](bson-semantics-consolidation-plan.md) posee
+la caracterización y propuesta H48–H54 de los dos informes posteriores. No
+está implementada ni amplía la aceptación histórica de B00–B10 o C00–C06.
+
 ## B00: infraestructura inicial
 
 El runner existente integra los testigos de group, ausencia, consumidores,

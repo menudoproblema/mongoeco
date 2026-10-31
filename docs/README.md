@@ -57,6 +57,8 @@ Python/PyMongo versions.
   prioritized blocks, finding coverage, dependencies and real MongoDB acceptance.
 - [Query, validation and prefilter analysis and plan](predicate-authorities-analysis-and-plan.md):
   root causes, native counterexamples and the H37–H47 implementation increment.
+- [BSON consolidation review and plan](bson-semantics-consolidation-plan.md):
+  review of the two follow-up reports, native characterization and proposed H48–H54 work.
 - [Architecture index](architecture/index.md) and
   [testing policy](architecture/testing-and-compatibility.md).
 - [CXP exchange](cxp-exchange.md): inspect the declared compatibility subset.

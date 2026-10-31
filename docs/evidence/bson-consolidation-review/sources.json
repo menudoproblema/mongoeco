@@ -1,0 +1,86 @@
+[
+  {
+    "file": "bson/bsontypes.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/bson/bsontypes.h",
+    "bytes": 12147,
+    "sha256": "368f1e1ac306fdc2ddba78e3a1496e249d9cf9e40bb5005fdb2bbb2f6f0cb3bc"
+  },
+  {
+    "file": "bson/bson_comparator_interface_base.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/bson/bson_comparator_interface_base.h",
+    "bytes": 10297,
+    "sha256": "8ca377d410a29af14438112e5d8785c9467f09894385b45f4c7c33a19356fec9"
+  },
+  {
+    "file": "bson/bsonelement.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/bson/bsonelement.cpp",
+    "bytes": 33523,
+    "sha256": "d3bf3cbcea737b6a9476e28e150d3f765fc7c92f5ee78f98f7087d00c88d2d14"
+  },
+  {
+    "file": "db/exec/document_value/value_comparator.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/exec/document_value/value_comparator.h",
+    "bytes": 8031,
+    "sha256": "44111ec8365fd9e43b5ec601cf270e5b45fb5c447ce81de58be1f5aa967e7867"
+  },
+  {
+    "file": "db/storage/key_string.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/storage/key_string.h",
+    "bytes": 46787,
+    "sha256": "6e93423e10b9b73d468e57fda7283d747e4783d1c4cd1bb7e1f85830a33aa0e7"
+  },
+  {
+    "file": "db/matcher/expression_leaf.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/matcher/expression_leaf.cpp",
+    "bytes": 35358,
+    "sha256": "ba5ac409b8d7e2786d42e5ceb40a2d2a7380ec71c690a85dfc8e17d15c9bfc1a"
+  },
+  {
+    "file": "db/matcher/schema/json_schema_parser.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/matcher/schema/json_schema_parser.cpp",
+    "bytes": 90604,
+    "sha256": "b006e255f60ee4e7d0f1dc2c8796d3cc705d10ad2baddd6e94d3ac0f6973af2d"
+  },
+  {
+    "file": "db/catalog/collection_write_path.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/catalog/collection_write_path.cpp",
+    "bytes": 42182,
+    "sha256": "760a17c1261407812283fcb5a9e1a305858432591a84c073834a3b41fce6c7fc"
+  },
+  {
+    "file": "db/catalog/collection_impl.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/catalog/collection_impl.cpp",
+    "bytes": 84731,
+    "sha256": "3097bbd2c8b9934644f03fbe69d29a8f0ff3be9d17891d660e37b1bc5c26a56b"
+  },
+  {
+    "file": "db/pipeline/variables.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/pipeline/variables.cpp",
+    "bytes": 20794,
+    "sha256": "47c78a564182b83e86698adda6c0e23f563c0b7cddb5aa5b5d89b9f971e4ff5f"
+  },
+  {
+    "file": "db/pipeline/pipeline.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/pipeline/pipeline.cpp",
+    "bytes": 39155,
+    "sha256": "77897b66c9b68bb671eab7a2c4ae42dde725e25f5d221025a9238fe7ecf8728b"
+  },
+  {
+    "file": "util/time_support.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/util/time_support.h",
+    "bytes": 12238,
+    "sha256": "bd4d2c7c0e204c69c5d7b77ed2065c84173b26cb39793d79921e5cc9c2ae0c94"
+  },
+  {
+    "file": "platform/decimal128.h",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/platform/decimal128.h",
+    "bytes": 28379,
+    "sha256": "045fd569d75e82b0f6ca6850bda8f65650c36a7262510f164d4eec99d91b7b10"
+  },
+  {
+    "file": "db/exec/document_value/value.cpp",
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/exec/document_value/value.cpp",
+    "bytes": 47227,
+    "sha256": "8648f27886c99f460bf92b068ecc204a3b8bb4d4caf40ddb4ea9847bd1b9697f"
+  }
+]

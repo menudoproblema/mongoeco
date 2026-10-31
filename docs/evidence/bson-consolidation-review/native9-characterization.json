@@ -1,0 +1,992 @@
+{
+  "base": "734c57f4026c602491bdc6f62aa5dc44369dfcb4",
+  "observations": {
+    "native": {
+      "eq0": {
+        "ok": true,
+        "value": [
+          1,
+          2
+        ]
+      },
+      "eq5": {
+        "ok": true,
+        "value": [
+          3
+        ]
+      },
+      "eq_bytes": {
+        "ok": true,
+        "value": [
+          1,
+          2
+        ]
+      },
+      "ne0": {
+        "ok": true,
+        "value": [
+          3
+        ]
+      },
+      "gt0": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "expr_eq0": {
+        "ok": true,
+        "value": [
+          1,
+          2
+        ]
+      },
+      "set_identical_binary": {
+        "ok": true,
+        "value": 0
+      },
+      "array_type_binData": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "array_type_objectId": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "array_type_date": {
+        "ok": true,
+        "value": [
+          3
+        ]
+      },
+      "dbref_eq_ref": {
+        "ok": true,
+        "value": [
+          1,
+          2
+        ]
+      },
+      "dbref_eq_doc": {
+        "ok": true,
+        "value": [
+          1,
+          2
+        ]
+      },
+      "group_dbref": {
+        "ok": true,
+        "value": [
+          {
+            "_id": "DBRef('c', 1)",
+            "n": 2
+          }
+        ]
+      },
+      "dates": {
+        "ok": true,
+        "value": [
+          {
+            "_id": 0,
+            "long": 1001,
+            "subtract": 1001,
+            "diff": 1001,
+            "roundtrip": "datetime.datetime(1970, 1, 1, 0, 0, 1, 1000)"
+          },
+          {
+            "_id": 1,
+            "long": -1001,
+            "subtract": -1001,
+            "diff": -1001,
+            "roundtrip": "datetime.datetime(1969, 12, 31, 23, 59, 58, 999000)"
+          },
+          {
+            "_id": 2,
+            "long": 2155582558687,
+            "subtract": 2155582558687,
+            "diff": 2155582558687,
+            "roundtrip": "datetime.datetime(2038, 4, 22, 20, 55, 58, 687000)"
+          }
+        ]
+      },
+      "watch_open_bad_expression": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 31325,
+        "message": "Invalid $project :: caused by :: Unknown expression $notAnOperator, full error: {'ok': 0.0, 'errmsg': 'Invalid $project :: caused by :: Unknown expression $notAnOperator', 'code': 31325, 'codeName': 'Location31325', '$clusterTime': {'clusterTime': Timestamp(1793438046, 15), 'signature': {'hash': b'\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00', 'keyId': 0}}, 'operationTime': Timestamp(1793438046, 15)}"
+      },
+      "watch_open_replace_field_path": {
+        "ok": true,
+        "value": "opened"
+      }
+    },
+    "memory-7.0": {
+      "eq0": {
+        "ok": true,
+        "value": []
+      },
+      "eq5": {
+        "ok": true,
+        "value": []
+      },
+      "eq_bytes": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "ne0": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "gt0": {
+        "ok": true,
+        "value": []
+      },
+      "expr_eq0": {
+        "ok": true,
+        "value": []
+      },
+      "set_identical_binary": {
+        "ok": true,
+        "value": 1
+      },
+      "array_type_binData": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "array_type_objectId": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "array_type_date": {
+        "ok": true,
+        "value": [
+          3
+        ]
+      },
+      "dbref_eq_ref": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "dbref_eq_doc": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "group_dbref": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": null,
+        "message": "$group _id must resolve to BSON-compatible values"
+      },
+      "dates": {
+        "ok": true,
+        "value": [
+          {
+            "_id": 0,
+            "long": 1000,
+            "subtract": 1000,
+            "diff": 1000,
+            "roundtrip": "datetime.datetime(1970, 1, 1, 0, 0, 1)"
+          },
+          {
+            "_id": 1,
+            "long": -1000,
+            "subtract": -1000,
+            "diff": -1000,
+            "roundtrip": "datetime.datetime(1969, 12, 31, 23, 59, 59)"
+          },
+          {
+            "_id": 2,
+            "long": 2155582558686,
+            "subtract": 2155582558686,
+            "diff": 2155582558686,
+            "roundtrip": "datetime.datetime(2038, 4, 22, 20, 55, 58, 686000)"
+          }
+        ]
+      },
+      "watch_open_bad_expression": {
+        "ok": true,
+        "value": "opened"
+      },
+      "watch_open_replace_field_path": {
+        "ok": false,
+        "exception": "TypeError",
+        "code": null,
+        "message": "$replaceWith stage must be a dict"
+      },
+      "moderate_bad_bad_modified": {
+        "ok": true,
+        "value": 1
+      },
+      "watch_now_values": [
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 553000)",
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 576000)"
+      ]
+    },
+    "sqlite-7.0": {
+      "eq0": {
+        "ok": true,
+        "value": []
+      },
+      "eq5": {
+        "ok": true,
+        "value": []
+      },
+      "eq_bytes": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "ne0": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "gt0": {
+        "ok": true,
+        "value": []
+      },
+      "expr_eq0": {
+        "ok": true,
+        "value": []
+      },
+      "set_identical_binary": {
+        "ok": true,
+        "value": 1
+      },
+      "array_type_binData": {
+        "ok": true,
+        "value": []
+      },
+      "array_type_objectId": {
+        "ok": true,
+        "value": []
+      },
+      "array_type_date": {
+        "ok": true,
+        "value": []
+      },
+      "dbref_eq_ref": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "dbref_eq_doc": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "group_dbref": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": null,
+        "message": "$group _id must resolve to BSON-compatible values"
+      },
+      "dates": {
+        "ok": true,
+        "value": [
+          {
+            "_id": 0,
+            "long": 1000,
+            "subtract": 1000,
+            "diff": 1000,
+            "roundtrip": "datetime.datetime(1970, 1, 1, 0, 0, 1)"
+          },
+          {
+            "_id": 1,
+            "long": -1000,
+            "subtract": -1000,
+            "diff": -1000,
+            "roundtrip": "datetime.datetime(1969, 12, 31, 23, 59, 59)"
+          },
+          {
+            "_id": 2,
+            "long": 2155582558686,
+            "subtract": 2155582558686,
+            "diff": 2155582558686,
+            "roundtrip": "datetime.datetime(2038, 4, 22, 20, 55, 58, 686000)"
+          }
+        ]
+      },
+      "watch_open_bad_expression": {
+        "ok": true,
+        "value": "opened"
+      },
+      "watch_open_replace_field_path": {
+        "ok": false,
+        "exception": "TypeError",
+        "code": null,
+        "message": "$replaceWith stage must be a dict"
+      },
+      "moderate_bad_bad_modified": {
+        "ok": true,
+        "value": 1
+      },
+      "watch_now_values": [
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 626000)",
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 652000)"
+      ]
+    },
+    "memory-8.0": {
+      "eq0": {
+        "ok": true,
+        "value": []
+      },
+      "eq5": {
+        "ok": true,
+        "value": []
+      },
+      "eq_bytes": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "ne0": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "gt0": {
+        "ok": true,
+        "value": []
+      },
+      "expr_eq0": {
+        "ok": true,
+        "value": []
+      },
+      "set_identical_binary": {
+        "ok": true,
+        "value": 1
+      },
+      "array_type_binData": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "array_type_objectId": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "array_type_date": {
+        "ok": true,
+        "value": [
+          3
+        ]
+      },
+      "dbref_eq_ref": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "dbref_eq_doc": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "group_dbref": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": null,
+        "message": "$group _id must resolve to BSON-compatible values"
+      },
+      "dates": {
+        "ok": true,
+        "value": [
+          {
+            "_id": 0,
+            "long": 1000,
+            "subtract": 1000,
+            "diff": 1000,
+            "roundtrip": "datetime.datetime(1970, 1, 1, 0, 0, 1)"
+          },
+          {
+            "_id": 1,
+            "long": -1000,
+            "subtract": -1000,
+            "diff": -1000,
+            "roundtrip": "datetime.datetime(1969, 12, 31, 23, 59, 59)"
+          },
+          {
+            "_id": 2,
+            "long": 2155582558686,
+            "subtract": 2155582558686,
+            "diff": 2155582558686,
+            "roundtrip": "datetime.datetime(2038, 4, 22, 20, 55, 58, 686000)"
+          }
+        ]
+      },
+      "watch_open_bad_expression": {
+        "ok": true,
+        "value": "opened"
+      },
+      "watch_open_replace_field_path": {
+        "ok": false,
+        "exception": "TypeError",
+        "code": null,
+        "message": "$replaceWith stage must be a dict"
+      },
+      "moderate_bad_bad_modified": {
+        "ok": true,
+        "value": 1
+      },
+      "watch_now_values": [
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 686000)",
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 711000)"
+      ]
+    },
+    "sqlite-8.0": {
+      "eq0": {
+        "ok": true,
+        "value": []
+      },
+      "eq5": {
+        "ok": true,
+        "value": []
+      },
+      "eq_bytes": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "ne0": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "gt0": {
+        "ok": true,
+        "value": []
+      },
+      "expr_eq0": {
+        "ok": true,
+        "value": []
+      },
+      "set_identical_binary": {
+        "ok": true,
+        "value": 1
+      },
+      "array_type_binData": {
+        "ok": true,
+        "value": []
+      },
+      "array_type_objectId": {
+        "ok": true,
+        "value": []
+      },
+      "array_type_date": {
+        "ok": true,
+        "value": []
+      },
+      "dbref_eq_ref": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "dbref_eq_doc": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "group_dbref": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": null,
+        "message": "$group _id must resolve to BSON-compatible values"
+      },
+      "dates": {
+        "ok": true,
+        "value": [
+          {
+            "_id": 0,
+            "long": 1000,
+            "subtract": 1000,
+            "diff": 1000,
+            "roundtrip": "datetime.datetime(1970, 1, 1, 0, 0, 1)"
+          },
+          {
+            "_id": 1,
+            "long": -1000,
+            "subtract": -1000,
+            "diff": -1000,
+            "roundtrip": "datetime.datetime(1969, 12, 31, 23, 59, 59)"
+          },
+          {
+            "_id": 2,
+            "long": 2155582558686,
+            "subtract": 2155582558686,
+            "diff": 2155582558686,
+            "roundtrip": "datetime.datetime(2038, 4, 22, 20, 55, 58, 686000)"
+          }
+        ]
+      },
+      "watch_open_bad_expression": {
+        "ok": true,
+        "value": "opened"
+      },
+      "watch_open_replace_field_path": {
+        "ok": false,
+        "exception": "TypeError",
+        "code": null,
+        "message": "$replaceWith stage must be a dict"
+      },
+      "moderate_bad_bad_modified": {
+        "ok": true,
+        "value": 1
+      },
+      "watch_now_values": [
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 756000)",
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 781000)"
+      ]
+    },
+    "memory-9.0": {
+      "eq0": {
+        "ok": true,
+        "value": []
+      },
+      "eq5": {
+        "ok": true,
+        "value": []
+      },
+      "eq_bytes": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "ne0": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "gt0": {
+        "ok": true,
+        "value": []
+      },
+      "expr_eq0": {
+        "ok": true,
+        "value": []
+      },
+      "set_identical_binary": {
+        "ok": true,
+        "value": 1
+      },
+      "array_type_binData": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "array_type_objectId": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "array_type_date": {
+        "ok": true,
+        "value": [
+          3
+        ]
+      },
+      "dbref_eq_ref": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "dbref_eq_doc": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "group_dbref": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": null,
+        "message": "$group _id must resolve to BSON-compatible values"
+      },
+      "dates": {
+        "ok": true,
+        "value": [
+          {
+            "_id": 0,
+            "long": 1000,
+            "subtract": 1000,
+            "diff": 1000,
+            "roundtrip": "datetime.datetime(1970, 1, 1, 0, 0, 1)"
+          },
+          {
+            "_id": 1,
+            "long": -1000,
+            "subtract": -1000,
+            "diff": -1000,
+            "roundtrip": "datetime.datetime(1969, 12, 31, 23, 59, 59)"
+          },
+          {
+            "_id": 2,
+            "long": 2155582558686,
+            "subtract": 2155582558686,
+            "diff": 2155582558686,
+            "roundtrip": "datetime.datetime(2038, 4, 22, 20, 55, 58, 686000)"
+          }
+        ]
+      },
+      "watch_open_bad_expression": {
+        "ok": true,
+        "value": "opened"
+      },
+      "watch_open_replace_field_path": {
+        "ok": false,
+        "exception": "TypeError",
+        "code": null,
+        "message": "$replaceWith stage must be a dict"
+      },
+      "moderate_bad_bad_modified": {
+        "ok": true,
+        "value": 1
+      },
+      "watch_now_values": [
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 815000)",
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 841000)"
+      ]
+    },
+    "sqlite-9.0": {
+      "eq0": {
+        "ok": true,
+        "value": []
+      },
+      "eq5": {
+        "ok": true,
+        "value": []
+      },
+      "eq_bytes": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "ne0": {
+        "ok": true,
+        "value": [
+          1,
+          2,
+          3
+        ]
+      },
+      "gt0": {
+        "ok": true,
+        "value": []
+      },
+      "expr_eq0": {
+        "ok": true,
+        "value": []
+      },
+      "set_identical_binary": {
+        "ok": true,
+        "value": 1
+      },
+      "array_type_binData": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "array_type_objectId": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "array_type_date": {
+        "ok": true,
+        "value": [
+          3
+        ]
+      },
+      "dbref_eq_ref": {
+        "ok": true,
+        "value": [
+          1
+        ]
+      },
+      "dbref_eq_doc": {
+        "ok": true,
+        "value": [
+          2
+        ]
+      },
+      "group_dbref": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": null,
+        "message": "$group _id must resolve to BSON-compatible values"
+      },
+      "dates": {
+        "ok": true,
+        "value": [
+          {
+            "_id": 0,
+            "long": 1000,
+            "subtract": 1000,
+            "diff": 1000,
+            "roundtrip": "datetime.datetime(1970, 1, 1, 0, 0, 1)"
+          },
+          {
+            "_id": 1,
+            "long": -1000,
+            "subtract": -1000,
+            "diff": -1000,
+            "roundtrip": "datetime.datetime(1969, 12, 31, 23, 59, 59)"
+          },
+          {
+            "_id": 2,
+            "long": 2155582558686,
+            "subtract": 2155582558686,
+            "diff": 2155582558686,
+            "roundtrip": "datetime.datetime(2038, 4, 22, 20, 55, 58, 686000)"
+          }
+        ]
+      },
+      "watch_open_bad_expression": {
+        "ok": true,
+        "value": "opened"
+      },
+      "watch_open_replace_field_path": {
+        "ok": false,
+        "exception": "TypeError",
+        "code": null,
+        "message": "$replaceWith stage must be a dict"
+      },
+      "moderate_bad_bad_modified": {
+        "ok": true,
+        "value": 1
+      },
+      "watch_now_values": [
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 881000)",
+        "datetime.datetime(2026, 10, 31, 9, 14, 6, 907000)"
+      ]
+    }
+  },
+  "native": {
+    "version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "replica_set": "bsonReview",
+    "moderate_bad_bad_modified": 1,
+    "moderate_warn_logs": [
+      {
+        "t": {
+          "$date": "2026-10-31T10:14:06.446+01:00"
+        },
+        "s": "W",
+        "c": "STORAGE",
+        "id": 20294,
+        "ctx": "conn6",
+        "msg": "Document would fail validation",
+        "attr": {
+          "namespace": "bson_review.moderate_warn",
+          "document": {
+            "_id": 1,
+            "a": 2
+          },
+          "errInfo": {
+            "failingDocumentId": 1,
+            "details": {
+              "operatorName": "$type",
+              "specifiedAs": {
+                "a": {
+                  "$type": "string"
+                }
+              },
+              "reason": "type did not match",
+              "consideredValue": 2,
+              "consideredType": "int"
+            }
+          }
+        }
+      }
+    ],
+    "watch_now_values": [
+      "datetime.datetime(2026, 10, 31, 9, 14, 6, 453000)",
+      "datetime.datetime(2026, 10, 31, 9, 14, 6, 453000)"
+    ]
+  },
+  "helpers": {
+    "raw_local": {
+      "types": [
+        "bytes",
+        "Binary"
+      ],
+      "ranks": [
+        6,
+        6
+      ],
+      "compare": 0,
+      "equal_key": true,
+      "schema_equal": true,
+      "same_update": false
+    },
+    "raw_sdk": {
+      "types": [
+        "bytes",
+        "Binary"
+      ],
+      "ranks": [
+        6,
+        100
+      ],
+      "compare": -1,
+      "equal_key": true,
+      "schema_equal": true,
+      "same_update": false
+    },
+    "internal_local": {
+      "types": [
+        "bytes",
+        "_InternalBsonBinary"
+      ],
+      "ranks": [
+        6,
+        100
+      ],
+      "compare": -1,
+      "equal_key": true,
+      "schema_equal": true,
+      "same_update": false
+    }
+  },
+  "binary_same_wire": true,
+  "ttl": {
+    "memory": {
+      "find_ids": [
+        1
+      ]
+    },
+    "sqlite": {
+      "find_ids": [
+        1
+      ]
+    }
+  },
+  "identity_extra": {
+    "signed_zero": {
+      "native_modified": 1,
+      "native_value": "-0.0",
+      "memory_classic": {
+        "modified": 1,
+        "value": "-0.0"
+      },
+      "memory_pipeline": {
+        "modified": 1,
+        "value": "-0.0"
+      },
+      "sqlite_classic": {
+        "modified": 1,
+        "value": "-0.0"
+      },
+      "sqlite_pipeline": {
+        "modified": 1,
+        "value": "-0.0"
+      }
+    },
+    "code_scope_order": {
+      "native_modified": 1,
+      "native_value": "Code('x', {'b': 2, 'a': 1})",
+      "memory_classic": {
+        "modified": 0,
+        "value": "Code('x', {'a': 1, 'b': 2})"
+      },
+      "memory_pipeline": {
+        "modified": 0,
+        "value": "Code('x', {'a': 1, 'b': 2})"
+      },
+      "sqlite_classic": {
+        "modified": 0,
+        "value": "Code('x', {'a': 1, 'b': 2})"
+      },
+      "sqlite_pipeline": {
+        "modified": 0,
+        "value": "Code('x', {'a': 1, 'b': 2})"
+      }
+    },
+    "code_no_scope_empty": {
+      "native_modified": 1,
+      "native_value": "Code('x', {})",
+      "memory_classic": {
+        "modified": 1,
+        "value": "Code('x', {})"
+      },
+      "memory_pipeline": {
+        "modified": 1,
+        "value": "Code('x', {})"
+      },
+      "sqlite_classic": {
+        "modified": 1,
+        "value": "Code('x', {})"
+      },
+      "sqlite_pipeline": {
+        "modified": 1,
+        "value": "Code('x', {})"
+      }
+    }
+  },
+  "date_sample": {
+    "n": 20000,
+    "seed": 20261031,
+    "mismatches": 148,
+    "fraction": 0.0074,
+    "oracle": "independent integer timedelta arithmetic; not native population sampling"
+  }
+}
