@@ -27,6 +27,7 @@ except Exception:  # pragma: no cover - optional dependency
     PyMongoUpdateMany = None
     PyMongoUpdateOne = None
 
+from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.errors import BulkWriteError, OperationFailure, WriteError
@@ -589,7 +590,7 @@ async def execute_bulk_write(
                 upserted=[
                     UpsertedWriteEntry(
                         index=op_index,
-                        document_id=DocumentCodec.to_pymongo(upserted_id),
+                        document_id=materialize_public_value(upserted_id),
                     )
                     for op_index, upserted_id in upserted_ids.items()
                 ],

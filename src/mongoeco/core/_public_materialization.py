@@ -19,10 +19,21 @@ _PLAIN_SCALARS = frozenset((str, int, float, bool, bytes, type(None)))
 _CODEC_VALUES = (datetime.datetime, uuid.UUID, dict, list, tuple)
 
 
+def materialize_public_value(data: Any) -> Any:
+    """Decode a BSON response value without document codec callbacks.
+
+    Engine-owned wrappers must leave the response just like stored documents.
+    Assigned insert IDs use DocumentCodec.to_pymongo's preserving default.
+    """
+    return DocumentCodec.to_pymongo(
+        DocumentCodec.to_public(data), binary_subtype_zero_as_bytes=True
+    )
+
+
 def materialize_public_document(
     data: Any, *, codec_options: CodecOptions | None
 ) -> Any:
-    """Equivalent to to_pymongo followed by apply_codec_options.
+    """Materialize a decoded BSON read, then apply codec_options.
 
     Custom document factories/decoders retain the two-phase implementation.
     The common path constructs dict/list containers once; only values still
@@ -37,7 +48,8 @@ def materialize_public_document(
         or codec.BsonObjectId is None
     ):
         return DocumentCodec.apply_codec_options(
-            DocumentCodec.to_pymongo(data), codec_options=codec_options
+            DocumentCodec.to_pymongo(data, binary_subtype_zero_as_bytes=True),
+            codec_options=codec_options,
         )
     pending: list[_Deferred] = []
     root: list[Any] = [None]
@@ -66,7 +78,7 @@ def _convert_into(
     elif value_type in _PLAIN_SCALARS:
         parent[key] = value
     else:
-        converted = DocumentCodec.to_pymongo(value)
+        converted = DocumentCodec.to_pymongo(value, binary_subtype_zero_as_bytes=True)
         parent[key] = converted
         if isinstance(converted, _CODEC_VALUES):
             pending.append((parent, key, converted))

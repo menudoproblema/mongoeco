@@ -4,6 +4,7 @@ from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.compat import MongoDialect80
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
+from mongoeco.errors import OperationFailure
 from mongoeco.types import IndexModel
 
 from tests.unit.api._collection_test_support import *  # noqa: F403
@@ -1227,8 +1228,17 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(engine.search_calls[4][0], "update")
         self.assertEqual(engine.search_calls[5][0], "drop")
 
-        with self.assertRaises(TypeError):
-            self.collection.watch(max_await_time_ms=-1)
+        async def invalid_getmore():
+            stream = await self.collection.watch(max_await_time_ms=-1)
+            try:
+                with self.assertRaises(OperationFailure) as error:
+                    await stream.try_next()
+                self.assertEqual(error.exception.code, 2)
+                self.assertFalse(stream.alive)
+            finally:
+                await stream.close()
+
+        asyncio.run(invalid_getmore())
 
     def test_collection_properties_and_with_options_expose_normalized_configuration(
         self,

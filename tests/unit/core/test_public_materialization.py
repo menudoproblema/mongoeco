@@ -40,6 +40,42 @@ def shape(value):
     return type(value), value
 
 
+def test_decoded_binary_zero_matches_sdk_inside_containers_and_bson_values():
+    bson = pytest.importorskip("bson")
+    zero = bson.Binary(b"zero", 0)
+    five = bson.Binary(b"five", 5)
+    value = {
+        "zero": zero,
+        "five": five,
+        "nested": [{"zero": zero}],
+        "code": bson.Code("return value", {"zero": zero}),
+        "reference": bson.DBRef("other", zero, binary=zero),
+    }
+    expected = bson.BSON(bson.BSON.encode(value)).decode()
+    actual = materialize_public_document(
+        DocumentCodec.to_internal(value), codec_options=CodecOptions()
+    )
+    assert shape(actual) == shape(expected)
+    assigned = DocumentCodec.to_pymongo(DocumentCodec.to_internal(zero))
+    assert type(assigned) is bson.Binary
+
+
+def test_binary_zero_is_decoded_before_custom_decoder_dispatch():
+    bson = pytest.importorskip("bson")
+    seen = []
+
+    def decode(value):
+        seen.append(type(value))
+        return value.hex()
+
+    actual = materialize_public_document(
+        DocumentCodec.to_internal({"v": bson.Binary(b"zero", 0)}),
+        codec_options=CodecOptions(type_registry={bytes: decode}),
+    )
+    assert actual == {"v": b"zero".hex()}
+    assert seen == [bytes]
+
+
 @pytest.fixture
 def document():
     return {

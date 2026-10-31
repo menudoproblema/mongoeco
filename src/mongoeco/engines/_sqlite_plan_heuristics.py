@@ -74,7 +74,7 @@ def sort_requires_python(
     plan_has_array_traversing_paths: Callable[[str, str, QueryNode], bool],
     translate_query_plan: Callable[[QueryNode], tuple[str, list[object]]],
     field_traverses_array_in_collection: Callable[[str, str, str], bool],
-    field_contains_tagged_bytes_in_collection: Callable[[str, str, str], bool],
+    field_contains_binary_values_in_collection: Callable[[str, str, str], bool],
     field_contains_tagged_undefined_in_collection: Callable[[str, str, str], bool],
     fetchone: Callable[[str, tuple[object, ...]], object | None],
     type_expression_sql: Callable[[str], str],
@@ -88,7 +88,7 @@ def sort_requires_python(
     for field, _direction in sort:
         if field_traverses_array_in_collection(db_name, coll_name, field):
             return True
-        if field_contains_tagged_bytes_in_collection(db_name, coll_name, field):
+        if field_contains_binary_values_in_collection(db_name, coll_name, field):
             return True
         if field_contains_tagged_undefined_in_collection(db_name, coll_name, field):
             return True

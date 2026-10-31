@@ -633,16 +633,32 @@ class DocumentCodec:
         return DocumentCodec._to_public_copy_on_write(data)
 
     @staticmethod
-    def to_pymongo(data: Any) -> Any:
-        """Materialize internal BSON values as the selected PyMongo surface."""
+    def to_pymongo(data: Any, *, binary_subtype_zero_as_bytes: bool = False) -> Any:
+        """Materialize the selected PyMongo surface.
+
+        Decoded responses use bytes for subtype zero. Locally assigned values,
+        such as insert IDs, retain their Binary wrapper unless requested here.
+        """
         data = _materialize_public_int64(data)
         if BsonObjectId is None:
             return data
+        if (
+            binary_subtype_zero_as_bytes
+            and isinstance(data, bytes)
+            and getattr(data, "subtype", 0) == 0
+        ):
+            return bytes(data)
         if BsonCode is not None and isinstance(data, BsonCode):
             scope = data.scope
             return BsonCode(
                 str(data),
-                DocumentCodec.to_pymongo(scope) if scope is not None else None,
+                (
+                    DocumentCodec.to_pymongo(
+                        scope,
+                        binary_subtype_zero_as_bytes=binary_subtype_zero_as_bytes,
+                    )
+                    if scope is not None else None
+                ),
             )
         if type(data) is ObjectId:
             return BsonObjectId(data.binary)
@@ -655,27 +671,39 @@ class DocumentCodec:
         if type(data) is Timestamp:
             return BsonTimestamp(data.time, data.inc)
         if type(data) is DBRef:
-            extras = DocumentCodec.to_pymongo(data.extras)
+            extras = DocumentCodec.to_pymongo(
+                data.extras, binary_subtype_zero_as_bytes=binary_subtype_zero_as_bytes
+            )
             return BsonDBRef(
                 data.collection,
-                DocumentCodec.to_pymongo(data.id),
+                DocumentCodec.to_pymongo(
+                    data.id, binary_subtype_zero_as_bytes=binary_subtype_zero_as_bytes
+                ),
                 data.database,
                 **extras,
             )
         if type(data) is SON:
             return BsonSON(
-                (key, DocumentCodec.to_pymongo(value))
+                (key, DocumentCodec.to_pymongo(
+                    value, binary_subtype_zero_as_bytes=binary_subtype_zero_as_bytes
+                ))
                 for key, value in data.items()
             )
         if isinstance(data, dict):
             return {
-                key: DocumentCodec.to_pymongo(value)
+                key: DocumentCodec.to_pymongo(
+                    value, binary_subtype_zero_as_bytes=binary_subtype_zero_as_bytes
+                )
                 for key, value in data.items()
             }
-        if isinstance(data, list):
-            return [DocumentCodec.to_pymongo(value) for value in data]
-        if isinstance(data, tuple):
-            return tuple(DocumentCodec.to_pymongo(value) for value in data)
+        if isinstance(data, (list, tuple)):
+            converted = [
+                DocumentCodec.to_pymongo(
+                    value, binary_subtype_zero_as_bytes=binary_subtype_zero_as_bytes
+                )
+                for value in data
+            ]
+            return tuple(converted) if isinstance(data, tuple) else converted
         return data
 
     @staticmethod

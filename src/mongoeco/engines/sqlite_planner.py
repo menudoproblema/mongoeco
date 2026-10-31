@@ -245,7 +245,7 @@ def compile_sqlite_read_execution_plan(  # noqa: PLR0911, PLR0913
     plan_requires_python_for_dbref_paths: Callable[[str, str, object], bool],
     plan_requires_python_for_array_comparisons: Callable[[str, str, object], bool],
     plan_requires_python_for_undefined: Callable[[str, str, object], bool],
-    plan_requires_python_for_bytes: Callable[[str, str, object], bool],
+    plan_requires_python_for_binary_values: Callable[[str, str, object], bool],
     plan_requires_python_for_tagged_numeric: Callable[
         [str, str, object], bool
     ] = lambda *_args: False,
@@ -320,7 +320,7 @@ def compile_sqlite_read_execution_plan(  # noqa: PLR0911, PLR0913
             use_sql=False,
             fallback_reason="Tagged undefined requires Python fallback",
         )
-    if plan_requires_python_for_bytes(db_name, coll_name, semantics.query_plan):
+    if plan_requires_python_for_binary_values(db_name, coll_name, semantics.query_plan):
         return SQLiteReadExecutionPlan(
             semantics=semantics,
             strategy="python",

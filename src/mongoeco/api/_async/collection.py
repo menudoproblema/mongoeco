@@ -75,7 +75,10 @@ from mongoeco.compat import (
     resolve_mongodb_dialect_resolution,
     resolve_pymongo_profile_resolution,
 )
-from mongoeco.core._public_materialization import materialize_public_document
+from mongoeco.core._public_materialization import (
+    materialize_public_document,
+    materialize_public_value,
+)
 from mongoeco.core.aggregation import (
     Pipeline,  # noqa: TC001 - runtime public annotations
 )
@@ -495,7 +498,7 @@ class AsyncCollection:
                 else result.matched_count
             ),
             modified_count=result.modified_count,
-            upserted_id=DocumentCodec.to_pymongo(result.upserted_id),
+            upserted_id=materialize_public_value(result.upserted_id),
             acknowledged=result.acknowledged,
             did_upsert=result.did_upsert,
         )
@@ -1038,7 +1041,7 @@ class AsyncCollection:
             deleted_count=result.deleted_count,
             upserted_count=result.upserted_count,
             upserted_ids={
-                index: DocumentCodec.to_pymongo(document_id)
+                index: materialize_public_value(document_id)
                 for index, document_id in result.upserted_ids.items()
             },
             acknowledged=result.acknowledged,
@@ -1967,7 +1970,7 @@ class AsyncCollection:
         options = await self._engine.collection_options(
             self._db_name, self._collection_name, context=session
         )
-        return DocumentCodec.to_pymongo(DocumentCodec.to_public(options))
+        return materialize_public_value(options)
 
 
     def watch(

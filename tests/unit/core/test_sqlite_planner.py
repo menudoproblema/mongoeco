@@ -161,7 +161,7 @@ class SQLitePlannerUnitTests(unittest.TestCase):
                     plan_requires_python_for_dbref_paths=engine._plan_requires_python_for_dbref_paths,
                     plan_requires_python_for_array_comparisons=engine._plan_requires_python_for_array_comparisons,
                     plan_requires_python_for_undefined=engine._plan_requires_python_for_undefined,
-                    plan_requires_python_for_bytes=engine._plan_requires_python_for_bytes,
+                    plan_requires_python_for_binary_values=engine._plan_requires_python_for_binary_values,
                     sort_requires_python=engine._sort_requires_python,
                     build_select_sql=engine._build_select_sql,
                 )
@@ -199,7 +199,7 @@ class SQLitePlannerUnitTests(unittest.TestCase):
                     plan_requires_python_for_dbref_paths=engine._plan_requires_python_for_dbref_paths,
                     plan_requires_python_for_array_comparisons=engine._plan_requires_python_for_array_comparisons,
                     plan_requires_python_for_undefined=engine._plan_requires_python_for_undefined,
-                    plan_requires_python_for_bytes=engine._plan_requires_python_for_bytes,
+                    plan_requires_python_for_binary_values=engine._plan_requires_python_for_binary_values,
                     sort_requires_python=engine._sort_requires_python,
                     build_select_sql=engine._build_select_sql,
                 )
@@ -240,7 +240,7 @@ class SQLitePlannerUnitTests(unittest.TestCase):
             plan_requires_python_for_dbref_paths=lambda *_args: False,
             plan_requires_python_for_array_comparisons=lambda *_args: False,
             plan_requires_python_for_undefined=lambda *_args: False,
-            plan_requires_python_for_bytes=lambda *_args: False,
+            plan_requires_python_for_binary_values=lambda *_args: False,
             sort_requires_python=lambda *_args: True,
             build_select_sql=Mock(side_effect=NotImplementedError("fallback")),
         )

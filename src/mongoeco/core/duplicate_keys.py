@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from itertools import product
 
+from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.core.bson_ordering import bson_equality_key
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
@@ -41,7 +42,7 @@ def duplicate_key_context(*, namespace, index, values, conflict, equality):
         ),
         "index": index["name"],
         "keyPattern": dict(index["key"]),
-        "keyValue": DocumentCodec.to_pymongo(
+        "keyValue": materialize_public_value(
             {
                 field: None if value == [] else value
                 for field, value in zip(index["fields"], key, strict=True)

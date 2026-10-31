@@ -1,0 +1,1054 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_binary_command_results": {
+      "0/update": {
+        "python_type": "builtins.bytes",
+        "bson": "1b0000000576616c7565000a000000007261775f75706461746500"
+      },
+      "0/findAndModify/False": {
+        "upserted": {
+          "python_type": "builtins.bytes",
+          "bson": "220000000576616c756500110000000066696e645f6d6f646966795f46616c736500"
+        },
+        "document": {
+          "python_type": "builtins.bytes",
+          "bson": "220000000576616c756500110000000066696e645f6d6f646966795f46616c736500"
+        }
+      },
+      "0/findAndModify/True": {
+        "upserted": {
+          "python_type": "builtins.bytes",
+          "bson": "210000000576616c756500100000000066696e645f6d6f646966795f5472756500"
+        },
+        "document": {
+          "python_type": "builtins.bytes",
+          "bson": "210000000576616c756500100000000066696e645f6d6f646966795f5472756500"
+        }
+      },
+      "5/update": {
+        "python_type": "bson.binary.Binary",
+        "bson": "1b0000000576616c7565000a000000057261775f75706461746500"
+      },
+      "5/findAndModify/False": {
+        "upserted": {
+          "python_type": "bson.binary.Binary",
+          "bson": "220000000576616c756500110000000566696e645f6d6f646966795f46616c736500"
+        },
+        "document": {
+          "python_type": "bson.binary.Binary",
+          "bson": "220000000576616c756500110000000566696e645f6d6f646966795f46616c736500"
+        }
+      },
+      "5/findAndModify/True": {
+        "upserted": {
+          "python_type": "bson.binary.Binary",
+          "bson": "210000000576616c756500100000000566696e645f6d6f646966795f5472756500"
+        },
+        "document": {
+          "python_type": "bson.binary.Binary",
+          "bson": "210000000576616c756500100000000566696e645f6d6f646966795f5472756500"
+        }
+      }
+    },
+    "semantic_binary_duplicate_errors": {
+      "0/_id": {
+        "error": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "key": {
+          "python_type": "builtins.bytes",
+          "bson": "210000000576616c75650010000000003031323334353637383961626364656600"
+        }
+      },
+      "0/v": {
+        "error": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "key": {
+          "python_type": "builtins.bytes",
+          "bson": "210000000576616c75650010000000003031323334353637383961626364656600"
+        }
+      },
+      "5/_id": {
+        "error": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "key": {
+          "python_type": "bson.binary.Binary",
+          "bson": "210000000576616c75650010000000053031323334353637383961626364656600"
+        }
+      },
+      "5/v": {
+        "error": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "key": {
+          "python_type": "bson.binary.Binary",
+          "bson": "210000000576616c75650010000000053031323334353637383961626364656600"
+        }
+      }
+    },
+    "semantic_binary_identifier_surfaces": {
+      "0": {
+        "inserted": {
+          "python_type": "bson.binary.Binary",
+          "bson": "190000000576616c756500080000000061737369676e656400"
+        },
+        "inserted_many": [
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c75650008000000006d756c7469706c6500"
+          }
+        ],
+        "upserted": {
+          "python_type": "builtins.bytes",
+          "bson": "190000000576616c7565000800000000757073657274656400"
+        },
+        "bulk": [
+          [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "python_type": "builtins.bytes",
+              "bson": "150000000576616c756500040000000062756c6b00"
+            }
+          ]
+        ],
+        "stored": [
+          {
+            "python_type": "builtins.bytes",
+            "bson": "150000000576616c756500040000000062756c6b00"
+          },
+          {
+            "python_type": "builtins.bytes",
+            "bson": "190000000576616c756500080000000061737369676e656400"
+          },
+          {
+            "python_type": "builtins.bytes",
+            "bson": "190000000576616c75650008000000006d756c7469706c6500"
+          },
+          {
+            "python_type": "builtins.bytes",
+            "bson": "190000000576616c7565000800000000757073657274656400"
+          }
+        ]
+      },
+      "5": {
+        "inserted": {
+          "python_type": "bson.binary.Binary",
+          "bson": "190000000576616c756500080000000561737369676e656400"
+        },
+        "inserted_many": [
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c75650008000000056d756c7469706c6500"
+          }
+        ],
+        "upserted": {
+          "python_type": "bson.binary.Binary",
+          "bson": "190000000576616c7565000800000005757073657274656400"
+        },
+        "bulk": [
+          [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "150000000576616c756500040000000562756c6b00"
+            }
+          ]
+        ],
+        "stored": [
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "150000000576616c756500040000000562756c6b00"
+          },
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c756500080000000561737369676e656400"
+          },
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c75650008000000056d756c7469706c6500"
+          },
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c7565000800000005757073657274656400"
+          }
+        ]
+      }
+    },
+    "semantic_binary_metadata_surfaces": {
+      "0": {
+        "options": {
+          "python_type": "builtins.bytes",
+          "bson": "210000000576616c75650010000000003031323334353637383961626364656600"
+        },
+        "listing": {
+          "python_type": "builtins.bytes",
+          "bson": "210000000576616c75650010000000003031323334353637383961626364656600"
+        },
+        "index": {
+          "python_type": "builtins.bytes",
+          "bson": "160000000576616c7565000500000000696e64657800"
+        }
+      },
+      "5": {
+        "options": {
+          "python_type": "bson.binary.Binary",
+          "bson": "210000000576616c75650010000000053031323334353637383961626364656600"
+        },
+        "listing": {
+          "python_type": "bson.binary.Binary",
+          "bson": "210000000576616c75650010000000053031323334353637383961626364656600"
+        },
+        "index": {
+          "python_type": "bson.binary.Binary",
+          "bson": "160000000576616c7565000500000005696e64657800"
+        }
+      }
+    },
+    "semantic_binary_partial_bulk_results": {
+      "0/False": {
+        "error": "BulkWriteError",
+        "upserted": [
+          [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "python_type": "builtins.bytes",
+              "bson": "190000000576616c7565000800000000757073657274656400"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "python_type": "builtins.bytes",
+              "bson": "160000000576616c7565000500000000616674657200"
+            }
+          ]
+        ],
+        "rejected": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "11000"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c756500080000000061737369676e656400"
+            },
+            {
+              "python_type": "builtins.bytes",
+              "bson": "190000000576616c756500080000000061737369676e656400"
+            }
+          ]
+        ],
+        "stored": [
+          {
+            "python_type": "builtins.bytes",
+            "bson": "160000000576616c7565000500000000616674657200"
+          },
+          {
+            "python_type": "builtins.bytes",
+            "bson": "190000000576616c756500080000000061737369676e656400"
+          },
+          {
+            "python_type": "builtins.bytes",
+            "bson": "190000000576616c7565000800000000757073657274656400"
+          }
+        ]
+      },
+      "0/True": {
+        "error": "BulkWriteError",
+        "upserted": [
+          [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "python_type": "builtins.bytes",
+              "bson": "190000000576616c7565000800000000757073657274656400"
+            }
+          ]
+        ],
+        "rejected": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "11000"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c756500080000000061737369676e656400"
+            },
+            {
+              "python_type": "builtins.bytes",
+              "bson": "190000000576616c756500080000000061737369676e656400"
+            }
+          ]
+        ],
+        "stored": [
+          {
+            "python_type": "builtins.bytes",
+            "bson": "190000000576616c756500080000000061737369676e656400"
+          },
+          {
+            "python_type": "builtins.bytes",
+            "bson": "190000000576616c7565000800000000757073657274656400"
+          }
+        ]
+      },
+      "5/False": {
+        "error": "BulkWriteError",
+        "upserted": [
+          [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c7565000800000005757073657274656400"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "160000000576616c7565000500000005616674657200"
+            }
+          ]
+        ],
+        "rejected": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "11000"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c756500080000000561737369676e656400"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c756500080000000561737369676e656400"
+            }
+          ]
+        ],
+        "stored": [
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "160000000576616c7565000500000005616674657200"
+          },
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c756500080000000561737369676e656400"
+          },
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c7565000800000005757073657274656400"
+          }
+        ]
+      },
+      "5/True": {
+        "error": "BulkWriteError",
+        "upserted": [
+          [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c7565000800000005757073657274656400"
+            }
+          ]
+        ],
+        "rejected": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "11000"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c756500080000000561737369676e656400"
+            },
+            {
+              "python_type": "bson.binary.Binary",
+              "bson": "190000000576616c756500080000000561737369676e656400"
+            }
+          ]
+        ],
+        "stored": [
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c756500080000000561737369676e656400"
+          },
+          {
+            "python_type": "bson.binary.Binary",
+            "bson": "190000000576616c7565000800000005757073657274656400"
+          }
+        ]
+      }
+    },
+    "semantic_binary_read_surfaces": {
+      "bytes": {
+        "find": {
+          "_id": "bytes",
+          "v": {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "00"
+            }
+          },
+          "nested": [
+            {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          ],
+          "code": {
+            "$code": "return v",
+            "$scope": {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          },
+          "reference": {
+            "$ref": "other",
+            "$id": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            },
+            "binary": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        "aggregate": [
+          {
+            "_id": "bytes",
+            "v": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            },
+            "nested": [
+              {
+                "v": {
+                  "$binary": {
+                    "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                    "subType": "00"
+                  }
+                }
+              }
+            ],
+            "code": {
+              "$code": "return v",
+              "$scope": {
+                "v": {
+                  "$binary": {
+                    "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                    "subType": "00"
+                  }
+                }
+              }
+            },
+            "reference": {
+              "$ref": "other",
+              "$id": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              },
+              "binary": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          }
+        ],
+        "distinct": [
+          {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "00"
+            }
+          }
+        ],
+        "findAndModify": {
+          "_id": "bytes",
+          "v": {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "00"
+            }
+          },
+          "nested": [
+            {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          ],
+          "code": {
+            "$code": "return v",
+            "$scope": {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          },
+          "reference": {
+            "$ref": "other",
+            "$id": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            },
+            "binary": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            }
+          },
+          "seen": true
+        }
+      },
+      "zero": {
+        "find": {
+          "_id": "zero",
+          "v": {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "00"
+            }
+          },
+          "nested": [
+            {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          ],
+          "code": {
+            "$code": "return v",
+            "$scope": {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          },
+          "reference": {
+            "$ref": "other",
+            "$id": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            },
+            "binary": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            }
+          }
+        },
+        "aggregate": [
+          {
+            "_id": "zero",
+            "v": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            },
+            "nested": [
+              {
+                "v": {
+                  "$binary": {
+                    "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                    "subType": "00"
+                  }
+                }
+              }
+            ],
+            "code": {
+              "$code": "return v",
+              "$scope": {
+                "v": {
+                  "$binary": {
+                    "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                    "subType": "00"
+                  }
+                }
+              }
+            },
+            "reference": {
+              "$ref": "other",
+              "$id": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              },
+              "binary": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          }
+        ],
+        "distinct": [
+          {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "00"
+            }
+          }
+        ],
+        "findAndModify": {
+          "_id": "zero",
+          "v": {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "00"
+            }
+          },
+          "nested": [
+            {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          ],
+          "code": {
+            "$code": "return v",
+            "$scope": {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "00"
+                }
+              }
+            }
+          },
+          "reference": {
+            "$ref": "other",
+            "$id": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            },
+            "binary": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "00"
+              }
+            }
+          },
+          "seen": true
+        }
+      },
+      "five": {
+        "find": {
+          "_id": "five",
+          "v": {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "05"
+            }
+          },
+          "nested": [
+            {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "05"
+                }
+              }
+            }
+          ],
+          "code": {
+            "$code": "return v",
+            "$scope": {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "05"
+                }
+              }
+            }
+          },
+          "reference": {
+            "$ref": "other",
+            "$id": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "05"
+              }
+            },
+            "binary": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "05"
+              }
+            }
+          }
+        },
+        "aggregate": [
+          {
+            "_id": "five",
+            "v": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "05"
+              }
+            },
+            "nested": [
+              {
+                "v": {
+                  "$binary": {
+                    "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                    "subType": "05"
+                  }
+                }
+              }
+            ],
+            "code": {
+              "$code": "return v",
+              "$scope": {
+                "v": {
+                  "$binary": {
+                    "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                    "subType": "05"
+                  }
+                }
+              }
+            },
+            "reference": {
+              "$ref": "other",
+              "$id": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "05"
+                }
+              },
+              "binary": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "05"
+                }
+              }
+            }
+          }
+        ],
+        "distinct": [
+          {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "05"
+            }
+          }
+        ],
+        "findAndModify": {
+          "_id": "five",
+          "v": {
+            "$binary": {
+              "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+              "subType": "05"
+            }
+          },
+          "nested": [
+            {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "05"
+                }
+              }
+            }
+          ],
+          "code": {
+            "$code": "return v",
+            "$scope": {
+              "v": {
+                "$binary": {
+                  "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                  "subType": "05"
+                }
+              }
+            }
+          },
+          "reference": {
+            "$ref": "other",
+            "$id": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "05"
+              }
+            },
+            "binary": {
+              "$binary": {
+                "base64": "MDEyMzQ1Njc4OWFiY2RlZg==",
+                "subType": "05"
+              }
+            }
+          },
+          "seen": true
+        }
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793476587,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793476587,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_binary_surface_cases.py",
+    "sha256": "c12ddd1b70323dbd116a78016270c2332061445e8e55a6c5f3367f8ce8c472e0"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_binary_read_surfaces",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_read_surfaces"
+    },
+    {
+      "name": "semantic_binary_identifier_surfaces",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_identifier_surfaces"
+    },
+    {
+      "name": "semantic_binary_metadata_surfaces",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_metadata_surfaces"
+    },
+    {
+      "name": "semantic_binary_partial_bulk_results",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_partial_bulk_results"
+    },
+    {
+      "name": "semantic_binary_duplicate_errors",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_duplicate_errors"
+    },
+    {
+      "name": "semantic_binary_command_results",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_command_results"
+    }
+  ]
+}

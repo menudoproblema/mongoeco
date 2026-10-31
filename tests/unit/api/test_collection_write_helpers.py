@@ -1327,7 +1327,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
 
         engine = EngineStub()
         collection = AsyncCollection(engine, 'db', 'coll')
-        session = object()
+        session = ClientSession()
 
         class CursorStub:
             async def to_list(self):

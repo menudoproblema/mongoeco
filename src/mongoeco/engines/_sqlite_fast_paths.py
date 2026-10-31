@@ -100,7 +100,7 @@ def build_scalar_sort_select_sql(
     limit: int | None,
     hint: str | IndexKeySpec | None,
     field_traverses_array_in_collection: Callable[[str, str, str], bool],
-    field_contains_tagged_bytes_in_collection: Callable[[str, str, str], bool],
+    field_contains_binary_values_in_collection: Callable[[str, str, str], bool],
     field_contains_tagged_undefined_in_collection: Callable[[str, str, str], bool],
     field_has_uniform_scalar_sort_type_in_collection: Callable[[str, str, str], str | None],
     translate_query_plan_with_multikey: Callable[[str, str, QueryNode], tuple[str, list[object]]],
@@ -117,7 +117,7 @@ def build_scalar_sort_select_sql(
         return None
     if field_traverses_array_in_collection(db_name, coll_name, field):
         return None
-    if field_contains_tagged_bytes_in_collection(db_name, coll_name, field):
+    if field_contains_binary_values_in_collection(db_name, coll_name, field):
         return None
     if field_contains_tagged_undefined_in_collection(db_name, coll_name, field):
         return None

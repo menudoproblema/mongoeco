@@ -231,6 +231,15 @@ escritura no cruzan esa frontera publica, para conservar estable la identidad
 de almacenamiento. La misma materializacion recursiva se aplica a metadata de
 indices, eventos de change streams y detalles parciales de errores bulk.
 
+Con PyMongo instalado, las respuestas decodifican BinData de subtipo 0 como
+`bytes`; los demás subtipos conservan `bson.Binary`. Esto incluye lecturas,
+metadatos de colección/índices, imágenes de streams y `keyValue` de errores.
+Los IDs asignados de insert conservan el wrapper proporcionado por el caller;
+los IDs de upsert recibidos como respuesta se decodifican. Sin el SDK se
+mantiene el perfil de tipos locales. SQLite conserva los tags históricos de
+almacenamiento y aplica orden BSON binario antes de `skip`/`limit`, mediante
+fallback cuando el orden JSON no basta.
+
 Los cursores de `find()` y `aggregate()` capturan su contexto inmutable,
 incluido `$$NOW`, al crearse; `clone()` captura un contexto temporal nuevo. El
 batching consume una unica fuente estable hasta agotarla, de modo que una
@@ -983,6 +992,14 @@ Una invalidación filtrada en una primera tanda vacía tiene un caso distinto:
 PyMongo 4.19 puede lanzar código 260 en la lectura y conservar `alive=True`.
 El cursor local conserva ese comportamiento; no se aplica indiscriminadamente
 la regla de cierre del invalidate recibido durante una lectura posterior.
+
+Las imágenes capturadas para `whenAvailable`/`required` sobreviven al drop,
+rename o recreación del namespace mientras estén retenidas localmente.
+`updateLookup` consulta el namespace al consumir: tras drop/recreación puede
+devolver el documento nuevo. La reanudación con `start_after` de invalidate
+conserva también los eventos pendientes de la recreación. Estas interacciones
+están contrastadas por ámbito colección/base/cliente; no añaden watch wire ni
+semántica distribuida al subset local.
 
 `resume_token` devuelve una copia independiente del checkpoint local. Los
 filtros pueden avanzar ese checkpoint aunque no entreguen documentos; nunca

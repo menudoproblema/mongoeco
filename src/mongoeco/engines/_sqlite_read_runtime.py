@@ -38,7 +38,7 @@ class _SQLiteReadRuntimeEngine(Protocol):
     def _plan_requires_python_for_undefined(
         self, db_name: str, coll_name: str, plan: object
     ) -> bool: ...
-    def _plan_requires_python_for_bytes(
+    def _plan_requires_python_for_binary_values(
         self, db_name: str, coll_name: str, plan: object
     ) -> bool: ...
     def _plan_requires_python_for_tagged_numeric(
@@ -152,7 +152,7 @@ def compile_read_execution_plan(
         plan_requires_python_for_dbref_paths=engine._plan_requires_python_for_dbref_paths,
         plan_requires_python_for_array_comparisons=engine._plan_requires_python_for_array_comparisons,
         plan_requires_python_for_undefined=engine._plan_requires_python_for_undefined,
-        plan_requires_python_for_bytes=engine._plan_requires_python_for_bytes,
+        plan_requires_python_for_binary_values=engine._plan_requires_python_for_binary_values,
         plan_requires_python_for_tagged_numeric=engine._plan_requires_python_for_tagged_numeric,
         sort_requires_python=engine._sort_requires_python,
         build_select_sql=engine._build_select_sql,

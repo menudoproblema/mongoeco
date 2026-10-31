@@ -18,6 +18,10 @@ from tests.differential.semantic_binary_edge_cases import (
     SEED as BINARY_EDGE_SEED,
     SEMANTIC_BINARY_EDGE_CASES,
 )
+from tests.differential.semantic_binary_surface_cases import (
+    SEED as BINARY_SURFACE_SEED,
+    SEMANTIC_BINARY_SURFACE_CASES,
+)
 from tests.differential.semantic_bson_size_cases import (
     SEED as BSON_SIZE_SEED,
     SEMANTIC_BSON_SIZE_CASES,
@@ -151,6 +155,10 @@ from tests.differential.semantic_watch_lifecycle_cases import (
     SEED as WATCH_LIFECYCLE_SEED,
     SEMANTIC_WATCH_LIFECYCLE_CASES,
 )
+from tests.differential.semantic_watch_namespace_image_cases import (
+    SEED as WATCH_NAMESPACE_IMAGE_SEED,
+    SEMANTIC_WATCH_NAMESPACE_IMAGE_CASES,
+)
 from tests.differential.semantic_watch_protocol_cases import (
     SEED as WATCH_PROTOCOL_SEED,
     SEMANTIC_WATCH_PROTOCOL_CASES,
@@ -180,6 +188,15 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "binary_surface": SemanticCorpus(
+        "binary-surface", "semantic_binary_surface_cases", BINARY_SURFACE_SEED,
+        SEMANTIC_BINARY_SURFACE_CASES,
+    ),
+    "watch_namespace_image": SemanticCorpus(
+        "watch-namespace-image", "semantic_watch_namespace_image_cases",
+        WATCH_NAMESPACE_IMAGE_SEED, SEMANTIC_WATCH_NAMESPACE_IMAGE_CASES,
+        surfaces=("sync", "async"),
+    ),
     "watch_batch": SemanticCorpus(
         "watch-batch", "semantic_watch_batch_cases", WATCH_BATCH_SEED,
         SEMANTIC_WATCH_BATCH_CASES, surfaces=("sync", "async"),

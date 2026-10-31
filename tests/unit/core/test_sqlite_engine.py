@@ -4107,7 +4107,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine._require_connection = Mock(return_value=fake_connection)
         engine._plan_has_array_traversing_paths = Mock(return_value=False)
         engine._plan_requires_python_for_array_comparisons = Mock(return_value=False)
-        engine._plan_requires_python_for_bytes = Mock(return_value=True)
+        engine._plan_requires_python_for_binary_values = Mock(return_value=True)
         engine._load_documents = Mock(
             return_value=[(engine._storage_key("1"), {"_id": "1", "v": b"\x00"})]
         )

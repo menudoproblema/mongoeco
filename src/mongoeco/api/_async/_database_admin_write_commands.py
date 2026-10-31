@@ -22,6 +22,7 @@ from mongoeco.api._command_bson import (
     validate_write_fields,
 )
 from mongoeco.api.public_api import ARG_UNSET
+from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.engines.results import FindAndModifyOutcome
 from mongoeco.errors import OperationFailure, WriteError
 from mongoeco.types import (
@@ -275,7 +276,10 @@ class DatabaseAdminWriteCommandService:
                 modified += result.modified_count
                 if result.did_upsert:
                     upserted.append(
-                        UpsertedWriteEntry(index=index, document_id=result.upserted_id)
+                        UpsertedWriteEntry(
+                            index=index,
+                            document_id=materialize_public_value(result.upserted_id),
+                        )
                     )
             except (WriteError, OperationFailure, TypeError, ValueError) as exc:
                 command_failure = (
@@ -492,7 +496,7 @@ class DatabaseAdminWriteCommandService:
             last_error_object=FindAndModifyLastErrorObject(
                 count=1 if applied else 0,
                 updated_existing=result.matched_count > 0,
-                upserted_id=result.upserted_id,
+                upserted_id=materialize_public_value(result.upserted_id),
             ),
             value=collection._apply_codec_options_to_optional_document(outcome.value),
         )
@@ -537,7 +541,7 @@ class DatabaseAdminWriteCommandService:
             last_error_object=FindAndModifyLastErrorObject(
                 count=1 if applied else 0,
                 updated_existing=result.matched_count > 0,
-                upserted_id=result.upserted_id,
+                upserted_id=materialize_public_value(result.upserted_id),
             ),
             value=collection._apply_codec_options_to_optional_document(outcome.value),
         )

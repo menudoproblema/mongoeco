@@ -69,7 +69,7 @@ class SQLiteFastPathsTests(unittest.TestCase):
             skip=0,
             limit=None,
             field_traverses_array_in_collection=lambda *_: False,
-            field_contains_tagged_bytes_in_collection=lambda *_: False,
+            field_contains_binary_values_in_collection=lambda *_: False,
             field_contains_tagged_undefined_in_collection=lambda *_: False,
             field_has_uniform_scalar_sort_type_in_collection=lambda *_: "string",
             translate_query_plan_with_multikey=lambda *_: ("1 = 1", []),
@@ -86,7 +86,7 @@ class SQLiteFastPathsTests(unittest.TestCase):
             fast_paths.build_scalar_sort_select_sql(sort=[("kind", 1)], hint=None, **kwargs)
         )
         kwargs = dict(base_kwargs)
-        kwargs["field_contains_tagged_bytes_in_collection"] = lambda *_: True
+        kwargs["field_contains_binary_values_in_collection"] = lambda *_: True
         self.assertIsNone(
             fast_paths.build_scalar_sort_select_sql(sort=[("kind", 1)], hint=None, **kwargs)
         )
@@ -112,7 +112,7 @@ class SQLiteFastPathsTests(unittest.TestCase):
             limit=3,
             hint=None,
             field_traverses_array_in_collection=lambda *_: False,
-            field_contains_tagged_bytes_in_collection=lambda *_: False,
+            field_contains_binary_values_in_collection=lambda *_: False,
             field_contains_tagged_undefined_in_collection=lambda *_: False,
             field_has_uniform_scalar_sort_type_in_collection=lambda *_: "string",
             translate_query_plan_with_multikey=lambda *_: ("1 = 1", []),

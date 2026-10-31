@@ -1,6 +1,7 @@
 """Binary aliases cross real SQL, index, persisted-key and cache boundaries."""
 
 from unittest.mock import patch
+from uuid import UUID
 
 import pytest
 
@@ -19,6 +20,44 @@ from mongoeco.types import Binary
 
 
 PAYLOAD = bytes(range(16))
+
+
+@pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+@pytest.mark.parametrize("field", ["v", "nested.v"])
+@pytest.mark.parametrize("indexed", [False, True])
+def test_binary_sort_fallback_precedes_skip_limit_and_tracks_changed_tags(
+    dialect, field, indexed
+):
+    engine = SQLiteEngine()
+    with MongoClient(engine, mongodb_dialect=dialect) as client:
+        subject = client.binary_sort.records
+        subject.insert_one({"_id": 1, "v": 1, "nested": {"v": 1}})
+        if indexed:
+            subject.create_index(field)
+        # Prime the negative feature cache before changing to binary storage tags.
+        assert [doc["_id"] for doc in subject.find({}).sort(field)] == [1]
+        values = [
+            SDKBinary(b"\xff", 0),
+            SDKBinary(b"\0\0", 0),
+            UUID(bytes=PAYLOAD),
+            SDKBinary(PAYLOAD, 5),
+        ]
+        subject.update_one({"_id": 1}, {"$set": {field: values[0]}})
+        for index, value in enumerate(values[1:], 2):
+            subject.insert_one(
+                {
+                    "_id": index,
+                    "v": value if field == "v" else 0,
+                    "nested": {"v": value if field != "v" else 0},
+                }
+            )
+        # BSON length wins before content; subtype 4 wins before subtype 5.
+        for direction, expected in [(1, [1, 2, 3, 4]), (-1, [4, 3, 2, 1])]:
+            assert [
+                doc["_id"] for doc in subject.find({}).sort(field, direction)
+            ] == expected
+            page = subject.find({}).sort(field, direction).skip(1).limit(2)
+            assert [doc["_id"] for doc in page] == expected[1:3]
 
 
 @pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])

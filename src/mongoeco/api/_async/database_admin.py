@@ -13,6 +13,7 @@ from mongoeco.api._async._database_admin_write_commands import (
 )
 from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
+from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.api.admin_parsing import (
     FindAndModifyCommandOptions,
     normalize_command_batch_size,
@@ -242,7 +243,7 @@ class AsyncDatabaseAdminService:
                 )
             ]
             return [
-                document
+                materialize_public_value(document)
                 for document in documents
                 if QueryEngine.match(
                     document,

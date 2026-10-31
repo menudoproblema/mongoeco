@@ -27,7 +27,7 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
 )
 from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
-from mongoeco.core.codec import DocumentCodec
+from mongoeco.core._public_materialization import materialize_public_document
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.driver import (
     AsyncCommandTransport,
@@ -84,8 +84,8 @@ def _materialize_change_document(
     document: dict[str, object],
     codec_options: CodecOptions,
 ) -> dict[str, object]:
-    materialized = DocumentCodec.apply_codec_options(
-        DocumentCodec.to_pymongo(document),
+    materialized = materialize_public_document(
+        document,
         codec_options=codec_options,
     )
     if not isinstance(materialized, dict):

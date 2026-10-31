@@ -119,6 +119,7 @@ SERVER_CODE_NAMES = {
     14: "TypeMismatch",
     28: "PathNotViable",
     40: "ConflictingUpdateOperators",
+    47: "NoMatchingDocument",
     50: "MaxTimeMSExpired",
     53: "InvalidIdField",
     54: "NotSingleValueField",

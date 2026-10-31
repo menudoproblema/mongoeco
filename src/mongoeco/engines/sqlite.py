@@ -1722,7 +1722,7 @@ class SQLiteEngine(AsyncStorageEngine):
             limit=limit,
             hint=hint,
             field_traverses_array_in_collection=self._field_traverses_array_in_collection,
-            field_contains_tagged_bytes_in_collection=self._field_contains_tagged_bytes_in_collection,
+            field_contains_binary_values_in_collection=self._field_contains_binary_values_in_collection,
             field_contains_tagged_undefined_in_collection=self._field_contains_tagged_undefined_in_collection,
             field_has_uniform_scalar_sort_type_in_collection=self._field_has_uniform_scalar_sort_type_in_collection,
             translate_query_plan_with_multikey=self._translate_query_plan_with_multikey,
@@ -2734,7 +2734,7 @@ class SQLiteEngine(AsyncStorageEngine):
             plan_has_array_traversing_paths=self._plan_has_array_traversing_paths,
             translate_query_plan=translate_query_plan,
             field_traverses_array_in_collection=self._field_traverses_array_in_collection,
-            field_contains_tagged_bytes_in_collection=self._field_contains_tagged_bytes_in_collection,
+            field_contains_binary_values_in_collection=self._field_contains_binary_values_in_collection,
             field_contains_tagged_undefined_in_collection=self._field_contains_tagged_undefined_in_collection,
             fetchone=lambda sql, params: (
                 self._require_connection().execute(sql, params).fetchone()
@@ -2882,42 +2882,44 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         field: str,
-        value_type: str,
+        value_type: str | tuple[str, ...],
     ) -> bool:
         feature_key = (db_name, coll_name, f"tagged_type:{field}:{value_type}")
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
         conn = self._require_connection()
         tagged_type_path = f'$."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
+        value_types = (value_type,) if isinstance(value_type, str) else value_type
         row = conn.execute(
             """
             SELECT 1
             FROM documents, json_tree(documents.document, ?) AS candidate
             WHERE db_name = ? AND coll_name = ?
               AND CASE WHEN candidate.type = 'object'
-                       THEN json_extract(candidate.value, ?) END = ?
+                       THEN json_extract(candidate.value, ?) END IN (
+                           SELECT value FROM json_each(?)
+                       )
             LIMIT 1
             """,
             (
                 json_path_for_field(field), db_name, coll_name,
-                tagged_type_path, value_type,
+                tagged_type_path, json.dumps(value_types),
             ),
         ).fetchone()
         result = row is not None
         self._collection_features_cache[feature_key] = result
         return result
 
-    def _field_contains_tagged_bytes_in_collection(
+    def _field_contains_binary_values_in_collection(
         self,
         db_name: str,
         coll_name: str,
         field: str,
     ) -> bool:
+        # All historical storage tags represent the same BSON binary family.
+        # SQL cannot order their JSON payloads by length/subtype/bytes.
         return self._field_contains_tagged_value_type_in_collection(
-            db_name,
-            coll_name,
-            field,
-            "bytes",
+            db_name, coll_name, field, ("bytes", "binary", "uuid")
         )
 
     def _field_contains_tagged_undefined_in_collection(
@@ -2933,7 +2935,7 @@ class SQLiteEngine(AsyncStorageEngine):
             "undefined",
         )
 
-    def _plan_requires_python_for_bytes(
+    def _plan_requires_python_for_binary_values(
         self,
         db_name: str,
         coll_name: str,
@@ -2944,7 +2946,7 @@ class SQLiteEngine(AsyncStorageEngine):
             coll_name=coll_name,
             plan=plan,
             comparison_fields=self._comparison_fields,
-            field_contains_tagged_type_in_collection=self._field_contains_tagged_bytes_in_collection,
+            field_contains_tagged_type_in_collection=self._field_contains_binary_values_in_collection,
         )
 
     def _plan_requires_python_for_undefined(

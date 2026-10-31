@@ -146,6 +146,11 @@ class _AsyncView:
     def list_indexes(self, *args, **kwargs):
         return _AsyncCursorView(self._call("list_indexes", *args, **kwargs), self.loop)
 
+    def list_collections(self, *args, **kwargs):
+        return _AsyncCursorView(
+            self._call("list_collections", *args, **kwargs), self.loop
+        )
+
     def drop(self, *args, **kwargs):
         return self._call("drop", *args, **kwargs)
 
