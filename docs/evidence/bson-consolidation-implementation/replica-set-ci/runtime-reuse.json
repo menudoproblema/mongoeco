@@ -1,0 +1,7 @@
+{
+  "manifest": "docs/evidence/bson-consolidation-implementation/namespace-images/runtime-sources.json",
+  "manifest_sha256": "f6be9e3080c04061054f78fd6adfe755c27d0e8a4d695ea9bea5aa5969ef834b",
+  "modules_unchanged": 283,
+  "product_code_changed": false,
+  "wheel_evidence": "docs/evidence/bson-consolidation-implementation/namespace-images/wheel-source-verification.json"
+}

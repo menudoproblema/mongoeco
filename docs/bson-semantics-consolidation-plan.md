@@ -159,7 +159,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
 | H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
 | H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
-| H52 y H53 | D04 sigue abierto: preparación/contexto, imágenes CRUD, efectos de namespace por ámbito, H56, decoder, protocolo y checkpoint tienen cortes aceptados en el registro. Primera tanda/opciones e integración de imágenes/DDL tienen aceptación propia en el registro; fixture RS conserva su pendiente. H53 conserva su disposición de observabilidad pendiente. Los eventos de actualización aceptados en D01b no cierran estas garantías del consumidor. |
+| H52 y H53 | D04 cerrado funcionalmente: el fixture RS de `0b5ac53` completa los cortes de preparación/contexto, imágenes/DDL, H56, protocolo/checkpoint y primera tanda. El [registro](bson-consolidation-implementation.md) conserva sus pruebas y límites; no se acredita ejecución remota CI ni cierre D05. H53 conserva su disposición de observabilidad en C03/B08. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 
@@ -1085,10 +1085,11 @@ dialectos; las referencias nativas previas mantienen su alcance.
 
 **Orden activo.** Sustituye las instrucciones de ejecución de revisión 12.
 Los estados de entrega y gates siguen perteneciendo al registro de implementación.
+D04 ya tiene cierre funcional registrado con el fixture `0b5ac53`; conservar
+sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
 | Prioridad / bloque | Trabajo y dependencia | Evidencia de salida |
 | --- | --- | --- |
-| P1, D04 restante | Revisar y aceptar el fixture RS ya escrito. Materialización, options, sort binario y precedencia merge tienen aceptación posterior a revisión 12; conservarlos como controles. | Selección canónica y particiones sin pérdida/duplicado, ejecución física no vacía 7/8/9, primary/FCV/build, wheel real y cleanup propio ante fallo/timeout/cancelación. Un workflow editado o un test de helper no acredita su ejecución ni un run remoto. |
 | P1, D06a/b | Un corte de gramática y preservación raw: completar contextos DBRef pendientes y H55 usando `bson_values`, `query_operators`, preparador/runtime y `bson_raw` existentes. Puede avanzar sin esperar al fixture RS. | Testigos String frente a Code con/sin scope, `$`/`$$`/literal y anidamiento; DBRef orden/extras/incompletos por contexto, vacío/poblado. Nativo 7/8/9, directa/wire y sync/async alcanzados; clase/código/fase y estado tras error. No ampliar reglas de literal a todos los contextos. |
 | P1, D06c | Tras D06a y las vistas disponibles, consolidar consumidores DBRef y claves de group/sets/lookup/spill/Search según su equivalencia. | Igual resultado con/sin hash/spill, collation y persistencia; candidatos completos antes del residual. Retirar duplicación solo al sustituir también guardas de admisión. No cambiar storage_key ni desempates persistidos. |
 | P2, H53 y conversión | Disponer H53 en C03/B08; contrastar string sNaN en 7/8/9 e incorporar regresión de conversión. Independientes de D06c. | Separar permiso, evaluación y diagnóstico; observar candidato/antiguo y error/warn/bypass. No deducir un rechazo de una ausencia de warning ni crear logging nuevo implícito. Conversión conserva clase/código/fase y controles válidos. |

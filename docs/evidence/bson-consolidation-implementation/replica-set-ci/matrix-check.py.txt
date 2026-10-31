@@ -1,0 +1,9 @@
+import os,subprocess,sys
+from pathlib import Path
+images=[('7.0','mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72'),('8.0','mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66'),('9.0','mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158')]
+for major,image in images:
+ env=dict(os.environ,MONGOECO_REAL_MONGODB_TARGET=major,MONGOECO_DIFFERENTIAL_SEED='42',CASE_FILTER='*',PATH=str(Path('.venv/bin').resolve())+os.pathsep+os.environ['PATH'])
+ with open('/tmp/mongoeco-rs-serial-workflow-'+major+'.txt','w') as log:
+  result=subprocess.run([sys.executable,'scripts/with_mongodb_replica_set.py','--image',image,'--target',major,'--artifacts',f'artifacts/{major}/replica-set/fixture','--timeout','1200','--','bash','/tmp/mongoeco-rs-workflow-payload.sh'],env=env,stdout=log,stderr=subprocess.STDOUT,check=False)
+ print('Terminal replica-set matrix major:',major,'exit:',result.returncode,flush=True)
+ if result.returncode:raise SystemExit(result.returncode)

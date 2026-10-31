@@ -1,0 +1,31 @@
+set -euo pipefail
+RS_ARTIFACTS="artifacts/${MONGOECO_REAL_MONGODB_TARGET}/replica-set"
+mkdir -p "$RS_ARTIFACTS/junit"
+python scripts/run_mongodb_real_differential.py \
+  "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition replica-set \
+  --seed "$MONGOECO_DIFFERENTIAL_SEED" \
+  --json-report "$RS_ARTIFACTS/report.json" --junit-dir "$RS_ARTIFACTS/junit" \
+  2>&1 | tee "$RS_ARTIFACTS/run.log"
+python scripts/run_mongodb_real_differential.py \
+  "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition replica-set \
+  --list-corpora > "$RS_ARTIFACTS/corpora.json"
+python - <<'PYTHON'
+import json, os, subprocess, sys
+from pathlib import Path
+target = os.environ["MONGOECO_REAL_MONGODB_TARGET"]
+root = Path("artifacts") / target / "replica-set"
+for corpus in json.loads((root / "corpora.json").read_text()):
+    subprocess.run([
+        sys.executable, "scripts/capture_differential_replay_golden.py",
+        "--target", target, "--case-set", corpus["case_set"],
+        "--output", str(root / (corpus["case_set"] + "-capture.json")),
+        "--check", f"tests/fixtures/semantic_{corpus['fixture_key']}_{target.replace('.', '_')}.json",
+    ], check=True)
+names = (root.parent / "selection-replica-set.txt").read_text().splitlines()
+assert names, "replica-set replay must not be empty"
+subprocess.run([
+    sys.executable, "-m", "pytest", "-q", "-o", "pythonpath=",
+    "tests/integration/api/test_semantic_group_regressions.py",
+    "-k", f"({' or '.join(names)}) and {target}", "--tb=short",
+], check=True)
+PYTHON

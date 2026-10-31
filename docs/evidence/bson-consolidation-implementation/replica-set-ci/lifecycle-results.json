@@ -1,0 +1,110 @@
+{
+  "exit-failure": {
+    "exit_code": 7,
+    "status": "failed",
+    "cleanup": {
+      "removed": true,
+      "container_id": "14c485ac9bf0ed601ec84fceb7f95ff7a0e8765f491b7b0d6b69219a22af3694",
+      "volumes_removed": true
+    },
+    "name": "mongoeco-differential-25267b01564844998e410632bc555f84",
+    "owner": "25267b01564844998e410632bc555f84",
+    "container_id": "14c485ac9bf0ed601ec84fceb7f95ff7a0e8765f491b7b0d6b69219a22af3694",
+    "anonymous_volumes": [
+      "d06ca8aca2dc2950acebeb86053b3527be209d7df7ccdf193263987c2fbeeb26",
+      "aa8bde4c9c7076627bf26f2573362ea0ca308f56014b77278626873c46fbb466"
+    ],
+    "error": null,
+    "traceback": null
+  },
+  "timeout": {
+    "exit_code": 1,
+    "status": "failed",
+    "cleanup": {
+      "removed": true,
+      "container_id": "6e41e260ac5df699355c4cdf3be66c566a141ac01fe164ba2f9bbe0e6d007703",
+      "volumes_removed": true
+    },
+    "name": "mongoeco-differential-b3c1a3e57352452cbc9c6bbbdd763df7",
+    "owner": "b3c1a3e57352452cbc9c6bbbdd763df7",
+    "container_id": "6e41e260ac5df699355c4cdf3be66c566a141ac01fe164ba2f9bbe0e6d007703",
+    "anonymous_volumes": [
+      "4cb85b0ccc58d0a24cb6ef85fd09bfe705114d65d249168b17f8a500cf81fb12",
+      "f5f002dbca19f48a51028d34c6408a9f1370290236104bef60c220b96929e503"
+    ],
+    "error": "TimeoutExpired(['/Users/uve/Proyectos/mongoeco/.venv/bin/python', '-c', 'import time;time.sleep(300)'], 0.5)",
+    "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/scripts/with_mongodb_replica_set.py\", line 352, in main\n    status = run_payload(command, fixture.uri, timeout=args.timeout)\n  File \"/Users/uve/Proyectos/mongoeco/scripts/with_mongodb_replica_set.py\", line 306, in run_payload\n    return process.wait(timeout=timeout)\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py\", line 1279, in wait\n    return self._wait(timeout=timeout)\n           ~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py\", line 2076, in _wait\n    raise TimeoutExpired(self.args, timeout)\nsubprocess.TimeoutExpired: Command '['/Users/uve/Proyectos/mongoeco/.venv/bin/python', '-c', 'import time;time.sleep(300)']' timed out after 0.5 seconds\n"
+  },
+  "wrong-version": {
+    "exit_code": 1,
+    "status": "failed",
+    "cleanup": {
+      "removed": true,
+      "container_id": "fcae84ab1d00e01bebfee1455312d22cb0c71c92a98fddf377f640de312a3474",
+      "volumes_removed": true
+    },
+    "name": "mongoeco-differential-622e12b95fce43ddafb0fc8c34b65372",
+    "owner": "622e12b95fce43ddafb0fc8c34b65372",
+    "container_id": "fcae84ab1d00e01bebfee1455312d22cb0c71c92a98fddf377f640de312a3474",
+    "anonymous_volumes": [
+      "97d108869429d5ae47aa58d88441e22ba646360cd2c654c9ba79cd2d2ffa0c83",
+      "249805f73f774785bf2759c261c020d2f68464452edfd5271a98ac1d231b6885"
+    ],
+    "error": "OperationFailure('Invalid feature compatibility version value \\'9.0\\'; expected \\'6.0\\' or \\'6.3\\' or \\'7.0\\'. See https://docs.mongodb.com/master/release-notes/6.0-compatibility/#feature-compatibility., full error: {\\'ok\\': 0.0, \\'errmsg\\': \"Invalid feature compatibility version value \\'9.0\\'; expected \\'6.0\\' or \\'6.3\\' or \\'7.0\\'. See https://docs.mongodb.com/master/release-notes/6.0-compatibility/#feature-compatibility.\", \\'code\\': 4926900, \\'codeName\\': \\'Location4926900\\', \\'$clusterTime\\': {\\'clusterTime\\': Timestamp(1793480421, 23), \\'signature\\': {\\'hash\\': b\\'\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\\\x00\\', \\'keyId\\': 0}}, \\'operationTime\\': Timestamp(1793480421, 23)}')",
+    "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/scripts/with_mongodb_replica_set.py\", line 350, in main\n    fixture.start()\n    ~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/scripts/with_mongodb_replica_set.py\", line 129, in start\n    self._start()\n    ~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/scripts/with_mongodb_replica_set.py\", line 173, in _start\n    self._initialize()\n    ~~~~~~~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/scripts/with_mongodb_replica_set.py\", line 205, in _initialize\n    client.admin.command(\n    ~~~~~~~~~~~~~~~~~~~~^\n        {\n        ^\n    ...<2 lines>...\n        }\n        ^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/_csot.py\", line 126, in csot_wrapper\n    return func(self, *args, **kwargs)\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/database.py\", line 946, in command\n    return self._client._retryable_read(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        inner, read_preference, session, command_name, None, False, is_run_command=True\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py\", line 2116, in _retryable_read\n    return self._retry_internal(\n           ~~~~~~~~~~~~~~~~~~~~^\n        func,\n        ^^^^^\n    ...<9 lines>...\n        is_aggregate_write=is_aggregate_write,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/_csot.py\", line 126, in csot_wrapper\n    return func(self, *args, **kwargs)\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py\", line 2077, in _retry_internal\n    ).run()\n      ~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py\", line 2947, in run\n    res = self._read() if self._is_read else self._write()\n          ~~~~~~~~~~^^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py\", line 3187, in _read\n    return self._func(self._session, self._server, conn, read_pref)  # type: ignore\n           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/database.py\", line 934, in inner\n    return self._command(\n           ~~~~~~~~~~~~~^\n        conn,\n        ^^^^^\n    ...<7 lines>...\n        **kwargs,\n        ^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/database.py\", line 773, in _command\n    return conn.command(\n           ~~~~~~~~~~~~^\n        self._name,\n        ^^^^^^^^^^^\n    ...<8 lines>...\n        client=self._client,\n        ^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/helpers.py\", line 50, in inner\n    return func(*args, **kwargs)\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/pool.py\", line 405, in command\n    return run_command(\n        self,\n    ...<17 lines>...\n        write_concern=write_concern,\n    )\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/command_runner.py\", line 440, in run_command\n    docs, _, _ = _run_command(\n                 ~~~~~~~~~~~~^\n        conn,\n        ^^^^^\n    ...<16 lines>...\n        set_conn_more_to_come=True,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/synchronous/command_runner.py\", line 214, in _run_command\n    helpers_shared._check_command_response(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        response_doc,\n        ^^^^^^^^^^^^^\n    ...<3 lines>...\n        pool_opts=pool_opts,\n        ^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/pymongo/helpers_shared.py\", line 327, in _check_command_response\n    raise OperationFailure(errmsg, code, response, max_wire_version)\npymongo.errors.OperationFailure: Invalid feature compatibility version value '9.0'; expected '6.0' or '6.3' or '7.0'. See https://docs.mongodb.com/master/release-notes/6.0-compatibility/#feature-compatibility., full error: {'ok': 0.0, 'errmsg': \"Invalid feature compatibility version value '9.0'; expected '6.0' or '6.3' or '7.0'. See https://docs.mongodb.com/master/release-notes/6.0-compatibility/#feature-compatibility.\", 'code': 4926900, 'codeName': 'Location4926900', '$clusterTime': {'clusterTime': Timestamp(1793480421, 23), 'signature': {'hash': b'\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00', 'keyId': 0}}, 'operationTime': Timestamp(1793480421, 23)}\n"
+  },
+  "cancel-startup": {
+    "exit_code": 143,
+    "status": "cancelled",
+    "cleanup": {
+      "removed": true,
+      "container_id": "350a20d07eddc60d749673be7e168d90d6762288aeffe20ca32522f4e785649a",
+      "volumes_removed": true
+    },
+    "name": "mongoeco-differential-fae3a662a13c4ae49cde64b6780ffad8",
+    "owner": "fae3a662a13c4ae49cde64b6780ffad8",
+    "container_id": null,
+    "anonymous_volumes": [
+      "1ba9d06159929dd1c72922666d09256de9344ed1b1f22b322f4f8b0497c98d9d",
+      "83a01febc5a9f86709e1abe9d4453d5c15c3e95db422bcb7d1407cca9b00ceaf"
+    ],
+    "error": "fixture interrupted by signal 15",
+    "traceback": null
+  },
+  "cancel-payload": {
+    "exit_code": 143,
+    "status": "cancelled",
+    "cleanup": {
+      "removed": true,
+      "container_id": "ad073aa4a0fb3bfba92a7053d1e1ae4b21e2dc4091276da94f93510704f91ace",
+      "volumes_removed": true
+    },
+    "name": "mongoeco-differential-9254aacc42f048638a8671d8195c3fda",
+    "owner": "9254aacc42f048638a8671d8195c3fda",
+    "container_id": "ad073aa4a0fb3bfba92a7053d1e1ae4b21e2dc4091276da94f93510704f91ace",
+    "anonymous_volumes": [
+      "84fb5823cc6a5717c1e6390564c875a379f138b5f677ff67629820dd94814c77",
+      "6e669ada643b4197be7e96833708f5514aea866b77d13f9f07713f1f29f1848b"
+    ],
+    "error": "fixture interrupted by signal 15",
+    "traceback": null
+  },
+  "cancel-pipeline": {
+    "exit_code": 143,
+    "status": "cancelled",
+    "cleanup": {
+      "removed": true,
+      "container_id": "bed6b18a9831f22d4e33ae14fcaf05f8d60ac36db87388b9252d3e4bccf9b332",
+      "volumes_removed": true
+    },
+    "name": "mongoeco-differential-4e716f6252de4b3b8add9292975e2f10",
+    "owner": "4e716f6252de4b3b8add9292975e2f10",
+    "container_id": "bed6b18a9831f22d4e33ae14fcaf05f8d60ac36db87388b9252d3e4bccf9b332",
+    "anonymous_volumes": [
+      "b4c651ceb0c4522b1cc8864fc31bd5fccb53a165b0ecf19ddda6a05c77f4e5ee",
+      "aa7e4530addb6409111b75d40a76fb01434ca9df2bd86f8f351199d19915c200"
+    ],
+    "error": "fixture interrupted by signal 15",
+    "traceback": null
+  }
+}

@@ -1,0 +1,71 @@
+import json,os,signal,subprocess,sys,time
+from pathlib import Path
+from uuid import uuid4
+
+root=Path('/tmp/mongoeco-rs-lifecycle-'+uuid4().hex);root.mkdir()
+image='mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72'
+records={}
+
+
+def load(path):
+ try:return json.loads(path.read_text())
+ except (FileNotFoundError,json.JSONDecodeError):return None
+
+
+def wait_for(probe, process):
+ deadline=time.monotonic()+30
+ while time.monotonic()<deadline:
+  value=probe()
+  if value:return value
+  if process.poll() is not None:raise AssertionError('fixture exited before requested phase')
+  time.sleep(.01)
+ raise TimeoutError('fixture did not reach requested phase')
+
+
+for mode in ['exit-failure','timeout','wrong-version','cancel-startup','cancel-payload','cancel-pipeline']:
+ folder=root/mode;folder.mkdir()
+ marker=folder/'pids.json'
+ payload=folder/'payload.py'
+ if mode in ['cancel-payload','cancel-pipeline']:
+  child=''
+  if mode=='cancel-payload':
+   child="child=subprocess.Popen([sys.executable,'-c','import signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);time.sleep(300)']); "
+  payload.write_text('import json,os,subprocess,sys,time\nfrom pathlib import Path\n'+child+f"Path({str(marker)!r}).write_text(json.dumps({{'pid':os.getpid(),'pgid':os.getpgrp(),'child':child.pid if 'child' in locals() else None}}))\ntime.sleep(300)\n")
+  command=['bash','-c',f'{sys.executable} {payload} | tee {folder / "payload.log"}; :']
+ elif mode=='exit-failure':command=[sys.executable,'-c','raise SystemExit(7)']
+ else:command=[sys.executable,'-c','import time;time.sleep(300)']
+ argv=[sys.executable,'scripts/with_mongodb_replica_set.py','--image',image,'--target','9.0' if mode=='wrong-version' else '7.0','--artifacts',str(folder),'--timeout','0.5' if mode=='timeout' else '60','--',*command]
+ with (folder/'run.log').open('w') as log:
+  process=subprocess.Popen(argv,stdout=log,stderr=subprocess.STDOUT)
+  try:
+   if mode=='cancel-startup':
+    wait_for(lambda:load(folder/'fixture.json'),process)
+    process.send_signal(signal.SIGTERM)
+   elif mode.startswith('cancel-'):
+    wait_for(lambda:load(marker),process)
+    process.send_signal(signal.SIGTERM)
+   code=process.wait(timeout=90)
+  except BaseException:
+   process.send_signal(signal.SIGTERM)
+   process.wait(timeout=40)
+   raise
+ report=load(folder/'fixture.json');assert report is not None,mode
+ records[mode]={'exit_code':code,'status':report['status'],'cleanup':report['cleanup'],'name':report['name'],'owner':report['owner'],'container_id':report.get('container_id'),'anonymous_volumes':report.get('anonymous_volumes',[]),'error':report.get('error'),'traceback':report.get('traceback')}
+ (root/'results.json').write_text(json.dumps(records,indent=2)+'\n')
+ expected=7 if mode=='exit-failure' else 143 if mode.startswith('cancel-') else 1
+ assert code==expected,(mode,code,report)
+ assert report['cleanup']['removed'] and report['cleanup']['volumes_removed'],(mode,report)
+ if marker.exists():
+  for key in ['pid','child']:
+   pid=load(marker).get(key)
+   if pid:
+    state=subprocess.run(['/bin/ps','-o','stat=','-p',str(pid)],capture_output=True,text=True,check=False).stdout.strip()
+    assert not state or state.startswith('Z'),(mode,pid,state)
+ # independently prove absence after the fixture's own cleanup report.
+ result=subprocess.run(['docker','inspect',report['name']],capture_output=True,text=True,check=False,timeout=30)
+ assert result.returncode and 'no such' in result.stderr.lower(),(mode,result.stderr)
+ for volume in report.get('anonymous_volumes',[]):
+  result=subprocess.run(['docker','volume','inspect',volume],capture_output=True,text=True,check=False,timeout=30)
+  assert result.returncode and 'no such volume' in result.stderr.lower(),(mode,volume,result.stderr)
+ print(mode,'verified',code,flush=True)
+print('Lifecycle acceptance artifacts:',root,flush=True)

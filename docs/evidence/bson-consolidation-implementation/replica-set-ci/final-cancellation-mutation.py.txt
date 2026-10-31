@@ -1,0 +1,6 @@
+from pathlib import Path
+from scripts import with_mongodb_replica_set as module
+import pytest
+source=Path('docs/evidence/bson-consolidation-implementation/replica-set-ci/helper-before-final-cancellation.py.txt').read_text()
+exec(compile(source,'helper-before-final-cancellation.py.txt','exec'),module.__dict__)
+raise SystemExit(pytest.main(['-q','tests/unit/test_mongodb_replica_set_fixture.py','-k','cancellation_during_payload_creation or interrupted_create','--tb=short']))

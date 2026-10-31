@@ -1,0 +1,8 @@
+{
+  "signal_during_popen_return": true,
+  "exit_code": 143,
+  "payload_pid": 75063,
+  "payload_absent": true,
+  "container_absent": true,
+  "anonymous_volumes_absent": true
+}

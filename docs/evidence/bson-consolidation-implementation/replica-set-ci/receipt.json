@@ -1,0 +1,166 @@
+{
+  "status": "D04 replica-set CI fixture functionally accepted; complete goal and D05 remain in progress",
+  "base_runtime": "e8abf99",
+  "plan_revision_commit": "e4a9644",
+  "implementation_commit": "0b5ac53c97a3574212920a84e5c7a6fa2dbbd9c4",
+  "contract": "docs/bson-semantics-consolidation-plan.md revision 13; D04 remaining fixture obligation",
+  "workset": "workset.json",
+  "impact": "impact.json",
+  "runtime": "runtime-reuse.json",
+  "product_modules_unchanged": 283,
+  "native_matrix": "native-matrix.json",
+  "per_version": {
+    "standalone_cases": 266,
+    "replica_set_cases": 48,
+    "disjoint_union": 314,
+    "replica_set_capture_checks": 12,
+    "replay_nodes_for_target_dialect": 192,
+    "physical_skips": 0
+  },
+  "native_versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "installed_wheel_import": "wheel-import.txt",
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/unit/test_mongodb_replica_set_fixture.py tests/unit/test_differential.py tests/unit/test_differential_replay.py tests/unit/test_native_capture_comparison.py --tb=short",
+      "log": "acceptance-unit.txt.gz",
+      "exit_code": 0,
+      "passed": 96,
+      "subtests_passed": 61,
+      "skipped_imported_physical_classes": 314
+    },
+    {
+      "command": "PYTHONPATH=/tmp/mongoeco-namespace-final-wheel-v4/site-packages:. MONGOECO_TEST_INSTALLED_ARTIFACT=1 .venv/bin/python /tmp/mongoeco-rs-serial-matrix.py",
+      "log": "acceptance-rs-matrix.txt.gz",
+      "exit_code": 0,
+      "targets": 3,
+      "physical_cases": 144,
+      "capture_checks": 36,
+      "target_replay_nodes": 576
+    },
+    {
+      "command": "PYTHONPATH=/tmp/mongoeco-namespace-final-wheel-v4/site-packages:. MONGOECO_TEST_INSTALLED_ARTIFACT=1 .venv/bin/python /tmp/mongoeco-standalone-partition-check.py",
+      "log": "acceptance-standalone-matrix.txt.gz",
+      "exit_code": 0,
+      "targets": 3,
+      "physical_cases": 798
+    },
+    {
+      "command": ".venv/bin/python /tmp/mongoeco-rs-lifecycle-checks.py",
+      "log": "acceptance-lifecycle.txt.gz",
+      "exit_code": 0,
+      "scenarios": 6,
+      "expected_child_exit_codes": [
+        7,
+        1,
+        143
+      ]
+    },
+    {
+      "command": ".venv/bin/python /tmp/mongoeco-rs-spawn-cancellation.py",
+      "log": "acceptance-spawn-cancellation.txt.gz",
+      "exit_code": 0,
+      "scenario": "OS SIGTERM while real Popen returns; process/container/volume cleanup",
+      "expected_fixture_exit_code": 143
+    },
+    {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref e8abf99",
+      "log": "lint.txt",
+      "exit_code": 0,
+      "changed_python_files": 7
+    }
+  ],
+  "selection": "selection-step.txt.gz; exact workflow selection step; 314 = 266 + 48 per target",
+  "workflow_validation": "workflow-validation.json; bash -n for every run step and byte-identical executed RS heredoc",
+  "replay_inventory": "replay-inventory.txt.gz; 192 collected IDs ending in target per matrix cell",
+  "mutations": {
+    "before-wiring-mutation.txt.gz": "expected 1 failure with Docker guard removed; isolated in-memory mutation, not historical product baseline",
+    "final-cancellation-mutation.txt.gz": "expected 2 failures/1 control pass with verified pre-change helper; isolated in-memory mutation"
+  },
+  "reuse": "lifecycle-reuse.json; 7/8 RS success and standalone native results reuse unchanged no-signal native inputs; 9 RS and final seven physical negative scenarios use final helper; exact scope disclosed",
+  "resources": "resource-audit.json; all 13 accepted containers and recorded anonymous volumes independently absent; no own-label containers remain",
+  "feedback": "feedback-* artifacts record unsuccessful diagnostic attempts only; prototype ownership/cleanup proofs separate",
+  "review": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "required_block_gates_executed_or_causally_reused": true,
+    "unrelated_changes_included": false
+  },
+  "documentation_checks": {
+    "relative_links_checked": 72,
+    "missing": [],
+    "documents_at_acceptance": {
+      "docs/bson-consolidation-implementation.md": "dcbd362cbb11ade0225ee70c246850d67669a8ddd4c044c67df5172a5a9c3c54",
+      "docs/bson-semantics-consolidation-plan.md": "8ef079d93aadf403222c721fc6cfb10c4e92e367157a626224550f0ba875fd49",
+      "docs/testing-real-mongodb.md": "d8b71a9f062cfe9bb01ef6899e4509dcfec1fb61a1bba89caaa88c4884d03228",
+      "docs/architecture/testing-and-compatibility.md": "bbc7cf1cf304027c0493708925cfed79a013847443db323fe8096ea407f01b68",
+      "docs/mongodb9-pymongo418.md": "e498e770d7289c4360c50cb893681f6b8aa6765a27e9ed2f5d7a379c95fbf618",
+      "docs/positional-update-validation.md": "2e511a860bb4f32aa5e8e131419aef4e406f4ec468e77591099a169578fb8b4c",
+      "CHANGELOG.md": "e12ba52b24d71399508588c6c7226c070550f017e9c1ea54cc2a99aee19235c3"
+    }
+  },
+  "limits": [
+    "No remote GitHub Actions execution, push or publication claimed.",
+    "No product source, persisted format, SPI, historical fixture or protected observer changes.",
+    "Existing product gates/performance retain original namespace-images scope; no new hot path in this CI-only cut.",
+    "D06, H53, scalar sNaN conversion, D07 disposition, B07 and complete D05 gates remain open."
+  ],
+  "artifacts": {
+    "README.md": "49646c5f0c9923b9bd1e443d7d7b39621693f2840fb3359e36664c68486d31e2",
+    "acceptance-lifecycle.txt.gz": "09bb8c865ca4a0250358cb23db2df6e8d07ad4ba5466763539de256b360fda63",
+    "acceptance-rs-matrix.txt.gz": "762c6c3b3b09ca090e5821cd00520e15f04b6b13d1455037ac9f39af6e6fe96b",
+    "acceptance-spawn-cancellation.txt.gz": "5e8cc38259d4fd337190a295b753749a80539c3e5b5549e6350b83c424a7506c",
+    "acceptance-standalone-matrix.txt.gz": "3eac5d1cd274c73b3bcfd3356c248aae8bf748179801aa487a67db020fb226a7",
+    "acceptance-unit.txt.gz": "1150f4b9dcdb22510b624ac3c2535fbd13382daab154891359959e957390aef0",
+    "artifact-relocation.json": "f3cad8613ef77e2204eb7c71779a3686b7229f27e43d92bd5914221bf84a5d70",
+    "before-wiring-mutation.txt.gz": "33f26311d4081cefbfb93e97d9daf15d45802dbf2ca440113fc5daa5d60764da",
+    "feedback-first-fixture.txt.gz": "26f9c677b1cb3d78b03b82df8ff3d1729fc5afdca4028034572b4bfb5fd52165",
+    "feedback-parallel-7.0.tar.gz": "ae340895d4e39da02920143bc28f69e360d84efcb75fb8c9dcbcfcfcbe1cdebe",
+    "feedback-parallel-7.0.txt.gz": "fb0ea727e1dc05526012e28e59d7f84d35dd01cd0dea59c04dd656babeaa3327",
+    "feedback-parallel-8.0.tar.gz": "77be4ebd01afb43a3f1a28526cdcdc1a5b6f55810e43edce9ac0d3618f265a29",
+    "feedback-parallel-8.0.txt.gz": "94d8ba6dfd76c511d3db542dc3c9373b4b8b033e7e977a971f05268b23a6e2a6",
+    "feedback-parallel-9.0.tar.gz": "e6fa692b798f2bf2c0d09f953b3d4b81fa9ba548a8acb94cfbf7ee3e053f4a77",
+    "feedback-parallel-9.0.txt.gz": "2cae09e45ee11ce8fa689eae01ef85b8fdbd9329414043560017ab5f562377d1",
+    "feedback-startup-cancellation.txt.gz": "767480e77ee288a622debd3c76511ccfed3b50fe6c38ea98bd6331d044dca799",
+    "feedback-startup-race.tar.gz": "b6d76595bfe47ce837911e914d48aa9cb9edbbcc654101b34c4c9cec57e428ce",
+    "final-cancellation-mutation.py.txt": "3e6a7e0b18f1414c31f38e02260ea99dbddac36c9f9e4fa1112e9e1af3606348",
+    "final-cancellation-mutation.txt.gz": "4db004883346434fd293108cc8224665aebd51e8bee8e88beb9c283b10a87261",
+    "helper-before-final-cancellation.py.txt": "cd0592b0af0553ea642363def4d90726652d13f6303e65fe54d7f5a6421cedae",
+    "impact.json": "703f10d91cdd7be8f27708221b2c2b6e59954b6a6e36d3d1caefa4e5bb4d6309",
+    "lifecycle-checks.py.txt": "e75489a08ead7acfb3185f0cda5e735272d175ec50195e649dce279cff227156",
+    "lifecycle-negative-cases.tar.gz": "92442c08329a1348f7900fb0547029e25269b8eca0063e0c008d71daab33c21c",
+    "lifecycle-results.json": "84d4a8d3ce9b8fdebcc1a95b0e49e52959c16f317e5cdbc75916819f0cbdb3ff",
+    "lifecycle-reuse.json": "2248da019c61a91756fd792c8e26874225ba12ba52059eff7521f3290449ac25",
+    "lifecycle-spawn-cancellation.tar.gz": "90724c364ddaac765bc50bc19be93332154330151f96f10015d2d7da91aec4d4",
+    "lint.txt": "d7787b07acf2580821d7de4fe477d3c4ddacb882427f7dc02ebbd5a3a5b076f3",
+    "matrix-check.py.txt": "6b83a64f3c897350b17a8865b5102326da3ad933f69073b971e30ae92433441a",
+    "native-matrix.json": "db20cae9f00e0b2908f7b964bf1b58b53a5e715173042a4632ecf175892b2409",
+    "payload-7.0.txt.gz": "8e4fff754461c8c99b3038eda9dc8622d4521de5b9059fcc128256da7a1a9e92",
+    "payload-8.0.txt.gz": "961f0314f94e8faab1879508ae2aec00864107ca2b7d35dec3cd6a02128fc434",
+    "payload-9.0.txt.gz": "1d653f7e40a1d915de4fb179700419fdf5d65cf890b5a4b6d9bc38976ee88ca0",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "prototype-volume-cleanup.json": "13b5f986fcb2d5365d998646c64bd8756a25a8b5ede3facd1958c7e464573634",
+    "prototype-volume-ownership.json": "919fa4ffa451c907ef8a900a0e42f8cd7ef7ca31077c031bf8e5d2971f717cf7",
+    "replay-inventory.txt.gz": "a0de2be237a5f90d67033741e21437a42e046c46aaaf52ea902a105cd360ce08",
+    "replica-set-7.0.tar.gz": "508ffa1ac29a83e574598e9b54be67f2e13d0a56ef310bc7bfcd733ce9df4be5",
+    "replica-set-8.0.tar.gz": "bb17b71e40e3f1b7267f8afcc01dcaa1bf800e20fd2c00a53c990e53b7f667dc",
+    "replica-set-9.0.tar.gz": "650f9d8aa09cc1a17e0cae2cfe0253dbda0e46238510c33affdae97663f64064",
+    "resource-audit.json": "182b5f4403805cff85f219b7c2c33ae79c1c44e990e5262bc7b5afa994b1026d",
+    "resource-audit.py.txt": "c03c4f2c70308b6f3456c8f3b16d680194b5bff4aa717e43ca903954f166c23e",
+    "runtime-reuse.json": "c863d118e24c703ef24ee258cb3014da1b90660f4b0c061318e8f13eb2dc1490",
+    "selection-step.txt.gz": "8d682d13d25bc8fdc55fd35201b44b602879e38fe8c8c115e81be3dba6688db8",
+    "spawn-cancellation-result.json": "cbea9a99adaa80069eec240fca2eace74968b95efbebf0a919fe13303d05cba2",
+    "spawn-cancellation.py.txt": "5447cd9db43939ad4c93f166e02749a81e9b2437f591ff853d5f046284e89066",
+    "standalone-7.0.tar.gz": "9ed362661cba8e4d32346a2843af0d3cdc6532d3c822d8dea206048594c11ee7",
+    "standalone-8.0.tar.gz": "e71b85677485ff8ff4c9b59472c2aec197715321380966dcbd5dce02ef8570c2",
+    "standalone-9.0.tar.gz": "b9d21ff71998e0beef7d92386ef90d361cebec1dfa4e3e2f86f039ac38d369df",
+    "standalone-check.py.txt": "fe0cc77f98262a74def8d6c8b22c446ed28367538a38adbc16879cc2ebd4f08e",
+    "wheel-import.txt": "9094cc191f0b20a0ff8c4d1a1609b49a7a110063e3a7404c7fa11491fe95adc3",
+    "workflow-payload.sh.txt": "02d73d5077d0fa91fa8c8a11c9576a668184cd51fec241198b40aa95e8bb225a",
+    "workflow-validation.json": "b0d9e494f6ddf057d5898c723d30ba0b1c1f4287268755539591a2b412a979cf",
+    "workset.json": "cb28b725cac4bc2fae36d29bd21e7c0427eebdffefaa164c7d086f22bff23a50"
+  }
+}

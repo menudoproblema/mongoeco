@@ -1,0 +1,59 @@
+"""Reproduce the existing CI standalone service; reuse ownership and native runner."""
+import json,os,signal,subprocess,sys,time,traceback
+from pathlib import Path
+from pymongo import MongoClient
+import yaml
+from scripts import with_mongodb_replica_set as lifecycle
+from scripts.run_mongodb_real_differential import inspect_server_runtime
+
+root=Path('/tmp/mongoeco-standalone-partition-acceptance');root.mkdir(exist_ok=True)
+images=yaml.safe_load(Path('.github/workflows/mongodb-differential.yml').read_text())['jobs']['differential']['strategy']['matrix']['include']
+for row in images:
+ target=row['target'];folder=root/target
+ assert not folder.exists(),folder
+ fixture=lifecycle.ReplicaSetFixture(row['image'],target,folder)
+ fixture.report['topology']='standalone (existing workflow service command)'
+ handlers={s:signal.signal(s,lifecycle._cancel) for s in (signal.SIGTERM,signal.SIGINT)}
+ status=1
+ try:
+  fixture.record()
+  created=fixture._command('create','--pull=never','--name',fixture.name,'--label',f'{lifecycle._OWNER_LABEL}={fixture.owner}','--publish','127.0.0.1::27017','--',fixture.image)
+  fixture.container_id=created.stdout.strip();fixture.report['container_id']=fixture.container_id
+  fixture._inspect_owned();fixture._command('start',fixture.container_id)
+  data=fixture._inspect_owned();port=data['NetworkSettings']['Ports']['27017/tcp'][0]['HostPort']
+  fixture.uri=f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000';fixture.report['uri']=fixture.uri
+  with MongoClient(fixture.uri,socketTimeoutMS=3000,connectTimeoutMS=1000) as client:
+   deadline=time.monotonic()+60
+   while True:
+    try:
+     if client.admin.command('ping'):break
+    except Exception:
+     if time.monotonic()>=deadline:raise
+     time.sleep(.1)
+   hello=client.admin.command('hello');assert not hello.get('setName')
+   assert client.server_info()['versionArray'][:2]==list(map(int,target.split('.')))
+   client.admin.command({'setFeatureCompatibilityVersion':target,'confirm':True})
+   fixture.report['hello']=hello
+  fixture.report['runtime']=inspect_server_runtime(fixture.uri,target)
+  fixture.report['status']='ready';fixture.record()
+  command=[sys.executable,'scripts/run_mongodb_real_differential.py',target,'*','--partition','standalone','--json-report',str(folder/'report.json')]
+  with (folder/'native.log').open('w') as log:
+   saved_out=os.dup(1);saved_err=os.dup(2)
+   try:
+    os.dup2(log.fileno(),1);os.dup2(log.fileno(),2)
+    status=lifecycle.run_payload(command,fixture.uri,timeout=1200)
+   finally:
+    os.dup2(saved_out,1);os.dup2(saved_err,2);os.close(saved_out);os.close(saved_err)
+  fixture.report['status']='succeeded' if status==0 else 'failed'
+ except BaseException as error:
+  fixture.report.update(status='failed',error=repr(error),traceback=traceback.format_exc())
+  raise
+ finally:
+  for s in handlers:signal.signal(s,signal.SIG_IGN)
+  lifecycle._CANCELLATION.pending=None
+  try:fixture.close()
+  finally:
+   fixture.record()
+   for s,handler in handlers.items():signal.signal(s,handler)
+ print('Standalone partition terminal:',target,status,flush=True)
+ if status:raise SystemExit(status)

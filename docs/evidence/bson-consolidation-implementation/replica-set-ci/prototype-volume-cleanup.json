@@ -1,0 +1,45 @@
+{
+  "ownership_evidence": "/tmp/mongoeco-rs-owned-volume-events.json",
+  "results": [
+    {
+      "volume": "2333e70c52b8e6b1268e5dfdce482cacf2349b5fd8ca8abdaf731683cdcd9f53",
+      "removed": true
+    },
+    {
+      "volume": "24248dab9202360e78060d1292cf77f64005af97318f4446eaf72f90759bcb48",
+      "removed": true
+    },
+    {
+      "volume": "340fb7ccd65fc87021fc67e4b12b24b8ca746a8de4c50ee98b33c5b845a12316",
+      "removed": true
+    },
+    {
+      "volume": "4bf5523302f30bf5c964729d2ae0984f45e0dabc6eacfcc1760fc2904ebaeb41",
+      "removed": true
+    },
+    {
+      "volume": "7d8e8cf959a1d0cc00ac4ba62d8202ca992610b8d57558058f2316cec396df87",
+      "removed": true
+    },
+    {
+      "volume": "8206b2a13adab5785b665a8f7cdcd0f3734fad9dec3c970a0807b4e7585491fb",
+      "removed": true
+    },
+    {
+      "volume": "a423d4ecb3a8629cae3457355db7c47ed36ac61867950ba35fa457ae2c9aabcb",
+      "removed": true
+    },
+    {
+      "volume": "bb097e9a1710613951d6ca804d356fe48f59ed98b72395e9c690599cb47d5e7f",
+      "removed": true
+    },
+    {
+      "volume": "e873b37f4b162b7758007be45797b420846cf55581d72a67232eb48c640ee381",
+      "removed": true
+    },
+    {
+      "volume": "f4252acb9a2156d90be11ddae51674004d364d4c7b39831bf865710a8c0125bc",
+      "removed": true
+    }
+  ]
+}

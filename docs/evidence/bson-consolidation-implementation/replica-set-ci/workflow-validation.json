@@ -1,0 +1,32 @@
+{
+  "bash_syntax_passed": [
+    "Install differential dependencies",
+    "Verify and install the release wheel",
+    "Resolve and verify topology partitions",
+    "Establish and verify the requested FCV",
+    "Run standalone differential partition",
+    "Verify positional update error codes and document atomicity",
+    "Verify unacknowledged writes and physical connection reuse",
+    "Verify ordinary and mirrored read reply suppression",
+    "Admit the complete write corpus and public routes",
+    "Verify review expectations against the native server",
+    "Verify native error payload deltas with the minimum SDK",
+    "Verify replica-set differential partition and captures",
+    "Record exact MongoDB runtime"
+  ],
+  "matrix_entries": [
+    {
+      "target": "7.0",
+      "image": "mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72"
+    },
+    {
+      "target": "8.0",
+      "image": "mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66"
+    },
+    {
+      "target": "9.0",
+      "image": "mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158"
+    }
+  ],
+  "payload_matches_executed": true
+}

@@ -1,0 +1,36 @@
+import json,os,signal,subprocess,sys
+from pathlib import Path
+from uuid import uuid4
+
+root=Path('/tmp/mongoeco-rs-spawn-cancel-'+uuid4().hex);root.mkdir()
+controller=root/'controller.py'
+marker=root/'payload.json'
+controller.write_text('''import json,os,signal,subprocess,sys
+from pathlib import Path
+from scripts import with_mongodb_replica_set as fixture
+original=subprocess.Popen
+def spawn(*args,**kwargs):
+    process=original(*args,**kwargs)
+    if kwargs.get('start_new_session'):
+        Path(sys.argv[1]).write_text(json.dumps({'pid':process.pid}))
+        os.kill(os.getpid(),signal.SIGTERM)
+    return process
+fixture.subprocess.Popen=spawn
+raise SystemExit(fixture.main(sys.argv[2:]))
+''')
+image='mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72'
+args=[sys.executable,str(controller),str(marker),'--image',image,'--target','7.0','--artifacts',str(root),'--',sys.executable,'-c','import time;time.sleep(300)']
+with (root/'run.log').open('w') as log:
+    result=subprocess.run(args,env=dict(os.environ,PYTHONPATH=str(Path.cwd())),stdout=log,stderr=subprocess.STDOUT,timeout=120)
+report=json.loads((root/'fixture.json').read_text())
+assert result.returncode==143,(result.returncode,report)
+assert report['cleanup']['removed'] and report['cleanup']['volumes_removed'],report
+pid=json.loads(marker.read_text())['pid']
+state=subprocess.run(['/bin/ps','-o','stat=','-p',str(pid)],capture_output=True,text=True,check=False).stdout.strip()
+assert not state or state.startswith('Z'),state
+for resource in [report['name'],*report['anonymous_volumes']]:
+    args=['docker','inspect',resource] if resource==report['name'] else ['docker','volume','inspect',resource]
+    result=subprocess.run(args,capture_output=True,text=True,timeout=30)
+    assert result.returncode and 'no such' in result.stderr.lower(),result.stderr
+(root/'verified.json').write_text(json.dumps({'signal_during_popen_return':True,'exit_code':143,'payload_pid':pid,'payload_absent':True,'container_absent':True,'anonymous_volumes_absent':True},indent=2)+'\n')
+print('Spawn cancellation acceptance artifacts:',root,flush=True)

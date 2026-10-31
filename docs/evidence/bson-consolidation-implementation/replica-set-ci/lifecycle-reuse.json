@@ -1,0 +1,20 @@
+{
+  "before_sha256": "cd0592b0af0553ea642363def4d90726652d13f6303e65fe54d7f5a6421cedae",
+  "after_sha256": "caf16ece300f81c95fd927bbea060ed84faca96f18538cc67137f6c8af967037",
+  "before_verified_against": "docs/evidence/bson-consolidation-review/review13/preexisting-workset.json",
+  "native_success_reuse": "7.0/8.0 wrappers loaded prior cancellation-only source; payload, topology, runner, corpus, product wheel and native success behavior unchanged. 9.0 wrapper loads final source. Final physical negative lifecycle checks cover final source.",
+  "changes": [
+    "Retain process ownership before queued cancellation during Popen",
+    "Mark create indeterminate before request so simultaneous timeout/cancellation cannot erase uncertainty"
+  ],
+  "source_stored": "helper-before-final-cancellation.py.txt",
+  "standalone_native_reuse": "Standalone proof predates final lifecycle cancellation fixes and uses a diagnostic harness reproducing the existing standalone service, not ReplicaSetFixture._start. Native selection/CLI, payload, product wheel and successful no-signal path are unchanged. Only native standalone results are reused; final lifecycle guarantees come from the final seven physical negative scenarios.",
+  "native_selection_inputs_unchanged_since_review13": {
+    ".github/workflows/mongodb-differential.yml": "0429a58a91f4db1a0146dbfe17846238d847c238379bab08ce2ca9d6e17623cc",
+    "scripts/capture_differential_replay_golden.py": "09cff94504775edab4a59461844f2dfa8c6d3b345a452b387e5006318303496e",
+    "scripts/run_mongodb_real_differential.py": "32b34f029a4a4a8f1dbd0c4672a3d09dc454ac9bb57fcbf664736322f426c344",
+    "tests/differential/cases.py": "3112c925b6f2b5c414e4ae7a3e7bd9387ed09b1d0888e7fe3c805a22efc21f19",
+    "tests/differential/runner.py": "80a64d3f39f47176f01f2184d845d3c912d5db90cb5dbacdff03812105181bf2",
+    "tests/differential/semantic_corpora.py": "46e7756a12918f60eccb5573c56715acd4e669a2f6e478a103d85933c389f6c3"
+  }
+}

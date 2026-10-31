@@ -1,0 +1,21 @@
+import json,subprocess,sys
+from pathlib import Path
+
+paths=[Path('artifacts')/v/'replica-set/fixture/fixture.json' for v in ['7.0','8.0','9.0']]
+paths += [Path('/tmp/mongoeco-standalone-partition-acceptance')/v/'fixture.json' for v in ['7.0','8.0','9.0']]
+paths += list(Path(sys.argv[1]).glob('*/fixture.json'))
+paths.append(Path(sys.argv[2])/'fixture.json')
+records=[]
+for path in paths:
+    report=json.loads(path.read_text())
+    assert report['cleanup']['removed'] and report['cleanup']['volumes_removed'],path
+    result=subprocess.run(['docker','inspect',report['name']],capture_output=True,text=True,timeout=30)
+    assert result.returncode and 'no such' in result.stderr.lower(),(path,result.stderr)
+    for volume in report.get('anonymous_volumes',[]):
+        result=subprocess.run(['docker','volume','inspect',volume],capture_output=True,text=True,timeout=30)
+        assert result.returncode and 'no such' in result.stderr.lower(),(path,volume,result.stderr)
+    records.append({'report':str(path),'name':report['name'],'container_absent':True,'volumes_absent':report.get('anonymous_volumes',[])})
+result=subprocess.run(['docker','ps','-a','--filter','label=mongoeco.differential-fixture','--format','{{.Names}}'],capture_output=True,text=True,timeout=30,check=True)
+assert not result.stdout.strip(),result.stdout
+Path('docs/evidence/bson-consolidation-implementation/replica-set-ci/resource-audit.json').write_text(json.dumps({'resources':records,'own_label_remaining':[],'containers_verified_absent':len(records),'global_prune_used':False},indent=2)+'\n')
+print('Independently verified removed containers:',len(records))

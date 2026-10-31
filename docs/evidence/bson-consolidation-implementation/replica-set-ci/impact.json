@@ -1,0 +1,12 @@
+{
+  "contract": "D04 replica-set fixture in docs/bson-semantics-consolidation-plan.md revision 13; full implementation and semantic commits authorized by user",
+  "base": "e8abf99; documentation-only review e4a9644 does not change runtime",
+  "affected_entrypoints": ["scripts/run_mongodb_real_differential.py", "scripts/capture_differential_replay_golden.py", ".github/workflows/mongodb-differential.yml", "tests.differential.runner.build_suite"],
+  "new_construct": "scripts/with_mongodb_replica_set.py owns only container and process lifecycle; native oracle/capturer/replay reused",
+  "shared_authority": "tests.differential.runner.select_cases; requirements declared in RealParityCase/SemanticCorpus",
+  "consumers": ["scheduled/manual/label-triggered MongoDB differential job", "release workflow_call with immutable distribution", "local runner and capture CLI", "differential API unit tests"],
+  "compatibility": ["existing case manifests and fixture hashes unchanged", "all remains default partition", "listing requires no URI and respects filter", "standalone selection explicit for services lacking replica sets", "physical zero-case and skip cannot pass execution"],
+  "gates": ["unit contracts and cancellation regressions", "single pinned 7/8/9 image matrix exact shell wiring", "standalone and replica-set physical partitions cover full catalog", "native capture --check for every reached RS corpus", "installed-wheel replay per target", "owned cleanup on failure/timeout/cancellation", "lint ratchet and shell/YAML validation"],
+  "unchanged": ["all 283 product modules", "SPI v2", "SQLite/journal formats", "protected BSON observers", "historical native fixtures and receipts"],
+  "scope_limit": "Local execution of workflow payload is not a remote GitHub Actions execution or D05 global acceptance"
+}

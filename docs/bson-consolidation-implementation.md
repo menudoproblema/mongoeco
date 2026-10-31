@@ -697,17 +697,11 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
-- D04: fixture replica set de CI.
-  H56/dropTarget conservan su subset de una base. Decoder, protocolo, checkpoint,
-  primera tanda/opciones y los modos CRUD ya tienen sus cortes propios abajo;
-  no repetir esas extracciones. El corte de integración de imágenes/DDL y
-  respuestas BSON registrado al final completa su aceptación funcional,
-  incluidos options, errores e IDs de comandos. El fixture RS conserva su
-  pendiente conforme a la revisión 12 del plan.
-- H53: caracterización y disposición de observabilidad conforme al plan.
+- H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre.
+- B07: admisión BSON general (tipos arbitrarios y Decimal crudo), fuera de las normalizaciones parciales aceptadas.
 
 Los cortes focales no acreditan el cierre integrado del programa ni D05.
 
@@ -971,3 +965,63 @@ van de 0,963 a 1,036: streams de colección/base/cliente, sin watchers, backlog 
 índices numéricos SQLite. El receipt conserva los tiempos absolutos. Es coste de
 este incremento; no elimina el coste histórico de batching ni cierra D05 global.
 D06, H53, conversión, decisión del piloto D07, D05 y B07 conservan sus pendientes.
+
+
+## D04 — Fixture replica set de CI y cierre funcional
+
+El código queda en `0b5ac53`, sobre el runtime aceptado `e8abf99` y el plan
+refinado en `e4a9644`. El [receipt](evidence/bson-consolidation-implementation/replica-set-ci/receipt.json)
+conserva workset, imágenes fijadas, comandos, informes y límites. Este corte
+completa la obligación restante de D04; D05 conserva la aceptación integrada.
+No se afirma que haya ocurrido una ejecución remota de GitHub Actions.
+
+La selección de casos pertenece a `select_cases`: listado, suite y reporte
+comparten filtro/versión/partición. `SemanticCorpus` y `RealParityCase` declaran
+si requieren replica set; no se infiere de un prefijo watch, pues TTL y eventos
+de updates también lo necesitan. Los manifiestos históricos no cambian. El job
+existente conserva su matriz de imágenes y servicio standalone, añade el fixture
+RS y acredita la unión disjunta de ambas particiones. Una partición vacía por
+filtro queda sin ejecutar; una selección total vacía o un skip físico no pasa.
+
+El wrapper posee exclusivamente ciclo de vida: nombre/label UUID, binding
+loopback efímero, primary/buildInfo/FCV, oplog de 128 MiB y monitor TTL de un
+segundo para estos escenarios. Startup, solicitudes Docker y payload tienen
+límites. El mismo guardado de cancelación protege solicitudes Docker y la
+creación del proceso antes de entregar una señal pendiente. Timeout de create
+conserva incertidumbre hasta inspección. La limpieza comprueba propiedad y
+elimina contenedor, volúmenes anónimos y grupo del payload, incluidos hijos que
+ignoran TERM. Un fallo de limpieza no convierte el resultado en verde.
+
+Se ejecutaron localmente la selección y el cuerpo RS del workflow contra el
+wheel inmutable del corte anterior. Un harness diagnóstico reproduce el servicio
+standalone y su CLI, sin ejecutar startup RS. Los 283 módulos de producto siguen idénticos.
+Cada versión 7.0.43/8.0.32/9.0.2, FCV correspondiente, pasa 266 casos standalone
+y 48 RS: 314 por versión, sin pérdidas, duplicados ni skips físicos. Las 12
+capturas RS por servidor pasan --check contra referencias intactas; el replay
+acredita 192 nodos por dialecto, 576 en total. No se ejecutan otros dialectos
+por duplicado en cada celda. Se conservan JSON/JUnit, metadata y logs nativos.
+
+Pasan 96 pruebas unitarias y 61 subtests; 314 skips de clases físicas importadas
+se registran aparte, sin contarlos como ejecución nativa. Lint y bash/YAML pasan.
+Los controles físicos finales cubren salida 7, timeout, versión incorrecta,
+cancelación en startup, payload y pipeline shell, y señal durante el retorno
+real de Popen. Verifican códigos 7/1/143 y limpieza independiente. La auditoría
+final confirma ausencia de los 13 contenedores de aceptación y sus volúmenes.
+Dos pruebas de mutación documentan las ventanas de cancelación corregidas;
+son mutaciones aisladas, no una baseline histórica del producto.
+
+Los wrappers de éxito 7/8 habían cargado el helper anterior a las dos últimas
+protecciones de cancelación. Su fuente se reconstruye y verifica contra el
+hash de revisión 13: payload, topología, runner, wheel y camino exitoso no
+cambian. El wrapper 9 y los siete negativos físicos usan el helper final.
+El receipt explicita esta reutilización causal; no presenta las tres entradas
+como ejecuciones de un mismo archivo cuando no lo fueron. La prueba standalone
+también precede los últimos cambios del lifecycle: se reutiliza solo su resultado
+nativo con selección/CLI/producto idénticos, no como garantía de cancelación final.
+
+Los intentos diagnósticos fallidos conservan sus artefactos y no cuentan como
+aceptación: conectividad perdida en la primera ejecución paralela, tratamiento
+de ausencia Docker, volúmenes y carrera de startup. Se acredita la propiedad
+y limpieza de recursos de prototipos; no se hizo prune global ni se reiniciaron
+servicios prestados. La aceptación final es secuencial. El trabajo restante
+vigente es D06a/b/c, H53, conversión sNaN, decisión D07, D05 y B07, conforme al plan.
