@@ -169,7 +169,7 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             collection = AsyncCollection(engine, "db", "coll", change_stream_history_size=2)
-            stream = collection.watch(resume_after={"_data": "1"}, max_await_time_ms=5)
+            stream = collection.watch(max_await_time_ms=5)
             await collection.insert_one({"_id": 1})
             await collection.insert_one({"_id": 2})
             await collection.insert_one({"_id": 3})

@@ -1,0 +1,266 @@
+{
+  "status": "D04 checkpoint/position/local history delivery; first batch and remaining options/integration still open",
+  "base": "ad2f030",
+  "runtime_manifest": "runtime-sources.json",
+  "changed_runtime_modules": [
+    "src/mongoeco/_change_streams/cursor.py",
+    "src/mongoeco/_change_streams/hub.py",
+    "src/mongoeco/_types/documents.py",
+    "src/mongoeco/error_catalog.py"
+  ],
+  "mechanisms": {
+    "bootstrap": "offset/coordinate/watcher acquired under existing hub Condition",
+    "advance": "separate read offset, consumed position and owned public checkpoint; no empty-read race or silent live gap crossing",
+    "token": "single v1 encoder/decoder, optional i bool: true invalidate, false explicit checkpoint, absent event/legacy; ordinary event bytes unchanged",
+    "history": "recover holes from existing coordinates, persist high water without following event, ordered interval search and bounded expired metadata",
+    "options": "captured PyMongo token selection, not raw-command mutual exclusion"
+  },
+  "native": {
+    "captures": "native-captures.json",
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "topology": "preexisting owned single-member replica sets, directConnection true",
+    "capture_command": "MONGOECO_REAL_MONGODB_URI=<owned URI> .venv/bin/python scripts/capture_differential_replay_golden.py --target <major> --case-set watch-checkpoint --output tests/fixtures/semantic_watch_checkpoint_<major>.json",
+    "check_command": "same capture to distinct /tmp output plus --check <new fixture>",
+    "capture_exit_codes": [
+      0,
+      0,
+      0
+    ],
+    "check_exit_codes": [
+      0,
+      0,
+      0
+    ],
+    "cases_per_major": 4,
+    "scenarios_per_major": 20,
+    "cleanup": "UUID databases in finally; service lifecycle unchanged; habitual instance untouched",
+    "observation": "opaque values never compared between backends; continuity is fenced with following writes",
+    "code_source": "error-code-source.json; code-name source is not physical oplog-loss acceptance"
+  },
+  "checks": {
+    "baseline": {
+      "command": "PYTHONPATH=/tmp/mongoeco-checkpoint-base/src:. .venv/bin/python -m pytest -q -o pythonpath=/tmp/mongoeco-checkpoint-base/src tests/integration/api/test_semantic_group_regressions.py -k watch_checkpoint --tb=short",
+      "runtime": "actual ad2f030 archive",
+      "failed": 48,
+      "passed": 3,
+      "seconds": 2.51,
+      "exit_code": 1,
+      "log": "before-regression.txt.gz"
+    },
+    "integrated": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "passed": 6292,
+      "seconds": 293.96,
+      "exit_code": 0,
+      "log": "acceptance-integrated.txt.gz"
+    },
+    "core": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/property tests/unit/test_change_streams.py tests/unit/api/test_watch_helpers.py tests/integration/api/test_watch_checkpoint_contract.py tests/integration/api/test_watch_protocol_contract.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_watch_image_contract.py tests/integration/api/test_watch_namespace_contract.py tests/contracts/engines/test_spi_v2_only.py --tb=short",
+      "passed": 2764,
+      "skipped": 1,
+      "subtests_passed": 936,
+      "seconds": 29.17,
+      "exit_code": 0,
+      "log": "acceptance-core.txt.gz"
+    },
+    "api": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_sync_api.py tests/integration/api/test_async_api.py -k 'watch or change_stream' --tb=short",
+      "passed": 6,
+      "subtests_passed": 12,
+      "seconds": 0.6,
+      "exit_code": 0,
+      "log": "acceptance-api.txt.gz"
+    },
+    "orjson": {
+      "command": "MONGOECO_JSON_BACKEND=orjson .venv/bin/python -m pytest -q tests/integration/api/test_watch_checkpoint_contract.py tests/property/test_change_stream_tokens.py tests/integration/api/test_semantic_group_regressions.py -k 'watch_checkpoint or change_stream_tokens' --tb=short",
+      "passed": 100,
+      "seconds": 2.01,
+      "exit_code": 0,
+      "log": "acceptance-orjson.txt.gz"
+    },
+    "typing": {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "scope": "public and engine boundary",
+      "exit_code": 0,
+      "log": "acceptance-typing.txt.gz"
+    },
+    "lint": {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref ad2f030",
+      "changed_python_files": 14,
+      "baseline_expanded": false,
+      "exit_code": 0,
+      "log": "acceptance-lint.txt.gz"
+    },
+    "sdk_free": {
+      "command": "PYTHONPATH=src /tmp/mongoeco-predicate-c06/minimal313/bin/python /tmp/mongoeco-checkpoint-sdk-free.py",
+      "python": "3.13 genuinely without bson",
+      "pairs": 6,
+      "surfaces": [
+        "sync",
+        "async"
+      ],
+      "exit_code": 0,
+      "log": "acceptance-sdk-free.txt.gz"
+    },
+    "legacy": {
+      "producer": "actual ad2f030 source archive, module path printed in log",
+      "producer_command": "PYTHONPATH=/tmp/mongoeco-checkpoint-base/src .venv/bin/python /tmp/mongoeco-checkpoint-legacy-producer.py /tmp/mongoeco-checkpoint-legacy",
+      "reader_command": "PYTHONPATH=src .venv/bin/python /tmp/mongoeco-checkpoint-legacy-reader.py /tmp/mongoeco-checkpoint-legacy",
+      "verified": [
+        "ordinary token bytes identical",
+        "old invalidate rejected by resumeAfter and accepted by startAfter",
+        "SQLite data retained",
+        "old journal gap recovered",
+        "new checkpoint reused after second reopen"
+      ],
+      "exit_codes": [
+        0,
+        0
+      ],
+      "logs": [
+        "acceptance-legacy-producer.txt.gz",
+        "acceptance-legacy-reader.txt.gz"
+      ],
+      "downgrade_claim": false
+    },
+    "performance": {
+      "command": ".venv/bin/python /tmp/mongoeco-checkpoint-paired.py",
+      "order": "before/candidate/candidate/before, sequential after acceptance gates terminated",
+      "samples_per_runtime_case": 10,
+      "updates_per_sample": 400,
+      "cases": [
+        "MemoryEngine/default",
+        "MemoryEngine/updateLookup",
+        "MemoryEngine/unwatched",
+        "SQLiteEngine/default",
+        "SQLiteEngine/updateLookup",
+        "SQLiteEngine/unwatched"
+      ],
+      "checksums_equal": true,
+      "final_reads_equal": true,
+      "median_ratio_range": [
+        0.9700642592710615,
+        1.0267952027276714
+      ],
+      "summary": "benchmark-paired-summary.json",
+      "log": "acceptance-benchmark.txt.gz",
+      "exit_code": 0,
+      "scope": "current hot paths including omission without journal; not full D05"
+    }
+  },
+  "review": {
+    "resolved": [
+      "bootstrap offset/checkpoint/watcher race",
+      "empty timeout checkpoint skipping a concurrent append",
+      "live readers silently crossing missing events",
+      "lost gaps on journal reopen",
+      "lost high water with no later event",
+      "invalidate versus checkpoint ambiguity and retained-boundary confusion",
+      "driver argument selection versus raw-command rule",
+      "public checkpoint mutation/ownership and error advance",
+      "history metadata growth and linear gap scans",
+      "new uncoded diagnostics without baseline expansion"
+    ],
+    "scope": "all changed runtime/callers plus native and local witnesses, public typing and persisted producer/reader",
+    "remaining": "first batch/backlog evaluation and error phase, remaining full_document/maxAwaitTime/option precedence, additional images/DDL and RS CI; wider plan unchanged"
+  },
+  "feedback": {
+    "native_empty_case": "initial witness demanded checkpoint beyond newest inserted barrier and failed all three natives; corrected witness fences earlier target without asserting immediate final-op equality",
+    "retained_boundary": "initial candidate inferred absent metadata as explicit false; permanent test failed and guard now preserves unknown event kind",
+    "uncoded_gate": "five new uncoded sites rejected; typed diagnostics added without baseline edit; owned replay stopped with SIGINT, exit 2",
+    "journal_suffix": "direct reproduction lost next_token 2 to 1 after restart without following event; mark_gap/align/publish(None) now persist high water; second owned replay stopped with SIGINT, exit 2",
+    "retention_test": "old helper test opened a nonexistent future token; now starts normally before overflowing retained window",
+    "api": "old expectations of updateLookup image after delete and invalidate-before-drop replaced on existing 7/8/9 image/namespace references; final API gate passed",
+    "interrupted_logs": [
+      "feedback-interrupted-diagnostics.txt.gz",
+      "feedback-interrupted-journal.txt.gz"
+    ],
+    "automatic_approval_rejected": false
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329",
+    "tests/fixtures/legacy_error_emitters.json": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14"
+  },
+  "historical_fixture_changes": [],
+  "limits": [
+    "Optional token metadata is additive; ordinary event bytes remain unchanged; no schema/journal migration or semantic downgrade claim.",
+    "Local omission/retention guards are deterministic local tests, not a physical native oplog-loss capture.",
+    "No positive wire watch or distributed/majority durability claim.",
+    "Native sync capture is replayed on both local APIs; no new native async checkpoint capture matrix.",
+    "First-batch/backlog phase, remaining full_document/maxAwaitTime and precedence, image integration and RS CI remain D04 work.",
+    "No full D04/D05/B07 closure; wider program and environment/wheel/global-performance gates remain with their owners."
+  ],
+  "workset_python_sha256": {
+    "src/mongoeco/_change_streams/cursor.py": "a3b9153771e60256c82e96ea0e75341b6bd09d84ff25c65f061df8f8540347dc",
+    "src/mongoeco/_change_streams/hub.py": "7362fbe18e7906feaaf1b082bb0550d0b24a987567371c722704d50d804b84d6",
+    "src/mongoeco/_types/documents.py": "4b4093caaedaf664eb2e5b874f244fc75a7d22111b23a2e2c9ce22bb85afaa5f",
+    "src/mongoeco/error_catalog.py": "470cce490e36b0e9d072446ec12290afc48b9a4d9d0aba0ecf0ee1f8e4ddc746",
+    "tests/differential/semantic_corpora.py": "6da81c267e4e94093232276fa5aaef57e4d82f6c816ccd9db6a55fec1f98b139",
+    "tests/differential/semantic_watch_checkpoint_cases.py": "fcb61052dd8c463645e8ad2da2fa0d4fd864c8ce3e9376e3ddc73cecd8799f25",
+    "tests/integration/api/test_semantic_group_regressions.py": "ab47260df838d6208b01650b1046242aa708d1c81be33992aa9d8836c0992280",
+    "tests/integration/api/test_watch_checkpoint_contract.py": "7494f83d91929dfe8686167133e3055909ad3643c8ced99fd810099375f92229",
+    "tests/integration/api/test_sync_api.py": "321eb7a9e217f2df814d4791eb34632601779d36cbe81ea01cb6c27da47d0854",
+    "tests/integration/api/test_async_api.py": "7fd1c8fcbe895e2a1f7983063441edd1eb61d69235c7c19eaf04500491afbd25",
+    "tests/property/test_change_stream_tokens.py": "918a6ab8cb1dd0668ca3a328a14e7b7ec8b91d7835d0314eb04035beeb90e0ec",
+    "tests/typing/public_contract_positive.py": "b4747337e9fdb29e58d4fc63f382ba21d0125278bce0ef7ca63028a76ed6e2eb",
+    "tests/unit/api/test_watch_helpers.py": "a40937a87c6982aa0d799aa2b57738597b0cc6180286089948db9c388a6dda37",
+    "tests/unit/test_change_streams.py": "af8c6f9b150a8cc7c962cc0294512bb66fbe46ffa97e3ff246dc3ca1801b740c"
+  },
+  "document_checks": {
+    "relative_links": 72,
+    "git_diff_check": 0,
+    "dedicated_checker": "none found; local link verification"
+  },
+  "artifacts": {
+    "README.md": "af565933156435e18086d44e00df8fe11c3161a44c1fbda5bb62bd23482a5612",
+    "acceptance-api.txt.gz": "6c2bd9e2c901fdb6b6131198a7e047cf2b5cf5d17a436cb5b68dceb7cd110783",
+    "acceptance-benchmark.txt.gz": "2cc8b920a30e903e5553f88ac1bd86659f44744e5b8e485017ba63c6c32f5538",
+    "acceptance-core.txt.gz": "2b2c9fb39f05ca484b3ba032d83f65f25216240891b7b4b05740cf7745eeaebb",
+    "acceptance-integrated.txt.gz": "89652ac0270f353712dc276c2b2bd02c2d8b54abf4fe6541da04e2326f6138dd",
+    "acceptance-legacy-producer.txt.gz": "b5ef26723fb636cd11c2d60cefffd7c7fdd17e927f134213005bbfce06478e57",
+    "acceptance-legacy-reader.txt.gz": "938ee3a798194baa753d32f9251c3b9baacbf69ccf55e07a33c75927baa6a33e",
+    "acceptance-lint.txt.gz": "60ddc209d2567df05a9bcc541f4dad1ff20ac5b17128045e80f69f8d7c2b9931",
+    "acceptance-orjson.txt.gz": "81db1314b37bafbac11c943651db194c43c1ce770b47ea1eac4dcc2fc00e4722",
+    "acceptance-sdk-free.txt.gz": "37eb8a0debb30720efdf88af37f2df066067592eed33211ce4e40db18646a3b1",
+    "acceptance-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "before-regression.txt.gz": "54b0ffc751d96191f32b46ed262daa45d9f8f12eeb28cc51fb6503c936e1141d",
+    "benchmark-after0.json": "efff22753e0f997928cf869fefcdd7b8b4b255d07712c64a68ce49e74805c43a",
+    "benchmark-after1.json": "3df09ece03ae1b3a0c015aaf306c7c13a48522d583ada9d8fdfb83c18bafc098",
+    "benchmark-before0.json": "480d947455ceddc540d150a1045d918142b0ee23e7f12413c321008f139ec87d",
+    "benchmark-before1.json": "94ece36a15dc500a751248b2bf996299093e3992c6625da730f432b74a3b52c5",
+    "benchmark-paired-summary.json": "4d404e659de99aabd0214e492c5c23999d818e23b6d239f00179750da2752b9c",
+    "benchmark.py.txt": "c44d477455ae5d0825cc082d28f17badbe4e288709207779f6a3c055a0f4d96b",
+    "create-legacy.py.txt": "1e364907433b37a5b7e3c4febba87864335a07fc480f5f89e1900e163559579f",
+    "error-code-source.json": "bb116059f7d3e188a025989a906d039f2c4dbf8c7362180407c1ab5c22346d27",
+    "feedback-api.txt.gz": "e3f46130a7779c34def8a35be6fede633ae0f61025418f15e15ac8a6ffcd8b11",
+    "feedback-core.txt.gz": "b8ec96dad91f9d029a6559967ada6ec41b0a9aa66ff6778e4f5e6f915f877938",
+    "feedback-interrupted-diagnostics.txt.gz": "69f975e8102b9272ea1f12a714f8a730a1e9407490d5ea1a10f5ff98b72be400",
+    "feedback-interrupted-journal.txt.gz": "5b32c012b86265e54103bf7a1b4679ca1e95069b3324f5b540a4505d7cb94540",
+    "feedback-interval-boundary.txt.gz": "a01cd2bbc35bb31f49bf9a460dfa600e7b553f88bbc52ed40ddb77f12b2e1649",
+    "native-captures.json": "4b97358c76de005c14bfb98c75b5dd321c59d9464ee3a59bd8c2ba55a576eb6d",
+    "native-check-7.0.txt.gz": "9f2e3b32de338be83ba6882d97dc8f9c2e8cc57555331c58392c3a78dcb1610a",
+    "native-check-8.0.txt.gz": "665b31553fb6cd29090fcf2fb7ce32f561f22e8ac36ebf4d0d1dae16d926a8ca",
+    "native-check-9.0.txt.gz": "71e89bbbe18e1f06fde0f1899f9b14b9716a3f1b20982d56355cefabb49d3efd",
+    "no-sdk.py.txt": "081ee7b519e575b58820105cac8a960753b8012e710c84855df747f73e999a30",
+    "paired-benchmark.py.txt": "c4757ccba4af565bbe638d8334d50b701c8d21701a9661b5bba996650488abd5",
+    "read-legacy.py.txt": "ea9af75003ef13f24e676af908acc4b80f6a159fb3c7ac0bf0ec2f0d3a75e2eb",
+    "runtime-sources.json": "804387d79a300e7a7767e13f80cfb2e38a9a6150845e9b256b96d41bc59287d8"
+  }
+}

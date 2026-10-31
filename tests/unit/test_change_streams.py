@@ -168,8 +168,9 @@ class ChangeStreamHubTests(unittest.TestCase):
         next_offset, event = hub.wait_for_event(0, timeout_seconds=0)
         self.assertEqual(next_offset, 1)
         self.assertEqual(event.token, 5)
+        self.assertEqual(hub.offset_after_token(4), 0)
         with self.assertRaisesRegex(OperationFailure, "resume token"):
-            hub.offset_after_token(4)
+            hub.offset_after_token(3)
 
     def test_hub_close_wakes_sync_waiters_and_rejects_new_watchers(self):
         hub = ChangeStreamHub()
@@ -929,7 +930,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         started_after_event = await started_after.try_next()
         self.assertEqual(started_after_event["documentKey"], {"_id": 2})
 
-    async def test_cursor_rejects_conflicting_resume_options(self):
+    async def test_cursor_rejects_unavailable_or_invalid_resume_requests(self):
         hub = ChangeStreamHub()
         with self.assertRaises(OperationFailure):
             AsyncChangeStreamCursor(

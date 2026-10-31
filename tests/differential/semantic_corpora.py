@@ -135,6 +135,10 @@ from tests.differential.semantic_watch_cases import (
     SEED as WATCH_SEED,
     SEMANTIC_WATCH_CASES,
 )
+from tests.differential.semantic_watch_checkpoint_cases import (
+    SEED as WATCH_CHECKPOINT_SEED,
+    SEMANTIC_WATCH_CHECKPOINT_CASES,
+)
 from tests.differential.semantic_watch_image_cases import (
     SEED as WATCH_IMAGE_SEED,
     SEMANTIC_WATCH_IMAGE_CASES,
@@ -172,6 +176,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "watch_checkpoint": SemanticCorpus(
+        "watch-checkpoint", "semantic_watch_checkpoint_cases", WATCH_CHECKPOINT_SEED,
+        SEMANTIC_WATCH_CHECKPOINT_CASES, surfaces=("sync", "async"),
+    ),
     "watch_protocol": SemanticCorpus(
         "watch-protocol", "semantic_watch_protocol_cases", WATCH_PROTOCOL_SEED,
         SEMANTIC_WATCH_PROTOCOL_CASES, surfaces=("sync", "async"),

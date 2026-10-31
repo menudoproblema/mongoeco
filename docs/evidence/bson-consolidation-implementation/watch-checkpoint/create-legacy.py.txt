@@ -1,0 +1,20 @@
+import json,sys
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.change_streams import ChangeStreamHub
+from mongoeco.engines import SQLiteEngine
+root=Path(sys.argv[1]);root.mkdir(exist_ok=True)
+print('producer:',mongoeco.__file__)
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c;s=c.watch(max_await_time_ms=1)
+ c.insert_one({'_id':1});first=s.try_next();c.drop()
+ assert s.try_next()['operationType']=='drop'
+ invalidate=s.try_next();s.close();c.insert_one({'_id':2})
+ (root/'expected.json').write_text(json.dumps({'first':first['_id'],'position':first['clusterTime'],'invalidate':invalidate['_id']}))
+hub=ChangeStreamHub(journal_path=str(root/'gaps.json'))
+hub.publish(operation_type='insert',db_name='db',coll_name='c',document_key={'_id':1})
+hub.mark_gap()
+hub.publish(operation_type='insert',db_name='db',coll_name='c',document_key={'_id':3})
+hub.compact_journal();hub.close()
+print('previous ordinary/invalidate tokens, SQLite, journal and explicit gap journal created')

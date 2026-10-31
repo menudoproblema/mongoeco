@@ -68,6 +68,7 @@ def test_arbitrary_data_strings_return_a_position_or_a_public_diagnostic(raw):
         {"v": True, "t": 1}, {"v": 1.0, "t": 1}, {"v": "1", "t": 1},
         {"v": 0, "t": 1}, {"v": 2, "t": 1}, {"v": 1, "t": True},
         {"v": 1, "t": 1.0}, {"v": 1, "t": "1"}, {"v": 1, "t": -1},
+        {"v": 1, "t": 1, "i": 1}, {"v": 1, "t": 1, "i": None},
     ],
 )
 def test_malformed_local_payload_is_rejected_before_watcher_registration(document):

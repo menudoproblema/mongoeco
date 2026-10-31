@@ -117,6 +117,10 @@ class _AsyncChangeStreamView(_AsyncCursorView):
     def __exit__(self, *args):
         return self._invoke("__aexit__", *args)
 
+    @property
+    def resume_token(self):
+        return self.cursor.resume_token
+
 
 class _AsyncView:
     """Run the unchanged synchronous witness against an async collection."""

@@ -1,0 +1,50 @@
+{
+  "MemoryEngine/default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.08154720853781328,
+    "after_median_seconds": 0.08335545792942867,
+    "ratio": 1.0221742647484604,
+    "checksums_equal": true
+  },
+  "MemoryEngine/updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.11051814595703036,
+    "after_median_seconds": 0.11176829150645062,
+    "ratio": 1.0113116768164598,
+    "checksums_equal": true
+  },
+  "MemoryEngine/unwatched": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.061432270507793874,
+    "after_median_seconds": 0.059593249985482544,
+    "ratio": 0.9700642592710615,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/default": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.19355550000909716,
+    "after_median_seconds": 0.1899903750163503,
+    "ratio": 0.9815808644415721,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/updateLookup": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.308860499470029,
+    "after_median_seconds": 0.3007051254971884,
+    "ratio": 0.9735952833501391,
+    "checksums_equal": true
+  },
+  "SQLiteEngine/unwatched": {
+    "before_samples": 10,
+    "after_samples": 10,
+    "before_median_seconds": 0.16384070896310732,
+    "after_median_seconds": 0.16823085397481918,
+    "ratio": 1.0267952027276714,
+    "checksums_equal": true
+  }
+}

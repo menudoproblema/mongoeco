@@ -697,11 +697,12 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
-- D04: checkpoint, opciones, interacción con imágenes, continuidad/
+- D04: primera tanda, opciones, interacción con imágenes, continuidad/
   reanudación y fixtures replica set de jobs nativos. H56 y dropTarget quedan
   aceptados en su subset de una base, sin extender rename entre bases.
   La dependencia del decoder de tokens tiene entrega propia; quedan el
-  checkpoint público, apertura/avance atómicos y precedencia de opciones.
+  checkpoint público y apertura/avance atómicos tienen el corte descrito abajo;
+  quedan primera tanda y precedencias restantes de opciones.
   Iteración/context manager, lectura terminal y cancelación tienen el corte
   de protocolo descrito abajo; no repetir su implementación al añadir checkpoint.
   Preparación/contexto, modos CRUD de imágenes y efectos de namespace tienen
@@ -795,3 +796,51 @@ el cierre amplio D05. Pasan 6.241 de replay integrado, 2.744 de core/contratos
 (936 subtests, un skip), 53 con orjson, typing, lint y smoke sin SDK. El ABBA
 secuencial de lectura default/updateLookup conserva checksums, con ratios de
 medianas entre 0,99 y 1,01 en ambos motores; no es el coste global de D05.
+
+## D04 — Checkpoint, posición y continuidad local
+
+El [receipt del checkpoint](evidence/bson-consolidation-implementation/watch-checkpoint/receipt.json)
+registra el getter owned resume_token y la adquisición atómica de offset,
+coordenada y watcher bajo el guard existente del hub. El avance comprueba
+historia, conserva el checkpoint tras error y no salta una escritura que
+llegue entre un timeout vacío y la publicación de su checkpoint.
+
+El decoder sigue siendo único. La metadata opcional `i` distingue invalidación
+(true), checkpoint explícito (false) y token de evento/legado (ausente).
+Los bytes de eventos ordinarios siguen idénticos; los invalidates antiguos se
+reconocen por el historial retenido. No se fabrica el tipo de un evento perdido.
+El checkpoint explícito puede continuar justo en la frontera retenida si toda
+su continuación existe. Los tokens de eventos ya perdidos mantienen el rechazo.
+ResumeAfter de invalidate falla con 260/InvalidResumeToken; startAfter continúa.
+
+La selección de opciones reproduce los casos PyMongo capturados: startAfter
+prima sobre resumeAfter, un startAfter vacío puede tomar su token y el reloj
+se ignora si el driver selecciona un token. No se convierte la regla del comando
+en un rechazo artificial de argumentos de watch. El reloj entero local conserva
+su contrato; el corpus no compara valores de Timestamp/tokens entre backends.
+
+La revisión corrigió dos errores espejo de historial: lectores activos que
+cruzaban huecos sin detectarlos, y reaperturas que perdían huecos ya reflejados
+en coordenadas persistidas. La metadata se reconstruye desde eventos/next_token;
+una omisión sin evento posterior persiste también el high water. No cambia
+schema SQL ni formato del journal. Los huecos fuera de retención se retiran y
+la búsqueda en el camino de lectura usa intervalos ordenados, sin escanear todo
+el pasado en cada evento. Los nuevos diagnósticos tienen identidad sin ampliar
+la baseline de emisores sin código.
+
+Cuatro casos permanentes suman veinte escenarios por major, con capturas y
+--check 7/8/9; su replay cubre sync/async en los seis pares motor/dialecto.
+Las pruebas deterministas cubren bootstrap con escritor concurrente, timeout
+con escritura intercalada, filtros, pérdida de historial, cierre sin avance,
+fronteras retenidas, tiempo futuro, reapertura y límites de metadata.
+Un SQLite/journal realmente producido por ad2f030 conserva tokens ordinarios,
+reconoce invalidates antiguos, recupera huecos y reanuda un checkpoint nuevo
+tras otra reapertura. Los comandos/gates y costes están en el receipt.
+
+D04 sigue abierto para evaluación de primera tanda/backlog y su fase de error,
+full_document/maxAwaitTime y precedencias restantes, integración adicional con
+imágenes y fixture RS de CI. Este corte no acredita esas garantías ni todo D05.
+Pasan 6.292 de replay integrado, 2.764 de core/contratos (936 subtests, un skip),
+100 con orjson, seis de API (doce subtests), typing, lint y smoke sin SDK.
+El ABBA secuencial con default/updateLookup y sin watchers conserva checksums
+y lectura final, con ratios de medianas entre 0,97 y 1,03 en los seis casos.

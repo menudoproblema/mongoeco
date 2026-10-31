@@ -12,6 +12,7 @@ from collections.abc import (
     Generator,
     Mapping,
 )
+from copy import deepcopy
 from typing import Self
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -25,15 +26,15 @@ from mongoeco.core.expression_context import (
 )
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.server_errors import server_error
-from mongoeco.errors import OperationFailure
-from mongoeco.types import (  # noqa: TC001 - introspectable signature
+from mongoeco.types import (
     ChangeEventDocument,
     ChangeEventSnapshot,
+    encode_change_stream_token,
 )
 
-from .hub import ChangeStreamHub  # noqa: TC001 - introspectable cursor signature
+from .hub import ChangeStreamHub  # noqa: TC001 - introspectable signature
 from .models import (
-    ChangeStreamScope,  # noqa: TC001 - cursor signature is introspectable
+    ChangeStreamScope,  # noqa: TC001 - introspectable signature
 )
 from .pipeline import (
     apply_full_document_mode,
@@ -75,11 +76,8 @@ class AsyncChangeStreamCursor:
         self._lookup_full_document = lookup_full_document
         self._hub = hub
         self._scope = scope
-        self._offset = resolve_change_stream_offset(
-            hub,
-            resume_after=resume_after,
-            start_after=start_after,
-            start_at_operation_time=start_at_operation_time,
+        token, after, operation_time = _prepare_resume_request(
+            resume_after, start_after, start_at_operation_time,
         )
         self._pipeline = compile_change_stream_pipeline(
             pipeline,
@@ -102,7 +100,14 @@ class AsyncChangeStreamCursor:
         self._materialize_document = materialize_document or DocumentCodec.to_pymongo
         self._closed = False
         self._stop_event = threading.Event()
-        hub.register_watcher()
+        self._offset, self._position, checkpoint = hub.resolve_cursor_start(
+            after=after, operation_time=operation_time,
+            start_after=start_after is not None, register=True,
+        )
+        self._operation_time = operation_time
+        self._resume_token = (
+            _checkpoint_token(checkpoint) if checkpoint is not None else token
+        )
         self._watcher_finalizer = weakref.finalize(self, hub.unregister_watcher)
 
     def __await__(self) -> Generator[None, None, Self]:
@@ -185,14 +190,35 @@ class AsyncChangeStreamCursor:
                 )
                 if self._closed:
                     return None
-                self._offset = next_offset
                 if event is None:
+                    checkpoint = self._hub.cursor_checkpoint(
+                        self._offset, self._position,
+                    )
+                    if checkpoint is not None:
+                        self._position = checkpoint
+                        self._resume_token = _checkpoint_token(checkpoint)
                     if not blocking:
                         return None
                     continue
+                if (
+                    self._operation_time is not None
+                    and event.token < self._operation_time
+                ):
+                    self._offset = next_offset
+                    continue
+                self._hub.validate_cursor_advance(self._position, event.token)
                 transformed = await self._transform(event)
                 if self._closed:
                     return None
+                self._hub.validate_cursor_advance(self._position, event.token)
+                self._offset, self._position = next_offset, event.token
+                self._resume_token = (
+                    event.resume_token
+                    if transformed is not None or (
+                        event.operation_type == "invalidate"
+                        and self._scope.matches(event)
+                    ) else _checkpoint_token(event.token)
+                )
                 if event.operation_type == "invalidate" and self._scope.matches(event):
                     self.close()
                 if transformed is not None:
@@ -235,6 +261,10 @@ class AsyncChangeStreamCursor:
     def alive(self) -> bool:
         return not self._closed
 
+    @property
+    def resume_token(self) -> dict[str, object] | None:
+        return deepcopy(self._resume_token)
+
 
 class ChangeStreamCursor:
     def __init__(self, client, async_cursor: AsyncChangeStreamCursor) -> None:
@@ -269,9 +299,17 @@ class ChangeStreamCursor:
     def alive(self) -> bool:
         return self._async_cursor.alive
 
+    @property
+    def resume_token(self) -> dict[str, object] | None:
+        return self._async_cursor.resume_token
+
 
 def parse_resume_token(token: object) -> int:
     """Read legacy decimal and v1 local tokens without leaking Python errors."""
+    return _decode_resume_token(token)[0]
+
+
+def _decode_resume_token(token: object) -> tuple[int, bool | None]:
     if not isinstance(token, Mapping):
         message = "resume token must be a document"
         raise server_error(message, code=14)
@@ -285,7 +323,7 @@ def parse_resume_token(token: object) -> int:
     invalid_data = "resume token must contain a valid _data field"
     try:
         if raw.isascii() and raw.isdecimal():
-            return int(raw)
+            return int(raw), None
         padding = "=" * (-len(raw) % 4)
         payload = base64.b64decode(
             (raw + padding).encode("ascii"), altchars=b"-_", validate=True
@@ -302,9 +340,31 @@ def parse_resume_token(token: object) -> int:
         or not isinstance(token_value, int)
         or isinstance(token_value, bool)
         or token_value < 0
+        or ("i" in document and not isinstance(document["i"], bool))
     ):
         raise server_error(invalid_data, code=9)
-    return token_value
+    return token_value, document.get("i")
+
+
+def _checkpoint_token(position: int) -> dict[str, object]:
+    return {"_data": encode_change_stream_token(position, invalidate=False)}
+
+
+def _prepare_resume_request(resume_after, start_after, operation_time):
+    # PyMongo selects the token before building the command, including empty
+    # start_after falling back to resume_after. Validate the selected request.
+    token = deepcopy(start_after or resume_after)
+    if token is not None:
+        after = _decode_resume_token(token)
+        return dict(token), after, None
+    if operation_time is not None and (
+        not isinstance(operation_time, int)
+        or isinstance(operation_time, bool)
+        or operation_time < 0
+    ):
+        message = "start_at_operation_time must be a non-negative integer"
+        raise TypeError(message)
+    return None, None, operation_time
 
 
 def resolve_change_stream_offset(
@@ -314,24 +374,9 @@ def resolve_change_stream_offset(
     start_after: dict[str, object] | None,
     start_at_operation_time: int | None,
 ) -> int:
-    configured = sum(
-        option is not None
-        for option in (resume_after, start_after, start_at_operation_time)
+    _token, after, operation_time = _prepare_resume_request(
+        resume_after, start_after, start_at_operation_time,
     )
-    if configured > 1:
-        raise OperationFailure(
-            "watch accepts at most one of resume_after, start_after, or start_at_operation_time"
-        )
-    if resume_after is not None:
-        return hub.offset_after_token(parse_resume_token(resume_after))
-    if start_after is not None:
-        return hub.offset_after_token(parse_resume_token(start_after))
-    if start_at_operation_time is not None:
-        if (
-            not isinstance(start_at_operation_time, int)
-            or isinstance(start_at_operation_time, bool)
-            or start_at_operation_time < 0
-        ):
-            raise TypeError("start_at_operation_time must be a non-negative integer")
-        return hub.offset_at_or_after_cluster_time(start_at_operation_time)
-    return hub.current_offset()
+    return hub.resolve_cursor_start(
+        after=after, operation_time=operation_time, start_after=start_after is not None,
+    )[0]

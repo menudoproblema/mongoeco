@@ -3344,16 +3344,16 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     delete_event = await client_stream.try_next()
                     self.assertEqual(update_event["operationType"], "update")
                     self.assertNotIn("fullDocument", update_event)
-                    self.assertEqual(
-                        update_lookup_event["fullDocument"]["name"],
-                        "Ada Lovelace",
-                    )
+                    self.assertIsNone(update_lookup_event["fullDocument"])
                     self.assertEqual(delete_event["operationType"], "delete")
 
                     invalidate_stream = collection.watch(max_await_time_ms=5)
                     await other.drop()
                     self.assertIsNone(await invalidate_stream.try_next())
                     await collection.drop()
+                    drop_event = await invalidate_stream.try_next()
+                    self.assertEqual(drop_event["operationType"], "drop")
+                    self.assertTrue(invalidate_stream.alive)
                     invalidate_event = await invalidate_stream.try_next()
                     self.assertEqual(
                         invalidate_event["operationType"],

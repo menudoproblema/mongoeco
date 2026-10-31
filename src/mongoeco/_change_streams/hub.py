@@ -6,6 +6,9 @@ import os
 import threading
 import time
 
+from bisect import bisect_right
+
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventSnapshot, Document
 
@@ -80,7 +83,24 @@ class ChangeStreamHub:
         self._last_compaction_time_monotonic: float | None = None
         self._publish_failure: Exception | None = None
         self._load_journal()
+        self._restore_gaps_from_history()
         self._load_degraded_marker()
+
+    def _restore_gaps_from_history(self) -> None:
+        """Existing event coordinates retain holes without a journal migration."""
+        expected = 1 if self._base_offset == 0 else None
+        for event in self._events:
+            if expected is not None:
+                if event.token < expected:
+                    message = "change stream journal could not be loaded"
+                    raise server_error(message, code=9)
+                self._record_gap_range_locked(expected, event.token - 1)
+            expected = event.token + 1
+        if expected is not None:
+            if expected > self._next_token:
+                message = "change stream journal could not be loaded"
+                raise server_error(message, code=9)
+            self._record_gap_range_locked(expected, self._next_token - 1)
 
     @property
     def backend_info(self) -> ChangeStreamBackendInfo:
@@ -146,6 +166,87 @@ class ChangeStreamHub:
         with self._condition:
             return self._end_offset_locked()
 
+    def resolve_cursor_start(
+        self, *, after: tuple[int, bool | None] | None = None,
+        operation_time: int | None = None, start_after: bool = False,
+        register: bool = False,
+    ) -> tuple[int, int, int | None]:
+        """Resolve offset/checkpoint and acquire the watcher under one guard."""
+        with self._condition:
+            self._raise_if_closed_locked()
+            self._raise_if_degraded_locked()
+            if after is not None:
+                position, invalidate = after
+                is_invalidate = invalidate is True or (
+                    invalidate is None and any(
+                        event.token == position and event.operation_type == "invalidate"
+                        for event in self._events
+                    )
+                )
+                if is_invalidate and not start_after:
+                    message = (
+                        "resumeAfter cannot use an invalidate event; use startAfter"
+                    )
+                    raise server_error(message, code=260)
+                if position >= self._next_token:
+                    message = (
+                        "resume token is not available in local change stream history"
+                    )
+                    raise server_error(message, code=286)
+                retained_start = self._retained_start_token_locked()
+                if invalidate is False and retained_start is not None and (
+                    position == retained_start - 1
+                ):
+                    self._raise_if_token_crosses_gap_locked(
+                        position,
+                        "resume token is no longer available "
+                        "in retained change stream history",
+                    )
+                    offset = self._base_offset
+                else:
+                    offset = self.offset_after_token(position)
+            elif operation_time is not None:
+                offset = self.offset_at_or_after_cluster_time(operation_time)
+                position = operation_time - 1
+            else:
+                offset, position = self._end_offset_locked(), self._next_token - 1
+            checkpoint = (
+                self._next_token - 1
+                if offset == self._end_offset_locked() and position < self._next_token
+                else None
+            )
+            if register:
+                self.register_watcher()
+            return offset, position, checkpoint
+
+    def validate_cursor_advance(self, position: int, next_token: int) -> None:
+        with self._condition:
+            self._raise_if_closed_locked()
+            self._raise_if_degraded_locked()
+            self._raise_if_cursor_crosses_gap_locked(position, next_token)
+
+    def cursor_checkpoint(self, offset: int, position: int) -> int | None:
+        """An empty read cannot checkpoint over an event appended meanwhile."""
+        with self._condition:
+            self._raise_if_closed_locked()
+            self._raise_if_degraded_locked()
+            if offset < self._base_offset:
+                message = "change stream history is no longer available"
+                raise server_error(message, code=286)
+            if offset != self._end_offset_locked() or self._next_token - 1 < position:
+                return None
+            checkpoint = self._next_token - 1
+            self._raise_if_cursor_crosses_gap_locked(position, checkpoint)
+            return checkpoint
+
+    def _raise_if_cursor_crosses_gap_locked(
+        self, position: int, next_token: int,
+    ) -> None:
+        index = bisect_right(self._gaps, (next_token + 1,)) - 1
+        if index >= 0 and self._gaps[index][1] > position:
+            message = "change stream history is unavailable across an omitted event"
+            raise server_error(message, code=286)
+
     def register_watcher(self) -> None:
         with self._condition:
             if self._closed:
@@ -191,6 +292,7 @@ class ChangeStreamHub:
             token = self._next_token
             self._record_gap_locked(token)
             self._next_token += 1
+            self._persist_locked()
             self._condition.notify_all()
             self._wake_async_waiters_locked()
 
@@ -204,6 +306,7 @@ class ChangeStreamHub:
                 return
             self._record_gap_range_locked(self._next_token, next_sequence - 1)
             self._next_token = next_sequence
+            self._persist_locked()
             self._condition.notify_all()
             self._wake_async_waiters_locked()
 
@@ -225,6 +328,7 @@ class ChangeStreamHub:
             if payload is None:
                 self._record_gap_locked(sequence)
                 self._next_token = sequence + 1
+                self._persist_locked()
                 self._condition.notify_all()
                 self._wake_async_waiters_locked()
                 return
@@ -296,7 +400,7 @@ class ChangeStreamHub:
             if retained_start is not None and cluster_time < retained_start and self._base_offset > 0:
                 raise OperationFailure("start_at_operation_time is no longer available in retained change stream history")
             self._raise_if_token_crosses_gap_locked(
-                cluster_time,
+                cluster_time - 1,
                 "start_at_operation_time is no longer available in retained change stream history",
             )
             for index, event in enumerate(self._events):
@@ -434,9 +538,8 @@ class ChangeStreamHub:
         return self._events[0].token
 
     def _raise_if_token_crosses_gap_locked(self, token: int, message: str) -> None:
-        for _start, end in self._gaps:
-            if token <= end:
-                raise OperationFailure(message)
+        if self._gaps and token < self._gaps[-1][1]:
+            raise OperationFailure(message)
 
     def _prune_locked(self) -> bool:
         if self._max_retained_events is None:
@@ -446,6 +549,10 @@ class ChangeStreamHub:
             return False
         del self._events[:excess]
         self._base_offset += excess
+        retained_start = self._events[0].token
+        self._gaps = [
+            (start, end) for start, end in self._gaps if end >= retained_start
+        ]
         return True
 
     def _persist_locked(self) -> None:

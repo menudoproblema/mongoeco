@@ -1,0 +1,6 @@
+{
+  "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/base/error_codes.yml",
+  "sha256": "a224e43f928dae7fc08f7e6dee4e9af5418d58f626385d5c2a5a8576674c82e4",
+  "bytes": 29122,
+  "scope": "code names 9, 260, 280, 286; local omission/journal failure assignment is not a native oplog-loss capture"
+}

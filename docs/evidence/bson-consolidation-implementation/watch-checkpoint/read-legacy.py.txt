@@ -1,0 +1,28 @@
+import json,sys
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.change_streams import AsyncChangeStreamCursor,ChangeStreamHub,ChangeStreamScope
+from mongoeco.engines import SQLiteEngine
+from mongoeco.errors import OperationFailure
+from mongoeco.types import encode_change_stream_token
+root=Path(sys.argv[1]);record=json.loads((root/'expected.json').read_text())
+assert encode_change_stream_token(record['position'])==record['first']['_data']
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ c=client.legacy.c
+ try:c.watch(resume_after=record['invalidate'],max_await_time_ms=1)
+ except OperationFailure as e:assert e.code==260
+ else:raise AssertionError('legacy invalidate was accepted by resumeAfter')
+ with c.watch(start_after=record['invalidate'],max_await_time_ms=1) as s:
+  assert next(s)['documentKey']=={'_id':2}
+  assert s.try_next()is None;checkpoint=s.resume_token
+ assert c.find_one({'_id':2})=={'_id':2}
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ with client.legacy.c.watch(resume_after=checkpoint,max_await_time_ms=1) as s:
+  client.legacy.c.insert_one({'_id':3});assert next(s)['documentKey']=={'_id':3}
+hub=ChangeStreamHub(journal_path=str(root/'gaps.json'))
+try:
+ try:AsyncChangeStreamCursor(hub,scope=ChangeStreamScope(),resume_after={'_data':encode_change_stream_token(1)})
+ except OperationFailure:pass
+ else:raise AssertionError('legacy journal gap was lost')
+finally:hub.close()
+print('ordinary bytes identical; old invalidate and gap recovered; new checkpoint resumes after reopen')

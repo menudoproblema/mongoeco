@@ -193,9 +193,11 @@ async def validate_change_stream_protocols(
         assert_type(stream.__iter__(), ChangeStreamCursor)
         assert_type(next(stream), ChangeEventDocument)
         assert_type(stream.try_next(), ChangeEventDocument | None)
+        assert_type(stream.resume_token, dict[str, object] | None)
     async with await async_collection.watch() as async_stream:
         assert_type(async_stream, AsyncChangeStreamCursor)
         assert_type(async_stream.__aiter__(), AsyncChangeStreamCursor)
         assert_type(await anext(async_stream), ChangeEventDocument)
         assert_type(await async_stream.try_next(), ChangeEventDocument | None)
+        assert_type(async_stream.resume_token, dict[str, object] | None)
         await async_stream.close()

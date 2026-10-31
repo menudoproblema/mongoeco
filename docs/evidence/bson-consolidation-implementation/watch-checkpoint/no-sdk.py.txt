@@ -1,0 +1,27 @@
+import asyncio
+from mongoeco import AsyncMongoClient,MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.errors import OperationFailure
+try:import bson
+except ImportError:pass
+else:raise AssertionError('SDK must be absent')
+async def run():
+ for dialect in ['7.0','8.0','9.0']:
+  for factory in [MemoryEngine,SQLiteEngine]:
+   with MongoClient(factory(),mongodb_dialect=dialect) as client:
+    c=client.db.c;c.insert_one({'_id':0})
+    s=c.watch(max_await_time_ms=1);initial=s.resume_token;s.resume_token['extra']=1;assert s.resume_token==initial
+    c.insert_one({'_id':1});event=next(s);c.insert_one({'_id':2})
+    r=c.watch(resume_after=s.resume_token,max_await_time_ms=1);assert next(r)['documentKey']=={'_id':2};r.close();s.close()
+    s=c.watch([{'$match':{'operationType':'insert'}}],max_await_time_ms=1);c.drop();assert s.try_next()is None;token=s.resume_token
+    try:c.watch(resume_after=token,max_await_time_ms=1)
+    except OperationFailure as e:assert e.code==260
+    else:raise AssertionError('resumeAfter invalidate')
+    with c.watch(start_after=token,max_await_time_ms=1) as s:
+     c.insert_one({'_id':3});assert next(s)['documentKey']=={'_id':3}
+   async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+    c=client.db.c;s=await c.watch(max_await_time_ms=1);assert s.resume_token is not None
+    await c.insert_one({'_id':1});event=await s.next();await c.insert_one({'_id':2})
+    r=await c.watch(resume_after=s.resume_token,max_await_time_ms=1);assert (await r.next())['documentKey']=={'_id':2};await r.close();await s.close()
+ print('six engine/dialect pairs, sync/async, owned checkpoints, valid resume and invalidation without SDK')
+asyncio.run(run())

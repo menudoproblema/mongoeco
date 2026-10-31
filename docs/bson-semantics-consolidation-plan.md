@@ -905,6 +905,14 @@ se apoya en ese bucle y en el decoder ya entregados: checkpoint público,
 apertura/avance atómicos, retención/gaps y precedencia de opciones. No repetir
 las dos extracciones ni presentar esos cimientos como cierre de reanudación.
 
+La entrega posterior de checkpoint registra getter owned, bootstrap/avance
+atómicos, invalidación/reanudación y guardas de huecos/retención en el mismo
+owner. Conserva los tokens de eventos ordinarios; la metadata opcional de
+checkpoint/invalidate no exige migrar el journal. La aceptación distingue los
+veinte escenarios nativos por major de las pruebas locales de intercalados y
+reapertura. Quedan D04 primera tanda/backlog, opciones y precedencias restantes,
+imágenes y fixture RS; no repetir la extracción del decoder, bucle o checkpoint.
+
 ## 6. Pruebas y aceptación por garantía
 
 | Familia | Casos obligatorios y observación |

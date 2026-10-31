@@ -198,9 +198,16 @@ class ChangeEventSnapshot:
     post_image_available: bool = False
     to_namespace: ChangeNamespaceDocument | None = None
 
+    @property
+    def resume_token(self) -> dict[str, object]:
+        return {"_data": encode_change_stream_token(
+            self.token,
+            invalidate=True if self.operation_type == "invalidate" else None,
+        )}
+
     def to_document(self) -> ChangeEventDocument:
         document: ChangeEventDocument = {
-            "_id": {"_data": encode_change_stream_token(self.token)},
+            "_id": self.resume_token,
             "operationType": self.operation_type,
         }
         if self.operation_type != "invalidate":
@@ -219,8 +226,11 @@ class ChangeEventSnapshot:
         return document
 
 
-def encode_change_stream_token(token: int) -> str:
-    payload = json.dumps({"v": 1, "t": token}, separators=(",", ":")).encode("utf-8")
+def encode_change_stream_token(token: int, *, invalidate: bool | None = None) -> str:
+    document = {"v": 1, "t": token}
+    if invalidate is not None:
+        document["i"] = invalidate
+    payload = json.dumps(document, separators=(",", ":")).encode("utf-8")
     return base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
 
 

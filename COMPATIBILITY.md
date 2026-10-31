@@ -970,6 +970,12 @@ lectura pendiente propaga la cancelación y cierra el cursor, liberando sus
 recursos. Sin `max_await_time_ms`, la espera de `try_next()` usa un timeout de
 un segundo; un resultado vacío mantiene vivo el stream salvo invalidación.
 
+`resume_token` devuelve una copia independiente del checkpoint local. Los
+filtros pueden avanzar ese checkpoint aunque no entreguen documentos; nunca
+avanza por encima de cambios pendientes de leer. Tras una invalidación,
+`start_after` permite continuar y `resume_after` la rechaza. Los tokens
+pertenecen al backend local; `start_at_operation_time` usa su reloj entero.
+
 El tamaño de esa retención es configurable desde cliente y determina hasta qué
 token o `startAtOperationTime` se puede reanudar sin error.
 
@@ -1002,6 +1008,11 @@ historial y cualquier `resume_after`, `start_after` o `startAtOperationTime`
 anterior al gap falla con el error publico de token no disponible. Si hay al
 menos un watcher activo, o si el journal esta habilitado, los eventos siguen
 materializandose y reteniendose como antes.
+
+El consumo activo también detecta los huecos. Una posición posterior al hueco
+permite continuar sin atravesarlo; el journal conserva esa coordenada aunque
+no se haya escrito un evento después. La reapertura reconstruye los huecos
+desde las coordenadas retenidas sin cambiar el formato del archivo.
 
 Además, cliente, base de datos y colección exponen `change_stream_state()`
 para inspeccionar en runtime:
