@@ -282,6 +282,18 @@ _LOCAL_STREAM_PREFIX_OPERATORS = frozenset(
 )
 _GROUP_OUTPUT_ORDER_FIELD = "__mongoeco_internal_group_order__"
 _GROUP_OUTPUT_DOCUMENT_FIELD = "__mongoeco_internal_group_document__"
+_NONEXPANDING_STREAM_STAGES = frozenset(
+    {
+        "$match",
+        "$project",
+        "$set",
+        "$addFields",
+        "$unset",
+        "$replaceRoot",
+        "$replaceWith",
+        "$lookup",
+    }
+)
 
 
 class AsyncAggregationCursor:
@@ -422,6 +434,7 @@ class AsyncAggregationCursor:
         self._response_buffer = deque()
         self._initialized = False
         self._response_remaining = None
+        self._pipeline_resources = None
         self._closed = False
 
     def _execution_variables(self) -> ExpressionExecutionContext:
@@ -915,6 +928,14 @@ class AsyncAggregationCursor:
         return None
 
     @classmethod
+    def _split_materialized_suffix(cls, pipeline, *, dialect):
+        for index in range(1, len(pipeline)):
+            suffix = cls._split_streamable_pipeline(pipeline[index:], dialect=dialect)
+            if suffix is not None:
+                return pipeline[:index], suffix
+        return None
+
+    @classmethod
     def _split_streaming_sort_suffix(
         cls,
         pipeline: Pipeline,
@@ -1052,6 +1073,8 @@ class AsyncAggregationCursor:
 
     async def _load_pipeline_resources(self) -> AggregationResources:
         """Bind the prepared dependency graph, retaining namespace ownership."""
+        if self._pipeline_resources is not None:
+            return self._pipeline_resources
         self._effective_pipeline()
         program = self._pipeline
         loaded = {}
@@ -1089,7 +1112,8 @@ class AsyncAggregationCursor:
                     self._collection._engine, "_snapshot_active_operations", None
                 )
                 snapshots[key] = snapshot() if callable(snapshot) else []
-        return AggregationResources(loaded, root, snapshots)
+        self._pipeline_resources = AggregationResources(loaded, root, snapshots)
+        return self._pipeline_resources
 
     def _collect_collstats_scales(self, pipeline: Pipeline) -> set[int]:
         scales: set[int] = set()
@@ -1421,15 +1445,33 @@ class AsyncAggregationCursor:
     async def _materialize(
         self,
     ) -> list[Document]:
+        result = await self._materialize_pipeline()
+        return [
+            DocumentCodec.to_public(
+                prepare_public_document(document)
+                if isinstance(document, RuntimeDocumentState)
+                else strip_search_result_metadata(document)
+            )
+            for document in result
+        ]
+
+    async def _materialize_pipeline(
+        self,
+        pipeline: Pipeline | None = None,
+        *,
+        deadline: float | None = None,
+    ) -> list[Document] | list[RuntimeDocumentState]:
         _ensure_operation_executable(self._collection, self._operation)
         self._ensure_session_can_use_engine()
-        deadline = operation_deadline(self._max_time_ms)
+        if deadline is None:
+            deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(
             self._collection,
             "mongodb_dialect",
             MONGODB_DIALECT_70,
         )
-        pipeline = self._effective_pipeline()
+        effective_pipeline = self._effective_pipeline()
+        pipeline = effective_pipeline if pipeline is None else pipeline
         pipeline, writeback_stage = self._split_terminal_writeback_stage(
             pipeline,
         )
@@ -1509,14 +1551,7 @@ class AsyncAggregationCursor:
                 _operator, spec = writeback_stage
                 await self._apply_merge_stage(result, spec)
                 return []
-            return [
-                DocumentCodec.to_public(
-                    prepare_public_document(document)
-                    if isinstance(document, RuntimeDocumentState)
-                    else strip_search_result_metadata(document)
-                )
-                for document in result
-            ]
+            return result
 
     def _cost_policy(self) -> AggregationCostPolicy | None:
         policy = getattr(
@@ -1895,9 +1930,11 @@ class AsyncAggregationCursor:
             )
         if plan.suffix:
             referenced_collections = await self._load_pipeline_resources()
+            split = self._split_materialized_suffix(plan.suffix, dialect=dialect)
+            prefix, suffix = (plan.suffix, None) if split is None else split
             result = apply_pipeline(
                 result,
-                plan.suffix,
+                prefix,
                 collection_resolver=referenced_collections,
                 variables=self._execution_variables(),
                 dialect=dialect,
@@ -1906,6 +1943,14 @@ class AsyncAggregationCursor:
                 lookup_hash_max_associations=(self._lookup_hash_max_associations()),
                 deadline=deadline,
             )
+            if suffix is not None:
+                return self._stream_group_result(
+                    result,
+                    suffix,
+                    spill_policy=spill_policy,
+                    dialect=dialect,
+                    deadline=deadline,
+                )
         return self._stream_group_documents(result)
 
     async def _stream_group_documents(
@@ -1934,49 +1979,87 @@ class AsyncAggregationCursor:
         dialect,
         deadline: float | None,
     ) -> AsyncIterator[Document]:
-        pipeline, remaining_skip, remaining_limit = stream_plan
-        if remaining_limit == 0:
-            return
-        page_size = self._batch_size or 256
+        pipeline, skip, limit = stream_plan
         source = iter(documents)
         try:
+            if limit == 0:
+                return
             referenced_collections = (
                 await self._load_pipeline_resources() if pipeline else {}
             )
-            while remaining_limit != 0:
-                page = list(islice(source, page_size))
-                if not page:
-                    break
-                transformed = apply_pipeline(
-                    page,
-                    pipeline,
-                    collection_resolver=referenced_collections,
-                    variables=self._execution_variables(),
-                    dialect=dialect,
-                    collation=self._collation,
-                    spill_policy=spill_policy,
-                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
-                    deadline=deadline,
+            options = self._pipeline_runtime_options(
+                referenced_collections, dialect, spill_policy, deadline
+            )
+            for document in self._iter_response_rows(
+                source, pipeline, _RemainingWindow(skip, limit), runtime_options=options
+            ):
+                yield self._materialize_document(
+                    DocumentCodec.to_public(strip_search_result_metadata(document))
                 )
-                if remaining_skip:
-                    if len(transformed) <= remaining_skip:
-                        remaining_skip -= len(transformed)
-                        continue
-                    transformed = transformed[remaining_skip:]
-                    remaining_skip = 0
-                if remaining_limit is not None:
-                    transformed = transformed[:remaining_limit]
-                    remaining_limit -= len(transformed)
-                for document in transformed:
-                    yield self._materialize_document(
-                        DocumentCodec.to_public(
-                            strip_search_result_metadata(document),
-                        ),
-                    )
         finally:
             close_source = getattr(source, "close", None)
             if callable(close_source):
                 close_source()
+
+    @staticmethod
+    def _first_expanding_stage(pipeline):
+        return next(
+            (
+                index
+                for index, stage in enumerate(pipeline)
+                if next(iter(stage)) not in _NONEXPANDING_STREAM_STAGES
+                or get_registered_aggregation_stage_registration(next(iter(stage)))
+                is not None
+            ),
+            None,
+        )
+
+    def _response_input_size(self, pipeline, window):
+        maximum = (
+            1
+            if self._first_expanding_stage(pipeline) is not None
+            else (self._batch_size or 256)
+        )
+        if self._response_remaining is not None:
+            maximum = min(maximum, max(1, self._response_remaining))
+        if window.limit is not None:
+            maximum = min(maximum, max(1, window.skip + window.limit))
+        return maximum
+
+    def _pipeline_runtime_options(self, resources, dialect, spill_policy, deadline):
+        return {
+            "collection_resolver": resources,
+            "variables": self._execution_variables(),
+            "dialect": dialect,
+            "collation": self._collation,
+            "spill_policy": spill_policy,
+            "lookup_hash_max_associations": self._lookup_hash_max_associations(),
+            "deadline": deadline,
+        }
+
+    def _iter_response_rows(self, documents, pipeline, window, *, runtime_options):
+        """Schedule a streamable suffix within the response's document-count demand.
+
+        An expanding stage may produce a whole array from one source row. Its
+        downstream stages run on demand too, rather than evaluating the rest of
+        that array before the first response can be returned.
+        """
+        pending = [(iter(documents), pipeline)]
+        while pending and window.open:
+            source, current = pending[-1]
+            page = list(islice(source, self._response_input_size(current, window)))
+            if not page:
+                pending.pop()
+                continue
+            expanding = self._first_expanding_stage(current)
+            prefix = current if expanding is None else current[: expanding + 1]
+            transformed = (
+                apply_pipeline(page, prefix, **runtime_options) if prefix else page
+            )
+            if expanding is not None:
+                pending.append((iter(transformed), current[expanding + 1 :]))
+            else:
+                yield from window.apply(transformed)
 
     async def _stream_sorted_group_result(
         self,
@@ -1992,9 +2075,7 @@ class AsyncAggregationCursor:
         referenced_collections = (
             await self._load_pipeline_resources() if plan.suffix else {}
         )
-        page_size = self._batch_size or 256
-        remaining_skip = plan.suffix_skip
-        remaining_limit = plan.suffix_limit
+        window = _RemainingWindow(plan.suffix_skip, plan.suffix_limit)
         sorted_documents = spill_policy.iter_sort_with_spill(
             documents,
             _require_sort(plan.sort_spec),
@@ -2003,36 +2084,15 @@ class AsyncAggregationCursor:
             deadline=deadline,
         )
         try:
-            while remaining_limit != 0:
-                page = list(islice(sorted_documents, page_size))
-                if not page:
-                    break
-                transformed = apply_pipeline(
-                    page,
-                    plan.suffix,
-                    collection_resolver=referenced_collections,
-                    variables=self._execution_variables(),
-                    dialect=dialect,
-                    collation=self._collation,
-                    spill_policy=spill_policy,
-                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
-                    deadline=deadline,
+            options = self._pipeline_runtime_options(
+                referenced_collections, dialect, spill_policy, deadline
+            )
+            for document in self._iter_response_rows(
+                sorted_documents, plan.suffix, window, runtime_options=options
+            ):
+                yield self._materialize_document(
+                    DocumentCodec.to_public(strip_search_result_metadata(document))
                 )
-                if remaining_skip:
-                    if len(transformed) <= remaining_skip:
-                        remaining_skip -= len(transformed)
-                        continue
-                    transformed = transformed[remaining_skip:]
-                    remaining_skip = 0
-                if remaining_limit is not None:
-                    transformed = transformed[:remaining_limit]
-                    remaining_limit -= len(transformed)
-                for document in transformed:
-                    yield self._materialize_document(
-                        DocumentCodec.to_public(
-                            strip_search_result_metadata(document),
-                        ),
-                    )
         finally:
             sorted_documents.close()
 
@@ -2087,27 +2147,15 @@ class AsyncAggregationCursor:
             referenced_collections = (
                 await self._load_pipeline_resources() if plan.suffix else {}
             )
-            while output_window.open:
-                page = list(islice(sorted_documents, page_size))
-                if not page:
-                    break
-                transformed = apply_pipeline(
-                    page,
-                    plan.suffix,
-                    collection_resolver=referenced_collections,
-                    variables=self._execution_variables(),
-                    dialect=dialect,
-                    collation=self._collation,
-                    spill_policy=spill_policy,
-                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
-                    deadline=deadline,
+            options = self._pipeline_runtime_options(
+                referenced_collections, dialect, spill_policy, deadline
+            )
+            for document in self._iter_response_rows(
+                sorted_documents, plan.suffix, output_window, runtime_options=options
+            ):
+                yield self._materialize_document(
+                    DocumentCodec.to_public(strip_search_result_metadata(document))
                 )
-                for document in output_window.apply(transformed):
-                    yield self._materialize_document(
-                        DocumentCodec.to_public(
-                            strip_search_result_metadata(document),
-                        ),
-                    )
         finally:
             close_output = getattr(sorted_documents, "close", None)
             if callable(close_output):
@@ -2121,28 +2169,15 @@ class AsyncAggregationCursor:
         dialect,
         deadline: float | None,
     ) -> AsyncIterator[Document]:
-        streamable_pipeline, trailing_skip, remaining_limit = stream_plan
-        if remaining_limit == 0:
+        streamable_pipeline, skip, limit = stream_plan
+        if limit == 0:
             return
         page_size = self._batch_size or 256
-        # These built-ins preserve or reduce outer-row cardinality. Unknown
-        # extensions and unwind may expand it, so request one source row there.
-        bounded_input = all(
-            get_registered_aggregation_stage_registration(next(iter(stage))) is None
-            and next(iter(stage))
-            in {
-                "$match",
-                "$project",
-                "$set",
-                "$addFields",
-                "$unset",
-                "$replaceRoot",
-                "$replaceWith",
-                "$lookup",
-            }
-            for stage in streamable_pipeline
-        )
+        window = _RemainingWindow(skip, limit)
         referenced_collections = await self._load_pipeline_resources()
+        options = self._pipeline_runtime_options(
+            referenced_collections, dialect, self._spill_policy(), deadline
+        )
         source = _CursorPageSource(
             self._build_pushdown_cursor(
                 self._pushdown_find_operation(batch_size=page_size),
@@ -2150,35 +2185,15 @@ class AsyncAggregationCursor:
         )
         try:
             await source.prepare()
-            while remaining_limit != 0:
-                requested = page_size if bounded_input else 1
-                if self._response_remaining is not None:
-                    requested = min(requested, max(1, self._response_remaining))
+            while window.open:
+                requested = self._response_input_size(streamable_pipeline, window)
                 page = await source.pull(requested)
                 if not page:
                     break
                 enforce_deadline(deadline)
-                transformed = apply_pipeline(
-                    page,
-                    streamable_pipeline,
-                    collection_resolver=referenced_collections,
-                    variables=self._execution_variables(),
-                    dialect=dialect,
-                    collation=self._collation,
-                    spill_policy=self._spill_policy(),
-                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
-                    deadline=deadline,
-                )
-                if trailing_skip:
-                    if len(transformed) <= trailing_skip:
-                        trailing_skip -= len(transformed)
-                        continue
-                    transformed = transformed[trailing_skip:]
-                    trailing_skip = 0
-                if remaining_limit is not None:
-                    transformed = transformed[:remaining_limit]
-                    remaining_limit -= len(transformed)
-                for document in transformed:
+                for document in self._iter_response_rows(
+                    page, streamable_pipeline, window, runtime_options=options
+                ):
                     yield self._materialize_document(
                         DocumentCodec.to_public(
                             strip_search_result_metadata(document),
@@ -2257,6 +2272,17 @@ class AsyncAggregationCursor:
             dialect=dialect,
         )
         if stream_plan is None:
+            split = self._split_materialized_suffix(effective_pipeline, dialect=dialect)
+            if split is not None:
+                prefix, suffix = split
+                documents = await self._materialize_pipeline(prefix, deadline=deadline)
+                return self._stream_group_result(
+                    documents,
+                    suffix,
+                    spill_policy=spill_policy,
+                    dialect=dialect,
+                    deadline=deadline,
+                )
             return self._stream_materialized_documents(await self._materialize())
         return self._stream_windowed_pipeline(
             stream_plan,
@@ -2307,6 +2333,7 @@ class AsyncAggregationCursor:
 
     async def close(self) -> None:
         self._response_buffer.clear()
+        self._pipeline_resources = None
         if self._closed:
             return
         active = self._active_async_iterator

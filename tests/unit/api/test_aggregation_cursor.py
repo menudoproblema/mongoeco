@@ -47,6 +47,8 @@ from mongoeco.errors import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import PlanningIssue, PlanningMode, SearchIndexModel
+
+from tests.differential.semantic_aggregation_response_cases import _pipeline
 from tests.unit.api._collection_test_support import _SpiV2EngineStub
 
 
@@ -1069,6 +1071,145 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(names, {"archive"})
+
+    async def test_pipeline_resource_snapshot_is_shared_across_prefix_and_suffix(self):
+        cursor = AsyncAggregationCursor(
+            _FakeCollection([]),
+            [
+                {
+                    "$lookup": {
+                        "from": "foreign",
+                        "localField": "a",
+                        "foreignField": "a",
+                        "as": "joined",
+                    }
+                }
+            ],
+        )
+        with patch.object(
+            cursor, "_load_collection_documents", return_value=[]
+        ) as load:
+            first = await cursor._load_pipeline_resources()
+            second = await cursor._load_pipeline_resources()
+        self.assertIs(first, second)
+        load.assert_awaited_once_with("foreign")
+        await cursor.close()
+        self.assertIsNone(cursor._pipeline_resources)
+
+    async def test_materialized_suffix_preserves_clock_bindings_and_spill_cleanup(self):
+        for factory in (MemoryEngine, SQLiteEngine):
+            for spill in (False, True):
+                with self.subTest(engine=factory.__name__, spill=spill):
+                    instant = [datetime.datetime(2001, 1, 1, tzinfo=datetime.UTC)]
+                    clocks = []
+
+                    def now(clocks=clocks, instant=instant):
+                        clocks.append(instant[0])
+                        return instant[0]
+
+                    engine = factory(aggregation_spill_threshold=2)
+                    async with AsyncMongoClient(engine, now_factory=now) as client:
+                        source = client.context.rows
+                        await source.insert_many([{"_id": n} for n in range(8)])
+                        before = len(clocks)
+                        cursor = await source.aggregate(
+                            [
+                                {
+                                    "$set": {
+                                        "pre": {"$add": ["$_id", 0]},
+                                        "before": "$$NOW",
+                                    }
+                                },
+                                {"$sort": {"pre": 1}},
+                                {
+                                    "$project": {
+                                        "before": 1,
+                                        "after": "$$NOW",
+                                        "salt": "$$salt",
+                                    }
+                                },
+                            ],
+                            batchSize=2,
+                            allowDiskUse=spill,
+                            let={"salt": 7},
+                        )
+                        instant[0] = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
+                        rows = await cursor.to_list()
+                        self.assertEqual(len(clocks), before + 1)
+                        self.assertEqual(len(rows), 8)
+                        for row in rows:
+                            self.assertEqual(row["before"], row["after"])
+                            self.assertEqual(row["before"].year, 2001)
+                            self.assertEqual(row["salt"], 7)
+                        await cursor.close()
+                    self.assertEqual(_aggregation_sort_temp_paths(), set())
+
+    async def test_response_error_after_spilled_prefix_preserves_first_packet(self):
+        for factory in (MemoryEngine, SQLiteEngine):
+            for kind in (
+                "sort",
+                "group",
+                "group_twice",
+                "unwind",
+                "sorted_unwind",
+                "single_unwind",
+            ):
+                with self.subTest(engine=factory.__name__, kind=kind):
+                    async with AsyncMongoClient(
+                        factory(aggregation_spill_threshold=2)
+                    ) as client:
+                        source = client.responses.rows
+                        await source.insert_many(
+                            [{"_id": 1, "items": list(range(226))}]
+                            if kind == "single_unwind"
+                            else [{"_id": n, "items": [0, 1]} for n in range(1, 114)]
+                        )
+                        cursor = await source.aggregate(
+                            _pipeline(kind, 103, None), allowDiskUse=True
+                        )
+                        received = []
+                        with self.assertRaises(OperationFailure) as failure:
+                            async for row in cursor:
+                                received.append(row)  # noqa: PERF401 - retain partial delivery on error
+                        self.assertEqual(len(received), 101)
+                        self.assertEqual(failure.exception.code, 2)
+                        self.assertTrue(cursor._closed)
+                        self.assertIsNone(cursor._pipeline_resources)
+                        await cursor.close()
+                    self.assertEqual(_aggregation_sort_temp_paths(), set())
+                    self.assertEqual(_aggregation_group_temp_paths(), set())
+
+    def test_many_expanding_stages_do_not_exhaust_python_recursion(self):
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        rows = list(
+            cursor._iter_response_rows(
+                [{"items": [1]}],
+                [{"$unwind": "$items"}] * 995,
+                _RemainingWindow(0, None),
+                runtime_options=cursor._pipeline_runtime_options(
+                    {}, MONGODB_DIALECT_70, None, None
+                ),
+            )
+        )
+        self.assertEqual(rows, [{"items": 1}])
+
+    async def test_prefix_does_not_materialize_long_before_suffix_type_expression(self):
+        for factory in (MemoryEngine, SQLiteEngine):
+            with self.subTest(engine=factory.__name__):
+                async with AsyncMongoClient(factory()) as client:
+                    source = client.types.rows
+                    await source.insert_many([{"_id": n, "n": n} for n in range(1, 4)])
+                    with patch("mongoeco.core.codec.BsonInt64Public", None):
+                        cursor = await source.aggregate(
+                            [
+                                {"$set": {"pre": {"$toLong": "$n"}}},
+                                {"$sort": {"pre": 1}},
+                                {"$project": {"kind": {"$type": "$pre"}}},
+                            ],
+                            allowDiskUse=False,
+                        )
+                        rows = await cursor.to_list()
+                    self.assertEqual([row["kind"] for row in rows], ["long"] * 3)
 
     async def test_split_streamable_pipeline_uses_registered_stage_execution_mode(
         self,

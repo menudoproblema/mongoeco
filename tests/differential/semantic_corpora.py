@@ -6,6 +6,10 @@ from tests.differential.semantic_absence_consumer_cases import (
     SEED as ABSENCE_SEED,
     SEMANTIC_ABSENCE_CONSUMER_CASES,
 )
+from tests.differential.semantic_aggregation_response_cases import (
+    SEED as AGGREGATION_RESPONSE_SEED,
+    SEMANTIC_AGGREGATION_RESPONSE_CASES,
+)
 from tests.differential.semantic_average_route_cases import (
     SEED as AVERAGE_ROUTE_SEED,
     SEMANTIC_AVERAGE_ROUTE_CASES,
@@ -197,6 +201,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "aggregation_response": SemanticCorpus(
+        "aggregation-response", "semantic_aggregation_response_cases",
+        AGGREGATION_RESPONSE_SEED, SEMANTIC_AGGREGATION_RESPONSE_CASES,
+    ),
     "bson_grammar_context": SemanticCorpus(
         "bson-grammar-context", "semantic_bson_grammar_context_cases",
         BSON_GRAMMAR_CONTEXT_SEED, SEMANTIC_BSON_GRAMMAR_CONTEXT_CASES,
