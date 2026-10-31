@@ -3,6 +3,10 @@
 Fecha: 31 de octubre de 2026. Base de runtime inspeccionada:
 `734c57f4026c602491bdc6f62aa5dc44369dfcb4`.
 
+Revisión 2 del plan sobre `57a9767`, contrastada con el tercer informe recibido.
+El runtime permanece idéntico. La evidencia inicial conserva su identidad;
+esta revisión añade trazas de representación, distinct, eq/in y fronteras TTL.
+
 **Estado: propuesta; ninguna corrección de runtime de este incremento está
 implementada.** Este documento posee H48–H54 y su integración con B00–B10 y
 C00–C06. No reabre H37–H47 ni sustituye sus receipts. La implementación y los
@@ -31,6 +35,12 @@ Los valores complejos del JSON de diagnóstico usan repr; no sustituyen al
 observador BSON independiente del runner. Las 167 pruebas focales existentes
 pasaron sin cambios: esto conserva regresiones, pero no cubre los nuevos casos.
 
+La [caracterización de revisión 2](evidence/bson-consolidation-review/refinement/receipt.json)
+añade un MongoDB **9.0.2, FCV 9.0, standalone desechable**, trazas de matcher en
+los seis pares locales motor/dialecto y 45 comprobaciones TTL locales. No
+repite ni amplía la aceptación de las 167 pruebas anteriores. Esta revisión
+solo cambia documentación/evidencia; los defectos continúan presentes.
+
 ## 2. Qué aceptar y qué corregir de las críticas
 
 | Afirmación o propuesta | Contraste y disposición |
@@ -52,16 +62,21 @@ pasaron sin cambios: esto conserva regresiones, pero no cubre los nuevos casos.
 | Todas las firmas internas deben perder defaults inmediatamente | Adoptar contexto explícito en rutas preparadas alcanzadas. No cambiar firmas SPI v2 ni defaults públicos/compatibles en masa; un default existente no demuestra una fuga en un caller que pasa contexto. |
 | Change streams debe esperar al cierre completo de B04 | No. Estaba fuera del programa histórico, pero existe un contrato local ADR-006. Ahora posee caracterización nativa propia y alcance separado H52; puede usar el preparador existente sin esperar todos los pendientes de B04. |
 | Compilar schema al matcher simplifica necesariamente | Posible evolución, no conclusión demostrada. Introduce nodos con semántica propia y diagnósticos anotados. No es requisito de los defectos observados ni autoriza traducir validators a SQL. Evaluar en un bloque opcional independiente. |
+| H48 atribuye la representación interna al almacenamiento | Aceptado el matiz del tercer informe. La traza pública muestra operandos `_InternalBsonBinary` de rango 100 frente a documentos decodificados con bytes/Binary local de rango 6. Un helper con ambos lados internos no representa ese camino productivo. |
+| Distinct pierde el subtipo 5 después de materializar | Confirmado: devuelve bytes y Binary SDK 0, mientras MongoDB devuelve bytes y Binary SDK 5. Igual número de resultados no implica igualdad de contenido BSON. Añadirlo al primer corte H48, no aplazarlo a la consolidación D06. |
+| D01/D03 son ambiguos y dependen del chat | Aceptado. Los bloques se definen aquí; D01a/D01b y D03a/D03b identifican entregas únicas. La correspondencia con la revisión 1 queda en la sección 5. |
+| Falta igualdad/claves desde el primer corte | Aceptado. D00 exige propiedades generadas y testigos deterministas antes de modificar H48; D03a no se acepta sin ellas. La clase de comparador sigue siendo opcional, la garantía no. |
+| TTL solo tenía control de borrado anticipado | Aceptado. Revisión 2 comprueba −1/0/+1 ms, fechas positivas/negativas, creación del índice y reapertura SQLite; los 45 casos coinciden. No demuestra toda la frontera ni la futura mezcla de auxiliares antiguos con un cutoff exacto. |
 
 ## 3. Hallazgos nuevos y causas
 
 | ID | Prioridad / estado | Primer invariante roto e impacto |
 | --- | --- | --- |
-| H48 | P1; confirmado | Binary normalizado pierde su rango (100 frente a 6), y bytes/subtipos llegan a fallbacks Python. Igualdades/rangos/selección de escrituras y no-op son incorrectos. El orden BinData omite además longitud. |
+| H48 | P1; confirmado | La normalización del operando y la decodificación del almacenamiento producen representaciones con rangos diferentes (100 frente a 6). El comparador reconoce Binary local pero no SDK: dos SDK de igual payload y distinto subtipo comparan iguales y pierden un valor en distinct. Igualdades/rangos/eq frente a in/selección/no-op y orden por longitud son incorrectos. |
 | H49 | P1; confirmado | Una fecha exacta se convierte a float antes de recuperar milisegundos. `$toLong`, `$subtract`, `$dateDiff` y roundtrip pierden un milisegundo; consumidores de ventanas y TTL requieren controles propios. |
 | H50 | P1; confirmado | DBRef SDK/local y documento equivalente no tienen la misma vista en todos los consumidores. Matching separa representaciones y agrupación rechaza valores BSON válidos. |
 | H51 | P1; confirmado | SQL de `$type` omite pertenencia en arrays para tres familias y binData omite su tag binary. En dialectos 7/8 elimina matches antes de la evaluación correcta. |
-| H52 | P1; confirmado en el subset local | Watch prepara solo forma externa y ejecuta por evento sin dialecto/reloj capturados. Error 31325 aparece tarde; replaceWith de ruta válida se rechaza; NOW cambia entre eventos e ignora now_factory. La fuga 7→9 con undefined ya tiene sonda local, faltando captura nativa tipada. |
+| H52 | P1; confirmado en el subset local | Watch prepara solo forma externa y ejecuta por evento sin dialecto/reloj capturados. OperationFailure 31325 aparece tarde; replaceWith de ruta válida se rechaza localmente con TypeError mientras MongoDB abre el stream; NOW cambia entre eventos e ignora now_factory. La fuga 7→9 con undefined ya tiene sonda local, faltando captura nativa tipada. |
 | H53 | P2; diferencia caracterizada | Moderate evalúa primero el antiguo y puede devolver aceptación sin evaluar el nuevo. MongoDB evalúa el nuevo y registra warning 20294 para bad→bad bajo warn. Local tampoco emite warning en strict/warn: el hueco de observabilidad es más amplio que el orden moderate. No atribuir rechazo incorrecto de escrituras a este testigo. |
 | H54 | P1; confirmado | La identidad de escritura termina usando igualdad Python para Code; ésta ignora el orden del scope. MongoDB modifica y conserva el nuevo orden; classic y pipeline locales devuelven cero y conservan el anterior en ambos motores. |
 
@@ -71,6 +86,30 @@ ninguno localmente; reasignar Binary idéntico devuelve 0 frente a 1;
 Code con scope `{a:1,b:2}` → `{b:2,a:1}` produce modificación 1 frente a 0.
 Cambiar +0.0 a -0.0 y Code sin scope a scope vacío sí coincide: conservar esos
 controles positivos, no corregirlos por aproximación.
+
+### H48: cadena causal observada por frontera
+
+1. El filtro público atraviesa `DocumentCodec.to_internal`: su Binary se vuelve
+   `_InternalBsonBinary` (rango 100 en el comparador actual).
+2. El almacenamiento codifica y decodifica por otra ruta: el matcher recibe
+   `bytes` o Binary local (rango 6). La traza confirma ambas formas en ambos
+   motores. No atribuirle la clase interna por cómo se normaliza el filtro.
+3. La guarda de familias o el comparador rechaza el par antes de comparar sus
+   partes binarias. Directamente, dos internos pueden coincidir; ese positivo
+   no valida la API pública. Agregar una clase a una tabla no completa H48.
+4. Tras `find`, la materialización pública produce Binary del SDK. El comparador
+   solo tiene rama explícita para Binary local; para dos SDK usa `<`/`>` de
+   bytes, que no distingue subtipo. Distinct deduplica esos valores públicos
+   mediante `_values_equal`, y omite el subtipo 5.
+5. `$in` toma además un hash fast path que considera otra representación. Para
+   Binary SDK 5, eq devuelve ningún ID e in devuelve ID 3 en los seis pares
+   locales; MongoDB devuelve ID 3 en ambos. Para subtipo 0 localmente eq da
+   vacío e in solo ID 2; MongoDB selecciona IDs 1 y 2 en ambos.
+
+El testigo directo SDK 0 frente a SDK 5 tiene `equal=True` y claves semánticas
+distintas. Esto viola ya la ley igualdad⇒clave sin modificar ningún helper.
+El arreglo debe cubrir normalización, decode/cache copy-on-write, representación
+pública y deduplicación; no basta con el punto donde falló la primera sonda.
 
 ## 4. Modelo común propuesto y límites
 
@@ -98,6 +137,12 @@ bytes/subtipo 0 en la representación binaria interna evita ramas ambiguas;
 las vistas deben aceptar también las representaciones históricas leídas de
 SQLite. Conservar bytes/subtipo del formato almacenado y salida pública. No
 crear un segundo normalizador recursivo paralelo al codec.
+
+D03a debe declarar qué formas conserva cada frontera de almacenamiento/cache
+copy-on-write y asegurar que las vistas comunes aceptan todas ellas. No exige
+que cada documento decodificado tenga físicamente la clase interna del filtro:
+exige la misma semántica BSON y que lectura, clonación y asignación no muten
+datos prestados. Se conservan tags y salida pública, incluidos archivos previos.
 
 ### 4.2. Comparación y claves: compartir responsabilidad, conservar contratos
 
@@ -152,23 +197,48 @@ Para watch el contexto de evaluación es el del stream, no el de la escritura
 que publica cada evento. La sonda nativa conserva NOW entre dos getMore.
 Caracterizar reapertura/reanudación e invalidate antes de fijar su tratamiento.
 
+TTL requiere además inclusión de candidatos, no solo residual exacto. En el
+camino actual cutoff y expiración usan la misma transformación monótona: una
+coordenada redondeada puede añadir candidatos; el residual evita borrados
+anticipados. No extender ese razonamiento a mezclas de versiones. Por ejemplo,
+para −1001 ms el helper antiguo da −1000: una entrada antigua frente al futuro
+cutoff exacto −1001 quedaría fuera. Es una deducción de compatibilidad a probar
+al implementar, no un retraso observado en el runtime actual. D02 debe mantener
+candidatos al leer auxiliares anteriores, mediante reconstrucción de auxiliares
+TTL o estrategia conservadora demostrada, conservando el formato público.
+
 ## 5. Plan por bloques y dependencias
 
-Se conservan los IDs D00–D05 del plan del chat; D06 añade consolidación de claves
-y D07 delimita la alternativa schema. Las prioridades ordenan riesgos, no
-obligan a una migración horizontal previa.
+Los bloques D00–D07 se definen canónicamente en este documento. Los bloques
+padre tienen un único significado; sus cortes identifican entregas citables.
+Las prioridades ordenan riesgos, sin exigir una migración horizontal previa.
 
 | Bloque | Prioridad / hallazgos | Dependencias y entrega |
 | --- | --- | --- |
-| D00 — Oráculos y fronteras | P1 transversal; H48–H54 | Ampliar registro/capturador/replay existentes; capturas 7/8/9 y ejecución anterior fallida por familia. No otro runner. |
-| D03 + corte D01 — Tipo, Binary e identidad | P1; H48/H54 | Testigos D00 de las dos familias. Extraer clasificación neutral, vistas binarias, longitud/subtipo/bytes, identidad recursiva Code, mover same_bson_update_value a capa neutral y migrar sus callers. Mantener los fixes de floats y width numérica. |
-| D02 — Milisegundos exactos | P1; H49 | Independiente de Binary. Conversión, dateDiff/subtract, roundtrip; revisar ventanas y TTL indexado. Retirar implementación de resta sin callers tras comprobar usos/export privados. |
-| D06 — Vistas y claves por consumidores | P1; H50 y coherencia H48 | Clasificación D03. Igualdad DBRef/documento, group y sus claves; después `$in`, lookup/distinct/sets y Search según sus contratos. Retirar `_aggregation_key` cuando su guarda tenga sustituto. No cambiar storage_key ni tie-breakers incidentalmente. |
-| D03, corte SQL/tipos | P1; H51 | Clasificación neutral y testigos D00. Canonicalizar aliases antes de construir SQL; un constructor de condición por tipo y forma escalar/array. Incluir tag binary y censo de virtual_indexes/partial indexes. Fallback explícito si no se acredita equivalencia. |
+| D00 — Oráculos y fronteras | P1 transversal; H48–H54 | Propiedades y testigos del primer corte antes de arreglar H48; ampliar registro/capturador/replay existentes, capturas 7/8/9 y fallo previo por familia. No otro runner. |
+| D01 — Identidad de modificación | P1; H48/H54 | Cortes D01a/D01b definidos abajo. Helper físico y consecuencias públicas, separados de igualdad semántica. |
+| D02 — Milisegundos exactos | P1; H49 | Independiente de Binary. Conversión, dateDiff/subtract, roundtrip; revisar ventanas, ambos lados de TTL y auxiliares antiguos frente a nuevo cutoff. Retirar resta sin callers tras comprobar usos/export privados. |
+| D03 — Tipos, Binary y especialización SQL | P1; H48/H51 | Cortes D03a/D03b definidos abajo. Clasificación/vistas y consumidores reales, incluyendo deduplicación pública. |
 | D04 — Preparación y contexto de watch | P1; H52 | Testigos D00 con replica set. Allowlist local y preparación común una vez; corregir replaceWith, capturar dialecto/reloj/codec. No depende del cierre completo de B04 ni de toda D06. |
-| D01, corte restante — Modificación pública | P1; H48/H54 | Después de helpers afectados. Contadores, estado, índices, outbox/eventos en classic/pipeline/replacement y operaciones múltiples. Resto de casos físicos como Decimal128/NaN solo se cambia con testigo nativo. |
 | D05 — Cierre integrado | P1 transversal | Cierre por familia y final conjunto de entregas obligatorias; comparar wheel/código, contratos y archivos SQLite, registrar costes y commits semánticos. |
+| D06 — Vistas y claves por consumidores | P1; H50 y consolidación contextual | Clasificación D03a. Igualdad DBRef/documento, group y sus claves; lookup/sets/Search según contratos. H48 distinct y eq/in ya deben pasar en D03a. Retirar `_aggregation_key` cuando su guarda tenga sustituto; conservar storage_key/tie-breakers. |
 | D07 — Piloto opcional schema | P2; no bloquea los fixes | Solo después de D03/D06 y una hipótesis medible. Evaluar nodos schema propios con arrays atómicos y diagnósticos anotados; no convertirlos a hojas MQL ordinarias. No compromiso de migración completa. |
+
+| Corte estable | Dependencias | Entrega y correspondencia con revisión 1 |
+| --- | --- | --- |
+| D03a — Clasificación, Binary y lecturas públicas | D00 de H48 | Parte de tipos/Binary de la antigua fila «D03 + corte D01». Reconocimiento común, longitudes/subtipos/bytes en local/SDK/interno, contrato storage/cache, eq/in y distinct públicos. No se acepta con un parche solo de rangos. |
+| D01a — Helper de identidad BSON | D00 de H48/H54 y vistas necesarias de D03a | Parte de identidad de la misma fila antigua: mover same_bson_update_value y corregir Code scope/Binary sin perder no-op, tipo ni orden. Puede acompañar a D03a en una entrega, con ambos IDs explícitos. |
+| D03b — SQL y tipos | D00 de H51 y D03a | Antigua fila «D03, corte SQL/tipos». Canonicalizar aliases; un constructor por tipo/forma escalar-array, tag binary, virtual/partial indexes y fallback acreditado. |
+| D01b — Efectos públicos de modificación | D01a | Antigua fila «D01, corte restante». Estado, contadores, índices, outbox/eventos, classic/pipeline/replacement y operaciones múltiples. Casos físicos adicionales solo cambian con testigo nativo. |
+
+D00 no es una etapa de cierre: el primer corte incorpora una propiedad generada
+sobre pares público/local/SDK/interno y transiciones de codec/almacenamiento/
+materialización. Exige igualdad⇒misma clave en cada política que la use,
+distinción de subtipos distintos con igual payload y preservación de una misma
+identidad BSON entre representaciones. Incluye los contraejemplos deterministas
+de H48 y registra que fallan en la base antes de modificar producción. No se
+deja una suite roja permanente: el corte del fix debe entregar propiedad y
+regresión verdes. No se acepta D03a sin esta garantía, aunque su helper pase.
 
 H53 se integra en D00 como caracterización y en C03/B08 como decisión de
 política/observabilidad: distinguir documento válido, validación omitida y
@@ -189,12 +259,12 @@ familias ni abrir un tercer sistema de contexto, AST o fixtures.
 | Familia | Casos obligatorios y observación |
 | --- | --- |
 | Tipos y representaciones | Público SDK/local e interno, antes/después de codec y persistencia; bytes/Binary 0/5, longitudes y subtipos diferentes, arrays/documentos anidados, ObjectId, DBRef con extras, Code, missing/null/undefined. Rango, tipo y claves en el contexto adecuado. UUID bajo cada codec_option soportada. |
-| Matching | eq/ne/in/nin/rangos/type/expr; compilado y canónico, arrays/rutas numéricas/punteadas; selección para update/delete/count/distinct; candidatos adicionales nunca sustituyen coincidencias. |
+| Matching | eq/ne/in/nin/rangos/type/expr; testigo explícito de eq frente a in unitario con el mismo Binary 0/5/bytes y sin regex; compilado/canónico, arrays/rutas numéricas/punteadas y selección para escrituras/count/distinct. Preservar fallback/fast path y observar cada frontera. |
 | SQL | Dialectos locales 7/8/9 y referencia nativa correspondiente; pushdown normal/desactivado, sin índice/con scalar/multikey/partial, escalar/array, aliases numéricos/string. Explain/traza o spy del camino real: un fallback verde no acepta SQL. No sort/window antes de residual eliminatorio. |
 | Identidad | No-op Binary 0/5, bytes equivalente, int/long/double/decimal, signed zero, NaN/payload, Code scope reordenado/ausente/vacío, tipos numéricos y arrays/documentos anidados en scope. Separar identidad del `_id` y de campos ordinarios. Classic, pipeline, replacement, bulk ordered/unordered, update_many, findAndModify y comandos; contadores, tipo físico/orden, estado y publicación. |
-| Fechas | ±1001 ms, ejemplo 2038, epoch, negativos submilisegundo normalizados, UTC naive/aware y offsets, extremos soportados; toLong/toDate, conversión inversa independiente, subtract/dateDiff. Ventanas derivative/integral con casos nativos propios. TTL usa reloj fijado y comprueba no borrado anticipado, índices existentes/reabiertos y publicación; no exigir que el monitor nativo borre sin demora. |
-| Claves/consumidores | Group/addToSet/set/lookup/distinct, spill y claves codificadas, collation incluida; igualdad DBRef/documento y Code scope binario donde corresponda. Mismo resultado con/sin hash y spill. Desempates Search e identidad persistida tienen controles separados. |
-| Watch | Apertura sin eventos y pipeline inválido, replaceWith válido, filtro de evento, dialecto y tipos undefined tipados, NOW entre etapas/eventos/batches, now_factory, getMore/reanudación/invalidate. Colección/DB/cliente, sync/async y wire solo donde esté soportado. Fase/error/cursor/offset/token/cierre, sin ampliar semántica distribuida. |
+| Fechas | ±1001 ms, ejemplo 2038, epoch, negativos submilisegundo normalizados, UTC naive/aware y offsets, extremos soportados; toLong/toDate, conversión inversa independiente, subtract/dateDiff. Ventanas derivative/integral con casos nativos propios. TTL a expiración−1/exacta/+1 ms: no borrar antes ni omitir candidatos vencidos; índice nuevo/creado tras datos/reabierto, auxiliares de versión anterior y publicación. No exigir borrado inmediato al monitor nativo. |
+| Claves/consumidores | Desde D03a, distinct sobre bytes/Binary SDK 0/5 con el mismo payload, distintos órdenes de inserción, arrays/anidados y materialización pública: comparar subtipo/contenido, no solo cardinalidad. Después group/addToSet/set/lookup/spill y collation, DBRef/documento y Code scope según política. Mismo resultado con/sin hash/spill; desempates Search y persistencia con controles separados. |
+| Watch | Apertura sin eventos y pipeline inválido, replaceWith válido, filtro de evento, undefined tipado, NOW entre etapas/eventos/batches, now_factory, getMore/reanudación/invalidate. Capturar clase de excepción además de código y fase: TypeError local de replaceWith frente a apertura válida física, y OperationFailure 31325 diferido frente a apertura fallida. Colección/DB/cliente, sync/async y wire soportados, cursor/offset/token/cierre; sin ampliar semántica distribuida. |
 | Validators | strict/moderate/off × error/warn/bypass, antiguo/candidato válido/inválido, insert/upsert/bulk/merge y estado tras error; observar errores de evaluación y diagnóstico, no inferirlos del permiso final. Logs físicos se comparan como efecto nativo sin prometer un API de logging local inexistente. |
 
 Las propiedades existentes se amplían: preservación de representación,

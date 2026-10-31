@@ -1,0 +1,1127 @@
+{
+  "runtime_base": "734c57f4026c602491bdc6f62aa5dc44369dfcb4",
+  "plan_base": "57a9767",
+  "local": {
+    "memory-7.0": {
+      "eq5": [],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        }
+      ],
+      "eq_sdk0": [],
+      "in_sdk0": [
+        2
+      ],
+      "eq_sdk5": [],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2,
+        3
+      ],
+      "in_bytes": [
+        1
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ]
+    },
+    "sqlite-7.0": {
+      "eq5": [],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        }
+      ],
+      "eq_sdk0": [],
+      "in_sdk0": [
+        2
+      ],
+      "eq_sdk5": [],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1
+      ],
+      "in_bytes": [
+        1
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ]
+    },
+    "memory-8.0": {
+      "eq5": [],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        }
+      ],
+      "eq_sdk0": [],
+      "in_sdk0": [
+        2
+      ],
+      "eq_sdk5": [],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2,
+        3
+      ],
+      "in_bytes": [
+        1
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ]
+    },
+    "sqlite-8.0": {
+      "eq5": [],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        }
+      ],
+      "eq_sdk0": [],
+      "in_sdk0": [
+        2
+      ],
+      "eq_sdk5": [],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1
+      ],
+      "in_bytes": [
+        1
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ]
+    },
+    "memory-9.0": {
+      "eq5": [],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        }
+      ],
+      "eq_sdk0": [],
+      "in_sdk0": [
+        2
+      ],
+      "eq_sdk5": [],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2,
+        3
+      ],
+      "in_bytes": [
+        1
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ]
+    },
+    "sqlite-9.0": {
+      "eq5": [],
+      "match_trace": [
+        {
+          "document": {
+            "class": "builtins.bytes",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 0,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        },
+        {
+          "document": {
+            "class": "mongoeco._types._bson_values.Binary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 6
+          },
+          "operand": {
+            "class": "mongoeco.core.codec._InternalBsonBinary",
+            "subtype": 5,
+            "bytes": "6162",
+            "rank": 100
+          }
+        }
+      ],
+      "eq_sdk0": [],
+      "in_sdk0": [
+        2
+      ],
+      "eq_sdk5": [],
+      "in_sdk5": [
+        3
+      ],
+      "eq_bytes": [
+        1,
+        2,
+        3
+      ],
+      "in_bytes": [
+        1
+      ],
+      "materialized_find": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 5,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ],
+      "distinct": [
+        {
+          "class": "builtins.bytes",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 6
+        },
+        {
+          "class": "bson.binary.Binary",
+          "subtype": 0,
+          "bytes": "6162",
+          "rank": 100
+        }
+      ]
+    }
+  },
+  "direct": {
+    "sdk_both": {
+      "document": {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "operand": {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "matches": true
+    },
+    "internal_both": {
+      "document": {
+        "class": "mongoeco.core.codec._InternalBsonBinary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "operand": {
+        "class": "mongoeco.core.codec._InternalBsonBinary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "matches": true
+    },
+    "decoded_vs_internal": {
+      "document": {
+        "class": "mongoeco._types._bson_values.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "operand": {
+        "class": "mongoeco.core.codec._InternalBsonBinary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "matches": false
+    },
+    "decoded_vs_sdk": {
+      "document": {
+        "class": "mongoeco._types._bson_values.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 6
+      },
+      "operand": {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "matches": false
+    }
+  },
+  "law_counterexample": {
+    "left": {
+      "class": "bson.binary.Binary",
+      "subtype": 0,
+      "bytes": "6162",
+      "rank": 100
+    },
+    "right": {
+      "class": "bson.binary.Binary",
+      "subtype": 5,
+      "bytes": "6162",
+      "rank": 100
+    },
+    "compare": 0,
+    "equal": true,
+    "same_key": false
+  },
+  "ttl": [
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "fresh",
+      "offset_ms": -1,
+      "backend": "memory",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "fresh",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "fresh",
+      "offset_ms": 0,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "fresh",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "fresh",
+      "offset_ms": 1,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "fresh",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "index_after_insert",
+      "offset_ms": -1,
+      "backend": "memory",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "index_after_insert",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "index_after_insert",
+      "offset_ms": 0,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "index_after_insert",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "index_after_insert",
+      "offset_ms": 1,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "index_after_insert",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "reopened",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "reopened",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "2038-04-22T20:55:58.687000",
+      "mode": "reopened",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "fresh",
+      "offset_ms": -1,
+      "backend": "memory",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "fresh",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "fresh",
+      "offset_ms": 0,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "fresh",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "fresh",
+      "offset_ms": 1,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "fresh",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "index_after_insert",
+      "offset_ms": -1,
+      "backend": "memory",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "index_after_insert",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "index_after_insert",
+      "offset_ms": 0,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "index_after_insert",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "index_after_insert",
+      "offset_ms": 1,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "index_after_insert",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "reopened",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "reopened",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1970-01-01T00:00:01.001000",
+      "mode": "reopened",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "fresh",
+      "offset_ms": -1,
+      "backend": "memory",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "fresh",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "fresh",
+      "offset_ms": 0,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "fresh",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "fresh",
+      "offset_ms": 1,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "fresh",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "index_after_insert",
+      "offset_ms": -1,
+      "backend": "memory",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "index_after_insert",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "index_after_insert",
+      "offset_ms": 0,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "index_after_insert",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "index_after_insert",
+      "offset_ms": 1,
+      "backend": "memory",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "index_after_insert",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "reopened",
+      "offset_ms": -1,
+      "backend": "sqlite",
+      "ids": [
+        1
+      ],
+      "expected_ids": [
+        1
+      ]
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "reopened",
+      "offset_ms": 0,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    },
+    {
+      "expiry": "1969-12-31T23:59:58.999000",
+      "mode": "reopened",
+      "offset_ms": 1,
+      "backend": "sqlite",
+      "ids": [],
+      "expected_ids": []
+    }
+  ],
+  "native": {
+    "version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "distinct": [
+      {
+        "class": "builtins.bytes",
+        "subtype": 0,
+        "bytes": "6162",
+        "rank": 6
+      },
+      {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      }
+    ],
+    "eq_sdk0": [
+      1,
+      2
+    ],
+    "in_sdk0": [
+      1,
+      2
+    ],
+    "eq_sdk5": [
+      3
+    ],
+    "in_sdk5": [
+      3
+    ],
+    "eq_bytes": [
+      1,
+      2
+    ],
+    "in_bytes": [
+      1,
+      2
+    ]
+  }
+}

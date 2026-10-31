@@ -1,0 +1,88 @@
+{
+  "status": "plan refinement and characterization; no runtime implementation or correction acceptance",
+  "runtime_base": "734c57f4026c602491bdc6f62aa5dc44369dfcb4",
+  "plan_base": "57a9767f855557c6dc4cfa6aff2a77621eb73641",
+  "python": "3.14.5",
+  "pymongo": "4.19.0",
+  "input": {
+    "title": "Review of consolidation plan and commit 57a9767",
+    "sha256": "c35390c3c0cd565830a23aecc44a00707f4404303fcc5a0dd32005a1f0dd4c4e",
+    "bytes": 8209
+  },
+  "previous_receipt_sha256": "5f814484d6098198f8d796dfce4e9be08c98d4100df261be1387c54c42e205b7",
+  "runtime_source_sha256": "e92a22923e78a88aecdb358cc8ce05054cf0b986db77487a70a4fcd9a7ba2b91",
+  "runtime_source_hashes_verified": true,
+  "previous_artifacts_hashes_verified": true,
+  "native": {
+    "server": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "topology": "standalone",
+    "owned_port": 49952
+  },
+  "characterization": {
+    "local_pairs": [
+      "memory-7.0",
+      "sqlite-7.0",
+      "memory-8.0",
+      "sqlite-8.0",
+      "memory-9.0",
+      "sqlite-9.0"
+    ],
+    "matcher_trace": "normalization operand versus decoded stored values",
+    "distinct": "BSON content/subtype, not count",
+    "eq_in": "same scalar operands, bytes and Binary subtypes 0/5",
+    "coherence_counterexample": {
+      "left": {
+        "class": "bson.binary.Binary",
+        "subtype": 0,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "right": {
+        "class": "bson.binary.Binary",
+        "subtype": 5,
+        "bytes": "6162",
+        "rank": 100
+      },
+      "compare": 0,
+      "equal": true,
+      "same_key": false
+    },
+    "ttl_local_cases": 45,
+    "ttl_failures": 0
+  },
+  "tests": "No new test suite; previous 167 passed are historical regression only.",
+  "limits": [
+    "No new native 7/8 reference.",
+    "No new watch/replica-set, async/wire or package/global acceptance.",
+    "TTL boundary characterization does not certify full domain or future mixed-version auxiliary entries.",
+    "Native descriptor rank is the mongoeco measurement, not native metadata."
+  ],
+  "artifacts": {
+    "README.md": "e213ca6761b0f03b77cfbbb95516c05ec3cbf94bcc750cd30677d1980ccf386c",
+    "cleanup.json": "c1200404cf25449601b9556cf5ee284188c51d959d26bc435584a10a4e59d92a",
+    "observations.json": "ac353d8dd31f48aa4609be34f050d591ca4dfff56ce684a57026938a361ef662",
+    "probe.py.txt": "1898ae3b557840c91d526f4fb2d6c896e362943056328c9f261a74fa1d8af478"
+  },
+  "document_checks": {
+    "unique_canonical_block_and_cut_ids": [
+      "D00",
+      "D01",
+      "D02",
+      "D03",
+      "D04",
+      "D05",
+      "D06",
+      "D07",
+      "D03a",
+      "D01a",
+      "D03b",
+      "D01b"
+    ],
+    "relative_links": "passed",
+    "previous_artifacts": "unchanged",
+    "runtime_source": "unchanged"
+  }
+}
