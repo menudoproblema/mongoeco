@@ -1,0 +1,86 @@
+{
+  "status": "implementation_in_progress; D06a/b not accepted",
+  "base": "57b5faf",
+  "workset": "workset.json",
+  "runtime": "runtime-sources.json",
+  "native": "native-captures-and-fixtures.tar.gz",
+  "baseline": {
+    "failed": 200,
+    "passed": 43,
+    "log": "baseline-final.txt.gz",
+    "actual_runtime": "baseline-runtime.json"
+  },
+  "candidate": {
+    "failed": 8,
+    "passed": 235,
+    "log": "checkpoint-focal.txt.gz"
+  },
+  "comparison": "comparison.json",
+  "core_api": {
+    "passed": 3035,
+    "skipped": 1,
+    "subtests_passed": 1017,
+    "log": "checkpoint-core-api.txt.gz"
+  },
+  "full_replay_feedback": {
+    "failed": 20,
+    "passed": 6815,
+    "final_candidate": false,
+    "log": "feedback-full-replay.txt.gz"
+  },
+  "mutation": {
+    "failed_expected": 24,
+    "log": "distinct-mutation.txt.gz"
+  },
+  "native_versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "native_checks_per_version": {
+    "new_actions": 10,
+    "historical_dbref_controls": 5
+  },
+  "remaining": [
+    "Live wire aggregation responses and getMore ownership/cleanup",
+    "Raw wire encoding before SDK response-shape decoding",
+    "Byte boundaries, materializing suffixes, cancellation and callback atomicity",
+    "Other typed String consumers and remaining D06 grammar/key contexts",
+    "Final review, required gates, wheel, performance, SDK-free and semantic implementation commits"
+  ],
+  "limits": [
+    "Required eight wire nodes remain red; this is not functional acceptance.",
+    "Historical fixtures/protected observers unchanged.",
+    "Global diagnostic used an earlier candidate and cannot be reused as a final green gate."
+  ],
+  "artifacts": {
+    "README.md": "e0d48f3d1519b77484dc4d2b08b04208e923a08440838a55d5f0031a0914b872",
+    "baseline-final.txt.gz": "205750a416dbf31fb42a16f918736f0c7d6ee2a61cd6d4da7dc82720c6de14fa",
+    "baseline-runtime.json": "f68cf01b9ab20168ba91dc2a9343f63f7e4ddf9226f3f87588f3cb92246c568b",
+    "candidate-workset.tar.gz": "15129a1d1aada68e65b039a0e70b35287e933d476533ef89ae80605fa1ac22a8",
+    "checkpoint-core-api.txt.gz": "fb7bc00e44fff4d5ca51a02bb3f94187b7adb87e8cb8d2ebbc8ecd7566a2e722",
+    "checkpoint-focal.txt.gz": "abecdb9b43d6fdfe617c83ea4c88970961ed037a408d17f39513922905292f80",
+    "comparison.json": "9b73388f7cab7499db16c2a8bc843b753449d85a2cb53130344cd9781cd9a4a4",
+    "distinct-mutation.py.txt": "2b8844781ae64599c4421fa84252998c60a6788cd1682dfe59af12b266394603",
+    "distinct-mutation.txt.gz": "cd852b26d85651d10984460508a6ed7ad22933b77fa6fd76261d628e885d75b3",
+    "feedback-candidate1.txt.gz": "2081c8c72fe165e8e2a73131a2889212d9206a69a740e1fedd8078abe4daefc6",
+    "feedback-candidate2.txt.gz": "78a79a14e05559906fc1e2159548cdce1c309f7e39100b7a1dcdac7bd304e6ee",
+    "feedback-candidate3.txt.gz": "14a0f305c7b75d4a52e56a66cf2b2503c7afe76ce170534f5e1ac5d950b25675",
+    "feedback-candidate4.txt.gz": "a19b3c999077e70783dd272e6a2f55cebf416cdc2b2528e9e0d43456a71e4dad",
+    "feedback-candidate5.txt.gz": "4b19fcf302cf35c52c4b35a160762cb342d97c034719b710edb47067e535f11d",
+    "feedback-full-replay.txt.gz": "c629a31c08239bb6b2baae4d1d70ad967f0fdbc211ebb73c028cbb974338cac3",
+    "initial-baseline.txt.gz": "931d4d41c4ccc1ce89ee37816fd34bfdbe530afe12d9b9e939ebda6470290913",
+    "initial-native-characterization.tar.gz": "870b4995956ff35112b94a06cb1ad1a50bfd2cb26b74bf0be80333a4662fa274",
+    "native-captures-and-fixtures.tar.gz": "61ab49cd857b197d676c9610dcd497af4a5c8c6292e8d27b74f7d26491f1aec2",
+    "native-cleanup.json": "d2a61768bda746dd0025f5d7bd5fae639a499c98b5ba643556dc0ec18965d593",
+    "native-matrix.py.txt": "f3dcb2bdd4bf5dcf0b377b05d42ff0f5d74e8aa2a20cac7ae2c1e1e56af37e88",
+    "native-matrix.txt.gz": "566cf9443f37f81d494eac2547b565b2bb57634d577929c8de98f5a56d44b0b3",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "runtime-sources.json": "b782c8e4000c42d6a3a8d8a07284f03f5ef0f6b3ef0ad42d19395c24f89c7a79",
+    "workset.json": "a8280973ba4a9b5e5e7fe69e4b672acdcb09cbe273c8c6f35cf16a060636e6ad"
+  },
+  "document_checks": {
+    "relative_links_checked": 33,
+    "missing": []
+  }
+}

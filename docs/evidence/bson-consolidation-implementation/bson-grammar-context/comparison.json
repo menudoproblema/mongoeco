@@ -1,0 +1,16 @@
+{
+  "baseline_failed": 200,
+  "candidate_failed": 8,
+  "turned_green": 192,
+  "new_failures": [],
+  "remaining_failures": [
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-async-MemoryEngine-8.0]",
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-async-MemoryEngine-9.0]",
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-async-SQLiteEngine-8.0]",
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-async-SQLiteEngine-9.0]",
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-sync-MemoryEngine-8.0]",
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-sync-MemoryEngine-9.0]",
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-sync-SQLiteEngine-8.0]",
+    "tests/integration/api/test_semantic_group_regressions.py::test_expression_matches_native_capture[bson_grammar_context-semantic_bson_grammar_response_boundaries-response_boundaries-wire-sync-SQLiteEngine-9.0]"
+  ]
+}

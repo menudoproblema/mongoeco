@@ -1025,3 +1025,70 @@ de ausencia Docker, volúmenes y carrera de startup. Se acredita la propiedad
 y limpieza de recursos de prototipos; no se hizo prune global ni se reiniciaron
 servicios prestados. La aceptación final es secuencial. El trabajo restante
 vigente es D06a/b/c, H53, conversión sNaN, decisión D07, D05 y B07, conforme al plan.
+
+## D06a/b — Checkpoint de gramática y representación, pendiente de aceptación
+
+Base `57b5faf`. La [evidencia del checkpoint](evidence/bson-consolidation-implementation/bson-grammar-context/receipt.json)
+identifica fuentes, corpus, capturas, baseline y candidato. D06a/b siguen
+abiertos; este registro conserva trabajo en curso y no acredita su cierre.
+
+`is_bson_string` comparte la distinción String/Code entre el evaluador,
+preparación, constantes, argumentos de nombre de campo y seguimiento de campos
+virtuales. `$type` conserva javascript frente a javascriptWithScope. Las claves
+de documentos conservan su contrato de cstring; no se sustituyen sus controles
+por reglas de valores de expresión.
+
+La materialización de respuestas convierte formas DBRef anidadas conforme al
+SDK, conservando la raíz documental y la raíz del scope de Code como documentos.
+Ese contrato es diferente del type bracketing: el hook SDK admite Code en ref/db
+y db null. Fechas y callbacks de hijos se aplican una vez antes del callback del
+contenedor, sin mutar el input. La deduplicación de distinct pasa a ocurrir antes
+de esa conversión; API y comando comparten el colector semántico. Dos BSON
+físicamente distintos pueden dar dos DBRef públicos idénticos y ambos deben
+permanecer en la respuesta.
+
+El cursor local prepara una primera respuesta al abrir/await y conserva su
+buffer para el consumo posterior. Se contrastan batchSize omitido/0/1/2 y errores
+en filas 1/3/103. El driver conserva el tamaño inicial solicitado y promueve 1 a 2
+en getMore; las capturas fijan el comportamiento de PyMongo 4.19.0 y su
+[implementación fijada](https://github.com/mongodb/mongo-python-driver/blob/4.19.0/pymongo/cursor_shared.py#L237)
+explica esa promoción. El adaptador
+async de pruebas devuelve e itera cursores reales: antes materializaba la lista
+al devolver aggregate y podía ocultar diferencias de fase. La nueva sonda
+ordena explícitamente por `_id`: su diagnóstico inicial sobre orden natural en
+SQLite no acreditaba una divergencia de ordenación del engine.
+
+Diez acciones tienen captura y --check en 7.0.43/8.0.32/9.0.2, FCV correspondiente,
+además de --check de los cinco controles DBRef históricos. Los tres fixtures
+propios finales y sus volúmenes están ausentes en la auditoría independiente.
+La baseline aislada verifica los 283 módulos y su import real: falla 200 checks
+y pasa 43. El candidato congelado pasa 235 y conserva ocho fallos wire ya rojos
+en baseline; no aparecen nuevos nodos fallidos en ese corpus. Pasan 3.035 de
+core/API y 1.017 subtests, con un skip separado. La mutación que deduplica después
+de decodificar falla los 24 nodos de distinct. Lint pasa para 19 Python cambiados.
+
+El replay completo anterior, sobre otro candidato y nueve acciones, terminó
+con 6.815 correctas y 20 fallos. Es diagnóstico, no gate global verde del
+checkpoint actual. Los primeros 168 fallos/27 controles usaban ocho acciones;
+sus fuentes y capturas están archivadas sin atribuirles alcance posterior.
+Las referencias históricas y observadores protegidos permanecen intactos.
+
+**Trabajo obligatorio antes de aceptar este corte:**
+
+- Wire materializa todavía toda la agregación antes de abrir: ocho nodos de
+  primera respuesta/getMore siguen fallando en 8/9. Conectar un cursor vivo al
+  almacén existente conservando parser/preparación, contexto, failpoints,
+  profiling, sesión, principal y namespace; cerrar recursos en EOF/error/kill
+  y teardown. No introducir otro runner ni omitir esos checks.
+- Mantener codificación BSON del servidor antes de la decodificación SDK de
+  formas DBRef. El límite público directo y el transporte raw tienen destinos
+  distintos; convertir antes de codificar puede perder orden/campos. Reutilizar
+  la lectura sin codecs que ya ofrece el cursor y materializar al entregar.
+- Contrastar límite por bytes, sufijos materializantes, cancelación y atomicidad
+  de callbacks por respuesta. La cardinalidad de una extensión no puede inferirse
+  del nombre de un built-in que haya sobrescrito. El testigo de número de documentos no acredita
+  esas otras fronteras ni un protocolo completo de aggregate.
+- Completar consumidores String tipados, contextos DBRef/raw y claves de D06;
+  repetir revisión/gates sobre candidato final, wheel, perfil sin SDK, costes y
+  las matrices exigidas por sus owners. H53, conversión, D07, D05 y B07 conservan
+  sus pendientes. El código de este checkpoint sigue siendo un candidato.

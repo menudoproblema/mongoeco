@@ -1,0 +1,11 @@
+import inspect,textwrap
+import pytest
+from mongoeco.api._async import _collection_reads as reads
+from mongoeco.api._async import _database_admin_read_commands as commands
+source=inspect.getsource(inspect.unwrap(reads.distinct)).replace('cursor._apply_codec_options = False','cursor._apply_codec_options = True')
+exec(compile('from __future__ import annotations\n'+source,'decoded-distinct-mutation','exec'),reads.__dict__)
+source=textwrap.dedent(inspect.getsource(commands.DatabaseAdminReadCommandService.execute_distinct_command)).replace('apply_codec_options=False','apply_codec_options=True')
+scope=dict(commands.__dict__)
+exec(compile('from __future__ import annotations\n'+source,'decoded-command-distinct-mutation','exec'),scope)
+commands.DatabaseAdminReadCommandService.execute_distinct_command=scope['execute_distinct_command']
+raise SystemExit(pytest.main(['-q','tests/integration/api/test_semantic_group_regressions.py','-k','semantic_bson_grammar_distinct_before_decoding','--tb=short']))
