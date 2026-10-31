@@ -1,0 +1,798 @@
+{
+  "native": {
+    "7.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o": {
+                  "a": 2,
+                  "b": 1
+                }
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5900000003757064617465644669656c6473001b000000036f0013000000106100020000001062000100000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o.a": 2
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "4c00000003757064617465644669656c6473000e000000106f2e610002000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o": {
+                  "a": 2,
+                  "b": 1
+                }
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5900000003757064617465644669656c6473001b000000036f0013000000106100020000001062000100000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "replace",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "fullDocumentBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "_id": 1.0
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5000000003757064617465644669656c64730012000000015f696400000000000000f03f000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    },
+    "8.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o": {
+                  "a": 2,
+                  "b": 1
+                }
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5900000003757064617465644669656c6473001b000000036f0013000000106100020000001062000100000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o.a": 2
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "4c00000003757064617465644669656c6473000e000000106f2e610002000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o": {
+                  "a": 2,
+                  "b": 1
+                }
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5900000003757064617465644669656c6473001b000000036f0013000000106100020000001062000100000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "replace",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "fullDocumentBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "_id": 1.0
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5000000003757064617465644669656c64730012000000015f696400000000000000f03f000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    },
+    "9.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o": {
+                  "a": 2,
+                  "b": 1
+                }
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5900000003757064617465644669656c6473001b000000036f0013000000106100020000001062000100000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o.a": 2
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "4c00000003757064617465644669656c6473000e000000106f2e610002000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "o": {
+                  "a": 2,
+                  "b": 1
+                }
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5900000003757064617465644669656c6473001b000000036f0013000000106100020000001062000100000000000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "replace",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "fullDocumentBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000",
+            "updateDescription": {
+              "updatedFields": {
+                "_id": 1.0
+              },
+              "removedFields": [],
+              "truncatedArrays": []
+            },
+            "updateDescriptionBson": "5000000003757064617465644669656c64730012000000015f696400000000000000f03f000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    }
+  },
+  "local": {
+    "MemoryEngine-7.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    },
+    "SQLiteEngine-7.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    },
+    "MemoryEngine-8.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    },
+    "SQLiteEngine-8.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    },
+    "MemoryEngine-9.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    },
+    "SQLiteEngine-9.0": {
+      "classic_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_dotted": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_whole": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "0e000000105f6964000100000000"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_small": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "pipeline_id_large": {
+        "counts": [
+          1,
+          1
+        ],
+        "events": [
+          {
+            "operationType": "update",
+            "documentKeyBson": "12000000015f696400000000000000f03f00"
+          }
+        ],
+        "barrier_seen": true
+      },
+      "classic_noop": {
+        "counts": [
+          1,
+          0
+        ],
+        "events": [],
+        "barrier_seen": true
+      }
+    }
+  }
+}

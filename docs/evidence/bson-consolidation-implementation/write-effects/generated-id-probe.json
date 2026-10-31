@@ -1,0 +1,161 @@
+{
+  "native9": {
+    "double_nan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    },
+    "decimal_nan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    },
+    "decimal_snan": {
+      "upsert": {
+        "error": "WriteError",
+        "code": 241,
+        "message": "Plan executor error during update :: caused by :: Failed to parse number 'sNaN' in $convert with no onError value: Failed to parse string to decimal, full error: {'index': 0, 'code': 241, 'errmsg': \"Plan executor error during update :: caused by :: Failed to parse number 'sNaN' in $convert with no onError value: Failed to parse string to decimal\"}"
+      },
+      "update": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 0
+      }
+    }
+  },
+  "MemoryEngine": {
+    "double_nan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    },
+    "decimal_nan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    },
+    "decimal_snan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    }
+  },
+  "SQLiteEngine": {
+    "double_nan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    },
+    "decimal_nan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    },
+    "decimal_snan": {
+      "upsert": {
+        "matched": 0,
+        "modified": 0,
+        "deleted": null
+      },
+      "update": {
+        "matched": 1,
+        "modified": 1,
+        "deleted": null
+      },
+      "delete": {
+        "matched": null,
+        "modified": null,
+        "deleted": 1
+      }
+    }
+  }
+}

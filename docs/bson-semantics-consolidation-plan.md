@@ -518,6 +518,14 @@ El punto 3 cruza el productor de eventos y su entrega; corregir solo watch no
 lo resuelve. Mantener ambos dentro de D01b, con D04 para preparación/contexto:
 son obligaciones separadas y no exigen una dependencia circular ni reabrir D02.
 
+La nueva [caracterización D01b](evidence/bson-consolidation-implementation/write-effects/receipt.json)
+precisa qué información preservar: classic whole/dotted pueden dejar la misma
+postimagen y producir updateDescription distinta. Conservar rutas/procedencia
+durante la mutación; un diff genérico posterior no basta para ambas formas.
+DocumentKey conserva la representación anterior de `_id` cuando pipeline cambia
+su tipo. Ambos testigos tienen referencia 7/8/9 y quedan en la aceptación D01b.
+No son otro sistema de contexto ni una razón para alterar claves persistidas.
+
 **Refactorización acotada de efectos.** Contrastar primero el outcome existente
 de mutación. Si no basta, ampliarlo con el cambio efectivo confirmado y los
 datos de evento que deban compartir Memory y SQLite; la construcción semántica

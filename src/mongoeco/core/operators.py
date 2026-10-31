@@ -150,7 +150,6 @@ class CompiledUpdatePlan:
             assert_classic_update_preserves_id(
                 original,
                 working,
-                dialect=self.context.dialect,
             )
         if modified:
             doc.clear()

@@ -1,0 +1,32 @@
+"""Independent native receipt for the nonfinite unique-index regression."""
+import json
+import uuid
+from pathlib import Path
+from bson import BSON, Decimal128
+from pymongo import MongoClient
+
+output = {}
+for dialect, port in [('7.0', 49973), ('8.0', 49974), ('9.0', 49975)]:
+    with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true') as client:
+        name = 'unique_nonfinite_' + uuid.uuid4().hex
+        results = {}
+        try:
+            for key, value in [('nan',float('nan')),('infinity',float('inf')),('decimal_nan',Decimal128('NaN')),('decimal_infinity',Decimal128('Infinity'))]:
+                collection = client[name][key]
+                collection.create_index([('v', 1)], unique=True)
+                collection.insert_many([{'_id': 1, 'v': value}, {'_id': 2, 'v': 1}])
+                before = [BSON.encode(row).hex() for row in collection.find({},sort=[('_id',1)])]
+                try:
+                    collection.update_one({'_id': 2}, [{'$set': {'v': {'$literal': value}}}])
+                    result = {'accepted': True}
+                except Exception as error:
+                    result = {'error':type(error).__name__,'code':getattr(error,'code',None)}
+                result['state_unchanged'] = before == [BSON.encode(row).hex() for row in collection.find({},sort=[('_id',1)])]
+                result['count'] = collection.count_documents({'v': value})
+                assert result == {'error':'DuplicateKeyError','code':11000,'state_unchanged':True,'count':1}
+                results[key] = result
+            output[dialect] = results
+        finally:
+            client.drop_database(name)
+Path('docs/evidence/bson-consolidation-implementation/write-effects/unique-index-native.json').write_text(json.dumps(output,indent=2)+'\n')
+print('12 native unique-index controls passed')

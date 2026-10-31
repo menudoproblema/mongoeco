@@ -115,6 +115,10 @@ from tests.differential.semantic_update_identity_cases import (
     SEED as UPDATE_IDENTITY_SEED,
     SEMANTIC_UPDATE_IDENTITY_CASES,
 )
+from tests.differential.semantic_write_effect_cases import (
+    SEED as WRITE_EFFECT_SEED,
+    SEMANTIC_WRITE_EFFECT_CASES,
+)
 
 
 @dataclass(frozen=True)
@@ -128,8 +132,16 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "write_effect": SemanticCorpus(
+        "write-effect",
+        "semantic_write_effect_cases",
+        WRITE_EFFECT_SEED,
+        SEMANTIC_WRITE_EFFECT_CASES,
+    ),
     "type_query": SemanticCorpus(
-        "type-query", "semantic_type_query_cases", TYPE_QUERY_SEED,
+        "type-query",
+        "semantic_type_query_cases",
+        TYPE_QUERY_SEED,
         SEMANTIC_TYPE_QUERY_CASES,
     ),
     "dbref_grammar": SemanticCorpus(
@@ -139,23 +151,35 @@ SEMANTIC_CORPORA = {
         SEMANTIC_DBREF_GRAMMAR_CASES,
     ),
     "binary_edges": SemanticCorpus(
-        "binary-edges", "semantic_binary_edge_cases", BINARY_EDGE_SEED,
+        "binary-edges",
+        "semantic_binary_edge_cases",
+        BINARY_EDGE_SEED,
         SEMANTIC_BINARY_EDGE_CASES,
     ),
     "ttl_publication": SemanticCorpus(
-        "ttl-publication", "semantic_ttl_publication_cases",
-        TTL_PUBLICATION_SEED, SEMANTIC_TTL_PUBLICATION_CASES,
+        "ttl-publication",
+        "semantic_ttl_publication_cases",
+        TTL_PUBLICATION_SEED,
+        SEMANTIC_TTL_PUBLICATION_CASES,
         surfaces=("sync", "async"),
     ),
     "datetime": SemanticCorpus(
-        "datetime", "semantic_datetime_cases", DATETIME_SEED, SEMANTIC_DATETIME_CASES,
+        "datetime",
+        "semantic_datetime_cases",
+        DATETIME_SEED,
+        SEMANTIC_DATETIME_CASES,
     ),
     "update_identity": SemanticCorpus(
-        "update-identity", "semantic_update_identity_cases",
-        UPDATE_IDENTITY_SEED, SEMANTIC_UPDATE_IDENTITY_CASES,
+        "update-identity",
+        "semantic_update_identity_cases",
+        UPDATE_IDENTITY_SEED,
+        SEMANTIC_UPDATE_IDENTITY_CASES,
     ),
     "binary": SemanticCorpus(
-        "binary", "semantic_binary_cases", BINARY_SEED, SEMANTIC_BINARY_CASES,
+        "binary",
+        "semantic_binary_cases",
+        BINARY_SEED,
+        SEMANTIC_BINARY_CASES,
     ),
     "mod": SemanticCorpus(
         "mod",

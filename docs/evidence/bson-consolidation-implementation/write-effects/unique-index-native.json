@@ -1,0 +1,80 @@
+{
+  "7.0": {
+    "nan": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "infinity": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "decimal_nan": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "decimal_infinity": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    }
+  },
+  "8.0": {
+    "nan": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "infinity": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "decimal_nan": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "decimal_infinity": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    }
+  },
+  "9.0": {
+    "nan": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "infinity": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "decimal_nan": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    },
+    "decimal_infinity": {
+      "error": "DuplicateKeyError",
+      "code": 11000,
+      "state_unchanged": true,
+      "count": 1
+    }
+  }
+}

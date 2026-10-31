@@ -204,10 +204,11 @@ def bson_equality_key(value: Any) -> Any:
     binary = binary_parts(value)
     if binary is not None:
         return ("binary", *binary)
-    if isinstance(value, dict):
+    document = document_mapping(value)
+    if document is not None:
         return (
             "dict",
-            tuple((key, bson_equality_key(item)) for key, item in value.items()),
+            tuple((key, bson_equality_key(item)) for key, item in document.items()),
         )
     if isinstance(value, list):
         return ("list", tuple(bson_equality_key(item) for item in value))

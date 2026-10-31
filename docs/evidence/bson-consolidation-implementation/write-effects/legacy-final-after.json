@@ -1,0 +1,19 @@
+{
+  "outcomes": {
+    "scalar": [
+      1,
+      0
+    ],
+    "compound": [
+      1,
+      0
+    ],
+    "binary": [
+      1,
+      0
+    ]
+  },
+  "keys_unchanged": true,
+  "schema_unchanged": true,
+  "reopened_and_deleted": true
+}

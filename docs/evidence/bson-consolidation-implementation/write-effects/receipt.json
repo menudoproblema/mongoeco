@@ -1,0 +1,266 @@
+{
+  "status": "D01b state/identity/indexed mutation increment verified; D01b event acceptance remains open",
+  "base_head": "c15dfb585892353626fc42613c42e22f3a85b3f3",
+  "candidate": "base HEAD plus source hashes in runtime-sources.json; semantic commit follows this receipt",
+  "plan": "docs/bson-semantics-consolidation-plan.md revision 6, with D01b event input clarification",
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "topology": "owned disposable single-member replica sets, already running",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "corpus": "write-effect",
+    "actions": 9,
+    "fresh_capture_checks": 3,
+    "fixtures": {
+      "tests/fixtures/semantic_write_effect_7_0.json": "f34b83a3add94e5cce84d934f9039418a1113298c44954ec1deff48ea9a502f5",
+      "tests/fixtures/semantic_write_effect_8_0.json": "e2dd69acb1cd34a9089e08965fec5147b7d841b7149ac9de3018d44af9d0072b",
+      "tests/fixtures/semantic_write_effect_9_0.json": "b9697a586314eaa2f22158dbb51066fb56089373c42dbc6279308f74081df37a"
+    },
+    "unique_index_controls": {
+      "per_version": 4,
+      "total": 12,
+      "artifact": "unique-index-native.json"
+    }
+  },
+  "baseline": {
+    "source": "git archive c15dfb5 src, imported before pytest",
+    "final_corpus": {
+      "failed": 84,
+      "passed": 135,
+      "deselected": 5476,
+      "seconds": 28.96
+    },
+    "log": "before-final-corpus.txt.gz",
+    "initial_corpus_runs": "retained as feedback, not final failure attribution"
+  },
+  "gates": {
+    "focal": {
+      "passed": 219,
+      "surfaces": [
+        "sync",
+        "async",
+        "wire-sync",
+        "wire-async"
+      ],
+      "engines": [
+        "Memory",
+        "SQLite"
+      ],
+      "dialects": [
+        "7.0",
+        "8.0",
+        "9.0"
+      ],
+      "evidence": "219 checks included in final-semantic and final-orjson; earlier focal logs identify prior numeric guard candidate"
+    },
+    "integrated_semantic": {
+      "passed": 5695,
+      "seconds": 274.9,
+      "log": "final-semantic.txt.gz"
+    },
+    "core_properties": {
+      "passed": 2564,
+      "skipped": 1,
+      "subtests_passed": 936,
+      "seconds": 26.8,
+      "log": "final-expanded-core.txt.gz"
+    },
+    "write_consumers": {
+      "passed": 12155,
+      "subtests_passed": 1478,
+      "seconds": 87.01,
+      "files": [
+        "test_nonfinite_sqlite_mutations",
+        "test_code_index_legacy",
+        "test_atomic_selected_mutations",
+        "test_selected_mutation_snapshot_contract",
+        "test_pymongo_bulk_models",
+        "test_write_identity_parity",
+        "test_write_operation_conservation",
+        "test_write_histories",
+        "test_numeric_predicate_index_conservation"
+      ],
+      "log": "final-write-consumers.txt.gz"
+    },
+    "orjson": {
+      "passed": 233,
+      "seconds": 17.9,
+      "backend_env": "MONGOECO_JSON_BACKEND=orjson",
+      "log": "final-orjson.txt.gz",
+      "scope": "219 corpus checks plus 14 property/boundary checks; unique-index four checks run in final core"
+    },
+    "typing": {
+      "status": "passed",
+      "log": "final-typing.txt.gz"
+    },
+    "without_sdk": {
+      "status": "passed",
+      "version": "3.13",
+      "scope": "double/decimal/signaling NaN roots and classic immutable ID",
+      "log": "final-no-sdk.txt.gz"
+    },
+    "lint": {
+      "status": "passed",
+      "changed_python_files": 11,
+      "log": "final-lint.txt.gz",
+      "new_tests": "separately linted"
+    },
+    "legacy_sqlite": {
+      "status": "passed",
+      "before": "legacy-final-before.json",
+      "after": "legacy-final-after.json",
+      "scope": "archived-runtime file update/no-op/index/reopen/delete; keys/schema unchanged, integrity_check ok"
+    },
+    "identity_contracts": {
+      "passed": 13,
+      "seconds": 0.5,
+      "log": "final-identity-contracts.txt.gz"
+    }
+  },
+  "properties": {
+    "new": 2,
+    "examples_each": 100,
+    "oracles": [
+      "SDK BSON encoding for DBRef/document identity",
+      "SDK BSON clone preserving NaN payload"
+    ],
+    "scope": "DBRef semantic index keys; raw/wrapped double and Decimal128 quiet/signaling NaN storage guards, not all D06c consumers",
+    "base_failed": 2,
+    "base_log": "final-before-properties.txt.gz"
+  },
+  "performance": {
+    "samples": 5,
+    "operations_per_sample": 300,
+    "workload": "100 documents, indexed value, update_one plus find_one",
+    "sequential_without_other_gates": true,
+    "checksums_identical": true,
+    "after_before_ratio": {
+      "MemoryEngine": 1.0536392126759007,
+      "SQLiteEngine": 1.011162846200007
+    },
+    "artifacts": [
+      "isolated-benchmark-before.json",
+      "isolated-benchmark-after.json"
+    ]
+  },
+  "event_characterization": {
+    "cases_per_version": 6,
+    "native_versions": 3,
+    "local_pairs": 6,
+    "barrier": true,
+    "fixed": false,
+    "remaining": [
+      "classic whole/dotted need source path information despite same postimage",
+      "native documentKey retains preimage BSON ID representation",
+      "pipeline update/replace kind and updateDescription",
+      "transactional publication/outbox/rollback across writes"
+    ],
+    "capture_candidate": "initial identity candidate; producer code unchanged in final numeric guard extension"
+  },
+  "additional_diagnostic": {
+    "generated_quiet_nan": "maintenance agrees in native9 and both engines",
+    "string_snan": "native9 conversion 241 vs local acceptance; scalar conversion owner pending reference 7/8 and permanent witness",
+    "scope": "not closure of conversion/B07"
+  },
+  "protected_files": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "historical_fixtures_unchanged": true,
+  "intermediate_runs": [
+    "first replay adapter lacked delete_one; added to async test view",
+    "first reopen test used client._engine database attribute, corrected to explicit engine",
+    "orjson flag not supported; failed invocation ran no tests, final env invocation passed",
+    "final baseline/candidate use same final 9-action corpus",
+    "final guard reuses existing raw numeric NaN detector; test domain extended to internal double/Decimal128 wrappers",
+    "transient detector rename caused import feedback and was reverted before final gates",
+    "test SDK adaptation initially failed for wrapped values; replaced by explicit independent test adapter; final 100-example properties pass",
+    "initial full gates belong to runtime-sources-initial.json; final-* gates run after final numeric guard extension",
+    "earlier final benchmark overlapped short lint process; isolated repeat awaited fully with no other gates and is the reported measurement"
+  ],
+  "remaining": [
+    "D01b event effects and delivery",
+    "D06a/D06b remaining context/subpipeline and physical acceptance",
+    "D06c remaining group/lookup/sets/spill/Search consumers",
+    "D04 watch preparation/context and native RS job fixtures",
+    "H53 policy disposition",
+    "scalar sNaN conversion differential",
+    "D07 optional pilot decision",
+    "D05 final matrices/package/global/coverage/performance"
+  ],
+  "lifecycle": "no server start/stop/reconfiguration this increment; temporary databases dropped; owned RS services retained for ongoing D01b; habitual instance untouched",
+  "artifacts": {
+    "README.md": "0a49d147f4f284a87902ecabe6e668e3de043daf7be7f42de93cba8eb8570017",
+    "before-final-corpus.txt.gz": "f5336d8488ee4edee89ae5e6bfb196f6d4ae7f2954d3149820763aaefe7ca23e",
+    "before-properties.txt.gz": "f9c87209b3935fe9bec872714cdbdeecfc35ecbfec27ff64d57e79eac939908c",
+    "before-replay.txt.gz": "fe3c7a28916d508d66ea5792e7dc9fba34c0d999655b679a49138d1808953e9c",
+    "benchmark-after.json": "005d0838a0e7a71dd09dbf4b5a2a8166c8ad028562e792b70cee877d8404e0bd",
+    "benchmark-before.json": "8f36bff0b8ae080702837ec12e7bdaeaa0d74267dce0cc91065fb798a5809666",
+    "benchmark.py.txt": "350aac806cd6df9c4e9eb733c0fb101a0746d6ce5d04e0cf89cff0c017a72fc6",
+    "candidate-direct-diff.txt.gz": "cf2d4a4978bab4c57d318d020f8335aba8204f654b68863ab4737c3b2612ef42",
+    "candidate-replay.txt.gz": "f1246333459b80cb925b23fe1916b53a7577ad3ea9164137e6613ca56ade37e6",
+    "candidate2-replay.txt.gz": "472c2c8f2ed622e6cc6ea9f90f63899a6c53b4ab89eae8997828b7c9840458b1",
+    "components-initial.txt.gz": "997fe7444702db71188172d240ffe92ae328d07e89ef1bdb5d0c6ba6ac7a3957",
+    "core-properties.txt.gz": "93e85e64cf615bfc71de0dea8111ea7d86d9c0d9dd0117967b64dad91711875a",
+    "event-inputs-probe.py.txt": "94432d822e4dda9f75e0c99c37d2c1ab479b1ce8b6e2569d9eedcc4e2f05b938",
+    "event-inputs.json": "d838cfbe9b56eeca92aa8e4a4909e2666891ad089338a0fd26134b9e4f193b1d",
+    "extended-properties-final.txt.gz": "fd351bcdd11ff2893f1548f19edf77bd3ae8a7a54b3e2e50bf50ee40b05b3961",
+    "extended-properties-green.txt.gz": "33cfcc6ee4afb9145278caa5d057b1e5d543bd08987041031978dc2cb4ea4bb2",
+    "extended-properties.txt.gz": "f31fc83dfe229e5279e7579a3069cc1fa2e7baec5d4634bcb7dfd2ce6631b1bf",
+    "final-before-properties.txt.gz": "eb2ecddc63912d42867ba9326d2c959468fc84dc0a37941fb9bef32fdfd415aa",
+    "final-benchmark-after.json": "055414bed7b04249f0528a0da54515cebd91634baf758cee753041b3f0de0eea",
+    "final-benchmark-before.json": "c71295b1e6c0f293b37c7ccd866b07fb4f555fa321bd58252484991ed24aa95d",
+    "final-core.txt.gz": "f8558548fd021a08fe152320259b323f44a6a24d3575dbfc043f4e0321704393",
+    "final-expanded-core.txt.gz": "4802946e3ebab799d22edb5036e2156f88d6a3ea950ae297051eb2659a808585",
+    "final-identity-contracts.txt.gz": "53114406f87463bb9773c803e28dafc42d863f0912e992343641da7a37bd8843",
+    "final-lint.txt.gz": "10b32f7162eab9d3cd1227b30374094075d7532032297ebea9be8aa3034f7d8a",
+    "final-no-sdk.txt.gz": "b886db67597c8c8b5adeea245b7fb52620bab8d86bb7aeb8e21ba4aa09e42dc8",
+    "final-orjson.txt.gz": "246b4d64e5bd403578fd676d165ae634dd1195866dd9c5d19012d7a475daa26b",
+    "final-semantic.txt.gz": "1e2df0af09ee47830577e39b387a6bd0134d1cd8fad29c929f669f5c4bfeaea3",
+    "final-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "final-unique-boundaries.txt.gz": "a402e983b9805ec770904af6d02c2c21625cef018167f9f5f15bbda7d5bfe433",
+    "final-write-consumers.txt.gz": "6bda030d60ab5c140dcada4ea328cc2893abe8e4f7e579bc8befd6fd340ae29a",
+    "focal-replay.txt.gz": "6d5dbee9c22f1e8424c49f8c510b2b05e7a250ae31c8da8ee128de5249757954",
+    "generated-id-probe.json": "7ac5a73051aa9a3e80fd0ca9b42c262c33d67f2993e7ae9eb46851405cf0df2f",
+    "generated-id-probe.py.txt": "10b48aa9d4bd84c1b3492828deff809f5d2d3d42a50bf2262faa98d525836a85",
+    "isolated-benchmark-after.json": "a2377de0f3b53f9fff9a612a6374f2ca2675484d50d4c01687d645fe0e8569b5",
+    "isolated-benchmark-before.json": "b555d403c6687340aa46d0c3121667f5c66a98ae8b232272bac2f18c30cecc91",
+    "legacy-after.json": "343d196870aed1be57fe7c38e966ebd1727b9e903b496e5e5d3c03c1fefd4b2f",
+    "legacy-before.json": "1fe3f273e432f61456cb24ab82b70c55781ff9a3f1f1878964eecb5ceab6c9e1",
+    "legacy-file-probe.py.txt": "faebdd7b737e0257523b39f7f21e34153a205fa454d097e059b0de10602e447d",
+    "legacy-final-after.json": "343d196870aed1be57fe7c38e966ebd1727b9e903b496e5e5d3c03c1fefd4b2f",
+    "legacy-final-before.json": "ad6392eeedca749eade2667e89f2adabde9b5d48afbf8a0aa6936435cc2d2776",
+    "lint-final.txt.gz": "10b32f7162eab9d3cd1227b30374094075d7532032297ebea9be8aa3034f7d8a",
+    "lint.txt.gz": "10b32f7162eab9d3cd1227b30374094075d7532032297ebea9be8aa3034f7d8a",
+    "native-check-7.0.txt.gz": "1f098de0b7367b0552acac7da9aa95ee6228f8b7efa74d878699f1f447f4b123",
+    "native-check-8.0.txt.gz": "911515e58d209b5be0b174ef2912af7877f8547534a29ccca344b218c8108362",
+    "native-check-9.0.txt.gz": "326abb350e431a6de6dff138045c4ff1beadc3a641da14910815c5fcab3fb2af",
+    "no-sdk-probe.py.txt": "7fc189e77a92bbbd75455c1e8a269e27e6319654e56c570b43b50cbc9f8d5d31",
+    "no-sdk.txt.gz": "77311b0479cbb162fae694bd7dde543f48c837fb3be4d2537318cfcbdc8a475a",
+    "orjson-final.txt.gz": "b0cb12b5098546be9e5e1a7c5562a0120467f353548836fee66e8af4be649d77",
+    "orjson.txt.gz": "01faeb6bfecac692b4011804e07c92c0583ee54e736d31a8e3927bc3d47e62e9",
+    "properties-boundaries-final.txt.gz": "f83b5c620b856f7e5e0ff342edd7e1eeb40805ed9d58dc36bcde4f7fad65270a",
+    "properties-boundaries.txt.gz": "fb76b1ad45fdc1bcf7cf29dec2f5b4a980d1b6b0eedd77135a0a074315a0d017",
+    "runtime-sources-initial.json": "403b1eeb36bb5a2684107f404edb2521df5025326876d606292773f073f4f35a",
+    "runtime-sources.json": "8ef2dee173cc913ff7bebd11fd961429edc162da3f0bca803e7ffc67b1f0e194",
+    "semantic-all.txt.gz": "924f8bedd0371be990179cf1c9122fb772ba4d3e36252dce1a14c4d3ab32b15d",
+    "typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "unique-index-native.json": "5a506f5297586230d9a75a620cd1168695ef77331f1bed7d7f2e439bf57f2463",
+    "unique-index-probe.py.txt": "47fa25e869e4ff36b94bfa6e84731a940db015ceb6b9a39372487755755a77d4",
+    "write-consumers.txt.gz": "a141d14b5089a95e7068bcffc09ae8a07babcf4f0aa63ea50bc9936f9b752f32"
+  }
+}

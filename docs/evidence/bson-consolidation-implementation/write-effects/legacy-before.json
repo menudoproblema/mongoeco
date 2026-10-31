@@ -1,0 +1,156 @@
+{
+  "source_file": "/tmp/mongoeco-d01b-current/before-source/src/mongoeco/__init__.py",
+  "file_sha256": "b7d83ed56f851983e6abb812bcd8edd97b73b4374fa831be39632313a8af6d32",
+  "keys": [
+    [
+      "binary",
+      "(<class 'mongoeco.core.codec._InternalBsonBinary'>, Binary(b'ab', subtype=0))"
+    ],
+    [
+      "compound",
+      "('dict', (('a', ('list', (('dict', (('n', (<class 'float'>, nan)),)),))),))"
+    ],
+    [
+      "scalar",
+      "(<class 'float'>, nan)"
+    ]
+  ],
+  "schema": [
+    [
+      "change_outbox",
+      "CREATE TABLE change_outbox (\n            sequence INTEGER PRIMARY KEY AUTOINCREMENT,\n            operation_id TEXT NOT NULL,\n            event_index INTEGER NOT NULL,\n            kind TEXT NOT NULL CHECK (kind IN ('event', 'gap')),\n            payload TEXT,\n            UNIQUE (operation_id, event_index)\n        )"
+    ],
+    [
+      "change_outbox_consumers",
+      "CREATE TABLE change_outbox_consumers (\n            consumer_id TEXT PRIMARY KEY,\n            checkpoint INTEGER NOT NULL,\n            durable INTEGER NOT NULL CHECK (durable IN (0, 1)),\n            updated_at_epoch REAL NOT NULL\n        , lease_owner TEXT, lease_generation INTEGER NOT NULL DEFAULT 0, lease_expires_at_epoch REAL, owner_instance TEXT, registration_expires_at_epoch REAL)"
+    ],
+    [
+      "change_outbox_identities",
+      "CREATE TABLE change_outbox_identities (\n            operation_id TEXT NOT NULL,\n            event_index INTEGER NOT NULL,\n            sequence INTEGER NOT NULL, event_kind TEXT, effect_hash TEXT,\n            PRIMARY KEY (operation_id, event_index),\n            UNIQUE (sequence)\n        )"
+    ],
+    [
+      "change_outbox_state",
+      "CREATE TABLE change_outbox_state (\n            singleton INTEGER PRIMARY KEY CHECK (singleton = 1),\n            pruned_through INTEGER NOT NULL DEFAULT 0\n        )"
+    ],
+    [
+      "collections",
+      "CREATE TABLE collections (\n                        collection_id INTEGER,\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        options_json TEXT NOT NULL DEFAULT '{}',\n                        PRIMARY KEY (db_name, coll_name)\n                    )"
+    ],
+    [
+      "documents",
+      "CREATE TABLE documents (\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        storage_key TEXT NOT NULL,\n                        document TEXT NOT NULL,\n                        PRIMARY KEY (db_name, coll_name, storage_key)\n                    )"
+    ],
+    [
+      "idx_6a795c47a9ac146d",
+      "CREATE INDEX \"idx_6a795c47a9ac146d\" ON documents (db_name, coll_name, COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), ''), COALESCE(json_extract(document, '$.v.\"$mongoeco\".value'), json_extract(document, '$.v')))"
+    ],
+    [
+      "idx_b13656d51d4fee1c",
+      "CREATE INDEX \"idx_b13656d51d4fee1c\" ON documents (db_name, coll_name, COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), ''), COALESCE(json_extract(document, '$.v.\"$mongoeco\".value'), json_extract(document, '$.v')))"
+    ],
+    [
+      "idx_collections_collection_id",
+      "CREATE UNIQUE INDEX idx_collections_collection_id\n                    ON collections (collection_id)\n                    "
+    ],
+    [
+      "idx_fe84eabf80080dae",
+      "CREATE INDEX \"idx_fe84eabf80080dae\" ON documents (db_name, coll_name, COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), ''), COALESCE(json_extract(document, '$.v.\"$mongoeco\".value'), json_extract(document, '$.v')))"
+    ],
+    [
+      "idx_scalar_index_entries_storage",
+      "CREATE INDEX idx_scalar_index_entries_storage\n                    ON scalar_index_entries (collection_id, storage_key)\n                    "
+    ],
+    [
+      "idx_ttl_index_entries_expiration",
+      "CREATE INDEX idx_ttl_index_entries_expiration\n                    ON ttl_index_entries (\n                        collection_id, expires_at_epoch_ms, index_name, storage_key\n                    )\n                    "
+    ],
+    [
+      "indexes",
+      "CREATE TABLE indexes (\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        name TEXT NOT NULL,\n                        physical_name TEXT,\n                        fields TEXT NOT NULL,\n                        keys TEXT,\n                        unique_flag INTEGER NOT NULL,\n                        sparse_flag INTEGER NOT NULL DEFAULT 0,\n                        hidden_flag INTEGER NOT NULL DEFAULT 0,\n                        collation_json TEXT,\n                        partial_filter_json TEXT,\n                        expire_after_seconds INTEGER,\n                        text_weights_json TEXT,\n                        default_language TEXT,\n                        language_override TEXT,\n                        min_value REAL,\n                        max_value REAL,\n                        bucket_size REAL,\n                        multikey_flag INTEGER NOT NULL DEFAULT 0,\n                        multikey_physical_name TEXT, scalar_physical_name TEXT,\n                        PRIMARY KEY (db_name, coll_name, name)\n                    )"
+    ],
+    [
+      "mkidx_214a83acf16bedc9",
+      "CREATE INDEX \"mkidx_214a83acf16bedc9\" ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
+    ],
+    [
+      "mkidx_bf0797bd92cd0334",
+      "CREATE INDEX \"mkidx_bf0797bd92cd0334\" ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
+    ],
+    [
+      "mkidx_c76a7657a9fdfb50",
+      "CREATE INDEX \"mkidx_c76a7657a9fdfb50\" ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
+    ],
+    [
+      "mongoeco_schema_migrations",
+      "CREATE TABLE mongoeco_schema_migrations (\n            component TEXT PRIMARY KEY,\n            version INTEGER NOT NULL\n        )"
+    ],
+    [
+      "multikey_entries",
+      "CREATE TABLE multikey_entries (\n                        collection_id INTEGER NOT NULL DEFAULT 0,\n                        index_name TEXT NOT NULL,\n                        storage_key TEXT NOT NULL,\n                        element_type TEXT NOT NULL,\n                        type_score INTEGER NOT NULL DEFAULT 100,\n                        element_key TEXT NOT NULL\n                    )"
+    ],
+    [
+      "scalar_index_entries",
+      "CREATE TABLE scalar_index_entries (\n                        collection_id INTEGER NOT NULL DEFAULT 0,\n                        index_name TEXT NOT NULL,\n                        storage_key TEXT NOT NULL,\n                        element_type TEXT NOT NULL,\n                        type_score INTEGER NOT NULL DEFAULT 100,\n                        element_key TEXT NOT NULL\n                    )"
+    ],
+    [
+      "scidx_4146d13571f4ed85",
+      "CREATE INDEX \"scidx_4146d13571f4ed85\" ON scalar_index_entries (collection_id, index_name, type_score, element_key, storage_key)"
+    ],
+    [
+      "scidx_76901845ea3e5504",
+      "CREATE INDEX \"scidx_76901845ea3e5504\" ON scalar_index_entries (collection_id, index_name, type_score, element_key, storage_key)"
+    ],
+    [
+      "scidx_841640bd8e8cf79d",
+      "CREATE INDEX \"scidx_841640bd8e8cf79d\" ON scalar_index_entries (collection_id, index_name, type_score, element_key, storage_key)"
+    ],
+    [
+      "search_indexes",
+      "CREATE TABLE search_indexes (\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        name TEXT NOT NULL,\n                        index_type TEXT NOT NULL,\n                        definition_json TEXT NOT NULL,\n                        ready_at_epoch REAL, physical_name TEXT,\n                        PRIMARY KEY (db_name, coll_name, name)\n                    )"
+    ],
+    [
+      "sqlite_autoindex_change_outbox_1",
+      null
+    ],
+    [
+      "sqlite_autoindex_change_outbox_consumers_1",
+      null
+    ],
+    [
+      "sqlite_autoindex_change_outbox_identities_1",
+      null
+    ],
+    [
+      "sqlite_autoindex_change_outbox_identities_2",
+      null
+    ],
+    [
+      "sqlite_autoindex_collections_1",
+      null
+    ],
+    [
+      "sqlite_autoindex_documents_1",
+      null
+    ],
+    [
+      "sqlite_autoindex_indexes_1",
+      null
+    ],
+    [
+      "sqlite_autoindex_mongoeco_schema_migrations_1",
+      null
+    ],
+    [
+      "sqlite_autoindex_search_indexes_1",
+      null
+    ],
+    [
+      "sqlite_sequence",
+      "CREATE TABLE sqlite_sequence(name,seq)"
+    ],
+    [
+      "ttl_index_entries",
+      "CREATE TABLE ttl_index_entries (\n                        collection_id INTEGER NOT NULL,\n                        index_name TEXT NOT NULL,\n                        storage_key TEXT NOT NULL,\n                        expires_at_epoch_ms INTEGER NOT NULL,\n                        PRIMARY KEY (collection_id, index_name, storage_key)\n                    ) WITHOUT ROWID\n                    "
+    ]
+  ]
+}

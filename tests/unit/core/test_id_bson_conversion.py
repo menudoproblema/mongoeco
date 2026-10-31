@@ -5,19 +5,22 @@ from dataclasses import replace
 import pytest
 
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
-from mongoeco.core.identity import document_id_bson_type_changed
+from mongoeco.core.identity import assert_classic_update_preserves_id
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.engines._memory_collection import MemoryCollection
+from mongoeco.errors import WriteError
 
 
-def test_id_type_observer_distinguishes_width_in_nested_arrays_without_wrapper_noise():
-    assert document_id_bson_type_changed(
-        {"_id": {"a": [1]}}, {"_id": {"a": [BsonInt64(1)]}}
-    )
-    assert not document_id_bson_type_changed(
-        {"_id": {"a": [1]}}, {"_id": {"a": [BsonInt32(1)]}}
-    )
-    assert not document_id_bson_type_changed({"_id": False}, {"_id": False})
+def test_classic_id_guard_distinguishes_width_in_nested_arrays_without_wrapper_noise():
+    with pytest.raises(WriteError) as error:
+        assert_classic_update_preserves_id(
+            {"_id": {"a": [1]}}, {"_id": {"a": [BsonInt64(1)]}}
+        )
+    assert error.value.code == 66  # noqa: PLR2004 - native immutable-ID code
+    updated = {"_id": {"a": [BsonInt32(1)]}}
+    assert_classic_update_preserves_id({"_id": {"a": [1]}}, updated)
+    assert updated == {"_id": {"a": [1]}}
+    assert_classic_update_preserves_id({"_id": False}, {"_id": False})
 
 
 @pytest.mark.parametrize("compiled", [True, False])

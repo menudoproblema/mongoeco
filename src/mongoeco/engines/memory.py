@@ -21,6 +21,7 @@ import numpy as np
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import AggregationSpillPolicy
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
+from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.bson_ordering import bson_engine_key, bson_equality_key
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
@@ -43,12 +44,12 @@ from mongoeco.core.identity import (
     assert_valid_root_document_id,
     assert_valid_upsert_document_id,
     document_matches_root_id_lookup,
-    root_id_needs_semantic_lookup,
     materialize_merge_insert_document,
     materialize_merge_update_document,
     materialize_replacement_document,
     preserve_and_validate_pipeline_id,
     replacement_document_changed,
+    root_id_needs_semantic_lookup,
 )
 from mongoeco.core.operation_context import (
     ChangePublicationPolicy,
@@ -144,10 +145,10 @@ from mongoeco.engines.semantic_core import (
     EngineReadExecutionPlan,
     _iter_finalize_documents,
     build_query_plan_explanation,
+    compile_collection_validation_semantics,
     compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
-    compile_collection_validation_semantics,
     filter_documents,
     finalize_documents,
     iter_filtered_documents,
@@ -4087,6 +4088,14 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                 )
                 updated_storage_key = self._storage_key(document.get("_id"))
+                if (
+                    "_id" in original_document
+                    and "_id" in document
+                    and same_bson_update_value(
+                        original_document["_id"], document["_id"]
+                    )
+                ):
+                    updated_storage_key = storage_key
                 if modified and (
                     "_id" not in original_document
                     or (

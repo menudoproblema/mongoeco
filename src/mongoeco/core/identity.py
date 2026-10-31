@@ -4,7 +4,11 @@ from re import Pattern
 from typing import Any
 
 from mongoeco.core.bson_identity import same_bson_update_value
-from mongoeco.core.bson_scalars import bson_numeric_alias, is_bson_numeric
+from mongoeco.core.bson_scalars import (
+    _is_nan_numeric_value,
+    is_bson_numeric,
+    wrap_bson_numeric,
+)
 from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.errors import WriteError
@@ -47,23 +51,6 @@ def root_id_needs_semantic_lookup(value: Any) -> bool:
     return is_bson_numeric(value) or binary_parts(value) is not None
 
 
-def _numeric_id_types(value: Any) -> Any:
-    if isinstance(value, dict):
-        return tuple((key, _numeric_id_types(item)) for key, item in value.items())
-    if isinstance(value, list):
-        return tuple(_numeric_id_types(item) for item in value)
-    return bson_numeric_alias(value)
-
-
-def document_id_bson_type_changed(
-    original: dict[str, Any], updated: dict[str, Any]
-) -> bool:
-    """Observe numeric width/type changes independently of BSON value equality."""
-    return _numeric_id_types(DocumentCodec.to_internal(original.get("_id"))) != (
-        _numeric_id_types(DocumentCodec.to_internal(updated.get("_id")))
-    )
-
-
 def is_valid_root_document_id(value: Any) -> bool:
     return not isinstance(value, (list, Regex, Pattern)) and not (
         BsonRegex is not None and isinstance(value, BsonRegex)
@@ -85,17 +72,30 @@ def assert_valid_upsert_document_id(value: Any, *, is_replacement: bool) -> None
     assert_valid_root_document_id(value)
 
 
+def _storage_keys_equal(left: Any, right: Any) -> bool:
+    """Keep key equality, making cloned NaNs reflexive without coercion."""
+    # Tuple equality can itself signal InvalidOperation for Decimal sNaN.
+    # Inspect numeric leaves first rather than swallowing an equality error.
+    if isinstance(left, tuple) and isinstance(right, tuple):
+        return len(left) == len(right) and all(
+            _storage_keys_equal(a, b) for a, b in zip(left, right, strict=True)
+        )
+    numeric = wrap_bson_numeric(left)
+    if numeric is not None and _is_nan_numeric_value(numeric.value):
+        return type(left) is type(right) and same_bson_update_value(left, right)
+    return left == right
+
+
 def _storage_key_matches_id(value, storage_key, storage_key_for_id):
-    if storage_key_for_id(value) == storage_key:
+    if _storage_keys_equal(storage_key_for_id(value), storage_key):
         return True
     # Existing SQLite rows can retain the owned Binary class in their key,
     # while decoding yields its public local class. Verify physical BSON
     # identity before accepting the owned representation; never coerce numbers
     # or rewrite a persisted key to make a selected document fit it.
     owned = DocumentCodec.to_internal(value)
-    return (
-        same_bson_update_value(value, owned)
-        and storage_key_for_id(owned) == storage_key
+    return same_bson_update_value(value, owned) and _storage_keys_equal(
+        storage_key_for_id(owned), storage_key
     )
 
 
@@ -156,9 +156,8 @@ def assert_document_kept_storage_key(
 def replacement_document_changed(original, materialized, replacement):
     """Native replacement no-op rule, including implicit _id insertion."""
     return (
-        ("_id" not in replacement and "_id" in original)
-        or not same_bson_update_value(original, materialized)
-    )
+        "_id" not in replacement and "_id" in original
+    ) or not same_bson_update_value(original, materialized)
 
 
 def materialize_replacement_document(
@@ -229,23 +228,18 @@ def document_matches_root_id_lookup(
 def assert_classic_update_preserves_id(
     original_doc: dict[str, Any],
     updated_doc: dict[str, Any],
-    *,
-    dialect: Any,
 ) -> None:
     if "_id" in original_doc:
         original_id = original_doc["_id"]
-        if (
-            "_id" not in updated_doc
-            or document_id_bson_type_changed(original_doc, updated_doc)
-            or not dialect.values_equal(updated_doc["_id"], original_id)
+        if "_id" not in updated_doc or not same_bson_update_value(
+            updated_doc["_id"], original_id
         ):
             raise WriteError(
                 "Performing an update on the path '_id' would modify the immutable field '_id'",
                 code=66,
             )
         assert_valid_root_document_id(updated_doc["_id"])
-        if same_bson_update_value(original_id, updated_doc["_id"]):
-            updated_doc["_id"] = deepcopy(original_id)
+        updated_doc["_id"] = deepcopy(original_id)
         return
     if "_id" in updated_doc:
         assert_valid_root_document_id(updated_doc["_id"])

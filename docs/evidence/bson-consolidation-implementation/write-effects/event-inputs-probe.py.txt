@@ -1,0 +1,65 @@
+"""Event characterization only: source operations can share a final document."""
+import json
+import time
+import uuid
+from pathlib import Path
+
+from bson import BSON, json_util
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+CASES = (
+    ('classic_whole', {'o': {'a': 1, 'b': 1}, 'pad': 'x'*1000}, {'$set': {'o': {'a': 2, 'b': 1}}}),
+    ('classic_dotted', {'o': {'a': 1, 'b': 1}, 'pad': 'x'*1000}, {'$set': {'o.a': 2}}),
+    ('pipeline_whole', {'o': {'a': 1, 'b': 1}, 'pad': 'x'*1000}, [{'$set': {'o': {'a': 2, 'b': 1}}}]),
+    ('pipeline_id_small', {}, [{'$set': {'_id': 1.0}}]),
+    ('pipeline_id_large', {'pad': 'x'*1000}, [{'$set': {'_id': 1.0}}]),
+    ('classic_noop', {'v': 1.0}, {'$set': {'v': 1.0}}),
+)
+
+def run(db):
+    output = {}
+    for name, body, update in CASES:
+        collection = db[name]
+        collection.insert_one({'_id': 1, **body})
+        stream = collection.watch(max_await_time_ms=50)
+        try:
+            result = collection.update_one({}, update)
+            collection.insert_one({'_id': '__barrier'})
+            seen = []
+            barrier = False
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                event = stream.try_next()
+                if event is None:
+                    continue
+                if event.get('documentKey', {}).get('_id') == '__barrier':
+                    barrier = True
+                    break
+                summary = {'operationType': event['operationType'], 'documentKeyBson': BSON.encode(event['documentKey']).hex()}
+                if 'updateDescription' in event:
+                    summary['updateDescription'] = json.loads(json_util.dumps(event['updateDescription']))
+                    summary['updateDescriptionBson'] = BSON.encode(event['updateDescription']).hex()
+                if 'fullDocument' in event:
+                    summary['fullDocumentBson'] = BSON.encode(event['fullDocument']).hex()
+                seen.append(summary)
+            assert barrier, name
+            output[name] = {'counts': [result.matched_count, result.modified_count], 'events': seen, 'barrier_seen': True}
+        finally:
+            stream.close()
+    return output
+
+report = {'native': {}, 'local': {}}
+for dialect, port in [('7.0',49973),('8.0',49974),('9.0',49975)]:
+    with NativeClient(f'mongodb://127.0.0.1:{port}/?directConnection=true',serverSelectionTimeoutMS=2000) as client:
+        name = 'event_inputs_' + uuid.uuid4().hex
+        try:
+            report['native'][dialect] = run(client[name])
+        finally:
+            client.drop_database(name)
+    for engine in [MemoryEngine, SQLiteEngine]:
+        with MongoClient(engine(),mongodb_dialect=dialect) as client:
+            report['local'][engine.__name__ + '-' + dialect] = run(client.event_inputs)
+Path('docs/evidence/bson-consolidation-implementation/write-effects/event-inputs.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({side:{name:{case:value['events'] for case,value in cases.items()} for name,cases in records.items()} for side,records in report.items()},indent=2))

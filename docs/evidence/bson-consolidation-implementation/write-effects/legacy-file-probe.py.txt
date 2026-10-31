@@ -1,0 +1,56 @@
+"""Write using archived runtime, then inspect using the current runtime."""
+import argparse
+import hashlib
+import json
+import sqlite3
+import struct
+from pathlib import Path
+
+from bson import BSON, Binary
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+
+parser = argparse.ArgumentParser()
+parser.add_argument('mode', choices=['write', 'check'])
+parser.add_argument('path')
+parser.add_argument('report')
+args = parser.parse_args()
+number = struct.unpack('<d', bytes.fromhex('010000000000f87f'))[0]
+ids = {'scalar': number, 'compound': {'a': [{'n': number}]}, 'binary': Binary(b'ab', 0)}
+if args.mode == 'write':
+    with MongoClient(SQLiteEngine(args.path)) as client:
+        for name, value in ids.items():
+            collection = client.legacy[name]
+            collection.insert_one({'_id': value, 'v': 0})
+            collection.create_index([('v', 1)])
+    with sqlite3.connect(args.path) as connection:
+        report = {
+            'source_file': __import__('mongoeco').__file__,
+            'file_sha256': hashlib.sha256(Path(args.path).read_bytes()).hexdigest(),
+            'keys': list(connection.execute('SELECT coll_name,storage_key FROM documents ORDER BY coll_name')),
+            'schema': list(connection.execute('SELECT name,sql FROM sqlite_master ORDER BY name')),
+        }
+    Path(args.report).write_text(json.dumps(report, indent=2) + '\n')
+else:
+    original = json.loads(Path(args.report).read_text())
+    outcomes = {}
+    with MongoClient(SQLiteEngine(args.path)) as client:
+        for name, value in ids.items():
+            collection = client.legacy[name]
+            first = collection.update_one({}, {'$set': {'v': 1}})
+            repeated = collection.update_one({}, {'$set': {'v': 1}})
+            stored = collection.find_one({'v': 1}, hint='v_1')
+            assert BSON.encode({'_id': stored['_id']}) == BSON.encode({'_id': value})
+            assert [first.modified_count, repeated.modified_count] == [1, 0]
+            outcomes[name] = [first.modified_count, repeated.modified_count]
+    with sqlite3.connect(args.path) as connection:
+        keys = list(connection.execute('SELECT coll_name,storage_key FROM documents ORDER BY coll_name'))
+        schema = list(connection.execute('SELECT name,sql FROM sqlite_master ORDER BY name'))
+        assert json.loads(json.dumps(keys)) == original['keys']
+        assert json.loads(json.dumps(schema)) == original['schema']
+        assert connection.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+    with MongoClient(SQLiteEngine(args.path)) as client:
+        for name, value in ids.items():
+            assert client.legacy[name].find_one({})['v'] == 1
+            assert client.legacy[name].delete_one({}).deleted_count == 1
+    print(json.dumps({'outcomes': outcomes, 'keys_unchanged': True, 'schema_unchanged': True, 'reopened_and_deleted': True}, indent=2))

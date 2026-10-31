@@ -1,0 +1,27 @@
+import importlib.util
+import struct
+assert importlib.util.find_spec('bson') is None
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.errors import WriteError
+from mongoeco.types import Decimal128
+
+nan = struct.unpack('<d', bytes.fromhex('010000000000f87f'))[0]
+for factory in [MemoryEngine, SQLiteEngine]:
+    with MongoClient(factory()) as client:
+        for name, value in [('double', nan), ('decimal', Decimal128('NaN')), ('signaling', Decimal128('sNaN'))]:
+            collection = client.smoke[name]
+            collection.insert_one({'_id': value, 'v': 0})
+            collection.create_index([('v', 1)])
+            assert collection.update_one({}, {'$set': {'v': 1}}).modified_count == 1
+            assert collection.update_one({}, {'$set': {'v': 1}}).modified_count == 0
+            assert collection.delete_one({}).deleted_count == 1
+        collection = client.smoke.zero
+        collection.insert_one({'_id': 0.0})
+        try:
+            collection.update_one({}, {'$set': {'_id': -0.0}})
+        except WriteError as error:
+            assert error.code == 66
+        else:
+            raise AssertionError('immutable physical ID accepted')
+print('SDK-free 3.13 NaN double/decimal/signaling roots and classic immutable-ID smoke passed')

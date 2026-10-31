@@ -1749,6 +1749,10 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(value, bool):
             return ("bool", "1" if value else "0")
         if isinstance(value, (int, float)) and not isinstance(value, bool):
+            # Unsupported auxiliary signatures must not reject valid writes.
+            # Numeric query guards retain the canonical matcher fallback.
+            if isinstance(value, float) and not math.isfinite(value):
+                return None
             return ("number", SQLiteEngine._normalize_multikey_number(value))
         if type(value) is str:
             return ("string", value)
@@ -1760,7 +1764,10 @@ class SQLiteEngine(AsyncStorageEngine):
         value_type = payload[DocumentCodec._TYPE]
         raw_value = payload[DocumentCodec._VALUE]
         if value_type in {"decimal128_public", "decimal128"}:
-            return ("number", bson_numeric_index_key(Decimal(str(raw_value))))
+            number = Decimal(str(raw_value))
+            if not number.is_finite():
+                return None
+            return ("number", bson_numeric_index_key(number))
         if value_type in {"datetime", "uuid", "objectid", "bytes"}:
             return (value_type, str(raw_value))
         if value_type == "undefined":

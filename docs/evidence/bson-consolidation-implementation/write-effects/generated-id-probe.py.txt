@@ -1,0 +1,38 @@
+"""Additional conversion diagnostic; not part of the accepted write corpus."""
+import json
+import uuid
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+
+def run(db):
+    output = {}
+    for name, expression in [('double_nan', {'$toDouble': 'NaN'}), ('decimal_nan', {'$toDecimal': 'NaN'}), ('decimal_snan', {'$toDecimal': 'sNaN'})]:
+        collection = db[name]
+        result = {}
+        for step, action in [
+            ('upsert', lambda: collection.update_one({'seed': 1}, [{'$set': {'_id': expression, 'v': 0}}], upsert=True)),
+            ('update', lambda: collection.update_one({}, {'$set': {'v': 1}})),
+            ('delete', lambda: collection.delete_one({})),
+        ]:
+            try:
+                value = action()
+                result[step] = {'matched': getattr(value, 'matched_count', None), 'modified': getattr(value, 'modified_count', None), 'deleted': getattr(value, 'deleted_count', None)}
+            except Exception as error:
+                result[step] = {'error': type(error).__name__, 'code': getattr(error, 'code', None), 'message': str(error)}
+        output[name] = result
+    return output
+
+
+output = {}
+with NativeClient('mongodb://127.0.0.1:49975/?directConnection=true') as client:
+    name = 'generated_id_' + uuid.uuid4().hex
+    try:
+        output['native9'] = run(client[name])
+    finally:
+        client.drop_database(name)
+for factory in [MemoryEngine, SQLiteEngine]:
+    with MongoClient(factory()) as client:
+        output[factory.__name__] = run(client.generated_id)
+print(json.dumps(output, indent=2))

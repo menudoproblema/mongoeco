@@ -351,13 +351,64 @@ El plan precisa reutilización de identidad física en el caller clásico y
 construcción compartida de efectos confirmados, con pruebas de commit/ausencia
 separadas de preparación/contexto watch. Esta revisión no modifica runtime.
 
+## D01b — Identidad de `_id`, índices y escrituras múltiples
+
+Este incremento implementa las guardas y efectos de estado/contadores/índices;
+D01b sigue abierto para construcción/contenido y entrega de eventos. La
+[evidencia](evidence/bson-consolidation-implementation/write-effects/receipt.json)
+identifica candidato, base archivada, capturas y ejecuciones finales.
+
+Classic usa `same_bson_update_value` en su guarda de `_id`; desaparecen el
+detector numérico parcial y su parámetro dialecto sin función semántica. No se
+cambia ninguna firma SPI v2. Pipeline/replacement conservan las conversiones
+semánticamente equivalentes que aceptan los servidores. La comparación de
+claves existentes admite copias BSON del mismo payload NaN, también con
+wrappers double/Decimal128 quiet/signaling; recorre tuplas antes de igualdad
+Python para evitar InvalidOperation. No acepta otro payload ni cambia el formato. Memory conserva la clave seleccionada para un
+`_id` físicamente idéntico. Se mantienen controles de claves/documentos erróneos.
+
+Los testigos encontraron otras dos especializaciones que evitaban su autoridad:
+las claves de índices Memory reconocen ahora la vista documental DBRef común;
+SQLite deja de rechazar escrituras válidas cuando no puede formar una firma
+auxiliar finita. Retorna ausencia de firma y conserva fallback probado, sin
+nuevo formato de claves ni pushdown aproximado. La propiedad DBRef amplía D00;
+no cierra group/lookup/sets/spill/Search ni todo D06c.
+
+Nueve acciones nuevas del registro/runner existentes tienen capturas nativas
+7.0.43/8.0.32/9.0.2, FCV correspondiente, verificadas con --check. El runtime
+archivado `c15dfb5` falla 84 checks y pasa 135 sobre el corpus final. El candidato
+pasa 219 focales, 5.695 integrados, 2.564 de core/propiedades (936 subtests,
+un skip local) y 12.155 de consumidores de escritura (1.478 subtests). Pasan
+233 con orjson (corpus y fronteras), typing público/boundary, SDK-free 3.13 y lint sin deuda nueva.
+Los observadores protegidos y fixtures históricos conservan su identidad.
+Un archivo SQLite realmente creado por la base anterior se actualiza/reabre
+sin cambiar claves ni esquema. Cinco muestras secuenciales del benchmark
+pequeño conservan checksum y razones de medianas 1,05 Memory/1,01 SQLite; D05 conserva
+costes y matrices completos.
+
+La caracterización adicional con barrera precisa el siguiente trabajo:
+classic whole y dotted pueden dejar la misma postimagen y publicar distinta
+updateDescription. Los efectos deben conservar rutas/procedencia; deducir todo
+solo de before/after perdería información. DocumentKey nativo conserva el tipo
+anterior de `_id` aunque pipeline cambie su representación; el local usa el
+posterior. Ambos defectos siguen abiertos junto con replace/update y entrega
+transaccional. No se reinterpretan los controles TTL como aceptación de estos
+contenidos de evento ni se normalizan sus diferencias en el observador.
+
+Una sonda adicional de IDs generados confirma mantenimiento de quiet NaN, pero
+expone string sNaN aceptado por `$toDecimal` local y rechazado con 241 por MongoDB
+9. El owner de conversión escalar conserva ese diagnóstico, con contraste 7/8 y
+testigo permanente pendientes; no se cierra mediante una prohibición global de
+NaN almacenado ni se declara completa la paridad de conversiones.
+
 ## Trabajo restante
 
-- D01b: consecuencias públicas de modificación, eventos, índices y operaciones múltiples.
+- D01b: construcción/contenido de eventos y entrega/outbox/rollback, con procedencia de rutas y documentKey físico anterior. Estado/contadores/índices/múltiples poseen el incremento anterior; no acreditan cierre completo.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
 - D04: preparación/contexto de watch y fixtures de replica set para los jobs
   nativos que alcanzan watch/TTL; la entrega TTL no cierra esos errores de entrada.
 - H53: caracterización y disposición de observabilidad conforme al plan.
+- Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre.
 
