@@ -54,6 +54,7 @@ class _AsyncCursorView:
     def __init__(self, cursor, loop):
         self.cursor = cursor
         self.loop = loop
+        self._iterator_view = None
 
     def _invoke(self, method, *args, **kwargs):
         async def execute():
@@ -63,7 +64,17 @@ class _AsyncCursorView:
         return asyncio.run_coroutine_threadsafe(execute(), self.loop).result(timeout=10)
 
     def __iter__(self):
-        return iter(self._invoke("to_list"))
+        return self
+
+    def __next__(self):
+        try:
+            if self._iterator_view is None:
+                self._iterator_view = _AsyncCursorView(
+                    self._invoke("__aiter__"), self.loop
+                )
+            return self._iterator_view._invoke("__anext__")
+        except StopAsyncIteration:
+            raise StopIteration from None
 
     def sort(self, *args, **kwargs):
         self._invoke("sort", *args, **kwargs)
@@ -74,6 +85,7 @@ class _AsyncCursorView:
 
     def rewind(self):
         self._invoke("rewind")
+        self._iterator_view = None
         return self
 
     def try_next(self):
@@ -164,11 +176,7 @@ class _AsyncView:
         return self._call("insert_many", *args, **kwargs)
 
     def aggregate(self, pipeline, **kwargs):
-        async def execute():
-            cursor = await self.collection.aggregate(pipeline, **kwargs)
-            return await cursor.to_list(length=None)
-
-        return asyncio.run_coroutine_threadsafe(execute(), self.loop).result(timeout=10)
+        return _AsyncCursorView(self._call("aggregate", pipeline, **kwargs), self.loop)
 
     def _call(self, method, *args, **kwargs):
         async def execute():

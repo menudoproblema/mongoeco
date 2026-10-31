@@ -1291,11 +1291,13 @@ class AsyncCollection:
         operation: AggregateOperation,
         *,
         session: ClientSession | None = None,
+        apply_codec_options: bool = True,
     ) -> AsyncAggregationCursor:
         return AsyncAggregationCursor(
             self,
             operation,
             session=session,
+            apply_codec_options=apply_codec_options,
         )
 
     async def update_one(

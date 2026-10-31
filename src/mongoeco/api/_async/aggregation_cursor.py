@@ -2,6 +2,7 @@ import datetime
 import math
 import time
 
+from collections import deque
 from collections.abc import AsyncIterator, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
@@ -34,6 +35,9 @@ from mongoeco.core.aggregation import (
     split_pushdown_pipeline,
 )
 from mongoeco.core.aggregation.grouping_stages import _IncrementalGroup
+from mongoeco.core.aggregation.extensions import (
+    get_registered_aggregation_stage_registration,
+)
 from mongoeco.core.aggregation.lookup_physical import (
     explain_lookup_physical_plans,
 )
@@ -284,10 +288,45 @@ class AsyncAggregationCursor:
     """Cursor async mínimo para resultados de aggregate()."""
 
     def __await__(self):
-        async def _resolve():
-            return self
+        return self._initialize().__await__()
 
-        return _resolve().__await__()
+    async def _initialize(self):
+        if not self._initialized and not self._closed:
+            self._initialized = True
+            maximum = 101 if self._batch_size is None else self._batch_size
+            # PyMongo omits the initial batchSize for a write pipeline. Raw
+            # aggregate commands keep their requested size via _read_response.
+            if maximum == 0 and self._split_terminal_writeback_stage(self._pipeline)[1]:
+                maximum = 101
+            await self._fill_response(maximum)
+        return self
+
+    async def _read_response(self, maximum, *, initial=False):
+        """One server response, without the driver's getMore size promotion."""
+        if initial:
+            self._initialized = True
+        await self._fill_response(maximum)
+        batch = list(self._response_buffer)
+        self._response_buffer.clear()
+        return batch
+
+    async def _fill_response(self, maximum):
+        if self._closed or maximum == 0:
+            return
+        batch = []
+        self._response_remaining = maximum
+        try:
+            while maximum is None or len(batch) < maximum:
+                try:
+                    batch.append(await self._next_source_document())
+                except StopAsyncIteration:
+                    break
+                if self._response_remaining is not None:
+                    self._response_remaining -= 1
+        except BaseException:
+            await self.close()
+            raise
+        self._response_buffer.extend(batch)
 
     _force_full_search_execution = False
 
@@ -304,8 +343,10 @@ class AsyncAggregationCursor:
         collation: dict[str, object] | None = None,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        apply_codec_options: bool = True,
     ):
         self._collection = collection
+        self._apply_codec_options = apply_codec_options
         if not isinstance(operation, AggregateOperation):
             operation = compile_aggregate_operation(
                 operation,
@@ -378,6 +419,9 @@ class AsyncAggregationCursor:
             session,
         )
         self._active_async_iterator: AsyncIterator[Document] | None = None
+        self._response_buffer = deque()
+        self._initialized = False
+        self._response_remaining = None
         self._closed = False
 
     def _execution_variables(self) -> ExpressionExecutionContext:
@@ -400,9 +444,7 @@ class AsyncAggregationCursor:
     def _effective_pipeline(self) -> Pipeline:
         self._pipeline = prepare_pipeline(
             self._pipeline,
-            dialect=getattr(
-                self._collection, "mongodb_dialect", MONGODB_DIALECT_70
-            ),
+            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
             collection=getattr(self._collection, "_collection_name", None),
             variables=frozenset(self._execution_context.bindings),
         )
@@ -414,9 +456,7 @@ class AsyncAggregationCursor:
     def _cxp_explain_projection(self) -> dict[str, object]:
         leading_search = self._leading_search_stage()
         if leading_search is None:
-            return build_mongodb_exchange_explain_projection(
-                capability="aggregation"
-            )
+            return build_mongodb_exchange_explain_projection(capability="aggregation")
         operator, _spec = leading_search
         if operator == "$vectorSearch":
             return build_mongodb_exchange_explain_projection(
@@ -487,7 +527,10 @@ class AsyncAggregationCursor:
         if not isinstance(terminal, dict) or len(terminal) != 1:
             return pipeline, None
         operator, spec = next(iter(terminal.items()))
-        if operator != "$merge":
+        if (
+            operator != "$merge"
+            or get_registered_aggregation_stage_registration(operator) is not None
+        ):
             return pipeline, None
         for stage in pipeline[:-1]:
             if isinstance(stage, dict) and "$merge" in stage:
@@ -819,7 +862,10 @@ class AsyncAggregationCursor:
 
         for stage in pipeline:
             operator, spec = next(iter(stage.items()))
-            if operator in {"$skip", "$limit"}:
+            if (
+                operator in {"$skip", "$limit"}
+                and get_registered_aggregation_stage_registration(operator) is None
+            ):
                 seen_trailing_window = True
                 if operator == "$skip":
                     trailing_window = trailing_window.skip(int(spec))
@@ -1545,6 +1591,8 @@ class AsyncAggregationCursor:
         )
 
     def _materialize_document(self, document: Document) -> Document:
+        if not self._apply_codec_options:
+            return DocumentCodec.to_public(document)
         applier = getattr(
             self._collection,
             "_apply_codec_options_to_document",
@@ -2076,10 +2124,24 @@ class AsyncAggregationCursor:
         streamable_pipeline, trailing_skip, remaining_limit = stream_plan
         if remaining_limit == 0:
             return
-        page_size = self._batch_size
-        if page_size is None or page_size <= 0:
-            message = "windowed pipeline requires a positive batch size"
-            raise RuntimeError(message)
+        page_size = self._batch_size or 256
+        # These built-ins preserve or reduce outer-row cardinality. Unknown
+        # extensions and unwind may expand it, so request one source row there.
+        bounded_input = all(
+            get_registered_aggregation_stage_registration(next(iter(stage))) is None
+            and next(iter(stage))
+            in {
+                "$match",
+                "$project",
+                "$set",
+                "$addFields",
+                "$unset",
+                "$replaceRoot",
+                "$replaceWith",
+                "$lookup",
+            }
+            for stage in streamable_pipeline
+        )
         referenced_collections = await self._load_pipeline_resources()
         source = _CursorPageSource(
             self._build_pushdown_cursor(
@@ -2089,7 +2151,10 @@ class AsyncAggregationCursor:
         try:
             await source.prepare()
             while remaining_limit != 0:
-                page = await source.pull(page_size)
+                requested = page_size if bounded_input else 1
+                if self._response_remaining is not None:
+                    requested = min(requested, max(1, self._response_remaining))
+                page = await source.pull(requested)
                 if not page:
                     break
                 enforce_deadline(deadline)
@@ -2140,10 +2205,8 @@ class AsyncAggregationCursor:
             effective_pipeline = []
             writeback_stage = None
         else:
-            effective_pipeline, writeback_stage = (
-                self._split_terminal_writeback_stage(
-                    self._effective_pipeline(),
-                )
+            effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(
+                self._effective_pipeline(),
             )
         if leading_search or writeback_stage is not None:
             return self._stream_materialized_documents(await self._materialize())
@@ -2155,9 +2218,17 @@ class AsyncAggregationCursor:
             MONGODB_DIALECT_70,
         )
         pushdown = split_pushdown_pipeline(effective_pipeline, dialect=dialect)
-        incremental_group = self._split_incremental_group_pipeline(
-            pushdown.remaining_pipeline,
-            dialect=dialect,
+        registered_stages = any(
+            get_registered_aggregation_stage_registration(next(iter(stage))) is not None
+            for stage in pushdown.remaining_pipeline
+        )
+        incremental_group = (
+            self._split_incremental_group_pipeline(
+                pushdown.remaining_pipeline,
+                dialect=dialect,
+            )
+            if not registered_stages
+            else None
         )
         if incremental_group is not None:
             return await self._open_incremental_group_stream(
@@ -2171,7 +2242,7 @@ class AsyncAggregationCursor:
                 pushdown.remaining_pipeline,
                 dialect=dialect,
             )
-            if spill_policy is not None
+            if spill_policy is not None and not registered_stages
             else None
         )
         if incremental_sort is not None:
@@ -2181,8 +2252,6 @@ class AsyncAggregationCursor:
                 dialect=dialect,
                 deadline=deadline,
             )
-        if self._batch_size in (None, 0):
-            return self._stream_materialized_documents(await self._materialize())
         stream_plan = self._split_streamable_pipeline(
             pushdown.remaining_pipeline,
             dialect=dialect,
@@ -2201,7 +2270,7 @@ class AsyncAggregationCursor:
     ) -> list[Document]:
         if length is not None and length < 0:
             raise ValueError("length must be non-negative or None")
-        if length == 0 or self._closed:
+        if length == 0 or (self._closed and not self._response_buffer):
             return []
         started_at = time.perf_counter_ns()
         try:
@@ -2237,6 +2306,7 @@ class AsyncAggregationCursor:
         return documents
 
     async def close(self) -> None:
+        self._response_buffer.clear()
         if self._closed:
             return
         active = self._active_async_iterator
@@ -2514,8 +2584,20 @@ class AsyncAggregationCursor:
 
     @command_errors
     async def __anext__(self) -> Document:
-        if self._closed:
-            raise StopAsyncIteration
+        if not self._response_buffer and not self._closed:
+            await self._initialize()
+            if not self._response_buffer and not self._closed:
+                # PyMongo command cursors promote a requested getMore size 1
+                # to 2; aggregate's firstBatch retains the requested size.
+                await self._fill_response(
+                    max(2, self._batch_size) if self._batch_size else None
+                )
+        if self._response_buffer:
+            return self._response_buffer.popleft()
+        raise StopAsyncIteration
+
+    @command_errors
+    async def _next_source_document(self) -> Document:
         if self._active_async_iterator is None:
             self._active_async_iterator = self._stream_batches()
         try:

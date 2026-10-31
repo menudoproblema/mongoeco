@@ -22,6 +22,10 @@ from tests.differential.semantic_binary_surface_cases import (
     SEED as BINARY_SURFACE_SEED,
     SEMANTIC_BINARY_SURFACE_CASES,
 )
+from tests.differential.semantic_bson_grammar_context_cases import (
+    SEED as BSON_GRAMMAR_CONTEXT_SEED,
+    SEMANTIC_BSON_GRAMMAR_CONTEXT_CASES,
+)
 from tests.differential.semantic_bson_size_cases import (
     SEED as BSON_SIZE_SEED,
     SEMANTIC_BSON_SIZE_CASES,
@@ -193,6 +197,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "bson_grammar_context": SemanticCorpus(
+        "bson-grammar-context", "semantic_bson_grammar_context_cases",
+        BSON_GRAMMAR_CONTEXT_SEED, SEMANTIC_BSON_GRAMMAR_CONTEXT_CASES,
+    ),
     "merge_key": SemanticCorpus(
         "merge-key", "semantic_merge_key_cases", MERGE_KEY_SEED,
         SEMANTIC_MERGE_KEY_CASES,

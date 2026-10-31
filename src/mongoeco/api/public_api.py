@@ -126,7 +126,9 @@ _FILTER_ALIAS = MappingProxyType({'filter': 'filter_spec'})
 _FILTER_UPDATE_ALIAS = MappingProxyType(
     {'filter': 'filter_spec', 'update': 'update_spec'}
 )
-_AGGREGATE_ALIAS = MappingProxyType({'allowDiskUse': 'allow_disk_use'})
+_AGGREGATE_ALIAS = MappingProxyType({
+    'allowDiskUse': 'allow_disk_use', 'batchSize': 'batch_size'
+})
 
 _SESSION_OPTION = frozenset({'session'})
 _READ_COMMAND_OPTIONS = _options('collation', 'hint', 'comment', 'max_time_ms')
@@ -189,7 +191,10 @@ def normalize_aggregate_operation_arguments(
             'hint': hint,
             'comment': comment,
             'max_time_ms': max_time_ms,
-            'batch_size': batch_size,
+            'batch_size': (
+                ARG_UNSET if batch_size is None and 'batchSize' in extra_kwargs
+                else batch_size
+            ),
             'allow_disk_use': allow_disk_use,
             'let': let,
             'session': session,

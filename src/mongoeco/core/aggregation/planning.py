@@ -8,6 +8,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.extensions import (
+    get_registered_aggregation_stage_registration,
+)
 from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.core.paths import validate_projection_paths
 from mongoeco.core.server_errors import server_error
@@ -298,6 +301,16 @@ def split_pushdown_pipeline(
 
     for index, stage in enumerate(pipeline):
         operator, spec = _require_stage(stage)
+
+        if get_registered_aggregation_stage_registration(operator) is not None:
+            return AggregationPushdown(
+                filter_spec=filter_spec,
+                projection=projection,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                remaining_pipeline=pipeline[index:],
+            )
 
         if operator == "$match" and phase == "match":
             if not isinstance(spec, dict):

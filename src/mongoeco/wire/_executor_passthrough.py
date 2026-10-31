@@ -58,6 +58,24 @@ async def _execute_authenticated_passthrough_command(
 ) -> dict[str, Any]:
     auth.require_authenticated(context.connection, context.command_name)
     database = client.get_database(context.db_name)
+    admin = getattr(database, "_admin", None)
+    if context.command_name in {"find", "aggregate"} and admin is not None:
+
+        async def cursor_response(cursor, namespace):
+            return await cursor_store.open_stream(
+                cursor,
+                namespace,
+                command_document=context.command_document,
+                lsid=context.raw_body.get("lsid"),
+                connection=context.connection,
+            )
+
+        return await admin._commands.execute_cursor_document(
+            context.command_document,
+            cursor_response=cursor_response,
+            session=context.session,
+            execution_context=context.execution_context,
+        )
     result = await _execute_database_command(database, context)
     if context.command_name == "listCommands":
         result = _wire_list_commands_result(result, surface=surface)

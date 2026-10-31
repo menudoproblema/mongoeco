@@ -1357,11 +1357,27 @@ class AsyncDatabaseCommandService:
         *,
         session: ClientSession | None = None,
         execution_context: ExpressionExecutionContext | None = None,
+        cursor_response=None,
     ) -> CommandResultT:
         self._ensure_session_can_use_engine(session)
         if execution_context is None:
             execution_context = _command_execution_context(self._admin)
         command = self._bind_execution_context(command, execution_context)
+        if cursor_response is not None and isinstance(
+            command, (self.FindCommand, self.AggregateCommand)
+        ):
+            collection = self._admin._database.get_collection(command.collection_name)
+            build = (
+                collection._build_cursor
+                if isinstance(command, self.FindCommand)
+                else collection._build_aggregation_cursor
+            )
+            cursor = build(
+                command.operation, session=session, apply_codec_options=False
+            )
+            return await cursor_response(  # type: ignore[return-value]
+                cursor, f"{command.db_name}.{command.collection_name}"
+            )
         if isinstance(command, self.StaticAdminCommand):
             return self._execute_static(command)  # type: ignore[return-value]
         if isinstance(command, self.ConnectionStatusCommand):
@@ -1614,6 +1630,25 @@ class AsyncDatabaseCommandService:
             if isinstance(command, self.AdminCommand)
             else self.parse_raw_command(command, **kwargs)
         )
+        return await self._execute_prepared_document(
+            parsed, session=session, execution_context=execution_context
+        )
+
+    @command_errors
+    async def execute_cursor_document(
+        self, command, *, cursor_response, session=None, execution_context=None
+    ):
+        parsed = self.parse_raw_command(command)
+        return await self._execute_prepared_document(
+            parsed,
+            session=session,
+            execution_context=execution_context,
+            cursor_response=cursor_response,
+        )
+
+    async def _execute_prepared_document(
+        self, parsed, *, session, execution_context, cursor_response=None
+    ):
         if execution_context is None:
             execution_context = _command_execution_context(self._admin)
         started_at = time.perf_counter_ns()
@@ -1685,13 +1720,17 @@ class AsyncDatabaseCommandService:
                 else _null_operation_tracker() as _opid
             ):
                 try:
-                    result = await self.execute(
-                        parsed,
-                        session=session,
-                        execution_context=execution_context,
-                    )
+                    execute_options = {
+                        "session": session,
+                        "execution_context": execution_context,
+                    }
+                    if cursor_response is not None:
+                        execute_options["cursor_response"] = cursor_response
+                    result = await self.execute(parsed, **execute_options)
                 except TypeError as exc:
-                    if "execution_context" not in str(exc):
+                    if cursor_response is not None or "execution_context" not in str(
+                        exc
+                    ):
                         raise
                     result = await self.execute(parsed, session=session)
                 serialized = self.serialize_result(result)

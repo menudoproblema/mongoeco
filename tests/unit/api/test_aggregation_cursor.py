@@ -1087,6 +1087,75 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(stream_plan, ([{"$match": {"x": 1}}, {"$future": {}}], 0, 1))
 
+    async def test_builtin_override_expands_first_response_before_next_input_error(
+        self,
+    ):
+        def expand(documents, _spec, _context):
+            output = []
+            for document in documents:
+                if document["_id"] != 1:
+                    message = "second input failed"
+                    raise OperationFailure(message)
+                output.extend({"_id": document["_id"], "copy": i} for i in range(101))
+            return output
+
+        for stage in (
+            {"$project": {"_id": 1}},
+            {"$match": {}},
+            {"$sort": {"_id": 1}},
+            {"$group": {"_id": None}},
+            {"$group": 99},
+            {"$skip": 0},
+            {"$limit": 1},
+        ):
+            operator = next(iter(stage))
+            with self.subTest(operator=operator):
+                register_aggregation_stage(
+                    operator, expand, execution_mode="streamable"
+                )
+                try:
+                    cursor = AsyncAggregationCursor(
+                        _FakeCollection([{"_id": 1}, {"_id": 2}]), [stage]
+                    )
+                    await cursor
+                    self.assertEqual(len(cursor._response_buffer), 101)
+                    self.assertEqual(
+                        [row["copy"] for row in await cursor.to_list(length=101)],
+                        list(range(101)),
+                    )
+                    with self.assertRaisesRegex(
+                        OperationFailure, "second input failed"
+                    ):
+                        await cursor.to_list()
+                    self.assertTrue(cursor._closed)
+                finally:
+                    unregister_aggregation_stage(operator)
+
+    async def test_write_pipeline_ignores_zero_initial_batch_only_at_driver_boundary(
+        self,
+    ):
+        for factory in (MemoryEngine, SQLiteEngine):
+            with self.subTest(engine=factory.__name__):
+                async with AsyncMongoClient(factory()) as client:
+                    source = client.db.source
+                    await source.insert_one({"_id": 1})
+                    cursor = await source.aggregate(
+                        [{"$merge": {"into": "target"}}], batchSize=0
+                    )
+                    self.assertEqual(await client.db.target.count_documents({}), 1)
+                    await cursor.close()
+                    raw = source._build_aggregation_cursor(
+                        compile_aggregate_operation(
+                            [{"$merge": {"into": "raw_target"}}]
+                        ),
+                        apply_codec_options=False,
+                    )
+                    self.assertEqual(await raw._read_response(0, initial=True), [])
+                    self.assertEqual(await client.db.raw_target.count_documents({}), 0)
+                    self.assertEqual(await raw._read_response(1), [])
+                    self.assertEqual(await client.db.raw_target.count_documents({}), 1)
+                    await raw.close()
+
     def test_incremental_group_and_sort_splitters_reject_unstreamable_shapes(self):
         self.assertIsNone(
             AsyncAggregationCursor._split_incremental_group_pipeline(["invalid"])
@@ -1233,13 +1302,15 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ],
             [],
         )
-        with self.assertRaisesRegex(RuntimeError, "positive batch size"):
-            async for _document in cursor._stream_windowed_pipeline(
-                ([], 0, None),
-                dialect=MONGODB_DIALECT_70,
-                deadline=None,
-            ):
-                pass
+        self.assertEqual(
+            [
+                document
+                async for document in cursor._stream_windowed_pipeline(
+                    ([], 0, None), dialect=MONGODB_DIALECT_70, deadline=None
+                )
+            ],
+            [],
+        )
 
     async def test_stream_group_result_preserves_skip_across_pages_and_limit(self):
         cursor = AsyncAggregationCursor(_FakeCollection([]), [], batch_size=2)
@@ -1449,7 +1520,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                     "hint": None,
                     "comment": None,
                     "max_time_ms": None,
-                    "batch_size": None,
+                    "batch_size": 256,
                     "session": None,
                 }
             ],
@@ -2464,9 +2535,9 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         ) as materialize:
             self.assertEqual(
                 [document async for document in unbatched_cursor._stream_batches()],
-                [{"_id": "u"}],
+                [{"_id": "1"}, {"_id": "2"}],
             )
-            materialize.assert_awaited_once()
+            materialize.assert_not_awaited()
 
         with (
             patch.object(cursor, "_split_streamable_pipeline", return_value=None),

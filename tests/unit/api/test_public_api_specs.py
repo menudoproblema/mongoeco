@@ -16,6 +16,7 @@ from mongoeco.api.public_api import (
     COLLECTION_UPDATE_ONE_SPEC,
     _assert_catalog_alignment,
     normalize_public_operation_arguments,
+    normalize_aggregate_operation_arguments,
 )
 from mongoeco.compat import PYMONGO_PROFILE_49
 from mongoeco.compat.operation_support import OPERATION_OPTION_SUPPORT
@@ -96,6 +97,23 @@ class PublicApiSpecTests(unittest.TestCase):
                 spec,
                 explicit={"filter_spec": ARG_UNSET},
                 extra_kwargs={"sort": {"_id": 1}},
+            )
+
+    def test_aggregate_batch_size_alias_keeps_zero_and_rejects_conflicting_size(self):
+        options = {
+            "pipeline": [], "collation": None, "hint": None, "comment": None,
+            "max_time_ms": None, "batch_size": None, "allow_disk_use": ARG_UNSET,
+            "let": None, "session": None,
+        }
+        for value in (0, 1):
+            result = normalize_aggregate_operation_arguments(
+                "Collection.aggregate", **options, extra_kwargs={"batchSize": value}
+            )
+            self.assertEqual(result["batch_size"], value)
+        with self.assertRaisesRegex(TypeError, "cannot pass both"):
+            normalize_aggregate_operation_arguments(
+                "Collection.aggregate", **{**options, "batch_size": 0},
+                extra_kwargs={"batchSize": 1},
             )
 
 

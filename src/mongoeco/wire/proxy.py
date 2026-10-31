@@ -180,7 +180,11 @@ class AsyncMongoEcoProxyServer:
                 await server.wait_closed()
             except Exception as error:
                 errors.append(error)
-        for clear in (self._cursor_store.clear, self._session_store.clear):
+        try:
+            await self._cursor_store.aclear()
+        except Exception as error:
+            errors.append(error)
+        for clear in (self._session_store.clear,):
             try:
                 clear()
             except Exception as error:
