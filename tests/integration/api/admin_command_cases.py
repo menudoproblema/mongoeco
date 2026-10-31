@@ -649,7 +649,7 @@ async def assert_database_command_distinct_supports_hint_comment_and_max_time(
                 case.assertEqual(distinct, {"values": ["python", "mongodb"], "ok": 1.0})
 
 
-async def assert_database_command_supports_rename_collection_within_current_database(
+async def assert_database_command_renames_collections_via_admin(
     case, engine_names, open_client: OpenClient,
 ) -> None:
     for engine_name in engine_names:
@@ -657,9 +657,9 @@ async def assert_database_command_supports_rename_collection_within_current_data
             async with open_client(engine_name) as client:
                 await _maybe_await(client.alpha.protected.insert_one({"_id": "keep"}))
 
-                with case.assertRaises(CollectionInvalid):
+                with case.assertRaises(OperationFailure):
                     await _maybe_await(
-                        client.alpha.command(
+                        client.admin.command(
                             {
                                 "renameCollection": "alpha.missing",
                                 "to": "alpha.protected",
@@ -674,9 +674,9 @@ async def assert_database_command_supports_rename_collection_within_current_data
                     {"_id": "keep"},
                 )
 
-                with case.assertRaises(CollectionInvalid):
+                with case.assertRaises(OperationFailure):
                     await _maybe_await(
-                        client.alpha.command(
+                        client.admin.command(
                             {
                                 "renameCollection": "alpha.protected",
                                 "to": "alpha.protected",
@@ -714,7 +714,7 @@ async def assert_database_command_supports_rename_collection_within_current_data
                 )
 
                 renamed = await _maybe_await(
-                    client.alpha.command(
+                    client.admin.command(
                         {
                             "renameCollection": "alpha.events",
                             "to": "alpha.archived",
@@ -1569,10 +1569,11 @@ async def assert_database_command_rejects_invalid_command_shapes(
             await _maybe_await(
                 client.alpha.command({"count": "events", "query": 1}),
             )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
+        with case.assertRaises(OperationFailure) as error:
             await _maybe_await(
-                client.alpha.command({"renameCollection": "events", "to": "alpha.logs"}),
-            )  # type: ignore[arg-type]
+                client.admin.command({"renameCollection": "events", "to": "alpha.logs"}),
+            )
+        case.assertEqual(error.exception.code, 73)  # type: ignore[arg-type]
         with case.assertRaises(TypeError):
             await _maybe_await(client.alpha.command({"distinct": "events", "key": ""}))
         with case.assertRaises(TypeError):

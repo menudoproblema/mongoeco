@@ -5863,8 +5863,20 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
+        await self._rename_collection(db_name, coll_name, new_name, context=context)
+
+    async def _rename_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        new_name: str,
+        *,
+        context: ClientSession | None = None,
+        drop_target: bool = False,
+    ) -> None:
         if coll_name == new_name:
-            raise CollectionInvalid("collection names must differ")
+            message = "collection names must differ"
+            raise server_error(message, code=20)
         lock_names = sorted({coll_name, new_name})
         async with AsyncExitStack() as stack:
             for name in lock_names:
@@ -5882,18 +5894,17 @@ class MemoryEngine(AsyncStorageEngine):
                     and coll_name not in indexes.get(db_name, {})
                     and coll_name not in search_indexes.get(db_name, {})
                 ):
-                    raise CollectionInvalid(
-                        f"collection '{coll_name}' does not exist",
-                    )
-                if (
+                    message = f"collection '{coll_name}' does not exist"
+                    raise server_error(message, code=26)
+                target_exists = (
                     new_name in collections.get(db_name, set())
                     or new_name in storage.get(db_name, {})
                     or new_name in indexes.get(db_name, {})
                     or new_name in search_indexes.get(db_name, {})
-                ):
-                    raise CollectionInvalid(
-                        f"collection '{new_name}' already exists",
-                    )
+                )
+                if target_exists and not drop_target:
+                    message = f"collection '{new_name}' already exists"
+                    raise server_error(message, code=48)
 
                 affected_names = {coll_name, new_name}
                 with (
@@ -5913,6 +5924,10 @@ class MemoryEngine(AsyncStorageEngine):
                         options=option_store,
                     ),
                 ):
+                    if target_exists:
+                        self._drop_collection_contents_locked(
+                            db_name, new_name, context=context, record=False
+                        )
                     db_storage = storage.get(db_name)
                     if db_storage is not None and coll_name in db_storage:
                         db_storage[new_name] = db_storage.pop(coll_name)
@@ -5930,33 +5945,16 @@ class MemoryEngine(AsyncStorageEngine):
                         db_search_indexes[new_name] = db_search_indexes.pop(
                             coll_name,
                         )
-                    ready_at = self._search_index_ready_at
-                    for key in [
-                        key
-                        for key in ready_at
-                        if key[0] == db_name and key[1] == coll_name
-                    ]:
-                        ready_at[(db_name, new_name, key[2])] = ready_at.pop(
-                            key,
-                        )
-                    stale_cache_keys = [
-                        key
-                        for key in self._search_document_cache
-                        if key[0] == db_name and key[1] == coll_name
-                    ]
-                    for key in stale_cache_keys:
-                        self._search_document_cache[(db_name, new_name, key[2])] = (
-                            self._search_document_cache.pop(key)
-                        )
-                    stale_vector_cache_keys = [
-                        key
-                        for key in self._vector_document_cache
-                        if key[0] == db_name and key[1] == coll_name
-                    ]
-                    for key in stale_vector_cache_keys:
-                        self._vector_document_cache[(db_name, new_name, key[2])] = (
-                            self._vector_document_cache.pop(key)
-                        )
+                    for cache in (
+                        self._search_index_ready_at,
+                        self._search_document_cache,
+                        self._vector_document_cache,
+                    ):
+                        for key in [
+                            key for key in cache
+                            if key[0] == db_name and key[1] == coll_name
+                        ]:
+                            cache[(db_name, new_name, key[2])] = cache.pop(key)
 
                     db_options = option_store.get(db_name)
                     if db_options is not None and coll_name in db_options:
@@ -6020,43 +6018,57 @@ class MemoryEngine(AsyncStorageEngine):
                 ),
                 self._meta_lock,
             ):
-                existed = any(
-                    coll_name in store.get(db_name, {})
-                    for store in (
-                        storage, indexes, search_indexes, collections, option_store
-                    )
+                self._drop_collection_contents_locked(
+                    db_name, coll_name, context=context
                 )
-                self._invalidate_search_runtime_cache(db_name, coll_name)
-                self._prune_collection_registry_locked(
-                    db_name,
-                    coll_name,
-                    collections=collections,
-                    collection_options=option_store,
-                )
-                if db_name in storage and coll_name in storage[db_name]:
-                    del storage[db_name][coll_name]
-                    if not storage[db_name]:
-                        del storage[db_name]
-                if db_name in indexes and coll_name in indexes[db_name]:
-                    del indexes[db_name][coll_name]
-                    if not indexes[db_name]:
-                        del indexes[db_name]
-                self._prune_index_data_locked(
-                    db_name,
-                    coll_name,
-                    index_data=index_data,
-                )
-                if db_name in search_indexes and coll_name in search_indexes[db_name]:
-                    del search_indexes[db_name][coll_name]
-                    if not search_indexes[db_name]:
-                        del search_indexes[db_name]
-                ready_at = self._search_index_ready_at
-                for key in [
-                    key for key in ready_at if key[0] == db_name and key[1] == coll_name
-                ]:
-                    del ready_at[key]
-                if existed:
-                    for payload in namespace_change_payloads(
-                        "drop", db_name, coll_name
-                    ):
-                        self._record_committed_payload(context, payload)
+
+    def _drop_collection_contents_locked(
+        self, db_name, coll_name, *, context, record=True
+    ):
+        """Caller owns locks and the complete namespace rollback/publication scope."""
+        storage = self._storage_view(context)
+        indexes = self._indexes_view(context)
+        index_data = self._index_data_view(context)
+        search_indexes = self._search_indexes_view(context)
+        collections = self._collections_view(context)
+        option_store = self._collection_options_view(context)
+        existed = any(
+            coll_name in store.get(db_name, {})
+            for store in (
+                storage, indexes, search_indexes, collections, option_store
+            )
+        )
+        self._invalidate_search_runtime_cache(db_name, coll_name)
+        self._prune_collection_registry_locked(
+            db_name,
+            coll_name,
+            collections=collections,
+            collection_options=option_store,
+        )
+        if db_name in storage and coll_name in storage[db_name]:
+            del storage[db_name][coll_name]
+            if not storage[db_name]:
+                del storage[db_name]
+        if db_name in indexes and coll_name in indexes[db_name]:
+            del indexes[db_name][coll_name]
+            if not indexes[db_name]:
+                del indexes[db_name]
+        self._prune_index_data_locked(
+            db_name,
+            coll_name,
+            index_data=index_data,
+        )
+        if db_name in search_indexes and coll_name in search_indexes[db_name]:
+            del search_indexes[db_name][coll_name]
+            if not search_indexes[db_name]:
+                del search_indexes[db_name]
+        ready_at = self._search_index_ready_at
+        for key in [
+            key for key in ready_at if key[0] == db_name and key[1] == coll_name
+        ]:
+            del ready_at[key]
+        if existed and record:
+            for payload in namespace_change_payloads(
+                "drop", db_name, coll_name
+            ):
+                self._record_committed_payload(context, payload)

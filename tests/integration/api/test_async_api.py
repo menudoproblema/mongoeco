@@ -65,7 +65,7 @@ from tests.integration.api.admin_command_cases import (
     assert_database_command_supports_find_and_modify,
     assert_database_command_supports_insert_update_and_delete,
     assert_database_command_supports_ping_list_collections_and_drop_database,
-    assert_database_command_supports_rename_collection_within_current_database,
+    assert_database_command_renames_collections_via_admin,
     assert_database_command_write_commands_surface_write_errors,
     assert_hello_and_is_master_commands_return_handshake_metadata,
     assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata,
@@ -5057,11 +5057,11 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             open_client,
         )
 
-    async def test_database_command_supports_rename_collection_within_current_database(
+    async def test_database_command_renames_collections_via_admin(
         self,
     ):
         await (
-            assert_database_command_supports_rename_collection_within_current_database(
+            assert_database_command_renames_collections_via_admin(
                 self,
                 ENGINE_FACTORIES,
                 open_client,
@@ -5216,9 +5216,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             await client.alpha.events.insert_one({"_id": "1"})
             await client.alpha.logs.insert_one({"_id": "2"})
 
-            with self.assertRaises(CollectionInvalid):
+            with self.assertRaises(OperationFailure):
                 await client.alpha.events.rename("logs")
-            with self.assertRaises(CollectionInvalid):
+            with self.assertRaises(OperationFailure):
                 await client.alpha.events.rename("events")
 
     async def test_find_one_without_filter_returns_first_document(self):

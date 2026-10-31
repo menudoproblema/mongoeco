@@ -158,7 +158,7 @@ from mongoeco.engines._sqlite_modify_ops import (
 )
 from mongoeco.engines._sqlite_namespace_admin import (
     create_collection as _sqlite_create_collection,
-    drop_collection as _sqlite_drop_collection,
+    remove_collection_contents as _sqlite_remove_collection_contents,
     rename_collection as _sqlite_rename_collection,
 )
 from mongoeco.engines._sqlite_outbox import (
@@ -7112,34 +7112,41 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         new_name: str,
         context: ClientSession | None = None,
+        *,
+        drop_target: bool = False,
     ) -> None:
         with self._lock:
             conn = self._require_connection(context)
-            _sqlite_rename_collection(
-                conn=conn,
-                record_changes=lambda payloads: self._record_namespace_changes(
-                    conn, payloads
-                ),
-                db_name=db_name,
-                coll_name=coll_name,
-                new_name=new_name,
-                begin_write=lambda current: self._begin_write(
-                    current,
-                    context,
-                ),
-                commit_write=lambda current: self._commit_write(
-                    current,
-                    context,
-                ),
-                rollback_write=lambda current: self._rollback_write(
-                    current,
-                    context,
-                ),
-                collection_exists=self._collection_exists_sync,
-                mark_index_metadata_changed=self._mark_index_metadata_changed,
-                invalidate_collection_id_cache=self._invalidate_collection_id_cache,
-                invalidate_collection_features_cache=self._invalidate_collection_features_cache,
-            )
+            with self._bind_connection(conn):
+                _sqlite_rename_collection(
+                    conn=conn,
+                    drop_target=drop_target,
+                    remove_target=lambda: self._drop_collection_contents(
+                        conn, db_name, new_name
+                    ),
+                    record_changes=lambda payloads: self._record_namespace_changes(
+                        conn, payloads
+                    ),
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    new_name=new_name,
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
+                    collection_exists=self._collection_exists_sync,
+                    mark_index_metadata_changed=self._mark_index_metadata_changed,
+                    invalidate_collection_id_cache=self._invalidate_collection_id_cache,
+                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                )
 
     def _drop_collection_sync(
         self,
@@ -7153,35 +7160,42 @@ class SQLiteEngine(AsyncStorageEngine):
             return
         with self._lock:
             conn = self._require_connection(context)
-            with self._bind_connection(conn):
-                _sqlite_drop_collection(
-                    conn=conn,
+            with (
+                self._bind_connection(conn),
+                sqlite_write_scope(
+                    conn,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(
+                        current, context
+                    ),
+                ),
+            ):
+                self._drop_collection_contents(
+                    conn, db_name, coll_name,
                     record_changes=lambda payloads: self._record_namespace_changes(
                         conn, payloads
                     ),
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    begin_write=lambda current: self._begin_write(
-                        current,
-                        context,
-                    ),
-                    commit_write=lambda current: self._commit_write(
-                        current,
-                        context,
-                    ),
-                    rollback_write=lambda current: self._rollback_write(
-                        current,
-                        context,
-                    ),
-                    load_indexes=self._load_indexes,
-                    load_search_index_rows=self._load_search_index_rows,
-                    lookup_collection_id=self._lookup_collection_id,
-                    quote_identifier=self._quote_identifier,
-                    drop_search_backend=self._drop_search_backend_sync,
-                    mark_index_metadata_changed=self._mark_index_metadata_changed,
-                    invalidate_collection_id_cache=self._invalidate_collection_id_cache,
-                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                 )
+
+    def _drop_collection_contents(
+        self, conn, db_name, coll_name, *, record_changes=None
+    ):
+        # The caller owns the enclosing SQLite write scope, including outbox.
+        _sqlite_remove_collection_contents(
+            conn=conn,
+            record_changes=record_changes,
+            db_name=db_name,
+            coll_name=coll_name,
+            load_indexes=self._load_indexes,
+            load_search_index_rows=self._load_search_index_rows,
+            lookup_collection_id=self._lookup_collection_id,
+            quote_identifier=self._quote_identifier,
+            drop_search_backend=self._drop_search_backend_sync,
+            mark_index_metadata_changed=self._mark_index_metadata_changed,
+            invalidate_collection_id_cache=self._invalidate_collection_id_cache,
+            invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+        )
 
     @override
     async def connect(self) -> None:
@@ -8356,12 +8370,24 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
+        await self._rename_collection(db_name, coll_name, new_name, context=context)
+
+    async def _rename_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        new_name: str,
+        *,
+        context: ClientSession | None = None,
+        drop_target: bool = False,
+    ) -> None:
         await self._run_blocking(
             self._rename_collection_sync,
             db_name,
             coll_name,
             new_name,
             context,
+            drop_target=drop_target,
         )
 
     @override

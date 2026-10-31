@@ -182,14 +182,18 @@ administrativa de `listCommands`.
 antes de enrutar o modificar datos; `0`, cadenas y otros tipos se rechazan.
 Es la forma documentada por el
 [comando MongoDB](https://www.mongodb.com/docs/v8.2/reference/command/dropDatabase/).
-`renameCollection` rechaza namespaces ajenos a la base seleccionada antes de
-aplicar el cambio.
-Esta restriccion local tiene una divergencia confirmada: MongoDB recibe el
-comando en admin y permite origen/destino en otra base, mientras rechaza la
-entrada por la base de origen con 13. H56 del
-[plan BSON](../bson-semantics-consolidation-plan.md) conserva la correccion y
-aceptacion pendientes; la API directa `collection.rename` no acredita esa
-ruta de comando ni su transporte wire.
+`renameCollection` se ejecuta en admin y admite origen/destino dentro de una
+misma base, que puede ser distinta de admin. La entrada por otra base falla
+con 13 antes de cambiar datos. Su gramatica BSON comparte validacion entre API
+directa y wire: tipos de namespace, campos requeridos/desconocidos, booleanos
+y forma de namespace conservan los errores contrastados en 7/8/9.
+
+El rename ordinario delega al SPI publico del proveedor. DropTarget usa una
+primitiva atomica de los motores locales que retira el destino y renombra bajo
+el mismo rollback/registro de efectos; un proveedor sin ese recurso falla con
+20 antes de mutar. No cambia el protocolo SPI v2. El subset local sigue
+limitado a rename dentro de una base. H56 y sus capturas/limites se registran en
+la [implementacion BSON](../bson-consolidation-implementation.md).
 
 La validacion temprana del executor tambien cubre ya familias especiales
 fuera del passthrough puro:

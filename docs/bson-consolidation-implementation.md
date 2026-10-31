@@ -647,11 +647,59 @@ sync de entradas, no aceptacion ni regresion permanente todavia. D04 sigue
 abierto para esta ruta/dropTarget, protocolo/reanudacion/cierre filtrado,
 interacciones adicionales con imagenes y fixture replica set de CI.
 
+## D04/H56 — Comando rename y sobrescritura atomica de destino
+
+La [evidencia de aceptacion](evidence/bson-consolidation-implementation/rename-command/receipt.json)
+cierra H56 funcionalmente dentro del subset de una base. RenameCollection se
+ejecuta en admin; la entrada por la base de origen falla con 13 sin mutar.
+El owner de gramatica BSON de comandos comparte campos admitidos, requeridos,
+tipos de namespace y booleanos entre directa/wire, con precedencia contrastada.
+Code no se admite como string por heredar de str; se usa la clasificacion BSON
+existente. Esto no cierra H55 en expresiones de agregacion.
+
+Los motores comparten el borrado de contenido entre drop y la sobrescritura
+de destino en rename. El caller conserva una sola unidad de rollback/outbox;
+se retiran datos, indices y recursos Search del destino y se mueve el origen.
+Solo se publica rename y su invalidacion, sin drop intermedio. La misma
+validacion atomica de existencia/conflicto conserva 26/48/20 en API y comando.
+
+El rename ordinario sigue delegando al SPI publico del proveedor. La revision
+reprodujo un candidato que elegia el metodo interno aun sin overwrite y
+saltaba un override publico; el test permanente lo impide en ambos motores.
+DropTarget exige el recurso atomico adicional antes de mutar; un proveedor
+que solo implementa SPI v2 conserva rename ordinario y falla con 20 ante
+overwrite. No se cambia el protocolo ni se simula atomicidad con dos commits.
+
+Dos corpora permanentes tienen capturas 7.0.43/8.0.32/9.0.2, FCV de su major,
+verificadas con --check: 17 escenarios de comando/estado/opciones/indices y
+24 de eventos/scopes por major. La base 6e6d31e falla 36 checks y pasa seis de
+metadata. El candidato final pasa 6.175 integrados, 2.760 de core/propiedades/
+contratos (950 subtests, un skip), 55 con orjson y 20 de API/wire seleccionados
+(25 subtests). Pasan typing publico/boundary, lint y smoke Python 3.13 sin SDK.
+Los cambios de expectativas antiguas de error/entrada se justifican con los
+nuevos diferenciales; no se modifican goldens u observadores anteriores.
+
+Fallos tras retirar destino y registrar efectos prueban restauracion de ambos
+namespaces por API sync/async. Search ya usado en origen/destino conserva
+recursos tras rollback y sigue al origen tras reintento. Las escrituras TCP
+usando cliente prestado entregan rename/invalidate a streams locales publicos
+de origen/destino y mantienen cliente/continuidad tras cerrar el proxy; no es
+soporte de watch wire. Un SQLite/journal realmente producido por 6e6d31e
+conserva clave del origen, sus indices/opciones, esquema central y replay al
+sobrescribir destino. No se acredita downgrade.
+
+El benchmark ABBA secuencial conserva checksums y lecturas indexadas finales:
+diez muestras por runtime/caso, 200 renames y 100 documentos; ratios de
+medianas 0,99 Memory y 1,00 SQLite. Es coste diagnostico del rename ordinario,
+no throughput de overwrite ni cierre de la matriz D05. D04 conserva protocolo,
+reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
+
 ## Trabajo restante
 
 - D06a/D06b/D06c: gramática (incluido H55 String/Code), preservación BSON wire y consumidores DBRef.
-- D04: entradas DDL (H56 y dropTarget), protocolo/cierre filtrado, interacción
-  con imágenes, continuidad/reanudación y fixtures replica set de jobs nativos.
+- D04: protocolo/cierre filtrado, interacción con imágenes, continuidad/
+  reanudación y fixtures replica set de jobs nativos. H56 y dropTarget quedan
+  aceptados en su subset de una base, sin extender rename entre bases.
   Preparación/contexto, modos CRUD de imágenes y efectos de namespace tienen
   aceptación propia; no cierran las garantías restantes. Las obligaciones y testigos concretos
   están en revisión 8 del plan; ni publicación TTL ni D01b los cierran.

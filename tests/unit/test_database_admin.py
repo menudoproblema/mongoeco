@@ -343,7 +343,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
     def test_command_rename_collection_validates_namespaces_and_can_drop_target(self):
         database = AsyncDatabase(MemoryEngine(), "db")
-        service = database._admin
+        service = AsyncDatabase(database._engine, "admin")._admin
 
         async def _run():
             await database.create_collection("source")
@@ -354,7 +354,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 await service._command_rename_collection(
                     {"renameCollection": "other.source", "to": "db.target"},
                 )
-            with self.assertRaises(TypeError):
+            with self.assertRaises(OperationFailure):
                 await service._command_rename_collection(
                     {"renameCollection": "db.source", "to": "db.target", "dropTarget": "yes"},
                 )

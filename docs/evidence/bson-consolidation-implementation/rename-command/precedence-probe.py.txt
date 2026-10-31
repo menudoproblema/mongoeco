@@ -1,0 +1,22 @@
+from pymongo import MongoClient
+from bson import Code
+import json,uuid
+r={}
+for port in (49973,49974,49975):
+ with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as c:
+  name='rename_'+uuid.uuid4().hex
+  cases={'typed_unknown':{'renameCollection':3,'to':name+'.t','unknown':1},'unknown_typed':{'renameCollection':name+'.s','unknown':1,'to':3},'namespace_bool':{'renameCollection':'bad','to':name+'.t','dropTarget':1},'missing_bool':{'renameCollection':name+'.s','dropTarget':1},'missing_unknown':{'renameCollection':name+'.s','unknown':1}}
+  result={}
+  try:
+   c[name].create_collection('s')
+   for k,spec in cases.items():
+    try:c.admin.command(spec);result[k]=None
+    except Exception as e:result[k]=getattr(e,'code',None)
+   c.admin.command({'renameCollection':name+'.s','to':name+'.t'})
+   result['options_default']=c[name].t.options()
+   c[name].create_collection('s')
+   c.admin.command({'renameCollection':name+'.s','to':name+'.u','stayTemp':True})
+   result['options_stay']=c[name].u.options()
+  finally:c.drop_database(name)
+  r[str(port)]=result
+print(json.dumps(r,indent=2))

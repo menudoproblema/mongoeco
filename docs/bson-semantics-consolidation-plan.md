@@ -182,7 +182,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | H53 | P2; diferencia caracterizada | Moderate evalúa primero el antiguo y puede devolver aceptación sin evaluar el nuevo. MongoDB evalúa el nuevo y registra warning 20294 para bad→bad bajo warn. Local tampoco emite warning en strict/warn: el hueco de observabilidad es más amplio que el orden moderate. No atribuir rechazo incorrecto de escrituras a este testigo. |
 | H54 | P1; confirmado | La identidad de escritura termina usando igualdad Python para Code; ésta ignora el orden del scope. MongoDB modifica y conserva el nuevo orden; classic y pipeline locales devuelven cero y conservan el anterior en ambos motores. |
 | H55 | P1; confirmado durante D04, pendiente D06a | Un Code BSON con prefijo $/$$ entra en la rama Python `str`: el runtime lo evalúa como campo y el preparador exige una variable inexistente. Referencias 7/8/9 y seis pares locales en la evidencia de imágenes confirman el mismo defecto en agregación ordinaria; $literal es control positivo. Reutilizar clasificación String/Code al decidir gramática y evaluar, con regresión permanente por contexto antes de corregir. No se confunde con identidad física H54. |
-| H56 | P1; confirmado durante D04, pendiente de corrección | `renameCollection` local exige que origen/destino pertenezcan a la base que recibe el comando. MongoDB exige ejecutar el comando en admin, incluso para renombrar dentro de una sola base. Las sondas físicas 7/8/9 rechazan la entrada por la base de origen con 13 y no cambian datos; los seis pares locales la aceptan y mueven datos. Admin hace lo contrario: funciona físicamente y falla localmente sin código. La API directa collection.rename sí queda cubierta por el corpus DDL; no acredita la entrada de comando ni wire. |
+| H56 | P1; cerrado funcionalmente en el corte de comandos D04 | En 6e6d31e, el comando local exigia origen/destino en la base seleccionada; MongoDB lo recibe en admin. La correccion comparte gramatica BSON y errores entre directa/wire, conserva el SPI publico para rename ordinario y usa una unidad atomica para dropTarget, con un unico evento rename. Capturas 7/8/9 y gates del [registro](bson-consolidation-implementation.md) acreditan el subset de una base. No cierra protocolo/reanudacion ni todo D04/D05. |
 
 Testigos físicos destacados: `Binary(ab,0)` selecciona IDs 1/2 en MongoDB y
 ninguno localmente; reasignar Binary idéntico devuelve 0 frente a 1;
@@ -806,20 +806,22 @@ No usar una invalidación de base para cerrar indiscriminadamente todos los
 streams de colección. Los nombres concretos del catálogo y el destino ya
 conocido de rename bastan; no introducir identidad de encarnación.
 
-La misma caracterización identifica H56 en la entrada de comando. Resolverlo
-en D04 antes de cerrar sus entradas DDL, con referencia permanente por versión:
-admin frente a base de origen, fase/clase/código y datos/eventos tras rechazo.
-Cubrir comandos directos y escrituras wire con observación local de eventos;
-esto no promete watch wire positivo. Reutilizar coordinación y primitiva de
-rename del motor, sin fabricar handles de colección para acceder a la entrega.
-La atomicidad de dropTarget y los errores de destino requieren sus propios
-testigos antes de aceptar esa opción; no extrapolar el caso de destino ausente
-ni ampliar silenciosamente el subset soportado a rename entre bases.
+La misma caracterización identifica H56 en la entrada de comando. Su corte
+funcional queda registrado en D04 con capturas permanentes 7/8/9: admin frente
+a base de origen, fase/clase/código y datos/eventos tras rechazo. Directa y
+wire comparten la gramatica, y los fallos inyectados acreditan rollback de
+dropTarget con recursos Search. El recurso atomico se exige antes de mutar;
+rename ordinario conserva el metodo publico del proveedor. Mantener los
+controles de ambas rutas sin fabricar handles para acceder a la entrega.
+El subset sigue limitado a una base y la observacion local de escrituras wire
+no acredita watch wire positivo.
 
 El orden D06/H53/conversión/D07/D05 permanece en la tabla anterior. Las 88
-comprobaciones focales y 408 de replay de esta revisión usan el candidato
-actual y capturas existentes; no son recaptura física, suite global ni cierre
-del incremento. No se cambia producción, tests, goldens ni receipts anteriores.
+comprobaciones focales y 408 de replay de la revision 9 usan sus capturas
+existentes; no fueron recaptura fisica, suite global ni cierre del incremento.
+Aquel corte fue solo documental y no cambio produccion/tests/goldens/receipts
+anteriores. Los cortes de implementacion posteriores conservan su aceptacion
+y limites en el registro vigente.
 
 ## 6. Pruebas y aceptación por garantía
 

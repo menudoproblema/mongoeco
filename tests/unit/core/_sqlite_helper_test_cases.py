@@ -46,7 +46,7 @@ from mongoeco.engines import _sqlite_write_ops as write_ops
 from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.engines.profiling import EngineProfiler
-from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
+from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.types import EngineIndexRecord, SearchIndexDefinition
 from mongoeco.compat import MONGODB_DIALECT_70
 
@@ -2672,7 +2672,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 ),
                 {},
             )
-            with self.assertRaises(CollectionInvalid):
+            with self.assertRaises(OperationFailure):
                 namespace_admin.rename_collection(
                     conn=conn,
                     db_name="db",

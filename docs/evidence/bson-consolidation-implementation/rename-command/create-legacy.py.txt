@@ -1,0 +1,18 @@
+import json,sqlite3
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path('/tmp/mongoeco-rename-legacy')
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ stream=client.watch(max_await_time_ms=1)
+ for name,value in [('source',1),('target',2)]:
+  c=client.compat.create_collection(name,changeStreamPreAndPostImages={'enabled':name=='source'})
+  c.create_index('v',name=name+'_index')
+  c.insert_one({'_id':name,'v':value})
+  token=stream.try_next()['_id']
+ stream.close()
+with sqlite3.connect(root/'db.sqlite') as conn:
+ before={'producer':mongoeco.__file__,'token':token,'source_key':conn.execute("SELECT storage_key FROM documents WHERE db_name='compat' AND coll_name='source'").fetchone()[0],'core_schema':conn.execute("SELECT name,sql FROM sqlite_master WHERE type='table' AND name IN ('collections','documents','indexes','search_indexes','change_outbox','change_outbox_identities','change_outbox_consumers','mongoeco_schema_migrations') ORDER BY name").fetchall()}
+(root/'before.json').write_text(json.dumps(before,indent=2))
+print(before['producer'])

@@ -1,0 +1,16 @@
+{
+  "memory": {
+    "before": 0.032064000493846834,
+    "after": 0.031808645522687584,
+    "ratio": 0.9920360851039703,
+    "checksum": 19900,
+    "samples_per_runtime": 10
+  },
+  "sqlite": {
+    "before": 0.13061995850875974,
+    "after": 0.13032274949364364,
+    "ratio": 0.9977246278554271,
+    "checksum": 19900,
+    "samples_per_runtime": 10
+  }
+}

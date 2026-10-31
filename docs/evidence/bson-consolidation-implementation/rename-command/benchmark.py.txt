@@ -1,0 +1,27 @@
+import json,time,statistics
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+report={}
+for backend,factory in [('memory',MemoryEngine),('sqlite',SQLiteEngine)]:
+ samples=[];checksums=[]
+ for sample in range(5):
+  with MongoClient(factory()) as client:
+   collection=client.benchmark.source
+   collection.insert_many([{'_id':i,'v':i,'pad':'x'*1000} for i in range(100)])
+   collection.create_index('v',name='v_index')
+   stream=client.watch(max_await_time_ms=1);checksum=0
+   try:
+    started=time.perf_counter()
+    for i in range(200):
+     target='target' if i%2==0 else 'source'
+     collection=collection.rename(target)
+     event=stream.try_next()
+     assert event['operationType']=='rename' and event['to']=={'db':'benchmark','coll':target}
+     checksum+=i
+    samples.append(time.perf_counter()-started)
+    assert collection.find_one({'v':99},hint='v_index')['_id']==99
+    assert collection.count_documents({})==100
+    checksums.append(checksum)
+   finally:stream.close()
+ report[backend]={'samples':samples,'median':statistics.median(samples),'checksums':checksums}
+print(json.dumps(report,indent=2))

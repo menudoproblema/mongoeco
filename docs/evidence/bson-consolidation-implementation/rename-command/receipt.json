@@ -1,0 +1,285 @@
+{
+  "status": "H56 accepted for same-database rename commands and atomic overwrite; D04/D05 and program remain open",
+  "base": "6e6d31ef01ba40c73e5256c7b3d2709b115cd4cc",
+  "runtime_manifest": {
+    "path": "runtime-sources.json",
+    "sha256": "7099bd2d202d9f9f0d4f14f4724034869af33bfaeca928f23565a78ec9ac82b7",
+    "files": 282
+  },
+  "reviewed_workset": {
+    "src/mongoeco/api/_async/_database_admin_write_commands.py": "3819a8a21a0b299c8a3334cc78bb296528b11ff1cb872c0afb71711636953bb0",
+    "src/mongoeco/api/_command_bson.py": "782727c12a7d1346a3b2a37b7bd56a6896814808efc8693bdaf556bc26f3b2bc",
+    "src/mongoeco/engines/_sqlite_namespace_admin.py": "93f607a7feec213234a6eb041d2741fd3e605411999a50ba3ffff5849f25185b",
+    "src/mongoeco/engines/memory.py": "f54967d9bead7a4ee29e0c045ab144788b83adaa599aa1cafacbe110afb08930",
+    "src/mongoeco/engines/sqlite.py": "268e15a2669b82e91962b3396fb08ad32c933632ce1ff5d708f79bf5c806f5c0",
+    "tests/differential/semantic_corpora.py": "f901234adf7ee30e49d304a9cd15cbed518b52ebe8b070953df601f3ecd5acbf",
+    "tests/differential/semantic_rename_command_cases.py": "e0644a36312d7937d3d39f8a70d24272f95ffc90b5ed9392bbd3a0fb5ba7325b",
+    "tests/differential/semantic_watch_rename_cases.py": "119316620585db0384d7442dd65bb937eb647833984bd43e6b89e71080e4a4d1",
+    "tests/integration/api/admin_command_cases.py": "81aaa7a5c9b26186575c7dca07ffc61cd393fd7071e82c3f0c9dfed47ed6c88f",
+    "tests/integration/api/test_async_api.py": "db7c2a98e8eb4bbd2b7cc241042a05c802b352a835b41acea4f688980908a148",
+    "tests/integration/api/test_rename_command_contract.py": "43e5a4b70b407dea8a57a5ce073e6f1251064428bc997199841b5eb2da327bf9",
+    "tests/integration/api/test_rename_command_wire_delivery.py": "33fc4a7a6764e22436f73419c6914b4ce7a806885ecc8a263a7d083a169cadaf",
+    "tests/integration/api/test_semantic_group_regressions.py": "7cc46f52b2ef5600a63d30879b2bc6d1c1b9c6db8ef4e6010d658c81eaa97d20",
+    "tests/integration/api/test_sync_api.py": "80696dd7abaf867d6ed368cac6a77d0f8c7a0013ba52456b58a2464df4c9ec06",
+    "tests/unit/core/_sqlite_helper_test_cases.py": "7e430faf740fd533779d2f07200c721414468e86834b25a9fbeb8f429d54b74c",
+    "tests/unit/core/test_memory_engine.py": "d7e68af0fcd0874cdb972a64a9216f44866dbea256537a7d655eb383952f7f93",
+    "tests/unit/core/test_sqlite_engine.py": "a25e16729a21c57b7f017e89030e3239b46fad860bffc9ebcc79513b1ae3ec39",
+    "tests/unit/core/test_sqlite_runtime_small_helpers.py": "83679fbe9a47c9eeef1429ec495fdbe7f7d8c4937239b9317a8ff5a70ceca298",
+    "tests/unit/test_database_admin.py": "c084a9c73f985bfc6cd34a8d0217c753ce8d1165ea799a56c8d7110a514efeb5",
+    "tests/unit/wire/test_proxy.py": "01468ef7912d8d09ee7c98474ddb15ab37472bf93a0cd3146bf9ab9f47e49f83"
+  },
+  "corpus_dependency": {
+    "tests/differential/semantic_watch_lifecycle_cases.py": "8570c72e606b5ba2b1a0855c98ee8881c669e699e8a1de19ef462f26afa6e5fa"
+  },
+  "native": {
+    "versions": {
+      "7.0": {
+        "version": "7.0.43",
+        "fcv": {
+          "version": "7.0"
+        },
+        "captures": {
+          "rename_command": {
+            "fixture": "tests/fixtures/semantic_rename_command_7_0.json",
+            "sha256": "5df225f026d8b6098426eb8b2d581db7c55abb2f3aec324acea85c857f1e97dc",
+            "fresh_check_sha256": "0bc3896f36013970f26deacbe4ce7295ab92f973e296d75ed9105c9f44ab29b3",
+            "scenarios": 17,
+            "exit_code": 0
+          },
+          "watch_rename": {
+            "fixture": "tests/fixtures/semantic_watch_rename_7_0.json",
+            "sha256": "907e4b0762ed616bc8800a6a42a4f8641417c08127b2ee797220dbc797bd6fb2",
+            "fresh_check_sha256": "06aa8788ff5a29cbc7ffe66dc2df1bb6dd7740ffe02835b721277ab4e761731d",
+            "scenarios": 24,
+            "exit_code": 0
+          }
+        }
+      },
+      "8.0": {
+        "version": "8.0.32",
+        "fcv": {
+          "version": "8.0"
+        },
+        "captures": {
+          "rename_command": {
+            "fixture": "tests/fixtures/semantic_rename_command_8_0.json",
+            "sha256": "56645e403fe08db483de422fb5049344c8c0585198c1353b41605645aa3ef168",
+            "fresh_check_sha256": "2040d87b049bef4e9dfefc1d97928f5ae8c97382abd2216c4a61712e3ed73b2e",
+            "scenarios": 17,
+            "exit_code": 0
+          },
+          "watch_rename": {
+            "fixture": "tests/fixtures/semantic_watch_rename_8_0.json",
+            "sha256": "6ef271e9ed3b695191cfe1d39c160e0d2f8038cf4a47b5062f3585a3a2a740b3",
+            "fresh_check_sha256": "949b6e23177b4f86a983371be3fd1f2801551509d005c547ffb8e6441018bada",
+            "scenarios": 24,
+            "exit_code": 0
+          }
+        }
+      },
+      "9.0": {
+        "version": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        },
+        "captures": {
+          "rename_command": {
+            "fixture": "tests/fixtures/semantic_rename_command_9_0.json",
+            "sha256": "fcc2679b28ab60347be502ae7849741dbaaf41db4afd20a80f4470128d5f265e",
+            "fresh_check_sha256": "3bc33cebbfdb3e65700f6abdacc9d7b85acdef059d77c4ca495cd09cfda10519",
+            "scenarios": 17,
+            "exit_code": 0
+          },
+          "watch_rename": {
+            "fixture": "tests/fixtures/semantic_watch_rename_9_0.json",
+            "sha256": "bbd6b660946d7cdcee6aa68cc0a748048b935abae7d6a4c525fd2d7b18eca1b4",
+            "fresh_check_sha256": "6c6f3dc42050316884cdaac6380c1cf741607099dbd888692f96dd45d34fd1c2",
+            "scenarios": 24,
+            "exit_code": 0
+          }
+        }
+      }
+    },
+    "topology": "owned single-member replica sets, preexisting primary/FCV checked through physical probes and capture",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "directConnection": true,
+    "capture_and_check_exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "cases_per_major": 2,
+    "scenarios_per_major": 41,
+    "capture_command": "MONGOECO_REAL_MONGODB_URI=<owned URI> .venv/bin/python scripts/capture_differential_replay_golden.py --target <major> --case-set <rename-command|watch-rename> --output <new fixture>",
+    "check_command": "same native capture to distinct /tmp output plus --check <new fixture>; all exit 0",
+    "databases": "UUID by runner; finally cleanup; native jobs sequential per server to isolate client-scope watches",
+    "service_lifecycle": "unchanged; habitual server untouched"
+  },
+  "checks": {
+    "integrated": {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py --tb=short",
+      "passed": 6175,
+      "seconds": 272.71,
+      "log": "acceptance-integrated.txt.gz",
+      "exit_code": 0
+    },
+    "core": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/core tests/property tests/unit/test_database_admin.py tests/unit/test_change_streams.py tests/integration/api/test_watch_namespace_contract.py tests/integration/api/test_rename_command_contract.py tests/integration/api/test_watch_image_contract.py tests/integration/api/test_watch_context_contract.py tests/integration/api/test_update_change_delivery.py tests/contracts/engines/test_spi_v2_only.py --tb=short",
+      "passed": 2760,
+      "skipped": 1,
+      "subtests_passed": 950,
+      "seconds": 27.58,
+      "log": "acceptance-core.txt.gz",
+      "exit_code": 0
+    },
+    "api_wire": {
+      "command": ".venv/bin/python -m pytest -q tests/unit/wire/test_proxy.py tests/integration/api/test_rename_command_wire_delivery.py tests/integration/api/test_sync_api.py tests/integration/api/test_async_api.py -k 'renames_collections_via_admin or rename or invalid_input' --tb=short",
+      "passed": 20,
+      "subtests_passed": 25,
+      "log": "acceptance-api.txt.gz",
+      "exit_code": 0
+    },
+    "orjson": {
+      "command": "MONGOECO_JSON_BACKEND=orjson .venv/bin/python -m pytest -q tests/integration/api/test_rename_command_contract.py tests/integration/api/test_semantic_group_regressions.py -k 'rename_command or watch_rename' --tb=short",
+      "passed": 55,
+      "log": "acceptance-orjson.txt.gz",
+      "exit_code": 0
+    },
+    "typing": {
+      "command": ".venv/bin/python scripts/check_public_typing.py",
+      "status": "public and engine boundary passed",
+      "log": "acceptance-typing.txt.gz",
+      "exit_code": 0
+    },
+    "lint": {
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref 6e6d31e",
+      "changed_python_files": 20,
+      "baseline_expanded": false,
+      "log": "acceptance-lint.txt.gz",
+      "exit_code": 0
+    },
+    "sdk_free": {
+      "command": "PYTHONPATH=src /tmp/mongoeco-predicate-c06/minimal313/bin/python /tmp/mongoeco-rename-sdk-free.py",
+      "python": "3.13 genuinely without bson",
+      "pairs": 6,
+      "scope": "admin/type rejection, overwrite, public ordinary rename and following-write continuity",
+      "log": "acceptance-sdk-free.txt.gz",
+      "exit_code": 0
+    },
+    "baseline": {
+      "runtime": "6e6d31e archive",
+      "command": "PYTHONPATH=/tmp/mongoeco-rename-base/src:. .venv/bin/python -m pytest -q -o pythonpath=/tmp/mongoeco-rename-base/src tests/integration/api/test_semantic_group_regressions.py -k 'rename_command or watch_rename' --tb=short",
+      "failed": 36,
+      "passed": 6,
+      "log": "before-regression.txt.gz",
+      "exit_code": 1
+    },
+    "legacy": {
+      "producer": "actual 6e6d31e archive; producer module path printed in log",
+      "scripts": [
+        "create-legacy.py.txt",
+        "read-legacy.py.txt"
+      ],
+      "logs": [
+        "acceptance-legacy-producer.txt.gz",
+        "acceptance-legacy-reader.txt.gz"
+      ],
+      "source_key_and_core_schema_unchanged": true,
+      "source_options_indexes_and_replay_preserved": true,
+      "destination_contents_replaced": true,
+      "downgrade_claim": false,
+      "exit_code": 0
+    },
+    "performance": {
+      "order": "before/candidate/candidate/before; sequential without other owned gates active",
+      "samples_per_runtime_case": 10,
+      "renames_per_sample": 200,
+      "documents": 100,
+      "checksums_equal": true,
+      "indexed_final_read_and_count_checked": true,
+      "summary": "benchmark-paired-summary.json",
+      "scope": "ordinary rename, not overwrite throughput or full D05",
+      "exit_code": 0
+    }
+  },
+  "review": {
+    "scope": "all changed runtime and test paths; base plus candidate manifest fixed",
+    "resolved": [
+      "admin versus selected database entrypoint",
+      "raw field/type/namespace validation and error precedence",
+      "atomic destination cleanup and rename; no intermediate drop event",
+      "public SPI override bypass in intermediate candidate, reproduced in terminal; two permanent provider regressions now pass",
+      "old expectations of CollectionInvalid and selected-database command success replaced only on new native evidence"
+    ],
+    "remaining": "D04 protocol/resume/filter-close/image interactions/RS CI and wider plan obligations; no proof of program-wide completion"
+  },
+  "feedback": {
+    "interrupted_integrated": "owned replay process stopped on reproduced public-SPI bypass; not accepted; final replay completed on fixed source",
+    "core_and_api": "old exception and command-entrypoint expectations updated to native class/codes; no production bypass to preserve mocks",
+    "options_order": "native catalog metadata member order differs from input order; new witness canonicalizes only that envelope, preserving BSON validator/document order",
+    "temp_probe": "initial create temp=True rejected natively with 72; no temporary-collection support claim; corrected argument/precedence probes use ordinary collections"
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "historical_fixture_changes": [],
+  "limits": [
+    "Same-database rename subset only; no cross-database rename expansion.",
+    "No positive wire watch; TCP writes observed on public local streams of supplied client.",
+    "No distributed/majority durability or native transaction-topology claim.",
+    "No full D05 wheel/environment/global-coverage/performance closure; no B07 general BSON admission closure.",
+    "H55 expression grammar, D06 consumers, H53/conversion and D07 disposition remain with their owners.",
+    "No automatic approval rejection; only owned integrated replay was interrupted on a reproduced candidate defect."
+  ],
+  "document_checks": {
+    "git_diff_check": 0,
+    "dedicated_checker": "none found; relative link verification",
+    "relative_links": 48
+  },
+  "artifacts": {
+    "README.md": "848186bcee572b8784253e0d86e713bd9c83e6c5959526f105ad5b7e12d263dd",
+    "acceptance-api.txt.gz": "b5c8cc9e45121a900464f6d3d91df526ce359850f51f52a3c1d6aa16f2e460c2",
+    "acceptance-benchmark.txt.gz": "77e7b0ae1a96f2a0e2b7e9aeafc97e3ce31e6a4cf46e36aee3f73e463e8bf28b",
+    "acceptance-core.txt.gz": "22be987d81fda56d43a6e5d9aab1afb8d43ef4d0022da63373c52a1f3b8ead6f",
+    "acceptance-integrated.txt.gz": "e4eb951ad118b6a2b8ac2323287d7e9ac2cc9db6055852777606a26f5962ab13",
+    "acceptance-legacy-producer.txt.gz": "bc7b8498f3964ab16ea23fcca25c80571df38a865131b34731322a9624fd1788",
+    "acceptance-legacy-reader.txt.gz": "245d141542f08e6efda6ecf9ad485363f74fe060a82a57e1d57342060e35c6ee",
+    "acceptance-lint.txt.gz": "a23b53cc9a4f3ed3dd9d528d79390b174b0dedd2d5cb85d55ac4d2dd409d3f8f",
+    "acceptance-orjson.txt.gz": "2c70efb4dcd25fffa744629cbd11a8b09f00acf7069e4ac740e845c58eefae18",
+    "acceptance-sdk-free.txt.gz": "7dbbd68242a08ce8cbd4793f753b1eafb388f2f974a328554d2b172066cca038",
+    "acceptance-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "argument-probe.json": "bda2e4709fb5a2d0a661ab213f97e21e7d7798f4386d914a3cad367bf3507853",
+    "argument-probe.py.txt": "89563dfc2278dc899591f94e76a8feb7f002effe8648b273393f51529bbea1a2",
+    "before-regression.txt.gz": "0a270f9c45ed84b5acdd63dadd0109d56ffc4a432e2ee710851861970cd00ff3",
+    "benchmark-after0.json": "88e583f51ff054c848751f6e90febc15781487cb60c84bf62418b0ed881017de",
+    "benchmark-after1.json": "9400ab68ada08744c7cf102b773ef0e085fcbdd2e5f6c50e07d4a8f72452a541",
+    "benchmark-before0.json": "ac3c8b07322e716a0bb4142a7bc1c4f6d7e2300bb06a50f8e618c482de5d6730",
+    "benchmark-before1.json": "abcb6c63a140dae04a33079564ca612f7edf2786ce47ab7147f01190417bc3c1",
+    "benchmark-paired-summary.json": "69331ae7bbd1c2149e3e07dc2c9adde384093c5f1fb6e40d2f74550214c63454",
+    "benchmark.py.txt": "c322aa59a8d0f7220bbaf2c158db82cfbe9abd8170d857ad547be4c2976aeb76",
+    "create-legacy.py.txt": "b0d01c7868107346e1a99e36cb756f23d0fa269efb987b0d878b7d009bfe9a26",
+    "event-probe.json": "eff9b7acfbf2b396195d92ff244f79dd8cfb5ae9f9f4200636ab2fcfde5e344c",
+    "event-probe.py.txt": "7c7e30c942c9449deeabda3461aa388d0852279d8ef22864706c038478f0f9c3",
+    "feedback-api.txt.gz": "cc24cba29495a3ff928c854e475885a3c1a212e0185436252cadd366ebcca195",
+    "feedback-core.txt.gz": "56be3277bf0670f7b841fce7731e0911bcb43cce4fb6b8f434824db0b39e870d",
+    "feedback-integrated-interrupted.txt.gz": "482e1d3f1b69aa24a9044bbaf55653eca046704c98201e86a08842f2fb31c672",
+    "feedback-options-order.txt.gz": "efd3aab7288cb55c7b769cd797f33fba28115e3974d4d083d03716711a823ed2",
+    "legacy-before.json": "09bcc8ca13ce7c5c5aef9a55ac84c67b2fe10cb1d010ef948684ebcedca6da98",
+    "no-sdk.py.txt": "10bfd6cfe48dd90327df19d77c810642a6a9e3df26b81b7e2db0af0dff798274",
+    "paired-benchmark.py.txt": "36e9f37b1d545e3de0afaa13ea28819c6180d261a5a3fdcc775ecc0a8c75b8df",
+    "precedence-probe.json": "b848f94c342678611b02d81ccf07046e7695383b36c805b31d13303731bb2bc6",
+    "precedence-probe.py.txt": "0175a674ea124707fa4584f1d1a2d74efaa8b458ea07a189cb1028732de6ace1",
+    "read-legacy.py.txt": "3578919a2c7fd203b8b52194e82656e0ae48aa4afd39cd81b53f62c5ab49e6f8",
+    "runtime-sources.json": "7099bd2d202d9f9f0d4f14f4724034869af33bfaeca928f23565a78ec9ac82b7"
+  }
+}

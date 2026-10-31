@@ -1,0 +1,41 @@
+{
+  "producer": "/tmp/mongoeco-rename-base/src/mongoeco/__init__.py",
+  "token": {
+    "_data": "eyJ2IjoxLCJ0IjoyfQ"
+  },
+  "source_key": "(<class 'str'>, 'source')",
+  "core_schema": [
+    [
+      "change_outbox",
+      "CREATE TABLE change_outbox (\n            sequence INTEGER PRIMARY KEY AUTOINCREMENT,\n            operation_id TEXT NOT NULL,\n            event_index INTEGER NOT NULL,\n            kind TEXT NOT NULL CHECK (kind IN ('event', 'gap')),\n            payload TEXT,\n            UNIQUE (operation_id, event_index)\n        )"
+    ],
+    [
+      "change_outbox_consumers",
+      "CREATE TABLE change_outbox_consumers (\n            consumer_id TEXT PRIMARY KEY,\n            checkpoint INTEGER NOT NULL,\n            durable INTEGER NOT NULL CHECK (durable IN (0, 1)),\n            updated_at_epoch REAL NOT NULL\n        , lease_owner TEXT, lease_generation INTEGER NOT NULL DEFAULT 0, lease_expires_at_epoch REAL, owner_instance TEXT, registration_expires_at_epoch REAL)"
+    ],
+    [
+      "change_outbox_identities",
+      "CREATE TABLE change_outbox_identities (\n            operation_id TEXT NOT NULL,\n            event_index INTEGER NOT NULL,\n            sequence INTEGER NOT NULL, event_kind TEXT, effect_hash TEXT,\n            PRIMARY KEY (operation_id, event_index),\n            UNIQUE (sequence)\n        )"
+    ],
+    [
+      "collections",
+      "CREATE TABLE collections (\n                        collection_id INTEGER,\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        options_json TEXT NOT NULL DEFAULT '{}',\n                        PRIMARY KEY (db_name, coll_name)\n                    )"
+    ],
+    [
+      "documents",
+      "CREATE TABLE documents (\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        storage_key TEXT NOT NULL,\n                        document TEXT NOT NULL,\n                        PRIMARY KEY (db_name, coll_name, storage_key)\n                    )"
+    ],
+    [
+      "indexes",
+      "CREATE TABLE indexes (\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        name TEXT NOT NULL,\n                        physical_name TEXT,\n                        fields TEXT NOT NULL,\n                        keys TEXT,\n                        unique_flag INTEGER NOT NULL,\n                        sparse_flag INTEGER NOT NULL DEFAULT 0,\n                        hidden_flag INTEGER NOT NULL DEFAULT 0,\n                        collation_json TEXT,\n                        partial_filter_json TEXT,\n                        expire_after_seconds INTEGER,\n                        text_weights_json TEXT,\n                        default_language TEXT,\n                        language_override TEXT,\n                        min_value REAL,\n                        max_value REAL,\n                        bucket_size REAL,\n                        multikey_flag INTEGER NOT NULL DEFAULT 0,\n                        multikey_physical_name TEXT, scalar_physical_name TEXT,\n                        PRIMARY KEY (db_name, coll_name, name)\n                    )"
+    ],
+    [
+      "mongoeco_schema_migrations",
+      "CREATE TABLE mongoeco_schema_migrations (\n            component TEXT PRIMARY KEY,\n            version INTEGER NOT NULL\n        )"
+    ],
+    [
+      "search_indexes",
+      "CREATE TABLE search_indexes (\n                        db_name TEXT NOT NULL,\n                        coll_name TEXT NOT NULL,\n                        name TEXT NOT NULL,\n                        index_type TEXT NOT NULL,\n                        definition_json TEXT NOT NULL,\n                        ready_at_epoch REAL, physical_name TEXT,\n                        PRIMARY KEY (db_name, coll_name, name)\n                    )"
+    ]
+  ]
+}

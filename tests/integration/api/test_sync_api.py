@@ -66,7 +66,7 @@ from tests.integration.api.admin_command_cases import (
     assert_database_command_supports_find_and_modify,
     assert_database_command_supports_insert_update_and_delete,
     assert_database_command_supports_ping_list_collections_and_drop_database,
-    assert_database_command_supports_rename_collection_within_current_database,
+    assert_database_command_renames_collections_via_admin,
     assert_database_command_write_commands_surface_write_errors,
     assert_hello_and_is_master_commands_return_handshake_metadata,
     assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata,
@@ -4805,11 +4805,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
             ),
         )
 
-    def test_database_command_supports_rename_collection_within_current_database(
+    def test_database_command_renames_collections_via_admin(
         self,
     ):
         asyncio.run(
-            assert_database_command_supports_rename_collection_within_current_database(
+            assert_database_command_renames_collections_via_admin(
                 self,
                 SYNC_ENGINE_FACTORIES,
                 open_sync_client,
@@ -5016,9 +5016,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             client.alpha.events.insert_one({"_id": "1"})
             client.alpha.logs.insert_one({"_id": "2"})
 
-            with self.assertRaises(CollectionInvalid):
+            with self.assertRaises(OperationFailure):
                 client.alpha.events.rename("logs")
-            with self.assertRaises(CollectionInvalid):
+            with self.assertRaises(OperationFailure):
                 client.alpha.events.rename("events")
 
     def test_client_database_and_collection_expose_configured_pymongo_options(

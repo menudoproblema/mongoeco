@@ -108,6 +108,9 @@ class _AsyncView:
     def options(self, *args, **kwargs):
         return self._call("options", *args, **kwargs)
 
+    def list_indexes(self, *args, **kwargs):
+        return _AsyncCursorView(self._call("list_indexes", *args, **kwargs), self.loop)
+
     def drop(self, *args, **kwargs):
         return self._call("drop", *args, **kwargs)
 

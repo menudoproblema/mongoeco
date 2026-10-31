@@ -93,6 +93,10 @@ from tests.differential.semantic_query_matching_cases import (
     SEED as QUERY_MATCHING_SEED,
     SEMANTIC_QUERY_MATCHING_CASES,
 )
+from tests.differential.semantic_rename_command_cases import (
+    SEED as RENAME_COMMAND_SEED,
+    SEMANTIC_RENAME_COMMAND_CASES,
+)
 from tests.differential.semantic_schema_cases import (
     SEED as SCHEMA_SEED,
     SEMANTIC_SCHEMA_CASES,
@@ -139,6 +143,10 @@ from tests.differential.semantic_watch_lifecycle_cases import (
     SEED as WATCH_LIFECYCLE_SEED,
     SEMANTIC_WATCH_LIFECYCLE_CASES,
 )
+from tests.differential.semantic_watch_rename_cases import (
+    SEED as WATCH_RENAME_SEED,
+    SEMANTIC_WATCH_RENAME_CASES,
+)
 from tests.differential.semantic_write_effect_cases import (
     SEED as WRITE_EFFECT_SEED,
     SEMANTIC_WRITE_EFFECT_CASES,
@@ -156,6 +164,14 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "rename_command": SemanticCorpus(
+        "rename-command", "semantic_rename_command_cases", RENAME_COMMAND_SEED,
+        SEMANTIC_RENAME_COMMAND_CASES,
+    ),
+    "watch_rename": SemanticCorpus(
+        "watch-rename", "semantic_watch_rename_cases", WATCH_RENAME_SEED,
+        SEMANTIC_WATCH_RENAME_CASES, surfaces=("sync", "async"),
+    ),
     "watch_lifecycle": SemanticCorpus(
         "watch-lifecycle", "semantic_watch_lifecycle_cases", WATCH_LIFECYCLE_SEED,
         SEMANTIC_WATCH_LIFECYCLE_CASES, surfaces=("sync", "async"),

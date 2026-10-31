@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from mongoeco.api._change_delivery import change_delivery_scope
+from mongoeco.engines.adapter import EngineSpiAdapter
+from mongoeco.core.server_errors import server_error
 from mongoeco.api._async import _collection_modify
 from mongoeco.api._async._write_command_validation import (
     command_shape_error as _command_shape_error,
@@ -13,13 +16,14 @@ from mongoeco.api._async._write_errors import validate_classic_update_sort
 from mongoeco.api._async._write_failures import record_write_failure
 from mongoeco.api._command_bson import (
     command_boolean,
+    rename_collection_options,
     validate_command_array_filters,
     validate_command_let,
     validate_write_fields,
 )
 from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.engines.results import FindAndModifyOutcome
-from mongoeco.errors import CollectionInvalid, OperationFailure, WriteError
+from mongoeco.errors import OperationFailure, WriteError
 from mongoeco.types import (
     CreateIndexesCommandResult,
     Document,
@@ -133,34 +137,31 @@ class DatabaseAdminWriteCommandService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        source_db, source_name = self._admin._normalize_namespace(
-            spec.get("renameCollection"),
-            "renameCollection",
+        (source_db, source_name), (target_db, target_name), drop_target = (
+            rename_collection_options(spec, self._admin._db_name)
         )
-        target_db, target_name = self._admin._normalize_namespace(spec.get("to"), "to")
-        if source_db != self._admin._db_name or target_db != self._admin._db_name:
-            raise OperationFailure(
-                "renameCollection only supports namespaces in the current database"
+        if source_db != target_db:
+            message = "renameCollection between databases is not supported locally"
+            raise server_error(message, code=20)
+        database = self._admin._database
+        adapter = database._validated_engine_spi
+        if adapter is None:
+            adapter = database._validated_engine_spi = EngineSpiAdapter(
+                self._admin._engine
             )
-        drop_target = spec.get("dropTarget", False)
-        if not isinstance(drop_target, bool):
-            raise TypeError("dropTarget must be a bool")
+        options = {}
         if drop_target:
-            collection_names = set(
-                await self._admin._engine.list_collections(
-                    self._admin._db_name,
-                    context=session,
-                )
+            rename = getattr(self._admin._engine, "_rename_collection", None)
+            if not callable(rename):
+                message = "atomic dropTarget requires engine support"
+                raise server_error(message, code=20)
+            options = {"drop_target": True}
+        else:
+            rename = self._admin._engine.rename_collection
+        with change_delivery_scope(adapter, database._change_hub, session=session):
+            await rename(
+                source_db, source_name, target_name, context=session, **options
             )
-            if source_name == target_name:
-                raise CollectionInvalid("collection names must differ")
-            if source_name not in collection_names:
-                raise CollectionInvalid(f"collection '{source_name}' does not exist")
-            if target_name in collection_names:
-                await self._admin.drop_collection(target_name, session=session)
-        await self._admin._database.get_collection(source_name).rename(
-            target_name, session=session
-        )
         return OkResult()
 
     async def command_insert(

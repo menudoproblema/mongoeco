@@ -7,7 +7,7 @@ from unittest.mock import Mock
 from mongoeco.core.query_plan import EqualsCondition
 from mongoeco.core.search import ClassicTextQuery
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
-from mongoeco.engines._sqlite_namespace_admin import drop_collection
+from mongoeco.engines._sqlite_namespace_admin import remove_collection_contents
 from mongoeco.engines._sqlite_plan_heuristics import plan_requires_python_for_array_comparisons
 from mongoeco.engines._sqlite_read_ops import build_search_explain
 from mongoeco.engines._sqlite_read_runtime import plan_find_semantics_sync
@@ -133,13 +133,10 @@ class SQLiteRuntimeSmallHelperTests(unittest.TestCase):
         conn = Mock()
         dropped: list[str | None] = []
 
-        drop_collection(
+        remove_collection_contents(
             conn=conn,
             db_name="db",
             coll_name="coll",
-            begin_write=lambda _conn: None,
-            commit_write=lambda _conn: None,
-            rollback_write=lambda _conn: None,
             load_indexes=lambda *_args: [],
             load_search_index_rows=lambda *_args: [
                 (SearchIndexDefinition({"mappings": {"dynamic": True}}, name="search"), None, None)

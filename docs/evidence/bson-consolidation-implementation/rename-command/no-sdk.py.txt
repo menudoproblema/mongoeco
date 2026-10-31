@@ -1,0 +1,29 @@
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.errors import OperationFailure
+try:import bson
+except ModuleNotFoundError:pass
+else:raise AssertionError('SDK must be absent')
+for factory in (MemoryEngine,SQLiteEngine):
+ for dialect in ('7.0','8.0','9.0'):
+  with MongoClient(factory(),mongodb_dialect=dialect) as client:
+   client.test.source.insert_one({'_id':1});client.test.target.insert_one({'_id':2})
+   stream=client.watch(max_await_time_ms=1)
+   spec={'renameCollection':'test.source','to':'test.target','dropTarget':True}
+   try:client.test.command(spec)
+   except OperationFailure as e:assert e.code==13
+   else:raise AssertionError('non-admin accepted')
+   try:client.admin.command({**spec,'dropTarget':1})
+   except OperationFailure as e:assert e.code==14
+   else:raise AssertionError('non-boolean accepted')
+   assert stream.try_next() is None
+   client.admin.command(spec)
+   event=stream.try_next();assert event['operationType']=='rename' and event['to']=={'db':'test','coll':'target'}
+   assert client.test.target.find_one({})=={'_id':1}
+   client.test.target.insert_one({'_id':3})
+   assert stream.try_next()['documentKey']=={'_id':3}
+   client.admin.command({'renameCollection':'test.target','to':'test.final'})
+   assert stream.try_next()['to']=={'db':'test','coll':'final'}
+   assert client.test.final.find_one({'_id':1})=={'_id':1}
+   stream.close()
+print('Python 3.13 without SDK: six pairs, admin/type errors, atomic overwrite, rename-only and following-write continuity passed')

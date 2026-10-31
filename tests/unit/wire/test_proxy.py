@@ -1251,7 +1251,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             connection=connection,
         )
 
-        with self.assertRaisesRegex(OperationFailure, "current database"):
+        with self.assertRaisesRegex(OperationFailure, "admin database"):
             await proxy._executor.execute_command(
                 {"renameCollection": "other.source", "to": "db.target", "$db": "db"},
                 connection=connection,
@@ -1273,7 +1273,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             ["source"],
         )
         renamed = await proxy._executor.execute_command(
-            {"renameCollection": "db.source", "to": "db.target", "$db": "db"},
+            {"renameCollection": "db.source", "to": "db.target", "$db": "admin"},
             connection=connection,
         )
         self.assertEqual(renamed, {"ok": 1.0})

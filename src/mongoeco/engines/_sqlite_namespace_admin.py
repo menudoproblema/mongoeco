@@ -5,6 +5,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from mongoeco.core.change_events import namespace_change_payloads
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import CollectionInvalid
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines._shared_namespace_admin import (
@@ -107,9 +108,12 @@ def rename_collection(
     invalidate_collection_id_cache: Callable[[str, str], None],
     invalidate_collection_features_cache: Callable[[str, str], None],
     record_changes: Callable[[list[dict]], None] | None = None,
+    drop_target: bool = False,
+    remove_target: Callable[[], None] | None = None,
 ) -> None:
     if coll_name == new_name:
-        raise CollectionInvalid("collection names must differ")
+        message = "collection names must differ"
+        raise server_error(message, code=20)
     with sqlite_write_scope(
         conn,
         begin_write=begin_write,
@@ -117,9 +121,16 @@ def rename_collection(
         rollback_write=rollback_write,
     ):
         if not collection_exists(conn, db_name, coll_name):
-            raise CollectionInvalid(f"collection '{coll_name}' does not exist")
+            message = f"collection '{coll_name}' does not exist"
+            raise server_error(message, code=26)
         if collection_exists(conn, db_name, new_name):
-            raise CollectionInvalid(f"collection '{new_name}' already exists")
+            if not drop_target:
+                message = f"collection '{new_name}' already exists"
+                raise server_error(message, code=48)
+            if remove_target is None:
+                message = "atomic dropTarget requires a target removal resource"
+                raise server_error(message, code=20)
+            remove_target()
         for table_name in ("collections", "documents", "indexes", "search_indexes"):
             conn.execute(
                 f"""
@@ -141,14 +152,11 @@ def rename_collection(
             ))
 
 
-def drop_collection(
+def remove_collection_contents(  # noqa: PLR0913 - injected catalog resources
     *,
     conn: sqlite3.Connection,
     db_name: str,
     coll_name: str,
-    begin_write: Callable[[sqlite3.Connection], None],
-    commit_write: Callable[[sqlite3.Connection], None],
-    rollback_write: Callable[[sqlite3.Connection], None],
     load_indexes: Callable[[str, str], list[dict[str, object]]],
     load_search_index_rows: Callable[
         [str, str], list[tuple[SearchIndexDefinition, str | None, float | None]]
@@ -163,82 +171,78 @@ def drop_collection(
 ) -> None:
     indexes = load_indexes(db_name, coll_name)
     search_indexes = load_search_index_rows(db_name, coll_name)
-    with sqlite_write_scope(
-        conn,
-        begin_write=begin_write,
-        commit_write=commit_write,
-        rollback_write=rollback_write,
-    ):
-        collection_id = lookup_collection_id(conn, db_name, coll_name)
-        for index in indexes:
-            conn.execute(
-                f"DROP INDEX IF EXISTS {quote_identifier(str(index['physical_name']))}"
-            )
-            if index.get("scalar_physical_name"):
-                conn.execute(
-                    f"DROP INDEX IF EXISTS {quote_identifier(str(index['scalar_physical_name']))}"
-                )
-            if index.get("multikey"):
-                conn.execute(
-                    f"DROP INDEX IF EXISTS {quote_identifier(str(index['multikey_physical_name']))}"
-                )
-        for _definition, physical_name, _ready_at_epoch in search_indexes:
-            drop_search_backend(conn, physical_name)
+    collection_id = lookup_collection_id(conn, db_name, coll_name)
+    for index in indexes:
         conn.execute(
-            """
-            DELETE FROM documents
-            WHERE db_name = ? AND coll_name = ?
-            """,
-            (db_name, coll_name),
+            f"DROP INDEX IF EXISTS {quote_identifier(str(index['physical_name']))}"
         )
-        if collection_id is not None:
+        if index.get("scalar_physical_name"):
             conn.execute(
-                """
-                DELETE FROM scalar_index_entries
-                WHERE collection_id = ?
-                """,
-                (collection_id,),
+                "DROP INDEX IF EXISTS "
+            f"{quote_identifier(str(index['scalar_physical_name']))}"
             )
+        if index.get("multikey"):
             conn.execute(
-                """
-                DELETE FROM multikey_entries
-                WHERE collection_id = ?
-                """,
-                (collection_id,),
+                "DROP INDEX IF EXISTS "
+            f"{quote_identifier(str(index['multikey_physical_name']))}"
             )
-            conn.execute(
-                """
-                DELETE FROM ttl_index_entries
-                WHERE collection_id = ?
-                """,
-                (collection_id,),
-            )
+    for _definition, physical_name, _ready_at_epoch in search_indexes:
+        drop_search_backend(conn, physical_name)
+    conn.execute(
+        """
+        DELETE FROM documents
+        WHERE db_name = ? AND coll_name = ?
+        """,
+        (db_name, coll_name),
+    )
+    if collection_id is not None:
         conn.execute(
             """
-            DELETE FROM indexes
-            WHERE db_name = ? AND coll_name = ?
+            DELETE FROM scalar_index_entries
+            WHERE collection_id = ?
             """,
-            (db_name, coll_name),
+            (collection_id,),
         )
         conn.execute(
             """
-            DELETE FROM search_indexes
-            WHERE db_name = ? AND coll_name = ?
+            DELETE FROM multikey_entries
+            WHERE collection_id = ?
             """,
-            (db_name, coll_name),
+            (collection_id,),
         )
         conn.execute(
             """
-            DELETE FROM collections
-            WHERE db_name = ? AND coll_name = ?
+            DELETE FROM ttl_index_entries
+            WHERE collection_id = ?
             """,
-            (db_name, coll_name),
+            (collection_id,),
         )
-        mark_index_metadata_changed(db_name, coll_name)
-        invalidate_collection_id_cache(db_name, coll_name)
-        invalidate_collection_features_cache(db_name, coll_name)
-        if collection_id is not None and record_changes is not None:
-            record_changes(namespace_change_payloads("drop", db_name, coll_name))
+    conn.execute(
+        """
+        DELETE FROM indexes
+        WHERE db_name = ? AND coll_name = ?
+        """,
+        (db_name, coll_name),
+    )
+    conn.execute(
+        """
+        DELETE FROM search_indexes
+        WHERE db_name = ? AND coll_name = ?
+        """,
+        (db_name, coll_name),
+    )
+    conn.execute(
+        """
+        DELETE FROM collections
+        WHERE db_name = ? AND coll_name = ?
+        """,
+        (db_name, coll_name),
+    )
+    mark_index_metadata_changed(db_name, coll_name)
+    invalidate_collection_id_cache(db_name, coll_name)
+    invalidate_collection_features_cache(db_name, coll_name)
+    if collection_id is not None and record_changes is not None:
+        record_changes(namespace_change_payloads("drop", db_name, coll_name))
 
 
 def drop_database(

@@ -1,0 +1,27 @@
+import json,uuid,time
+from pymongo import MongoClient
+out={}
+for port in (49973,49974,49975):
+ with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as c:
+  cases={};name='rename_'+uuid.uuid4().hex;db=c[name]
+  try:
+   for label,kwargs in [('overwrite',{'dropTarget':True}),('collision',{}),('same',{'to':f'{name}.source'}),('same_drop',{'to':f'{name}.source','dropTarget':True}),('number',{'dropTarget':1}),('string',{'dropTarget':'yes'}),('null',{'dropTarget':None}),('missing_source',{'missing':True,'dropTarget':True})]:
+    c.drop_database(name)
+    if not kwargs.pop('missing',False):db.source.insert_one({'_id':1})
+    db.target.insert_one({'_id':2})
+    streams={k:x.watch(max_await_time_ms=10) for k,x in [('source',db.source),('target',db.target),('database',db),('client',c)]}
+    result={}
+    try:
+     c.admin.command({'renameCollection':f'{name}.source','to':f'{name}.target',**kwargs});result['ok']=True
+    except Exception as e:result['error']={'class':type(e).__name__,'code':getattr(e,'code',None)}
+    for key,stream in streams.items():
+     rows=[];deadline=time.monotonic()+0.12
+     while stream.alive and time.monotonic()<deadline:
+      e=stream.try_next()
+      if e:rows.append({k:v for k,v in e.items() if k not in ('_id','clusterTime','wallTime')})
+     result[key]={'events':rows,'alive':stream.alive};stream.close()
+    result['data']={'source':list(db.source.find({})),'target':list(db.target.find({}))}
+    cases[label]=result
+  finally:c.drop_database(name)
+  out[str(port)]=cases
+print(json.dumps(out,indent=2))

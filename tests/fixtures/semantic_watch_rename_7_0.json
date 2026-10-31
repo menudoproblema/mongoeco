@@ -1,0 +1,583 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_watch_rename": {
+      "default/source": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "default/target": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "default/database": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "default/client": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "overwrite/source": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "overwrite/target": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "overwrite/database": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "overwrite/client": {
+        "ok": true,
+        "source": [],
+        "target": [
+          {
+            "_id": "source"
+          }
+        ],
+        "events": [
+          {
+            "ns": {
+              "db": "<database>",
+              "coll": "source"
+            },
+            "operationType": "rename",
+            "to": {
+              "db": "<database>",
+              "coll": "target"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "collision/source": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "48"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "collision/target": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "48"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "collision/database": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "48"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "collision/client": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "48"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "missing_source/source": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        },
+        "source": [],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "missing_source/target": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        },
+        "source": [],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "missing_source/database": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        },
+        "source": [],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "missing_source/client": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        },
+        "source": [],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "same/source": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "20"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "same/target": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "20"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "same/database": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "20"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "same/client": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "20"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "nonadmin/source": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "13"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "nonadmin/target": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "13"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "nonadmin/database": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "13"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      },
+      "nonadmin/client": {
+        "error": "OperationFailure",
+        "code": {
+          "$numberInt": "13"
+        },
+        "source": [
+          {
+            "_id": "source"
+          }
+        ],
+        "target": [
+          {
+            "_id": "target"
+          }
+        ],
+        "events": [],
+        "alive": true
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793466236,
+            "i": 64
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793466236,
+          "i": 64
+        }
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_watch_rename_cases.py",
+    "sha256": "119316620585db0384d7442dd65bb937eb647833984bd43e6b89e71080e4a4d1"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_watch_rename",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_watch_rename"
+    }
+  ]
+}

@@ -100,6 +100,14 @@ autoritativos, por lo que un fallo conserva todos los roots anteriores.
 `rename` registra ambos nombres y `drop_database` declara alcance de base
 completo.
 
+La sobrescritura de destino en rename reutiliza el borrado de contenido del
+namespace dentro de ese mismo scope. En SQLite, remove_collection_contents
+modifica catalogo/datos/indices sin iniciar ni confirmar una transaccion: el
+caller conserva la propiedad del write scope y del outbox. Memory comparte
+su limpieza bajo los locks y snapshots de ambos nombres. La publicacion final
+es la de rename; un fallo despues de retirar destino o preparar efectos
+restaura ambos namespaces y sus recursos Search.
+
 Las mutaciones de documentos usan un journal de undo: registran solo las
 entradas de storage, las
 pertenencias a buckets de indices y la metadata de alta que realmente cambian.

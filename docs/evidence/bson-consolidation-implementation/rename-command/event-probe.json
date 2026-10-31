@@ -1,0 +1,953 @@
+{
+  "49973": {
+    "overwrite": {
+      "ok": true,
+      "source": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "source"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "target": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "source"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "database": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "source"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_2b5d7a6025f145868878c59fbb6f087b",
+              "coll": "source"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "data": {
+        "source": [],
+        "target": [
+          {
+            "_id": 1
+          }
+        ]
+      }
+    },
+    "collision": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 48
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "same": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 20
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "same_drop": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 20
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "number": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "string": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "null": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "missing_source": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 26
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    }
+  },
+  "49974": {
+    "overwrite": {
+      "ok": true,
+      "source": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "source"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "target": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "source"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "database": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "source"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_cdb5256b75254711b78156d5963226ee",
+              "coll": "source"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "data": {
+        "source": [],
+        "target": [
+          {
+            "_id": 1
+          }
+        ]
+      }
+    },
+    "collision": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 48
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "same": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 20
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "same_drop": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 20
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "number": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "string": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "null": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "missing_source": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 26
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    }
+  },
+  "49975": {
+    "overwrite": {
+      "ok": true,
+      "source": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "source"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "target": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "source"
+            }
+          },
+          {
+            "operationType": "invalidate"
+          }
+        ],
+        "alive": false
+      },
+      "database": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "source"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "client": {
+        "events": [
+          {
+            "to": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "target"
+            },
+            "operationType": "rename",
+            "ns": {
+              "db": "rename_243da776aeee455282511d6798bebefe",
+              "coll": "source"
+            }
+          }
+        ],
+        "alive": true
+      },
+      "data": {
+        "source": [],
+        "target": [
+          {
+            "_id": 1
+          }
+        ]
+      }
+    },
+    "collision": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 48
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "same": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 20
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "same_drop": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 20
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "number": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "string": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "null": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 14
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [
+          {
+            "_id": 1
+          }
+        ],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    },
+    "missing_source": {
+      "error": {
+        "class": "OperationFailure",
+        "code": 26
+      },
+      "source": {
+        "events": [],
+        "alive": true
+      },
+      "target": {
+        "events": [],
+        "alive": true
+      },
+      "database": {
+        "events": [],
+        "alive": true
+      },
+      "client": {
+        "events": [],
+        "alive": true
+      },
+      "data": {
+        "source": [],
+        "target": [
+          {
+            "_id": 2
+          }
+        ]
+      }
+    }
+  }
+}

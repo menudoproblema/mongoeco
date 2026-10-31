@@ -78,6 +78,10 @@ de base, manteniendo el de cliente y el de una coleccion que nunca existio.
 Rename entrega el evento e invalida streams de origen y destino. El destino se
 conserva como metadata opcional en journal; el evento publico rename expone
 `to`. Invalidate omite `ns`/`documentKey`, y dropDatabase omite `ns.coll`.
+DropTarget retira el contenido anterior del destino dentro del mismo rename,
+incluidos sus indices/recursos Search, sin publicar un drop intermedio. Las
+escrituras por proxy con cliente prestado usan el hub de ese cliente; se
+verifican con un stream local publico, sin prometer watch wire positivo.
 El registro de [implementacion BSON](../bson-consolidation-implementation.md)
 posee la aceptacion y los pendientes de protocolo, reanudacion, entradas de
 comando y CI; esta descripcion no cierra todo D04.

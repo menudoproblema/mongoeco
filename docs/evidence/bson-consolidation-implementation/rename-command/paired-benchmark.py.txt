@@ -1,0 +1,20 @@
+import json,os,statistics,subprocess,sys
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/rename-command')
+script=root/'benchmark.py.txt'
+rows={'before':{},'after':{}}
+for label,source in [('before0','/tmp/mongoeco-rename-base/src'),('after0','src'),('after1','src'),('before1','/tmp/mongoeco-rename-base/src')]:
+    result=subprocess.run([sys.executable,str(script)],env={**os.environ,'PYTHONPATH':source},check=True,capture_output=True,text=True)
+    (root/('benchmark-'+label+'.json')).write_text(result.stdout)
+    for name,values in json.loads(result.stdout).items():
+        rows[label[:-1]].setdefault(name,{'samples':[],'checksums':[]})
+        for key in ('samples','checksums'):rows[label[:-1]][name][key].extend(values[key])
+    print(label,flush=True)
+summary={}
+for name,before in rows['before'].items():
+    after=rows['after'][name]
+    assert before['checksums']==after['checksums']
+    a=statistics.median(before['samples']);b=statistics.median(after['samples'])
+    summary[name]={'before':a,'after':b,'ratio':b/a,'checksum':before['checksums'][0],'samples_per_runtime':len(before['samples'])}
+(root/'benchmark-paired-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+print(summary)

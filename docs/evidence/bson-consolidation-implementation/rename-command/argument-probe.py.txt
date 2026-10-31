@@ -1,0 +1,16 @@
+from pymongo import MongoClient
+from bson import Code
+import json,uuid
+r={}
+for port in (49973,49974,49975):
+ with MongoClient(f'mongodb://127.0.0.1:{port}/?directConnection=true&serverSelectionTimeoutMS=3000') as c:
+  name='rename_'+uuid.uuid4().hex;out={}
+  try:
+   c[name].source.insert_one({'_id':1})
+   variants={'missing_to':{'renameCollection':name+'.source'},'source_type':{'renameCollection':3,'to':name+'.target'},'source_code':{'renameCollection':Code(name+'.source'),'to':name+'.target'},'source_unqualified':{'renameCollection':'source','to':name+'.target'},'target_unqualified':{'renameCollection':name+'.source','to':'target'},'target_empty':{'renameCollection':name+'.source','to':name+'.'},'target_nullbyte':{'renameCollection':name+'.source','to':name+'.bad\0x'},'unknown':{'renameCollection':name+'.source','to':name+'.target','wrong':1},'nonadmin_type':{'renameCollection':3,'to':name+'.target'}}
+   for k,spec in variants.items():
+    try:(c[name] if k=='nonadmin_type' else c.admin).command(spec);out[k]={'ok':True}
+    except Exception as e:out[k]={'class':type(e).__name__,'code':getattr(e,'code',None),'message':str(e).split(', full error:')[0]}
+  finally:c.drop_database(name)
+  r[str(port)]=out
+print(json.dumps(r,indent=2))

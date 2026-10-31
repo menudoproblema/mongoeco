@@ -6557,12 +6557,12 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
             with self.assertRaisesRegex(CollectionInvalid, "does not exist"):
                 await engine.collection_options("db", "missing")
-            with self.assertRaisesRegex(CollectionInvalid, "must differ"):
+            with self.assertRaisesRegex(OperationFailure, "must differ"):
                 await engine.rename_collection("db", "same", "same")
 
             await engine.create_collection("db", "coll")
             await engine.create_collection("db", "other")
-            with self.assertRaisesRegex(CollectionInvalid, "already exists"):
+            with self.assertRaisesRegex(OperationFailure, "already exists"):
                 await engine.rename_collection("db", "coll", "other")
         finally:
             await engine.disconnect()

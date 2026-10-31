@@ -3961,8 +3961,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 ),
                 [],
             )
-            with self.assertRaises(CollectionInvalid):
+            with self.assertRaises(OperationFailure) as error:
                 await engine.rename_collection("db", "missing", "renamed")
+            self.assertEqual(error.exception.code, 26)
         finally:
             await engine.disconnect()
 

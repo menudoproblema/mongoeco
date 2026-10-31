@@ -1,0 +1,24 @@
+import json,sqlite3
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+root=Path('/tmp/mongoeco-rename-legacy');before=json.loads((root/'before.json').read_text())
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ stream=client.watch(resume_after=before['token'],max_await_time_ms=1)
+ client.admin.command({'renameCollection':'compat.source','to':'compat.target','dropTarget':True})
+ e=stream.try_next();assert e['operationType']=='rename' and e['to']=={'db':'compat','coll':'target'}
+ assert client.compat.target.find_one({'v':1},hint='source_index')=={'_id':'source','v':1}
+ assert client.compat.target.options()['changeStreamPreAndPostImages']=={'enabled':True}
+ assert sorted(i['name'] for i in client.compat.target.list_indexes())==['_id_','source_index']
+ stream.close()
+with sqlite3.connect(root/'db.sqlite') as conn:
+ assert conn.execute("SELECT storage_key FROM documents WHERE db_name='compat' AND coll_name='target'").fetchone()[0]==before['source_key']
+ schema=conn.execute("SELECT name,sql FROM sqlite_master WHERE type='table' AND name IN ('collections','documents','indexes','search_indexes','change_outbox','change_outbox_identities','change_outbox_consumers','mongoeco_schema_migrations') ORDER BY name").fetchall()
+ assert json.loads(json.dumps(schema))==before['core_schema']
+with MongoClient(SQLiteEngine(str(root/'db.sqlite')),change_stream_journal_path=str(root/'journal.json')) as client:
+ stream=client.watch(resume_after=before['token'],max_await_time_ms=1)
+ assert stream.try_next()['operationType']=='rename'
+ client.compat.target.insert_one({'_id':'after','v':3})
+ assert stream.try_next()['documentKey']=={'_id':'after'}
+ stream.close()
+print('Actual 6e6d31e SQLite/journal: atomic overwrite, source key/index/options, core schema and replay continuity passed; no downgrade claim')
