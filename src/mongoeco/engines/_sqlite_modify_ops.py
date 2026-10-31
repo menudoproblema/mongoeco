@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
+from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
@@ -342,6 +343,11 @@ def update_with_operation(
                 after_document=deepcopy(document),
             )
         updated_storage_key = storage_key_for_id(document.get("_id"))
+        if (
+            "_id" in original_document and "_id" in document
+            and same_bson_update_value(original_document["_id"], document["_id"])
+        ):
+            updated_storage_key = storage_key
         if (
             "_id" not in original_document
             or (replacement_document is None and isinstance(

@@ -729,19 +729,9 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
             ],
         )
 
-        sql, params = translate_query_plan(
-            EqualsCondition('session_id', session_id)
-        )
-        self.assertIn("json_each.type = 'object'", sql)
-        self.assertEqual(
-            params,
-            [
-                'uuid',
-                '12345678-1234-5678-1234-567812345678',
-                'uuid',
-                '12345678-1234-5678-1234-567812345678',
-            ],
-        )
+        # UUID/Binary 4 aliases can occupy different persisted tags.
+        with self.assertRaises(NotImplementedError):
+            translate_query_plan(EqualsCondition('session_id', session_id))
 
         sql, params = translate_query_plan(
             EqualsCondition('legacy', UNDEFINED)

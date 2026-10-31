@@ -1,0 +1,38 @@
+{
+  "7.0": {
+    "dbref": {
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 9
+    },
+    "scope": {
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 9
+    }
+  },
+  "8.0": {
+    "dbref": {
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 9
+    },
+    "scope": {
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 9
+    }
+  },
+  "9.0": {
+    "dbref": {
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 9
+    },
+    "scope": {
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 9
+    }
+  }
+}

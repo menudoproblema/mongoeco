@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from functools import cmp_to_key
 import heapq
 import math
+
+from functools import cmp_to_key
 from typing import TYPE_CHECKING, Any, Iterable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_values import binary_order_key
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline
@@ -89,7 +91,10 @@ def _compare_native_sort_scalars(left: Any, right: Any) -> int | None:
     left_type = type(left)
     if left_type is not type(right):
         return None
-    if left_type is int or left_type is bool or left_type is str or left_type is bytes:
+    if left_type is bytes:
+        left_key, right_key = binary_order_key(left), binary_order_key(right)
+        return (left_key > right_key) - (left_key < right_key)
+    if left_type is int or left_type is bool or left_type is str:
         if left < right:
             return -1
         if left > right:

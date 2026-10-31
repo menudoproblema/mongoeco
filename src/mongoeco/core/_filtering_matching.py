@@ -241,6 +241,7 @@ class FilteringMatchingMixin:
             if (
                 value_type is target_type
                 and value_type in _FAST_SCALAR_TYPES
+                and value_type is not bytes
                 and not (
                     value_type is float and (math.isnan(value) or math.isnan(target))
                 )

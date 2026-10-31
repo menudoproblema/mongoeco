@@ -17,6 +17,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_ordering import compare_bson_documents
+from mongoeco.core.bson_values import document_mapping
 from mongoeco.types import CollationDocument
 
 
@@ -155,8 +156,13 @@ def compare_with_collation(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> int:
-    if collation is not None and isinstance(left, dict) and isinstance(right, dict):
-        return _compare_collated_documents(left, right, dialect, collation)
+    if collation is not None:
+        left_document = document_mapping(left)
+        right_document = document_mapping(right)
+        if left_document is not None and right_document is not None:
+            return _compare_collated_documents(
+                left_document, right_document, dialect, collation
+            )
     if collation is not None and isinstance(left, list) and isinstance(right, list):
         return _compare_collated_arrays(left, right, dialect, collation)
     if collation is None or type(left) is not str or type(right) is not str:

@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from mongoeco.core.filtering import BSONComparator
 from mongoeco.core.query_operators import (
+    is_query_expression_document,
     is_query_operator_key,
     query_operator_keys,
 )
@@ -10,12 +11,10 @@ from mongoeco.types import Document, Filter
 
 
 def _seed_candidate_from_condition(value: object) -> object:
-    if not isinstance(value, dict):
+    if not is_query_expression_document(value):
         return value
 
     operators = query_operator_keys(value)
-    if not operators:
-        return value
     if len(operators) != len(value):
         raise KeyError('condition is not seedable')
     if operators == ('$eq',):

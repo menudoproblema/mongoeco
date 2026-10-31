@@ -30,11 +30,26 @@ except ImportError:  # pragma: no cover - optional SDK
     DriverDBRef = ()
 
 
+_OLD_BINARY_SUBTYPE = 2
+
+
 def binary_parts(value: Any) -> tuple[int, bytes] | None:
-    """Recognize bytes (subtype zero), local, SDK and owned Binary uniformly."""
+    """View bytes/Binary and the canonical standard UUID storage representation."""
+    if isinstance(value, uuid.UUID):
+        return 4, value.bytes
     if not isinstance(value, bytes):
         return None
     return getattr(value, "subtype", 0), bytes(value)
+
+
+def binary_order_key(value: Any) -> tuple[int, int, bytes] | None:
+    """Order the stored BSON payload, including old subtype 2's inner length."""
+    parts = binary_parts(value)
+    if parts is None:
+        return None
+    subtype, payload = parts
+    embedded_length_bytes = 4 if subtype == _OLD_BINARY_SUBTYPE else 0
+    return len(payload) + embedded_length_bytes, subtype, payload
 
 
 def document_mapping(value: Any) -> Mapping[str, Any] | None:

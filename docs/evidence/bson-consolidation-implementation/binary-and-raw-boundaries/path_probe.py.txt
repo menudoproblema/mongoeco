@@ -1,0 +1,29 @@
+import json
+from pathlib import Path
+from unittest.mock import patch
+from bson import Binary
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.core.filtering import QueryEngine
+
+report={}
+for dialect in ('7.0','8.0','9.0'):
+ for factory in (MemoryEngine,SQLiteEngine):
+  engine=factory()
+  with MongoClient(engine,mongodb_dialect=dialect) as client:
+   c=client.paths.c
+   c.insert_many([{'_id':1,'v':b'ab'},{'_id':2,'v':Binary(b'ab',0)},{'_id':3,'v':Binary(b'ab',5)}])
+   calls=[]
+   original=QueryEngine.match_plan
+   def observe(doc,plan,**kwargs):
+    calls.append({'document':type(doc.get('v')).__module__+'.'+type(doc.get('v')).__qualname__,'operand':type(getattr(plan,'value',None)).__module__+'.'+type(getattr(plan,'value',None)).__qualname__})
+    return original(doc,plan,**kwargs)
+   sql=[]
+   if factory is SQLiteEngine:engine._connection.set_trace_callback(sql.append)
+   with patch.object(QueryEngine,'match_plan',side_effect=observe):
+    ids=sorted(d['_id'] for d in c.find({'v':Binary(b'ab',0)}))
+   if factory is SQLiteEngine:engine._connection.set_trace_callback(None)
+   report[factory.__name__+'-'+dialect]={'ids':ids,'matcher_boundaries':calls,'sql':sql}
+Path('/tmp/mongoeco-bson-raw/paths.json').write_text(json.dumps(report,indent=2)+'\n')
+assert all(v['ids']==[1,2] for v in report.values())
+print('six real matcher paths retain Binary aliases and expose both operand/document representations')

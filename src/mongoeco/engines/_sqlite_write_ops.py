@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from mongoeco.core.bson_ordering import bson_equality_key
 from mongoeco.core.identity import (
     assert_valid_root_document_id,
-    id_contains_numeric_value,
+    root_id_needs_semantic_lookup,
 )
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.semantic_core import (
@@ -165,7 +165,7 @@ def _batch_id_equality_keys(
     deserialize_document: Callable[[str], Document],
 ) -> set[object] | None:
     if not any(
-        id_contains_numeric_value(document.get("_id")) for document in documents
+        root_id_needs_semantic_lookup(document.get("_id")) for document in documents
     ):
         return None
     return {

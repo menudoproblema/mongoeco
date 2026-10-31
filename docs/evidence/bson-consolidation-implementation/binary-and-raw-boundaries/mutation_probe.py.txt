@@ -1,0 +1,31 @@
+import json,uuid
+from pathlib import Path
+from pymongo import MongoClient as NativeClient
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+
+
+def run(c):
+ out={}
+ for label,value in [('ordered',{'$ref':'c','$id':1}),('reversed',{'$id':1,'$ref':'c'}),('ordinary',{'x':1,'$unknown':2})]:
+  c.delete_many({})
+  try:
+   r=c.update_one({'_id':1,'v':value},{'$set':{'done':True}},upsert=True)
+   out['upsert-'+label]={'counts':[r.matched_count,r.modified_count],'matches':c.count_documents({'v':{'$eq':value}})}
+  except Exception as exc:out['upsert-'+label]={'error':type(exc).__name__,'code':getattr(exc,'code',None)}
+ c.delete_many({})
+ c.insert_one({'_id':1,'a':[{'$ref':'c','$id':1,'tag':'ordered'},{'$id':1,'$ref':'c','tag':'reversed'},{'$ref':'c','$id':2,'tag':'other'}]})
+ r=c.update_one({'_id':1},{'$pull':{'a':{'$ref':'c','$id':1}}})
+ out['pull']={'modified':r.modified_count,'remaining':len(c.find_one({'_id':1})['a'])}
+ return out
+report={'local':{},'native':{}}
+for d in ('7.0','8.0','9.0'):
+ for e in (MemoryEngine,SQLiteEngine):
+  with MongoClient(e(),mongodb_dialect=d) as client:report['local'][e.__name__+'-'+d]=run(client.probe.c)
+for d,p in [('7.0',49967),('8.0',49968),('9.0',49969)]:
+ client=NativeClient(f'mongodb://127.0.0.1:{p}/',serverSelectionTimeoutMS=1500)
+ name='mongoeco_dbref_probe_'+uuid.uuid4().hex
+ try:report['native'][d]=run(client[name].c)
+ finally:client.drop_database(name);client.close()
+Path('/tmp/mongoeco-bson-raw/mutation-before.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps(report,indent=2))

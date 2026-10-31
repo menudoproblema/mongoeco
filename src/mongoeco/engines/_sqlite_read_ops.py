@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.identity import (
     document_matches_root_id_lookup,
-    id_contains_numeric_value,
+    root_id_needs_semantic_lookup,
 )
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
@@ -49,7 +49,7 @@ def get_document(
         (db_name, coll_name, storage_key),
     ).fetchone()
     if row is None:
-        if not id_contains_numeric_value(doc_id):
+        if not root_id_needs_semantic_lookup(doc_id):
             return None
         row = next(
             (

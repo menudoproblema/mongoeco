@@ -5,8 +5,9 @@ import math
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
+from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.identity import id_contains_numeric_value
+from mongoeco.core.identity import root_id_needs_semantic_lookup
 from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.query_plan import (
@@ -212,7 +213,7 @@ def _is_codec_aware_value(value: object) -> bool:
 def _is_translatable_equality_value(value: object) -> bool:
     # bytes and Binary(…, 0) have different historical storage tags. Tag-only
     # predicates omit equal BSON values; retain canonical Python evaluation.
-    if isinstance(value, bytes):
+    if binary_parts(value) is not None:
         return False
     encoded = DocumentCodec.encode(value)
     if DocumentCodec._is_tagged_value(encoded):
@@ -638,9 +639,9 @@ def _require_sql_identity_comparison(field: object, *values: object) -> None:
     if (
         isinstance(field, str)
         and (field == "_id" or field.startswith("_id."))
-        and any(id_contains_numeric_value(value) for value in values)
+        and any(root_id_needs_semantic_lookup(value) for value in values)
     ):
-        message = "Numeric identity comparisons require BSON equality"
+        message = "Identity aliases require BSON equality"
         raise NotImplementedError(message)
 
 
@@ -769,7 +770,7 @@ def _translate_membership(
     negated: bool,
     null_matches_undefined: bool = False,
 ) -> SqlFragment:
-    if any(isinstance(value, bytes) for value in values):
+    if any(binary_parts(value) is not None for value in values):
         message = 'Binary membership requires semantic fallback'
         raise NotImplementedError(message)
     if values and all(_is_codec_aware_value(value) for value in values):

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import re
-import uuid
 
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
@@ -17,6 +16,7 @@ from mongoeco.types import (
     is_object_id_like,
     normalize_object_id,
 )
+
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -69,8 +69,6 @@ def hashable_in_lookup_key(value: Any) -> tuple[str, Any] | None:
         return ("bytes", binary[1]) if binary[0] == 0 else ("binary", binary)
     if isinstance(value, datetime.datetime):
         return ("date", value)
-    if isinstance(value, uuid.UUID):
-        return ("uuid", value)
     if is_object_id_like(value):
         return ("objectid", normalize_object_id(value))
     if isinstance(value, Timestamp):

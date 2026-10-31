@@ -14,7 +14,7 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
     wrap_bson_numeric,
 )
-from mongoeco.core.bson_values import binary_parts
+from mongoeco.core.bson_values import binary_parts, document_mapping
 
 
 try:
@@ -43,6 +43,8 @@ def bson_type_rank(value: Any, type_order: Mapping[type, int]) -> int:
     rank = type_order.get(type(value))
     if rank is not None:
         return rank
+    if document_mapping(value) is not None:
+        return type_order.get(dict, 100)
     comparable = unwrap_bson_numeric(value)
     rank = type_order.get(type(comparable))
     if rank is not None:

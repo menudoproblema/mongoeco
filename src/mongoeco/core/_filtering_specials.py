@@ -17,10 +17,9 @@ from mongoeco.core.bson_scalars import (
     truncate_bson_int64,
     unwrap_bson_numeric,
 )
-from mongoeco.core.bson_values import matches_bson_type
-from mongoeco.core.query_operators import query_operator_keys
+from mongoeco.core.bson_values import document_mapping, matches_bson_type
+from mongoeco.core.query_operators import is_elem_match_value_document
 from mongoeco.core.query_plan import _normalize_type_specifier
-from mongoeco.errors import OperationFailure
 
 
 if TYPE_CHECKING:
@@ -296,7 +295,8 @@ class FilteringSpecialOperatorsMixin:
                     collation=collation,
                     variables=variables,
                 )
-            if not isinstance(candidate, dict):
+            candidate = document_mapping(candidate)
+            if candidate is None:
                 return False
             return cls.match_plan(
                 candidate,
@@ -305,12 +305,7 @@ class FilteringSpecialOperatorsMixin:
                 collation=collation,
                 variables=variables,
             )
-        operator_keys = query_operator_keys(condition)
-        if operator_keys:
-            if len(operator_keys) != len(condition):
-                raise OperationFailure(
-                    "$elemMatch cannot mix operator and field conditions"
-                )
+        if is_elem_match_value_document(condition):
             wrapper = ArrayElementDocument(value=candidate)
             return cls.match(
                 wrapper,
@@ -318,7 +313,8 @@ class FilteringSpecialOperatorsMixin:
                 dialect=dialect,
                 collation=collation,
             )
-        if not isinstance(candidate, dict):
+        candidate = document_mapping(candidate)
+        if candidate is None:
             return False
         return cls.match(
             candidate,

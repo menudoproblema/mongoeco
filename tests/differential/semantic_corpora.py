@@ -14,6 +14,10 @@ from tests.differential.semantic_binary_cases import (
     SEED as BINARY_SEED,
     SEMANTIC_BINARY_CASES,
 )
+from tests.differential.semantic_binary_edge_cases import (
+    SEED as BINARY_EDGE_SEED,
+    SEMANTIC_BINARY_EDGE_CASES,
+)
 from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
@@ -21,6 +25,10 @@ from tests.differential.semantic_command_let_cases import (
 from tests.differential.semantic_datetime_cases import (
     SEED as DATETIME_SEED,
     SEMANTIC_DATETIME_CASES,
+)
+from tests.differential.semantic_dbref_grammar_cases import (
+    SEED as DBREF_GRAMMAR_SEED,
+    SEMANTIC_DBREF_GRAMMAR_CASES,
 )
 from tests.differential.semantic_decimal_advanced_cases import (
     CONTROL_SEED as DECIMAL_CONTROL_SEED,
@@ -116,6 +124,16 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "dbref_grammar": SemanticCorpus(
+        "dbref-grammar",
+        "semantic_dbref_grammar_cases",
+        DBREF_GRAMMAR_SEED,
+        SEMANTIC_DBREF_GRAMMAR_CASES,
+    ),
+    "binary_edges": SemanticCorpus(
+        "binary-edges", "semantic_binary_edge_cases", BINARY_EDGE_SEED,
+        SEMANTIC_BINARY_EDGE_CASES,
+    ),
     "ttl_publication": SemanticCorpus(
         "ttl-publication", "semantic_ttl_publication_cases",
         TTL_PUBLICATION_SEED, SEMANTIC_TTL_PUBLICATION_CASES,

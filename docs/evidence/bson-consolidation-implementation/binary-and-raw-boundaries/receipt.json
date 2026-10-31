@@ -1,0 +1,177 @@
+{
+  "status": "D03a functional acceptance; shared D06a/D06b increment, not complete D06 or D05",
+  "runtime_baseline": "f69759a",
+  "documentation_baseline": "e608dbc",
+  "candidate": "identified by runtime-sources.json; includes prior Binary worktree edits and this shared-boundary correction",
+  "runtime_diff_sha256": "d98d26982a4bec341879ae191899833c5a4b99b53c96d4c84689355b4871821a",
+  "fixtures": {
+    "tests/fixtures/semantic_binary_edges_7_0.json": {
+      "sha256": "7399cb39c7b5b0ba15f6a521f5149ea21f93e9d39cc158139a97c3b26b16a9d5",
+      "native_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "actions": 5,
+      "native_recheck": "--check passed"
+    },
+    "tests/fixtures/semantic_binary_edges_8_0.json": {
+      "sha256": "645e33bfdb47ab141276b304840c590d7202cca859c1a1d4bc0d8b76dd48a137",
+      "native_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "actions": 5,
+      "native_recheck": "--check passed"
+    },
+    "tests/fixtures/semantic_binary_edges_9_0.json": {
+      "sha256": "66df82d9c01aa4d4f09d0d50a80f4487b8e6d3d33b6e0ac9c0068854cba8ea7c",
+      "native_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "actions": 5,
+      "native_recheck": "--check passed"
+    },
+    "tests/fixtures/semantic_dbref_grammar_7_0.json": {
+      "sha256": "3023fd07eaee0fa3e8bc61a1d2c9f443a4375977312b264a53af8d457f0f2d7f",
+      "native_version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "actions": 5,
+      "native_recheck": "--check passed"
+    },
+    "tests/fixtures/semantic_dbref_grammar_8_0.json": {
+      "sha256": "7f1a8ecffc6ea2981b4f84a8bb6efc3690ce70b7dadbc3706fadfd20eb90407b",
+      "native_version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "actions": 5,
+      "native_recheck": "--check passed"
+    },
+    "tests/fixtures/semantic_dbref_grammar_9_0.json": {
+      "sha256": "9e09d7a9ec820f44a3f7e9ea99d0290367bdd077ac76f1f3e653e2ab304533c2",
+      "native_version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "actions": 5,
+      "native_recheck": "--check passed"
+    }
+  },
+  "before": {
+    "binary_edges": {
+      "failed": 84,
+      "passed": 39
+    },
+    "dbref_grammar": {
+      "failed": 120,
+      "passed": 3
+    },
+    "generated_properties": {
+      "failed": 2,
+      "passed": 3
+    },
+    "runtime_package": "/tmp/mongoeco-binary-edges/before-source/src/mongoeco"
+  },
+  "after": {
+    "semantic_replay_passed": 5377,
+    "core_and_properties_passed": 2443,
+    "core_subtests": 936,
+    "unrelated_local_skip": 1,
+    "wire_passed": 2740,
+    "wire_subtests": 92,
+    "orjson_replay_passed": 246,
+    "orjson_components_passed": 110,
+    "generated_properties": 5,
+    "public_typing": "passed, positive=1 negative-errors=20",
+    "boundary_typing": "passed, positive=1 negative-errors=25",
+    "lint_ratchet": "passed, 33 changed Python files",
+    "no_sdk": "3.13 smoke passed"
+  },
+  "additional_native": {
+    "nested_md5_in_dbref_and_code_scope": {
+      "versions": [
+        "7.0.43",
+        "8.0.32",
+        "9.0.2"
+      ],
+      "code": 9,
+      "writes": false
+    },
+    "mutation_grammar": "upsert and pull mirror defects reproduced in six local pairs and all three native versions"
+  },
+  "observed_paths": [
+    "real matcher document/operand representations in six engine/dialect pairs",
+    "SQL trace and matcher spy, normal/disabled translation, scalar/multikey/partial indexes",
+    "bytes/Binary historical tags and public materialization/cache mutation",
+    "flat/compound Binary root ID reopen, duplicate alias and distinct subtype",
+    "file written by archived runtime, current update preserves key and refreshes index",
+    "raw body/sequences, nested documents/arrays/Code scopes, undefined, malformed/truncated inputs and readonly buffers"
+  ],
+  "physical_identity": "canonical_document_id and persisted codec/key formats unchanged; wrong selected keys remain rejected",
+  "test_contract_updates": [
+    "UUID lookup key equals its standard Binary 4 alias",
+    "UUID SQL equality uses lossless fallback, not a tag-specific query",
+    "one-byte Binary sorts before 16-byte UUID",
+    "invalid elemMatch no longer becomes a deferred nonmatch"
+  ],
+  "intermediate_runs": [
+    "initial integrated run found replacement materialization retaining immutable owned root; stopped identified PID 39573 with TERM after candidate invalidation",
+    "initial native mutation capture aborted on legitimate invalid pull syntax; final witness records rejection and retained state",
+    "collection-time SyntaxError while editing and stale corpus metadata were diagnostics, not gates"
+  ],
+  "protected_artifacts": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "performance": {
+    "samples": 5,
+    "decode_iterations": 3000,
+    "requests_per_sample": 300,
+    "documents": 100,
+    "same_checksum": 1102500,
+    "limits": "small diagnostic benchmark with other gates active; not D05 cost acceptance"
+  },
+  "resource_cleanup": "owned standalones stopped; Docker containers removed; ports 49967/49968/49969 closed; usual server untouched",
+  "remaining": [
+    "D01b complete public mutation effects",
+    "D03b SQL type specialization",
+    "D06a/D06b remaining subpipeline and physical transport acceptance",
+    "D06c keys/group/lookup/sets/spill/Search",
+    "D04 watch preparation/context and native RS jobs",
+    "H53 policy disposition",
+    "D07 optional pilot decision",
+    "D05 package/SDK/Python/pytest/native matrices, performance and final integration"
+  ],
+  "artifacts": {
+    "README.md": "c796948b51ec38c895d67a24e18820c5434ebd659aae37c3a5354aeead15a281",
+    "before-binary.txt.gz": "871ae3b1a4bdde4a25dc3f266c27ad828f85dce93a9ceaaeba8d0957893d1cde",
+    "before-dbref.txt.gz": "95099f1ef7cefdd9e159c05c74fdcb1f6468307554787f05deab7cfa27caff37",
+    "before-properties.txt.gz": "8d4b878b2a0c1346fe4df19e728f368755ed76d009d502d337168ffeb6df18d6",
+    "benchmark-after.json": "c7ec61a2fc1d4e3649f1318617bd0470cfcb0cd88c581cbc28912cb1e4f92cd4",
+    "benchmark-before.json": "622e9341d6790ca38f898cb438bd9f738f85dfec57552c224bc8575c452caabd",
+    "benchmark.py.txt": "e89590c4c7cdcb67b40d85799201eff3b71ce6864a5954087e1c6866f8185721",
+    "cleanup.json": "4c3419e38082861c1f49bcd2aaacb562d8942af6cbd7a27d0265dfb4ee8471d8",
+    "core-final.txt.gz": "ebfd1709d8f564fd8bda112e8917da84d067aca3f4317d7c799a13821d13cbd3",
+    "impact.txt": "24339941fc7f5568613394f5b9a409802efba099cd2df149f0b0b3183ef7157b",
+    "intermediate-schema-diagnostic.txt.gz": "b11f4a02a59c1bb345493761e05c61f89ce848b154fddd68dfe736cdb7c0e178",
+    "intermediate-schema-diff.txt.gz": "26e589209d8756cf77d29d5c6a1693d55218b81914ca1f437e64ee227191df5e",
+    "mutation-before.json": "226125be5de6869c7e3994c506e89fb7c1bcddd9b1594626c9432597c7c5b052",
+    "mutation_probe.py.txt": "6c395872f346638360f80f4fc5f5a6064596aaba8ca93103d27e76db3c68d8c3",
+    "nested-literal-native.json": "03e44494e441eb1ad16500182dbb5e011629ff42c6a758bc3359c9ce08b40fd9",
+    "no-sdk.txt.gz": "162c1f563bc145d40dd3af39375d87f3f3c12acdaf3e00a01ebaf02160d1d48d",
+    "orjson-components.txt.gz": "67ec29d24965c4d85aaa2ddfda6330e447f381eeec5f75f76304e282dfa05373",
+    "orjson-replay.txt.gz": "93b288d81649dbbddaaac7f473d9f2ca4bb8320f113fc14bfb9feba0c83ebd4a",
+    "path_probe.py.txt": "213080761b1678a00f17c692e644782ca7a097754a4cd263e4590973adf688c9",
+    "paths.json": "0e2ec80641ba9bcd90a6fe84f4fe4e31822e25cd5ae88aba0aad23ec7b7ef539",
+    "prior-file.txt.gz": "ae24fe34689945e3797a8a2caceee719eb982cbd69319ad6f9f96a8e6b29daf9",
+    "prior_file.py.txt": "5e6561b7a359e39a4a1efdbc5b743157d40c3458a0cdcccfbe28a81c19d2827a",
+    "runtime-sources.json": "68ebd5c7527ca34bab70efc6d1ac6b1fac5ae504fdc0ae45ca0756ac41c5b807",
+    "semantic-final.txt.gz": "fea37226dc0a29a62b430c06668c1e398233d9a824ec017cc3d83bb6db20eefa",
+    "wire-final.txt.gz": "8d9a1cd8318ef179bfba8bd9f3453a1dc4e27060ffcb4ac521f19184cb275a68"
+  }
+}

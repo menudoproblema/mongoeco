@@ -6,10 +6,10 @@ from mongoeco.core._filtering_matching import FilteringMatchingMixin
 from mongoeco.core._filtering_specials import FilteringSpecialOperatorsMixin
 from mongoeco.core._filtering_support import (
     extract_values as _observable_extract_values,
-    query_values as _extract_values,
     get_field_value as _get_field_value,
     hashable_in_lookup_key as _hashable_in_lookup_key,
     path_mapping as _path_mapping,
+    query_values as _extract_values,
 )
 from mongoeco.core.collation import CollationSpec, values_equal_with_collation
 from mongoeco.core.expression_context import ensure_expression_context
@@ -197,7 +197,8 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                     f"query plan contains deferred validation issues: {issue.message}"
                 )
             case EqualsCondition(
-                field=field, value=value, null_matches_undefined=null_matches_undefined
+                field=field, value=value, null_matches_undefined=null_matches_undefined,
+                collation_sensitive=collation_sensitive,
             ):
                 return QueryEngine._evaluate_equals(
                     document,
@@ -205,7 +206,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                     value,
                     null_matches_undefined=null_matches_undefined,
                     dialect=dialect,
-                    collation=collation,
+                    collation=collation if collation_sensitive else None,
                 )
             case NotEqualsCondition(field=field, value=value):
                 return QueryEngine._evaluate_not_equals(

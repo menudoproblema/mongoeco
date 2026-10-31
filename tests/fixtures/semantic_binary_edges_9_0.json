@@ -1,0 +1,6388 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_binary_edges_literal_grammar": {
+      "False-3-0-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-0-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-0-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-0-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-0-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-2-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-2-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-2-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-2-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-2-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-3-16-scalar": {
+        "ok": true,
+        "documents": []
+      },
+      "False-3-16-literal": {
+        "ok": true,
+        "documents": []
+      },
+      "False-3-16-const": {
+        "ok": true,
+        "documents": []
+      },
+      "False-3-16-object": {
+        "ok": true,
+        "documents": []
+      },
+      "False-3-16-array": {
+        "ok": true,
+        "documents": []
+      },
+      "False-5-0-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-0-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-0-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-0-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-0-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-2-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-2-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-2-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-2-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-2-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "False-5-16-scalar": {
+        "ok": true,
+        "documents": []
+      },
+      "False-5-16-literal": {
+        "ok": true,
+        "documents": []
+      },
+      "False-5-16-const": {
+        "ok": true,
+        "documents": []
+      },
+      "False-5-16-object": {
+        "ok": true,
+        "documents": []
+      },
+      "False-5-16-array": {
+        "ok": true,
+        "documents": []
+      },
+      "False-query": [],
+      "False-field": [],
+      "True-3-0-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-0-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-0-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-0-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-0-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-2-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-2-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-2-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-2-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-2-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-3-16-scalar": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "3"
+              },
+              "hex": "61616161616161616161616161616161"
+            }
+          }
+        ]
+      },
+      "True-3-16-literal": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "3"
+              },
+              "hex": "61616161616161616161616161616161"
+            }
+          }
+        ]
+      },
+      "True-3-16-const": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "3"
+              },
+              "hex": "61616161616161616161616161616161"
+            }
+          }
+        ]
+      },
+      "True-3-16-object": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "v": {
+                "subtype": {
+                  "$numberInt": "3"
+                },
+                "hex": "61616161616161616161616161616161"
+              }
+            }
+          }
+        ]
+      },
+      "True-3-16-array": {
+        "ok": true,
+        "documents": [
+          {
+            "v": [
+              {
+                "subtype": {
+                  "$numberInt": "3"
+                },
+                "hex": "61616161616161616161616161616161"
+              }
+            ]
+          }
+        ]
+      },
+      "True-5-0-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-0-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-0-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-0-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-0-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-2-scalar": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-2-literal": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-2-const": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-2-object": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-2-array": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "phase": "open"
+      },
+      "True-5-16-scalar": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "5"
+              },
+              "hex": "61616161616161616161616161616161"
+            }
+          }
+        ]
+      },
+      "True-5-16-literal": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "5"
+              },
+              "hex": "61616161616161616161616161616161"
+            }
+          }
+        ]
+      },
+      "True-5-16-const": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "5"
+              },
+              "hex": "61616161616161616161616161616161"
+            }
+          }
+        ]
+      },
+      "True-5-16-object": {
+        "ok": true,
+        "documents": [
+          {
+            "v": {
+              "v": {
+                "subtype": {
+                  "$numberInt": "5"
+                },
+                "hex": "61616161616161616161616161616161"
+              }
+            }
+          }
+        ]
+      },
+      "True-5-16-array": {
+        "ok": true,
+        "documents": [
+          {
+            "v": [
+              {
+                "subtype": {
+                  "$numberInt": "5"
+                },
+                "hex": "61616161616161616161616161616161"
+              }
+            ]
+          }
+        ]
+      },
+      "True-query": [
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "True-field": [
+        {
+          "v": {
+            "subtype": {
+              "$numberInt": "5"
+            },
+            "hex": "6162"
+          }
+        }
+      ]
+    },
+    "semantic_binary_edges_matching": {
+      "0-v-$eq": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-v-$ne": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-v-$in": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-v-$nin": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-v-$gt": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-v-$gte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-v-$lt": [],
+      "0-v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-a-$eq": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-a-$ne": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-a-$in": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-a-$nin": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-a-$gt": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-a-$gte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-a-$lt": [],
+      "0-a-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-n.v-$eq": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-n.v-$ne": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.v-$in": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-n.v-$nin": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.v-$gt": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.v-$gte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.v-$lt": [],
+      "0-n.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-n.0.v-$eq": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-n.0.v-$ne": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.0.v-$in": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "0-n.0.v-$nin": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.0.v-$gt": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.0.v-$gte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "0-n.0.v-$lt": [],
+      "0-n.0.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "count0": {
+        "$numberInt": "2"
+      },
+      "write0": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "2-v-$eq": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-v-$in": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-v-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-v-$gte": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-a-$eq": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-a-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-a-$in": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-a-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-a-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-a-$gte": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-a-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-a-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.v-$eq": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-n.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.v-$in": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-n.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.v-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-n.v-$gte": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-n.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.0.v-$eq": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-n.0.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.0.v-$in": [
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "2-n.0.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.0.v-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-n.0.v-$gte": [
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "2-n.0.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "2-n.0.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "count2": {
+        "$numberInt": "1"
+      },
+      "write2": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "5-v-$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-v-$in": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-v-$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-v-$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-a-$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-a-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-a-$in": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-a-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-a-$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-a-$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-a-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-a-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.v-$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-n.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.v-$in": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-n.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.v-$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-n.v-$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-n.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.0.v-$eq": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-n.0.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.0.v-$in": [
+        {
+          "$numberInt": "6"
+        }
+      ],
+      "5-n.0.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.0.v-$gt": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-n.0.v-$gte": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "5-n.0.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "5-n.0.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "count5": {
+        "$numberInt": "1"
+      },
+      "write5": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "8-v-$eq": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-v-$in": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-v-$gt": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-v-$gte": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-a-$eq": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-a-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-a-$in": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-a-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-a-$gt": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-a-$gte": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-a-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-a-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.v-$eq": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-n.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.v-$in": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-n.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.v-$gt": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-n.v-$gte": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-n.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.0.v-$eq": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-n.0.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.0.v-$in": [
+        {
+          "$numberInt": "9"
+        }
+      ],
+      "8-n.0.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.0.v-$gt": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-n.0.v-$gte": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "8-n.0.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "8-n.0.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "count8": {
+        "$numberInt": "1"
+      },
+      "write8": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "9-v-$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-v-$in": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-v-$gt": [
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-v-$gte": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-a-$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-a-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-a-$in": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-a-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-a-$gt": [
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-a-$gte": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-a-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-a-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.v-$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-n.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.v-$in": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-n.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.v-$gt": [
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-n.v-$gte": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-n.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.0.v-$eq": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-n.0.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.0.v-$in": [
+        {
+          "$numberInt": "10"
+        }
+      ],
+      "9-n.0.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.0.v-$gt": [
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-n.0.v-$gte": [
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "9-n.0.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "9-n.0.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "count9": {
+        "$numberInt": "1"
+      },
+      "write9": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "6-v-$eq": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-v-$in": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-v-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-v-$gte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-a-$eq": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-a-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-a-$in": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-a-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-a-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-a-$gte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-a-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-a-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.v-$eq": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-n.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.v-$in": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-n.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.v-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-n.v-$gte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-n.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.0.v-$eq": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-n.0.v-$ne": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.0.v-$in": [
+        {
+          "$numberInt": "7"
+        }
+      ],
+      "6-n.0.v-$nin": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.0.v-$gt": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-n.0.v-$gte": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "6-n.0.v-$lt": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "6-n.0.v-$lte": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "12"
+        }
+      ],
+      "count6": {
+        "$numberInt": "1"
+      },
+      "write6": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_binary_edges_materialization": {
+      "forward-v": [
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "0000"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ffffffffffffffffffffffffffffffffff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": "00"
+        },
+        {
+          "subtype": {
+            "$numberInt": "3"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "4"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "5"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": "ff"
+        }
+      ],
+      "forward-a": [
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "0000"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ffffffffffffffffffffffffffffffffff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": "00"
+        },
+        {
+          "subtype": {
+            "$numberInt": "3"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "4"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "5"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": "ff"
+        }
+      ],
+      "forward-n.v": [
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "0000"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ffffffffffffffffffffffffffffffffff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": "00"
+        },
+        {
+          "subtype": {
+            "$numberInt": "3"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "4"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "5"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": "ff"
+        }
+      ],
+      "forward-reread": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "v": {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": ""
+        },
+        "a": [
+          {
+            "subtype": {
+              "$numberInt": "0"
+            },
+            "hex": ""
+          }
+        ],
+        "n": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "0"
+              },
+              "hex": ""
+            }
+          }
+        ]
+      },
+      "reverse-v": [
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "0000"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ffffffffffffffffffffffffffffffffff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": "00"
+        },
+        {
+          "subtype": {
+            "$numberInt": "3"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "4"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "5"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": "ff"
+        }
+      ],
+      "reverse-a": [
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "0000"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ffffffffffffffffffffffffffffffffff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": "00"
+        },
+        {
+          "subtype": {
+            "$numberInt": "3"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "4"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "5"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": "ff"
+        }
+      ],
+      "reverse-n.v": [
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "0000"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "ffffffffffffffffffffffffffffffffff"
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "2"
+          },
+          "hex": "00"
+        },
+        {
+          "subtype": {
+            "$numberInt": "3"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "4"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "5"
+          },
+          "hex": "000102030405060708090a0b0c0d0e0f"
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": ""
+        },
+        {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": "ff"
+        }
+      ],
+      "reverse-reread": {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "v": {
+          "subtype": {
+            "$numberInt": "128"
+          },
+          "hex": ""
+        },
+        "a": [
+          {
+            "subtype": {
+              "$numberInt": "128"
+            },
+            "hex": ""
+          }
+        ],
+        "n": [
+          {
+            "v": {
+              "subtype": {
+                "$numberInt": "128"
+              },
+              "hex": ""
+            }
+          }
+        ]
+      }
+    },
+    "semantic_binary_edges_ordering": {
+      "1": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "11"
+        }
+      ],
+      "-1": [
+        {
+          "$numberInt": "11"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "12"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "cmp0": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "cmp1": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "cmp2": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp3": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp4": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp5": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp6": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp7": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp8": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp9": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp10": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        }
+      ],
+      "cmp11": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "cmp": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "6"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "7"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "8"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "9"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "10"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "11"
+          },
+          "cmp": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "12"
+          },
+          "cmp": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extrema": [
+        {
+          "_id": null,
+          "lo": {
+            "subtype": {
+              "$numberInt": "0"
+            },
+            "hex": ""
+          },
+          "hi": {
+            "subtype": {
+              "$numberInt": "0"
+            },
+            "hex": "ffffffffffffffffffffffffffffffffff"
+          }
+        }
+      ]
+    },
+    "semantic_binary_edges_root_aliases": {
+      "0-find": {
+        "_id": {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "61"
+        },
+        "v": {
+          "$numberInt": "1"
+        }
+      },
+      "0-count": {
+        "$numberInt": "1"
+      },
+      "0-update": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "0-duplicate": {
+        "$numberInt": "11000"
+      },
+      "0-state": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ],
+      "1-find": {
+        "_id": {
+          "subtype": {
+            "$numberInt": "0"
+          },
+          "hex": "61"
+        },
+        "v": {
+          "$numberInt": "1"
+        }
+      },
+      "1-count": {
+        "$numberInt": "1"
+      },
+      "1-update": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "1-duplicate": {
+        "$numberInt": "11000"
+      },
+      "1-state": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_binary_edge_cases.py",
+    "sha256": "1b18e8b2011456378b2fcbf98d23a51f1c2a4e438b6e7dd69c5da8fcb34fdcfc"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_binary_edges_ordering",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_edges_ordering"
+    },
+    {
+      "name": "semantic_binary_edges_matching",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_edges_matching"
+    },
+    {
+      "name": "semantic_binary_edges_materialization",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_edges_materialization"
+    },
+    {
+      "name": "semantic_binary_edges_literal_grammar",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_edges_literal_grammar"
+    },
+    {
+      "name": "semantic_binary_edges_root_aliases",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_binary_edges_root_aliases"
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+{
+  "MemoryEngine-7.0": {
+    "ids": [
+      1,
+      2
+    ],
+    "matcher_boundaries": [
+      {
+        "document": "builtins.bytes",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      }
+    ],
+    "sql": []
+  },
+  "SQLiteEngine-7.0": {
+    "ids": [
+      1,
+      2
+    ],
+    "matcher_boundaries": [
+      {
+        "document": "builtins.bytes",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      }
+    ],
+    "sql": [
+      "PRAGMA main.data_version",
+      "SAVEPOINT mongoeco_catalog_read",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND json_type(document, '$.v') = 'array'\n            LIMIT 1\n            ",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'paths' AND coll_name = 'c'\n            ",
+      "RELEASE SAVEPOINT mongoeco_catalog_read",
+      "\n        SELECT checkpoint\n        FROM change_outbox_consumers\n        WHERE consumer_id = 'local-change-hub:210bc3bc6ee0402fbb1ef8237733edbf:4958423312'\n        ",
+      "\n        SELECT pruned_through\n        FROM change_outbox_state\n        WHERE singleton = 1\n        ",
+      "SELECT COALESCE(MAX(sequence), 0) FROM change_outbox",
+      "SELECT pruned_through FROM change_outbox_state WHERE singleton = 1"
+    ]
+  },
+  "MemoryEngine-8.0": {
+    "ids": [
+      1,
+      2
+    ],
+    "matcher_boundaries": [
+      {
+        "document": "builtins.bytes",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      }
+    ],
+    "sql": []
+  },
+  "SQLiteEngine-8.0": {
+    "ids": [
+      1,
+      2
+    ],
+    "matcher_boundaries": [
+      {
+        "document": "builtins.bytes",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      }
+    ],
+    "sql": [
+      "PRAGMA main.data_version",
+      "SAVEPOINT mongoeco_catalog_read",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'paths' AND coll_name = 'c'\n              AND json_type(document, '$.v') = 'array'\n            LIMIT 1\n            ",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'paths' AND coll_name = 'c'\n            ",
+      "RELEASE SAVEPOINT mongoeco_catalog_read",
+      "\n        SELECT checkpoint\n        FROM change_outbox_consumers\n        WHERE consumer_id = 'local-change-hub:210bc3bc6ee0402fbb1ef8237733edbf:4960864720'\n        ",
+      "\n        SELECT pruned_through\n        FROM change_outbox_state\n        WHERE singleton = 1\n        ",
+      "SELECT COALESCE(MAX(sequence), 0) FROM change_outbox",
+      "SELECT pruned_through FROM change_outbox_state WHERE singleton = 1"
+    ]
+  },
+  "MemoryEngine-9.0": {
+    "ids": [
+      1,
+      2
+    ],
+    "matcher_boundaries": [
+      {
+        "document": "builtins.bytes",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      }
+    ],
+    "sql": []
+  },
+  "SQLiteEngine-9.0": {
+    "ids": [
+      1,
+      2
+    ],
+    "matcher_boundaries": [
+      {
+        "document": "builtins.bytes",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      },
+      {
+        "document": "mongoeco._types._bson_values.Binary",
+        "operand": "mongoeco.core.codec._InternalBsonBinary"
+      }
+    ],
+    "sql": [
+      "PRAGMA main.data_version",
+      "SAVEPOINT mongoeco_catalog_read",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'paths' AND coll_name = 'c'\n            ",
+      "RELEASE SAVEPOINT mongoeco_catalog_read",
+      "\n        SELECT checkpoint\n        FROM change_outbox_consumers\n        WHERE consumer_id = 'local-change-hub:210bc3bc6ee0402fbb1ef8237733edbf:4958049136'\n        ",
+      "\n        SELECT pruned_through\n        FROM change_outbox_state\n        WHERE singleton = 1\n        ",
+      "SELECT COALESCE(MAX(sequence), 0) FROM change_outbox",
+      "SELECT pruned_through FROM change_outbox_state WHERE singleton = 1"
+    ]
+  }
+}

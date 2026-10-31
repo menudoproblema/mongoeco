@@ -5,6 +5,7 @@ from typing import Any
 
 from mongoeco.core.bson_identity import same_bson_update_value
 from mongoeco.core.bson_scalars import bson_numeric_alias, is_bson_numeric
+from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.errors import WriteError
 from mongoeco.types import Regex
@@ -37,13 +38,13 @@ def canonical_document_id(value: Any) -> Any:
         return ("repr", repr(value))
 
 
-def id_contains_numeric_value(value: Any) -> bool:
-    """Numeric IDs need logical equality in addition to physical type identity."""
+def root_id_needs_semantic_lookup(value: Any) -> bool:
+    """Numeric and binary aliases need equality beyond physical storage keys."""
     if isinstance(value, dict):
-        return any(id_contains_numeric_value(item) for item in value.values())
+        return any(root_id_needs_semantic_lookup(item) for item in value.values())
     if isinstance(value, (list, tuple)):
-        return any(id_contains_numeric_value(item) for item in value)
-    return is_bson_numeric(value)
+        return any(root_id_needs_semantic_lookup(item) for item in value)
+    return is_bson_numeric(value) or binary_parts(value) is not None
 
 
 def _numeric_id_types(value: Any) -> Any:
@@ -84,6 +85,20 @@ def assert_valid_upsert_document_id(value: Any, *, is_replacement: bool) -> None
     assert_valid_root_document_id(value)
 
 
+def _storage_key_matches_id(value, storage_key, storage_key_for_id):
+    if storage_key_for_id(value) == storage_key:
+        return True
+    # Existing SQLite rows can retain the owned Binary class in their key,
+    # while decoding yields its public local class. Verify physical BSON
+    # identity before accepting the owned representation; never coerce numbers
+    # or rewrite a persisted key to make a selected document fit it.
+    owned = DocumentCodec.to_internal(value)
+    return (
+        same_bson_update_value(value, owned)
+        and storage_key_for_id(owned) == storage_key
+    )
+
+
 def assert_document_matches_storage_key(
     document: dict[str, Any],
     storage_key: Any,
@@ -92,7 +107,9 @@ def assert_document_matches_storage_key(
 ) -> None:
     if "_id" in document:
         assert_valid_root_document_id(document["_id"])
-    if storage_key_for_id(document.get("_id")) != storage_key:
+    if not _storage_key_matches_id(
+        document.get("_id"), storage_key, storage_key_for_id
+    ):
         raise WriteError(SELECTED_DOCUMENT_STORAGE_MISMATCH_MESSAGE, code=66)
 
 
@@ -130,7 +147,9 @@ def assert_document_kept_storage_key(
     *,
     storage_key_for_id: Callable[[Any], Any],
 ) -> None:
-    if storage_key_for_id(document.get("_id")) != storage_key:
+    if not _storage_key_matches_id(
+        document.get("_id"), storage_key, storage_key_for_id
+    ):
         raise WriteError(UPDATED_DOCUMENT_STORAGE_MISMATCH_MESSAGE, code=66)
 
 
@@ -150,7 +169,9 @@ def materialize_replacement_document(
     if "_id" in replacement:
         assert_valid_root_document_id(replacement["_id"])
     if "_id" in replacement or "_id" not in original_document:
-        return deepcopy(replacement)
+        # Command-owned documents intentionally survive deepcopy unchanged.
+        # A materialized replacement needs its own mutable root for _id policy.
+        return {key: deepcopy(value) for key, value in replacement.items()}
 
     replacement_items = [(key, deepcopy(value)) for key, value in replacement.items()]
     materialized: dict[str, Any] = {}
@@ -223,6 +244,8 @@ def assert_classic_update_preserves_id(
                 code=66,
             )
         assert_valid_root_document_id(updated_doc["_id"])
+        if same_bson_update_value(original_id, updated_doc["_id"]):
+            updated_doc["_id"] = deepcopy(original_id)
         return
     if "_id" in updated_doc:
         assert_valid_root_document_id(updated_doc["_id"])
@@ -251,6 +274,8 @@ def preserve_and_validate_pipeline_id(
                 code=66,
             )
         assert_valid_root_document_id(replacement_doc["_id"])
+        if same_bson_update_value(original_id, replacement_doc["_id"]):
+            replacement_doc["_id"] = deepcopy(original_id)
         return
     if "_id" in replacement_doc:
         assert_valid_root_document_id(replacement_doc["_id"])

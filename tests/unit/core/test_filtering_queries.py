@@ -165,7 +165,7 @@ class QueryEngineTests(unittest.TestCase):
             QueryEngine._hashable_in_lookup_key(now), ('date', now)
         )
         self.assertEqual(
-            QueryEngine._hashable_in_lookup_key(uid), ('uuid', uid)
+            QueryEngine._hashable_in_lookup_key(uid), ("binary", (4, uid.bytes))
         )
         self.assertEqual(
             QueryEngine._hashable_in_lookup_key(oid), ('objectid', oid)

@@ -52,6 +52,7 @@ from mongoeco.core.aggregation.runtime import (
     evaluate_expression,
 )
 from mongoeco.core.aggregation.scalar_expressions import validate_convert_spec
+from mongoeco.core.bson_values import binary_parts, code_parts, document_mapping
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.error_documents import command_error_document, error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
@@ -779,6 +780,32 @@ def prepare_expression(
     return requires_document
 
 
+def _validate_literal_binary_lengths(value):
+    """Expression constants have stricter subtype rules than stored fields."""
+    document = document_mapping(value)
+    code = code_parts(value)
+    if document is not None:
+        for item in document.values():
+            _validate_literal_binary_lengths(item)
+    elif code is not None and code[1] is not None:
+        _validate_literal_binary_lengths(code[1])
+    elif isinstance(value, list):
+        for item in value:
+            _validate_literal_binary_lengths(item)
+    else:
+        parts = binary_parts(value)
+        required_length = 16
+        if (
+            parts is not None and parts[0] in {3, 5}
+            and len(parts[1]) != required_length
+        ):
+            message = (
+                f"BinData subtype {parts[0]} requires exactly 16 bytes "
+                "as an expression literal"
+            )
+            raise server_error(message, code=9, reason="expression_binary_literal")
+
+
 def _prepare_expression_structure(
     expression, dialect, *, fold_constants, document_code
 ):
@@ -792,15 +819,21 @@ def _prepare_expression_structure(
                 document_code=document_code,
             )
         return
-    if not isinstance(expression, dict):
+    document = document_mapping(expression)
+    if document is None:
+        _validate_literal_binary_lengths(expression)
         return
+    expression = document
     operator = next(iter(expression)) if len(expression) == 1 else None
     if len(expression) > 1 and any(
         isinstance(key, str) and key.startswith("$") for key in expression
     ):
         message = "An expression specification must contain exactly one field"
         raise server_error(message, code=document_code)
-    if operator in {"$literal", "$const"} or (
+    if operator in {"$literal", "$const"}:
+        _validate_literal_binary_lengths(expression[operator])
+        return
+    if (
         operator
         and get_registered_aggregation_expression_operator(operator) is not None
     ):

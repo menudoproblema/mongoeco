@@ -43,7 +43,7 @@ from mongoeco.core.identity import (
     assert_valid_root_document_id,
     assert_valid_upsert_document_id,
     document_matches_root_id_lookup,
-    id_contains_numeric_value,
+    root_id_needs_semantic_lookup,
     materialize_merge_insert_document,
     materialize_merge_update_document,
     materialize_replacement_document,
@@ -2876,7 +2876,7 @@ class MemoryEngine(AsyncStorageEngine):
                 )
             if scan_payload_id or (
                 candidate_id_storage_key != normalized_exclude
-                and id_contains_numeric_value(candidate["_id"])
+                and root_id_needs_semantic_lookup(candidate["_id"])
             ):
                 for storage_key, data in coll.items():
                     if (
@@ -3236,7 +3236,7 @@ class MemoryEngine(AsyncStorageEngine):
                     }
                     if not overwrite
                     and any(
-                        id_contains_numeric_value(document.get("_id"))
+                        root_id_needs_semantic_lookup(document.get("_id"))
                         for document in documents
                     )
                     else None
@@ -3276,11 +3276,11 @@ class MemoryEngine(AsyncStorageEngine):
                         )._duplicate_key_context
                         results.append(False)
                         break
-                    numeric_id = (
+                    semantic_id = (
                         id_equality_keys is not None
-                        and id_contains_numeric_value(doc_id)
+                        and root_id_needs_semantic_lookup(doc_id)
                     )
-                    if numeric_id and bson_equality_key(doc_id) in id_equality_keys:
+                    if semantic_id and bson_equality_key(doc_id) in id_equality_keys:
                         rejection_context = self._unique_key_error(
                             "Duplicate key", f"{db_name}.{coll_name}", document
                         )._duplicate_key_context
@@ -3304,7 +3304,7 @@ class MemoryEngine(AsyncStorageEngine):
                             indexes_view=indexes_view,
                             storage_view=storage,
                             index_data_view=index_data_view,
-                            check_id_storage=not numeric_id,
+                            check_id_storage=not semantic_id,
                             scan_payload_id=len(documents) == 1,
                         )
                     except DuplicateKeyError as error:
@@ -3654,7 +3654,7 @@ class MemoryEngine(AsyncStorageEngine):
             storage_key = self._storage_key(doc_id)
             coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
             data = coll.get(storage_key)
-            if data is None and id_contains_numeric_value(doc_id):
+            if data is None and root_id_needs_semantic_lookup(doc_id):
                 data = next(
                     (
                         candidate
@@ -3714,7 +3714,7 @@ class MemoryEngine(AsyncStorageEngine):
                 now=self._ttl_now(),
             )
             storage_key = self._storage_key(doc_id)
-            if storage_key not in coll and id_contains_numeric_value(doc_id):
+            if storage_key not in coll and root_id_needs_semantic_lookup(doc_id):
                 storage_key = next(
                     (
                         key

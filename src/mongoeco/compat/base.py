@@ -30,12 +30,12 @@ from mongoeco.compat.catalog import (
     MongoBehaviorPolicySpec,
 )
 from mongoeco.core.bson_ordering import bson_type_rank, compare_bson_documents
-from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.bson_scalars import (
     compare_bson_numeric,
     unwrap_bson_numeric,
     wrap_bson_numeric,
 )
+from mongoeco.core.bson_values import binary_order_key, document_mapping
 from mongoeco.types import (
     Timestamp,
     UndefinedType,
@@ -168,9 +168,11 @@ def _compare_values_default(
     if code_comparison is not None:
         return code_comparison
 
-    if isinstance(normalized_left, dict) and isinstance(normalized_right, dict):
+    left_document = document_mapping(normalized_left)
+    right_document = document_mapping(normalized_right)
+    if left_document is not None and right_document is not None:
         return compare_bson_documents(
-            normalized_left, normalized_right,
+            left_document, right_document,
             type_order=bson_type_order,
             compare_values=compare_nested,
         )
@@ -184,14 +186,10 @@ def _compare_values_default(
             return 0
         return -1 if len(normalized_left) < len(normalized_right) else 1
 
-    left_binary = binary_parts(normalized_left)
-    right_binary = binary_parts(normalized_right)
+    left_binary = binary_order_key(normalized_left)
+    right_binary = binary_order_key(normalized_right)
     if left_binary is not None and right_binary is not None:
-        left_subtype, left_bytes = left_binary
-        right_subtype, right_bytes = right_binary
-        left_key = (len(left_bytes), left_subtype, left_bytes)
-        right_key = (len(right_bytes), right_subtype, right_bytes)
-        return (left_key > right_key) - (left_key < right_key)
+        return (left_binary > right_binary) - (left_binary < right_binary)
 
     if isinstance(normalized_left, Timestamp) and isinstance(
         normalized_right, Timestamp

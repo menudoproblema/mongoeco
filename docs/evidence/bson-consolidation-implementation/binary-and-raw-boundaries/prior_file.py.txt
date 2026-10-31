@@ -1,0 +1,25 @@
+import json,sys
+from pathlib import Path
+from bson import Binary
+from mongoeco import MongoClient
+from mongoeco.engines import SQLiteEngine
+
+path='/tmp/mongoeco-bson-raw/prior.sqlite'
+engine=SQLiteEngine(path)
+with MongoClient(engine,mongodb_dialect='7.0') as client:
+ c=client.compat.c
+ if sys.argv[1]=='write':
+  c.insert_one({'_id':Binary(b'ab',0),'v':1})
+  c.create_index([('v',1)])
+  before=engine._connection.execute('SELECT storage_key,document FROM documents').fetchall()
+  Path('/tmp/mongoeco-bson-raw/prior-rows.json').write_text(json.dumps(before)+'\n')
+  print('prior runtime wrote binary-tagged _id and secondary index')
+ else:
+  before=json.loads(Path('/tmp/mongoeco-bson-raw/prior-rows.json').read_text())
+  assert c.find_one({'_id':b'ab'})['v']==1
+  assert c.update_one({'_id':b'ab'},{'$set':{'v':2}}).modified_count==1
+  assert c.count_documents({'v':1})==0
+  assert c.count_documents({'v':2})==1
+  after=engine._connection.execute('SELECT storage_key FROM documents').fetchall()
+  assert after[0][0]==before[0][0]
+  print('current runtime reopened prior file, updated through alias, retained storage key and refreshed index')

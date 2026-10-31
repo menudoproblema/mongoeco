@@ -193,9 +193,93 @@ extraer helpers ni reabrir D02. La nueva
 no acepta los cambios sin commitear ni cierra D03a/D06/D05. Se mantienen los
 owners y receipts de todos los cortes anteriores.
 
+## D03a — Binary en comparación, almacenamiento y transporte
+
+La [evidencia del corte](evidence/bson-consolidation-implementation/binary-and-raw-boundaries/receipt.json)
+completa D03a y materializa su dependencia compartida de D06a/D06b. No cierra
+estos últimos cortes ni D06c por asociación. Se amplían el registro, capturador
+y replay existentes con cinco acciones Binary y cinco DBRef, sin otro runner.
+Los seis archivos nuevos tienen referencias 7.0.43/8.0.32/9.0.2, FCV de su
+major, verificadas de nuevo con --check; no cambian fixtures históricos.
+
+Binary compara longitud BSON, subtipo y contenido. El subtipo 2 añade cuatro
+bytes de longitud interna: len(payload) no basta. Los atajos de rango y sort
+de bytes consumen esa regla o delegan; dejan de comparar lexicográficamente
+por Python. La vista común reconoce UUID estándar de almacenamiento como
+Binary 4, preservando codec_options, tags y claves físicas existentes. Las
+cinco propiedades generadas cubren formas SDK/local/owned/decode/públicas,
+subtipos, framing codificado por el SDK y coherencia de UUID estándar. Esto no
+amplía la política de entrada UUID ni acredita las representaciones legacy.
+
+SQLite mantiene fallback binario lossless en eq/in/ne/nin, incluyendo tags
+bytes/binary/uuid. Se observan SQL ejecutado y matcher con traducción normal y
+desactivada, índices escalares/multikey/parciales, arrays y rutas punteadas.
+Las trazas reales registran separadamente documento y operando, sin fijar sus
+clases como contrato público. Distinct/materialización y mutación de copias
+públicas conservan contenido/subtipo y el estado posterior de ambos motores.
+
+La selección/unicidad de `_id` extiende su guarda semántica de números a alias
+binarios. Las guardas de escritura siguen exigiendo identidad física; no se
+aceptan claves de otro payload/subtipo/tipo. Se reconoce la representación owned
+de una clave SQLite previa cuando decode entrega la clase local. No se
+redefinen canonical_document_id ni claves persistidas. Los controles abarcan
+IDs planos/compuestos, duplicados, subtipo distinto, reapertura e índices, y un
+archivo realmente escrito por el runtime anterior que el candidato actualiza
+sin cambiar su clave. D01b conserva sus efectos públicos más amplios pendientes.
+
+### Dependencia compartida de gramática y BSON raw
+
+`query_operators` decide literal/operadores por primer campo y presencia de
+ref/id según contexto, sin exigir tipos del constructor SDK. El parser, la
+preparación de membership/elemMatch, upsert y pull consumen esa decisión.
+Comparten gramática; mantienen sus diferencias de recorrido. La revisión
+reprodujo upserts que omitían el literal y pulls que no retiraban elementos,
+en ambos motores y en las tres referencias nativas. Los campos especiales
+$ref/$id/$db tienen igualdad de campo en la gramática de objeto; id conserva
+collation y ref/db comparación binaria. No se amplía indiscriminadamente la
+allowlist de operadores ni se traslada esa excepción a agregación. ElemMatch
+ya no convierte errores de preparación en un plan ausente: falla sin filas.
+
+El owner existente bson_raw conserva orden documental, arrays, scopes y
+undefined antes del bridge, también desde buffers readonly. Delega primitivas
+al SDK y controla límites/longitudes en los contenedores que debe preservar;
+no modifica tablas globales ni añade un segundo camino de decodificación. La validación
+de literales Binary 3/5 ocurre en preparación, con código 9 y apertura eager,
+incluso vacíos. También alcanza DBRef y Code scope mediante las vistas comunes.
+No se aplica esa restricción de expresión a todos los campos almacenados o
+filtros. Framing inválido y constante inválida conservan fronteras distintas.
+
+La regresión integrada detectó otro cruce de ownership: deepcopy conserva la
+raíz inmutable del reemplazo preparado, pero la política de `_id` necesitaba
+un documento de trabajo mutable. materialize_replacement_document crea esa
+raíz, conserva orden y no modifica la entrada del comando. La corrección se
+verifica con reemplazos públicos, validadores y el control de ownership.
+
+### Aceptación y límites
+
+La base f69759a aislada reproduce 84 fallos/39 checks verdes en Binary edges,
+120 fallos/3 checks de metadata verdes en DBRef, y dos fallos en las cinco
+propiedades ampliadas. El candidato final pasa 5.377 checks integrados, 2.443
+de core/propiedades con 936 subtests y un skip local, y 2.740 de wire con 92
+subtests. Orjson pasa 246 checks de replay y 110 de componentes. Pasan typing
+público/boundary, smoke sin SDK 3.13 y lint sin deuda nueva. Observers protegidos
+y snapshots permanecen idénticos. Los logs distinguen candidatos intermedios,
+fallos de preparación del test y gates finales sobre source congelado.
+
+El benchmark pequeño conserva resultados: medianas aproximadas +3 % Memory y
+−1 % SQLite en peticiones directas; parseo raw +8 % ping/+5 % find/−27 % batch.
+Son cinco muestras con otros gates activos, no aceptación de costes D05. Los
+servidores propios se detuvieron, los contenedores se retiraron y los tres
+puertos nativos están cerrados.
+
+D03a queda cerrado funcionalmente. D06a/D06b conservan aceptación restante de
+subpipelines y transporte físico según el plan; no se extrapola la suite
+focal a todos sus consumidores. D06c conserva group/claves/lookup/sets/spill/
+Search y retirada de guardas duplicadas. Tampoco se cierran B07 general ni D05.
+
 ## Trabajo restante
 
-- D03a: completar testigos de longitudes/arrays/gramática y caminos físicos.
+- D03a: cerrado funcionalmente; D05 conserva su integración final.
 - D01b: consecuencias públicas de modificación, eventos, índices y operaciones múltiples.
 - D03b: tipos/SQL bajo prueba de equivalencia.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.

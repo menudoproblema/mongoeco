@@ -4123,7 +4123,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             None,
         )
 
-        self.assertEqual(result.deleted_count, 1)
+        self.assertEqual(result.deleted_count, 0)
 
     def test_update_matching_document_sync_commits_successful_upsert(self):
         engine = SQLiteEngine()
@@ -5054,7 +5054,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-        self.assertEqual(count, 1)
+        self.assertEqual(count, 0)
 
     def test_iter_scan_documents_sync_python_fallback_honors_skip(self):
         engine = SQLiteEngine()
@@ -5179,12 +5179,17 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                         engine, "db", "coll", {"created_at": created_at}
                     )
                 ]
+            with patch(
+                "mongoeco.engines.sqlite.QueryEngine.match_plan",
+                wraps=QueryEngine.match_plan,
+            ) as matcher:
                 by_uuid = [
                     document
                     async for document in self._scan(
                         engine, "db", "coll", {"session_id": session_id}
                     )
                 ]
+                self.assertGreater(matcher.call_count, 0)
         finally:
             await engine.disconnect()
 

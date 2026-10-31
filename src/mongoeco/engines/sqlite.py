@@ -64,7 +64,7 @@ from mongoeco.core.identity import (
     assert_valid_root_document_id,
     canonical_document_id,
     document_matches_root_id_lookup,
-    id_contains_numeric_value,
+    root_id_needs_semantic_lookup,
     materialize_merge_insert_document,
     materialize_merge_update_document,
 )
@@ -3188,7 +3188,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
             if scan_payload_id or (
                 document_id_storage_key != exclude_storage_key
-                and id_contains_numeric_value(document["_id"])
+                and root_id_needs_semantic_lookup(document["_id"])
             ):
                 for storage_key, existing_document in self._load_documents(
                     db_name,

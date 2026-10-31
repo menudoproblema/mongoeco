@@ -7,15 +7,13 @@ from functools import cmp_to_key
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.core.bson_identity import same_bson_update_value
+from mongoeco.core.bson_values import document_mapping
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import (
     get_document_value,
     set_document_value,
 )
-from mongoeco.core.query_operators import (
-    has_query_top_level_operator,
-    query_operator_keys,
-)
+from mongoeco.core.query_operators import is_elem_match_value_document
 from mongoeco.core.server_errors import server_error
 from mongoeco.core.sorting import compare_documents
 from mongoeco.types import Regex, SortSpec
@@ -194,32 +192,20 @@ def _pull_candidate_matches(
         return (
             isinstance(candidate, str) and compiled_regex.search(candidate) is not None
         )
-    if isinstance(condition, dict):
-        operator_keys = query_operator_keys(condition)
-        if operator_keys and (
-            len(operator_keys) != len(condition)
-            or has_query_top_level_operator(condition)
-        ):
-            if not isinstance(candidate, dict):
-                return False
-            return QueryEngine.match(
-                candidate,
-                condition,
-                dialect=context.dialect,
-                collation=context.collation,
-            )
-        if operator_keys:
-            # $pull applies a field predicate to each value, including one
-            # level of array traversal; elemMatch binds its operand atomically.
+    condition_document = document_mapping(condition)
+    if condition_document is not None:
+        if is_elem_match_value_document(condition_document):
+            # $pull keeps field-predicate array traversal; elemMatch binds its
+            # value operand atomically. They share grammar, not traversal.
             return QueryEngine.match(
                 {"value": candidate},
-                {"value": condition},
+                {"value": condition_document},
                 dialect=context.dialect,
                 collation=context.collation,
             )
         return QueryEngine._match_elem_match_candidate(
             candidate,
-            condition,
+            condition_document,
             dialect=context.dialect,
             collation=context.collation,
         )

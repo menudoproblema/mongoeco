@@ -25,7 +25,11 @@ from mongoeco.core.geo import (
     parse_geo_geometry,
     parse_geo_point,
 )
-from mongoeco.core.query_operators import query_operator_keys
+from mongoeco.core.query_operators import (
+    DBREF_FIELDS,
+    is_elem_match_value_document,
+    is_query_expression_document,
+)
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
@@ -76,6 +80,7 @@ class EqualsCondition(QueryNode):
     field: str
     value: BsonValue
     null_matches_undefined: bool = False
+    collation_sensitive: bool = True
 
 
 @dataclass(frozen=True)
@@ -510,6 +515,13 @@ def _validate_regex_values(values: list[Any] | tuple[Any, ...]) -> None:
             compile_bson_regex(value)
 
 
+def _validate_membership_values(values):
+    _validate_regex_values(values)
+    if any(is_query_expression_document(value) for value in values):
+        message = "cannot nest an operator document inside $in/$nin"
+        raise server_error(message, code=2)
+
+
 def _compile_field_condition(
     field: str,
     condition: Any,
@@ -531,9 +543,7 @@ def _compile_field_condition(
             _regex_options_from_pattern(condition),
         )
 
-    if not isinstance(condition, dict) or not any(
-        isinstance(key, str) and key.startswith("$") for key in condition
-    ):
+    if not is_query_expression_document(condition):
         return EqualsCondition(
             field,
             condition,
@@ -584,7 +594,7 @@ def _compile_field_condition(
             if not isinstance(value, (list, tuple)):
                 message = "$in necesita una lista"
                 raise server_error(message, code=2)
-            _validate_regex_values(value)
+            _validate_membership_values(value)
             clauses.append(
                 InCondition(
                     field,
@@ -597,7 +607,7 @@ def _compile_field_condition(
             if not isinstance(value, (list, tuple)):
                 message = "$nin necesita una lista"
                 raise server_error(message, code=2)
-            _validate_regex_values(value)
+            _validate_membership_values(value)
             clauses.append(
                 NotInCondition(
                     field,
@@ -747,11 +757,10 @@ def _compile_field_condition(
             if (
                 not isinstance(value, dict)
                 or not value
-                or not all(
-                    isinstance(key, str) and key.startswith("$") for key in value
-                )
+                or not is_query_expression_document(value)
             ):
-                raise ValueError("$not necesita una expresion de operador")
+                message = "$not necesita una expresion de operador"
+                raise server_error(message, code=2)
             clauses.append(
                 NotCondition(
                     _compile_field_condition(
@@ -765,27 +774,14 @@ def _compile_field_condition(
         elif operator == "$elemMatch":
             if not isinstance(value, dict):
                 raise ValueError("$elemMatch necesita una expresion de filtro")
-            operator_keys = query_operator_keys(value)
-            compiled_plan: QueryNode | None = None
-            wrap_value = False
-            try:
-                if operator_keys and len(operator_keys) == len(value):
-                    compiled_plan = _compile_field_condition(
-                        "value",
-                        value,
-                        dialect=dialect,
-                        depth=depth + 1,
-                    )
-                    wrap_value = True
-                elif not operator_keys:
-                    compiled_plan = compile_filter(
-                        value,
-                        dialect=dialect,
-                        _depth=depth + 1,
-                    )
-            except (OperationFailure, ValueError, TypeError):
-                compiled_plan = None
-                wrap_value = False
+            wrap_value = is_elem_match_value_document(value)
+            compiled_plan = (
+                _compile_field_condition(
+                    "value", value, dialect=dialect, depth=depth + 1
+                )
+                if wrap_value
+                else compile_filter(value, dialect=dialect, _depth=depth + 1)
+            )
             clauses.append(
                 ElemMatchCondition(
                     field,
@@ -889,6 +885,17 @@ def _compile_filter_strict(
 
     clauses: list[QueryNode] = []
     for key, value in filter_spec.items():
+        if key in DBREF_FIELDS:
+            clauses.append(
+                EqualsCondition(
+                    key,
+                    value,
+                    null_matches_undefined=value is None
+                    and dialect.policy.null_query_matches_undefined(),
+                    collation_sensitive=key == "$id",
+                )
+            )
+            continue
         if (
             isinstance(key, str)
             and key.startswith("$")

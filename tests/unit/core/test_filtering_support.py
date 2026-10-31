@@ -56,7 +56,7 @@ class FilteringSupportTests(unittest.TestCase):
         self.assertEqual(hashable_in_lookup_key(True), ("bool", True))
         self.assertEqual(hashable_in_lookup_key(b"abc"), ("bytes", b"abc"))
         self.assertEqual(hashable_in_lookup_key(moment), ("date", moment))
-        self.assertEqual(hashable_in_lookup_key(token), ("uuid", token))
+        self.assertEqual(hashable_in_lookup_key(token), ("binary", (4, token.bytes)))
         self.assertEqual(hashable_in_lookup_key(object_id), ("objectid", object_id))
         self.assertEqual(hashable_in_lookup_key(stamp), ("timestamp", stamp))
         self.assertIsNone(hashable_in_lookup_key({"unsupported": True}))

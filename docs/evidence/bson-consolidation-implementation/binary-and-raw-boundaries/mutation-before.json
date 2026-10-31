@@ -1,0 +1,249 @@
+{
+  "local": {
+    "MemoryEngine-7.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "pull": {
+        "modified": 0,
+        "remaining": 3
+      }
+    },
+    "SQLiteEngine-7.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "pull": {
+        "modified": 0,
+        "remaining": 3
+      }
+    },
+    "MemoryEngine-8.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "pull": {
+        "modified": 0,
+        "remaining": 3
+      }
+    },
+    "SQLiteEngine-8.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "pull": {
+        "modified": 0,
+        "remaining": 3
+      }
+    },
+    "MemoryEngine-9.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "pull": {
+        "modified": 0,
+        "remaining": 3
+      }
+    },
+    "SQLiteEngine-9.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 0
+      },
+      "pull": {
+        "modified": 0,
+        "remaining": 3
+      }
+    }
+  },
+  "native": {
+    "7.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "pull": {
+        "modified": 1,
+        "remaining": 1
+      }
+    },
+    "8.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "pull": {
+        "modified": 1,
+        "remaining": 1
+      }
+    },
+    "9.0": {
+      "upsert-ordered": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "upsert-reversed": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "upsert-ordinary": {
+        "counts": [
+          0,
+          0
+        ],
+        "matches": 1
+      },
+      "pull": {
+        "modified": 1,
+        "remaining": 1
+      }
+    }
+  }
+}

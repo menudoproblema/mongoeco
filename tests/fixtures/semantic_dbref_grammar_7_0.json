@@ -1,0 +1,994 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_dbref_collation_contexts": {
+      "literal": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "sdk": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "elem-ref": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "elem-id": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        }
+      ],
+      "elem-db": [
+        {
+          "$numberInt": "4"
+        }
+      ]
+    },
+    "semantic_dbref_field_literals": {
+      "False-ordered-implicit": {
+        "ok": true,
+        "ids": []
+      },
+      "False-ordered-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-reversed-implicit": {
+        "ok": true,
+        "ids": []
+      },
+      "False-reversed-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-extras-implicit": {
+        "ok": true,
+        "ids": []
+      },
+      "False-extras-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-database-implicit": {
+        "ok": true,
+        "ids": []
+      },
+      "False-database-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-wrong_ref-implicit": {
+        "ok": true,
+        "ids": []
+      },
+      "False-wrong_ref-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-ref_only-implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-ref_only-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-id_only-implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-id_only-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-ordinary-implicit": {
+        "ok": true,
+        "ids": []
+      },
+      "False-ordinary-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-operator-implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-operator-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "False-sdk-implicit": {
+        "ok": true,
+        "ids": []
+      },
+      "False-sdk-eq": {
+        "ok": true,
+        "ids": []
+      },
+      "True-ordered-implicit": {
+        "ok": true,
+        "ids": [
+          "ordered",
+          "sdk"
+        ]
+      },
+      "True-ordered-eq": {
+        "ok": true,
+        "ids": [
+          "ordered",
+          "sdk"
+        ]
+      },
+      "True-reversed-implicit": {
+        "ok": true,
+        "ids": [
+          "reversed"
+        ]
+      },
+      "True-reversed-eq": {
+        "ok": true,
+        "ids": [
+          "reversed"
+        ]
+      },
+      "True-extras-implicit": {
+        "ok": true,
+        "ids": [
+          "extras"
+        ]
+      },
+      "True-extras-eq": {
+        "ok": true,
+        "ids": [
+          "extras"
+        ]
+      },
+      "True-database-implicit": {
+        "ok": true,
+        "ids": [
+          "database"
+        ]
+      },
+      "True-database-eq": {
+        "ok": true,
+        "ids": [
+          "database"
+        ]
+      },
+      "True-wrong_ref-implicit": {
+        "ok": true,
+        "ids": [
+          "wrong_ref"
+        ]
+      },
+      "True-wrong_ref-eq": {
+        "ok": true,
+        "ids": [
+          "wrong_ref"
+        ]
+      },
+      "True-ref_only-implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-ref_only-eq": {
+        "ok": true,
+        "ids": [
+          "ref_only"
+        ]
+      },
+      "True-id_only-implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-id_only-eq": {
+        "ok": true,
+        "ids": [
+          "id_only"
+        ]
+      },
+      "True-ordinary-implicit": {
+        "ok": true,
+        "ids": [
+          "ordinary"
+        ]
+      },
+      "True-ordinary-eq": {
+        "ok": true,
+        "ids": [
+          "ordinary"
+        ]
+      },
+      "True-operator-implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-operator-eq": {
+        "ok": true,
+        "ids": [
+          "operator"
+        ]
+      },
+      "True-sdk-implicit": {
+        "ok": true,
+        "ids": [
+          "ordered",
+          "sdk"
+        ]
+      },
+      "True-sdk-eq": {
+        "ok": true,
+        "ids": [
+          "ordered",
+          "sdk"
+        ]
+      }
+    },
+    "semantic_dbref_membership": {
+      "ordered-$in": {
+        "ok": true,
+        "ids": [
+          "ordered",
+          "sdk"
+        ]
+      },
+      "ordered-$nin": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "id_only",
+          "operator",
+          "ordinary",
+          "ref_only",
+          "reversed",
+          "wrong_ref"
+        ]
+      },
+      "reversed-$in": {
+        "ok": true,
+        "ids": [
+          "reversed"
+        ]
+      },
+      "reversed-$nin": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "id_only",
+          "operator",
+          "ordered",
+          "ordinary",
+          "ref_only",
+          "sdk",
+          "wrong_ref"
+        ]
+      },
+      "extras-$in": {
+        "ok": true,
+        "ids": [
+          "extras"
+        ]
+      },
+      "extras-$nin": {
+        "ok": true,
+        "ids": [
+          "database",
+          "id_only",
+          "operator",
+          "ordered",
+          "ordinary",
+          "ref_only",
+          "reversed",
+          "sdk",
+          "wrong_ref"
+        ]
+      },
+      "database-$in": {
+        "ok": true,
+        "ids": [
+          "database"
+        ]
+      },
+      "database-$nin": {
+        "ok": true,
+        "ids": [
+          "extras",
+          "id_only",
+          "operator",
+          "ordered",
+          "ordinary",
+          "ref_only",
+          "reversed",
+          "sdk",
+          "wrong_ref"
+        ]
+      },
+      "wrong_ref-$in": {
+        "ok": true,
+        "ids": [
+          "wrong_ref"
+        ]
+      },
+      "wrong_ref-$nin": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "id_only",
+          "operator",
+          "ordered",
+          "ordinary",
+          "ref_only",
+          "reversed",
+          "sdk"
+        ]
+      },
+      "ref_only-$in": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "ref_only-$nin": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "id_only-$in": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "id_only-$nin": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "ordinary-$in": {
+        "ok": true,
+        "ids": [
+          "ordinary"
+        ]
+      },
+      "ordinary-$nin": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "id_only",
+          "operator",
+          "ordered",
+          "ref_only",
+          "reversed",
+          "sdk",
+          "wrong_ref"
+        ]
+      },
+      "operator-$in": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "operator-$nin": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "sdk-$in": {
+        "ok": true,
+        "ids": [
+          "ordered",
+          "sdk"
+        ]
+      },
+      "sdk-$nin": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "id_only",
+          "operator",
+          "ordinary",
+          "ref_only",
+          "reversed",
+          "wrong_ref"
+        ]
+      }
+    },
+    "semantic_dbref_mutation_literals": {
+      "upsert-ordered": {
+        "counts": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "matches": {
+          "$numberInt": "1"
+        }
+      },
+      "pull-ordered": {
+        "modified": {
+          "$numberInt": "1"
+        },
+        "remaining": {
+          "$numberInt": "1"
+        }
+      },
+      "upsert-reversed": {
+        "counts": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "matches": {
+          "$numberInt": "1"
+        }
+      },
+      "pull-reversed": {
+        "modified": {
+          "$numberInt": "1"
+        },
+        "remaining": {
+          "$numberInt": "1"
+        }
+      },
+      "upsert-ordinary": {
+        "counts": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "matches": {
+          "$numberInt": "1"
+        }
+      },
+      "pull-ordinary": {
+        "code": {
+          "$numberInt": "2"
+        },
+        "remaining": {
+          "$numberInt": "3"
+        }
+      },
+      "upsert-sdk": {
+        "counts": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "matches": {
+          "$numberInt": "1"
+        }
+      },
+      "pull-sdk": {
+        "modified": {
+          "$numberInt": "1"
+        },
+        "remaining": {
+          "$numberInt": "1"
+        }
+      }
+    },
+    "semantic_dbref_nested_grammar": {
+      "False-ordered-elem": {
+        "ok": true,
+        "ids": []
+      },
+      "False-ordered-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-reversed-elem": {
+        "ok": true,
+        "ids": []
+      },
+      "False-reversed-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-extras-elem": {
+        "ok": true,
+        "ids": []
+      },
+      "False-extras-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-database-elem": {
+        "ok": true,
+        "ids": []
+      },
+      "False-database-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-wrong_ref-elem": {
+        "ok": true,
+        "ids": []
+      },
+      "False-wrong_ref-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-ref_only-elem": {
+        "ok": true,
+        "ids": []
+      },
+      "False-ref_only-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-id_only-elem": {
+        "ok": true,
+        "ids": []
+      },
+      "False-id_only-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-ordinary-elem": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-ordinary-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-operator-elem": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-operator-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "False-top": {
+        "ok": true,
+        "ids": []
+      },
+      "True-ordered-elem": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "ordered",
+          "reversed",
+          "sdk"
+        ]
+      },
+      "True-ordered-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-reversed-elem": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "ordered",
+          "reversed",
+          "sdk"
+        ]
+      },
+      "True-reversed-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-extras-elem": {
+        "ok": true,
+        "ids": [
+          "extras"
+        ]
+      },
+      "True-extras-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-database-elem": {
+        "ok": true,
+        "ids": [
+          "database"
+        ]
+      },
+      "True-database-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-wrong_ref-elem": {
+        "ok": true,
+        "ids": [
+          "wrong_ref"
+        ]
+      },
+      "True-wrong_ref-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-ref_only-elem": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "ordered",
+          "ref_only",
+          "reversed",
+          "sdk"
+        ]
+      },
+      "True-ref_only-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-id_only-elem": {
+        "ok": true,
+        "ids": [
+          "database",
+          "extras",
+          "id_only",
+          "ordered",
+          "reversed",
+          "sdk",
+          "wrong_ref"
+        ]
+      },
+      "True-id_only-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-ordinary-elem": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-ordinary-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-operator-elem": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-operator-not": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open"
+      },
+      "True-top": {
+        "ok": true,
+        "ids": []
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_dbref_grammar_cases.py",
+    "sha256": "05595768d84dcf60b6b6ea0e1bbce3cc5d219bfb8150fd2a606db5f29753034e"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_dbref_field_literals",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_dbref_field_literals"
+    },
+    {
+      "name": "semantic_dbref_membership",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_dbref_membership"
+    },
+    {
+      "name": "semantic_dbref_nested_grammar",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_dbref_nested_grammar"
+    },
+    {
+      "name": "semantic_dbref_collation_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_dbref_collation_contexts"
+    },
+    {
+      "name": "semantic_dbref_mutation_literals",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_dbref_mutation_literals"
+    }
+  ]
+}

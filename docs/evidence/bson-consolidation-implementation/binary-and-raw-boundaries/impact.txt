@@ -1,0 +1,19 @@
+Active workset: D03a, with its D06a/D06b raw/grammar dependency; approved plan revision 5.
+Baseline: f69759a runtime, e608dbc documentation. No AGENTS-specific regime found.
+Classification and representations: core/bson_values, compat/base, bson_ordering,
+filtering_matching/support, sorting, collation. Existing policies and overrides retained.
+Transport entrypoints: wire/protocol (OP_MSG body/sequences and OP_QUERY),
+api/admin_parsing RawBSONDocument, core/bson_raw, wire/bson_bridge.
+Grammar consumers: query_plan, filtering_specials, compiled_query canonical leaf
+fallback, upserts, update_array_operators; direct/async/wire runtime operations.
+Persistence/identity: identity, MemoryEngine, SQLiteEngine and read/write/modify
+helpers, sqlite_query eligibility; canonical_document_id and codec tags retained.
+Gates: existing semantic capture/replay, generated properties, SQL executed-path
+spy, plain/scalar/multikey/partial indexes, reopened/prior SQLite file, root-key
+corruption guards, raw framing/SDK buffers, public/boundary typing, no-SDK, lint.
+Protected: existing observation owners, catalog snapshots and historical goldens.
+Excluded from closure: D01b full effects, D03b SQL type specialization,
+D06a/b remaining subpipeline/physical transport acceptance, D06c keys/group/
+lookup/spill/Search, D04 watch, H53 policy, optional D07 and integrated D05 gates.
+Mechanism: reuse/compose existing value views, query grammar owner, raw boundary,
+physical identity helper and runners; no new evaluator, global SDK decoder or key format.

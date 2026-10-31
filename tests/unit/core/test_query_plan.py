@@ -386,13 +386,13 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({'name': {'$regex': 123}})
         with self.assertRaises(ValueError):
             compile_filter({'name': {'$options': 1}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'name': {'$not': 1}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'name': {'$not': {}}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'name': {'$not': {'x': 1}}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'name': {'$not': {'$regex': '^ad', 'x': 1}}})
         with self.assertRaises(ValueError):
             compile_filter({'items': {'$elemMatch': 1}})
@@ -445,7 +445,7 @@ class QueryPlanTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             _coerce_bitwise_mask([64])
 
-    def test_compile_filter_private_branches_cover_regex_equals_and_elem_match_fallback(
+    def test_compile_filter_prepares_regex_and_rejects_invalid_elem_match_eagerly(
         self,
     ):
         self.assertEqual(
@@ -463,13 +463,12 @@ class QueryPlanTests(unittest.TestCase):
             RegexCondition('name', '^ad', 'im'),
         )
 
-        plan = compile_filter(
-            {'items': {'$elemMatch': {'$future': 1}}},
-            planning_mode=PlanningMode.STRICT,
-        )
-        self.assertIsInstance(plan, ElemMatchCondition)
-        self.assertIsNone(plan.compiled_plan)
-        self.assertFalse(plan.wrap_value)
+        with self.assertRaises(OperationFailure) as error:
+            compile_filter(
+                {'items': {'$elemMatch': {'$future': 1}}},
+                planning_mode=PlanningMode.STRICT,
+            )
+        self.assertEqual(error.exception.code, 2)
 
     def test_compile_filter_rejects_options_without_regex(self):
         with self.assertRaises(Exception):
