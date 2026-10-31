@@ -1,0 +1,98 @@
+"""Disposable public-API characterization; not an acceptance runner."""
+
+import json
+import time
+import uuid
+from pathlib import Path
+
+from bson import BSON
+from pymongo import MongoClient as NativeClient
+
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+
+ROOT = Path(__file__).parent
+CASES = (
+    "unset_null_array",
+    "rename_equal",
+    "merge_numeric_type",
+    "pipeline_omit_id_small",
+    "pipeline_omit_id_large",
+)
+
+
+def observe(client, case):
+    db = client["review7_" + uuid.uuid4().hex]
+    cursor = None
+    try:
+        collection = db.target
+        seed = {"_id": 1}
+        if case == "unset_null_array":
+            seed["a"] = [None]
+        elif case == "rename_equal":
+            seed.update(a=1, b=1, pad="x" * 1000)
+        else:
+            seed.update(v=1, pad="x" * (0 if case.endswith("small") else 1000))
+        collection.insert_one(seed)
+        if case == "merge_numeric_type":
+            db.source.insert_one({"_id": 1, "v": 1.0})
+        cursor = collection.watch(max_await_time_ms=50)
+        result = {}
+        try:
+            if case == "unset_null_array":
+                write = collection.update_one({"_id": 1}, {"$unset": {"a.0": 1}})
+            elif case == "rename_equal":
+                write = collection.update_one({"_id": 1}, {"$rename": {"a": "b"}})
+            elif case == "merge_numeric_type":
+                list(db.source.aggregate([{"$merge": {
+                    "into": "target", "whenMatched": "merge", "whenNotMatched": "insert",
+                }}]))
+                write = None
+            else:
+                write = collection.update_one({"_id": 1}, [{"$unset": "_id"}])
+            result["modified_count"] = None if write is None else write.modified_count
+        except Exception as error:
+            result["error"] = {"family": type(error).__name__, "code": getattr(error, "code", None)}
+        collection.insert_one({"_id": "barrier"})
+        events = []
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            event = cursor.try_next()
+            if event is None:
+                continue
+            if event.get("documentKey", {}).get("_id") == "barrier":
+                result["barrier_seen"] = True
+                break
+            # Independent BSON encoding preserves numeric widths and field order.
+            observed = {key: event[key] for key in (
+                "operationType", "documentKey", "fullDocument", "updateDescription",
+            ) if key in event}
+            events.append(BSON.encode(observed).hex())
+        result.setdefault("barrier_seen", False)
+        result["events_bson"] = events
+        result["state_bson"] = BSON.encode(collection.find_one({"_id": 1})).hex()
+        return result
+    finally:
+        if cursor is not None:
+            cursor.close()
+        client.drop_database(db.name)
+
+
+report = {"scope": "characterization of preexisting WIP; not closure", "native": {}, "local": {}}
+for major, port in (("7.0", 49973), ("8.0", 49974), ("9.0", 49975)):
+    with NativeClient(f"mongodb://127.0.0.1:{port}/?directConnection=true", serverSelectionTimeoutMS=3000) as client:
+        report["native"][major] = {
+            "version": client.server_info()["version"],
+            "fcv": client.admin.command({"getParameter": 1, "featureCompatibilityVersion": 1})["featureCompatibilityVersion"],
+            "cases": {case: observe(client, case) for case in CASES},
+        }
+    for name, engine in (("memory", MemoryEngine()), ("sqlite", SQLiteEngine())):
+        with MongoClient(engine, mongodb_dialect=major) as client:
+            report["local"][name + "-" + major] = {case: observe(client, case) for case in CASES}
+report["differences"] = {
+    name: [case for case in CASES if values[case] != report["native"][name.split("-", 1)[1]]["cases"][case]]
+    for name, values in report["local"].items()
+}
+(ROOT / "effects.json").write_text(json.dumps(report, indent=2) + "\n")
+print(report["differences"])

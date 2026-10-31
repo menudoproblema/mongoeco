@@ -1,0 +1,118 @@
+{
+  "status": "plan revision 7; characterization only, no runtime acceptance",
+  "runtime_head": "375382a0e4857e67f2d6b2e772f0ed2df10f90cb",
+  "preexisting_wip": "production/events/size and associated tests; preserved, not accepted by this review",
+  "runtime_manifest": {
+    "file": "runtime-sources.json",
+    "sha256": "074f0907bda965a88bb8cf64f66252b733accbfcdeadd11c64e26f68c2a10776",
+    "files": 872
+  },
+  "tracked_src_tests_diff_sha256": "20dfd4bbbd5bebda8e52b6f5cd694037e36c9f897d66f0cc0b723fa3983caf4b",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_4_5_6": true,
+  "runtime_and_tests_changed_by_review": false,
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "fcv": [
+      {
+        "version": "7.0"
+      },
+      {
+        "version": "8.0"
+      },
+      {
+        "version": "9.0"
+      }
+    ],
+    "topology": "preexisting owned single-member replica sets",
+    "ports": [
+      49973,
+      49974,
+      49975
+    ],
+    "cases_per_version": 5,
+    "observations": 15,
+    "barriers_seen": 15,
+    "databases": "UUID disposable, dropped in finally",
+    "service_lifecycle": "unchanged"
+  },
+  "local": {
+    "pairs": 6,
+    "cases_per_pair": 5,
+    "observations": 30,
+    "barriers_seen": 30,
+    "representation_trace_rows": 18
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/property/test_sqlite_type_predicates.py tests/unit/core/test_binary_storage_paths.py",
+      "passed": 69,
+      "seconds": 2.54
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k 'binary_edges or dbref_grammar or type_query'",
+      "passed": 345,
+      "deselected": 5536,
+      "seconds": 15.55,
+      "reference": "existing native fixtures; not recaptured"
+    },
+    {
+      "command": "PYTHONPATH=src .venv/bin/python docs/evidence/bson-consolidation-review/review7/representation-probe.py.txt",
+      "exit_code": 0
+    },
+    {
+      "command": "PYTHONPATH=src .venv/bin/python docs/evidence/bson-consolidation-review/review7/effects-probe.py.txt",
+      "exit_code": 0,
+      "interpretation": "characterization, expected native/local differences retained"
+    }
+  ],
+  "sources": {
+    "reference_tag": "r8.0.0",
+    "newly_downloaded": 16,
+    "matched": 16,
+    "historical_sources_unchanged": true
+  },
+  "environment_attempts": {
+    "replay-sandbox-attempt.log.gz": "168 failed/177 passed due denied socket bind; superseded by enabled final run",
+    "sources-sandbox-attempt.json": "DNS denied; superseded by 16 successful hash checks",
+    "automatic_approval_rejected": false
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "document_checks": {
+    "relative_links_checked": 28,
+    "policy": "no dedicated documentation checker found; relative targets and git diff --check validated",
+    "git_diff_check_documents": "passed",
+    "git_diff_check_entire_tree": "preexisting unrelated WIP: src/mongoeco/wire/bson_bridge.py:147 new blank line at EOF; not modified in this review"
+  },
+  "limits": [
+    "No production or test edits by this review; preexisting WIP remains unaccepted.",
+    "No complete global/wheel/environment matrix, new Binary/DBRef/type capture, transformed watch, TTL or performance gate.",
+    "No D01b/D04/D05/B07 closure; native effect probe is not a permanent regression.",
+    "Effects observer retains operationType/documentKey/fullDocument/updateDescription BSON and state, omits opaque tokens/cluster times; does not accept these omitted contracts.",
+    "Only one matched-merge mode and five effect cases characterized; no transaction/retry acceptance."
+  ],
+  "artifacts": {
+    "README.md": "8ed0a08242bbce8ee2f664f82b3f76175653659134b18b2cf7f98ba3dcc0f2a6",
+    "effects-probe.log.gz": "0d68c7afb5901626ed0ca8a52809947388bb87cfdb2e1d51ce4b0f94b55b82eb",
+    "effects-probe.py.txt": "4462bd0ea443fc69bc89cec154afde0db261e411b9e4801ca9299aa878851c10",
+    "effects.json": "910ad96d3fd431409bb870c8491f740b9217d1bbd3f1302e358b01bc488e68f4",
+    "regression.log.gz": "eda3c27108acc8c592cb6faaa7c5baa1ee6e634e365dc20a77de0ff31d50aa38",
+    "replay-sandbox-attempt.log.gz": "50d0e2b912eee9bf53c1d0c4e6a809607675db681c399531000c57c27375faa5",
+    "replay.log.gz": "01771a8fb277d1a9507675d5ee91229ca89bafb8b7d924020e3e5a86142fe76f",
+    "representation-probe.log.gz": "631fe90b08b0df4b91ff94b0426f420f8995ddfa9f040e7ceaa2fce52b78d454",
+    "representation-probe.py.txt": "456988a15c5e027d87af8d5f4d3d8cc786118d25222e98acd240a9eba52b0965",
+    "representations.json": "e943720f6d84379b709fa0890f70d1fa06a31452e1880d13d245d9e7974ac705",
+    "runtime-sources.json": "074f0907bda965a88bb8cf64f66252b733accbfcdeadd11c64e26f68c2a10776",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e",
+    "sources-sandbox-attempt.json": "f236324c41a7da5557624956681b19fdd80eb75612069075d643e67c28a58926"
+  }
+}

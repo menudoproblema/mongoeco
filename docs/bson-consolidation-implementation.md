@@ -401,6 +401,24 @@ expone string sNaN aceptado por `$toDecimal` local y rechazado con 241 por Mongo
 testigo permanente pendientes; no se cierra mediante una prohibición global de
 NaN almacenado ni se declara completa la paridad de conversiones.
 
+## Revisión documental 7
+
+La [revisión 7 del plan](bson-semantics-consolidation-plan.md) contrasta el mismo
+informe sobre `375382a` y el trabajo de eventos preexistente sin commitear. La
+[evidencia](evidence/bson-consolidation-review/review7/receipt.json) repite 69
+checks de propiedades/fronteras y 345 de replay, y verifica 16 hashes r8.0.0.
+No sustituye los gates de aceptación ni acepta el trabajo en curso.
+
+Cinco casos públicos nuevos por referencia nativa 7/8/9 y par local muestran
+tres defectos compartidos pendientes D01b: unset de array null modifica/publica
+nativamente sin cambiar postimagen, rename local mueve un destino existente y
+merge omite el cambio físico int→double por igualdad semántica. Los casos de
+pipeline que omite `_id`, pequeño/grande, coinciden con el trabajo local actual;
+requieren regresión permanente y aceptación del corte. Se precisa reutilización
+del plan/outcome y un constructor de contenido común, conservando políticas de
+operador y owners transaccionales. La identidad física sola no decide todos los
+contadores/eventos. No se modifica producción en esta revisión documental.
+
 ## Trabajo restante
 
 - D01b: construcción/contenido de eventos y entrega/outbox/rollback, con procedencia de rutas y documentKey físico anterior. Estado/contadores/índices/múltiples poseen el incremento anterior; no acreditan cierre completo.

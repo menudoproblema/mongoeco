@@ -28,6 +28,12 @@ Revisión 6: mismo adjunto (SHA-256 verificado), contrastado con HEAD
 histórica no vuelve a abrirlos. Esta revisión actualiza el orden restante y
 precisa las obligaciones de D01b con sondas nuevas contra MongoDB 7/8/9.
 
+Revisión 7: mismo adjunto, contrastado con HEAD `375382a` y el trabajo de
+eventos sin commitear. La [evidencia de revisión 7](evidence/bson-consolidation-review/review7/receipt.json)
+identifica ese árbol, repite regresiones y caracteriza cinco efectos de escritura
+en los tres servidores temporales. El orden vigente está al final de la sección
+5; las revisiones anteriores conservan su alcance histórico.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H54 y su integración con B00–B10 y
@@ -110,7 +116,7 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 | Obligación | Disposición al revisar el informe |
 | --- | --- |
 | H48 rango/partes Binary, SDK y eq/in SQL | D03a cerrado funcionalmente en `542bce9`; vistas SDK/local/owned, distinct, longitudes y fallback binario tienen evidencia en el registro. La sonda de revisión 6 conserva IDs/subtipos y observa ambos lados del matcher. No reintroducir pushdown por simplificación. |
-| H54 identidad física y Code | D01a entregado en `93b9b34`, con codec corregido en `19ed3fa`. D01b permanece abierto: nueva sonda confirma una guarda clásica incompleta de `_id` Code y diferencias en eventos. No repetir la extracción del helper. |
+| H54 identidad física y Code | D01a entregado en `93b9b34`, con codec corregido en `19ed3fa`. `375382a` entrega guardas clásicas/almacenamiento, índices y escrituras múltiples según el registro. D01b permanece abierto para contenido/entrega de eventos y las rutas restantes precisadas en revisión 7. No repetir la extracción del helper ni reabrir sus contraejemplos resueltos. |
 | H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices. |
 | H50 parser/vistas/wire/claves | `542bce9` entrega gramática y preservación raw compartidas, con testigos nativos/directos/wire. D06a/D06b conservan aceptación restante; D06c conserva consumidores y claves. No volver a describir el literal DBRef básico como defecto presente. |
 | H51 tipos SQL | D03b cerrado funcionalmente en `ef604c7`: tabla común de argumentos y predicados por familia, arrays y SQL ejecutado. D05 conserva gates integrados. |
@@ -461,7 +467,7 @@ clases internas exactas ni del número de llamadas un contrato público o una
 telemetría permanente. Las trazas conservan valor diagnóstico. Las tres
 propiedades actuales son regresión focal, no prueba de todos esos caminos.
 
-### Refinamiento vigente de la revisión 6
+### Refinamiento de la revisión 6 (orden sustituido por revisión 7)
 
 La [evidencia de revisión 6](evidence/bson-consolidation-review/review6/receipt.json)
 verifica que el texto es idéntico al de revisiones 3–5. Las catorce fuentes
@@ -550,6 +556,89 @@ implementación sigue siendo el único owner de estado/gates: las tablas del
 plan expresan obligaciones y apuntan a él. No se crean IDs para los
 contraejemplos adicionales, ya incluidos en identidad y eventos de D01b. El trabajo
 de tests sin commitear preexistente no se considera aceptado por esta revisión.
+
+### Refinamiento vigente de la revisión 7
+
+La autocrítica no introduce otra familia de defectos: parser DBRef, fallback
+binario eq/in, SDK Binary, distinct y testigos de representación ya están
+incorporados y tienen entregas funcionales. En esta revisión pasan 69 controles
+de propiedades/fronteras y 345 de replay sobre capturas existentes; las trazas
+actuales observan ambos lados del matcher en los seis pares motor/dialecto.
+Las 14 fuentes históricas y las dos adicionales de revisión 6 coinciden por
+descarga/SHA-256. Esto no acredita gates globales, nuevas capturas de esos
+corpora ni los cambios de eventos sin commitear. Las 167 pruebas históricas
+mantienen su significado original. Watch sigue pendiente por fase/familia/código
+y contexto; TTL no se reabre ni se rebaja su garantía de candidatos.
+
+**Precisar la causa transversal sin crear una igualdad universal.** La pérdida
+de información explica Binary/DBRef, fechas y procedencia de eventos. Evitar la
+autoridad común explica SQL, rutas rápidas y el uso de igualdad semántica en
+escrituras. Pero no todo efecto de escritura se deduce de identidad BSON entre
+la preimagen y la imagen guardada. La sonda nueva confirma, en MongoDB
+7.0.43/8.0.32/9.0.2 con FCV correspondiente:
+
+- `$unset: {"a.0": 1}` sobre `a: [null]` cuenta como modificación y emite
+  actualización aunque la imagen guardada sea idéntica. Ambos motores locales
+  devuelven cero y omiten el evento. La excepción pertenece al operador clásico;
+  no se debe cambiar la igualdad física general para simularla.
+- `$rename: {a: "b"}` con `a: 1, b: 1` elimina `a`, conserva la posición previa
+  de `b` y publica su asignación. Eliminar y reinsertar el destino localmente
+  altera el orden BSON. La refactorización debe conservar el orden en el setter,
+  no compensarlo reordenando el resultado o el observador.
+- `$merge` con `whenMatched: "merge"` y `v: int(1) → double(1)` cambia tipo y
+  publica evento. Ambos motores locales conservan el entero por usar igualdad
+  semántica. Es otra entrada de escritura a D01b; su ruta manual no debe quedar
+  fuera al consolidar updates. No extrapolar esta sonda a todos los modos merge.
+- Un pipeline que omite `_id` conserva el identificador al guardar, pero puede
+  producir replace en el documento pequeño o update con `_id` en removedFields
+  en el grande. El trabajo local actual coincide en estos dos casos; falta su
+  testigo permanente y aceptación del corte. Conservar imagen calculada e imagen
+  guardada cuando el constructor de eventos necesite distinguirlas.
+
+Estas son caracterizaciones públicas nuevas, con barrera de entrega, estado y
+contenido BSON independientes del helper productivo. No son cierre de D01b ni
+aceptación de transacciones. Las bases UUID se eliminan al terminar; no se
+modifica la instancia habitual ni se detienen servicios de la tarea anterior.
+
+**Responsabilidades comunes mínimas.** Mantener los componentes existentes y
+completar únicamente la información que falta en sus fronteras:
+
+| Responsabilidad | Owner y simplificación | Límite que debe conservar |
+| --- | --- | --- |
+| Reconocer representación BSON | `bson_values`, codec y `bson_raw`; consumidores delegan vistas | Gramática, opciones de codec y validación de admisión tienen contratos propios. |
+| Igualdad/orden/claves semánticas | Primitivas y adaptadores de cada política existentes | Query traversal, schema, group y Search no se convierten en un único modo de comparación. |
+| Identidad física de un valor | `bson_identity` | No decide por sí sola inmutabilidad de `_id`, todos los modified_count ni publicación. |
+| Aplicar la operación y conservar procedencia | Plan de update y outcome existentes; reutilizarlos desde entradas equivalentes, incluido merge cuando corresponda | Separar aplicado/no-op, imágenes, rutas concretas y contenido del cambio. No recalcular todo desde las dos imágenes ni crear otro AST. |
+| Construir contenido de evento | Un owner interno compartido Memory/SQLite; el trabajo `change_events` es candidato, no contrato aceptado | Mantener diferencias classic/pipeline/replace, documentKey anterior y diferencias por versión; no convertirlo en emulador general del oplog. |
+| Calcular tamaño BSON si el contenido lo requiere | Un cálculo contrastado, compartido con `$bsonSize` | Framing Binary 2, Code scope, widths numéricos, regex/UTF-8/anidados; SDK independiente y servidor como oráculos. No usar estimaciones JSON. |
+| Guardar y entregar | Owners actuales de storage, journal/outbox, publicación y transacción | Contenido preparado no acredita commit; rollback, retry y ausencia antes del commit se prueban aparte. No cambiar formato de claves ni esquema persistido sin necesidad demostrada. |
+
+No añadir clases wrapper, una jerarquía de efectos ni una API pública por el
+mero hecho de compartir esta responsabilidad. Si el outcome existente admite
+los datos necesarios, ampliarlo de forma interna y verificar ownership/copia.
+No imponer la captura costosa de rutas/diffs a escrituras sin observador cuando
+su política de publicación no la requiere. Conservar controles de huecos del
+journal y reanudación; la optimización no puede ocultar trabajo pendiente.
+
+**Secuencia restante y garantías de salida.** Esta tabla sustituye el orden
+restante de revisión 6; no crea otros IDs ni cambia los owners de estado:
+
+| Orden / bloque | Trabajo y dependencia | Aceptación discriminante |
+| --- | --- | --- |
+| 1. D01b: primitivas pendientes y efectos clásicos | D01a/D03a disponibles. Completar tamaño BSON si el diseño elegido lo necesita; corregir unset de array null y rename sin mover destino; conservar procedencia real de las rutas. | Propiedad de tamaño frente a BSON SDK y capturas 7/8/9; límites estrictos update/replace y subdocumentos/arrays; imagen, orden, contador y evento completos. Whole/dotted con misma postimagen deben seguir produciendo descripciones distintas. |
+| 2. D01b: todas las entradas de escritura afectadas | Reutilizar los planes y políticas existentes en merge en lugar de mantener otro evaluador de mutación. Censar classic/pipeline/replacement, merge, bulk, update_many, command y findAndModify; reutilizar el corte ya aceptado de estado/índices. | Tipos físicos, `_id` permitido/rechazado por forma de escritura, selección/rekey sin cambiar formato ni orden natural, índices y reapertura; fase/familia/código de errores de comando y escritura según referencia nativa. No asumir que todos exponen WriteError. |
+| 3. D01b: entrega confirmada | Contenido común disponible; integración con scopes y outbox existentes, sin otro contexto ni journal. | Evento una vez después de commit, ninguno antes ni tras abort/error/no-op nativo, rollback de estado/índices/outbox y retry/reapertura. Usar barrera, no un timeout aislado; distinguir pruebas locales de captura transaccional física. |
+| 4. D04 y D06 restantes | Sin dependencia circular entre productor y consumidor watch. D04 prepara una vez con contexto del stream y fixture replica set; D06a/b completan contextos y preservación, D06c comparte átomos conservando políticas de consumidores. | Watch inválido falla al abrir sin eventos; replaceWith válido abre; fase/familia/código y NOW entre getMore. DBRef/raw en subpipelines y consumidores con/sin hash/spill. Wire no soportado se registra como límite, nunca como éxito de paridad. |
+| 5. H53 y conversión escalar | Disposición H53 en C03/B08 sin canal de logging implícito. El diagnóstico sNaN del registro conserva owner de conversión; no se pierde en la consolidación. | strict/moderate/off × error/warn/bypass con antiguos/candidatos; contrastar sNaN 7/8/9 y añadir regresión antes de modificar conversiones, sin prohibir NaN almacenado. D07 sigue opcional. |
+| 6. D05 | Entregas obligatorias y fuentes congeladas; revisión por bloque, matrices y commits semánticos del owner vigente. | Reusar evidencias focales válidas, ejecutar gates integrados/matrices/wheel/SPI/SDK-free y medidas exigidas; no contar caracterización o WIP como entrega. |
+
+Por cada fallo compartido, exigir un testigo contra el servidor además de la
+equivalencia Memory/SQLite o compilado/interpretado. Por cada especialización,
+observar el camino real y contrastarlo con la autoridad canónica. No duplicar
+fixtures ni repetir una matriz equivalente sin cambios; sí repetir el gate
+afectado cuando cambie su fuente/corpus. Cada receipt identifica ese candidato,
+el fallo previo y las dimensiones no ejercidas. Los observadores BSON protegidos
+y goldens históricos permanecen independientes e inalterados.
 
 ## 6. Pruebas y aceptación por garantía
 
