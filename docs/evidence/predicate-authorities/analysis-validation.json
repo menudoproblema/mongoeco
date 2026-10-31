@@ -1,0 +1,122 @@
+{
+  "date": "2026-10-31",
+  "base": "79529a2424f2ba16b454c559bf2202bd0bf9b055",
+  "status": "analysis_and_plan_only_no_productive_changes",
+  "input_reports": {
+    "announced": 2,
+    "received": 1,
+    "second_report": "pending"
+  },
+  "source_count": 276,
+  "source_fingerprint_algorithm": "sha256 of sorted path:sha256\\n for all src/**/*.py",
+  "source_fingerprint": "75ad2520f74b86b6aaa0bcb24ef77c5fead6978fadf1f4f55ff37b2324358338",
+  "native": {
+    "server_version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "cases": 65,
+    "cases_with_success_or_value_difference": 42,
+    "difference_case_ids": [
+      "query_string_number",
+      "dotted_string_number",
+      "query_bool_number",
+      "dotted_bool_number",
+      "query_null_number",
+      "dotted_null_number",
+      "dotted_array_empty",
+      "dotted_nested_array",
+      "schema_enum_bool",
+      "schema_enum_nested_bool",
+      "schema_enum_numeric",
+      "schema_double_max",
+      "schema_double_min",
+      "schema_nan_min",
+      "schema_decimal_nan_min",
+      "schema_inf_min",
+      "schema_exclusive",
+      "schema_unique",
+      "schema_type_intersection",
+      "schema_type_int",
+      "schema_enum_empty",
+      "schema_enum_duplicate",
+      "schema_unknown_keyword",
+      "schema_multiple_of",
+      "schema_required_duplicate",
+      "schema_negative_multiple",
+      "schema_additional_schema",
+      "mod_fraction_divisor",
+      "mod_fraction_remainder",
+      "mod_fraction_value",
+      "mod_decimal",
+      "mod_nan_remainder",
+      "mod_inf_remainder",
+      "mod_range_divisor",
+      "mod_range_remainder",
+      "mod_decimal_divisor",
+      "mod_zero_truncated",
+      "mod_negative_zero",
+      "empty_schema_unknown",
+      "empty_schema_enum",
+      "empty_schema_pattern",
+      "empty_schema_exclusive"
+    ],
+    "scope": "Collectionless aggregate with literal documents and match. No collection writes. Native 7/8, collection-write semantics, and full installed acceptance not run.",
+    "counter_limit": "Counts cases, not independent bugs; excludes class/code/message differences when both observations fail.",
+    "scalar_modes": {
+      "local": "BSON Decimal128 adapted to local Decimal128, preserving numeric content; other values unchanged",
+      "local_driver_bson": "Raw driver values at helper level; not a claim that every public boundary presents that representation"
+    }
+  },
+  "local_routes": {
+    "engines": [
+      "MemoryEngine",
+      "SQLiteEngine(:memory:)"
+    ],
+    "predicate_scenarios_per_engine": 8,
+    "total_route_observations": 22,
+    "scope": "Only synthetic data in private in-memory engines. Includes indexed reads and enum collection writes. Not native write parity."
+  },
+  "existing_tests": {
+    "command": ".venv/bin/python -m pytest tests/unit/core/test_compiled_query.py tests/unit/core/test_schema_validation.py tests/unit/core/test_search_filter_prefilter.py tests/unit/core/test_sqlite_vector_backend_helpers.py -q -rs",
+    "passed": 38,
+    "subtests_passed": 307,
+    "scope": "Green baseline before fixes; not acceptance of new counterexamples."
+  },
+  "reproduction": {
+    "native_command": ".venv/bin/python docs/evidence/predicate-authorities/characterize_predicates.py --uri <isolated-9-uri> --output <output.json>",
+    "routes_command": ".venv/bin/python docs/evidence/predicate-authorities/characterize_routes.py --output <output.json>",
+    "maintained_scripts_replayed": true,
+    "comparison": "Canonical EJSON objects identical on replay, including non-finite tags; no productive comparator used."
+  },
+  "artifacts_sha256": {
+    "docs/evidence/predicate-authorities/baseline-tests.txt": "7beb0a73c5b35ef476d186be13e2592a0d32966631020dd6f2109b050bab7548",
+    "docs/evidence/predicate-authorities/characterize_predicates.py": "f66700591a1c429e7395e9573a5f34522c550f453278cc5b8a27680a994190f5",
+    "docs/evidence/predicate-authorities/characterize_routes.py": "bfa91a277a3d76f1751c2af628c5e9fe30f6e529ead2bd69d16bb246d8da275b",
+    "docs/evidence/predicate-authorities/local-routes.json": "a3f1e67c48529e1c5da525dd461fe9ee6342f416fc81489c88690d3c64a38bab",
+    "docs/evidence/predicate-authorities/native-9.json": "80fe131bd77cfbfe5f171bd772b7f5f5155d2b8a2cf5a15487191804f94a2663"
+  },
+  "findings": {
+    "H37": "native query type bracketing",
+    "H38": "compiled dotted comparison bypass",
+    "H39": "internal exceptions converted to no-match",
+    "H40": "schema enum equality",
+    "H41": "schema numeric comparison and scalar domain",
+    "H42": "schema definition validation",
+    "H43": "ignored or rejected schema restrictions",
+    "H44": "moderate loses dialect on original document",
+    "H45": "lossy candidate keys",
+    "H46": "candidate traversal, missing values and array correlation",
+    "H47": "query mod coercion and validation"
+  },
+  "limits": {
+    "workset_fixed": true,
+    "absence_of_other_defects_proven": false,
+    "second_report_integrated": false,
+    "native_versions_7_8_pending": true,
+    "native_collection_write_validation_pending": true,
+    "atlas_parity_claimed": false,
+    "plan_implemented": false
+  }
+}

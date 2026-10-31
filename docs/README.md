@@ -55,6 +55,8 @@ Python/PyMongo versions.
 
 - [Semantic parity correction and refactoring plan](plan-semantic-parity-refactor.md):
   prioritized blocks, finding coverage, dependencies and real MongoDB acceptance.
+- [Query, validation and prefilter analysis and plan](predicate-authorities-analysis-and-plan.md):
+  root causes, native counterexamples and the H37–H47 implementation increment.
 - [Architecture index](architecture/index.md) and
   [testing policy](architecture/testing-and-compatibility.md).
 - [CXP exchange](cxp-exchange.md): inspect the declared compatibility subset.

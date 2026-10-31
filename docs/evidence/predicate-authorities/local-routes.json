@@ -1,0 +1,356 @@
+{
+  "base": "79529a2",
+  "scope": "synthetic data in private Memory and SQLite :memory: engines only; no existing databases",
+  "routes": [
+    {
+      "case": "string_number",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "nested_empty",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "large_integer",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "array_range",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "array_and",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": true
+      },
+      "vector": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      }
+    },
+    {
+      "case": "missing_null",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "broadcast",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "array_position",
+      "engine": "MemoryEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": true
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "string_number",
+      "engine": "MemoryEngine",
+      "indexed_find": [
+        {
+          "$numberInt": "0"
+        }
+      ]
+    },
+    {
+      "case": "nested_empty",
+      "engine": "MemoryEngine",
+      "indexed_find": [
+        {
+          "$numberInt": "0"
+        }
+      ]
+    },
+    {
+      "case": "enum_bool_write",
+      "engine": "MemoryEngine",
+      "accepted": true
+    },
+    {
+      "case": "string_number",
+      "engine": "SQLiteEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "nested_empty",
+      "engine": "SQLiteEngine",
+      "find": [],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "large_integer",
+      "engine": "SQLiteEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "array_range",
+      "engine": "SQLiteEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "array_and",
+      "engine": "SQLiteEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": true
+      },
+      "vector": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      }
+    },
+    {
+      "case": "missing_null",
+      "engine": "SQLiteEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "broadcast",
+      "engine": "SQLiteEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": false
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "array_position",
+      "engine": "SQLiteEngine",
+      "find": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "helper": {
+        "ok": true,
+        "value": true
+      },
+      "vector": {
+        "ok": true,
+        "ids": []
+      }
+    },
+    {
+      "case": "string_number",
+      "engine": "SQLiteEngine",
+      "indexed_find": [
+        {
+          "$numberInt": "0"
+        }
+      ]
+    },
+    {
+      "case": "nested_empty",
+      "engine": "SQLiteEngine",
+      "indexed_find": []
+    },
+    {
+      "case": "enum_bool_write",
+      "engine": "SQLiteEngine",
+      "accepted": true
+    }
+  ],
+  "moderate": {
+    "original_valid_9": true,
+    "original_valid_7": false,
+    "new_valid_9": false,
+    "moderate_transition_accepted": true
+  },
+  "exception_injection": {
+    "ok": true,
+    "value": false
+  },
+  "cache_control": {
+    "shared_template": true,
+    "distinct_values": true,
+    "first_matches_1": true,
+    "first_matches_2": false,
+    "second_matches_1": false,
+    "second_matches_2": true
+  },
+  "key_collision": {
+    "key_2_pow_53": [
+      "number",
+      {
+        "$numberDouble": "9007199254740992.0"
+      }
+    ],
+    "key_next_integer": [
+      "number",
+      {
+        "$numberDouble": "9007199254740992.0"
+      }
+    ]
+  }
+}

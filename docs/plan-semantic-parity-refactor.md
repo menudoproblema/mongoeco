@@ -5,6 +5,11 @@ Fecha: 30 de octubre de 2026. Base inspeccionada:
 Estado y evidencia de ejecución: [registro de implementación](semantic-parity-implementation.md).
 Este plan conserva las obligaciones; el registro posee los estados y resultados.
 
+La [ampliación de consultas, validadores y prefiltros](predicate-authorities-analysis-and-plan.md)
+posee H37–H47 y los cortes C00–C06, contrastados con la base `79529a2`.
+Extiende estos bloques sin reabrir los receipts focales de H01–H36 ni duplicar
+su estado de implementación.
+
 Revisión de mantenibilidad: 31 de octubre de 2026, contrastada con el árbol de
 trabajo en curso y sus receipts. Se conservan H01–H36, B00–B10, las celdas
 instaladas y los gates. Esta revisión ajusta el trabajo restante; no declara

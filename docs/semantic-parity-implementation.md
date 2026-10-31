@@ -763,3 +763,19 @@ la garantía focal H26/H30 sin cerrar los demás consumidores o fases.
 | H34 | B00 | Comparador desacoplado de identidad productiva, controles BSON independientes y fallo de `$mod` expuesto/corregido; inventario, procedencia y cobertura completa de oráculos pendientes. |
 | H35 | B08 | Overflow/no-op, gramática y let B04 verificados en rutas directas/wire con errores/efectos. Pendientes fases completas de cursor/getMore/reloj, otros perfiles SDK, distinct(let) directo y alias partialFilterExpression de create_index frente a createIndexes observado en H33. La omisión de let en clone PyMongo 4.19 queda observada por separado. |
 | H36 | B09 | Contratos/catálogo y procedencia static-admin vigentes actualizados en revisión. Inventario restante y consumidor externo pendientes. |
+
+## Ampliación: consultas, validadores y prefiltros
+
+El [análisis y plan H37–H47](predicate-authorities-analysis-and-plan.md) añade
+los cortes C00–C06 sobre la base `79529a2`, después de los commits del trabajo
+anterior. Posee sus causas, alcance y dependencias; este registro posee su estado.
+
+Estado: **analizado y planificado, sin correcciones productivas**. La evidencia
+de caracterización conserva 65 estímulos de solo lectura contra MongoDB 9.0.2,
+ocho escenarios de rutas públicas en ambos motores privados y 38 pruebas
+existentes verdes. No es aceptación de los hallazgos nuevos ni captura nativa
+7/8. Se ha recibido un informe; el segundo anunciado sigue pendiente.
+
+H37–H47 están pendientes de implementación y aceptación C00–C06. Los receipts
+y cierres focales anteriores conservan su identidad y no se reescriben; los
+pendientes B00–B10 no quedan absorbidos ni cerrados por esta ampliación.
