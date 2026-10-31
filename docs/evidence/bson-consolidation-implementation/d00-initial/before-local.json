@@ -1,0 +1,190 @@
+{
+  "memory": {
+    "semantic_binary_selection": {
+      "bytes_$eq": [
+        1,
+        2,
+        3
+      ],
+      "bytes_$ne": [],
+      "bytes_$in": [
+        1
+      ],
+      "bytes_$nin": [
+        2,
+        3
+      ],
+      "bytes_$gt": [],
+      "bytes_$gte": [
+        1,
+        2,
+        3
+      ],
+      "bytes_$lt": [],
+      "bytes_$lte": [
+        1,
+        2,
+        3
+      ],
+      "bytes_expr": [
+        1,
+        2,
+        3
+      ],
+      "subtype0_$eq": [],
+      "subtype0_$ne": [
+        1,
+        2,
+        3
+      ],
+      "subtype0_$in": [
+        2
+      ],
+      "subtype0_$nin": [
+        1,
+        3
+      ],
+      "subtype0_$gt": [],
+      "subtype0_$gte": [],
+      "subtype0_$lt": [],
+      "subtype0_$lte": [],
+      "subtype0_expr": [],
+      "subtype5_$eq": [],
+      "subtype5_$ne": [
+        1,
+        2,
+        3
+      ],
+      "subtype5_$in": [
+        3
+      ],
+      "subtype5_$nin": [
+        1,
+        2
+      ],
+      "subtype5_$gt": [],
+      "subtype5_$gte": [],
+      "subtype5_$lt": [],
+      "subtype5_$lte": [],
+      "subtype5_expr": []
+    },
+    "semantic_binary_distinct": [
+      [
+        0,
+        "6162636465666768696a6b6c6d6e6f70"
+      ],
+      [
+        0,
+        "6162636465666768696a6b6c6d6e6f70"
+      ]
+    ],
+    "semantic_binary_assignments": {
+      "classic": {
+        "matched": 1,
+        "modified": 1,
+        "subtype": 5,
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      },
+      "pipeline": {
+        "matched": 1,
+        "modified": 1,
+        "subtype": 5,
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      }
+    }
+  },
+  "sqlite": {
+    "semantic_binary_selection": {
+      "bytes_$eq": [
+        1,
+        2,
+        3
+      ],
+      "bytes_$ne": [],
+      "bytes_$in": [
+        1
+      ],
+      "bytes_$nin": [
+        2,
+        3
+      ],
+      "bytes_$gt": [],
+      "bytes_$gte": [
+        1,
+        2,
+        3
+      ],
+      "bytes_$lt": [],
+      "bytes_$lte": [
+        1,
+        2,
+        3
+      ],
+      "bytes_expr": [
+        1,
+        2,
+        3
+      ],
+      "subtype0_$eq": [],
+      "subtype0_$ne": [
+        1,
+        2,
+        3
+      ],
+      "subtype0_$in": [
+        2
+      ],
+      "subtype0_$nin": [
+        1,
+        3
+      ],
+      "subtype0_$gt": [],
+      "subtype0_$gte": [],
+      "subtype0_$lt": [],
+      "subtype0_$lte": [],
+      "subtype0_expr": [],
+      "subtype5_$eq": [],
+      "subtype5_$ne": [
+        1,
+        2,
+        3
+      ],
+      "subtype5_$in": [
+        3
+      ],
+      "subtype5_$nin": [
+        1,
+        2
+      ],
+      "subtype5_$gt": [],
+      "subtype5_$gte": [],
+      "subtype5_$lt": [],
+      "subtype5_$lte": [],
+      "subtype5_expr": []
+    },
+    "semantic_binary_distinct": [
+      [
+        0,
+        "6162636465666768696a6b6c6d6e6f70"
+      ],
+      [
+        0,
+        "6162636465666768696a6b6c6d6e6f70"
+      ]
+    ],
+    "semantic_binary_assignments": {
+      "classic": {
+        "matched": 1,
+        "modified": 1,
+        "subtype": 5,
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      },
+      "pipeline": {
+        "matched": 1,
+        "modified": 1,
+        "subtype": 5,
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      }
+    }
+  }
+}

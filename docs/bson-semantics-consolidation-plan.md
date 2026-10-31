@@ -20,6 +20,11 @@ El [plan histórico](plan-semantic-parity-refactor.md) conserva las obligaciones
 generales; el [incremento C](predicate-authorities-analysis-and-plan.md) conserva
 su caracterización inicial, cuando faltaba el segundo informe.
 
+El usuario ha autorizado la implementación completa del plan refinado. El
+[registro de implementación](bson-consolidation-implementation.md) conserva
+el progreso por bloque y sus pendientes; las caracterizaciones de este plan
+no se convierten en aceptación de runtime por esa autorización.
+
 ## 1. Evidencia y alcance del contraste
 
 Se contrastaron los dos textos adjuntos, las propuestas previas de este chat,

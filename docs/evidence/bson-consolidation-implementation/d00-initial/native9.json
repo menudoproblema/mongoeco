@@ -1,0 +1,128 @@
+{
+  "runtime": {
+    "version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    }
+  },
+  "cases": {
+    "semantic_binary_selection": {
+      "bytes_$eq": [
+        1,
+        2
+      ],
+      "bytes_$ne": [
+        3
+      ],
+      "bytes_$in": [
+        1,
+        2
+      ],
+      "bytes_$nin": [
+        3
+      ],
+      "bytes_$gt": [
+        3
+      ],
+      "bytes_$gte": [
+        1,
+        2,
+        3
+      ],
+      "bytes_$lt": [],
+      "bytes_$lte": [
+        1,
+        2
+      ],
+      "bytes_expr": [
+        1,
+        2
+      ],
+      "subtype0_$eq": [
+        1,
+        2
+      ],
+      "subtype0_$ne": [
+        3
+      ],
+      "subtype0_$in": [
+        1,
+        2
+      ],
+      "subtype0_$nin": [
+        3
+      ],
+      "subtype0_$gt": [
+        3
+      ],
+      "subtype0_$gte": [
+        1,
+        2,
+        3
+      ],
+      "subtype0_$lt": [],
+      "subtype0_$lte": [
+        1,
+        2
+      ],
+      "subtype0_expr": [
+        1,
+        2
+      ],
+      "subtype5_$eq": [
+        3
+      ],
+      "subtype5_$ne": [
+        1,
+        2
+      ],
+      "subtype5_$in": [
+        3
+      ],
+      "subtype5_$nin": [
+        1,
+        2
+      ],
+      "subtype5_$gt": [],
+      "subtype5_$gte": [
+        3
+      ],
+      "subtype5_$lt": [
+        1,
+        2
+      ],
+      "subtype5_$lte": [
+        1,
+        2,
+        3
+      ],
+      "subtype5_expr": [
+        3
+      ]
+    },
+    "semantic_binary_distinct": [
+      [
+        0,
+        "6162636465666768696a6b6c6d6e6f70"
+      ],
+      [
+        5,
+        "6162636465666768696a6b6c6d6e6f70"
+      ]
+    ],
+    "semantic_binary_assignments": {
+      "classic": {
+        "matched": 1,
+        "modified": 0,
+        "subtype": 5,
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      },
+      "pipeline": {
+        "matched": 1,
+        "modified": 0,
+        "subtype": 5,
+        "bytes": "6162636465666768696a6b6c6d6e6f70"
+      }
+    }
+  }
+}

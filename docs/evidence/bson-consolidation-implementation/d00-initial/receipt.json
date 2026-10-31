@@ -1,0 +1,29 @@
+{
+  "status": "before-fix characterization; D00 incomplete",
+  "base": "eef9c09",
+  "corpus_sha256": "e893eef9a67af673523a0216ace35bf8f8d30d8b9b95cad994b856c5520670b8",
+  "native": {
+    "version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    }
+  },
+  "different_actions": {
+    "memory": [
+      "semantic_binary_selection",
+      "semantic_binary_distinct",
+      "semantic_binary_assignments"
+    ],
+    "sqlite": [
+      "semantic_binary_selection",
+      "semantic_binary_distinct",
+      "semantic_binary_assignments"
+    ]
+  },
+  "limits": [
+    "Registry/capturer/replay integration remains pending.",
+    "Native 7/8 and coherence properties remain pending.",
+    "No runtime fix or global acceptance."
+  ],
+  "input_correction": "Native expression subtype 5 requires a 16-byte payload; the completed corpus uses valid MD5-sized input."
+}
