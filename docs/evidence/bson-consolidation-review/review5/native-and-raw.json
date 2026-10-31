@@ -1,0 +1,161 @@
+{
+  "native": {
+    "7.0": {
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "cases": {
+        "old_binary_order": {
+          "ok": true,
+          "documents": [
+            {
+              "_id": 3
+            },
+            {
+              "_id": 2
+            },
+            {
+              "_id": 4
+            },
+            {
+              "_id": 1
+            }
+          ]
+        },
+        "dbref_same_order": {
+          "ok": true,
+          "documents": [
+            {
+              "_id": 1
+            }
+          ]
+        },
+        "dbref_order": {
+          "ok": true,
+          "documents": []
+        },
+        "short_uuid3": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": 9
+        },
+        "short_md5": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": 9
+        }
+      }
+    },
+    "8.0": {
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "cases": {
+        "old_binary_order": {
+          "ok": true,
+          "documents": [
+            {
+              "_id": 3
+            },
+            {
+              "_id": 2
+            },
+            {
+              "_id": 4
+            },
+            {
+              "_id": 1
+            }
+          ]
+        },
+        "dbref_same_order": {
+          "ok": true,
+          "documents": [
+            {
+              "_id": 1
+            }
+          ]
+        },
+        "dbref_order": {
+          "ok": true,
+          "documents": []
+        },
+        "short_uuid3": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": 9
+        },
+        "short_md5": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": 9
+        }
+      }
+    },
+    "9.0": {
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "cases": {
+        "old_binary_order": {
+          "ok": true,
+          "documents": [
+            {
+              "_id": 3
+            },
+            {
+              "_id": 2
+            },
+            {
+              "_id": 4
+            },
+            {
+              "_id": 1
+            }
+          ]
+        },
+        "dbref_same_order": {
+          "ok": true,
+          "documents": [
+            {
+              "_id": 1
+            }
+          ]
+        },
+        "dbref_order": {
+          "ok": true,
+          "documents": []
+        },
+        "short_uuid3": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": 9
+        },
+        "short_md5": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": 9
+        }
+      }
+    }
+  },
+  "raw_decoder": {
+    "dbref_order": {
+      "class": "DBRef",
+      "repr": "DBRef('c', 1)",
+      "reencoded_equal": false
+    },
+    "short_uuid3": {
+      "exception": "InvalidBSON",
+      "message": "invalid length or type code"
+    },
+    "short_md5": {
+      "class": "Binary",
+      "repr": "Binary(b'ab', 5)",
+      "reencoded_equal": true
+    }
+  }
+}

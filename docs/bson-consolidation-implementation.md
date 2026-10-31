@@ -183,6 +183,16 @@ de cluster/operación en buildInfo varían, sin cambiar resultados ni manifiesto
 El receipt distingue candidatos intermedios y gates finales. D02 queda cerrado
 funcionalmente con esta evidencia; D05 conserva el cierre integrado completo.
 
+## Revisión documental 5 del plan
+
+El mismo informe se vuelve a contrastar sobre `f69759a` y el árbol Binary en
+curso. La [revisión 5 del plan](bson-semantics-consolidation-plan.md) precisa
+el incremento compartido raw/gramática y las guardas de `_id`, sin volver a
+extraer helpers ni reabrir D02. La nueva
+[evidencia de caracterización](evidence/bson-consolidation-review/review5/receipt.json)
+no acepta los cambios sin commitear ni cierra D03a/D06/D05. Se mantienen los
+owners y receipts de todos los cortes anteriores.
+
 ## Trabajo restante
 
 - D03a: completar testigos de longitudes/arrays/gramática y caminos físicos.

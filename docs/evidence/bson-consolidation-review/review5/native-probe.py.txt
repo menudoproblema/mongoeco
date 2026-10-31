@@ -1,0 +1,39 @@
+import json
+from pathlib import Path
+from bson import BSON, Binary
+from pymongo import MongoClient
+from mongoeco.core.bson_raw import decode_bson_document
+
+report={'native':{},'raw_decoder':{}}
+for label,value in [('dbref_order',{'$id':1,'$ref':'c'}),('short_uuid3',Binary(b'ab',3)),('short_md5',Binary(b'ab',5))]:
+    raw=BSON.encode({'v':value})
+    try:
+        decoded=decode_bson_document(raw)['v']
+        report['raw_decoder'][label]={'class':type(decoded).__name__,'repr':repr(decoded),'reencoded_equal':BSON.encode({'v':decoded})==raw}
+    except Exception as exc:
+        report['raw_decoder'][label]={'exception':type(exc).__name__,'message':str(exc)}
+for major,port in [('7.0',49967),('8.0',49968),('9.0',49969)]:
+    client=MongoClient(f'mongodb://127.0.0.1:{port}/',serverSelectionTimeoutMS=1500)
+    try:
+        build=client.admin.command('buildInfo')
+        item={'version':build['version'],'fcv':client.admin.command({'getParameter':1,'featureCompatibilityVersion':1})['featureCompatibilityVersion'],'cases':{}}
+        pipelines={
+          'old_binary_order':[{'$documents':[{'_id':1,'v':Binary(b'a',2)},{'_id':2,'v':Binary(b'aa',0)},{'_id':3,'v':Binary(b'a',0)},{'_id':4,'v':Binary(b'',2)}]},{'$sort':{'v':1}},{'$project':{'v':0}}],
+          'dbref_same_order':[{'$documents':[{'_id':1,'v':{'$literal':{'$ref':'c','$id':1}}}]},{'$match':{'v':{'$ref':'c','$id':1}}},{'$project':{'v':0}}],
+          'dbref_order':[{'$documents':[{'_id':1,'v':{'$literal':{'$ref':'c','$id':1}}}]},{'$match':{'v':{'$id':1,'$ref':'c'}}}],
+          'short_uuid3':[{'$documents':[{'x':1}]},{'$project':{'v':{'$literal':Binary(b'ab',3)}}}],
+          'short_md5':[{'$documents':[{'x':1}]},{'$project':{'v':{'$literal':Binary(b'ab',5)}}}],
+        }
+        for name,pipeline in pipelines.items():
+            try:
+                docs=list(client.review5.aggregate(pipeline))
+                item['cases'][name]={'ok':True,'documents':docs}
+            except Exception as exc:
+                item['cases'][name]={'ok':False,'exception':type(exc).__name__,'code':getattr(exc,'code',None)}
+        report['native'][major]=item
+    except Exception as exc:
+        report['native'][major]={'unavailable':type(exc).__name__,'message':str(exc)}
+    finally:
+        client.close()
+Path('docs/evidence/bson-consolidation-review/review5/native-and-raw.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps(report,indent=2))

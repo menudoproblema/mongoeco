@@ -18,6 +18,11 @@ octubre. La base histórica de las secciones 1–3 no describe automáticamente
 el runtime actual. Esta revisión precisa aceptación y dependencias; no agrega
 otra implementación ni altera los cambios de fechas en curso.
 
+Revisión 5: contraste del mismo adjunto con HEAD `f69759a` y cambios Binary
+sin commitear, identificados en el receipt. La identidad del texto coincide con
+las revisiones 3/4; no se abren hallazgos nuevos por repetirlo. Se actualizan el
+estado de fechas y las dependencias entre Binary, gramática y transporte.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H54 y su integración con B00–B10 y
@@ -77,6 +82,21 @@ sus referencias anteriores mantienen su alcance original. Se releyeron las
 fuentes versionadas del parser; no se atribuye a esta revisión una nueva
 descarga y comprobación de los 14 hashes históricos.
 
+La [revisión 5](evidence/bson-consolidation-review/review5/receipt.json) repite
+48 observaciones directas y nueve trazas SQL en los seis pares motor/dialecto:
+eq/in binario conserva IDs 1/2 mediante fallback; el parser y la igualdad DBRef
+siguen fallando. Las tres propiedades Binary actuales pasan, sin acreditar
+su ampliación pendiente. Se verifican otra vez los 14 hashes r8.0.0: coinciden.
+
+Quince sondas de solo lectura con `$documents` contra los servidores temporales
+7.0.43/8.0.32/9.0.2, FCV correspondiente, confirman orden Binary subtipo 2,
+rechazo de literales cortos 3/5 con código 9 y ausencia de coincidencia con
+orden DBRef inverso. No equivalen a filtros de colección, escrituras, watch ni
+a la matriz completa del replay. El decoder raw local convierte el documento
+reordenado en DBRef y no conserva sus bytes al recodificar; para Binary 3 corto
+lanza InvalidBSON antes de la preparación de expresiones. No se repite wire
+ni se declara cerrado ese defecto con una prueba del decoder.
+
 ### Estado actual frente a la caracterización inicial
 
 El registro de implementación sigue siendo el owner de gates y progreso. Esta
@@ -84,9 +104,9 @@ tabla solo evita volver a planificar como nuevos defectos ya corregidos:
 
 | Obligación | Disposición al revisar el informe |
 | --- | --- |
-| H48 rango/partes Binary, SDK y eq/in SQL | Primer arreglo commiteado en `b661e7a`; clasificación neutral ampliada en `93b9b34`. La nueva traza acredita fallback, no pushdown exacto. D03a sigue abierto por sus testigos ampliados. |
+| H48 rango/partes Binary, SDK y eq/in SQL | Primer arreglo commiteado en `b661e7a`; clasificación neutral ampliada en `93b9b34`. Las trazas de revisiones 4/5 acreditan fallback, no pushdown exacto. Los cambios Binary actuales sin commitear no son una entrega aceptada; D03a sigue abierto por sus testigos ampliados. |
 | H54 identidad física y Code | Helper común en `93b9b34`, con corrección separada del codec en `19ed3fa`. D01b conserva efectos públicos pendientes; no repetir la extracción del helper. |
-| H49 fechas | Hay cambios sin commitear en curso. No se aceptan ni se revisan como entrega cerrada en este contraste documental. |
+| H49 fechas | D02 cerrado funcionalmente en `0979fd8` y `f69759a`, con evidencia de coordenadas, migración TTL y entrega de eventos en el registro. D05 conserva integración/matrices; no repetir la extracción ni reabrir el defecto a partir de la descripción histórica. |
 | H50 parser/vistas/wire/claves | Pendiente. La sonda directa actual conserva los fallos; la ruta wire se sustenta en la caracterización de revisión 3, no en una repetición actual. |
 | H51, H52 y H53 | Mantienen sus obligaciones SQL/tipos, watch y observabilidad. Lectura de código y resultados históricos no equivalen a nuevos diferenciales. |
 
@@ -391,6 +411,49 @@ superficie por otra. Para watch/gramática, comparar fase, familia pública de
 excepción y código cuando exista, sin exigir identidad de módulo entre PyMongo
 y mongoeco ni igualdad literal de mensajes no contractuales. La preparación
 eager se verifica sin eventos y con colección vacía para evitar falsos verdes.
+
+### Ajustes de ejecución de la revisión 5
+
+El informe retira correctamente sus objeciones a la causa de H48, a la presencia
+de `$in`/distinct y a la asignación de propiedades. Esos puntos ya tienen
+owner/testigos; no necesitan otra abstracción ni otra fase. Se conservan los
+huecos de parser DBRef, SQL y error/fase de watch. Se rechaza la conclusión de
+que cualquier retraso TTL sería irrelevante: D02 ya resolvió la compatibilidad
+de coordenadas antiguas con reconstrucción versionada y sus pruebas propias.
+
+La causa transversal es una política aplicada después de perder información,
+o una especialización que evita su autoridad. La simplificación consiste en
+reutilizar `bson_values`, `bson_identity`, `bson_raw` y la preparación existente,
+con pruebas en sus entradas reales. No requiere un objeto universal de valores.
+
+| Corte | Precisión de aceptación y mantenimiento |
+| --- | --- |
+| D03a | Incluir subtipo 2: la longitud de comparación es la longitud BSON almacenada, con sus cuatro bytes de longitud interna; no siempre `len(payload)`. Verificar orden contra BSON codificado por SDK y servidor. Cubrir bytes crudos en atajos de rango/sort, además del comparador canónico, sin alterar overrides de dialecto. |
+| D03a + D06b | Clasificar separadamente BSON estructuralmente inválido, BSON válido rechazado como literal de expresión y valor almacenado leído como campo. Los subtipos 3/5 cortos requieren testigo eager vacío/poblado y error público nativo; no imponer la regla del literal a todo almacenamiento o filtro. El decoder SDK no es por sí solo un oráculo de aceptación del servidor. |
+| D06a + D06b | Preservar orden/tipos antes de convertir documentos a DBRef y validar gramática después. Una sola frontera raw con controles anidados, arrays, Code scope y undefined; no otro decoder paralelo por cada defecto, ni mutación de tablas SDK. Elegir el cambio mínimo que conserve las comprobaciones estructurales; no se exige reimplementar todo BSON. |
+| D03a + D01b | `_id` bytes/Binary 0 exige selección y unicidad semánticas, pero las guardas de escritura y las claves persistidas conservan identidad física. Probar ambos órdenes de inserción, duplicado, subtipo distinto, actualización no relacionada y reapertura de archivo previo; añadir controles de clave/documento corruptos. La equivalencia de alias no autoriza aceptar un documento seleccionado incorrectamente ni cambiar su clave persistida. |
+| D04 + D05 | Integrar fixtures nativos con replica set para watch/TTL, distinguiendo el timeout del fixture con monitor rápido de cualquier promesa del producto. Comparar fase/familia/código en el subset soportado; el rechazo wire actual de changeStream sigue explícito y no cuenta como paridad positiva. |
+
+**Dependencia acotada:** D03a no depende de cerrar toda D06. La gramática Binary
+wire que atraviesa `bson_raw` exige el incremento de preservación D06b; aceptarlo
+junto con los testigos DBRef de D06a que ese incremento afecte. D06a usa las
+primitivas de clasificación ya entregadas, no el cierre de D03a. Así se evita
+una dependencia circular y se conserva un solo owner raw. D06c y la optimización
+SQL siguen siendo entregas separadas; no retienen fixes focales verdes.
+
+Orden restante: (1) ampliar D00 y completar D03a con esa dependencia raw/gramática;
+(2) cerrar D01b, D03b y D06c sobre sus primitivas disponibles; D04 puede avanzar
+con fixtures físicos propios; (3) disposición de H53, decisión explícita de
+continuar o descartar D07, y D05 sobre el candidato integrado. D02 y D01a no se
+reimplementan. La caracterización H53 no obliga a crear logging nuevo y D07
+no bloquea correcciones obligatorias.
+
+Cada especialización alcanzada se contrasta con el camino canónico y con el
+servidor: matcher compilado/interpretado, sort rápido, hash, SQL y selección por
+`_id`. Usar testigos discriminantes y un spy puntual de la ruta; no hacer de
+clases internas exactas ni del número de llamadas un contrato público o una
+telemetría permanente. Las trazas conservan valor diagnóstico. Las tres
+propiedades actuales son regresión focal, no prueba de todos esos caminos.
 
 ## 6. Pruebas y aceptación por garantía
 

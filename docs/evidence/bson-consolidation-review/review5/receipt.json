@@ -1,0 +1,64 @@
+{
+  "status": "review 5 characterization and plan refinement; not block acceptance",
+  "runtime_head": "f69759a9685302ac286a48745653f7daeacf81c5",
+  "runtime_worktree_diff_sha256": "8b8765e5aca11ad7e7ce94b304d370ebbc20402aa72b56c5c5c5f33b325704c4",
+  "runtime_sources_manifest": "runtime-sources.json",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_review3_and_review4": true,
+  "source_hashes": {
+    "verified": 14,
+    "matched": 14,
+    "reference_tag": "r8.0.0"
+  },
+  "direct": {
+    "pairs": 6,
+    "query_shapes": 8,
+    "sqlite_traces": 9,
+    "binary_results": [
+      1,
+      2
+    ],
+    "matcher_calls_each": 3
+  },
+  "native": {
+    "versions": {
+      "7.0": "7.0.43",
+      "8.0": "8.0.32",
+      "9.0": "9.0.2"
+    },
+    "cases_per_version": 5,
+    "total": 15,
+    "topology": "existing temporary standalone servers",
+    "ports": [
+      49967,
+      49968,
+      49969
+    ],
+    "writes": false,
+    "server_lifecycle": "no servers started, stopped or reconfigured"
+  },
+  "properties": {
+    "passed": 3,
+    "scope": "existing Binary properties; not widened domain or integrated acceptance"
+  },
+  "limits": [
+    "No new wire, async, watch, TTL or global replay execution.",
+    "Native DBRef probes use $documents/$match, not collection find/write tests.",
+    "First DBRef $documents attempt lacked $literal and failed at expression parsing with 15983; excluded, then corrected and rerun with a positive control.",
+    "Raw decoder diagnostics exercise production code; they are not an independent expected-value oracle.",
+    "Current Binary production/test edits predate this review and remain uncommitted/unaccepted.",
+    "No frozen observers, goldens or historical evidence changed.",
+    "Characterization does not close D03a, D06, B07 or D05."
+  ],
+  "runtime_and_tests_edits_this_review": false,
+  "artifacts": {
+    "README.md": "e7fdd8731d11f98cd5d6920ae614189e6333e9be4e19a709bc10db4c153814ee",
+    "native-and-raw.json": "002ab9a82de29f3bfea412529f6069d3b80690b349fbafcd679bc617f542280c",
+    "native-probe.py.txt": "a92b467b49a69b324e50b033645c24411ff3135453015d233893aa2a00df6289",
+    "observations.json": "562954929c5273a5833d838f3055fe22bbf6819a37b319e89603318e8a0138b3",
+    "probe.py.txt": "1523f0a22333580e125a44dad12f5b6e4582bf529cbc83084be0ea4ef3c4d079",
+    "properties.txt": "73606f0fdd8d2b1efa0d8609f2509e54e938c1ad166b776dd787b0dfba86b15a",
+    "runtime-sources.json": "27eb5b93bad5365d40b6a9d533dad880f8234f8deeb08fbf217c71c2b033ec40",
+    "sources-check.json": "0acf132e721ce0717265d9784e1a2ac150d9dfdf51c39d73b6f3dc6d40ee9d9c"
+  }
+}

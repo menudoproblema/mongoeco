@@ -1,0 +1,476 @@
+{
+  "runtime_head": "f69759a+dirty",
+  "scope": "current direct paths only; Binary worktree changes present; no native or wire rerun",
+  "direct": {
+    "memory-7.0": {
+      "implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "explicit_eq": {
+        "ok": true,
+        "ids": [
+          2
+        ]
+      },
+      "sdk": {
+        "ok": true,
+        "ids": [
+          1
+        ]
+      },
+      "reordered": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $id, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $id'}"
+      },
+      "extras": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "wrong_ref_type": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "incomplete": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "ordinary_first": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: x, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: x'}"
+      }
+    },
+    "sqlite-7.0": {
+      "implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "explicit_eq": {
+        "ok": true,
+        "ids": [
+          2
+        ]
+      },
+      "sdk": {
+        "ok": true,
+        "ids": [
+          1
+        ]
+      },
+      "reordered": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $id, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $id'}"
+      },
+      "extras": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "wrong_ref_type": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "incomplete": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "ordinary_first": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: x, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: x'}"
+      }
+    },
+    "memory-8.0": {
+      "implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "explicit_eq": {
+        "ok": true,
+        "ids": [
+          2
+        ]
+      },
+      "sdk": {
+        "ok": true,
+        "ids": [
+          1
+        ]
+      },
+      "reordered": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $id, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $id'}"
+      },
+      "extras": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "wrong_ref_type": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "incomplete": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "ordinary_first": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: x, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: x'}"
+      }
+    },
+    "sqlite-8.0": {
+      "implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "explicit_eq": {
+        "ok": true,
+        "ids": [
+          2
+        ]
+      },
+      "sdk": {
+        "ok": true,
+        "ids": [
+          1
+        ]
+      },
+      "reordered": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $id, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $id'}"
+      },
+      "extras": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "wrong_ref_type": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "incomplete": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "ordinary_first": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: x, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: x'}"
+      }
+    },
+    "memory-9.0": {
+      "implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "explicit_eq": {
+        "ok": true,
+        "ids": [
+          2
+        ]
+      },
+      "sdk": {
+        "ok": true,
+        "ids": [
+          1
+        ]
+      },
+      "reordered": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $id, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $id'}"
+      },
+      "extras": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "wrong_ref_type": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "incomplete": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "ordinary_first": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: x, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: x'}"
+      }
+    },
+    "sqlite-9.0": {
+      "implicit": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "explicit_eq": {
+        "ok": true,
+        "ids": [
+          2
+        ]
+      },
+      "sdk": {
+        "ok": true,
+        "ids": [
+          1
+        ]
+      },
+      "reordered": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $id, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $id'}"
+      },
+      "extras": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "wrong_ref_type": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "incomplete": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: $ref, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: $ref'}"
+      },
+      "ordinary_first": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": 2,
+        "message": "Unsupported query operator: x, full error: {'ok': 0.0, 'code': 2, 'codeName': 'BadValue', 'errmsg': 'Unsupported query operator: x'}"
+      }
+    }
+  },
+  "wire": {},
+  "sqlite_paths": {
+    "7.0": {
+      "bytes_eq": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND json_type(document, '$.v') = 'array'\n            LIMIT 1\n            ",
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      },
+      "bytes_in": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      },
+      "binary_eq": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      }
+    },
+    "8.0": {
+      "bytes_eq": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+          "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n              AND json_type(document, '$.v') = 'array'\n            LIMIT 1\n            ",
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      },
+      "bytes_in": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      },
+      "binary_eq": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      }
+    },
+    "9.0": {
+      "bytes_eq": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      },
+      "bytes_in": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      },
+      "binary_eq": {
+        "result": {
+          "ok": true,
+          "ids": [
+            1,
+            2
+          ]
+        },
+        "matcher_calls": 3,
+        "document_selects": [
+          "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'review3' AND coll_name = 'binary'\n            "
+        ]
+      }
+    }
+  },
+  "sdk_decode": {
+    "implicit": {
+      "class": "bson.dbref.DBRef",
+      "repr": "DBRef('c', 1)"
+    },
+    "explicit_eq": {
+      "class": "builtins.dict",
+      "repr": "{'$eq': DBRef('c', 1)}"
+    },
+    "sdk": {
+      "class": "bson.dbref.DBRef",
+      "repr": "DBRef('c', 1)"
+    },
+    "reordered": {
+      "class": "bson.dbref.DBRef",
+      "repr": "DBRef('c', 1)"
+    },
+    "extras": {
+      "class": "bson.dbref.DBRef",
+      "repr": "DBRef('c', 1, tenant='t')"
+    },
+    "wrong_ref_type": {
+      "class": "builtins.dict",
+      "repr": "{'$ref': 1, '$id': 1}"
+    },
+    "incomplete": {
+      "class": "builtins.dict",
+      "repr": "{'$ref': 'c'}"
+    },
+    "ordinary_first": {
+      "class": "builtins.dict",
+      "repr": "{'x': 1, '$unknown': 2}"
+    }
+  }
+}
