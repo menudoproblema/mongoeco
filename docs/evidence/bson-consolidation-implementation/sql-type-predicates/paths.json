@@ -1,0 +1,273 @@
+{
+  "7.0-binData-v": {
+    "ids": [
+      1,
+      2,
+      3,
+      4,
+      14
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$._id') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'bytes'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$._id') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'undefined'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "\n            SELECT\n                COUNT(*),\n                SUM(CASE WHEN json_type(document, '$._id') IN ('integer', 'real') THEN 1 ELSE 0 END),\n                SUM(CASE WHEN json_type(document, '$._id') = 'text' THEN 1 ELSE 0 END),\n                SUM(CASE WHEN json_type(document, '$._id') IN ('true', 'false') THEN 1 ELSE 0 END)\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "7.0-binData-a": {
+    "ids": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "7.0-objectId-v": {
+    "ids": [
+      5
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "7.0-objectId-a": {
+    "ids": [
+      5
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "7.0-date-v": {
+    "ids": [
+      6
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "7.0-date-a": {
+    "ids": [
+      6
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "8.0-binData-v": {
+    "ids": [
+      1,
+      2,
+      3,
+      4,
+      14
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.v') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$._id') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'bytes'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$._id') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'undefined'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "\n            SELECT\n                COUNT(*),\n                SUM(CASE WHEN json_type(document, '$._id') IN ('integer', 'real') THEN 1 ELSE 0 END),\n                SUM(CASE WHEN json_type(document, '$._id') = 'text' THEN 1 ELSE 0 END),\n                SUM(CASE WHEN json_type(document, '$._id') IN ('true', 'false') THEN 1 ELSE 0 END)\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "8.0-binData-a": {
+    "ids": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'int64'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents, json_tree(documents.document, '$.a') AS candidate\n            WHERE db_name = 'probe' AND coll_name = 'records'\n              AND CASE WHEN candidate.type = 'object'\n                       THEN json_extract(candidate.value, '$.\"$mongoeco\".type') END = 'decimal128_public'\n            LIMIT 1\n            ",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') IN ('bytes', 'binary', 'uuid')) OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END IN ('bytes', 'binary', 'uuid'))))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "8.0-objectId-v": {
+    "ids": [
+      5
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "8.0-objectId-a": {
+    "ids": [
+      5
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'objectid') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'objectid')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "8.0-date-v": {
+    "ids": [
+      6
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.v.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.v') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.v') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "8.0-date-a": {
+    "ids": [
+      6
+    ],
+    "matcher_calls": 0,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT 1\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))\n              AND (\n                json_type(document, '$._id') = 'array'\n                OR (\n                    json_type(document, '$._id') = 'object'\n                    AND COALESCE(json_extract(document, '$._id.\"$mongoeco\".type'), '') IN (\n                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'\n                    )\n                )\n              )\n            LIMIT 1\n            ",
+      "SELECT 1 FROM sqlite_schema LIMIT 1",
+      "PRAGMA main.data_version",
+      "\n            SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name\n            FROM indexes\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            ORDER BY name\n            ",
+      "SELECT document FROM documents WHERE db_name = 'probe' AND coll_name = 'records' AND ((COALESCE(json_extract(document, '$.a.\"$mongoeco\".type'), '') = 'datetime') OR (json_type(document, '$.a') = 'array' AND EXISTS (SELECT 1 FROM json_each(document, '$.a') WHERE CASE WHEN json_each.type = 'object' THEN COALESCE(json_extract(json_each.value, '$.\"$mongoeco\".type'), '') ELSE '' END = 'datetime')))  ORDER BY COALESCE(json_extract(document, '$._id.\"$mongoeco\".value'), json_extract(document, '$._id')) ASC"
+    ]
+  },
+  "9.0-binData-v": {
+    "ids": [
+      1,
+      2,
+      3,
+      4,
+      14
+    ],
+    "matcher_calls": 15,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            "
+    ]
+  },
+  "9.0-binData-a": {
+    "ids": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "matcher_calls": 15,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            "
+    ]
+  },
+  "9.0-objectId-v": {
+    "ids": [
+      5
+    ],
+    "matcher_calls": 15,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            "
+    ]
+  },
+  "9.0-objectId-a": {
+    "ids": [
+      5
+    ],
+    "matcher_calls": 15,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            "
+    ]
+  },
+  "9.0-date-v": {
+    "ids": [
+      6
+    ],
+    "matcher_calls": 15,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            "
+    ]
+  },
+  "9.0-date-a": {
+    "ids": [
+      6
+    ],
+    "matcher_calls": 15,
+    "sql": [
+      "BEGIN",
+      "\n            SELECT storage_key, document\n            FROM documents\n            WHERE db_name = 'probe' AND coll_name = 'records'\n            "
+    ]
+  }
+}

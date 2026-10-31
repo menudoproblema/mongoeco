@@ -1,0 +1,19 @@
+import json
+from pathlib import Path
+from pymongo import MongoClient
+codes={-1:'minKey',1:'double',2:'string',3:'object',4:'array',5:'binData',6:'undefined',7:'objectId',8:'bool',9:'date',10:'null',11:'regex',12:'dbPointer',13:'javascript',14:'symbol',15:'javascriptWithScope',16:'int',17:'timestamp',18:'long',19:'decimal',127:'maxKey'}
+report={}
+for version,port in [('7.0',49970),('8.0',49971),('9.0',49972)]:
+ with MongoClient(f'mongodb://127.0.0.1:{port}/',serverSelectionTimeoutMS=1500) as c:
+  items=[]
+  for arg in [*codes.keys(),*codes.values(),'number','INT','STRING','OBJECTID','Double','Decimal']:
+   try:
+    docs=list(c.probe.aggregate([{'$documents':[{'v':b'a'}]},{'$match':{'v':{'$type':arg}}},{'$project':{'v':0}}]))
+    result={'argument':arg,'ok':True,'count':len(docs)}
+   except Exception as exc:result={'argument':arg,'ok':False,'exception':type(exc).__name__,'code':getattr(exc,'code',None)}
+   items.append(result)
+  report[version]=items
+Path('/tmp/mongoeco-sql-types/aliases-native.json').write_text(json.dumps(report,indent=2)+'\n')
+for version,items in report.items():
+ bad=[i for i in items if not i['ok']]
+ print(version,bad)

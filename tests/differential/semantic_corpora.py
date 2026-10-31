@@ -107,6 +107,10 @@ from tests.differential.semantic_ttl_publication_cases import (
     SEED as TTL_PUBLICATION_SEED,
     SEMANTIC_TTL_PUBLICATION_CASES,
 )
+from tests.differential.semantic_type_query_cases import (
+    SEED as TYPE_QUERY_SEED,
+    SEMANTIC_TYPE_QUERY_CASES,
+)
 from tests.differential.semantic_update_identity_cases import (
     SEED as UPDATE_IDENTITY_SEED,
     SEMANTIC_UPDATE_IDENTITY_CASES,
@@ -124,6 +128,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "type_query": SemanticCorpus(
+        "type-query", "semantic_type_query_cases", TYPE_QUERY_SEED,
+        SEMANTIC_TYPE_QUERY_CASES,
+    ),
     "dbref_grammar": SemanticCorpus(
         "dbref-grammar",
         "semantic_dbref_grammar_cases",

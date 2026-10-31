@@ -1,0 +1,152 @@
+{
+  "status": "D03b functional acceptance; complete D03a/D03b fixes, integrated D05 pending",
+  "baseline": "542bce9",
+  "candidate": "runtime-sources.json; no storage/key format or SPI change",
+  "runtime_diff_sha256": "cd5053e50b821558b8993e60d36d1d311a53d8ed568305b0eec1c1227173b3f1",
+  "fixtures": {
+    "tests/fixtures/semantic_type_query_7_0.json": {
+      "sha256": "8fbefbcb583a61f99d071e03a25a81247f0687d5e766aa04e301169e18ae9180",
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "actions": 4,
+      "recheck": "--check passed"
+    },
+    "tests/fixtures/semantic_type_query_8_0.json": {
+      "sha256": "a92dfc434d9930e1f1c69cdecbb5f0a58f613803896f3c361c382af385ee7059",
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "actions": 4,
+      "recheck": "--check passed"
+    },
+    "tests/fixtures/semantic_type_query_9_0.json": {
+      "sha256": "211ee3caba12ecbd3317acf7f58e9c6ffc36ead791f66734998764a46a9e7602",
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "actions": 4,
+      "recheck": "--check passed"
+    }
+  },
+  "before": {
+    "replay": {
+      "failed": 40,
+      "passed": 59
+    },
+    "generated_property": "fails on explicit native-supported Binary/ObjectId/date array witnesses; archived runtime imported before pytest"
+  },
+  "after": {
+    "semantic_replay": 5476,
+    "core_and_properties": 2546,
+    "core_subtests": 936,
+    "unrelated_local_skip": 1,
+    "orjson_replay": 99,
+    "sql_paths": 90,
+    "independent_property": "250 generated examples plus three explicit H51 witnesses",
+    "public_typing": "passed, positive=1 negative-errors=20",
+    "boundary_typing": "passed, positive=1 negative-errors=25",
+    "lint": "10 changed Python files, no added debt",
+    "no_sdk": "3.13 parsing/matching/SQL smoke passed"
+  },
+  "mechanism": [
+    "single immutable code-to-name table supplies numeric and exact string normalization",
+    "integral BSON numeric argument forms share existing exact numeric primitives",
+    "one family predicate instantiated for scalar field and one array element",
+    "binary/bytes/uuid tags and datetime/objectId arrays preserved",
+    "array tag extraction guarded by JSON kind, never applied to arbitrary text"
+  ],
+  "actual_paths": {
+    "permanent_cases": 90,
+    "dialects_7_8": "translated SQL with no matcher residual for the demonstrated cases",
+    "dialect_9": "existing Python fallback explicitly observed",
+    "indexes": [
+      "none",
+      "scalar",
+      "multikey",
+      "partial boolean",
+      "partial type"
+    ],
+    "reopen": true,
+    "forced_fallback_equivalence": true,
+    "diagnostic_cases": 18,
+    "reader": "dedicated connection trace; initial master-only trace did not observe actual data selects"
+  },
+  "grammar": [
+    "21 numeric codes and canonical names validated against all three servers",
+    "noncanonical case/whitespace rejected with native code 2",
+    "Int64, integral double and Decimal128 accepted; fractional/nonfinite codes rejected",
+    "empty type list code 9; nonnumeric/nonstring or Code arguments code 14",
+    "validity of deprecated names is not legacy BSON storage support"
+  ],
+  "property_oracle": "SDK BSON encoded type byte and one-level array membership, independent of QueryEngine classification",
+  "preserved_guards": [
+    "binary equality/membership fallback from D03a",
+    "MongoDB 9/custom dialect fallback",
+    "dotted array traversal fallback",
+    "tagged numeric guards; direct SQL property does not claim those runtime paths are optimized"
+  ],
+  "protected_artifacts": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329"
+  },
+  "performance": {
+    "sequential_samples": 5,
+    "requests_per_sample": 300,
+    "documents": 100,
+    "same_checksums": true,
+    "after_before_ratio": {
+      "MemoryEngine-string": 1.0008195859903979,
+      "MemoryEngine-binData": 1.0259780013193411,
+      "SQLiteEngine-string": 0.9887334111105903,
+      "SQLiteEngine-binData": 1.0371623921816775
+    },
+    "initial_concurrent_run": "retained as diagnostic; isolated repeat after gates finished did not reproduce large Memory variation",
+    "scope": "small fixed indexed workloads, not D05 performance acceptance"
+  },
+  "intermediate_runs": [
+    "lint-only corpus comment changed source hash; native results/manifests verified identical before refreshing metadata",
+    "full numeric/name argument coverage added and recaptured in existing runner",
+    "first SQL trace watched only master connection; corrected to trace dedicated readers without changing runtime resource ownership",
+    "prior internal tests asserted nonnative case folding and tag-specific SQL strings; updated alongside independent native witnesses"
+  ],
+  "cleanup": "MongoDB 9 shutdown, own Docker 7/8 containers removed; ports 49970/49971/49972 closed; habitual instance untouched",
+  "remaining": [
+    "D01b public mutation effects",
+    "D06a/D06b remaining subpipeline and physical acceptance",
+    "D06c keys/group/lookup/sets/spill/Search",
+    "D04 watch and native replica-set jobs",
+    "H53 policy disposition",
+    "D07 optional pilot decision",
+    "D05 all final matrices/package/global/coverage/performance gates"
+  ],
+  "artifacts": {
+    "README.md": "06d578e5682579a9e160a17a884dd84ef766022f1751a6607d632ee45260e45e",
+    "alias_probe.py.txt": "e6fdb72b47d5d61e2f9d37ed65dba8c68b5fd54ec6bed890bc00853e358be72f",
+    "aliases-native.json": "ddcb7fbe142cb93ef09f62adf88f4947dc7b1ec0c76fc391043b64f81f99e4ac",
+    "before-property.txt.gz": "f8ff9fdada1863d1c0092c459bd2b5c7dff0b5ea751df108839cb96f5732b93e",
+    "before.txt.gz": "ff825b4e43e7517bfac17b87758e8fedc47ed94686787493829ff75117eeeaac",
+    "benchmark-after-concurrent.json": "c795b4e8aa0883315c62bfda4164f5705e3fe6bb4b7e856c2b972122b10cc678",
+    "benchmark-after.json": "6cf01647cf3f283aa095a6ee2aca6fb5169cef90c96457a43e467a8d36c98ae0",
+    "benchmark-before-concurrent.json": "f95ea2d373f574ff064d294c049aaa5cef750c65f2361659376da8ac11e7fb3f",
+    "benchmark-before.json": "3cd965091b8838bef6fab2567eebfee10d5d179481222335963d4bf7409555b7",
+    "benchmark.py.txt": "f0c887f57a2bfb1dbea61fa2be2a5f764dd803ddbe5d29a77c279109ea753b49",
+    "cleanup.json": "1cc35fd13ef04d6023745d45d43d6b488ab5656f787672ca2916bee7d884ec39",
+    "components.txt.gz": "bf833d4f8f75e37c9b5701514cd5d0b71d5cd6faf1a1df38971a8d3f11fc1b5b",
+    "core-final.txt.gz": "98f7baf708596e677b82b57eaa9e614eccc489e78f07ac6b608156d171100dd3",
+    "impact.txt": "578ae19c64876b02e68c6526c40c485289b045d05b112cedaa4ad0ef9fde5a8c",
+    "lint.txt.gz": "896293dc31346edf172aedfb2cc1fad782576afe0fd0dd89baaa09921c345cc1",
+    "no-sdk.txt.gz": "0951153600984723fe1b906c84028305aff5aa53beb80d844f83246b073b899c",
+    "orjson.txt.gz": "9c64ea556ff3a1f00ea925e7151b1a2faaa50ac30d81c317e013726ab5622569",
+    "path_probe.py.txt": "20e5251abfb5678078617b0148afdc9f8f49df7dbc0a6bb23bef838225fad916",
+    "paths.json": "5c5109b6e3fdb80e213c2cc95f5ef0e6ab6c04384155a000d72cc5468f75382f",
+    "runtime-sources.json": "effb4214dde6d6058da4dc105d99acc6d175e98f8c2ed595f5d8c8f72950ee6c",
+    "semantic-final.txt.gz": "085da4f0208297a1365c6b9b8f837674704857cf9fb67c4e967fd5b291158e15",
+    "typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90"
+  }
+}

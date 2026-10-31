@@ -1,0 +1,20 @@
+import json,statistics,time
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+out={}
+for factory in (MemoryEngine,SQLiteEngine):
+ for alias in ('string','binData'):
+  with MongoClient(factory(),mongodb_dialect='7.0') as client:
+   c=client.bench.c
+   values=[b'ab' if alias=='binData' else ('text' if i%3==0 else 1.5*i) for i in range(100)]
+   c.insert_many([{'_id':i,'v':v} for i,v in enumerate(values)])
+   c.create_index([('v',1)])
+   samples=[]
+   for _ in range(5):
+    checksum=0
+    start=time.perf_counter()
+    for i in range(300):checksum+=sum(d['_id'] for d in c.find({'v':{'$type':alias}}))
+    samples.append(time.perf_counter()-start)
+   assert checksum==(1485000 if alias=='binData' else 504900)
+   out[factory.__name__+'-'+alias]={'seconds':samples,'median_seconds':statistics.median(samples),'checksum':checksum}
+print(json.dumps(out,indent=2))

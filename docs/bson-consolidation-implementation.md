@@ -277,11 +277,63 @@ subpipelines y transporte físico según el plan; no se extrapola la suite
 focal a todos sus consumidores. D06c conserva group/claves/lookup/sets/spill/
 Search y retirada de guardas duplicadas. Tampoco se cierran B07 general ni D05.
 
+## D03b — Tipos SQL y gramática común
+
+La [evidencia de aceptación](evidence/bson-consolidation-implementation/sql-type-predicates/receipt.json)
+cierra D03b funcionalmente. El corpus type_query añade cuatro acciones al
+registro/capturador/replay existentes: selección, escrituras, argumentos y
+representaciones numéricas. Las capturas 7.0.43/8.0.32/9.0.2, FCV de su major,
+se verificaron con --check. No se reescriben referencias históricas.
+
+El traductor sustituye las ramas duplicadas de código/alias por un predicado
+por familia, instanciado para campo y elemento de array. Incluye tags
+bytes/binary/uuid y pertenencia de binData/objectId/date, además de preservar
+ancho numérico y doubles etiquetados. El elemento se inspecciona solo un nivel;
+la extracción del tag se protege por su tipo JSON, sin intentar parsear una
+cadena arbitraria como documento. TypeCondition.aliases conserva su autoridad
+cuando el plan ya está preparado. Las formas no traducibles siguen delegando.
+
+El contraste encontró otro error compartido por ambos motores: se aceptaban
+mayúsculas/espacios no nativos y se rechazaban códigos integrales válidos en
+Int64/double/Decimal128. Una tabla inmutable código→nombre sirve ahora a ambos
+formatos; number deriva sus cuatro familias. Se usan las primitivas numéricas
+exactas existentes. Se conservan rechazos nativos por tipo/valor, con código
+14/2 y lista vacía 9. Todos los 21 códigos y nombres canónicos y los rechazos
+de los aliases antiguos se incorporan al testigo permanente, vacío/poblado.
+La aceptación de un nombre de tipo deprecated no acredita su almacenamiento o
+decodificación general; B07 conserva ese alcance pendiente.
+
+Las 90 comprobaciones de ruta observan SQL de conexiones lectoras dedicadas y
+el matcher, con aliases/códigos, traducción normal/desactivada y archivos
+reabiertos. Cubren índices escalares, multikey y parciales, incluido parcial
+por tipo y consultas que no lo implican. En los casos demostrados, 7/8 usan SQL
+sin residual; 9 conserva su fallback. Se mantienen las guardas para numéricos
+etiquetados y rutas que atraviesan arrays, y el fallback binario eq/in de
+D03a. No se presenta el test de un constructor como pushdown numérico efectivo.
+
+La propiedad usa los bytes de tipo que codifica el SDK BSON como oráculo, con
+250 ejemplos generados y tres testigos explícitos de H51. No usa la
+clasificación del matcher para calcular el esperado; falla sobre 542bce9.
+El replay anterior aislado falla 40 checks y pasa 59; el candidato final pasa
+5.476 checks integrados, 2.546 de core/propiedades con 936 subtests y un skip
+local, y 99 de replay con orjson. Pasan typing público/boundary, smoke sin SDK
+3.13 y lint sin deuda nueva. Las capturas históricas, observers protegidos y
+snapshots siguen idénticos.
+
+La primera medición concurrente motivó una repetición secuencial sin otros
+gates activos. En cinco muestras de 300 peticiones sobre 100 documentos, con
+resultados idénticos, las razones candidato/base quedan aproximadamente
+1,00/1,03 en Memory y 0,99/1,04 en SQLite para string/binData. Es un diagnóstico
+pequeño, no aceptación de costes D05; no exige otra especialización. Los tres
+servidores propios se retiraron y sus puertos están cerrados.
+
+D03a/D03b están cerrados funcionalmente; D05 conserva sus matrices y cierre de
+paquete/integración. Los pendientes siguientes mantienen sus owners y no se
+cierran por este incremento.
+
 ## Trabajo restante
 
-- D03a: cerrado funcionalmente; D05 conserva su integración final.
 - D01b: consecuencias públicas de modificación, eventos, índices y operaciones múltiples.
-- D03b: tipos/SQL bajo prueba de equivalencia.
 - D06a/D06b/D06c: gramática, preservación BSON wire y consumidores DBRef.
 - D04: preparación/contexto de watch y fixtures de replica set para los jobs
   nativos que alcanzan watch/TTL; la entrega TTL no cierra esos errores de entrada.

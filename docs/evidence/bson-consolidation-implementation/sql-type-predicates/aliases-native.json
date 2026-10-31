@@ -1,0 +1,743 @@
+{
+  "7.0": [
+    {
+      "argument": -1,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 1,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 2,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 3,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 4,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 5,
+      "ok": true,
+      "count": 1
+    },
+    {
+      "argument": 6,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 7,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 8,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 9,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 10,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 11,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 12,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 13,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 14,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 15,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 16,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 17,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 18,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 19,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 127,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "minKey",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "double",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "string",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "object",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "array",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "binData",
+      "ok": true,
+      "count": 1
+    },
+    {
+      "argument": "undefined",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "objectId",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "bool",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "date",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "null",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "regex",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "dbPointer",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "javascript",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "symbol",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "javascriptWithScope",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "int",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "timestamp",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "long",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "decimal",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "maxKey",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "number",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "INT",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "STRING",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "OBJECTID",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "Double",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "Decimal",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    }
+  ],
+  "8.0": [
+    {
+      "argument": -1,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 1,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 2,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 3,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 4,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 5,
+      "ok": true,
+      "count": 1
+    },
+    {
+      "argument": 6,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 7,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 8,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 9,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 10,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 11,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 12,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 13,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 14,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 15,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 16,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 17,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 18,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 19,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 127,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "minKey",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "double",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "string",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "object",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "array",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "binData",
+      "ok": true,
+      "count": 1
+    },
+    {
+      "argument": "undefined",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "objectId",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "bool",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "date",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "null",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "regex",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "dbPointer",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "javascript",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "symbol",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "javascriptWithScope",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "int",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "timestamp",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "long",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "decimal",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "maxKey",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "number",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "INT",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "STRING",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "OBJECTID",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "Double",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "Decimal",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    }
+  ],
+  "9.0": [
+    {
+      "argument": -1,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 1,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 2,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 3,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 4,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 5,
+      "ok": true,
+      "count": 1
+    },
+    {
+      "argument": 6,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 7,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 8,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 9,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 10,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 11,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 12,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 13,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 14,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 15,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 16,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 17,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 18,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 19,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": 127,
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "minKey",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "double",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "string",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "object",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "array",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "binData",
+      "ok": true,
+      "count": 1
+    },
+    {
+      "argument": "undefined",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "objectId",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "bool",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "date",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "null",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "regex",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "dbPointer",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "javascript",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "symbol",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "javascriptWithScope",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "int",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "timestamp",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "long",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "decimal",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "maxKey",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "number",
+      "ok": true,
+      "count": 0
+    },
+    {
+      "argument": "INT",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "STRING",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "OBJECTID",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "Double",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    {
+      "argument": "Decimal",
+      "ok": false,
+      "exception": "OperationFailure",
+      "code": 2
+    }
+  ]
+}

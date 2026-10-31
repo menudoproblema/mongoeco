@@ -1,0 +1,28 @@
+import json,tempfile
+from pathlib import Path
+from unittest.mock import patch
+from mongoeco import MongoClient
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.engines import SQLiteEngine
+from tests.differential.semantic_type_query_cases import VALUES,SPECS
+from bson.json_util import loads
+report={}
+with tempfile.TemporaryDirectory() as folder:
+ for dialect in ('7.0','8.0','9.0'):
+  engine=SQLiteEngine(str(Path(folder)/(dialect+'.sqlite')))
+  with MongoClient(engine,mongodb_dialect=dialect) as client:
+   c=client.probe.records
+   c.insert_many([{'_id':i,'v':v,'a':[v]} for i,v in enumerate(VALUES,1)])
+   fixtures=loads(Path('tests/fixtures/semantic_type_query_'+dialect.replace('.','_')+'.json').read_text())['cases']['semantic_type_selection']
+   for alias in ('binData','objectId','date'):
+    for field in ('v','a'):
+     statements=[]
+     open_conn=engine._create_sqlite_connection
+     def trace_conn():
+      conn=open_conn();conn.set_trace_callback(statements.append);return conn
+     with patch.object(engine,'_create_sqlite_connection',side_effect=trace_conn),patch.object(QueryEngine,'match_plan',wraps=QueryEngine.match_plan) as matcher:
+      ids=[d['_id'] for d in c.find({field:{'$type':alias}},sort=[('_id',1)])]
+     assert ids==fixtures[f'{SPECS.index(alias)}-{field}']
+     report[f'{dialect}-{alias}-{field}']={'ids':ids,'matcher_calls':matcher.call_count,'sql':statements}
+Path('/tmp/mongoeco-sql-types/paths.json').write_text(json.dumps(report,indent=2)+'\n')
+print('18 actual dedicated-reader SQL/fallback paths match native IDs')

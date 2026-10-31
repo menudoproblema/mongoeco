@@ -420,14 +420,14 @@ class QueryPlanTests(unittest.TestCase):
 
         self.assertEqual(_normalize_type_specifier(127), ('maxKey',))
         self.assertEqual(
-            _normalize_type_specifier(' number '),
+            _normalize_type_specifier('number'),
             ('double', 'int', 'long', 'decimal'),
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             _normalize_type_specifier(999)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             _normalize_type_specifier(object())
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             _normalize_type_specifier('future')
 
         self.assertEqual(

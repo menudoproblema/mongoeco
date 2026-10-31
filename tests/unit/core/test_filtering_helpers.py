@@ -303,10 +303,11 @@ class FilteringHelperTests(unittest.TestCase):
     def test_query_engine_not_equals_treats_undefined_like_null(self):
         self.assertFalse(QueryEngine.match({"value": UNDEFINED}, {"value": {"$ne": None}}))
 
-    def test_query_engine_type_accepts_case_insensitive_aliases(self):
-        self.assertTrue(QueryEngine.match({"value": 1}, {"value": {"$type": "INT"}}))
-        self.assertTrue(QueryEngine.match({"value": "Ada"}, {"value": {"$type": "STRING"}}))
-        self.assertTrue(QueryEngine.match({"value": ObjectId()}, {"value": {"$type": "OBJECTID"}}))
+    def test_query_engine_type_rejects_noncanonical_aliases(self):
+        for alias in ("INT", "STRING", "OBJECTID", " number "):
+            with self.assertRaises(OperationFailure) as error:
+                QueryEngine.match({"value": 1}, {"value": {"$type": alias}})
+            self.assertEqual(error.exception.code, 2)
 
     def test_query_engine_bitwise_rejects_out_of_range_bit_positions(self):
         with self.assertRaises(ValueError):
@@ -443,15 +444,15 @@ class FilteringHelperTests(unittest.TestCase):
         timestamp = Timestamp(10, 1)
 
         self.assertEqual(QueryEngine._normalize_type_specifier(8), ("bool",))
-        self.assertEqual(QueryEngine._normalize_type_specifier(" number "), ("double", "int", "long", "decimal"))
-        with self.assertRaises(ValueError):
+        self.assertEqual(QueryEngine._normalize_type_specifier("number"), ("double", "int", "long", "decimal"))
+        with self.assertRaises(OperationFailure):
             QueryEngine._normalize_type_specifier(True)
         self.assertEqual(QueryEngine._normalize_type_specifier(6), ("undefined",))
         self.assertEqual(QueryEngine._normalize_type_specifier(13), ("javascript",))
         self.assertEqual(QueryEngine._normalize_type_specifier(15), ("javascriptWithScope",))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine._normalize_type_specifier("nonsense")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine._normalize_type_specifier(object())
 
         self.assertTrue(QueryEngine._matches_bson_type(decimal.Decimal("1.5"), "number"))

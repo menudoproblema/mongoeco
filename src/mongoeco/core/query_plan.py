@@ -6,6 +6,7 @@ import re
 import uuid
 
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -379,68 +380,39 @@ def _regex_options_from_pattern(pattern: re.Pattern[str]) -> str:
     return options
 
 
+_TYPE_NAMES_BY_CODE = MappingProxyType({
+    -1: "minKey", 1: "double", 2: "string", 3: "object", 4: "array",
+    5: "binData", 6: "undefined", 7: "objectId", 8: "bool", 9: "date",
+    10: "null", 11: "regex", 12: "dbPointer", 13: "javascript", 14: "symbol",
+    15: "javascriptWithScope", 16: "int", 17: "timestamp", 18: "long",
+    19: "decimal", 127: "maxKey",
+})
+
+
 def _normalize_type_specifier(type_spec: Any) -> tuple[str, ...]:
-    if isinstance(type_spec, bool):
-        raise ValueError("$type no acepta booleanos como identificadores de tipo")
-    if isinstance(type_spec, int):
-        numeric_mapping = {
-            -1: ("minKey",),
-            1: ("double",),
-            2: ("string",),
-            3: ("object",),
-            4: ("array",),
-            5: ("binData",),
-            6: ("undefined",),
-            7: ("objectId",),
-            8: ("bool",),
-            9: ("date",),
-            10: ("null",),
-            11: ("regex",),
-            13: ("javascript",),
-            14: ("symbol",),
-            15: ("javascriptWithScope",),
-            16: ("int",),
-            17: ("timestamp",),
-            18: ("long",),
-            19: ("decimal",),
-            127: ("maxKey",),
-        }
-        if type_spec not in numeric_mapping:
-            raise ValueError("$type usa un codigo BSON no soportado")
-        return numeric_mapping[type_spec]
+    numeric = wrap_bson_numeric(type_spec)
+    if numeric is not None:
+        integer = truncate_bson_int64(type_spec)
+        if integer is None or numeric.value != integer:
+            message = "$type requires an integral BSON type code"
+            raise server_error(message, code=2)
+        name = _TYPE_NAMES_BY_CODE.get(integer)
+        if name is None:
+            message = "$type usa un codigo BSON no soportado"
+            raise server_error(message, code=2)
+        return (name,)
     if isinstance(type_spec, Code):
         message = "type must be represented as a number or a string"
         raise server_error(message, code=14)
     if not isinstance(type_spec, str):
-        raise ValueError("$type necesita alias string o codigo entero BSON")
-    alias_mapping = {
-        "double": ("double",),
-        "string": ("string",),
-        "object": ("object",),
-        "array": ("array",),
-        "bindata": ("binData",),
-        "objectid": ("objectId",),
-        "bool": ("bool",),
-        "date": ("date",),
-        "null": ("null",),
-        "regex": ("regex",),
-        "dbpointer": ("dbPointer",),
-        "javascript": ("javascript",),
-        "symbol": ("symbol",),
-        "javascriptwithscope": ("javascriptWithScope",),
-        "minkey": ("minKey",),
-        "maxkey": ("maxKey",),
-        "int": ("int",),
-        "timestamp": ("timestamp",),
-        "long": ("long",),
-        "decimal": ("decimal",),
-        "undefined": ("undefined",),
-        "number": ("double", "int", "long", "decimal"),
-    }
-    normalized = type_spec.strip().casefold()
-    if normalized not in alias_mapping:
-        raise ValueError("$type usa un alias BSON no soportado")
-    return alias_mapping[normalized]
+        message = "$type necesita alias string o codigo entero BSON"
+        raise server_error(message, code=14)
+    if type_spec == "number":
+        return tuple(_TYPE_NAMES_BY_CODE[code] for code in (1, 16, 18, 19))
+    if type_spec not in _TYPE_NAMES_BY_CODE.values():
+        message = "$type usa un alias BSON no soportado"
+        raise server_error(message, code=2)
+    return (type_spec,)
 
 
 def _normalize_type_aliases(
@@ -798,7 +770,8 @@ def _compile_field_condition(
         elif operator == "$type":
             if isinstance(value, (list, tuple)):
                 if not value:
-                    raise ValueError("$type necesita al menos un tipo")
+                    message = "$type necesita al menos un tipo"
+                    raise server_error(message, code=9)
                 compiled_values = tuple(value)
                 clauses.append(
                     TypeCondition(

@@ -179,8 +179,8 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
                 'items', MatchAll(), wrap_value=True
             )
 
-        with self.assertRaises(NotImplementedError):
-            translate_query_plan(TypeCondition('value', (19,)))
+        sql, _ = translate_query_plan(TypeCondition('value', (19,)))
+        self.assertIn("IN ('decimal', 'decimal128', 'decimal128_public')", sql)
         with self.assertRaises(NotImplementedError):
             translate_query_plan(TypeCondition('value', ([],)))  # type: ignore[list-item]
 
@@ -499,7 +499,7 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
             TypeCondition('value', ('number', 'string'))
         )
         self.assertIn(
-            "json_type(document, '$.value') IN ('integer', 'real')", sql
+            "json_type(document, '$.value') = 'real'", sql
         )
         self.assertIn("json_type(document, '$.value') = 'text'", sql)
         self.assertEqual(params, [])
@@ -515,7 +515,7 @@ class SQLiteQueryTranslationTests(unittest.TestCase):
 
         self.assertIn("json_type(document, '$.value') = 'real'", sql)
         self.assertIn("json_type(document, '$.value') = 'object'", sql)
-        self.assertIn("IN ('bytes', 'uuid')", sql)
+        self.assertIn("IN ('bytes', 'binary', 'uuid')", sql)
         self.assertIn("= 'objectid'", sql)
         self.assertIn(
             "json_type(document, '$.value') IN ('true', 'false')", sql

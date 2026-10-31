@@ -1,0 +1,20 @@
+D03b approved by docs/bson-semantics-consolidation-plan.md revision 5.
+Runtime baseline: 542bce9. Reuse: canonical query_plan type normalization,
+TypeCondition.aliases, SQL translator, existing planner guards, native capture
+and semantic replay. No new evaluator, runner, storage key/tag or SPI change.
+Grammar consumers: query_plan, FilteringSpecialOperatorsMixin and virtual_indexes
+partial-filter implication. Both compiled and canonical matchers share the parser;
+native argument witnesses detect errors shared by them.
+SQL consumers: translate_query_plan and _translate_query_plan_with_multikey,
+read/count/write selection; dedicated SQLite reader connections, virtual/scalar/
+multikey/partial indexes, reopen and sort/skip/limit.
+Classification: scalar JSON types and codec tags reused for one array element;
+never recursively flatten arrays or parse a JSON text value as an object tag.
+Conservative guards: MongoDB 9/custom dialects, traversing dotted paths, numeric
+tagged values and binary equality/membership remain fallback where already required.
+Verification: independent SDK BSON type-byte property, native 7/8/9 captures,
+actual SQL trace and matcher spy, enabled/disabled translation, typing, no-SDK,
+core/property and integrated replay. Native legacy names are checked as arguments,
+not as a claim that every deprecated BSON storage type is supported.
+Exclusions: D01b full mutation effects, D04/watch, D06a/b remaining acceptance,
+D06c keys/group/lookup/sets/spill/Search, H53 policy, optional D07, integrated D05.

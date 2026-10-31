@@ -659,7 +659,7 @@ class QueryEngineTests(unittest.TestCase):
         )
 
     def test_query_engine_type_rejects_unsupported_or_invalid_type_specs(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match({'score': 7}, {'score': {'$type': []}})
         self.assertTrue(
             QueryEngine.match(
@@ -673,20 +673,20 @@ class QueryEngineTests(unittest.TestCase):
             )
         )
         self.assertTrue(
-            QueryEngine.match({'score': 7.5}, {'score': {'$type': 'Double'}})
+            QueryEngine.match({'score': 7.5}, {'score': {'$type': 'double'}})
         )
         self.assertTrue(
-            QueryEngine.match({'score': 7}, {'score': {'$type': 'INT'}})
+            QueryEngine.match({'score': 7}, {'score': {'$type': 'int'}})
         )
         self.assertTrue(
             QueryEngine.match(
                 {'score': decimal.Decimal('7.5')},
-                {'score': {'$type': 'Decimal'}},
+                {'score': {'$type': 'decimal'}},
             )
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match({'score': 7}, {'score': {'$type': True}})
-        with self.assertRaisesRegex(ValueError, 'codigo BSON no soportado'):
+        with self.assertRaisesRegex(OperationFailure, 'codigo BSON no soportado'):
             QueryEngine._normalize_type_specifier(999)  # type: ignore[arg-type]
 
     def test_query_engine_supports_bitwise_query_operators(self):
