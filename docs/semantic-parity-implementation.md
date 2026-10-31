@@ -779,3 +779,8 @@ existentes verdes. No es aceptación de los hallazgos nuevos ni captura nativa
 H37–H47 están pendientes de implementación y aceptación C00–C06. Los receipts
 y cierres focales anteriores conservan su identidad y no se reescriben; los
 pendientes B00–B10 no quedan absorbidos ni cerrados por esta ampliación.
+
+El plan incorpora una revisión de simplicidad sobre `1f9c794`: C00/C06
+acompañan cada entrega y C02/C03 se integran por familia. Se mantienen los
+hallazgos, la matriz de garantías y sus aceptaciones pendientes. Esta revisión
+solo cambia la organización del trabajo; no añade resultados de ejecución.
