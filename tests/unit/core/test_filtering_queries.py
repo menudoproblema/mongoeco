@@ -588,17 +588,17 @@ class QueryEngineTests(unittest.TestCase):
     ):
         self.assertTrue(
             QueryEngine.match(
-                {'value': 10**20},
-                {'value': {'$mod': [3, 1]}},
+                {"value": (1 << 63) - 1},
+                {"value": {"$mod": [3, 1]}},
             )
         )
 
     def test_query_engine_mod_rejects_non_finite_divisors(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match(
                 {'value': 5}, {'value': {'$mod': [float('inf'), 1]}}
             )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match(
                 {'value': 5}, {'value': {'$mod': [float('nan'), 1]}}
             )
@@ -862,7 +862,7 @@ class QueryEngineTests(unittest.TestCase):
                 {'count': float('inf')}, {'count': {'$mod': [3, 1]}}
             )
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             QueryEngine.match(
                 {'count': 10}, {'count': {'$mod': [float('inf'), 1]}}
             )
@@ -886,7 +886,7 @@ class QueryEngineTests(unittest.TestCase):
             QueryEngine.match({'count': -5}, {'count': {'$mod': [3, -2]}})
         )
         self.assertTrue(
-            QueryEngine.match({'count': 5.5}, {'count': {'$mod': [2.5, 0.5]}})
+            QueryEngine.match({"count": 5.5}, {"count": {"$mod": [2.5, 1.5]}})
         )
         self.assertFalse(
             QueryEngine.match({'count': 5.5}, {'count': {'$mod': [2.5, 0.0]}})

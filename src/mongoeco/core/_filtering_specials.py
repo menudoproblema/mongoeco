@@ -26,7 +26,11 @@ from mongoeco.core._filtering_support import (
     query_field_values,
 )
 from mongoeco.core.aggregation.expression_values import MISSING
-from mongoeco.core.bson_scalars import bson_numeric_alias, unwrap_bson_numeric
+from mongoeco.core.bson_scalars import (
+    bson_numeric_alias,
+    query_mod_integer,
+    unwrap_bson_numeric,
+)
 from mongoeco.core.query_operators import query_operator_keys
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
@@ -338,47 +342,18 @@ class FilteringSpecialOperatorsMixin:
 
     @classmethod
     def _evaluate_mod(
-        cls,
-        doc: dict[str, Any],
-        field: str,
-        divisor: int | float,
-        remainder: int | float,
+        cls, doc: dict[str, Any], field: str, divisor: int, remainder: int
     ) -> bool:
-        values = cls._extract_values(doc, field)
         return any(
-            isinstance(value, (int, float))
-            and not isinstance(value, bool)
-            and math.isfinite(value)
-            and math.isfinite(divisor)
-            and divisor != 0
-            and cls._mod_remainder_matches(
-                cls._mongo_remainder(value, divisor), remainder
-            )
-            for value in values
+            (integer := query_mod_integer(value)) is not None
+            and cls._mongo_remainder(integer, divisor) == remainder
+            for value in cls._extract_values(doc, field)
         )
 
     @classmethod
-    def _mod_remainder_matches(cls, actual: int | float, expected: int | float) -> bool:
-        if isinstance(actual, float) or isinstance(expected, float):
-            return math.isclose(
-                float(actual), float(expected), rel_tol=1e-12, abs_tol=1e-12
-            )
-        return actual == expected
-
-    @classmethod
-    def _mongo_remainder(cls, value: int | float, divisor: int | float) -> int | float:
-        if (
-            isinstance(value, int)
-            and not isinstance(value, bool)
-            and isinstance(divisor, int)
-            and not isinstance(divisor, bool)
-        ):
-            quotient = abs(value) // abs(divisor)
-            if (value < 0) != (divisor < 0):
-                quotient = -quotient
-            return value - divisor * quotient
-        quotient = math.trunc(value / divisor)
-        return value - divisor * quotient
+    def _mongo_remainder(cls, value: int, divisor: int) -> int:
+        remainder = abs(value) % abs(divisor)
+        return -remainder if value < 0 else remainder
 
     @classmethod
     def _evaluate_regex(

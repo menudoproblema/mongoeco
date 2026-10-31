@@ -376,11 +376,11 @@ class QueryPlanTests(unittest.TestCase):
             compile_filter({'tags': {'$size': -1}})
         with self.assertRaises(ValueError):
             compile_filter({'tags': {'$size': 1 << 40}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'count': {'$mod': 3}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'count': {'$mod': [0, 1]}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'count': {'$mod': [3, 'x']}})
         with self.assertRaises(ValueError):
             compile_filter({'name': {'$regex': 123}})

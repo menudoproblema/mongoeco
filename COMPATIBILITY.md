@@ -1420,3 +1420,19 @@ array de campos numéricos y operandos atómicos de elemMatch. Comparte sus hoja
 entre find, agregación, selección de escrituras y residual Search. La extracción
 de claves de índice conserva su contrato anterior; la fixture SQLite heredada
 verifica lectura/hint, unicidad parcial y reapertura sin imponer una migración.
+
+## `$mod` de consulta
+
+Los argumentos numéricos se truncan hacia cero a int64 durante preparación;
+NaN/Infinity, valores fuera de rango y divisor cero tras truncar dan error 2,
+incluso sin filas. Los candidatos se convierten al mismo dominio: un valor
+no numérico, no finito o fuera de rango no coincide. El resto conserva el signo
+del dividendo y no usa tolerancia flotante. Decimal128 participa sin perder
+precisión; la frontera pública sigue rechazando Decimal Python crudo.
+El operador de agregación conserva su aritmética propia.
+
+SQLite mantiene `%` para enteros escalares representados sin tags. Arrays,
+doubles y numerics BSON etiquetados usan el matcher común. `$pull` aplica un
+predicado de campo al elemento, incluyendo un nivel de traversal; elemMatch
+liga el elemento atómicamente. Sus controles de escritura conservan estado y
+recuperación mediante el observador común de paridad.

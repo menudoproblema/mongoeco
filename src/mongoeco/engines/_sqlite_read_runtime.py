@@ -4,6 +4,7 @@ import sqlite3
 from typing import TYPE_CHECKING, Any, Protocol
 
 from mongoeco.core.operation_limits import enforce_deadline
+from mongoeco.core.query_plan import ModCondition
 from mongoeco.engines._sqlite_read_execution import (
     compile_read_execution_plan as _sqlite_compile_read_execution_plan,
     plan_find_semantics_sync as _sqlite_plan_find_semantics_sync,
@@ -220,6 +221,14 @@ def plan_find_semantics_sync(
             ),
             use_sql=False,
             fallback_reason="classic $text local runtime executes in Python fallback",
+        )
+    if isinstance(
+        semantics.query_plan, ModCondition
+    ) and engine._plan_requires_python_for_tagged_numeric(
+        db_name, coll_name, semantics.query_plan
+    ):
+        return engine._compile_read_execution_plan(
+            db_name, coll_name, semantics, hint=semantics.hint
         )
     return _sqlite_plan_find_semantics_sync(
         db_name=db_name,

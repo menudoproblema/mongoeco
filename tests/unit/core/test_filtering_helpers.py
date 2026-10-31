@@ -502,8 +502,7 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertFalse(QueryEngine._evaluate_bitwise({}, "flags", "$bitsAllSet", 1))
         self.assertTrue(QueryEngine._evaluate_bitwise({"flags": BsonInt64(0b1010)}, "flags", "$bitsAllSet", BsonInt32(0b1000)))
         self.assertFalse(QueryEngine._evaluate_bitwise({"flags": -1}, "flags", "$bitsAllSet", bytes([0] * 12 + [0b1])))
-        self.assertTrue(QueryEngine._mod_remainder_matches(0.09999999999999998, 0.1))
-        self.assertTrue(QueryEngine._evaluate_mod({"value": 0.9}, "value", 0.3, 0.0))
+        self.assertTrue(QueryEngine._evaluate_mod({"value": 0.9}, "value", 2, 0))
         with self.assertRaises(ValueError):
             QueryEngine._evaluate_bitwise({"flags": 3}, "flags", "$bitsNope", 1)
 

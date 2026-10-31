@@ -893,3 +893,29 @@ Memory 0,976–1,209×; vector SQLite 0,997–1,047×. Los compound should de SQ
 con exists llegan a 6,370× al retirar una prueba de exactitud inválida que
 adelantaba poda de score. Se conserva la garantía semántica; recuperar ese
 coste exige demostrar presencia real, no inferirla de postings de texto.
+
+
+### C05: preparación y dominio entero de `$mod`
+
+H47 se corrige preparando divisor/resto una vez en ModCondition existente.
+La coerción `query_mod_integer` usa los wrappers BSON comunes, truncamiento a
+int64 y salida no elegible; el parser convierte esa salida en diagnóstico de
+argumento, el matcher en false. Se retira isclose y el cálculo flotante. El
+resto es entero con signo de dividendo; `$mod` de agregación permanece aparte.
+
+Se protege el fast path SQL con la comprobación existente de numerics tagged,
+sin otro análisis de tipos. Los enteros simples conservan `%`; arrays/doubles/
+Decimal128 usan residual. La selección de escrituras descubrió que `$pull`
+reutilizaba indebidamente el enlace atómico de elemMatch: ahora sus operadores
+usan el predicado normal de campo, respaldado por el testigo nativo anidado.
+
+El corpus mantenido tiene seis acciones: find/count/aggregate sobre campos
+planos y punteados, SQL sin sort con dominios simples/mixtos/tagged, preparación
+vacía/poblada y observaciones completas de update/delete/pull. Incluye extremos
+int64, signos, fracciones, Decimal128, no finitos y fase/código de errores.
+Los goldens 7/8/9 preservan identidad BSON; el EJSON estándar no conserva sNaN
+como semilla y no se debilita esa comprobación para incluirlo.
+
+Receipt: `evidence/predicate-authorities/mod-validation.json`. C01–C05 quedan
+corregidos focalmente; sigue C06 sobre el candidato integrado. B00–B10 no se
+cierran automáticamente.

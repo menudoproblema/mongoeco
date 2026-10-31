@@ -10,7 +10,14 @@ from typing import TYPE_CHECKING, Any, TypeIs
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_support import compile_bson_regex, compile_regex
-from mongoeco.core.bson_scalars import INT32_MAX, unwrap_bson_numeric
+from mongoeco.core.bson_scalars import (
+    INT32_MAX,
+    _is_infinite_numeric_value,
+    _is_nan_numeric_value,
+    query_mod_integer,
+    unwrap_bson_numeric,
+    wrap_bson_numeric,
+)
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.geo import (
     parse_geo_box,
@@ -29,6 +36,24 @@ from mongoeco.types import (
     PlanningMode,
     Regex,
 )
+
+
+def _prepare_mod_operand(value: object, role: str) -> int:
+    integer = query_mod_integer(value)
+    if integer is not None:
+        return integer
+    numeric = wrap_bson_numeric(value)
+    if numeric is None:
+        message = f"malformed mod, {role} not a number"
+        raise server_error(message, code=2)
+    reason = (
+        "Unable to coerce NaN/Inf to integral type"
+        if _is_nan_numeric_value(numeric.value)
+        or _is_infinite_numeric_value(numeric.value)
+        else "Out of bounds coercing to integral value"
+    )
+    message = f"malformed mod, {role} value is invalid :: caused by :: {reason}"
+    raise server_error(message, code=2)
 
 
 class QueryNode:
@@ -111,8 +136,8 @@ class SizeCondition(QueryNode):
 @dataclass(frozen=True)
 class ModCondition(QueryNode):
     field: str
-    divisor: int | float
-    remainder: int | float
+    divisor: int
+    remainder: int
 
 
 @dataclass(frozen=True)
@@ -592,18 +617,21 @@ def _compile_field_condition(
                 raise ValueError("$size necesita un entero no negativo")
             clauses.append(SizeCondition(field, value))
         elif operator == "$mod":
-            if not isinstance(value, (list, tuple)) or len(value) != 2:
-                raise ValueError("$mod necesita una lista de dos numeros")
-            divisor, remainder = value
-            if (
-                not isinstance(divisor, (int, float))
-                or isinstance(divisor, bool)
-                or not math.isfinite(divisor)
-                or divisor == 0
-            ):
-                raise ValueError("$mod necesita un divisor numerico distinto de cero")
-            if not isinstance(remainder, (int, float)) or isinstance(remainder, bool):
-                raise ValueError("$mod necesita un resto numerico")
+            if not isinstance(value, (list, tuple)):
+                message = "malformed mod, needs to be an array"
+                raise server_error(message, code=2)
+            if len(value) != 2:
+                message = (
+                    "malformed mod, not enough elements"
+                    if len(value) < 2  # noqa: PLR2004 - the two-operand query grammar
+                    else "malformed mod, too many elements"
+                )
+                raise server_error(message, code=2)
+            divisor = _prepare_mod_operand(value[0], "divisor")
+            remainder = _prepare_mod_operand(value[1], "remainder")
+            if divisor == 0:
+                message = "divisor cannot be 0"
+                raise server_error(message, code=2)
             clauses.append(ModCondition(field, divisor, remainder))
         elif operator == "$regex":
             if isinstance(value, Regex):

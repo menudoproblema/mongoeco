@@ -43,6 +43,10 @@ from tests.differential.semantic_missing_cases import (
     SEED as MISSING_SEED,
     SEMANTIC_MISSING_CASES,
 )
+from tests.differential.semantic_mod_cases import (
+    SEED as MOD_SEED,
+    SEMANTIC_MOD_CASES,
+)
 from tests.differential.semantic_numeric_cases import (
     SEED as NUMERIC_SEED,
     SEMANTIC_NUMERIC_CASES,
@@ -95,6 +99,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "mod": SemanticCorpus(
+        "mod",
+        "semantic_mod_cases",
+        MOD_SEED,
+        SEMANTIC_MOD_CASES,
+        observation_encoding="canonical-json",
+    ),
     "search_eligibility": SemanticCorpus(
         "search-eligibility",
         "semantic_search_eligibility_cases",

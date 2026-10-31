@@ -10,6 +10,12 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Prepare query `$mod` operands as signed int64 with truncation toward zero;
+  reject invalid operands before rows and use exact signed integer remainders.
+  Support Decimal128 candidates, decline nonfinite/out-of-range values and
+  guard the SQLite scalar fast path against tagged numerics. Keep aggregation
+  `$mod` separate and preserve `$pull` field traversal versus atomic elemMatch.
+
 - Preserve exact numeric Search filter keys and use the common MQL residual
   before ranking, windows, collectors and writeback. Candidate plans decline
   unrepresented arrays/paths and unsafe complements instead of dropping matches.

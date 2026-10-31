@@ -208,6 +208,15 @@ def _pull_candidate_matches(
                 dialect=context.dialect,
                 collation=context.collation,
             )
+        if operator_keys:
+            # $pull applies a field predicate to each value, including one
+            # level of array traversal; elemMatch binds its operand atomically.
+            return QueryEngine.match(
+                {"value": candidate},
+                {"value": condition},
+                dialect=context.dialect,
+                collation=context.collation,
+            )
         return QueryEngine._match_elem_match_candidate(
             candidate,
             condition,

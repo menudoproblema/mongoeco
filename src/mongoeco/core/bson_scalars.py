@@ -131,6 +131,22 @@ def wrap_bson_numeric(value: object) -> BsonNumeric | None:
     return None
 
 
+def query_mod_integer(value: object) -> int | None:
+    """Truncate a numeric BSON operand to the query-mod int64 domain.
+
+    Invalid arguments and ineligible document values use the same coercion;
+    their callers own the distinct error-versus-no-match behavior.
+    """
+    numeric = wrap_bson_numeric(value)
+    if numeric is None:
+        return None
+    try:
+        integer = int(numeric.value)
+    except (ValueError, OverflowError):
+        return None
+    return integer if INT64_MIN <= integer <= INT64_MAX else None
+
+
 def unwrap_bson_numeric(value: object) -> object:
     if isinstance(value, BsonInt32 | BsonInt64 | BsonDouble | BsonDecimal128):
         return value.value
