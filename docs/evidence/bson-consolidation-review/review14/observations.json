@@ -1,0 +1,78 @@
+[
+  {
+    "engine": "MemoryEngine",
+    "source_demand": {
+      "requested": 1,
+      "returned": [
+        1
+      ],
+      "evaluated": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "expanded_filter_error": {
+      "phase": "open",
+      "seen": [],
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    "string_producers": {
+      "concat": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": 16493
+      },
+      "replaceAll": {
+        "ok": true,
+        "utf8_bytes": 16777216
+      },
+      "concat_null_tail": {
+        "ok": true,
+        "utf8_bytes": null
+      }
+    }
+  },
+  {
+    "engine": "SQLiteEngine",
+    "source_demand": {
+      "requested": 1,
+      "returned": [
+        1
+      ],
+      "evaluated": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "expanded_filter_error": {
+      "phase": "open",
+      "seen": [],
+      "exception": "OperationFailure",
+      "code": 2
+    },
+    "string_producers": {
+      "concat": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": 16493
+      },
+      "replaceAll": {
+        "ok": true,
+        "utf8_bytes": 16777216
+      },
+      "concat_null_tail": {
+        "ok": true,
+        "utf8_bytes": null
+      }
+    }
+  }
+]

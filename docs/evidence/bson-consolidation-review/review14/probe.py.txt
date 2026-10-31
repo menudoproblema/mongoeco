@@ -1,0 +1,87 @@
+"""Read-only characterization of the candidate; no native oracle or acceptance."""
+
+import asyncio
+import json
+from unittest.mock import patch
+
+from mongoeco import AsyncMongoClient
+from mongoeco.api._async.aggregation_cursor import _CursorPageSource
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+
+
+async def characterize(factory):
+    async with AsyncMongoClient(factory()) as client:
+        collection = client.plan_review.rows
+        await collection.insert_many([{"_id": n} for n in range(1, 6)])
+        cursor = collection.find({}, batch_size=256)
+        opened = cursor._open_read_source
+        evaluated = []
+
+        def tracked(**options):
+            async def rows():
+                async for row in opened(**options):
+                    evaluated.append(row["_id"])
+                    yield row
+            return rows()
+
+        with patch.object(cursor, "_open_read_source", tracked):
+            source = _CursorPageSource(cursor)
+            await source.prepare()
+            first = await source.pull(1)
+            demand = {
+                "requested": 1,
+                "returned": [row["_id"] for row in first],
+                "evaluated": list(evaluated),
+            }
+            await source.aclose()
+
+        await collection.delete_many({})
+        await collection.insert_many([
+            {"_id": n, "v": 0 if n == 5 else 1, "p": "x" * 1024}
+            for n in range(1, 10)
+        ])
+        pipeline = [
+            {"$match": {"$expr": {"$gt": [{"$divide": [1, "$v"]}, 0]}}},
+            {"$sort": {"_id": 1}},
+            {"$project": {"p": {"$replaceAll": {
+                "input": "$p", "find": "x", "replacement": "x" * 4096,
+            }}}},
+        ]
+        expanded = {"phase": "open", "seen": []}
+        cursor = None
+        try:
+            cursor = await collection.aggregate(pipeline)
+            expanded["phase"] = "iterate"
+            async for row in cursor:
+                expanded["seen"].append(row["_id"])
+        except Exception as error:
+            expanded.update(exception=type(error).__name__, code=getattr(error, "code", None))
+        finally:
+            if cursor is not None:
+                await cursor.close()
+
+        await collection.delete_many({})
+        await collection.insert_one({"_id": 1, "p": "x" * (8 * 1024 * 1024)})
+        strings = {}
+        for name, expression in {
+            "concat": {"$concat": ["$p", "$p"]},
+            "replaceAll": {"$replaceAll": {"input": "$p", "find": "x", "replacement": "xx"}},
+            "concat_null_tail": {"$concat": ["$p", "$p", None]},
+        }.items():
+            cursor = None
+            phase = "open"
+            try:
+                cursor = await collection.aggregate([{"$project": {"p": expression}}])
+                phase = "iterate"
+                values = await cursor.to_list()
+                value = values[0]["p"]
+                strings[name] = {"ok": True, "utf8_bytes": None if value is None else len(value.encode("utf-8"))}
+            except Exception as error:
+                strings[name] = {"ok": False, "phase": phase, "exception": type(error).__name__, "code": getattr(error, "code", None)}
+            finally:
+                if cursor is not None:
+                    await cursor.close()
+        return {"engine": factory.__name__, "source_demand": demand, "expanded_filter_error": expanded, "string_producers": strings}
+
+
+print(json.dumps([asyncio.run(characterize(factory)) for factory in (MemoryEngine, SQLiteEngine)], indent=2))

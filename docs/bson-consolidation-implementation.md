@@ -696,6 +696,10 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 
 ## Trabajo restante
 
+El orden vigente se mantiene en el [plan, contraste actual](bson-semantics-consolidation-plan.md#contraste-actual-y-orden-mínimo-de-ejecución).
+La revisión 14 caracteriza demanda interna y límites String del candidato;
+no acepta sus cambios ni vuelve a abrir los cortes funcionalmente cerrados.
+
 - D06a/D06b/D06c: completar contextos de gramática/String/DBRef/raw y consumidores. Los cortes de sufijos y raw por cantidades/contenido tienen aceptación acotada; siguen bytes/callbacks y el resto de contextos/consumidores. El diagnóstico nativo siguiente ya reproduce ambos fallos de respuesta. No acredita cierre de D06.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.

@@ -1,0 +1,104 @@
+{
+  "status": "review 14; plan and evidence only; preexisting response candidate not accepted",
+  "date": "2026-11-01",
+  "head": "e9415546eee09927ef7d92770cef6822810bf7b5",
+  "python": "3.14.5",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_reviews_3_through_13": true,
+  "preexisting_runtime_tests_workset_sha256": {
+    "src/mongoeco/api/_async/_response.py": "465be9c60ff632af7593b90ecd0ed71d3f374765dec7fc762a0139dce11554ee",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "03e995ead40c5fa14aaf192224101bdd844a304519615d6a9f8ad95e741d2e1a",
+    "src/mongoeco/api/_async/collection.py": "d8863cec8e8915f6eda362d3b9794fa20965a27a405fd8bbdfcdbcc60c38e90f",
+    "src/mongoeco/api/_async/cursor.py": "15a86e3132856c96a2ba2024fe44c9fcf26e929f88ab3b776e48519d94026d67",
+    "src/mongoeco/api/_async/raw_batch_cursor.py": "90fb5eb866a0e32210a722c5b5faefbd062b7defeaa746259261c4e38f45ec90",
+    "src/mongoeco/api/_sync/aggregation_cursor.py": "88e807aaf1126b5228c1fb73b84c1d7d6869d44f14d70c80255e2401e7d650db",
+    "src/mongoeco/api/_sync/cursor.py": "005c0f2a87207ba5620603e5d54d7063b5838bc3ba304e2759da3df84074e661",
+    "src/mongoeco/core/aggregation/array_string_expressions.py": "60e2e3ac6c5162fb3f69f35606d6238855bfc73a3ab6fc05336abcb98565e2b8",
+    "src/mongoeco/core/codec.py": "4b1333d9a44ab64b7981f1144aa6105f4ec178a461dee109b0583ff942ed737b",
+    "src/mongoeco/core/server_errors.py": "987fe388b7b9313cf4ecc23140edcadaa424d91fa2b9309a2067399bd8234c2d",
+    "src/mongoeco/engines/memory.py": "f30a80fe4625ff107efc88dee24f8cf33c85fe10eacbb75780ce50fc15f2f05e",
+    "src/mongoeco/engines/semantic_core.py": "ca8558cf50f36b9e6b2ffdc3067052d0da2f9eefb0e326974428ad914b1d7ced",
+    "src/mongoeco/engines/sqlite.py": "a95724da5cf50cd9a724ff1a3173e40eba0bfb3279bec7676cdb44dd4c4e154c",
+    "src/mongoeco/engines/sqlite_planner.py": "946467f1e36abcf89d65ba55a00dd9cb1cd992650c6804b04dfd8ed49028f410",
+    "src/mongoeco/error_catalog.py": "b1eaddea18482a844bd406b70e5452af4e7dac1784b718ab5461ba801d3bbc20",
+    "src/mongoeco/wire/_lifecycle.py": "087cdf8c37879a9a53b96b4e2b38101cec80afb15e6cd10ab53f31a48ed0fdea",
+    "src/mongoeco/wire/cursors.py": "0ab26f8de0ec6560d601920bf05bfe0d259382444739b0384de8b2f9886e01df",
+    "src/mongoeco/wire/protocol.py": "0a2a49ab173e1c672d8654a3c1c523f76e4bed0cc7a97c871655f9446aa60889",
+    "tests/differential/semantic_corpora.py": "bb18930c05cfdb6bbb91b8b223f461e638abd00b3095753a11128ff98fe6f1ba",
+    "tests/differential/semantic_response_command_cases.py": "5fb4a007deca6e564d5b745c89208c62d21182069626b2b7f93a96d561f84b31",
+    "tests/differential/semantic_response_frontier_cases.py": "012fe1f5ddc702f2e6fa6db0a673f9c508a67a673a93054c0ced9df7f978c1fb",
+    "tests/fixtures/semantic_response_command_7_0.json": "73d0046f9adf5d715ad577393275bdf8bab4730abce6c97d9ce2a548a6da8784",
+    "tests/fixtures/semantic_response_command_8_0.json": "263f495bf96b9dd968726524e7d301418d80a90791799477fe76b2582419c923",
+    "tests/fixtures/semantic_response_command_9_0.json": "6cd1c9fcc35be9a479d7d9250b7ac6e5085fa40946bf792e4bf7c1a10c48a972",
+    "tests/fixtures/semantic_response_frontier_7_0.json": "55875eec9cd2662cede9c90a3b58773b600d6dc88534593c93f81e399aab0faf",
+    "tests/fixtures/semantic_response_frontier_8_0.json": "32986d4e352e87cba8bcd18e3e35c543d7c9ec53b71a91df2e746a5f123f7ef8",
+    "tests/fixtures/semantic_response_frontier_9_0.json": "0586fe51fef44c4cef7c66277345aeeacf9df4022400a6f9218293875da19da4",
+    "tests/integration/api/test_memory_lazy_snapshot_contract.py": "135220d3156f4be5bda4a807ce98cd6aede2b93bd5df355622ac71a1e192a841",
+    "tests/unit/api/test_aggregation_cursor.py": "4e940c7057cdd35dc41e69f4fb6bf4f32fcfa5c55759f8d9044eac76f77a9b0d",
+    "tests/unit/api/test_cursors.py": "6593b23c2fff23c2bdd44ab4f592fecf4e9dd9fa71063518499806e90cdff060",
+    "tests/unit/api/test_response_boundaries.py": "f99a6bbf9086b9d26cc78f4bafe826b0e013a15cbaea0c2ce99d24ccf6f7fb4a",
+    "tests/unit/wire/test_live_cursors.py": "357ff781116a8b03c724650a8fb9ae9c15694898d1d3ba9847cf110aae99650b",
+    "tests/unit/wire/test_protocol.py": "bc4c0b4c307b217fb056214eef1a5884839d6a81330da5d8ac3ac2e5f3219157",
+    "tests/unit/wire/test_proxy.py": "58f498b4bacb7b975121d48668fa5b5bbecd769f3b78c436cedac49958ff869f"
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": {
+      "sha256": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+      "matches_head": true
+    },
+    "tests/support_bson_observation.py": {
+      "sha256": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+      "matches_head": true
+    },
+    "tests/fixtures/compat_catalog_snapshot.json": {
+      "sha256": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+      "matches_head": true
+    },
+    "tests/fixtures/compat_catalog_snapshot.md": {
+      "sha256": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329",
+      "matches_head": true
+    },
+    "tests/fixtures/legacy_error_emitters.json": {
+      "sha256": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14",
+      "matches_head": true
+    }
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/unit/core/test_query_operators.py tests/unit/core/test_sqlite_query.py tests/integration/api/test_ttl_exact_millisecond_migration.py tests/integration/api/test_watch_context_contract.py --tb=short",
+      "exit_code": 0,
+      "passed": 78,
+      "seconds": 1.45,
+      "log": "focal.txt"
+    },
+    {
+      "command": ".venv/bin/python docs/evidence/bson-consolidation-review/review14/probe.py.txt",
+      "exit_code": 0,
+      "output": "observations.json",
+      "scope": "ephemeral Memory/SQLite, default dialect; local characterization only"
+    }
+  ],
+  "external_sources": {
+    "method": "web open/find of official pinned r8.0.0 parser and bsonelement.cpp",
+    "fresh_full_manifest_hash_verification": false,
+    "historical_hash_receipt": "../response-frontier-plan/receipt.json"
+  },
+  "limits": [
+    "No new MongoDB execution, native capture or native expected result asserted for new local probes.",
+    "No full candidate diff review, global suite, installed wheel, performance, remote CI or D05 acceptance.",
+    "No production or test implementation edits in this review; preexisting changes retained.",
+    "Historical receipts, sources and native references not rewritten."
+  ],
+  "artifacts_sha256": {
+    "README.md": "93cb9f67191240677606d3f7b2eca273df03bd8338179fb5d6e976a2580a0a87",
+    "focal.txt": "f060c8fda032a8c74f9def15e808a0796ebcca5dbcdca8aeb0c130f166a7b09a",
+    "observations.json": "23a442cb082470c1aac9993ef3ad68cbce7c0f50813adda0149d504205e26da3",
+    "probe.py.txt": "5d61a74a06b31b50a30f8b6905517c6e85dc63132e678a917213602e183608cf"
+  },
+  "document_checks": {
+    "relative_links_missing": [],
+    "preexisting_runtime_tests_unchanged": true,
+    "diff_whitespace": "passes",
+    "scope": "plan, implementation owner pointer and review14 evidence; no project-specific Markdown validator found"
+  }
+}
