@@ -391,10 +391,8 @@ class QueryEngineTests(unittest.TestCase):
                 document, {'tags': {'$all': ['python', 'mongodb']}}
             )
         )
-        self.assertFalse(
-            QueryEngine.match(
-                document, {'tags': {'$all': [['python', 'mongodb']]}}
-            )
+        self.assertTrue(
+            QueryEngine.match(document, {"tags": {"$all": [["python", "mongodb"]]}})
         )
 
     def test_query_engine_all_uses_single_resolution_for_array_traversal_and_hashable_fast_path(
@@ -444,10 +442,10 @@ class QueryEngineTests(unittest.TestCase):
             QueryEngine.extract_values(document, 'items.exposed_at'),
             [exposed_at],
         )
-        self.assertTrue(
+        self.assertFalse(
             QueryEngine.match(
                 document,
-                {'items.exposed_at': {'$exists': True, '$ne': None}},
+                {"items.exposed_at": {"$exists": True, "$ne": None}},
             )
         )
         self.assertFalse(
@@ -728,9 +726,7 @@ class QueryEngineTests(unittest.TestCase):
         self.assertFalse(
             QueryEngine.match(document, {'mask': {'$bitsAllSet': 0b0101}})
         )
-        self.assertFalse(
-            QueryEngine.match(document, {'array': {'$bitsAnySet': 0b0010}})
-        )
+        self.assertTrue(QueryEngine.match(document, {"array": {"$bitsAnySet": 0b0010}}))
 
     def test_query_engine_bitwise_rejects_invalid_masks(self):
         with self.assertRaises(ValueError):

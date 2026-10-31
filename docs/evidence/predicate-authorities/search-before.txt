@@ -1,0 +1,248 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+__ test_search_preserves_native_mql_eligibility[vector-sync-MemoryEngine-9.0] __
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '9.0'
+surface = 'sync', route = 'vector'
+
+    @pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    @pytest.mark.parametrize("route", ["vector", "text"])
+    def test_search_preserves_native_mql_eligibility(
+        engine_factory, dialect, surface, route
+    ):
+>       replay_native_case(
+            engine_factory,
+            dialect,
+            "search_eligibility",
+            "semantic_search_eligibility",
+            partial(
+                routes,
+                route=route,
+                model_factory=DriverSearchIndexModel
+                if surface.startswith("wire-")
+                else SearchIndexModel,
+            ),
+            surface=surface,
+        )
+
+tests/integration/api/test_search_predicate_authorities.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '9.0'
+corpus = 'search_eligibility', name = 'semantic_search_eligibility'
+action = functools.partial(<function routes at 0x105caacf0>, route='vector', model_factory=<class 'mongoeco._types.indexes.SearchIndexModel'>)
+surface = 'sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action"],
+        [(corpus, n, a) for corpus, cases in CORPORA.items() for n, a in cases],
+    )
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+>               assert _normalize(action(collection)) == _normalize(expected)
+E               AssertionError: assert ('document', ... ...))), ...)) == ('document', ... ...))), ...))
+E                 
+E                 At index 1 diff: ((<class 'str'>, 'large', ('array', ())), (<class 'str'>, 'array_range', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00d\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00g\x00\x00')))), (<class 'str'>, 'array_and', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00c\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00d\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00g\x00\x00')))), (<class 'str'>, 'null', ('array', ((<class 'str'>...
+E                 
+E                 ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/integration/api/test_semantic_group_regressions.py:186: AssertionError
+__ test_search_preserves_native_mql_eligibility[vector-sync-SQLiteEngine-9.0] __
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '9.0'
+surface = 'sync', route = 'vector'
+
+    @pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    @pytest.mark.parametrize("route", ["vector", "text"])
+    def test_search_preserves_native_mql_eligibility(
+        engine_factory, dialect, surface, route
+    ):
+>       replay_native_case(
+            engine_factory,
+            dialect,
+            "search_eligibility",
+            "semantic_search_eligibility",
+            partial(
+                routes,
+                route=route,
+                model_factory=DriverSearchIndexModel
+                if surface.startswith("wire-")
+                else SearchIndexModel,
+            ),
+            surface=surface,
+        )
+
+tests/integration/api/test_search_predicate_authorities.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '9.0'
+corpus = 'search_eligibility', name = 'semantic_search_eligibility'
+action = functools.partial(<function routes at 0x105caacf0>, route='vector', model_factory=<class 'mongoeco._types.indexes.SearchIndexModel'>)
+surface = 'sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action"],
+        [(corpus, n, a) for corpus, cases in CORPORA.items() for n, a in cases],
+    )
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+>               assert _normalize(action(collection)) == _normalize(expected)
+E               AssertionError: assert ('document', ... ...))), ...)) == ('document', ... ...))), ...))
+E                 
+E                 At index 1 diff: ((<class 'str'>, 'large', ('array', ())), (<class 'str'>, 'array_range', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00d\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00g\x00\x00')))), (<class 'str'>, 'array_and', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00c\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00d\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00g\x00\x00')))), (<class 'str'>, 'null', ('array', ((<class 'str'>...
+E                 
+E                 ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/integration/api/test_semantic_group_regressions.py:186: AssertionError
+___ test_search_preserves_native_mql_eligibility[text-sync-MemoryEngine-9.0] ___
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '9.0'
+surface = 'sync', route = 'text'
+
+    @pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    @pytest.mark.parametrize("route", ["vector", "text"])
+    def test_search_preserves_native_mql_eligibility(
+        engine_factory, dialect, surface, route
+    ):
+>       replay_native_case(
+            engine_factory,
+            dialect,
+            "search_eligibility",
+            "semantic_search_eligibility",
+            partial(
+                routes,
+                route=route,
+                model_factory=DriverSearchIndexModel
+                if surface.startswith("wire-")
+                else SearchIndexModel,
+            ),
+            surface=surface,
+        )
+
+tests/integration/api/test_search_predicate_authorities.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+engine_factory = <class 'mongoeco.engines.memory.MemoryEngine'>, dialect = '9.0'
+corpus = 'search_eligibility', name = 'semantic_search_eligibility'
+action = functools.partial(<function routes at 0x105caacf0>, route='text', model_factory=<class 'mongoeco._types.indexes.SearchIndexModel'>)
+surface = 'sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action"],
+        [(corpus, n, a) for corpus, cases in CORPORA.items() for n, a in cases],
+    )
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+>               assert _normalize(action(collection)) == _normalize(expected)
+E               AssertionError: assert ('document', ... ...))), ...)) == ('document', ... ...))), ...))
+E                 
+E                 At index 1 diff: ((<class 'str'>, 'large', ('array', ())), (<class 'str'>, 'array_range', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00d\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00g\x00\x00')))), (<class 'str'>, 'array_and', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00c\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00d\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00g\x00\x00')))), (<class 'str'>, 'null', ('array', ((<class 'str'>...
+E                 
+E                 ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/integration/api/test_semantic_group_regressions.py:186: AssertionError
+___ test_search_preserves_native_mql_eligibility[text-sync-SQLiteEngine-9.0] ___
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '9.0'
+surface = 'sync', route = 'text'
+
+    @pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    @pytest.mark.parametrize("route", ["vector", "text"])
+    def test_search_preserves_native_mql_eligibility(
+        engine_factory, dialect, surface, route
+    ):
+>       replay_native_case(
+            engine_factory,
+            dialect,
+            "search_eligibility",
+            "semantic_search_eligibility",
+            partial(
+                routes,
+                route=route,
+                model_factory=DriverSearchIndexModel
+                if surface.startswith("wire-")
+                else SearchIndexModel,
+            ),
+            surface=surface,
+        )
+
+tests/integration/api/test_search_predicate_authorities.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+engine_factory = <class 'mongoeco.engines.sqlite.SQLiteEngine'>, dialect = '9.0'
+corpus = 'search_eligibility', name = 'semantic_search_eligibility'
+action = functools.partial(<function routes at 0x105caacf0>, route='text', model_factory=<class 'mongoeco._types.indexes.SearchIndexModel'>)
+surface = 'sync'
+
+    @pytest.mark.parametrize("dialect", DIALECTS)
+    @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+    @pytest.mark.parametrize(
+        ["corpus", "name", "action"],
+        [(corpus, n, a) for corpus, cases in CORPORA.items() for n, a in cases],
+    )
+    @pytest.mark.parametrize("surface", ["sync", "async", "wire-sync", "wire-async"])
+    def test_expression_matches_native_capture(  # noqa: PLR0913 - explicit pytest axes
+        engine_factory, dialect, corpus, name, action, *, surface
+    ):
+        capture = _capture(dialect, corpus)
+        seed = deepcopy(SEMANTIC_CORPORA[corpus].seed)
+        expected = capture["cases"][name]
+        if surface == "sync":
+            with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                collection = client.semantic_group.records
+                collection.insert_many(seed)
+>               assert _normalize(action(collection)) == _normalize(expected)
+E               AssertionError: assert ('document', ... ...))), ...)) == ('document', ... ...))), ...))
+E                 
+E                 At index 1 diff: ((<class 'str'>, 'large', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00b\x00\x00'),))), (<class 'str'>, 'array_range', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00c\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00d\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00g\x00\x00')))), (<class 'str'>, 'array_and', ('array', ((<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x00\x00\x00c\x00\x00'), (<class 'str'>, b'\x12\x00\x00\x00\x02value\x00\x02\x...
+E                 
+E                 ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/integration/api/test_semantic_group_regressions.py:186: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/api/test_search_predicate_authorities.py::test_search_preserves_native_mql_eligibility[vector-sync-MemoryEngine-9.0]
+FAILED tests/integration/api/test_search_predicate_authorities.py::test_search_preserves_native_mql_eligibility[vector-sync-SQLiteEngine-9.0]
+FAILED tests/integration/api/test_search_predicate_authorities.py::test_search_preserves_native_mql_eligibility[text-sync-MemoryEngine-9.0]
+FAILED tests/integration/api/test_search_predicate_authorities.py::test_search_preserves_native_mql_eligibility[text-sync-SQLiteEngine-9.0]
+4 failed, 46 deselected in 0.43s

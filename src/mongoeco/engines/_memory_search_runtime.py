@@ -30,7 +30,6 @@ from mongoeco.core.search import (
     search_query_explain_details,
     vector_field_paths,
 )
-from mongoeco.core.search_filter_prefilter import matches_candidateable_filter
 from mongoeco.core.search_models import SearchExplainVerbosity
 from mongoeco.engines._memory_vector_runtime import (
     candidate_positions_for_vector_filter,
@@ -395,36 +394,23 @@ def _matches_vector_postfilter(
 ) -> bool:
     if filter_spec is None:
         return True
-    candidateable_match = (
-        None
-        if operation_context is not None and operation_context.collation is not None
-        else matches_candidateable_filter(document, filter_spec)
-    )
-    if candidateable_match is False:
-        return False
-    if candidateable_match is None:
-        return bool(
-            QueryEngine.match(
-                document,
-                filter_spec,
-                dialect=(
-                    operation_context.dialect
-                    if operation_context is not None
-                    else MONGODB_DIALECT_70
-                ),
-                collation=(
-                    operation_context.collation
-                    if operation_context is not None
-                    else None
-                ),
-                variables=(
-                    operation_context.expressions
-                    if operation_context is not None
-                    else None
-                ),
+    return bool(
+        QueryEngine.match(
+            document,
+            filter_spec,
+            dialect=(
+                operation_context.dialect
+                if operation_context is not None
+                else MONGODB_DIALECT_70
             ),
-        )
-    return True
+            collation=(
+                operation_context.collation if operation_context is not None else None
+            ),
+            variables=(
+                operation_context.expressions if operation_context is not None else None
+            ),
+        ),
+    )
 
 
 async def execute_search_documents(
@@ -529,24 +515,15 @@ async def execute_search_documents(
         if isinstance(query, SearchCompoundQuery) and query.should:
             ranked_documents: list[tuple[tuple[int, float, float], str, Document]] = []
             for document, materialized in materialized_documents:
-                if downstream_filter_spec is not None:
-                    candidateable_match = (
-                        None
-                        if operation_context is not None
-                        and operation_context.collation is not None
-                        else matches_candidateable_filter(
-                            document,
-                            downstream_filter_spec,
-                        )
-                    )
-                    if candidateable_match is False:
-                        continue
-                    if candidateable_match is None and not _matches_vector_postfilter(
+                if (
+                    downstream_filter_spec is not None
+                    and not _matches_vector_postfilter(
                         document,
                         filter_spec=downstream_filter_spec,
                         operation_context=operation_context,
-                    ):
-                        continue
+                    )
+                ):
+                    continue
                 if not matches_search_query(
                     document,
                     definition=definition,
@@ -595,24 +572,12 @@ async def execute_search_documents(
             ]
         ranked_matches: list[tuple[float, str, Document]] = []
         for document, materialized in materialized_documents:
-            if downstream_filter_spec is not None:
-                candidateable_match = (
-                    None
-                    if operation_context is not None
-                    and operation_context.collation is not None
-                    else matches_candidateable_filter(
-                        document,
-                        downstream_filter_spec,
-                    )
-                )
-                if candidateable_match is False:
-                    continue
-                if candidateable_match is None and not _matches_vector_postfilter(
-                    document,
-                    filter_spec=downstream_filter_spec,
-                    operation_context=operation_context,
-                ):
-                    continue
+            if downstream_filter_spec is not None and not _matches_vector_postfilter(
+                document,
+                filter_spec=downstream_filter_spec,
+                operation_context=operation_context,
+            ):
+                continue
             matched, clause_score, _near_distance = search_clause_ranking(
                 document,
                 definition=definition,
@@ -709,42 +674,18 @@ async def execute_search_documents(
     vector_hits: list[tuple[float, int]] = []
     for score, row_index in scored_rows:
         prepared = vector_index.documents[path_positions[row_index]]
-        if downstream_requires_postfilter:
-            candidateable_match = (
-                None
-                if operation_context is not None
-                and operation_context.collation is not None
-                else matches_candidateable_filter(
-                    prepared.document,
-                    downstream_filter_spec,
-                )
-            )
-            if candidateable_match is False:
-                continue
-            if candidateable_match is None and not _matches_vector_postfilter(
-                prepared.document,
-                filter_spec=downstream_filter_spec,
-                operation_context=operation_context,
-            ):
-                continue
-        if query_requires_postfilter:
-            candidateable_match = (
-                None
-                if operation_context is not None
-                and operation_context.collation is not None
-                else matches_candidateable_filter(
-                    prepared.document,
-                    query.filter_spec,
-                )
-            )
-            if candidateable_match is False:
-                continue
-            if candidateable_match is None and not _matches_vector_postfilter(
-                prepared.document,
-                filter_spec=query.filter_spec,
-                operation_context=operation_context,
-            ):
-                continue
+        if downstream_requires_postfilter and not _matches_vector_postfilter(
+            prepared.document,
+            filter_spec=downstream_filter_spec,
+            operation_context=operation_context,
+        ):
+            continue
+        if query_requires_postfilter and not _matches_vector_postfilter(
+            prepared.document,
+            filter_spec=query.filter_spec,
+            operation_context=operation_context,
+        ):
+            continue
         vector_hits.append((score, row_index))
     selected_hits = top_scored_rows(
         vector_hits,

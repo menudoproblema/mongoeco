@@ -551,3 +551,12 @@ del motor; no añade un nuevo contrato obligatorio al SPI v2.
 El puente BSON opcional conserva undefined físico en entrada, incluyendo arrays
 y scopes de Code, sin modificar las tablas globales del SDK. Sus offsets usan el
 decoder de elementos de PyMongo y quedan sujetos a su matriz SDK.
+
+### Candidatos MQL y extracción de índices
+
+`query_field_values` conserva la procedencia de hojas de consulta: ausencia,
+broadcast y posición numérica. `query_values` aplica la expansión terminal
+solo donde procede. ElemMatch liga el elemento atómico y reutiliza las hojas
+QueryNode existentes. La extracción observable/de claves de índice mantiene
+su contrato separado, sin cambiar formatos persistidos por arreglar matching.
+Las pruebas nativas incluyen arrays con ramas ausentes y un lookup físico.

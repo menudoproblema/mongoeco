@@ -1,0 +1,1108 @@
+{
+  "case_filter": "semantic_search_*",
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_search_post_lookup",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "a": 9007199254740992,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740992,
+          "title": "Ada"
+        },
+        {
+          "_id": "b",
+          "a": 9007199254740993,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740993,
+          "title": "Ada"
+        },
+        {
+          "_id": "c",
+          "a": [
+            1,
+            20
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "d",
+          "a": 7,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "e",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "f",
+          "a": null,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": null,
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "g",
+          "a": [
+            7
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": [
+            {
+              "x": 7
+            }
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "h",
+          "a": {
+            "x": 7
+          },
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": {},
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "i",
+          "a": [],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": [],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "j",
+          "a": true,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "k",
+          "a": "z",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "l",
+          "a": "0.1",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "m",
+          "a": 0.1,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "n",
+          "a": {},
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "o",
+          "a": [
+            [
+              7
+            ]
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "p",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": {
+            "x": 7
+          },
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        }
+      ],
+      "selector": "semantic_search_post_lookup"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_search_candidate_mutations",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "a": 9007199254740992,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740992,
+          "title": "Ada"
+        },
+        {
+          "_id": "b",
+          "a": 9007199254740993,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740993,
+          "title": "Ada"
+        },
+        {
+          "_id": "c",
+          "a": [
+            1,
+            20
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "d",
+          "a": 7,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "e",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "f",
+          "a": null,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": null,
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "g",
+          "a": [
+            7
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": [
+            {
+              "x": 7
+            }
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "h",
+          "a": {
+            "x": 7
+          },
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": {},
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "i",
+          "a": [],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": [],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "j",
+          "a": true,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "k",
+          "a": "z",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "l",
+          "a": "0.1",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "m",
+          "a": 0.1,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "n",
+          "a": {},
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "o",
+          "a": [
+            [
+              7
+            ]
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "p",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": {
+            "x": 7
+          },
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        }
+      ],
+      "selector": "semantic_search_candidate_mutations"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_search_traversal_partial_indexes",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "a": 9007199254740992,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740992,
+          "title": "Ada"
+        },
+        {
+          "_id": "b",
+          "a": 9007199254740993,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740993,
+          "title": "Ada"
+        },
+        {
+          "_id": "c",
+          "a": [
+            1,
+            20
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "d",
+          "a": 7,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "e",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "f",
+          "a": null,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": null,
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "g",
+          "a": [
+            7
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": [
+            {
+              "x": 7
+            }
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "h",
+          "a": {
+            "x": 7
+          },
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": {},
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "i",
+          "a": [],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": [],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "j",
+          "a": true,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "k",
+          "a": "z",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "l",
+          "a": "0.1",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "m",
+          "a": 0.1,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "n",
+          "a": {},
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "o",
+          "a": [
+            [
+              7
+            ]
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "p",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": {
+            "x": 7
+          },
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        }
+      ],
+      "selector": "semantic_search_traversal_partial_indexes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_search_traversal_controls",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "a": 9007199254740992,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740992,
+          "title": "Ada"
+        },
+        {
+          "_id": "b",
+          "a": 9007199254740993,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740993,
+          "title": "Ada"
+        },
+        {
+          "_id": "c",
+          "a": [
+            1,
+            20
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "d",
+          "a": 7,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "e",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "f",
+          "a": null,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": null,
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "g",
+          "a": [
+            7
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": [
+            {
+              "x": 7
+            }
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "h",
+          "a": {
+            "x": 7
+          },
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": {},
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "i",
+          "a": [],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": [],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "j",
+          "a": true,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "k",
+          "a": "z",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "l",
+          "a": "0.1",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "m",
+          "a": 0.1,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "n",
+          "a": {},
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "o",
+          "a": [
+            [
+              7
+            ]
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "p",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": {
+            "x": 7
+          },
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        }
+      ],
+      "selector": "semantic_search_traversal_controls"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "semantic_search_eligibility",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "a": 9007199254740992,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740992,
+          "title": "Ada"
+        },
+        {
+          "_id": "b",
+          "a": 9007199254740993,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 9007199254740993,
+          "title": "Ada"
+        },
+        {
+          "_id": "c",
+          "a": [
+            1,
+            20
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "d",
+          "a": 7,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "e",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "f",
+          "a": null,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": null,
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "g",
+          "a": [
+            7
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": [
+            {
+              "x": 7
+            }
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "h",
+          "a": {
+            "x": 7
+          },
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": {},
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "i",
+          "a": [],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": [],
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "j",
+          "a": true,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "k",
+          "a": "z",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "l",
+          "a": "0.1",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "m",
+          "a": 0.1,
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "n",
+          "a": {},
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "o",
+          "a": [
+            [
+              7
+            ]
+          ],
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        },
+        {
+          "_id": "p",
+          "embedding": [
+            1.0,
+            0.0
+          ],
+          "items": {
+            "x": 7
+          },
+          "kind": "keep",
+          "scalar": 0,
+          "title": "Ada"
+        }
+      ],
+      "selector": "semantic_search_eligibility"
+    }
+  ],
+  "duration_seconds": 1.176832914352417,
+  "errors": [
+    {
+      "test": "test_semantic_search_traversal_partial_indexes_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_traversal_partial_indexes_matches_real_mongodb) (engine='memory', case='semantic_search_traversal_partial_indexes')",
+      "traceback": "Traceback (most recent call last):\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/client.py\", line 284, in run\n    asyncio.get_running_loop()\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_search_eligibility_cases.py\", line 166, in traversal_partial_indexes\n    for doc in collection.find(query, hint=\"partial_b\", sort=[(\"_id\", 1)])\n               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/cursor.py\", line 40, in __next__\n    value = self._cursor._next_document()\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/cursor.py\", line 303, in _next_document\n    if self._pull_chunk(active):\n       ~~~~~~~~~~~~~~~~^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/cursor.py\", line 290, in _pull_chunk\n    self._sync_buffer = self._client._run(pull_chunk(batch_size))\n                        ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_async/cursor.py\", line 189, in pull_chunk\n    document = await self._source.__anext__()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/snapshots.py\", line 101, in __anext__\n    return self._own_document(await self._iterator.__anext__())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/memory.py\", line 3828, in _scan\n    self._resolve_hint_index(\n    ~~~~~~~~~~~~~~~~~~~~~~~~^\n        db_name,\n        ^^^^^^^^\n    ...<5 lines>...\n        collation=semantics.collation,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/memory.py\", line 1846, in _resolve_hint_index\n    raise OperationFailure(\n        \"hint does not correspond to a usable index for this query\",\n    )\nmongoeco.errors.OperationFailure: hint does not correspond to a usable index for this query\n"
+    },
+    {
+      "test": "test_semantic_search_traversal_partial_indexes_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_traversal_partial_indexes_matches_real_mongodb) (engine='sqlite', case='semantic_search_traversal_partial_indexes')",
+      "traceback": "Traceback (most recent call last):\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_async/_write_errors.py\", line 48, in invoke\n    return await method(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_async/_collection_modify.py\", line 220, in update_one\n    captured = await collection._engine_update_with_operation(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<6 lines>...\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_async/collection.py\", line 712, in _engine_update_with_operation\n    return await self._runtime.engine_update_with_operation(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_async/_collection_runtime.py\", line 484, in engine_update_with_operation\n    result = await self._engine_spi.update_outcome(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<10 lines>...\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/adapter.py\", line 462, in update_outcome\n    result = await engine.update_with_operation(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<9 lines>...\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/sqlite.py\", line 7459, in update_with_operation\n    return await self._run_blocking(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<14 lines>...\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/sqlite.py\", line 845, in _run_blocking\n    return await asyncio.shield(submitted)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py\", line 86, in run\n    result = ctx.run(self.task)\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py\", line 73, in run\n    return fn(*args, **kwargs)\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/sqlite.py\", line 7528, in _update_with_operation_sync\n    result = _sqlite_update_with_operation(\n        db_name=db_name,\n    ...<79 lines>...\n        replacement_document=replacement_document,\n    )\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/_sqlite_modify_ops.py\", line 361, in update_with_operation\n    validate_document_against_unique_indexes(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        db_name,\n        ^^^^^^^^\n    ...<2 lines>...\n        storage_key,\n        ^^^^^^^^^^^^\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/sqlite.py\", line 7566, in <lambda>\n    self._validate_document_against_unique_indexes(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        current_db_name,\n        ^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n        scan_payload_id=scan_payload_id,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/engines/sqlite.py\", line 3273, in _validate_document_against_unique_indexes\n    raise self._unique_key_error(\n    ...<6 lines>...\n    )\nmongoeco.errors.DuplicateKeyError: Duplicate key for unique index 'partial_b': ['b']=(('number', Decimal('1')),)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 112, in _assert_matches_real_case\n    eco_result = case.action(eco_collection)\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/semantic_search_eligibility_cases.py\", line 173, in traversal_partial_indexes\n    collection.update_one({\"_id\": 1}, {\"$set\": {\"a\": []}})\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/collection.py\", line 518, in update_one\n    return self._run_collection_method(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        \"update_one\",\n        ^^^^^^^^^^^^^\n    ...<11 lines>...\n        inline=True,\n        ^^^^^^^^^^^^\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/collection.py\", line 149, in _run_collection_method\n    return self._client._run(method(*args, **kwargs), inline=use_inline)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/client.py\", line 666, in _run\n    return self._runner.run(awaitable, inline=inline)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/client.py\", line 288, in run\n    return self._run_direct(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_sync/client.py\", line 99, in _run_direct\n    return self._runner.run(awaitable)\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_async/collection.py\", line 1316, in update_one\n    result = await _collection_modify.update_one(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<15 lines>...\n    )\n    ^\n  File \"/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/api/_async/_write_errors.py\", line 63, in invoke\n    raise DuplicateKeyError._from_server_document(\n    ...<8 lines>...\n    ) from error\nmongoeco.errors.DuplicateKeyError: Plan executor error during update :: caused by :: E11000 duplicate key error collection: mongoeco_diff_794cb2e6972640f6b94e64bdf83af3a3.cases index: partial_b dup key: { b: 1 }, full error: {'index': 0, 'code': 11000, 'errmsg': 'Plan executor error during update :: caused by :: E11000 duplicate key error collection: mongoeco_diff_794cb2e6972640f6b94e64bdf83af3a3.cases index: partial_b dup key: { b: 1 }', 'keyPattern': {'b': 1}, 'keyValue': {'b': 1}}\n"
+    }
+  ],
+  "expected_tests": 5,
+  "failures": [
+    {
+      "test": "test_semantic_search_eligibility_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_eligibility_matches_real_mongodb) (engine='memory', case='semantic_search_eligibility')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[3056 chars]00'), (<class 'str'>, b'\\x12\\x00\\x00\\x00\\x02va[5471 chars]))))) != ('doc[3056 chars]00'),))), (<class 'str'>, 'array_literal', ('a[5396 chars])))))\n\nFirst differing element 1:\n((<cl[3043 chars]00'), (<class 'str'>, b'\\x12\\x00\\x00\\x00\\x02va[5470 chars])))))\n((<cl[3043 chars]00'),))), (<class 'str'>, 'array_literal', ('a[5395 chars])))))\n\nDiff is 9973 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_search_eligibility_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_eligibility_matches_real_mongodb) (engine='sqlite', case='semantic_search_eligibility')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[3056 chars]00'), (<class 'str'>, b'\\x12\\x00\\x00\\x00\\x02va[5471 chars]))))) != ('doc[3056 chars]00'),))), (<class 'str'>, 'array_literal', ('a[5396 chars])))))\n\nFirst differing element 1:\n((<cl[3043 chars]00'), (<class 'str'>, b'\\x12\\x00\\x00\\x00\\x02va[5470 chars])))))\n((<cl[3043 chars]00'),))), (<class 'str'>, 'array_literal', ('a[5395 chars])))))\n\nDiff is 9973 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_search_post_lookup_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_post_lookup_matches_real_mongodb) (engine='memory', case='semantic_search_post_lookup')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[94 chars]00\\x01\\x00\\x00\\x00\\x00'), (<class 'int'>, b'\\x[517 chars]))))) != ('doc[94 chars]00\\x02\\x00\\x00\\x00\\x00'),))), (<class 'str'>, [447 chars])))))\n\nFirst differing element 1:\n((<cl[81 chars]00\\x01\\x00\\x00\\x00\\x00'), (<class 'int'>, b'\\x[516 chars])))))\n((<cl[81 chars]00\\x02\\x00\\x00\\x00\\x00'),))), (<class 'str'>, [446 chars])))))\n\nDiff is 1541 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_search_post_lookup_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_post_lookup_matches_real_mongodb) (engine='sqlite', case='semantic_search_post_lookup')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[94 chars]00\\x01\\x00\\x00\\x00\\x00'), (<class 'int'>, b'\\x[517 chars]))))) != ('doc[94 chars]00\\x02\\x00\\x00\\x00\\x00'),))), (<class 'str'>, [447 chars])))))\n\nFirst differing element 1:\n((<cl[81 chars]00\\x01\\x00\\x00\\x00\\x00'), (<class 'int'>, b'\\x[516 chars])))))\n((<cl[81 chars]00\\x02\\x00\\x00\\x00\\x00'),))), (<class 'str'>, [446 chars])))))\n\nDiff is 1541 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_search_traversal_controls_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_traversal_controls_matches_real_mongodb) (engine='memory', case='semantic_search_traversal_controls')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[14037 chars]0\\x00m\\x00\\x00'),))), (<class 'str'>, 'count',[73802 chars]))))) != ('doc[14037 chars]0\\x00g\\x00\\x00'), (<class 'str'>, b'\\x12\\x00\\x[75660 chars])))))\n\nFirst differing element 1:\n((<cl[14024 chars]0\\x00m\\x00\\x00'),))), (<class 'str'>, 'count',[73801 chars])))))\n((<cl[14024 chars]0\\x00g\\x00\\x00'), (<class 'str'>, b'\\x12\\x00\\x[75659 chars])))))\n\nDiff is 201095 characters long. Set self.maxDiff to None to see it.\n"
+    },
+    {
+      "test": "test_semantic_search_traversal_controls_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_semantic_search_traversal_controls_matches_real_mongodb) (engine='sqlite', case='semantic_search_traversal_controls')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/uve/Proyectos/mongoeco/tests/differential/_real_parity_base.py\", line 114, in _assert_matches_real_case\n    self.assertEqual(_normalize(eco_result), _normalize(real_result))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('doc[14037 chars]0\\x00m\\x00\\x00'),))), (<class 'str'>, 'count',[73802 chars]))))) != ('doc[14037 chars]0\\x00g\\x00\\x00'), (<class 'str'>, b'\\x12\\x00\\x[75660 chars])))))\n\nFirst differing element 1:\n((<cl[14024 chars]0\\x00m\\x00\\x00'),))), (<class 'str'>, 'count',[73801 chars])))))\n((<cl[14024 chars]0\\x00g\\x00\\x00'), (<class 'str'>, b'\\x12\\x00\\x[75659 chars])))))\n\nDiff is 201095 characters long. Set self.maxDiff to None to see it.\n"
+    }
+  ],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "distarch": "arm64",
+        "distmod": "",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "javascriptEngine": "mozjs-wasm",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysinfo": "deprecated",
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": false,
+  "target": "9.0",
+  "tests_run": 5
+}

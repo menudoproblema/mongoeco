@@ -1,0 +1,3669 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "8.0",
+  "cases": {
+    "semantic_search_candidate_mutations": {
+      "before": [
+        "b"
+      ],
+      "array": [
+        "a"
+      ],
+      "insert": [
+        "b",
+        "q"
+      ],
+      "delete": [
+        "q"
+      ],
+      "recovery": {
+        "$numberInt": "15"
+      }
+    },
+    "semantic_search_eligibility": {
+      "scalar_large": [
+        "b"
+      ],
+      "scalar_equal": [
+        "a"
+      ],
+      "scalar_in": [
+        "a"
+      ],
+      "large": [
+        "b"
+      ],
+      "array_range": [
+        "c",
+        "d",
+        "g"
+      ],
+      "array_and": [
+        "c",
+        "d",
+        "g"
+      ],
+      "null": [
+        "e",
+        "f",
+        "p"
+      ],
+      "in_null": [
+        "d",
+        "e",
+        "f",
+        "g",
+        "p"
+      ],
+      "not_null": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o"
+      ],
+      "broadcast": [
+        "g",
+        "p"
+      ],
+      "position": [
+        "g"
+      ],
+      "array_literal": [
+        "g",
+        "o"
+      ],
+      "decimal_bound": [
+        "m"
+      ],
+      "boolean": [
+        "j"
+      ],
+      "string": [
+        "k"
+      ],
+      "exists": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p"
+      ],
+      "absent": [
+        "e"
+      ],
+      "or": [
+        "b",
+        "e",
+        "f",
+        "p"
+      ],
+      "nor": [
+        "a",
+        "c",
+        "d",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o"
+      ],
+      "partial_and": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o"
+      ],
+      "or_partial": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p"
+      ]
+    },
+    "semantic_search_post_lookup": {
+      "exists_ne": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "ne": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "null": [
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "elem": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ]
+    },
+    "semantic_search_traversal_controls": {
+      "a_eq": {
+        "ids": [
+          "a",
+          "i"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "a",
+          "i"
+        ]
+      },
+      "a_array": {
+        "ids": [
+          "a",
+          "b"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "a",
+          "b"
+        ]
+      },
+      "a_null": {
+        "ids": [
+          "g",
+          "m"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "g",
+          "m"
+        ]
+      },
+      "a_ne_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "13"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "n",
+          "o"
+        ]
+      },
+      "a_in": {
+        "ids": [
+          "a",
+          "i"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "a",
+          "i"
+        ]
+      },
+      "a_in_null": {
+        "ids": [
+          "g",
+          "m"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "g",
+          "m"
+        ]
+      },
+      "a_nin_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "13"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "n",
+          "o"
+        ]
+      },
+      "a_gt": {
+        "ids": [
+          "a",
+          "i"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "a",
+          "i"
+        ]
+      },
+      "a_gte_null": {
+        "ids": [
+          "g",
+          "m"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "g",
+          "m"
+        ]
+      },
+      "a_type_int": {
+        "ids": [
+          "a",
+          "i",
+          "k"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "a",
+          "i",
+          "k"
+        ]
+      },
+      "a_type_array": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "h",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "h",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a_exists": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "14"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a_absent": {
+        "ids": [
+          "g"
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "aggregate": [
+          "g"
+        ]
+      },
+      "a_all": {
+        "ids": [
+          "a",
+          "i"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "a",
+          "i"
+        ]
+      },
+      "a_all_null": {
+        "ids": [
+          "g",
+          "m"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "g",
+          "m"
+        ]
+      },
+      "a_all_array": {
+        "ids": [
+          "a",
+          "b"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "a",
+          "b"
+        ]
+      },
+      "a_all_elem": {
+        "ids": [
+          "a"
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "aggregate": [
+          "a"
+        ]
+      },
+      "a_size": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "o"
+        ]
+      },
+      "a_elem_match": {
+        "ids": [
+          "a"
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "aggregate": [
+          "a"
+        ]
+      },
+      "a_bits": {
+        "ids": [
+          "a",
+          "i"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "a",
+          "i"
+        ]
+      },
+      "a.x_eq": {
+        "ids": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.x_array": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.x_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ]
+      },
+      "a.x_ne_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "k",
+          "l",
+          "m"
+        ],
+        "count": {
+          "$numberInt": "7"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "k",
+          "l",
+          "m"
+        ]
+      },
+      "a.x_in": {
+        "ids": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.x_in_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ]
+      },
+      "a.x_nin_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "k",
+          "l",
+          "m"
+        ],
+        "count": {
+          "$numberInt": "7"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "k",
+          "l",
+          "m"
+        ]
+      },
+      "a.x_gt": {
+        "ids": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.x_gte_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ]
+      },
+      "a.x_type_int": {
+        "ids": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.x_type_array": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.x_exists": {
+        "ids": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.x_absent": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "g",
+          "h",
+          "i",
+          "j",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "g",
+          "h",
+          "i",
+          "j",
+          "o"
+        ]
+      },
+      "a.x_all": {
+        "ids": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.x_all_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "n",
+          "o"
+        ]
+      },
+      "a.x_all_array": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.x_all_elem": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.x_size": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.x_elem_match": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.x_bits": {
+        "ids": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0_eq": {
+        "ids": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ]
+      },
+      "a.0_array": {
+        "ids": [
+          "b",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "b",
+          "o"
+        ]
+      },
+      "a.0_null": {
+        "ids": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0_ne_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "f",
+          "h",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "7"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "f",
+          "h",
+          "o"
+        ]
+      },
+      "a.0_in": {
+        "ids": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ]
+      },
+      "a.0_in_null": {
+        "ids": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0_nin_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "f",
+          "h",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "7"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "f",
+          "h",
+          "o"
+        ]
+      },
+      "a.0_gt": {
+        "ids": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ]
+      },
+      "a.0_gte_null": {
+        "ids": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0_type_int": {
+        "ids": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "k",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "6"
+        },
+        "aggregate": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "k",
+          "o"
+        ]
+      },
+      "a.0_type_array": {
+        "ids": [
+          "b",
+          "c",
+          "l",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "b",
+          "c",
+          "l",
+          "o"
+        ]
+      },
+      "a.0_exists": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a.0_absent": {
+        "ids": [
+          "g",
+          "h",
+          "i",
+          "j"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "g",
+          "h",
+          "i",
+          "j"
+        ]
+      },
+      "a.0_all": {
+        "ids": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ]
+      },
+      "a.0_all_null": {
+        "ids": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "8"
+        },
+        "aggregate": [
+          "e",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0_all_array": {
+        "ids": [
+          "b",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "b",
+          "o"
+        ]
+      },
+      "a.0_all_elem": {
+        "ids": [
+          "b",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "b",
+          "o"
+        ]
+      },
+      "a.0_size": {
+        "ids": [
+          "b",
+          "c",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "b",
+          "c",
+          "o"
+        ]
+      },
+      "a.0_elem_match": {
+        "ids": [
+          "b",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "b",
+          "o"
+        ]
+      },
+      "a.0_bits": {
+        "ids": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ]
+      },
+      "a.0.0_eq": {
+        "ids": [
+          "b",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "b",
+          "d",
+          "o"
+        ]
+      },
+      "a.0.0_array": {
+        "ids": [
+          "c",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "c",
+          "o"
+        ]
+      },
+      "a.0.0_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "10"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0.0_ne_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "o"
+        ]
+      },
+      "a.0.0_in": {
+        "ids": [
+          "b",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "b",
+          "d",
+          "o"
+        ]
+      },
+      "a.0.0_in_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "10"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0.0_nin_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "5"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "h",
+          "o"
+        ]
+      },
+      "a.0.0_gt": {
+        "ids": [
+          "b",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "b",
+          "d",
+          "o"
+        ]
+      },
+      "a.0.0_gte_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "10"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0.0_type_int": {
+        "ids": [
+          "b",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "b",
+          "d",
+          "o"
+        ]
+      },
+      "a.0.0_type_array": {
+        "ids": [
+          "c",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "c",
+          "o"
+        ]
+      },
+      "a.0.0_exists": {
+        "ids": [
+          "b",
+          "c",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "b",
+          "c",
+          "d",
+          "o"
+        ]
+      },
+      "a.0.0_absent": {
+        "ids": [
+          "a",
+          "e",
+          "f",
+          "g",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "a",
+          "e",
+          "f",
+          "g",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0.0_all": {
+        "ids": [
+          "b",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "b",
+          "d",
+          "o"
+        ]
+      },
+      "a.0.0_all_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ],
+        "count": {
+          "$numberInt": "10"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n"
+        ]
+      },
+      "a.0.0_all_array": {
+        "ids": [
+          "c",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "c",
+          "o"
+        ]
+      },
+      "a.0.0_all_elem": {
+        "ids": [
+          "c",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "c",
+          "o"
+        ]
+      },
+      "a.0.0_size": {
+        "ids": [
+          "c",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "c",
+          "o"
+        ]
+      },
+      "a.0.0_elem_match": {
+        "ids": [
+          "c",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "aggregate": [
+          "c",
+          "o"
+        ]
+      },
+      "a.0.0_bits": {
+        "ids": [
+          "b",
+          "d",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "3"
+        },
+        "aggregate": [
+          "b",
+          "d",
+          "o"
+        ]
+      },
+      "a.00_eq": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_array": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a.00_ne_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "h"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "h"
+        ]
+      },
+      "a.00_in": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_in_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a.00_nin_null": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "h"
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "h"
+        ]
+      },
+      "a.00_gt": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_gte_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a.00_type_int": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_type_array": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_exists": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_absent": {
+        "ids": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "g",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "15"
+        },
+        "aggregate": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "g",
+          "h",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a.00_all": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_all_null": {
+        "ids": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ],
+        "count": {
+          "$numberInt": "11"
+        },
+        "aggregate": [
+          "d",
+          "e",
+          "f",
+          "g",
+          "i",
+          "j",
+          "k",
+          "l",
+          "m",
+          "n",
+          "o"
+        ]
+      },
+      "a.00_all_array": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_all_elem": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_size": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_elem_match": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "a.00_bits": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "aggregate": []
+      },
+      "selection_write": {
+        "matched": {
+          "$numberInt": "5"
+        },
+        "ids": [
+          "a",
+          "d",
+          "e",
+          "f",
+          "o"
+        ],
+        "recovery": {
+          "$numberInt": "15"
+        }
+      }
+    },
+    "semantic_search_traversal_partial_indexes": {
+      "before": [
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "hint": [
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "duplicate": {
+        "$numberInt": "11000"
+      },
+      "after": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "recovery": {
+        "$numberInt": "2"
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "8.0.32",
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "modules": [],
+      "allocator": "tcmalloc-google",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "32"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.13 30 Jan 2024",
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2404",
+        "distarch": "aarch64",
+        "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_search_eligibility_cases.py",
+    "sha256": "7145dc539a6e9e33c578c84b226b10ee7b3fdff212b3aeef769fdd2edf41f330"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_search_post_lookup",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740992"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740992"
+          }
+        },
+        {
+          "_id": "b",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": "c",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "d",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberInt": "7"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "e",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "f",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": null,
+          "a": null,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "g",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "items": [
+            {
+              "x": {
+                "$numberInt": "7"
+              }
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "h",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": {},
+          "a": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "i",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": [],
+          "a": [],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "j",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": true,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "k",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": "z",
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "l",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "m",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "n",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {},
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "o",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "p",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "items": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_search_post_lookup"
+    },
+    {
+      "name": "semantic_search_candidate_mutations",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740992"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740992"
+          }
+        },
+        {
+          "_id": "b",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": "c",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "d",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberInt": "7"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "e",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "f",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": null,
+          "a": null,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "g",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "items": [
+            {
+              "x": {
+                "$numberInt": "7"
+              }
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "h",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": {},
+          "a": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "i",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": [],
+          "a": [],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "j",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": true,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "k",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": "z",
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "l",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "m",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "n",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {},
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "o",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "p",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "items": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_search_candidate_mutations"
+    },
+    {
+      "name": "semantic_search_traversal_partial_indexes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740992"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740992"
+          }
+        },
+        {
+          "_id": "b",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": "c",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "d",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberInt": "7"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "e",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "f",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": null,
+          "a": null,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "g",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "items": [
+            {
+              "x": {
+                "$numberInt": "7"
+              }
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "h",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": {},
+          "a": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "i",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": [],
+          "a": [],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "j",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": true,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "k",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": "z",
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "l",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "m",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "n",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {},
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "o",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "p",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "items": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_search_traversal_partial_indexes"
+    },
+    {
+      "name": "semantic_search_traversal_controls",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740992"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740992"
+          }
+        },
+        {
+          "_id": "b",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": "c",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "d",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberInt": "7"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "e",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "f",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": null,
+          "a": null,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "g",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "items": [
+            {
+              "x": {
+                "$numberInt": "7"
+              }
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "h",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": {},
+          "a": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "i",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": [],
+          "a": [],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "j",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": true,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "k",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": "z",
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "l",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "m",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "n",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {},
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "o",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "p",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "items": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_search_traversal_controls"
+    },
+    {
+      "name": "semantic_search_eligibility",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740992"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740992"
+          }
+        },
+        {
+          "_id": "b",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberLong": "9007199254740993"
+          },
+          "scalar": {
+            "$numberLong": "9007199254740993"
+          }
+        },
+        {
+          "_id": "c",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "20"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "d",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberInt": "7"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "e",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "f",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": null,
+          "a": null,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "g",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "items": [
+            {
+              "x": {
+                "$numberInt": "7"
+              }
+            }
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "h",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": {},
+          "a": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "i",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": [],
+          "a": [],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "j",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": true,
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "k",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": "z",
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "l",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDecimal": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "m",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {
+            "$numberDouble": "0.1"
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "n",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": {},
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "o",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "a": [
+            [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          ],
+          "scalar": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "p",
+          "title": "Ada",
+          "embedding": [
+            {
+              "$numberDouble": "1.0"
+            },
+            {
+              "$numberDouble": "0.0"
+            }
+          ],
+          "kind": "keep",
+          "items": {
+            "x": {
+              "$numberInt": "7"
+            }
+          },
+          "scalar": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_search_eligibility"
+    }
+  ]
+}

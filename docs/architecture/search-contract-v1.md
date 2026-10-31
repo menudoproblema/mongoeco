@@ -14,6 +14,24 @@ La propuesta [search-v2](search-contract-v2-proposal.md) no altera este
 contrato ni esta activa en 4.7. Una futura minor debera ofrecer convivencia
 opt-in antes de que 5.0 pueda retirar aliases v1.
 
+## Conservación de candidatos
+
+Para el universo elegible `U`, los matches semánticos `T` y los candidatos `C`,
+la poda garantiza `T ⊆ C ⊆ U`; declarar `exact=True` exige `C = T`. Una cláusula
+sin representación demostrada no reduce el universo. AND puede aprovechar
+partes seguras; OR necesita todas sus ramas y la negación no complementa un
+superset. Las ventanas y collectors solo se adelantan con una prueba exacta.
+
+Los filtros MQL de vectorSearch y los matches downstream usan el matcher común
+con el contexto de operación. Las claves numéricas escalares son exactas, sin
+convertir enteros a double. Arrays, rutas punteadas y dominios no representados
+conservan el residual; los postings textuales no prueban ausencia/null ni la
+presencia de campos vacíos. Los operadores propios de search-v1 mantienen su
+contrato local (incluidos exists, rangos y facets), sin afirmar paridad Atlas.
+
+Los índices de filtros vectoriales son estado materializado reconstruible bajo
+la versión de colección; estas correcciones no cambian un formato de disco.
+
 ## Frontera de ejecucion
 
 Una operacion Search se compila una vez y cruza el engine como un request

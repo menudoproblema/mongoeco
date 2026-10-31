@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from functools import lru_cache
 from typing import Any
 
+from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
@@ -187,71 +188,58 @@ def get_field_value(doc: Any, path: str) -> tuple[bool, Any]:
     return True, current
 
 
-def extract_all_candidates(doc: Any, field: str) -> list[Any]:
-    parts = split_path(field)
-    if not parts:
-        return []
+class ArrayElementDocument(dict):
+    """Bind an elemMatch operand without implicit traversal of that operand."""
 
-    current_level = [doc]
-    for index, part in enumerate(parts):
-        next_level: list[Any] = []
-        is_digit = part.isdigit()
-        idx = int(part) if is_digit else -1
-        is_last = index == len(parts) - 1
 
-        for item in current_level:
-            if isinstance(item, list):
-                if is_digit:
-                    if 0 <= idx < len(item):
-                        value = item[idx]
-                        if is_last:
-                            if isinstance(value, list):
-                                next_level.extend(value)
-                            else:
-                                next_level.append(value)
-                        elif isinstance(value, list):
-                            next_level.append(value)
-                            next_level.extend(value)
-                        else:
-                            next_level.append(value)
-                else:
-                    for subitem in item:
-                        mapping = path_mapping(subitem)
-                        if mapping is None:
-                            continue
-                        found, value = _mapping_field(mapping, part)
-                        if not found:
-                            continue
-                        if is_last:
-                            if isinstance(value, list):
-                                next_level.extend(value)
-                            else:
-                                next_level.append(value)
-                        elif isinstance(value, list):
-                            next_level.append(value)
-                            next_level.extend(value)
-                        else:
-                            next_level.append(value)
-            else:
-                mapping = path_mapping(item)
-                if mapping is None:
-                    continue
-                found, value = _mapping_field(mapping, part)
-                if not found:
-                    continue
-                if is_last:
-                    if isinstance(value, list):
-                        next_level.extend(value)
-                    else:
-                        next_level.append(value)
-                elif isinstance(value, list):
-                    next_level.append(value)
-                    next_level.extend(value)
-                else:
-                    next_level.append(value)
+_MAX_ARRAY_INDEX_DIGITS = 20
 
-        if not next_level:
-            return []
-        current_level = next_level
 
-    return current_level
+def query_field_values(doc: Any, path: str) -> list[tuple[Any, bool]]:
+    """MQL terminal values and whether a named field permits array traversal.
+
+    Missing object fields yield MISSING. An untraversable array yields no leaf,
+    which is distinct for null/negation. A numeric segment can address both an
+    array position and a numeric object field. Explicit positions are atomic.
+    This traversal is separate from observable/index and update path access.
+    """
+    if isinstance(doc, ArrayElementDocument) and path == "value":
+        return [(doc["value"], False)]
+
+    def walk(value, parts, *, indexed=False):
+        part, *rest = parts
+        if isinstance(value, list):
+            leaves = []
+            canonical_index = part == "0" or (
+                part and part[0] in "123456789" and part.isascii() and part.isdecimal()
+            )
+            if canonical_index and len(part) <= _MAX_ARRAY_INDEX_DIGITS:
+                position = int(part)
+                if position < len(value):
+                    leaves.extend(
+                        walk(value[position], rest, indexed=True)
+                        if rest
+                        else [(value[position], False)]
+                    )
+            for item in value:
+                if path_mapping(item) is not None:
+                    leaves.extend(walk(item, parts))
+            return leaves
+        mapping = path_mapping(value)
+        if mapping is None:
+            return [] if indexed else [(MISSING, False)]
+        if part not in mapping:
+            return [(MISSING, False)]
+        child = mapping[part]
+        return walk(child, rest) if rest else [(child, True)]
+
+    return walk(doc, path.split("."))
+
+
+def query_values(doc: Any, path: str) -> list[Any]:
+    candidates = []
+    for value, traverse in query_field_values(doc, path):
+        candidates.append(value)
+        if traverse and isinstance(value, list):
+            candidates.extend(value)
+    return candidates

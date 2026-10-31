@@ -5,7 +5,8 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_matching import FilteringMatchingMixin
 from mongoeco.core._filtering_specials import FilteringSpecialOperatorsMixin
 from mongoeco.core._filtering_support import (
-    extract_values as _extract_values,
+    extract_values as _observable_extract_values,
+    query_values as _extract_values,
     get_field_value as _get_field_value,
     hashable_in_lookup_key as _hashable_in_lookup_key,
     path_mapping as _path_mapping,
@@ -433,7 +434,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
     @staticmethod
     def extract_values(doc: Any, path: str) -> list[Any]:
         """API publica para resolver valores observables por dot notation."""
-        return QueryEngine._extract_values(doc, path)
+        return _observable_extract_values(doc, path)
 
     @staticmethod
     def _values_equal(

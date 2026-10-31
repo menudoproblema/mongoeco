@@ -4943,7 +4943,7 @@ def _normalize_search_scalar_value(value: object) -> tuple[str, object] | None:
         numeric = float(value)
         if not math.isfinite(numeric):
             return None
-        return "number", numeric
+        return "number", value
     if isinstance(value, datetime.datetime):
         return "datetime", value
     if isinstance(value, datetime.date):

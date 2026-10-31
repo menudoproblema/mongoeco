@@ -82,29 +82,33 @@ class MemorySearchRuntimeTests(unittest.TestCase):
             "non-exact-prefilter",
         )
 
-    def test_matches_vector_postfilter_covers_all_candidateable_paths(self) -> None:
-        self.assertTrue(_matches_vector_postfilter({"_id": 1}, filter_spec=None))
-
+    def test_vector_postfilter_delegates_to_mql_with_its_context(self) -> None:
+        self.assertTrue(_matches_vector_postfilter({}, filter_spec=None))
+        context = OperationContext.create(dialect=MONGODB_DIALECT_70)
         with patch.object(
-            memory_search_runtime_module,
-            "matches_candidateable_filter",
-            return_value=False,
-        ):
+            memory_search_runtime_module.QueryEngine, "match", return_value=False
+        ) as match:
             self.assertFalse(
-                _matches_vector_postfilter({"_id": 1}, filter_spec={"kind": "note"})
+                _matches_vector_postfilter(
+                    {}, filter_spec={"kind": "note"}, operation_context=context
+                )
             )
-
+        match.assert_called_once_with(
+            {},
+            {"kind": "note"},
+            dialect=context.dialect,
+            collation=context.collation,
+            variables=context.expressions,
+        )
         with (
             patch.object(
-                memory_search_runtime_module,
-                "matches_candidateable_filter",
-                return_value=None,
+                memory_search_runtime_module.QueryEngine,
+                "match",
+                side_effect=TypeError("internal failure"),
             ),
-            patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=True),
+            self.assertRaisesRegex(TypeError, "internal failure"),
         ):
-            self.assertTrue(
-                _matches_vector_postfilter({"_id": 1}, filter_spec={"kind": "note"})
-            )
+            _matches_vector_postfilter({}, filter_spec={"kind": "note"})
 
     def test_execute_and_explain_cover_near_compound_and_vector_paths(self) -> None:
         async def _run() -> None:
@@ -294,15 +298,7 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                     )
                 self.assertEqual([doc["_id"] for doc in near_docs], [3])
 
-                def _text_prefilter(document, _spec):
-                    if document["_id"] == 1:
-                        return False
-                    if document["_id"] == 2:
-                        return None
-                    return False
-
                 with (
-                    patch.object(memory_search_runtime_module, "matches_candidateable_filter", side_effect=_text_prefilter),
                     patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=False),
                 ):
                     text_docs = await execute_search_documents(
@@ -334,17 +330,9 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                 )
                 self.assertEqual(missing_path_hits, [])
 
-                def _query_postfilter(document, _spec):
-                    if document["_id"] == 1:
-                        return False
-                    if document["_id"] == 2:
-                        return None
-                    return False
-
                 with (
                     patch.object(memory_search_runtime_module, "candidate_rows_for_vector_filter", side_effect=[(None, None), ([0, 1], {"exact": True})]),
                     patch.object(memory_search_runtime_module, "vector_scores_for_rows", return_value=[(1.0, 0), (0.9, 1)]),
-                    patch.object(memory_search_runtime_module, "matches_candidateable_filter", side_effect=_query_postfilter),
                     patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=False),
                 ):
                     query_postfilter_hits = await execute_search_documents(
@@ -362,17 +350,9 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                     )
                 self.assertEqual(query_postfilter_hits, [])
 
-                def _downstream_postfilter(document, _spec):
-                    if document["_id"] == 1:
-                        return False
-                    if document["_id"] == 2:
-                        return None
-                    return False
-
                 with (
                     patch.object(memory_search_runtime_module, "candidate_rows_for_vector_filter", side_effect=[([0, 1], {"exact": True}), (None, None)]),
                     patch.object(memory_search_runtime_module, "vector_scores_for_rows", return_value=[(1.0, 0), (0.9, 1)]),
-                    patch.object(memory_search_runtime_module, "matches_candidateable_filter", side_effect=_downstream_postfilter),
                     patch.object(memory_search_runtime_module.QueryEngine, "match", return_value=False),
                 ):
                     downstream_postfilter_hits = await execute_search_documents(
@@ -450,8 +430,8 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                         side_effect=[[(1.0, 0), (0.9, 1)], [(1.0, 0), (0.9, 1)]],
                     ),
                     patch.object(
-                        memory_search_runtime_module,
-                        "matches_candidateable_filter",
+                        memory_search_runtime_module.QueryEngine,
+                        "match",
                         side_effect=[False, True, False],
                     ),
                 ):

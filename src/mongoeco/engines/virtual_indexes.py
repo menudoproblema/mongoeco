@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_scalars import _is_nan_numeric_value, unwrap_bson_numeric
 from mongoeco.core.collation import (
     CollationSpec,
@@ -429,8 +430,8 @@ def _same_field_ordering_implies(
     query_plan: QueryNode,
     field: str,
     *,
-    minimum: object | None = None,
-    maximum: object | None = None,
+    minimum: object = MISSING,
+    maximum: object = MISSING,
     inclusive: bool,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
@@ -470,7 +471,7 @@ def _same_field_ordering_implies(
         if isinstance(query_plan, comparison_type):
             if query_plan.field != field:
                 return False
-            if kind == "min" and minimum is not None:
+            if kind == "min" and minimum is not MISSING:
                 return _compare_bounds(
                     query_plan.value,
                     minimum,
@@ -479,7 +480,7 @@ def _same_field_ordering_implies(
                     dialect=dialect,
                     collation=collation,
                 )
-            if kind == "max" and maximum is not None:
+            if kind == "max" and maximum is not MISSING:
                 return _compare_bounds(
                     query_plan.value,
                     maximum,
@@ -524,14 +525,15 @@ def _compare_bounds(
 def _value_satisfies_bounds(
     value: object,
     *,
-    minimum: object | None = None,
-    maximum: object | None = None,
+    minimum: object = MISSING,
+    maximum: object = MISSING,
     inclusive: bool,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> bool:
     return all(
-        bound is None or QueryEngine._comparison_matches_candidate(
+        bound is MISSING
+        or QueryEngine._comparison_matches_candidate(
             value, bound, operator, dialect=dialect, collation=collation
         )
         for bound, operator in (

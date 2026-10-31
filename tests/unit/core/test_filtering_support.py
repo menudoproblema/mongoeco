@@ -4,7 +4,6 @@ import uuid
 
 from mongoeco.core._filtering_support import (
     compile_regex,
-    extract_all_candidates,
     extract_values,
     get_field_value,
     hashable_in_lookup_key,
@@ -69,20 +68,8 @@ class FilteringSupportTests(unittest.TestCase):
         self.assertEqual(get_field_value(document, "items.1.tags.0"), (True, "c"))
         self.assertEqual(get_field_value(document, "items.tags"), (False, None))
 
-        self.assertEqual(extract_all_candidates(document, "authors.tenant"), ["t2", "t2"])
-        self.assertEqual(extract_all_candidates(document, "items.tags"), ["a", "b", "c", "a", "b", "c"])
-        self.assertEqual(extract_all_candidates(document, ""), [])
 
     def test_filtering_support_helpers_cover_mapping_redirect_and_array_candidate_paths(self):
         ref = DBRef("users", "ada", extras={"tags": ["eu", "admin"]})
         self.assertEqual(extract_values(ref, "tags"), [["eu", "admin"], "eu", "admin"])
         self.assertEqual(get_field_value(ref, "$id"), (True, "ada"))
-
-        document = {"items": [[{"name": "Ada"}], []], "tags": [["a", "b"]]}
-        self.assertEqual(extract_all_candidates(document, "items.0.name"), ["Ada", "Ada", "Ada"])
-        self.assertEqual(extract_all_candidates(document, "tags.0"), ["a", "b", "a"])
-
-    def test_extract_all_candidates_covers_non_last_scalar_values_inside_lists(self):
-        document = {"items": [{"profile": {"name": "Ada"}}, {"profile": {"name": "Grace"}}]}
-
-        self.assertEqual(extract_all_candidates(document, "items.profile.name"), ["Ada", "Grace", "Ada", "Grace"])

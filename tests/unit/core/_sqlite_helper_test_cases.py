@@ -1,6 +1,5 @@
 import asyncio
 import ast
-import datetime
 import json
 from pathlib import Path
 import sqlite3
@@ -329,9 +328,10 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             state,
             filter_spec={"kind": {"$in": ["keep"]}, "tags": "b"},
         )
-        self.assertEqual(in_keys, ["1"])
-        self.assertEqual(in_description["supportedOperators"], ["$in", "eq"])
-        self.assertEqual(in_description["supportedClauseCount"], 2)
+        self.assertEqual(in_keys, ["1", "3"])
+        self.assertFalse(in_description["exact"])
+        self.assertEqual(in_description["supportedOperators"], ["$in"])
+        self.assertEqual(in_description["supportedClauseCount"], 1)
 
         exists_keys, exists_description = (
             vector_backend.vector_filter_candidate_storage_keys(
@@ -339,8 +339,8 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 filter_spec={"meta.rank": {"$exists": True}},
             )
         )
-        self.assertEqual(exists_keys, ["1"])
-        self.assertTrue(exists_description["exact"])
+        self.assertIsNone(exists_keys)
+        self.assertFalse(exists_description["exact"])
 
         missing_keys, missing_description = (
             vector_backend.vector_filter_candidate_storage_keys(
@@ -348,8 +348,8 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 filter_spec={"meta.rank": {"$exists": False}},
             )
         )
-        self.assertEqual(missing_keys, ["2", "3"])
-        self.assertTrue(missing_description["exact"])
+        self.assertIsNone(missing_keys)
+        self.assertFalse(missing_description["exact"])
 
         unsupported_keys, unsupported_description = (
             vector_backend.vector_filter_candidate_storage_keys(
@@ -365,9 +365,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             state,
             filter_spec={"$or": [{"kind": "drop"}, {"meta.rank": {"$exists": True}}]},
         )
-        self.assertEqual(or_keys, ["1", "2"])
+        self.assertIsNone(or_keys)
         self.assertEqual(or_description["booleanShape"], "$or")
-        self.assertTrue(or_description["exact"])
+        self.assertFalse(or_description["exact"])
 
         partial_and_keys, partial_and_description = (
             vector_backend.vector_filter_candidate_storage_keys(
@@ -395,11 +395,11 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 filter_spec={"meta.rank": {"$gte": 1, "$lt": 2}},
             )
         )
-        self.assertEqual(range_keys, ["1"])
-        self.assertTrue(range_description["candidateable"])
-        self.assertTrue(range_description["exact"])
-        self.assertEqual(range_description["supportedOperators"], ["range"])
-        self.assertEqual(range_description["supportedPaths"], ["meta.rank"])
+        self.assertIsNone(range_keys)
+        self.assertFalse(range_description["candidateable"])
+        self.assertFalse(range_description["exact"])
+        self.assertEqual(range_description["supportedOperators"], [])
+        self.assertEqual(range_description["supportedPaths"], [])
 
     def test_sqlite_search_runtime_exact_should_score_prefilter_and_vector_prefilter_helpers(
         self,
@@ -549,10 +549,10 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                             should_candidates=should_candidates,
                         )
                     )
-                    self.assertEqual(pruned_keys, [engine._storage_key(1)])
                     self.assertEqual(
-                        topk_prefilter["strategy"], "exact-should-score-tier"
+                        pruned_keys, [engine._storage_key(1), engine._storage_key(2)]
                     )
+                    self.assertIsNone(topk_prefilter)
 
                     ranking_query = search_runtime_module.compile_search_stage(
                         "$search",
@@ -599,18 +599,13 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         definition=text_definition,
                         query=ranking_query,
                     )
-                    ranking_pruned_keys, ranking_cutoff = (
+                    self.assertIsNone(
                         search_runtime_module._prune_candidate_storage_keys_with_candidateable_ranking(
                             ranking_candidates,
                             ranking_should_candidates or [],
                             result_limit_hint=1,
                         )
                     )
-                    self.assertEqual(
-                        ranking_pruned_keys,
-                        [engine._storage_key(1), engine._storage_key(2)],
-                    )
-                    self.assertEqual(ranking_cutoff, 1)
 
                     entries_by_key = (
                         search_runtime_module._load_search_entries_by_storage_key(
@@ -768,23 +763,16 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         )
                     )
                     self.assertEqual(downstream_or_description["booleanShape"], "$or")
-                    self.assertTrue(downstream_or_description["candidateable"])
-                    self.assertTrue(downstream_or_description["exact"])
+                    self.assertFalse(downstream_or_description["candidateable"])
+                    self.assertFalse(downstream_or_description["exact"])
                     self.assertEqual(
-                        downstream_or_description["supportedClauseCount"], 2
+                        downstream_or_description["supportedClauseCount"], 1
                     )
                     self.assertEqual(
                         downstream_or_description["supportedOperators"],
-                        ["eq", "$exists"],
+                        ["eq"],
                     )
-                    self.assertEqual(
-                        downstream_or_keys,
-                        [
-                            engine._storage_key(1),
-                            engine._storage_key(2),
-                            engine._storage_key(3),
-                        ],
-                    )
+                    self.assertIsNone(downstream_or_keys)
 
                     downstream_partial_and_keys, downstream_partial_and_description = (
                         search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
@@ -1052,8 +1040,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     self.assertTrue(autocomplete_keys)
                     self.assertEqual(wildcard_backend, "fts5-glob")
                     self.assertTrue(wildcard_exact)
-                    self.assertEqual(exists_backend, "fts5-path")
-                    self.assertTrue(exists_exact)
+                    self.assertIsNone(exists_backend)
+                    self.assertIsNone(exists_keys)
+                    self.assertFalse(exists_exact)
                     self.assertEqual(
                         search_runtime_module._sqlite_candidate_storage_keys_for_query(
                             engine,
@@ -1207,7 +1196,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                             clause=7,
                             field_types={"score": "number"},
                         ),
-                        (None, "eq"),
+                        (None, "eq", False),
                     )
                     self.assertEqual(
                         search_runtime_module._candidate_storage_keys_for_downstream_clause(
@@ -1218,7 +1207,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                             clause="Ada algorithms",
                             field_types={"title": "string"},
                         ),
-                        (None, "eq"),
+                        (None, "eq", False),
                     )
 
                     direct_docs = search_runtime_module.execute_sqlite_search_query(
@@ -1569,7 +1558,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         )
                     )
                     self.assertEqual(downstream_keys, [engine._storage_key(1)])
-                    self.assertTrue(downstream_description["exact"])
+                    self.assertFalse(downstream_description["exact"])
                     self.assertEqual(
                         set(downstream_description["supportedOperators"]), {"eq", "$in"}
                     )
@@ -1585,7 +1574,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         described["clauseClasses"]["should"],
-                        ["candidateable-exact", "candidateable-exact"],
+                        ["candidateable-ranking", "candidateable-exact"],
                     )
                     self.assertTrue(described["partialRanking"]["supported"])
                     self.assertEqual(
@@ -1615,7 +1604,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(compound_keys, [engine._storage_key(1)])
                     self.assertEqual(backend, "fts5-prefilter")
-                    self.assertTrue(exact)
+                    self.assertFalse(exact)
                     self.assertEqual(non_candidateable, 0)
                     self.assertEqual(len(should_candidates), 2)
 
@@ -1841,18 +1830,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 }
             },
             exists_filter_index={"score": ("a", "b", "c", "d")},
+            unrepresented_filter_paths=frozenset(),
         )
 
-        self.assertEqual(
-            vector_backend._collect_filterable_values({"": 1, "score": [1, "x"]}),
-            [("score", {("number", 1.0), ("string", "x")})],
-        )
-        self.assertEqual(
-            vector_backend._collect_filterable_values([], prefix="items"),
-            [("items", set())],
-        )
-        self.assertEqual(vector_backend._filter_value_key(True), ("bool", True))
-        self.assertIsNone(vector_backend._filter_value_key(float("inf")))
         scalar_filter_index: dict[str, dict[tuple[str, object], list[str]]] = {}
         exists_filter_index: dict[str, list[str]] = {}
         vector_backend._index_filterable_document(
@@ -1863,61 +1843,6 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         )
         self.assertEqual(exists_filter_index["items"], ["empty"])
         self.assertEqual(scalar_filter_index, {})
-        self.assertIsNone(
-            vector_backend._candidate_storage_keys_for_range_clause(
-                state,  # type: ignore[arg-type]
-                path="score",
-                clause={"$gt": "x"},
-            )
-        )
-        self.assertIsNone(
-            vector_backend._candidate_storage_keys_for_range_clause(
-                state,  # type: ignore[arg-type]
-                path="score",
-                clause={"$gt": 1, "$regex": "bad"},
-            )
-        )
-        self.assertEqual(
-            vector_backend._candidate_storage_keys_for_range_clause(
-                state,  # type: ignore[arg-type]
-                path="score",
-                clause={"$gt": 1, "$lte": 2},
-            ),
-            {"b"},
-        )
-        self.assertIsNone(
-            vector_backend._candidate_storage_keys_for_range_clause(
-                state,  # type: ignore[arg-type]
-                path="score",
-                clause={"$gt": 1, "$lte": datetime.datetime.now(datetime.timezone.utc)},
-            )
-        )
-        self.assertEqual(
-            vector_backend._candidate_storage_keys_for_range_clause(
-                state,  # type: ignore[arg-type]
-                path="missing",
-                clause={"$gt": 1},
-            ),
-            set(),
-        )
-        self.assertFalse(
-            vector_backend._value_key_matches_range(
-                ("number", 2.0),
-                {"$gt": ("number", 2.0)},
-            )
-        )
-        self.assertTrue(
-            vector_backend._value_key_matches_range(
-                ("number", 2.0),
-                {"$gte": ("number", 2.0), "$lte": ("number", 2.0)},
-            )
-        )
-        self.assertTrue(
-            vector_backend._value_key_matches_range(
-                ("number", 2.0),
-                {"$gte": 2, "$lte": 2},
-            )
-        )
         self.assertEqual(
             vector_backend._candidate_storage_keys_for_filter_clause(
                 state,  # type: ignore[arg-type]
@@ -1925,7 +1850,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 clause={"$in": [object()]},
                 all_storage_keys={"a", "b", "c", "d"},
             ),
-            (None, "$in"),
+            (None, "$in", False),
         )
         self.assertIsNone(
             vector_backend._candidate_storage_keys_for_filter_node(

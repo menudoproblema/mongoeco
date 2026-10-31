@@ -76,7 +76,6 @@ from mongoeco.core.search import (
 from mongoeco.core.search_filter_prefilter import (
     collect_filterable_values as _shared_collect_filterable_values,
     filter_value_key as _shared_filter_value_key,
-    matches_candidateable_filter as _shared_matches_candidateable_filter,
     value_key_matches_range as _shared_value_key_matches_range,
 )
 from mongoeco.core.search_models import (
@@ -431,12 +430,6 @@ def _candidate_positions_for_vector_filter(
         candidate_positions=candidate_positions,
     )
 
-
-def _matches_candidateable_filter(
-    document: Document,
-    filter_spec: dict[str, object],
-) -> bool | None:
-    return _shared_matches_candidateable_filter(document, filter_spec)
 
 
 def _vector_scores_for_positions(

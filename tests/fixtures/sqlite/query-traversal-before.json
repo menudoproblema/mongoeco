@@ -1,0 +1,7 @@
+{
+  "base": "23be20d",
+  "fixture_sha256": "15b0337095f6c9be06eccd4afa1b1143b2854bddf3ede7143f0de1e4c350377c",
+  "source_path": "/tmp/mongoeco-predicate-c04-baseline/src/mongoeco/core/_filtering_support.py",
+  "source_sha256": "f159c5adf138ca13e6f3426641faa5612e918d95e05eb23ba48fcbd5997a6afc",
+  "scope": "Legacy partial membership omits a document with a missing branch in an array path"
+}

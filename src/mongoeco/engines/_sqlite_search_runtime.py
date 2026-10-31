@@ -644,7 +644,11 @@ def _sqlite_leaf_candidate_storage_keys(
         | SearchExistsQuery
     ),
     limit: int | None = None,
-) -> tuple[list[str], str, bool]:
+) -> tuple[list[str] | None, str | None, bool]:
+    if isinstance(query, SearchExistsQuery):
+        # Text postings omit null, empty arrays and objects, but search-v1 exists
+        # is field presence. No subset of those postings proves a safe candidate.
+        return None, None, False
     sql: str
     params: list[object]
     if isinstance(query, SearchAutocompleteQuery) and query.fuzzy_max_edits > 0:
@@ -980,12 +984,14 @@ def _candidate_storage_keys_for_downstream_clause(
     path: str,
     clause: object,
     field_types: dict[str, str],
-) -> tuple[list[str] | None, str]:
+) -> tuple[list[str] | None, str, bool]:
+    if "." in path:
+        return None, "eq", False
     mapping_type = field_types.get(path)
     if mapping_type not in {"string", "autocomplete", "token"}:
-        return None, "eq"
+        return None, "eq", False
     if engine is None or conn is None or physical_name is None:
-        return None, "eq"
+        return None, "eq", False
     sql: str
     params: list[object]
     if isinstance(clause, str):
@@ -1002,7 +1008,7 @@ def _candidate_storage_keys_for_downstream_clause(
     ):
         values = [item for item in clause["$in"] if isinstance(item, str)]
         if not values or len(values) != len(clause["$in"]):
-            return None, "$in"
+            return None, "$in", False
         placeholders = ", ".join("?" for _ in values)
         sql = (
             f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
@@ -1010,18 +1016,13 @@ def _candidate_storage_keys_for_downstream_clause(
         )
         params = [path, *values]
         operator_name = "$in"
-    elif isinstance(clause, dict) and clause == {"$exists": True}:
-        sql = (
-            f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
-            "WHERE field_path = ?"
-        )
-        params = [path]
-        operator_name = "$exists"
     else:
-        return None, "eq"
-    return [
-        row[0] for row in conn.execute(sql, tuple(params)).fetchall()
-    ], operator_name
+        return None, "eq", False
+    return (
+        [row[0] for row in conn.execute(sql, tuple(params)).fetchall()],
+        operator_name,
+        False,
+    )
 
 
 def _describe_compound_prefilter_sync(

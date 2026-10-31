@@ -10,6 +10,14 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Preserve exact numeric Search filter keys and use the common MQL residual
+  before ranking, windows, collectors and writeback. Candidate plans decline
+  unrepresented arrays/paths and unsafe complements instead of dropping matches.
+  Preserve Search-v1 integer ranges/facets and field-presence semantics in SQLite.
+  Unify query traversal for numeric positions, missing branches, elemMatch,
+  all/size/bits and post-lookup filters; distinguish null partial-index bounds
+  from unspecified bounds.
+
 - Share JSON Schema equality, numeric bounds and collection validation decisions;
   enforce enum/uniqueItems, exclusivity, multipleOf and additional-property schemas.
   Validate schema definitions before rows and render failures from recorded issues.

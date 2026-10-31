@@ -1921,7 +1921,9 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             collection_resolver=foreign.get,
         )
 
-        self.assertEqual(result, [{'_id': 'pk_task_soft'}])
+        # A missing branch makes $ne:null false, even with another non-null branch.
+        # The physical post-lookup differential covers this same query context.
+        self.assertEqual(result, [])
 
     def test_pipeline_supports_lookup_with_dotted_variable_paths(self):
         documents = [

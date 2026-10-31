@@ -394,22 +394,6 @@ class FilteringHelperTests(unittest.TestCase):
         self.assertTrue(QueryEngine.match(document, {"a.b.c": 3}))
         self.assertFalse(QueryEngine.match(document, {"a.b.c": 99}))
 
-    def test_extract_all_candidates_covers_empty_and_indexed_nested_list_paths(self):
-        document = {
-            "items": [[1, 2], [3, 4]],
-            "nested": [{"tags": ["a", "b"]}, {"tags": ["c"]}],
-            "groups": [[{"scores": [1, 2]}], [{"scores": [3]}]],
-        }
-
-        self.assertEqual(QueryEngine._extract_all_candidates(document, ""), [])
-        self.assertEqual(QueryEngine._extract_all_candidates(document, "items"), [[1, 2], [3, 4]])
-        self.assertEqual(QueryEngine._extract_all_candidates(document, "items.0"), [1, 2, 1, 3])
-        self.assertEqual(QueryEngine._extract_all_candidates(document, "items.1"), [3, 4, 2, 4])
-        self.assertEqual(QueryEngine._extract_all_candidates(document, "nested.tags"), ["a", "b", "c", "a", "b", "c"])
-        self.assertEqual(QueryEngine._extract_all_candidates(document, "nested.0.tags"), ["a", "b"])
-        self.assertEqual(QueryEngine._extract_all_candidates(document, "nested.0.tags.1"), ["b"])
-        self.assertEqual(QueryEngine._extract_all_candidates(document, "groups.scores.0"), [1, 3])
-        self.assertEqual(QueryEngine._extract_all_candidates({"profile": {"name": "Ada"}}, "profile.name.first"), [])
 
     def test_comparison_helpers_cover_numeric_fast_paths_and_candidate_expansion(self):
         self.assertTrue(QueryEngine._comparison_matches_candidate(2, 1.0, "gt"))

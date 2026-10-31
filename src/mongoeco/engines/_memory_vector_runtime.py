@@ -12,8 +12,8 @@ from mongoeco.core.search import SearchVectorQuery, vector_field_specs
 from mongoeco.core.search_filter_prefilter import (
     collect_filterable_values,
     evaluate_candidate_filter,
-    filter_value_key,
-    value_key_matches_range,
+    scalar_filter_candidates,
+    unrepresented_filter_paths,
 )
 from mongoeco.engines._vector_query_cache import (
     VectorQueryCache,
@@ -42,6 +42,7 @@ class MaterializedVectorDocument:
 @dataclass(frozen=True, slots=True)
 class MaterializedVectorIndex:
     documents: tuple[MaterializedVectorDocument, ...]
+    unrepresented_filter_paths: frozenset[str]
     vector_paths: tuple[str, ...]
     vector_specs: dict[str, dict[str, object]]
     valid_vector_counts: dict[str, int]
@@ -91,7 +92,9 @@ def build_materialized_vector_index(
     vector_rows: dict[str, list[tuple[float, ...]]] = {path: [] for path in specs}
     vector_row_positions: dict[str, list[int]] = {path: [] for path in specs}
     materialized_documents: list[MaterializedVectorDocument] = []
+    unrepresented_paths: set[str] = set()
     for position, document in enumerate(documents):
+        unrepresented_paths.update(unrepresented_filter_paths(document))
         vectors_by_path: dict[str, tuple[float, ...]] = {}
         for path, field_spec in specs.items():
             found, value = get_document_value(document, path)
@@ -193,6 +196,7 @@ def build_materialized_vector_index(
     for array in (*matrices.values(), *norms.values()):
         array.flags.writeable = False
     return MaterializedVectorIndex(
+        unrepresented_filter_paths=frozenset(unrepresented_paths),
         documents=tuple(materialized_documents),
         vector_paths=tuple(specs),
         vector_specs=specs,
@@ -633,43 +637,15 @@ def _candidate_positions_for_vector_filter_clause(
     path: str,
     clause: object,
     all_positions: set[int],
-) -> tuple[set[int] | None, str]:
-    if (
-        isinstance(clause, dict)
-        and set(clause) == {"$exists"}
-        and isinstance(clause["$exists"], bool)
-    ):
-        existing = set(vector_index.exists_filter_index.get(path, ()))
-        return (existing if clause["$exists"] else all_positions - existing), "$exists"
-    if (
-        isinstance(clause, dict)
-        and set(clause) == {"$in"}
-        and isinstance(clause["$in"], list)
-    ):
-        matched_positions: set[int] = set()
-        for item in clause["$in"]:
-            value_key = filter_value_key(item)
-            if value_key is None:
-                return None, "$in"
-            matched_positions.update(
-                vector_index.scalar_filter_index.get(path, {}).get(value_key, ())
-            )
-        return matched_positions, "$in"
-    if (
-        isinstance(clause, dict)
-        and clause
-        and set(clause).issubset({"$gt", "$gte", "$lt", "$lte"})
-    ):
-        matched_positions = {
-            position
-            for position, value_key in vector_index.scalar_values_by_path.get(path, ())
-            if value_key_matches_range(value_key, clause)
-        }
-        return matched_positions, "range"
-    value_key = filter_value_key(clause)
-    if value_key is None:
-        return None, "eq"
-    return set(vector_index.scalar_filter_index.get(path, {}).get(value_key, ())), "eq"
+) -> tuple[set[int] | None, str, bool]:
+    return scalar_filter_candidates(
+        path,
+        clause,
+        all_candidates=all_positions,
+        exists_index=vector_index.exists_filter_index,
+        value_index=vector_index.scalar_filter_index,
+        unrepresented_paths=vector_index.unrepresented_filter_paths,
+    )
 
 
 def _candidate_rows_for_vector_filter_clause(
@@ -679,43 +655,12 @@ def _candidate_rows_for_vector_filter_clause(
     path: str,
     clause: object,
     all_rows: set[int],
-) -> tuple[set[int] | None, str]:
-    row_exists_index = vector_index.vector_row_exists_filter_index.get(query_path, {})
-    row_scalar_index = vector_index.vector_row_scalar_filter_index.get(query_path, {})
-    row_scalar_values = vector_index.vector_row_scalar_values_by_path.get(
-        query_path, {}
+) -> tuple[set[int] | None, str, bool]:
+    return scalar_filter_candidates(
+        path,
+        clause,
+        all_candidates=all_rows,
+        exists_index=vector_index.vector_row_exists_filter_index.get(query_path, {}),
+        value_index=vector_index.vector_row_scalar_filter_index.get(query_path, {}),
+        unrepresented_paths=vector_index.unrepresented_filter_paths,
     )
-    if (
-        isinstance(clause, dict)
-        and set(clause) == {"$exists"}
-        and isinstance(clause["$exists"], bool)
-    ):
-        existing = set(row_exists_index.get(path, ()))
-        return (existing if clause["$exists"] else all_rows - existing), "$exists"
-    if (
-        isinstance(clause, dict)
-        and set(clause) == {"$in"}
-        and isinstance(clause["$in"], list)
-    ):
-        matched_rows: set[int] = set()
-        for item in clause["$in"]:
-            value_key = filter_value_key(item)
-            if value_key is None:
-                return None, "$in"
-            matched_rows.update(row_scalar_index.get(path, {}).get(value_key, ()))
-        return matched_rows, "$in"
-    if (
-        isinstance(clause, dict)
-        and clause
-        and set(clause).issubset({"$gt", "$gte", "$lt", "$lte"})
-    ):
-        matched_rows = {
-            row_index
-            for row_index, value_key in row_scalar_values.get(path, ())
-            if value_key_matches_range(value_key, clause)
-        }
-        return matched_rows, "range"
-    value_key = filter_value_key(clause)
-    if value_key is None:
-        return None, "eq"
-    return set(row_scalar_index.get(path, {}).get(value_key, ())), "eq"

@@ -73,6 +73,10 @@ from tests.differential.semantic_schema_cases import (
     SEED as SCHEMA_SEED,
     SEMANTIC_SCHEMA_CASES,
 )
+from tests.differential.semantic_search_eligibility_cases import (
+    SEED as SEARCH_ELIGIBILITY_SEED,
+    SEMANTIC_SEARCH_ELIGIBILITY_CASES,
+)
 from tests.differential.semantic_sum_cases import (
     SEED as SUM_SEED,
     SEMANTIC_SUM_CASES,
@@ -91,6 +95,12 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "search_eligibility": SemanticCorpus(
+        "search-eligibility",
+        "semantic_search_eligibility_cases",
+        SEARCH_ELIGIBILITY_SEED,
+        SEMANTIC_SEARCH_ELIGIBILITY_CASES,
+    ),
     "schema": SemanticCorpus(
         "schema",
         "semantic_schema_cases",

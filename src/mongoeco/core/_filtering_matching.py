@@ -7,9 +7,10 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core._filtering_support import (
+    ArrayElementDocument,
     compile_bson_regex,
-    extract_all_candidates as _extract_all_candidates,
 )
+from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_ordering import Code, bson_type_rank
 from mongoeco.core.bson_scalars import _is_nan_numeric_value, wrap_bson_numeric
 from mongoeco.core.collation import CollationSpec, compare_with_collation
@@ -32,12 +33,10 @@ class FilteringMatchingMixin:
         return True
 
     @classmethod
-    def _regex_item_matches_candidate(cls, candidate: Any, pattern: re.Pattern[str]) -> bool:
+    def _regex_item_matches_candidate(
+        cls, candidate: Any, pattern: re.Pattern[str]
+    ) -> bool:
         return isinstance(candidate, str) and pattern.search(candidate) is not None
-
-    @classmethod
-    def _extract_all_candidates(cls, doc: Any, field: str) -> list[Any]:
-        return _extract_all_candidates(doc, field)
 
     @classmethod
     def _in_item_matches_candidate(
@@ -103,10 +102,15 @@ class FilteringMatchingMixin:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
+        if candidate is MISSING:
+            candidate = None
         key = cls._hashable_in_lookup_key(candidate, collation=collation)
         if key is not None and key in literal_lookup:
             return True
-        if any(cls._regex_item_matches_candidate(candidate, pattern) for pattern in regex_values):
+        if any(
+            cls._regex_item_matches_candidate(candidate, pattern)
+            for pattern in regex_values
+        ):
             return True
         return any(
             cls._query_equality_matches(
@@ -129,12 +133,18 @@ class FilteringMatchingMixin:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
-        if expected is None:
-            if candidate is None:
-                return True
-            if null_matches_undefined and isinstance(candidate, UndefinedType):
-                return True
-        if null_matches_undefined and candidate is None and isinstance(expected, UndefinedType):
+        if candidate is MISSING:
+            return expected is None
+        if expected is None and (
+            candidate is None
+            or (null_matches_undefined and isinstance(candidate, UndefinedType))
+        ):
+            return True
+        if (
+            null_matches_undefined
+            and candidate is None
+            and isinstance(expected, UndefinedType)
+        ):
             return True
         if collation is None and dialect is MONGODB_DIALECT_70:
             candidate_type = type(candidate)
@@ -142,7 +152,10 @@ class FilteringMatchingMixin:
             if (
                 candidate_type is expected_type
                 and candidate_type in _FAST_SCALAR_TYPES
-                and not (candidate_type is float and (math.isnan(candidate) or math.isnan(expected)))
+                and not (
+                    candidate_type is float
+                    and (math.isnan(candidate) or math.isnan(expected))
+                )
             ):
                 return candidate == expected
             if (
@@ -156,7 +169,9 @@ class FilteringMatchingMixin:
                 )
             ):
                 return candidate == expected
-        return cls._values_equal(candidate, expected, dialect=dialect, collation=collation)
+        return cls._values_equal(
+            candidate, expected, dialect=dialect, collation=collation
+        )
 
     @classmethod
     def _comparison_matches_candidate(
@@ -168,6 +183,8 @@ class FilteringMatchingMixin:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
+        if candidate is MISSING:
+            candidate = None
         target_rank = bson_type_rank(target, dialect.bson_type_order)
         if target_rank not in {0, 127} and not cls._comparison_types_match(
             candidate, target, dialect=dialect
@@ -211,13 +228,19 @@ class FilteringMatchingMixin:
                 None, target, operator, dialect=dialect, collation=collation
             )
         value = doc[field]
-        if collation is None and dialect is MONGODB_DIALECT_70 and not isinstance(value, list):
+        if (
+            collation is None
+            and dialect is MONGODB_DIALECT_70
+            and not isinstance(value, list)
+        ):
             value_type = type(value)
             target_type = type(target)
             if (
                 value_type is target_type
                 and value_type in _FAST_SCALAR_TYPES
-                and not (value_type is float and (math.isnan(value) or math.isnan(target)))
+                and not (
+                    value_type is float and (math.isnan(value) or math.isnan(target))
+                )
             ):
                 if operator in {"gt", ">"}:
                     return value > target
@@ -296,7 +319,10 @@ class FilteringMatchingMixin:
                 if (
                     value_type is condition_type
                     and value_type in _FAST_SCALAR_TYPES
-                    and not (value_type is float and (math.isnan(value) or math.isnan(condition)))
+                    and not (
+                        value_type is float
+                        and (math.isnan(value) or math.isnan(condition))
+                    )
                 ):
                     return value == condition
                 if (
@@ -355,7 +381,7 @@ class FilteringMatchingMixin:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
-        if "." not in field:
+        if "." not in field and not isinstance(doc, ArrayElementDocument):
             return cls._match_top_level_equals(
                 doc,
                 field,
@@ -365,7 +391,7 @@ class FilteringMatchingMixin:
                 collation=collation,
             )
         values = cls._extract_values(doc, field)
-        candidates = values or [None]
+        candidates = values
         return any(
             cls._query_equality_matches(
                 value,
@@ -388,8 +414,6 @@ class FilteringMatchingMixin:
         collation: CollationSpec | None = None,
     ) -> bool:
         values = cls._extract_values(doc, field)
-        if not values:
-            return condition is not None
         return all(
             not cls._query_equality_matches(
                 value,
@@ -412,7 +436,7 @@ class FilteringMatchingMixin:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
-        if "." not in field:
+        if "." not in field and not isinstance(doc, ArrayElementDocument):
             return cls._match_top_level_comparison(
                 doc,
                 field,
@@ -423,9 +447,7 @@ class FilteringMatchingMixin:
             )
         candidates = cls._extract_values(doc, field)
         if not candidates:
-            return cls._comparison_matches_candidate(
-                None, target, operator, dialect=dialect, collation=collation
-            )
+            return False
         if len(candidates) == 1:
             return cls._comparison_matches_candidate(
                 candidates[0],
@@ -458,7 +480,7 @@ class FilteringMatchingMixin:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
     ) -> bool:
-        candidates = cls._extract_values(doc, field) or [None]
+        candidates = cls._extract_values(doc, field)
         literal_lookup, regex_values, residual_values = cls._prepare_membership_values(
             values,
             null_matches_undefined=null_matches_undefined,
@@ -489,9 +511,6 @@ class FilteringMatchingMixin:
         collation: CollationSpec | None = None,
     ) -> bool:
         candidates = cls._extract_values(doc, field)
-        if not candidates:
-            has_null = any(item is None for item in values)
-            return not has_null
         literal_lookup, regex_values, residual_values = cls._prepare_membership_values(
             values,
             null_matches_undefined=null_matches_undefined,

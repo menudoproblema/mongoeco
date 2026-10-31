@@ -1,20 +1,27 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import time
 
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
 import numpy as np
+
 from usearch.index import Index, MetricKind
 
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.search_filter_prefilter import (
     collect_filterable_values,
     evaluate_candidate_filter,
-    filter_value_key,
-    value_key_matches_range,
+    scalar_filter_candidates,
+    unrepresented_filter_paths,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, SearchIndexDefinition
+
+
+if TYPE_CHECKING:
+    from mongoeco.types import Document, SearchIndexDefinition
+
 
 _FilterValueKey = tuple[str, object]
 
@@ -40,6 +47,7 @@ class SQLiteVectorBackendState:
     storage_keys_by_slot: tuple[str, ...]
     scalar_filter_index: dict[str, dict[_FilterValueKey, tuple[str, ...]]]
     exists_filter_index: dict[str, tuple[str, ...]]
+    unrepresented_filter_paths: frozenset[str]
 
 
 def build_sqlite_vector_backend(
@@ -73,11 +81,13 @@ def build_sqlite_vector_backend(
     invalid_vectors = 0
     scalar_filter_index: dict[str, dict[_FilterValueKey, list[str]]] = {}
     exists_filter_index: dict[str, list[str]] = {}
+    unrepresented_paths: set[str] = set()
     for slot, (storage_key, document) in enumerate(documents):
         vector = _extract_vector(document, path=path, num_dimensions=num_dimensions)
         if vector is None:
             invalid_vectors += 1
             continue
+        unrepresented_paths.update(unrepresented_filter_paths(document))
         keys.append(slot)
         vectors.append(vector)
         storage_keys.append(storage_key)
@@ -95,6 +105,7 @@ def build_sqlite_vector_backend(
         )
 
     return SQLiteVectorBackendState(
+        unrepresented_filter_paths=frozenset(unrepresented_paths),
         db_name=db_name,
         coll_name=coll_name,
         index_name=definition.name,
@@ -242,30 +253,15 @@ def _candidate_storage_keys_for_filter_clause(
     path: str,
     clause: object,
     all_storage_keys: set[str],
-) -> tuple[set[str] | None, str]:
-    if isinstance(clause, dict) and set(clause) == {"$exists"} and isinstance(clause["$exists"], bool):
-        existing = set(state.exists_filter_index.get(path, ()))
-        return (existing if clause["$exists"] else all_storage_keys - existing), "$exists"
-    if isinstance(clause, dict) and set(clause) == {"$in"} and isinstance(clause["$in"], list):
-        matched_keys: set[str] = set()
-        for item in clause["$in"]:
-            value_key = filter_value_key(item)
-            if value_key is None:
-                return None, "$in"
-            matched_keys.update(state.scalar_filter_index.get(path, {}).get(value_key, ()))
-        return matched_keys, "$in"
-    if isinstance(clause, dict):
-        range_storage_keys = _candidate_storage_keys_for_range_clause(
-            state,
-            path=path,
-            clause=clause,
-        )
-        if range_storage_keys is not None:
-            return range_storage_keys, "range"
-    value_key = filter_value_key(clause)
-    if value_key is None:
-        return None, "eq"
-    return set(state.scalar_filter_index.get(path, {}).get(value_key, ())), "eq"
+) -> tuple[set[str] | None, str, bool]:
+    return scalar_filter_candidates(
+        path,
+        clause,
+        all_candidates=all_storage_keys,
+        exists_index=state.exists_filter_index,
+        value_index=state.scalar_filter_index,
+        unrepresented_paths=state.unrepresented_filter_paths,
+    )
 
 
 def _candidate_storage_keys_for_filter_node(
@@ -295,61 +291,6 @@ def _candidate_storage_keys_for_filter_node(
         "exact": result.plan.exact,
         "shape": result.plan.shape,
     }
-
-
-def _candidate_storage_keys_for_range_clause(
-    state: SQLiteVectorBackendState,
-    *,
-    path: str,
-    clause: dict[str, object],
-) -> set[str] | None:
-    supported_operators = {"$gt", "$gte", "$lt", "$lte"}
-    if not clause or any(operator not in supported_operators for operator in clause):
-        return None
-
-    bound_kind: str | None = None
-    for operator, raw_value in clause.items():
-        value_key = filter_value_key(raw_value)
-        if value_key is None or value_key[0] not in {"number", "date", "datetime"}:
-            return None
-        if bound_kind is None:
-            bound_kind = value_key[0]
-        elif bound_kind != value_key[0]:
-            return None
-
-    path_index = state.scalar_filter_index.get(path)
-    if not path_index:
-        return set()
-
-    matched: set[str] = set()
-    for value_key, storage_keys in path_index.items():
-        if value_key[0] != bound_kind:
-            continue
-        if value_key_matches_range(value_key, clause):
-            matched.update(storage_keys)
-    return matched
-
-
-def _collect_filterable_values(
-    value: object,
-    *,
-    prefix: str = "",
-) -> list[tuple[str, set[_FilterValueKey]]]:
-    return collect_filterable_values(value, prefix=prefix)
-
-
-def _filter_value_key(value: object) -> _FilterValueKey | None:
-    return filter_value_key(value)
-
-
-def _value_key_matches_range(
-    value_key: _FilterValueKey,
-    bounds: dict[str, object],
-) -> bool:
-    if bounds and all(isinstance(value, tuple) and len(value) == 2 for value in bounds.values()):
-        raw_bounds = {operator: value[1] for operator, value in bounds.items()}
-        return value_key_matches_range(value_key, raw_bounds)
-    return value_key_matches_range(value_key, bounds)
 
 
 def _metric_kind(similarity: str) -> MetricKind:

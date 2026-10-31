@@ -1,20 +1,25 @@
 from __future__ import annotations
 
+import datetime
+
 from collections.abc import Callable, Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
-import datetime
-import math
 from typing import Generic, TypeVar
 
-from mongoeco.core.paths import get_document_value
+from mongoeco.core.bson_ordering import Code
+from mongoeco.core.bson_scalars import (
+    normalize_utc_bson_datetime,
+    numeric_comparison_decimal,
+    wrap_bson_numeric,
+)
 from mongoeco.core.query_operators import (
     is_non_empty_document_clause_list,
     is_query_operator_key,
 )
 
 
-CandidateT = TypeVar('CandidateT')
+CandidateT = TypeVar("CandidateT")
 _FilterValueKey = tuple[str, object]
 
 
@@ -46,15 +51,15 @@ class CandidateFilterPlan:
 
     def to_metadata(self, *, backend: str | None = None) -> dict[str, object]:
         return {
-            'spec': deepcopy(self.spec),
-            'candidateable': self.candidateable,
-            'exact': self.exact,
-            'backend': backend if self.candidateable else None,
-            'supportedPaths': list(self.supported_paths),
-            'supportedClauseCount': self.supported_clause_count,
-            'unsupportedClauseCount': self.unsupported_clause_count,
-            'supportedOperators': list(self.supported_operators),
-            'booleanShape': self.shape,
+            "spec": deepcopy(self.spec),
+            "candidateable": self.candidateable,
+            "exact": self.exact,
+            "backend": backend if self.candidateable else None,
+            "supportedPaths": list(self.supported_paths),
+            "supportedClauseCount": self.supported_clause_count,
+            "unsupportedClauseCount": self.unsupported_clause_count,
+            "supportedOperators": list(self.supported_operators),
+            "booleanShape": self.shape,
         }
 
 
@@ -81,34 +86,37 @@ class _NodeEvaluation(Generic[CandidateT]):
 
 def filter_value_key(value: object) -> _FilterValueKey | None:
     if value is None:
-        return ('null', None)
+        return ("null", None)
     if isinstance(value, bool):
-        return ('bool', value)
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        number = float(value)
-        if not math.isfinite(number):
+        return ("bool", value)
+    numeric = wrap_bson_numeric(value)
+    if numeric is not None:
+        number = numeric_comparison_decimal(numeric.value)
+        if not number.is_finite():
             return None
-        return ('number', number)
+        return ("number", number)
+    if isinstance(value, Code):
+        return None
     if isinstance(value, str):
-        return ('string', value)
+        return ("string", value)
     if isinstance(value, datetime.datetime):
-        return ('datetime', value)
+        return ("datetime", normalize_utc_bson_datetime(value))
     if isinstance(value, datetime.date):
-        return ('date', value)
+        return ("date", value)
     return None
 
 
 def collect_filterable_values(
     value: object,
     *,
-    prefix: str = '',
+    prefix: str = "",
 ) -> list[tuple[str, set[_FilterValueKey]]]:
     entries: list[tuple[str, set[_FilterValueKey]]] = []
     if isinstance(value, dict):
         for key, item in value.items():
             if not isinstance(key, str) or not key:
                 continue
-            path = f'{prefix}.{key}' if prefix else key
+            path = f"{prefix}.{key}" if prefix else key
             entries.extend(collect_filterable_values(item, prefix=path))
         return entries
     if not prefix:
@@ -130,118 +138,100 @@ def value_key_matches_range(
     value_key: _FilterValueKey, clause: dict[str, object]
 ) -> bool:
     kind, value = value_key
-    if kind not in {'number', 'date', 'datetime'}:
+    if kind not in {"number", "date", "datetime"}:
         return False
+    if kind == "number":
+        value = numeric_comparison_decimal(value)
     for operator, bound in clause.items():
-        if operator not in {'$gt', '$gte', '$lt', '$lte'}:
+        if operator not in {"$gt", "$gte", "$lt", "$lte"}:
             return False
         bound_key = filter_value_key(bound)
         if bound_key is None or bound_key[0] != kind:
             return False
         bound_value = bound_key[1]
-        if operator == '$gt' and not (value > bound_value):
+        if operator == "$gt" and not (value > bound_value):
             return False
-        if operator == '$gte' and not (value >= bound_value):
+        if operator == "$gte" and not (value >= bound_value):
             return False
-        if operator == '$lt' and not (value < bound_value):
+        if operator == "$lt" and not (value < bound_value):
             return False
-        if operator == '$lte' and not (value <= bound_value):
+        if operator == "$lte" and not (value <= bound_value):
             return False
     return True
 
 
-def matches_candidateable_filter(
-    document: dict[str, object], filter_spec: dict[str, object]
-) -> bool | None:
-    for key, value in filter_spec.items():
-        if key == '$and':
-            if not is_non_empty_document_clause_list(value):
-                return None
-            for item in value:
-                matched = matches_candidateable_filter(document, item)
-                if matched is None:
-                    return None
-                if not matched:
-                    return False
-            continue
-        if key == '$or':
-            if not is_non_empty_document_clause_list(value):
-                return None
-            matched_any_branch = False
-            for item in value:
-                matched = matches_candidateable_filter(document, item)
-                if matched is None:
-                    return None
-                if matched:
-                    matched_any_branch = True
-                    break
-            if not matched_any_branch:
-                return False
-            continue
-        if not isinstance(key, str) or is_query_operator_key(key):
-            return None
-        found, raw_value = get_document_value(document, key)
-        candidate_values = (
-            raw_value if isinstance(raw_value, list) else [raw_value]
+def unrepresented_filter_paths(document: dict[str, object]) -> set[str]:
+    """Top-level domains that the scalar postings cannot represent completely."""
+    return {path for path, value in document.items() if filter_value_key(value) is None}
+
+
+def scalar_filter_candidates[CandidateT](  # noqa: PLR0911, PLR0913 - explicit coverage and capability exits
+    path: str,
+    clause: object,
+    *,
+    all_candidates: set[CandidateT],
+    exists_index: dict,
+    value_index: dict,
+    unrepresented_paths: frozenset[str],
+) -> tuple[set[CandidateT] | None, str, bool]:
+    """Resolve only lossless scalar postings; unknown domains imply no reduction.
+
+    Arrays, object traversal and numeric positions stay in the canonical residual.
+    Null membership also needs that residual because missing is not a posting.
+    """
+    operator = (
+        "$exists"
+        if isinstance(clause, dict) and set(clause) == {"$exists"}
+        else "$in"
+        if isinstance(clause, dict) and set(clause) == {"$in"}
+        else "range"
+        if isinstance(clause, dict)
+        else "eq"
+    )
+    if "." in path or path in unrepresented_paths:
+        return None, operator, False
+    if operator == "$exists":
+        if not isinstance(clause["$exists"], bool):
+            return None, operator, False
+        existing = set(exists_index.get(path, ())) & all_candidates
+        return (
+            (existing if clause["$exists"] else all_candidates - existing),
+            operator,
+            True,
         )
-        if (
-            isinstance(value, dict)
-            and set(value) == {'$exists'}
-            and isinstance(value['$exists'], bool)
+    postings = value_index.get(path, {})
+    if operator == "$in":
+        if not isinstance(clause["$in"], list):
+            return None, operator, False
+        values = clause["$in"]
+    elif operator == "range":
+        if not clause or any(
+            key not in {"$gt", "$gte", "$lt", "$lte"}
+            or (bound := filter_value_key(value)) is None
+            or bound[0] not in {"number", "date", "datetime"}
+            for key, value in clause.items()
         ):
-            if found != value['$exists']:
-                return False
-            continue
-        if not found:
-            return False
-        if (
-            isinstance(value, dict)
-            and set(value) == {'$in'}
-            and isinstance(value['$in'], list)
-        ):
-            normalized_candidates = {
-                normalized
-                for item in candidate_values
-                if (normalized := filter_value_key(item)) is not None
-            }
-            normalized_filter_values = {
-                normalized
-                for item in value['$in']
-                if (normalized := filter_value_key(item)) is not None
-            }
-            if (
-                not normalized_filter_values
-                or normalized_candidates.isdisjoint(normalized_filter_values)
-            ):
-                return False
-            continue
-        if (
-            isinstance(value, dict)
-            and value
-            and set(value).issubset({'$gt', '$gte', '$lt', '$lte'})
-        ):
-            normalized_candidates = [
-                normalized
-                for item in candidate_values
-                if (normalized := filter_value_key(item)) is not None
-            ]
-            if not normalized_candidates or not any(
-                value_key_matches_range(item, value)
-                for item in normalized_candidates
-            ):
-                return False
-            continue
-        normalized_clause = filter_value_key(value)
-        if normalized_clause is None:
-            return None
-        normalized_candidates = {
-            normalized
-            for item in candidate_values
-            if (normalized := filter_value_key(item)) is not None
-        }
-        if normalized_clause not in normalized_candidates:
-            return False
-    return True
+            return None, operator, False
+        return (
+            {
+                candidate
+                for value, candidates in postings.items()
+                if value_key_matches_range(value, clause)
+                for candidate in candidates
+                if candidate in all_candidates
+            },
+            operator,
+            True,
+        )
+    else:
+        values = [clause]
+    matches = set()
+    for value in values:
+        key = filter_value_key(value)
+        if key is None or key[0] == "null":
+            return None, operator, False
+        matches.update(postings.get(key, ()))
+    return matches & all_candidates, operator, True
 
 
 def flatten_candidate_filter_clauses(
@@ -250,7 +240,7 @@ def flatten_candidate_filter_clauses(
     node = _evaluate_candidate_filter_node(
         filter_spec,
         all_candidates=(),
-        clause_resolver=lambda _path, _clause: ((), 'eq'),
+        clause_resolver=lambda _path, _clause: ((), "eq", True),
         clauses_only=True,
     )
     if node is None:
@@ -263,7 +253,7 @@ def evaluate_candidate_filter(
     *,
     all_candidates: Sequence[CandidateT],
     clause_resolver: Callable[
-        [str, object], tuple[Iterable[CandidateT] | None, str]
+        [str, object], tuple[Iterable[CandidateT] | None, str, bool]
     ],
     ordered_candidates: Sequence[CandidateT] | None = None,
 ) -> CandidateFilterResult[CandidateT] | None:
@@ -290,9 +280,7 @@ def evaluate_candidate_filter(
     if matches is not None and ordered_candidates is not None:
         allowed = set(matches)
         matches = tuple(
-            candidate
-            for candidate in ordered_candidates
-            if candidate in allowed
+            candidate for candidate in ordered_candidates if candidate in allowed
         )
     return CandidateFilterResult(plan=plan, matches=matches)
 
@@ -302,7 +290,7 @@ def _evaluate_candidate_filter_node(
     *,
     all_candidates: Sequence[CandidateT],
     clause_resolver: Callable[
-        [str, object], tuple[Iterable[CandidateT] | None, str]
+        [str, object], tuple[Iterable[CandidateT] | None, str, bool]
     ],
     clauses_only: bool,
 ) -> _NodeEvaluation[CandidateT] | None:
@@ -337,10 +325,10 @@ def _evaluate_candidate_filter_node(
         return tuple(ordered)
 
     for key, value in filter_spec.items():
-        if key == '$and':
+        if key == "$and":
             if not is_non_empty_document_clause_list(value):
                 return None
-            shapes.append('$and')
+            shapes.append("$and")
             local_matches: tuple[CandidateT, ...] | None = None
             local_supported = False
             for item in value:
@@ -363,9 +351,7 @@ def _evaluate_candidate_filter_node(
                     local_matches = (
                         nested.matches
                         if local_matches is None
-                        else _ordered_intersection(
-                            local_matches, nested.matches
-                        )
+                        else _ordered_intersection(local_matches, nested.matches)
                     )
             if not clauses_only and local_supported:
                 matches = (
@@ -374,10 +360,10 @@ def _evaluate_candidate_filter_node(
                     else _ordered_intersection(matches, local_matches or ())
                 )
             continue
-        if key == '$or':
+        if key == "$or":
             if not is_non_empty_document_clause_list(value):
                 return None
-            shapes.append('$or')
+            shapes.append("$or")
             branch_matches: list[tuple[CandidateT, ...]] = []
             branch_exact = True
             for item in value:
@@ -403,24 +389,21 @@ def _evaluate_candidate_filter_node(
                             supported_paths=tuple(supported_paths),
                             supported_operators=tuple(supported_operators),
                             supported_clause_count=supported_clause_count,
-                            unsupported_clause_count=unsupported_clause_count
-                            + 1,
+                            unsupported_clause_count=unsupported_clause_count + 1,
                             exact=False,
-                            shape='+'.join(shapes) if shapes else 'flat',
+                            shape="+".join(shapes) if shapes else "flat",
                         )
                     branch_matches.append(nested.matches)
             if not clauses_only:
                 union = _ordered_union(branch_matches)
                 matches = (
-                    union
-                    if matches is None
-                    else _ordered_intersection(matches, union)
+                    union if matches is None else _ordered_intersection(matches, union)
                 )
                 exact = exact and branch_exact
             continue
         if not isinstance(key, str) or is_query_operator_key(key):
             return None
-        clause_matches, operator_name = clause_resolver(key, value)
+        clause_matches, operator_name, clause_exact = clause_resolver(key, value)
         supported = clause_matches is not None
         clauses.append(
             CandidateFilterClause(
@@ -429,7 +412,7 @@ def _evaluate_candidate_filter_node(
                 support=CandidateFilterSupport(
                     operator=operator_name,
                     supported=supported,
-                    exact=supported,
+                    exact=supported and clause_exact,
                 ),
             )
         )
@@ -439,6 +422,7 @@ def _evaluate_candidate_filter_node(
             unsupported_clause_count += 1
             exact = False
             continue
+        exact = exact and clause_exact
         supported_paths.append(key)
         supported_operators.append(operator_name)
         supported_clause_count += 1
@@ -457,5 +441,5 @@ def _evaluate_candidate_filter_node(
         supported_clause_count=supported_clause_count,
         unsupported_clause_count=unsupported_clause_count,
         exact=exact,
-        shape='+'.join(shapes) if shapes else 'flat',
+        shape="+".join(shapes) if shapes else "flat",
     )

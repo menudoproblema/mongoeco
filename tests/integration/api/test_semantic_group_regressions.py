@@ -120,6 +120,9 @@ class _AsyncView:
     def delete_many(self, *args, **kwargs):
         return self._call("delete_many", *args, **kwargs)
 
+    def create_search_index(self, *args, **kwargs):
+        return self._call("create_search_index", *args, **kwargs)
+
     def create_index(self, *args, **kwargs):
         return self._call("create_index", *args, **kwargs)
 

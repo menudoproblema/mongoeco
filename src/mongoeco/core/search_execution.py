@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operation_context import OperationContext
+from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.search import SearchQuery, compile_search_stage
 from mongoeco.core.search_models import SearchExecutionMode
 from mongoeco.core.search_planning import SearchPipelinePlan, SearchPipelineStrategy
@@ -50,6 +51,16 @@ class SearchRequest:
         self._validate_limits()
         self._validate_pipeline_plan()
         self._own_inputs()
+        for predicate in (
+            self.downstream_filter_spec,
+            getattr(self.query, "filter_spec", None),
+        ):
+            if predicate is not None:
+                compile_filter(
+                    predicate,
+                    dialect=self.operation_context.dialect,
+                    variables=self.operation_context.expressions,
+                )
         if compile_search_stage(self.operator, self.specification) != self.query:
             msg = "compiled search query diverges from its specification"
             raise ValueError(msg)

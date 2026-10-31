@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import sqlite3
+
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
-import sqlite3
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
+from mongoeco.core.query_operators import is_non_empty_document_clause_list
 from mongoeco.core.search import (
     SearchAutocompleteQuery,
     SearchCompoundQuery,
@@ -15,16 +17,18 @@ from mongoeco.core.search import (
     SearchNearQuery,
     SearchPhraseQuery,
     SearchQuery,
-    SearchRegexQuery,
     SearchRangeQuery,
+    SearchRegexQuery,
     SearchTextQuery,
     SearchWildcardQuery,
-    materialize_search_document,
     matches_search_query,
+    materialize_search_document,
     search_query_operator_name,
 )
-from mongoeco.core.query_operators import is_non_empty_document_clause_list
-from mongoeco.types import Document, SearchIndexDefinition
+
+
+if TYPE_CHECKING:
+    from mongoeco.types import Document, SearchIndexDefinition
 
 
 class _SQLiteCompoundEngine(Protocol):
@@ -132,7 +136,7 @@ def sqlite_compound_candidate_plan(
     candidate_intersections: list[list[str]] = []
     should_candidates: list[list[str]] = []
     non_candidateable_should = 0
-    exact = True
+    exact = downstream_filter_spec is None or downstream_filter_exact
 
     for clause in (*query.must, *query.filter):
         storage_keys, _backend, clause_exact, _refinement = (

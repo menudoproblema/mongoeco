@@ -855,3 +855,41 @@ Regresión: 2.814 pruebas, 936 subpruebas, un skip opcional de ICU. La matriz
 schema cubre sync/async y wire-sync/wire-async en Memory/SQLite y dialectos 7/8/9.
 C01 y C02/C03 quedan corregidos focalmente. H45–H47 / C04–C05 y los gates globales
 C06 siguen pendientes; no se cierran B00–B10 por esta ampliación.
+
+
+### C04: conservación de candidatos y traversal MQL
+
+H45/H46 se corrigen reutilizando CandidateFilterPlan/Result y el matcher MQL.
+Las claves escalares numéricas son exactas; las materializaciones marcan paths
+no representados y declinan arrays/rutas punteadas/ausencia-null. Se retira el
+matcher booleano paralelo; el residual comparte dialecto, collation y contexto.
+SQLite no adelanta top-k si el downstream necesita residual. Search-v1 mantiene
+enteros en rangos/facets y no confunde postings textuales con field presence.
+
+El oráculo nativo descubrió además errores compartidos de traversal: posición
+numérica versus campo numérico, arrays anidados, ramas missing, elemMatch
+atómico y all/size/bits. Sus consumidores comparten las mismas hojas; el helper
+observable de índices conserva su contrato. Los límites null de un índice
+parcial usan MISSING como marcador de ausencia de límite.
+
+El corpus mantenido `semantic_search_eligibility_cases.py` tiene cinco acciones,
+incluidos cien estímulos de rutas, lookup físico, escrituras, hint/índice parcial
+y mutaciones del estado materializado. Las rutas Search verifican ventanas,
+compound, collectors y merge en sync/async/wire y ambos motores. La propiedad
+usa los IDs nativos como verdad y prueba T⊆C⊆U y exact⇒C=T. La fixture SQLite
+previa comprueba lectura, unicidad, salida de membresía y reapertura.
+
+El reproducer `characterize_routes.py` es evidencia histórica del análisis y
+solo se ejecuta en su base Git; el corpus mantenido sustituye su import del
+helper retirado. No se modifica esa evidencia histórica para simular vigencia.
+
+El receipt `evidence/predicate-authorities/search-validation.json` registra el
+corte, nativos, rojo previo, regresión y tendencias de coste. H47/C05 y C06
+siguen abiertos. Este corte no declara paridad Atlas ni cierra B00–B10.
+
+C04: regresión 3.399 passed + 936 subtests, ICU opcional omitido; nativos
+3×5 acciones con ambos motores sin fallos/omisiones. Tendencias secuenciales:
+Memory 0,976–1,209×; vector SQLite 0,997–1,047×. Los compound should de SQLite
+con exists llegan a 6,370× al retirar una prueba de exactitud inválida que
+adelantaba poda de score. Se conserva la garantía semántica; recuperar ese
+coste exige demostrar presencia real, no inferirla de postings de texto.

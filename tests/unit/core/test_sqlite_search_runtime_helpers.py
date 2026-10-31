@@ -334,7 +334,7 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
                             clause={"$in": [1]},
                             field_types={"title": "string"},
                         ),
-                        (None, "$in"),
+                        (None, "$in", False),
                     )
                     self.assertEqual(
                         search_runtime_module._candidate_storage_keys_for_downstream_clause(
@@ -345,7 +345,7 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
                             clause={"$exists": False},
                             field_types={"title": "string"},
                         ),
-                        (None, "eq"),
+                        (None, "eq", False),
                     )
 
                     compound_clause = compile_search_stage(

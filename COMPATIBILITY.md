@@ -1405,3 +1405,18 @@ usan la collation de colección, mientras enum es binario. `$merge` valida un
 reemplazo sin cambios en dialecto 9 y lo omite en 7/8, según las capturas nativas.
 `$out` no tiene implementación local y se rechaza sin escribir; este incremento
 no introduce una implementación parcial del stage.
+
+## Conservación de filtros Search y rutas MQL
+
+Los filtros de vectorSearch y `$match` downstream conservan los matches MQL
+antes de ranking y ventanas. Las claves de enteros no pierden precisión sobre
+2**53; las formas no representadas por postings mantienen evaluación residual.
+Search-v1 conserva su semántica local de presencia de campo, rangos y facets.
+La elegibilidad se contrasta con MongoDB Community; no es una garantía Atlas
+ni de recall ANN sobre datasets arbitrarios.
+
+El traversal MQL distingue ramas ausentes de arrays sin hojas, posiciones de
+array de campos numéricos y operandos atómicos de elemMatch. Comparte sus hojas
+entre find, agregación, selección de escrituras y residual Search. La extracción
+de claves de índice conserva su contrato anterior; la fixture SQLite heredada
+verifica lectura/hint, unicidad parcial y reapertura sin imponer una migración.

@@ -4212,8 +4212,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 filter_spec={"tags": {"$in": ["b"]}},
             )
         )
-        self.assertEqual(in_positions, [0, 1])
-        self.assertEqual(in_description["supportedOperators"], ["$in"])
+        self.assertIsNone(in_positions)
+        self.assertEqual(in_description["supportedOperators"], [])
 
         range_positions, range_description = (
             memory_module._candidate_positions_for_vector_filter(
@@ -4221,8 +4221,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 filter_spec={"meta.rank": {"$gte": 1, "$lt": 2}},
             )
         )
-        self.assertEqual(range_positions, [0])
-        self.assertEqual(range_description["supportedOperators"], ["range"])
+        self.assertIsNone(range_positions)
+        self.assertEqual(range_description["supportedOperators"], [])
 
         exists_positions, exists_description = (
             memory_module._candidate_positions_for_vector_filter(
@@ -4230,8 +4230,8 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 filter_spec={"meta.published": {"$exists": False}},
             )
         )
-        self.assertEqual(exists_positions, [1, 2])
-        self.assertTrue(exists_description["exact"])
+        self.assertIsNone(exists_positions)
+        self.assertFalse(exists_description["exact"])
 
         or_positions, or_description = (
             memory_module._candidate_positions_for_vector_filter(
@@ -4241,9 +4241,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 },
             )
         )
-        self.assertEqual(or_positions, [0, 1])
+        self.assertIsNone(or_positions)
         self.assertEqual(or_description["booleanShape"], "$or")
-        self.assertTrue(or_description["exact"])
+        self.assertFalse(or_description["exact"])
 
         partial_positions, partial_description = (
             memory_module._candidate_positions_for_vector_filter(
@@ -4275,42 +4275,6 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(scoped_positions, [0])
         self.assertTrue(scoped_description["exact"])
 
-        self.assertTrue(
-            memory_module._matches_candidateable_filter(documents[0], {"kind": "keep"})
-        )
-        self.assertFalse(
-            memory_module._matches_candidateable_filter(documents[0], {"kind": "drop"})
-        )
-        self.assertTrue(
-            memory_module._matches_candidateable_filter(
-                documents[0],
-                {"meta.rank": {"$gte": 1, "$lte": 1}},
-            )
-        )
-        self.assertFalse(
-            memory_module._matches_candidateable_filter(
-                documents[1],
-                {"meta.rank": {"$gt": 2}},
-            )
-        )
-        self.assertFalse(
-            memory_module._matches_candidateable_filter(
-                documents[1],
-                {"meta.published": {"$exists": True}},
-            )
-        )
-        self.assertIsNone(
-            memory_module._matches_candidateable_filter(
-                documents[0],
-                {"kind": {"$regex": "keep"}},
-            )
-        )
-        self.assertIsNone(
-            memory_module._matches_candidateable_filter(
-                documents[0],
-                {"$or": "bad"},  # type: ignore[arg-type]
-            )
-        )
 
         dot_query = SearchVectorQuery(
             index_name="vec",
@@ -4824,7 +4788,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 clause={"$exists": False},
                 all_positions=all_positions,
             ),
-            (all_positions, "$exists"),
+            (all_positions, "$exists", True),
         )
         self.assertEqual(
             _candidate_positions_for_vector_filter_clause(
@@ -4833,7 +4797,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 clause={"$in": [object()]},
                 all_positions=all_positions,
             ),
-            (None, "$in"),
+            (None, "$in", False),
         )
         self.assertEqual(
             _candidate_positions_for_vector_filter_clause(
@@ -4842,7 +4806,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 clause=object(),
                 all_positions=all_positions,
             ),
-            (None, "eq"),
+            (None, "eq", False),
         )
 
         all_rows = {0, 1}
@@ -4854,7 +4818,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 clause={"$exists": False},
                 all_rows=all_rows,
             ),
-            (all_rows, "$exists"),
+            (all_rows, "$exists", True),
         )
         self.assertEqual(
             _candidate_rows_for_vector_filter_clause(
@@ -4864,7 +4828,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 clause={"$in": [object()]},
                 all_rows=all_rows,
             ),
-            (None, "$in"),
+            (None, "$in", False),
         )
         self.assertEqual(
             _candidate_rows_for_vector_filter_clause(
@@ -4874,5 +4838,5 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 clause=object(),
                 all_rows=all_rows,
             ),
-            (None, "eq"),
+            (None, "eq", False),
         )
