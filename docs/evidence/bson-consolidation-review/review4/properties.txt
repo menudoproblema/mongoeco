@@ -1,0 +1,2 @@
+Command: .venv/bin/python -m pytest tests/property/test_bson_binary_coherence.py -q
+Result: 3 passed in 0.29s

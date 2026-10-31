@@ -12,6 +12,12 @@ los IDs y garantías de revisión 2; añade parser de literales DBRef, orden en
 wire y selección SQL de bytes. No reinterpreta el retraimiento de una crítica
 como corrección de runtime ni como motivo para retirar testigos válidos.
 
+Revisión 4: nueva lectura de la misma autocrítica (hash idéntico al input de
+revisión 3), contrastada con HEAD `93b9b34` y el árbol de trabajo del 31 de
+octubre. La base histórica de las secciones 1–3 no describe automáticamente
+el runtime actual. Esta revisión precisa aceptación y dependencias; no agrega
+otra implementación ni altera los cambios de fechas en curso.
+
 **Estado: contrato autorizado; implementación en curso.** Los cortes y gates
 aceptados se registran en el documento de implementación; no se acredita aquí
 el cierre completo del incremento. Este documento posee H48–H54 y su integración con B00–B10 y
@@ -60,6 +66,29 @@ el SQL que un traductor podría producir. Las 14 fuentes iniciales se volvieron
 a descargar de sus URLs r8.0.0: todos los hashes coinciden. Se añade el parser
 del servidor con URL/hash propios, sin alterar sources.json ni receipts previos.
 Las ejecuciones son caracterización; no hubo nuevos fixes ni suite de aceptación.
+
+La [revisión actual](evidence/bson-consolidation-review/review4/receipt.json)
+repite ocho formas de filtro en los seis pares directos motor/dialecto y nueve
+trazas SQL, sobre el árbol de trabajo identificado en su receipt. Bytes eq/in
+y Binary eq ya seleccionan IDs 1/2 con fallback y tres llamadas al matcher;
+DBRef implícito y las vistas de igualdad siguen divergiendo. Pasan las tres
+propiedades Binary existentes. No se repitieron nativos, wire, watch ni TTL;
+sus referencias anteriores mantienen su alcance original. Se releyeron las
+fuentes versionadas del parser; no se atribuye a esta revisión una nueva
+descarga y comprobación de los 14 hashes históricos.
+
+### Estado actual frente a la caracterización inicial
+
+El registro de implementación sigue siendo el owner de gates y progreso. Esta
+tabla solo evita volver a planificar como nuevos defectos ya corregidos:
+
+| Obligación | Disposición al revisar el informe |
+| --- | --- |
+| H48 rango/partes Binary, SDK y eq/in SQL | Primer arreglo commiteado en `b661e7a`; clasificación neutral ampliada en `93b9b34`. La nueva traza acredita fallback, no pushdown exacto. D03a sigue abierto por sus testigos ampliados. |
+| H54 identidad física y Code | Helper común en `93b9b34`, con corrección separada del codec en `19ed3fa`. D01b conserva efectos públicos pendientes; no repetir la extracción del helper. |
+| H49 fechas | Hay cambios sin commitear en curso. No se aceptan ni se revisan como entrega cerrada en este contraste documental. |
+| H50 parser/vistas/wire/claves | Pendiente. La sonda directa actual conserva los fallos; la ruta wire se sustenta en la caracterización de revisión 3, no en una repetición actual. |
+| H51, H52 y H53 | Mantienen sus obligaciones SQL/tipos, watch y observabilidad. Lectura de código y resultados históricos no equivalen a nuevos diferenciales. |
 
 ## 2. Qué aceptar y qué corregir de las críticas
 
@@ -319,6 +348,49 @@ Orden sugerido: testigos + Binary/Code, fechas exactas, DBRef/claves y SQL de
 tipos; watch puede avanzar al disponer de su referencia física. Pruebas y
 cierre acompañan cada corte. No retener un fix P1 hasta terminar todas las
 familias ni abrir un tercer sistema de contexto, AST o fixtures.
+
+### Precisiones de ejecución y simplificación de la revisión 4
+
+1. **Reutilizar los owners ya extraídos.** D03a amplía `bson_values`; D01b
+   consume `bson_identity`. No crear otro clasificador, una clase universal de
+   comparación o una segunda identidad. La extracción no elimina las políticas
+   distintas de consulta, agrupación, identidad y almacenamiento.
+2. **Separar gramática de representación.** D06a comparte una decisión de
+   literal/operadores con contexto explícito en los callers alcanzados. La
+   referencia r8.0.0 usa DBRef completo para campo e `$in`, y permite incompleto
+   al decidir la forma de `$elemMatch`; este último sigue su posterior parser
+   de objeto. No deducir aceptación final solo de esa decisión intermedia ni
+   trasladarla al top-level o a expresiones de agregación. Capturar cada
+   contexto en 7/8/9 antes de convertir esa lectura en regla definitiva.
+3. **Conservar información antes de comparar.** D06b observa orden raw antes
+   de la decodificación SDK y después del bridge. Incluir filtros y escrituras,
+   objetos/arrays anidados y scopes Code, con controles de undefined. Mantener
+   salidas públicas y opciones soportadas: no modificar decoders globales ni
+   canonicalizar el orden de documentos para facilitar igualdad.
+4. **Mantener el fallback probado.** D03b no necesita optimizar bytes para
+   cerrar H51. Corregir tipos/arrays y acreditar el fallback binario existente
+   es suficiente; optimizarlo solo con equivalencia y medida propias. La traza
+   con matcher demuestra ese fallback, nunca exactitud de una traducción SQL.
+5. **Proteger el cambio de coordenadas TTL.** D02 prueba por separado cálculo,
+   conservación de candidatos y residual exacto. Para archivos anteriores,
+   reconstrucción versionada de auxiliares o selección conservadora, con
+   reapertura, rollback ante error y rechazo de versiones futuras sin alterar
+   documentos. Ni las 45 sondas históricas ni el monitor nativo aceptan por sí
+   solos esa transición. No se promete una frecuencia de purgado nativa.
+6. **Una ficha de aceptación por corte.** Reutilizar receipt y runner actuales:
+   invariante/testigo, base y candidato identificados, referencia nativa,
+   superficie/camino efectivamente ejecutados, observación independiente y
+   pendientes. D00 acompaña al corte; D05 verifica su integración sin duplicar
+   fixtures, IDs o reinterpretar caracterizaciones como pruebas verdes.
+
+No es necesario materializar todo el producto cartesiano de la sección 6:
+cada camino semántico distinto debe tener testigo discriminante, con pares de
+control para representaciones y límites relevantes. Justificar las dimensiones
+no alcanzadas; no eliminar las matrices contractuales de D05 ni sustituir una
+superficie por otra. Para watch/gramática, comparar fase, familia pública de
+excepción y código cuando exista, sin exigir identidad de módulo entre PyMongo
+y mongoeco ni igualdad literal de mensajes no contractuales. La preparación
+eager se verifica sin eventos y con colección vacía para evitar falsos verdes.
 
 ## 6. Pruebas y aceptación por garantía
 

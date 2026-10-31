@@ -1,0 +1,37 @@
+{
+  "status": "plan refinement and current-path characterization; not integrated acceptance",
+  "runtime_head": "93b9b346a31f45222427c018feb69afb9537a6c5",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_review3": true,
+  "worktree_runtime_diff_sha256": "eb7dbeafb8d82416127b437f9c6527dcdf5df2394b7369dd9d0dd678ca77b91e",
+  "observations": {
+    "direct_pairs": 6,
+    "query_shapes_per_pair": 8,
+    "sqlite_binary_paths": 9,
+    "all_binary_paths_ids": [
+      1,
+      2
+    ],
+    "matcher_calls_per_binary_path": 3,
+    "binary_properties_passed": 3
+  },
+  "native_and_wire": "not rerun; prior receipts retain their original scope",
+  "source_reference": {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/matcher/expression_parser.cpp",
+    "sections": [
+      "isDBRefDocument",
+      "isExpressionDocument",
+      "parseInExpression",
+      "parseElemMatch"
+    ],
+    "all_14_hashes_rechecked_this_review": false
+  },
+  "production_and_tests_edits_this_review": false,
+  "artifacts": {
+    "README.md": "365bae12e101a4821b8fd609b6020f623511ddc4aa6124ee48791087d4e50784",
+    "observations.json": "be066b7e80b233d3165fd7a5bb3b534f83b0b6c1c0f08815d8426359c514b43a",
+    "probe.py.txt": "675c14121017e331f04528d318a92111e4c53696fba3631136d0c2019a26ecba",
+    "properties.txt": "6fb9c08f64fe658e13eafb286a91f3177fc0226618bc7de8eae0ed5f95749e91",
+    "runtime-sources.json": "03af73d89db4bad13cfedae0359d422365f104f97213771d43fc862537e4a76f"
+  }
+}
