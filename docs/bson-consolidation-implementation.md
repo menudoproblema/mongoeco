@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: admisión BSON general (tipos arbitrarios y Decimal crudo), fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
+- B07: el preflight nativo de admisión fija fase de find, mutación de filtros y codificación por grupos bulk; su corpus obligatorio sigue rojo (96 fallos / 51 checks correctos), sin implementación aceptada. Véase el [corte activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos). Admisión BSON general (tipos arbitrarios y Decimal crudo) permanece fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1685,3 +1685,38 @@ D01/D02/D03/D04 ni declara D06/D05 terminados.
 → Sigue: contextos/representaciones y consumidores restantes D06, disposición
 H53/C03/B08, decisión opcional D07, matrices/cobertura/costes y cierre integrado
 D05, y admisión B07 con el corte UUID coordinado. El default sigue STANDARD.
+
+
+## B07 — Preflight nativo de admisión, implementación abierta
+
+Tras `2ae4b56`, el [preflight](evidence/bson-consolidation-implementation/bson-admission-preflight/README.md)
+y su [receipt](evidence/bson-consolidation-implementation/bson-admission-preflight/receipt.json)
+fijan seis acciones y 676 observaciones por versión MongoDB 7/8/9. No cambia
+producción ni acredita correcciones. El baseline aislado tiene 96 fallos y 51
+checks correctos: 72 fallos directos, 24 wire en opciones/comandos, 48 controles
+wire correctos y tres de metadata. El adaptador async delega explain al método
+real para observar la fase; no inventa un resultado del plan físico.
+
+Las causas exigen integrar la codificación cliente en su momento y lote:
+find permite mutar el filtro antes de iterar, y cerrar no codifica. Un error
+capturado al construir sería incorrecto. Insert_many y cada familia bulk
+codifican antes de ejecutar ese grupo; un bulk mixto puede conservar el grupo
+insert previo cuando falla la codificación de los updates. La preparación
+anticipada de todo el bulk también sería incorrecta. AsyncCursor._as_operation
+y el agrupador bulk existentes son mecanismos a reutilizar.
+
+Los controles positivos conservan diferencias que no son fallos de admisión:
+proyección calculada de find, id int64/orden firstBatch/id/ns del sobre raw,
+orden n/nModified/ok del resultado update y superficie pública del resultado
+bulk. El plan las asigna a D06/B08 sin cambiar el observador. Los rechazos de
+objetos imposibles por el driver wire ya correctos no se atribuyen al servidor.
+
+Capturas/checks finales coinciden; se verifica con Docker operativo la ausencia
+de 11 contenedores y 22 volúmenes propios, incluidas las rondas de feedback del
+observador. No se modifican normalizadores, observadores o referencias
+históricas. No hay gate global verde, candidato corregido, wheel nuevo ni
+aceptación D05/B07. El corpus nuevo permanece rojo y obligatorio, sin xfail.
+
+→ Sigue: implementar la admisión diferida y común sobre las fronteras existentes,
+integrar los lotes de escritura y completar el corte UUID antes de cambiar su
+default. Conservar los consumidores positivos y el resto del objetivo íntegro.

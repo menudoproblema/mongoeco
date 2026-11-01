@@ -1,0 +1,5 @@
+{
+  "tests/differential/semantic_corpora.py": "4e720cfa3a906b3d70349e4617683bfc873566116a67273281fa828b40dc8057",
+  "tests/differential/semantic_bson_admission_cases.py": "75a0b0dcdc9690fcb51843561fc924a74226ed311a58f165f243074e3765f078",
+  "tests/integration/api/test_semantic_group_regressions.py": "495796ee0715e7b58f61767d86ec00bc3da85cad62c685ec014ff9141bc2ea37"
+}

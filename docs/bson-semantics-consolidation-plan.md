@@ -1295,6 +1295,40 @@ representación/tipos, fase, contexto y almacenamiento; no se añade otro
 comparador ni se amplía admisión BSON. H53, decisión D07, resto D06, D05 y B07
 siguen abiertos; el coste escalar diagnóstico 1,06 no cierra D05.
 
+### B07 — Admisión en la fase y el lote correctos
+
+Corte activo P1 tras la conversión, independiente de terminar todos los
+consumidores D06 y necesario para el default UUID coordinado. El
+[preflight](evidence/bson-consolidation-implementation/bson-admission-preflight/README.md)
+contrasta seis acciones/676 observaciones por versión contra 7.0.43/8.0.32/9.0.2.
+No implementa ni acepta B07: el corpus obligatorio nuevo tiene 96 fallos y 51
+checks correctos en el baseline `2ae4b56`, diferenciados de los 97 nodos
+históricos de D05. No se ocultan con xfail ni normalización del resultado.
+
+**Causa compartida.** La API mezcla normalización interna con codificación de
+solicitudes: puede perder el tipo original o compilar antes del momento en que
+el SDK codifica. La frontera pertenece a la solicitud cliente y a su lote,
+no al motor ni a `DocumentCodec.to_internal` global. Los consumidores de valores
+internos deben seguir aceptando sus representaciones válidas. Wire ya recibió
+BSON: no volver a imponerle la codificación cliente ni perder undefined/orden
+al reconstruir un DBRef con el decoder SDK.
+
+| Unidad / dependencia | Implementación y simplificación | Garantía de cierre |
+| --- | --- | --- |
+| 1. Solicitud find sin codificar | Reutilizar `AsyncCursor._as_operation`, caché/contexto actuales y validadores de forma. Retirar la compilación/normalización anticipada de la entrada pública find. El camino interno con FindOperation preparado conserva su artefacto; no otra clase de cursor o caché. | Find difiere InvalidDocument/OverflowError hasta consumir; cerrar no codifica. Filtro inválido→válido y válido→inválido antes del primer I/O, clone/rewind/explain, contexto temporal, sesión, codecs y cursores raw. No guardar un error al construir: el filtro todavía puede cambiar. Preservar validaciones de forma que el SDK sí hace eager. |
+| 2. Codificación pública común | Separar admisión estricta y codec interno reversible. Integrar en el límite cliente de documentos/filtros/proyecciones/updates/replacements/pipelines/let/array_filters/comments y comandos/índices/validators. Reusar vistas/normalización y capacidades SDK/portable existentes; no dependencia obligatoria PyMongo ni marca/flag público de «validado». | Clase y fase nativas para Decimal crudo/object/set/frozenset/bytearray/date, claves NUL/no String, entero fuera de int64, UTF-8 inválido, Code.scope y DBRef anidados. Controles Decimal128/Binary/datetime/documentos/tuplas siguen válidos. Distinguir codificación inválida del error semántico servidor; comparar estado/aux_exists y no inventar rollback de efectos semánticos nativos. Un solo chequeo de admisión por solicitud, sin repetirlo en fachada/comando/motor. |
+| 3. Lotes de escritura | Reutilizar `_classic_bulk_batches` y la preparación existente. Admitir todo el grupo que se va a enviar antes de ejecutarlo, manteniendo el orden entre grupos. Insert_many codifica su lote antes de escribir; no endurecer globalmente la preparación de todos los modelos bulk. | Un segundo insert/update inválido impide el primer write válido de la misma familia; en bulk mixto el insert previo permanece antes del error del grupo update, también unordered. Clase cliente conserva InvalidDocument/OverflowError/etc.; no envolver como BulkWriteError/WriteError servidor. IDs asignados, contadores, estado, índices y ausencia/entrega de eventos tienen controles de frontera y barrera. |
+| 4. UUID coordinado D06a/b | Aplicar opciones de escritura antes del almacenamiento, separadas de la interpretación de lectura. Mantener STANDARD hasta que el corte completo permita cambiar el default a UNSPECIFIED de forma consistente. Usar CodecOptions del dueño de cada solicitud: las de colección no reemplazan las de database.command. | Default/UNSPECIFIED rechazan UUID con ValueError en fase SDK, sin mutación/eventos. STANDARD y tres legacy conservan bytes/subtipos y lectura correctos, también wire y reapertura, con/sin SDK. No reescribir Binary 4 almacenado a 3 al leer; no retocar el snapshot para ocultar la diferencia. |
+| 5. Consumidores positivos D06/B08 | La proyección de find debe reutilizar la preparación/evaluación de proyección existente para valores calculados. Sobres raw y resultado bulk reutilizan materialización y contratos DTO: tipos, orden de campos y callbacks una vez. | Preservar proyecciones Decimal128/Binary/datetime/arrays/documentos y el error 9 de la constante Binary 5; no reducirlas a flags Python. Raw find conserva firstBatch/id/ns e id BSON int64; update conserva n/nModified/ok; bulk expone el resultado público nativo. No ordenar claves ni borrar metadata del oráculo. Decoders/fábricas activas detectan doble pase y diferencias de fase. |
+| 6. Aceptación conjunta | Baseline/candidato, referencias nuevas congeladas/check, wheel instalado y gates alcanzados; D05 conserva matrices/cobertura/costes integrados. | Todos los testigos anteriores por directa sync/async y wire × Memory/SQLite × 7/8/9, subset portable real, persistencia/reapertura y recursos limpios. Referencias/observadores históricos intactos y commits semánticos. El preflight rojo no acepta ninguna unidad productiva. |
+
+Las unidades 1 y 2 se implementan juntas donde comparten la frontera de lectura;
+3 requiere ese codificador común, y 4 completa su política de escritura antes
+del default. Los consumidores positivos tienen owner propio: una codificación
+correcta no acepta su proyección/sobre. No se crea otro comparador, planificador,
+contexto o formato de almacenamiento para resolver esta frontera. Los demás
+contextos D06, H53, D07 y el cierre integrado D05 conservan sus obligaciones.
+
 **Entrega posterior `332d07a`.** El corte de claves/consumidores tiene
 [aceptación propia](evidence/bson-consolidation-implementation/bson-consumers/README.md):
 grupo DBRef/collation, átomos del índice de conjuntos y representantes BSON

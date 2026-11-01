@@ -1,0 +1,15 @@
+import hashlib,io,json,os,subprocess,sys,tarfile,tempfile
+from pathlib import Path
+repo=Path.cwd();root=Path(tempfile.mkdtemp(prefix='mongoeco-bson-admission-baseline-'));stage=root/'archive';stage.mkdir()
+blob=subprocess.check_output(['git','archive','2ae4b56','src'])
+with tarfile.open(fileobj=io.BytesIO(blob)) as archive:archive.extractall(stage,filter='data')
+site=(root/'site-packages').resolve();site.mkdir();(stage/'src/mongoeco').rename(site/'mongoeco')
+manifest={str(Path('src')/p.relative_to(site)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((site/'mongoeco').rglob('*.py'))}
+(root/'runtime.json').write_text(json.dumps(manifest,indent=2)+'\n');(root/'wheel.json').write_text(json.dumps({'site_packages':str(site),'baseline':'2ae4b56 Git archive'})+'\n')
+Path('/tmp/mongoeco-bson-admission-baseline-location.txt').write_text(str(root))
+sys.path[:0]=[str(site),'/tmp',str(repo)]
+os.environ['MONGOECO_TEST_INSTALLED_ARTIFACT']='1';os.environ['MONGOECO_DISPATCH_ARTIFACT_ROOT']=str(root)
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+print('baseline 2ae4b56',mongoeco.__file__,len(manifest),flush=True)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/integration/api/test_semantic_group_regressions.py','-k','bson_admission','--tb=short','-p','mongoeco_dispatch_artifact_guard']))

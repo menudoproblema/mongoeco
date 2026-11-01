@@ -1,0 +1,18 @@
+import asyncio,json
+from pathlib import Path
+from pymongo import MongoClient
+from mongoeco.wire import AsyncMongoEcoProxyServer
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from tests.differential.semantic_bson_admission_cases import admission_options,admission_commands
+from tests.differential._real_parity_base import _decode_capture,_normalize
+expected=_decode_capture(Path('tests/fixtures/semantic_bson_admission_7_0.json').read_text())['cases'];report={}
+async def run():
+ for factory in (MemoryEngine,SQLiteEngine):
+  async with AsyncMongoEcoProxyServer(engine=factory(),mongodb_dialect='7.0') as proxy:
+   def probe():
+    with MongoClient(f'mongodb://{proxy.address.host}:{proxy.address.port}',serverSelectionTimeoutMS=3000) as client:
+     for name,action in [('semantic_admission_options',admission_options),('semantic_admission_commands',admission_commands)]:
+      got=action(client.test.c);differences={k:{'local':v,'native':expected[name][k]} for k,v in got.items() if _normalize(v)!=_normalize(expected[name][k])}
+      key=f'{factory.__name__}/{name}';report[key]={'total':len(got),'differences':differences};print(key,len(differences),flush=True)
+   await asyncio.to_thread(probe)
+asyncio.run(run());Path('/tmp/mongoeco-bson-admission-wire-before.json').write_text(json.dumps(report,indent=2)+'\n')

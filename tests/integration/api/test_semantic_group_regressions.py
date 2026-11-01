@@ -83,6 +83,9 @@ class _AsyncCursorView:
     def clone(self):
         return _AsyncCursorView(self._invoke("clone"), self.loop)
 
+    def explain(self, *args, **kwargs):
+        return self._invoke("explain", *args, **kwargs)
+
     def rewind(self):
         self._invoke("rewind")
         self._iterator_view = None

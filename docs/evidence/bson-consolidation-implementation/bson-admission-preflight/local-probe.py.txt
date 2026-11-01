@@ -1,0 +1,14 @@
+import json
+from pathlib import Path
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from tests.differential.semantic_bson_admission_cases import SEMANTIC_BSON_ADMISSION_CASES
+from tests.differential._real_parity_base import _decode_capture,_normalize
+expected=_decode_capture(Path('tests/fixtures/semantic_bson_admission_7_0.json').read_text())['cases']
+result={}
+for engine_factory in (MemoryEngine,SQLiteEngine):
+ with MongoClient(engine_factory(),mongodb_dialect='7.0') as client:
+  for name,action in SEMANTIC_BSON_ADMISSION_CASES:
+   got=action(client.test.c);ref=expected[name];diffs={k:{'local':v,'native':ref[k]} for k,v in got.items() if _normalize(v)!=_normalize(ref[k])}
+   key=f'{engine_factory.__name__}/{name}';result[key]={'total':len(got),'differences':diffs};print(key,len(diffs),'of',len(got),flush=True)
+Path('/tmp/mongoeco-bson-admission-local-before.json').write_text(json.dumps(result,indent=2,ensure_ascii=True)+'\n')

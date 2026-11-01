@@ -1,0 +1,109 @@
+{
+  "scope": "Native admission characterization and implementation preflight only; B07 remains open",
+  "head": "2ae4b56",
+  "runtime_changed": false,
+  "native": {
+    "final_round": 5,
+    "references": [
+      {
+        "target": "7.0",
+        "file": "tests/fixtures/semantic_bson_admission_7_0.json",
+        "sha256": "f874ca3644891bb1343e8acfc0347926a40cc8d3d12c309f10601d96f4fa11ea",
+        "source_sha256": "75a0b0dcdc9690fcb51843561fc924a74226ed311a58f165f243074e3765f078",
+        "native_check_identical": true,
+        "records": 676
+      },
+      {
+        "target": "8.0",
+        "file": "tests/fixtures/semantic_bson_admission_8_0.json",
+        "sha256": "abe2cf0933b8138910bb91747109b6dd32ed1635986bb4f529268ac71697b56f",
+        "source_sha256": "75a0b0dcdc9690fcb51843561fc924a74226ed311a58f165f243074e3765f078",
+        "native_check_identical": true,
+        "records": 676
+      },
+      {
+        "target": "9.0",
+        "file": "tests/fixtures/semantic_bson_admission_9_0.json",
+        "sha256": "e52e167ac33011f66fa0ac589a7c983b9ddd95dcd84907decb6f475b8ce1ee97",
+        "source_sha256": "75a0b0dcdc9690fcb51843561fc924a74226ed311a58f165f243074e3765f078",
+        "native_check_identical": true,
+        "records": 676
+      }
+    ],
+    "topology": "standalone",
+    "actions": 6,
+    "records_per_version": 676
+  },
+  "baseline": {
+    "failed": 96,
+    "passed": 51,
+    "seconds": 40.57,
+    "oracle": "Git archive 2ae4b56, not installed distribution acceptance",
+    "direct_failures": 72,
+    "wire_options_and_commands_failures": 24,
+    "wire_other_actions_passed": 48,
+    "metadata_passed": 3
+  },
+  "local_probe": "local-differences.json.gz",
+  "wire_probe": "wire-differences.json.gz",
+  "protected_unchanged": 266,
+  "resources_verified_absent": 33,
+  "environment": {
+    "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "pymongo": "4.19.0",
+    "pytest": "9.1.1"
+  },
+  "limits": [
+    "No production fix or acceptance of B07/D06/D05.",
+    "The new mandatory regression corpus intentionally remains red; no xfail or filtering to hide failures.",
+    "No final candidate wheel, full distribution matrix, coverage or performance claim.",
+    "Projection and response-envelope defects have their own consumers/owners; native client rejections are not wire-server errors."
+  ],
+  "artifact_sha256": {
+    "README.md": "06e94f9242c2e55b995860dea039f226e7c3fcc08989d69554c2dff3d8e7fe43",
+    "artifact-guard.py.txt": "d3f1ddd3376418a72b6ec4aea27b7df0f1be19b17a7114f4339eaf0efae9307f",
+    "baseline-runtime-sources.json": "6924b59598f166c0bde3f683fecb929b9fade69c8fcc3d506627eefabb4819ca",
+    "baseline-wheel-imports-master.json": "71339cc689ce01d5133f9a1320613565513703bdeb2c1cbcd4b380ecd776dc4d",
+    "baseline.py.txt": "99b07bb65030df6ddeaa31c33051754569b526cf0817ad9a0f93a651a6943627",
+    "baseline.txt.gz": "19f61c30be9d1d3022a4f03df53480981b306c55e1ccd04c79da73770c6ff23b",
+    "lint.txt": "4ae801fab289e4c03f5c44420240d6502efecb22d67001b4b844a12f350eca26",
+    "local-differences.json.gz": "12993beb9bbf0342970905c078f5c40ac1e3724e75ff100361f379228f916f57",
+    "local-probe.py.txt": "3a3a9a337371bdd94da076e16c9c63284528a47e2bd901feb4cf9544aa69a192",
+    "local.txt.gz": "1c2d87803c4cd62b9d6d01b7ff799afb512e04282390ff6beee8a7a182f5159e",
+    "native-controller.py.txt": "593b3b5fb407f53e094db2390eba0c63d005511e5f31c56d739081045fc6ebcd",
+    "protected-sources.json": "d7c2fdf112ce92cacb390cdc4b8128cf6c4517ef59257f1ab428e41aa05a7878",
+    "resources.json": "d4d0fb197ad9927c991f81d09ca954aa8af4c24a3052ae3ae1d2ed1ded7000e1",
+    "resources.py.txt": "65703dd00138c1830d33435807c6cad859ec57f8169eb0653a5aec3161c5bc65",
+    "round-1/7.0/capture-check.txt.gz": "ed76be911020d17e9e4824fc0bd6711bec70a6a91761c9401c777606c67eb257",
+    "round-1/7.0/fixture.json": "4f0f7e78f3ac1d7c46232ca7033af7ed46569b85844b6994f308c33d3f78497a",
+    "round-2/7.0/capture-check.txt.gz": "f4ab646f2b1f3915f4afa9cbe4711cc51311bfb1a2d1a74f8bf661d56aa04755",
+    "round-2/7.0/fixture.json": "8522cc12197f1cc88cdaa0d734c81ea6c0409e2e9f2eb4090585d54ff1892109",
+    "round-3/7.0/capture-check.txt.gz": "6795b3544d93f09aa48ae4a980cad5daaf86e5d3173597e94d6bc677bba91727",
+    "round-3/7.0/fixture.json": "635bcfed429b3c4625df1109fb0eef5274027ef10f9c04374df3e94c7f016de0",
+    "round-3/8.0/capture-check.txt.gz": "f709f1c86bb4f98f7e68027496cf99d1358ba7bd8588569b6afa23331e96dc00",
+    "round-3/8.0/fixture.json": "a5cc3b7bece8d12f18531fcc1b767caf6335c0e29d190d1e897e2c54c797a0f4",
+    "round-3/9.0/capture-check.txt.gz": "dfd9702438bccd4b1a4eca5a6d74ecb7d55ee979fb07e614edc8ab728b536df8",
+    "round-3/9.0/fixture.json": "1451ad8ae7637f9ba6b417ce62f2b41dbba3a9083fa5e53eb4396ee84c505acc",
+    "round-4/7.0/capture-check.txt.gz": "08e5f37adfb1991cee05ef0035a8d7a6e9803ba921a10787d3a98c7d3fb2069e",
+    "round-4/7.0/fixture.json": "16cadccdb3febc8812203ed514950cf0a991f51cea44040bf5c6523bfdba9a23",
+    "round-4/8.0/capture-check.txt.gz": "913a61d6425f37dc91c1cbe5b008647e9e0255e6e76a45fc4cfc4ef32033a234",
+    "round-4/8.0/fixture.json": "873d82f411ed6f6af6298dfe8af834751d939cdd54ba3ef0e3327be30430e1f3",
+    "round-4/9.0/capture-check.txt.gz": "b02da3ac699f68b15e532a5d68eef4192846001b9eb4524d21065167efdbf9f7",
+    "round-4/9.0/fixture.json": "5c7cadd842695aa2b713554a50dbe746ec4a5d049e649fc93e7605ce7470d952",
+    "round-5/7.0/capture-check.txt.gz": "4eda7cf1abe9969cbe3e30f28d5a786b2a3f74b071546fae24ee8e76ed9cef27",
+    "round-5/7.0/fixture.json": "9e911d443a5cbd323c8d8f76bc25c620edad3bc220f777caaa8ad872c1ebf0b3",
+    "round-5/8.0/capture-check.txt.gz": "8ba7f761f87dc8c7f5d97a6f28ae24c5b8bb02b139b93ca10e4d3db0f223b970",
+    "round-5/8.0/fixture.json": "e68eb615282c564e6108a2da2dc988357c561690cf13de78e80692b56752eeee",
+    "round-5/9.0/capture-check.txt.gz": "03ce6a72cce14f1925e281e8371fce7090be9958c3cd2dc1073b89bc05ebd57d",
+    "round-5/9.0/fixture.json": "ab75d9183b628b920cd356eb2bf65d52dcb1a658cd6be44afe9d7141d9eb6b11",
+    "test-sources.json": "6cbbaad2263087277ce4a52d4624737956e2b41c69f07074c475ea815575b2ff",
+    "wire-differences.json.gz": "fec96dc542928cc78694d03f45539c0b2a083757e7ee6ee5647008b1a80bba27",
+    "wire-probe.py.txt": "6f4a2c9410d2eff84a030e9359531a44a38a7356df313b8c9ed405bd4e25fed6",
+    "wire.txt.gz": "637aea1146f159aeeed20132ee6b4030040989980f34941bf66caa3faf083545"
+  },
+  "document_checks": {
+    "relative_links_missing": [],
+    "git_diff_check": "passed",
+    "lint_ratchet": "passed for 3 changed Python files; lint.txt"
+  }
+}

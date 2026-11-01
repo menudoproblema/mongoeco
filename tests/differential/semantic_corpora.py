@@ -26,6 +26,10 @@ from tests.differential.semantic_binary_surface_cases import (
     SEED as BINARY_SURFACE_SEED,
     SEMANTIC_BINARY_SURFACE_CASES,
 )
+from tests.differential.semantic_bson_admission_cases import (
+    SEED as BSON_ADMISSION_SEED,
+    SEMANTIC_BSON_ADMISSION_CASES,
+)
 from tests.differential.semantic_bson_consumer_cases import (
     SEED as BSON_CONSUMER_SEED,
     SEMANTIC_BSON_CONSUMER_CASES,
@@ -522,6 +526,10 @@ SEMANTIC_CORPORA = {
         "semantic_decimal_cases",
         DECIMAL_EDGE_SEED,
         SEMANTIC_DECIMAL_EDGE_CASES,
+    ),
+    "bson_admission": SemanticCorpus(
+        "bson-admission", "semantic_bson_admission_cases",
+        BSON_ADMISSION_SEED, SEMANTIC_BSON_ADMISSION_CASES,
     ),
     "decimal_conversion": SemanticCorpus(
         "decimal-conversion", "semantic_decimal_conversion_cases",
