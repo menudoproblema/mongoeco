@@ -2,6 +2,36 @@
   "source": "real-mongodb",
   "targetDialect": "7.0",
   "cases": {
+    "semantic_followup_f02_duplicate_sort": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "6050106"
+        },
+        "codeName": "Location6050106",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f02_dynamic_nul": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "4940400"
+        },
+        "codeName": "Location4940400",
+        "phase": "open"
+      }
+    },
     "semantic_followup_f02_linear_missing": {
       "empty": {
         "ok": true,
@@ -41,6 +71,46 @@
             }
           }
         ]
+      }
+    },
+    "semantic_followup_f02_no_sort_linear": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "605001"
+        },
+        "codeName": "Location605001",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "605001"
+        },
+        "codeName": "Location605001",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f02_no_sort_shift": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "codeName": "FailedToParse",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "codeName": "FailedToParse",
+        "phase": "open"
       }
     },
     "semantic_followup_f02_object_nul": {
@@ -85,6 +155,90 @@
               "$numberInt": "2"
             },
             "r": null
+          }
+        ]
+      }
+    },
+    "semantic_followup_f02_window_edges": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "0"
+            },
+            "carry": null,
+            "linear": null,
+            "shift": "outside"
+          },
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": null,
+            "carry": null,
+            "linear": null,
+            "shift": "outside"
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "2"
+            },
+            "carry": {
+              "$numberInt": "2"
+            },
+            "linear": {
+              "$numberInt": "2"
+            },
+            "shift": null
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "carry": {
+              "$numberInt": "2"
+            },
+            "linear": {
+              "$numberDouble": "3.0"
+            },
+            "shift": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "v": {
+              "$numberInt": "4"
+            },
+            "carry": {
+              "$numberInt": "4"
+            },
+            "linear": {
+              "$numberInt": "4"
+            },
+            "shift": "outside"
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "carry": {
+              "$numberInt": "4"
+            },
+            "linear": null,
+            "shift": {
+              "$numberInt": "4"
+            }
           }
         ]
       }
@@ -2466,14 +2620,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793559552613"
+          "$numberLong": "1793560051603"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "21"
+        "$numberInt": "66"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -2489,7 +2643,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "23dcf7f9d68b1d8ecbd342c4fa76db5add29c4a3d7265ed282ffca2887eba12d",
+    "sha256": "b1d4af518779674a59fcb6068fb6acd1edd22a0879ae0d78b9ee01f59e37cde7",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -5057,6 +5211,101 @@
         }
       ],
       "selector": "semantic_followup_f05_default_unique"
+    },
+    {
+      "name": "semantic_followup_f02_window_edges",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_window_edges"
+    },
+    {
+      "name": "semantic_followup_f02_dynamic_nul",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_dynamic_nul"
+    },
+    {
+      "name": "semantic_followup_f02_no_sort_shift",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_no_sort_shift"
+    },
+    {
+      "name": "semantic_followup_f02_no_sort_linear",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_no_sort_linear"
+    },
+    {
+      "name": "semantic_followup_f02_duplicate_sort",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_duplicate_sort"
     }
   ]
 }

@@ -35,7 +35,10 @@ from mongoeco.core.aggregation.group_execution import (
     group_prefix_slot_compatible,
     group_uses_slot_semantics,
 )
-from mongoeco.core.aggregation.grouping_stages import validate_date_range_window
+from mongoeco.core.aggregation.grouping_stages import (
+    validate_date_range_window,
+    validate_window_fill_sort,
+)
 from mongoeco.core.aggregation.information_stages import (
     INFORMATION_STAGES,
     parse_information_spec,
@@ -530,6 +533,8 @@ def _validate_stage_structure(operator, spec, dialect):
     if operator == "$match" and not isinstance(spec, dict):
         message = "$match requires an expression object"
         raise server_error(message, code=15959)
+    if operator == "$setWindowFields":
+        validate_window_fill_sort(spec)
     if operator == "$project":
         _require_projection_for_dialect(spec, dialect=dialect)
     elif operator == "$replaceRoot":
@@ -834,6 +839,7 @@ _EXPRESSION_ARITIES = {
 }
 _PURE_CONSTANT_OPERATORS = frozenset(_EXPRESSION_ARITIES) - {"$range"} | {
     "$regexMatch",
+    "$arrayToObject",
     "$literal",
     "$const",
     "$add",

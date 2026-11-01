@@ -684,6 +684,9 @@ def evaluate_array_string_expression(
                 )
             if not isinstance(key, str):
                 raise OperationFailure("$arrayToObject keys must be strings")
+            if "\x00" in key:
+                message = "Key field cannot contain an embedded null byte"
+                raise server_error(message, code=4940400, reason="expression_type")
             result[key] = deepcopy(value)
         return result
 

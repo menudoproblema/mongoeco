@@ -6,6 +6,7 @@ import math
 from collections.abc import Iterable
 from copy import deepcopy
 from functools import cmp_to_key
+from itertools import pairwise
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -26,6 +27,7 @@ from mongoeco.core.aggregation.accumulators import (
 )
 from mongoeco.core.aggregation.date_expressions import _require_date_unit
 from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
+from mongoeco.core.aggregation.expression_values import null_if_missing
 from mongoeco.core.aggregation.numeric_accumulation import RemovableNumericSum
 from mongoeco.core.aggregation.numeric_expressions import _require_integral_numeric
 from mongoeco.core.aggregation.planning import _require_group_spec, _require_sort
@@ -422,6 +424,27 @@ def _resolve_set_window_documents(
         if lower_value <= numeric_candidate <= upper_value:
             window_documents.append(candidate)
     return window_documents
+
+
+def validate_window_fill_sort(spec: object) -> None:
+    """Check nullable-window sort requirements before an empty input can hide them."""
+    if not isinstance(spec, dict) or not isinstance(spec.get("output"), dict):
+        return
+    sort = spec.get("sortBy")
+    for output in spec["output"].values():
+        if not isinstance(output, dict):
+            continue
+        if "$shift" in output and not sort:
+            message = "'$shift' requires a sortBy"
+            raise server_error(message, code=9)
+        if "$linearFill" in output and (
+            sort is None or (isinstance(sort, dict) and len(sort) != 1)
+        ):
+            message = (
+                "$linearFill must be specified with a top level sortBy expression "
+                "with exactly one element"
+            )
+            raise server_error(message, code=605001)
 
 
 def validate_date_range_window(window: object) -> None:
@@ -980,6 +1003,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
     if not isinstance(output, dict):
         raise OperationFailure("$setWindowFields output must be a document")
 
+    validate_window_fill_sort(spec)
     sort_spec = _require_sort(spec["sortBy"]) if "sortBy" in spec else None
     accumulator_runtime = _build_accumulator_runtime(
         dialect=dialect, collation=collation
@@ -1066,6 +1090,17 @@ def _apply_set_window_fields(  # noqa: PLR0913
             if sort_spec is not None
             else []
         )
+        if any(item[0] == "$linearFill" for item in prepared_window_outputs.values()):
+            for left, right in pairwise(window_sort_keys):
+                checkpoint()
+                if _window_sort_keys_equal(
+                    left, right, dialect=dialect, collation=collation
+                ):
+                    message = (
+                        "There can be no repeated values in the sort field "
+                        "in the same partition"
+                    )
+                    raise server_error(message, code=6050106)
         ranks, dense_ranks = _precompute_window_ranks(
             window_sort_keys,
             dialect=dialect,
@@ -1106,8 +1141,6 @@ def _apply_set_window_fields(  # noqa: PLR0913
                     )
                     continue
                 if operator == "$shift":
-                    if sort_spec is None:
-                        raise OperationFailure("$shift requires sortBy")
                     if window is not None:
                         raise OperationFailure(
                             "$shift does not support an explicit window"
@@ -1131,8 +1164,10 @@ def _apply_set_window_fields(  # noqa: PLR0913
                             dialect=dialect,
                         )
                     else:
+                        shifted_value = _MISSING
+                    if shifted_value is _MISSING:
                         shifted_value = deepcopy(expression.get("default"))
-                    set_document_value(enriched, field, shifted_value)
+                    set_document_value(enriched, field, null_if_missing(shifted_value))
                     continue
                 if operator in {"$locf", "$linearFill"}:
                     if sort_spec is None:
@@ -1142,11 +1177,13 @@ def _apply_set_window_fields(  # noqa: PLR0913
                             f"{operator} does not support an explicit window"
                         )
                     partition_values = [
-                        evaluate_expression(
-                            candidate_document,
-                            expression,
-                            variables,
-                            dialect=dialect,
+                        null_if_missing(
+                            evaluate_expression(
+                                candidate_document,
+                                expression,
+                                variables,
+                                dialect=dialect,
+                            )
                         )
                         for candidate_document in iter_with_deadline(
                             ordered,

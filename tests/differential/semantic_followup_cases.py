@@ -655,3 +655,80 @@ SEMANTIC_FOLLOWUP_CASES += (
     ("semantic_followup_f07_bulk_replace", bulk_replacement),
     ("semantic_followup_f05_default_unique", default_unique),
 )
+
+# F02 boundary controls: no other window-family expansion.
+SEMANTIC_FOLLOWUP_CASES += (
+    (
+        "semantic_followup_f02_window_edges",
+        partial(
+            pipeline,
+            stages=[
+                {
+                    "$setWindowFields": {
+                        "sortBy": {"_id": 1},
+                        "output": {
+                            "carry": {"$locf": "$v"},
+                            "linear": {"$linearFill": "$v"},
+                            "shift": {
+                                "$shift": {
+                                    "output": "$v",
+                                    "by": -1,
+                                    "default": "outside",
+                                }
+                            },
+                        },
+                    }
+                }
+            ],
+            rows=[
+                {"_id": 0},
+                {"_id": 1, "v": None},
+                {"_id": 2, "v": 2},
+                {"_id": 3},
+                {"_id": 4, "v": 4},
+                {"_id": 5},
+            ],
+        ),
+    ),
+    (
+        "semantic_followup_f02_dynamic_nul",
+        partial(
+            expression,
+            value={"$arrayToObject": [[["$key", 1]]]},
+            rows=[{"_id": 1, "key": "a\u0000b"}],
+        ),
+    ),
+    *(
+        (
+            f"semantic_followup_f02_no_sort_{name}",
+            partial(
+                pipeline,
+                stages=[{"$setWindowFields": {"output": {"r": value}}}],
+                rows=[{"_id": 1, "v": 1}],
+            ),
+        )
+        for name, value in [
+            ("shift", {"$shift": {"output": "$v", "by": 1}}),
+            ("linear", {"$linearFill": "$v"}),
+        ]
+    ),
+    (
+        "semantic_followup_f02_duplicate_sort",
+        partial(
+            pipeline,
+            stages=[
+                {
+                    "$setWindowFields": {
+                        "sortBy": {"s": 1},
+                        "output": {"r": {"$linearFill": "$v"}},
+                    }
+                }
+            ],
+            rows=[
+                {"_id": 1, "s": 1, "v": 1},
+                {"_id": 2, "s": 1, "v": None},
+                {"_id": 3, "s": 2, "v": 3},
+            ],
+        ),
+    ),
+)

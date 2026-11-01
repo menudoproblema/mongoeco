@@ -2929,7 +2929,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | --- | --- | --- |
 | F00 | Cerrado | Inventario/oráculos congelados; f00-inventory.json y capturas 7/8/9. |
 | F01 | Cerrado | 24 diferenciales 7/8/9; 225 regresiones de respuesta y 103 controles locales/21 subtests. |
-| F02 | Pendiente | Ventanas/objetos sin sentinels ni errores no tipados. |
+| F02 | Cerrado | 192 diferenciales + 3 metadatos; 19 regresiones focales/3 subtests y lint. |
 | F03 | Pendiente | Rutas y consumidores de arrays con semántica contextual. |
 | F04 | Pendiente | Regex/size/all y selección de consumidores. |
 | F05 | Pendiente | Collation efectiva y subset validado. |
@@ -2964,3 +2964,14 @@ primera respuesta de 101, y validación tras close. Observaciones previas
 conservadas; la única conciliación de hash sin recaptura es un comentario noqa
 con AST idéntico, no una expectativa alterada. Logs con prefijo f01.
 Suites globales y aceptación integrada siguen reservadas a F11.
+
+F02: shift, locf y linearFill materializan ausencia en sus propias fronteras
+nullable usando el helper existente; shift usa default también para el campo
+ausente de una fila destino existente. ArrayToObject valida NUL al construir
+el objeto, con 4940400 y evaluación constante/contextual en su fase; bson_size
+permanece estricto. La validación de sort de shift/linearFill se comparte entre
+preparación y aplicación, y se rechazan claves repetidas de linearFill en su
+partición con 6050106. Se añaden cinco controles de bordes/default, NUL dinámico
+y sort inválido/duplicado: todas las 135 observaciones F00 anteriores quedan
+idénticas en 7/8/9. Pasan 192 diferenciales, tres metadatos y 19 controles
+focales/3 subtests. Lint verde, logs f02; F11 sigue pendiente.
