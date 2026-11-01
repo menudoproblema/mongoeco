@@ -2928,7 +2928,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | Bloque | Estado | Evidencia / siguiente criterio |
 | --- | --- | --- |
 | F00 | Cerrado | Inventario/oráculos congelados; f00-inventory.json y capturas 7/8/9. |
-| F01 | Pendiente | Límites y consumo por perfil/superficie. |
+| F01 | Cerrado | 24 diferenciales 7/8/9; 225 regresiones de respuesta y 103 controles locales/21 subtests. |
 | F02 | Pendiente | Ventanas/objetos sin sentinels ni errores no tipados. |
 | F03 | Pendiente | Rutas y consumidores de arrays con semántica contextual. |
 | F04 | Pendiente | Regex/size/all y selección de consumidores. |
@@ -2950,3 +2950,17 @@ y recapturar fuentes estables pasan siete checks de metadata/registro.
 Range grande solo se capturó en mongod (146 antes de materializar), nunca en
 la base local sin guard. Los efectos/watch requieren controles adicionales
 de sus bloques; este inventario no los acepta por asociación.
+
+F01: la normalización pública de find/limit separa cero sin límite y negativos
+de una respuesta del cero interno vacío. El cursor conserva singleBatch en
+clone y cierra la fuente después de esa respuesta sin perder su buffer.
+To_list valida longitud entera <1 antes de leer/decodificar; en cursor cerrado
+conserva la precedencia del SDK. First mantiene su extensión local y el cero
+interno sigue vacío. Se concilian las expectativas antiguas que exigían el bug.
+Pasan 24 diferenciales 7/8/9 de cuatro superficies, 225 controles focales
+de consumo/callbacks/límites y 103 pruebas locales/21 subtests. Los controles
+nativos adicionales cubren clone, skip, lote menor/igual al límite negativo,
+primera respuesta de 101, y validación tras close. Observaciones previas
+conservadas; la única conciliación de hash sin recaptura es un comentario noqa
+con AST idéntico, no una expectativa alterada. Logs con prefijo f01.
+Suites globales y aceptación integrada siguen reservadas a F11.

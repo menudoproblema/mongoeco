@@ -12,6 +12,16 @@ type HintSpec = str | SortSpec
 type ProjectionInput = Mapping[str, Any] | Sequence[str] | AbstractSet[str]
 
 
+def normalize_cursor_limit(limit: object | None) -> tuple[int | None, bool]:
+    """Public find limits: zero is unbounded; negative requests one batch."""
+    if limit is None:
+        return None, False
+    if not isinstance(limit, int):
+        message = "limit must be an instance of int"
+        raise TypeError(message)
+    return abs(limit) or None, limit < 0
+
+
 def projection_document(projection: object | None) -> Mapping[str, Any] | None:
     if projection is None:
         return None

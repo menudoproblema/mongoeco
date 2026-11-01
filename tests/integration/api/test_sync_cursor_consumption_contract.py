@@ -18,7 +18,8 @@ def test_mixed_consumption_drains_prefetched_documents_in_order(engine_factory):
         iterator = iter(cursor)
         try:
             assert next(iterator) == documents[0]
-            assert cursor.to_list(length=0) == []
+            with pytest.raises(ValueError, match="greater than 0"):
+                cursor.to_list(length=0)
             assert cursor.to_list(length=2) == documents[1:3]
             assert cursor.first() == documents[3]
             assert next(iterator) == documents[4]

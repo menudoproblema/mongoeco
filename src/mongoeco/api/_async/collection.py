@@ -47,6 +47,7 @@ from mongoeco.api.admin_parsing import normalize_index_models_from_command
 from mongoeco.api.argument_validation import (
     HintSpec,
     ProjectionInput,
+    normalize_cursor_limit,
     normalize_projection_spec,
     normalize_sort_spec as _normalize_sort_spec,
     projection_document,
@@ -63,7 +64,6 @@ from mongoeco.api.operations import (
     FindOperation,
     UpdateOperation,
     _normalize_array_filters,
-    _normalize_limit,
     _normalize_skip,
     compile_aggregate_operation,
 )
@@ -1112,6 +1112,7 @@ class AsyncCollection:
         # only when executing. Keep the caller's filter alive until that point.
         self._normalize_batch_size(options.get("batch_size"))
         self._normalize_max_time_ms(options.get("max_time_ms"))
+        limit, single_batch = normalize_cursor_limit(options.get("limit"))
         return AsyncCursor(
             self,
             query,
@@ -1120,7 +1121,8 @@ class AsyncCollection:
             collation=options.get("collation"),
             sort=sort_document(options.get("sort")),
             skip=_normalize_skip(options.get("skip", 0)),
-            limit=_normalize_limit(options.get("limit")),
+            limit=limit,
+            single_batch=single_batch,
             hint=self._normalize_hint(options.get("hint")),
             comment=options.get("comment"),
             max_time_ms=options.get("max_time_ms"),

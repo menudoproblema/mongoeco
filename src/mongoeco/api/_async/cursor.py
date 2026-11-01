@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, cast
 from mongoeco.api._async._response import ResponseBatchReader
 from mongoeco.api.argument_validation import (
     HintSpec,
+    normalize_cursor_limit,
     normalize_sort_spec as _normalize_sort_spec,
     sort_document,
     validate_batch_size as _validate_batch_size,
@@ -260,6 +261,9 @@ class _AsyncCursorIterator:
             self._cursor._raise_expression_diagnostic(error, initial=initial)
             raise
         self._position += len(raw)
+        if initial and self._cursor._single_batch:
+            self._cursor._exhausted = True
+            await self._close_source()
         return page
 
     async def _read_response(self, maximum, *, initial=None):
@@ -279,7 +283,10 @@ class _AsyncCursorIterator:
                 _DEFAULT_LOCAL_PREFETCH_SIZE if initial else None
             )
         limit = self._cursor._limit
-        if initial and self._batch_size is not None and limit == self._batch_size:
+        if (
+            initial and not self._cursor._single_batch
+            and self._batch_size is not None and limit == self._batch_size
+        ):
             maximum = self._batch_size + 1
         elif not initial and limit is not None:
             remaining = limit - self._retrieved
@@ -350,6 +357,7 @@ class AsyncCursor:
         sort: SortSpec | None = None,
         skip: int = 0,
         limit: int | None = None,
+        single_batch: bool = False,
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
@@ -368,6 +376,7 @@ class AsyncCursor:
         self._sort = sort
         self._skip = skip
         self._limit = limit
+        self._single_batch = single_batch
         self._hint = hint
         self._comment = comment
         self._max_time_ms = max_time_ms
@@ -780,9 +789,7 @@ class AsyncCursor:
 
     def limit(self, limit: int | None) -> "AsyncCursor":
         self._ensure_mutable()
-        if limit is not None and limit < 0:
-            raise ValueError("limit must be >= 0")
-        self._limit = limit
+        self._limit, self._single_batch = normalize_cursor_limit(limit)
         self._invalidate_execution_cache()
         return self
 
@@ -790,9 +797,9 @@ class AsyncCursor:
         self,
         length: int | None = None,
     ) -> list[Document]:
-        if length is not None and length < 0:
-            raise ValueError("length must be non-negative or None")
-        if length == 0 or self._closed:
+        if isinstance(length, int) and length < 1:
+            raise ValueError("to_list() length must be greater than 0")
+        if self._closed:
             return []
         if self._limit == 0:
             return []
@@ -1043,6 +1050,7 @@ class AsyncCursor:
             sort=deepcopy(self._sort) if self._plan is None else self._sort,
             skip=self._skip,
             limit=self._limit,
+            single_batch=self._single_batch,
             hint=deepcopy(self._hint) if self._plan is None else self._hint,
             comment=deepcopy(self._comment) if self._plan is None else self._comment,
             max_time_ms=self._max_time_ms,

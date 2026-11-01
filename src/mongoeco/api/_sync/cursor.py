@@ -246,11 +246,11 @@ class Cursor:
         return _CursorIterator(self, async_iterable)
 
     def to_list(self, length: int | None = None) -> list[Document]:
-        self._ensure_open()
-        if length is not None and length < 0:
-            raise ValueError("length must be non-negative or None")
-        if length == 0:
+        if isinstance(length, int) and length < 1:
+            raise ValueError("to_list() length must be greater than 0")
+        if self._closed:
             return []
+        self._ensure_open()
         if length is None and not self._started and self._active_async_iterable is None:
             return self._consume_remaining()
 

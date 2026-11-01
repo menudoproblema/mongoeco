@@ -29,7 +29,7 @@ class AsyncCursorContractIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await cursor.close()
                     self.assertEqual(await cursor.to_list(length=None), [])
 
-                    with self.assertRaisesRegex(ValueError, "non-negative"):
+                    with self.assertRaisesRegex(ValueError, "greater than 0"):
                         await collection.find({}).to_list(length=-1)
 
     async def test_aggregation_cursor_is_incremental_and_single_use(self):
@@ -108,7 +108,7 @@ class SyncCursorContractIntegrationTests(unittest.TestCase):
                         [{"_id": "third", "order": 3}],
                     )
 
-                    with self.assertRaisesRegex(ValueError, "non-negative"):
+                    with self.assertRaisesRegex(ValueError, "greater than 0"):
                         collection.find({}).to_list(length=-1)
 
 

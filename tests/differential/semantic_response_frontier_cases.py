@@ -435,7 +435,7 @@ SEMANTIC_RESPONSE_FRONTIER_CASES = (
 )
 
 
-def cursor_limit_contract(collection):
+def cursor_limit_contract(collection):  # noqa: PLR0912, PLR0915 - finite public cursor state matrix
     _reset(collection, [{"_id": n} for n in range(5)])
     result = {}
     for kind in ("keyword", "setter", "replace"):
@@ -477,6 +477,37 @@ def cursor_limit_contract(collection):
         result["remainder"] = [row["_id"] for row in cursor]
     finally:
         cursor.close()
+    result["skip_zero"] = [
+        row["_id"] for row in collection.find().sort("_id", 1).skip(2).limit(0)
+    ]
+    for limit, batch in ((-5, 2), (-2, 2)):
+        cursor = collection.find({}, sort=[("_id", 1)], limit=limit, batch_size=batch)
+        try:
+            clone = cursor.clone()
+            try:
+                result[f"clone/{limit}/{batch}"] = [row["_id"] for row in clone]
+            finally:
+                clone.close()
+            result[f"batch/{limit}/{batch}"] = [
+                row["_id"] for row in cursor.to_list(1)
+            ] + [row["_id"] for row in cursor]
+        finally:
+            cursor.close()
+    for length in (0, -1, "x"):
+        cursor = collection.find()
+        cursor.close()
+        try:
+            cursor.to_list(length)
+            result[f"closed_length/{length}"] = {"ok": True}
+        except Exception as error:
+            result[f"closed_length/{length}"] = {
+                "ok": False,
+                "family": type(error).__name__,
+            }
+    _reset(collection, [{"_id": n} for n in range(200)])
+    result["negative_default_batch"] = [
+        row["_id"] for row in collection.find({}, sort=[("_id", 1)], limit=-200)
+    ]
     return result
 
 

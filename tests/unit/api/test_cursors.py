@@ -715,7 +715,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(InvalidOperation):
             await cursor.to_list()
 
-    async def test_async_cursor_rejects_negative_skip_and_limit_and_returns_none_first(
+    async def test_async_negative_limit_and_empty_first(
         self,
     ):
         cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None)
@@ -723,9 +723,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             cursor.skip(-1)
 
-        with self.assertRaises(ValueError):
-            cursor.limit(-1)
-
+        self.assertIs(cursor.limit(-1), cursor)
         self.assertIsNone(await cursor.first())
 
     async def test_async_cursor_validates_sort_spec_eagerly(self):
@@ -771,13 +769,17 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(factory.calls, 1)
         self.assertEqual(factory.first_calls, 1)
 
-    async def test_async_cursor_first_respects_zero_limit(self):
+    async def test_async_cursor_first_distinguishes_public_zero_and_empty_window(self):
         cursor = AsyncCursor(
             _AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None
         ).limit(0)
 
-        self.assertIsNone(await cursor.first())
-        self.assertEqual(await cursor.to_list(), [])
+        self.assertEqual(await cursor.first(), {"_id": "1"})
+        empty = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, limit=0
+        )
+        self.assertIsNone(await empty.first())
+        self.assertEqual(await empty.to_list(), [])
 
     async def test_async_cursor_rejects_mutation_after_iteration_starts(self):
         cursor = AsyncCursor(
@@ -1194,7 +1196,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(TypeError):
             await cursor.explain()
 
-    def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
+    def test_sync_cursor_accepts_single_batch_negative_limit(self):
         cursor = Cursor(
             _SyncClientStub(),
             _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]),
@@ -1205,10 +1207,8 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             cursor.skip(-1)
 
-        with self.assertRaises(ValueError):
-            cursor.limit(-1)
-
-        self.assertEqual(list(cursor), [{"_id": "1"}, {"_id": "2"}])
+        self.assertIs(cursor.limit(-1), cursor)
+        self.assertEqual(list(cursor), [{"_id": "1"}])
 
     def test_sync_cursor_explain_surfaces_deferred_reason_details(self):
         collection = _PlanningIssueCollectionStub([{"_id": "1"}])
@@ -1416,7 +1416,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(list(cursor), documents)
         self.assertLess(client.run_calls, len(documents))
 
-    def test_sync_cursor_close_is_idempotent_and_blocks_further_use(self):
+    def test_sync_cursor_close_is_idempotent_and_to_list_returns_empty(self):
         cursor = Cursor(
             _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
         )
@@ -1426,8 +1426,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(InvalidOperation):
             cursor.first()
-        with self.assertRaises(InvalidOperation):
-            cursor.to_list()
+        self.assertEqual(cursor.to_list(), [])
         with self.assertRaises(InvalidOperation):
             list(cursor)
 
