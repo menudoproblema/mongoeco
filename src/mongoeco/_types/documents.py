@@ -482,14 +482,14 @@ class WriteCommandResult:
 
     def to_document(self) -> dict[str, object]:
         document: dict[str, object] = {"n": self.count}
-        if self.modified_count is not None:
-            document["nModified"] = self.modified_count
-        if self.upserted:
-            document["upserted"] = [entry.to_document() for entry in self.upserted]
         if self.write_errors:
             document["writeErrors"] = [
                 entry.to_document() for entry in self.write_errors
             ]
+        if self.upserted:
+            document["upserted"] = [entry.to_document() for entry in self.upserted]
+        if self.modified_count is not None:
+            document["nModified"] = self.modified_count
         document["ok"] = 1.0
         return document
 

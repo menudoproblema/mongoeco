@@ -55,7 +55,13 @@ def command_error_document(error):
     )
     if name is not None:
         details["codeName"] = name
-    return details
+    document = {
+        key: details[key]
+        for key in ("ok", "errmsg", "code", "codeName")
+        if key in details
+    }
+    document.update(details)
+    return document
 
 
 def _complete_command_error(error):

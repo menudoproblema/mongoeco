@@ -11,6 +11,7 @@ from mongoeco.core.bson_scalars import (
 )
 from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.server_errors import retain_diagnostic, server_error
 from mongoeco.errors import WriteError
 from mongoeco.types import Regex
 
@@ -247,9 +248,13 @@ def assert_classic_update_preserves_id(
         if "_id" not in updated_doc or not same_bson_update_value(
             updated_doc["_id"], original_id
         ):
-            raise WriteError(
-                "Performing an update on the path '_id' would modify the immutable field '_id'",
-                code=66,
+            message = (
+                "Performing an update on the path '_id' would modify "
+                "the immutable field '_id'"
+            )
+            raise retain_diagnostic(
+                server_error(message, code=66, reason="immutable_id"),
+                WriteError(message, code=66),
             )
         assert_valid_root_document_id(updated_doc["_id"])
         updated_doc["_id"] = deepcopy(original_id)

@@ -287,6 +287,10 @@ from tests.differential.semantic_write_effect_cases import (
     SEED as WRITE_EFFECT_SEED,
     SEMANTIC_WRITE_EFFECT_CASES,
 )
+from tests.differential.semantic_write_response_cases import (
+    SEED as WRITE_RESPONSE_SEED,
+    SEMANTIC_WRITE_RESPONSE_CASES,
+)
 
 
 @dataclass(frozen=True)
@@ -302,6 +306,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "write_response": SemanticCorpus(
+        "write-response",
+        "semantic_write_response_cases",
+        WRITE_RESPONSE_SEED,
+        SEMANTIC_WRITE_RESPONSE_CASES,
+        requires_standalone=True,
+    ),
     "query_batch_callbacks": SemanticCorpus(
         "query-batch-callbacks",
         "semantic_query_batch_callback_cases",

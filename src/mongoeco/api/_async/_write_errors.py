@@ -9,7 +9,10 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 from functools import wraps
 
-from mongoeco.core._public_materialization import materialize_public_document
+from mongoeco.core._public_materialization import (
+    materialize_command_response,
+    materialize_public_document,
+)
 from mongoeco.core.duplicate_keys import duplicate_key_message, write_error_message
 from mongoeco.core.error_documents import (
     CODE_NAMES,
@@ -191,7 +194,7 @@ def find_modify_errors[**P, T](
             if name is not None:
                 details["codeName"] = name
             if not kwargs.get("server_command"):
-                details = materialize_write_response(
+                details = materialize_command_response(
                     details,
                     codec_options=args[0]._codec_options,
                 )

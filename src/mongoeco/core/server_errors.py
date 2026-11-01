@@ -58,12 +58,16 @@ class ServerDiagnostic:
 
     def command_document(self):
         return {
-            **_copy_context(self.context),
             "ok": 0.0,
+            "errmsg": self.message,
             "code": self.code,
             "codeName": self.code_name
             or SERVER_CODE_NAMES.get(self.code, f"Location{self.code}"),
-            "errmsg": self.message,
+            **{
+                key: value
+                for key, value in _copy_context(self.context).items()
+                if key not in {"ok", "errmsg", "code", "codeName"}
+            },
         }
 
     def item_document(self, index=0):
@@ -160,7 +164,10 @@ def operation_error(error, operation, dialect, *, namespace=None):
         )
         if resolved is not None:
             error = resolved
-    if diagnostic is not None and diagnostic.reason == "arithmetic_overflow":
+    if diagnostic is not None and diagnostic.reason in {
+        "arithmetic_overflow",
+        "immutable_id",
+    }:
         if operation.startswith("find_one_and_"):
             prefix = "Plan executor error during findAndModify :: caused by :: "
         elif dialect == "9.0" and operation in {"update_one", "update_many"}:
