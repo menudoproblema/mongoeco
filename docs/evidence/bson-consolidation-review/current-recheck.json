@@ -1,0 +1,24 @@
+{
+  "base_commit": "fe81fcf8b88d1c483a10b64e55169bd160551a49",
+  "attachment_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "scope": "Recontraste documental del mismo informe; no aceptación nueva de runtime ni cierre de B07/D05.",
+  "focal_command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/unit/core/test_binary_storage_paths.py tests/unit/core/test_query_operators.py tests/unit/core/test_sqlite_query.py tests/integration/api/test_ttl_exact_millisecond_migration.py tests/integration/api/test_watch_context_contract.py",
+  "checks": {
+    "focal_passed": 153,
+    "engine_dialect_pairs": 6,
+    "matcher_traces": 18,
+    "official_r8_sources_downloaded_and_matching": 16
+  },
+  "limits": [
+    "No nuevas capturas MongoDB, Atlas ni replica set",
+    "Pruebas sobre checkout, no aceptación instalada o integrada",
+    "72 fallos de replay y dos de batching siguen en el registro de implementación; no se repiten en este recontraste",
+    "El primer intento de descarga falló por DNS del sandbox; se completó con acceso de red autorizado"
+  ],
+  "artifacts_sha256": {
+    "current-recheck-tests.txt": "16fccfb10dbad5c3e7a6f5b92b823601aa596cf7b5af03f66f6364e8aa09c6e0",
+    "current-recheck-representations.json": "2e2bcb8bef835273846e2af3cb6b938276398e41101a4d31b779799956757418",
+    "current-recheck-sources.json": "760e26a8794e67d938ccaf931046958ec41e7f168d671df0dced97ebc9eaf0f9",
+    "current-recheck.py.txt": "571765245475bdff3bb838a9dd39241efb4c41c59ce5ed9f794cfee9e6f32a46"
+  }
+}

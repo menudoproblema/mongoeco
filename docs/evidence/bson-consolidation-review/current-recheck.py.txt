@@ -1,0 +1,17 @@
+import hashlib,json,concurrent.futures,urllib.request
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-review')
+probe=(root/'review19/representation-probe.py.txt').read_text()
+probe=probe.replace("ROOT = Path('docs/evidence/bson-consolidation-review/review19')", "ROOT = Path('/tmp')")
+probe=probe.replace("'cb77581; clean runtime and tests'", "'fe81fcf8; clean runtime and tests'")
+exec(compile(probe,'representation-probe.py','exec'))
+expected=json.loads((root/'review19/sources-check.json').read_text())
+def check(item):
+    with urllib.request.urlopen(item['url'], timeout=25) as response: raw=response.read()
+    actual=hashlib.sha256(raw).hexdigest()
+    assert actual==item['expected_sha256'],item['file']
+    return {'url':item['url'],'sha256':actual,'bytes':len(raw)}
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+    results=list(pool.map(check,expected))
+Path('/tmp/mongoeco-current-sources.json').write_text(json.dumps(results,indent=2)+'\n')
+print({'downloaded_sources':len(results),'matching':len(results)})

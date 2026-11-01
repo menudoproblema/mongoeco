@@ -1,0 +1,82 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/bson/bsontypes.h",
+    "sha256": "368f1e1ac306fdc2ddba78e3a1496e249d9cf9e40bb5005fdb2bbb2f6f0cb3bc",
+    "bytes": 12147
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/bson/bson_comparator_interface_base.h",
+    "sha256": "8ca377d410a29af14438112e5d8785c9467f09894385b45f4c7c33a19356fec9",
+    "bytes": 10297
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/bson/bsonelement.cpp",
+    "sha256": "d3bf3cbcea737b6a9476e28e150d3f765fc7c92f5ee78f98f7087d00c88d2d14",
+    "bytes": 33523
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/exec/document_value/value_comparator.h",
+    "sha256": "44111ec8365fd9e43b5ec601cf270e5b45fb5c447ce81de58be1f5aa967e7867",
+    "bytes": 8031
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/storage/key_string.h",
+    "sha256": "6e93423e10b9b73d468e57fda7283d747e4783d1c4cd1bb7e1f85830a33aa0e7",
+    "bytes": 46787
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/matcher/expression_leaf.cpp",
+    "sha256": "ba5ac409b8d7e2786d42e5ceb40a2d2a7380ec71c690a85dfc8e17d15c9bfc1a",
+    "bytes": 35358
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/matcher/schema/json_schema_parser.cpp",
+    "sha256": "b006e255f60ee4e7d0f1dc2c8796d3cc705d10ad2baddd6e94d3ac0f6973af2d",
+    "bytes": 90604
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/catalog/collection_write_path.cpp",
+    "sha256": "760a17c1261407812283fcb5a9e1a305858432591a84c073834a3b41fce6c7fc",
+    "bytes": 42182
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/catalog/collection_impl.cpp",
+    "sha256": "3097bbd2c8b9934644f03fbe69d29a8f0ff3be9d17891d660e37b1bc5c26a56b",
+    "bytes": 84731
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/pipeline/variables.cpp",
+    "sha256": "47c78a564182b83e86698adda6c0e23f563c0b7cddb5aa5b5d89b9f971e4ff5f",
+    "bytes": 20794
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/pipeline/pipeline.cpp",
+    "sha256": "77897b66c9b68bb671eab7a2c4ae42dde725e25f5d221025a9238fe7ecf8728b",
+    "bytes": 39155
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/util/time_support.h",
+    "sha256": "bd4d2c7c0e204c69c5d7b77ed2065c84173b26cb39793d79921e5cc9c2ae0c94",
+    "bytes": 12238
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/platform/decimal128.h",
+    "sha256": "045fd569d75e82b0f6ca6850bda8f65650c36a7262510f164d4eec99d91b7b10",
+    "bytes": 28379
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/exec/document_value/value.cpp",
+    "sha256": "8648f27886c99f460bf92b068ecc204a3b8bb4d4caf40ddb4ea9847bd1b9697f",
+    "bytes": 47227
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/matcher/expression_parser.cpp",
+    "sha256": "780b36522a9f526398daf6e08fdf05dd3509b9cb6675a5bd28521415bc94c872",
+    "bytes": 104188
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/update/pipeline_executor.cpp",
+    "sha256": "46a26d513314b0251385e710f87b9f0946aef5d6799e547986df41ec8e8f2b90",
+    "bytes": 7775
+  }
+]
