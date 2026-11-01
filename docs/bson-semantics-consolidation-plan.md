@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre, revisión 20, bulk `5a89dcc`, comandos `3bfe5fb`, catálogo `7524e39` y recontraste del informe):**
+**Entrada vigente (1 de noviembre, contraste sobre `785936c`; bulk `5a89dcc`, comandos `3bfe5fb` y catálogo `7524e39` aceptados en sus cortes):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1136,23 +1136,44 @@ extracción. El registro de implementación posee el estado aceptado de cada
 corte. Este apartado mantiene el único orden actual; las caracterizaciones y
 receipts anteriores conservan sus límites históricos.
 
-**Recontraste del mismo informe sobre `fd37c14`.** El SHA-256 del adjunto
-sigue siendo el indicado arriba. La lectura actual confirma que sus cuatro
-huecos ya tienen dueño; no añade otro bloque ni justifica repetir la extracción
-de helpers. Pasan 153 regresiones focales de Binary, almacenamiento, gramática,
-SQL, TTL y contexto watch; la [evidencia de esta comprobación](evidence/bson-consolidation-review/recheck-fd37c14/receipt.json)
-distingue ese resultado de las 167 pruebas históricas y de la aceptación de cada
-corte. El árbol contiene un candidato de comandos sin commitear: su presencia,
-sus capturas y estos tests focales no aceptan todavía B07. No se modificó ese
-candidato para revisar el informe. Se verifica la correspondencia de los 14
-registros originales con los 16 de revisión 19; esta relectura no repite sus
-16 descargas ni los diferenciales nativos.
+**Recontraste vigente sobre `785936c`, con runtime/tests limpios.** El nuevo
+adjunto conserva el SHA-256 indicado arriba: es la misma autocrítica, no una
+nueva reproducción. Se repiten las seis suites focales del
+[recontraste anterior](evidence/bson-consolidation-review/recheck-fd37c14/receipt.json):
+153 pruebas Binary/almacenamiento/gramática/SQL/TTL/contexto watch correctas.
+Se vuelve a ejecutar la [sonda de representación existente](evidence/bson-consolidation-review/review19/representation-probe.py.txt),
+sin cambiar sus aserciones: seis pares motor/dialecto, 18 trazas del matcher,
+eq/in con IDs completos y distinct con payload/subtipo correctos. Son controles
+locales sobre checkout; no nuevas capturas nativas ni aceptación instalada.
+
+Se comprueba la correspondencia de las 14 entradas de `sources.json` con los
+16 registros de descarga de revisión 19, y se relee el
+[parser oficial r8.0.0](https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/matcher/expression_parser.cpp).
+La excepción DBRef comprueba nombres y distingue documentos completos e
+incompletos según contexto; no equivale a la regla de materialización del SDK.
+Esta relectura no repite las 16 descargas ni verifica otra vez sus bytes remotos.
+
+Los cuatro huecos señalados conservan sus disposiciones: Binary SDK y frontera
+del matcher en D03a/D00, eq/in SQL con fallback binario en D03a/D03b, gramática
+DBRef básica aceptada y contextos restantes en D06, clase/código/fase de watch
+en D04. No se reabren por repetir el informe. H53 sigue pendiente de disposición;
+las 167 pruebas citadas son históricas. Comandos y creación de catálogo ya tienen
+aceptación propia, posterior al recontraste anterior: el siguiente corte B07 es
+el censo administrativo, no repetir esos dos cortes. El registro conserva 72
+fallos previos de replay y dos tests de batching rojos: no hay cierre global.
 
 **Simplificación de la aceptación pendiente.** Usar los owners y el runner
 existentes, con una ficha por corte: frontera/consumidor, invariante, testigo
 nativo cuando corresponda, fallo en la base, resultado candidato y alcance
 pendiente. No crear otra matriz paralela ni otro recibo de aceptación por cada
-relectura del mismo informe. Conservar cinco obligaciones independientes:
+relectura del mismo informe. La ficha distingue aceptación existente, hipótesis
+por inspección y fallo reproducido; especifica también la disposición de cada
+entrada delegada. Una delegación solo acredita reuse si conserva el original,
+la fase y las opciones del dueño, codifica una vez y no repite callbacks. No
+exigir una implementación diferente por cada método del censo. En Search,
+separar admisión cliente contrastable con el driver de capacidades de servidor:
+un standalone sin Atlas no acredita resultados positivos de Search.
+Conservar cinco obligaciones independientes:
 
 - **Representación:** observar documento y operando en la frontera real; las
   clases privadas son diagnóstico, mientras rango, subtipo, bytes y resultado
@@ -1175,8 +1196,8 @@ relectura del mismo informe. Conservar cinco obligaciones independientes:
   candidatos omitidos. No aceptar «un milisegundo irrelevante» ni ausencia de
   eventos basada únicamente en un timeout.
 
-El orden de las seis filas de trabajo siguientes se conserva: B07 comandos y
-wrappers de catálogo; UUID coordinado; positivos/respuestas; contextos D06;
+El orden de las seis filas de trabajo siguientes se conserva: B07 entradas
+administrativas pendientes; UUID coordinado; positivos/respuestas; contextos D06;
 disposición H53/D07; integración D05. Los arreglos aceptados conservan sus
 regresiones y no vuelven al backlog. La historia detallada permanece donde está;
 esta entrada y el registro de implementación poseen el estado actual.
