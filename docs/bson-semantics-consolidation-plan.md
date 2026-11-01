@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre, revisión 19 sobre `cb77581`):**
+**Entrada vigente (1 de noviembre, revisión 20 sobre `79d5a62` y candidato sin aceptar):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1118,18 +1118,22 @@ sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
 ### Contraste actual y orden mínimo de ejecución
 
-Relectura vigente sobre HEAD `cb77581`, con árbol limpio y el mismo adjunto
-(SHA-256 `a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`).
-La [revisión 19](evidence/bson-consolidation-review/review19/README.md) contrasta
-las retractaciones y sugerencias con código, 153 regresiones locales y 18 trazas
-del matcher en seis pares motor/dialecto. Vuelve a descargar las 16 fuentes
-fijadas r8.0.0 y comprueba sus hashes; no ejecuta nuevos servidores MongoDB.
-El informe no aporta hallazgos nuevos respecto de las revisiones anteriores.
-Sus cuatro huecos ya están incorporados y tienen aceptación o pendientes por
-consumidor. La conversión y la lectura B07, posteriores a revisión 18, tienen
-aceptación propia; no repetir su extracción. El registro de implementación
-posee el estado de cada corte. Este apartado mantiene el único orden actual;
-las caracterizaciones y receipts anteriores conservan sus límites históricos.
+Relectura vigente sobre HEAD `79d5a62` y el candidato de mutaciones sin
+commitear, identificado en la [revisión 20](evidence/bson-consolidation-review/review20/README.md).
+El adjunto mantiene SHA-256 `a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`:
+no introduce hallazgos nuevos respecto de las revisiones anteriores. Sus cuatro
+huecos ya están incorporados y tienen aceptación o pendientes por consumidor.
+En este árbol pasan 186 regresiones Binary/SQL/TTL/watch/codificador, 49 controles
+del candidato de mutaciones y 18 trazas del matcher en seis pares motor/dialecto.
+Son comprobaciones sobre checkout, no aceptación instalada ni cierre de B07.
+La revisión 19 conserva sus 16 descargas y hashes r8.0.0; esta revisión verifica
+la integridad de ese receipt y relee el parser oficial, sin atribuirse otra
+verificación completa por descarga ni nuevas ejecuciones MongoDB.
+
+Conversión, lectura e inserciones B07 tienen aceptación propia; no repetir su
+extracción. El registro de implementación posee el estado aceptado de cada
+corte. Este apartado mantiene el único orden actual; las caracterizaciones y
+receipts anteriores conservan sus límites históricos.
 
 | Afirmación del informe | Contraste actual y decisión |
 | --- | --- |
@@ -1245,7 +1249,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 
 | Orden / prioridad | Trabajo y dependencia | Aceptación / owner |
 | --- | --- | --- |
-| 1 / P1 — B07, escrituras y comandos | Extender el codificador de lectura ya entregado a la frontera cliente y al lote real. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
+| 1 / P1 — B07, escrituras y comandos | Revisar y aceptar primero el candidato update/delete/findAndModify; después completar admisión bulk por familia y comandos. Inserciones ya aceptadas. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
 | 2 / P1 — B07, UUID | Después de integrar entradas de escritura, aplicar opciones del dueño de la solicitud y coordinar el default. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte. |
 | 3 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
 | 4 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
@@ -1350,15 +1354,39 @@ frente a 60 fallos de la base, con 169 observaciones nativas por versión. El ga
 amplio mantiene 96 fallos B07 y 8.856 correctos. No se reextraen estos mecanismos
 ni se acepta por ello todo bulk, todas las escrituras o el default UUID.
 
-La implementación restante continúa con update/delete/findAndModify y lotes
-bulk de la unidad 3, además de comandos/índices/validators de la unidad 2,
-reutilizando encode_bson_request, encode_operation_bson y la preparación común
-de documentos/IDs. Cada familia bulk debe preservar la entrada hasta su
+**Candidato actual, no aceptado.** Update/delete/findAndModify tienen código y
+controles sin commitear; no son una extracción pendiente ni una entrega cerrada.
+Las 49 pruebas focales nuevas pasan sobre checkout. La siguiente acción es
+revisar y acreditar ese corte con su fuente final congelada; después completar
+los lotes bulk de la unidad 3 y comandos/índices/validators de la unidad 2,
+reutilizando encode_bson_request, sus constructores de solicitud y la
+preparación común de documentos/IDs. Cada familia bulk debe preservar la entrada hasta su
 codificación: el ejecutor interno no es otro chequeo cliente. La unidad 4
 completa el default UUID; unidad 5 conserva proyecciones y sobres/resultados. No reintroducir admisión por cada helper de
 campo ni volver a codificar una operación interna preparada. D05 incorpora el
 coste diagnóstico Memory find_one 1,12 y find(limit=1) 1,06 del corte de lectura; no se
 acepta su presupuesto global por el buen resultado de otras rutas.
+
+**Simplificación y garantías del siguiente corte.**
+
+- Compartir la codificación BSON y las vistas; mantener el orden de validación
+  en el dueño de cada operación. El candidato distingue sesiones, validación
+  cliente y findAndModify: no sustituir esas diferencias por una secuencia
+  universal ni una colección creciente de flags. Antes de extraer otra clase,
+  contrastar errores simultáneos y fijar los casos por perfil SDK/capacidad.
+- Las entradas de comando ya decodificadas usan el ejecutor interno. Que bulk
+  use ese ejecutor evita la doble codificación, pero no acredita admisión:
+  falta codificar cada familia real antes de escribir su primer elemento.
+  Un test unitario de delegación no sustituye estado, índices y barrera de
+  eventos tras un error del segundo elemento y tras un grupo previo válido.
+- Congelar el corpus suplementario y referencias antes de la aceptación final.
+  Comparar baseline y candidato con la misma fuente del caso y observador,
+  separando sync/async/wire, motor, dialecto y perfil SDK. Conservar tipos de
+  IDs, errores y orden de sobres; no ajustar referencias para encubrir fallos.
+- Vincular gates al hash final de runtime y distribución instalada. Los 186/49
+  controles de esta revisión diagnostican el árbol, sin sustituir replay nativo,
+  perfil portable real, typing/SPI, recursos ni gates integrados. El corte de
+  mutaciones puede aceptarse sin declarar resueltos bulk, comandos o UUID.
 
 **Causa compartida.** La API mezcla normalización interna con codificación de
 solicitudes: puede perder el tipo original o compilar antes del momento en que
