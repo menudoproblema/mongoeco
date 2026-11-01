@@ -524,8 +524,10 @@ class DocumentCodecTests(unittest.TestCase):
             codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
         )
 
-        self.assertEqual(legacy["session"], Binary(value.bytes, subtype=3))
-        self.assertEqual(unspecified["session"], Binary(value.bytes, subtype=4))
+        self.assertEqual(bytes(legacy["session"]), value.bytes)
+        self.assertEqual(legacy["session"].subtype, 4)
+        self.assertEqual(bytes(unspecified["session"]), value.bytes)
+        self.assertEqual(unspecified["session"].subtype, 4)
         self.assertEqual(standard["session"], value)
 
     def test_apply_codec_options_returns_input_when_options_are_none(self):

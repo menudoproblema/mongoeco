@@ -531,51 +531,85 @@ class DocumentCodec:
     ) -> Any:
         if codec_options is None:
             return data
-        return DocumentCodec._apply_codec_options_recursive(data, codec_options=codec_options)
+        return DocumentCodec._apply_codec_options_recursive(
+            data, codec_options=codec_options, root_document=True
+        )
 
     @staticmethod
     def _apply_codec_options_recursive(
         data: Any,
         *,
         codec_options: CodecOptions,
+        root_document: bool = False,
     ) -> Any:
         if BsonCode is not None and isinstance(data, BsonCode):
             converted = BsonCode(
                 str(data),
                 DocumentCodec._apply_codec_options_recursive(
-                    data.scope, codec_options=codec_options
-                ) if data.scope is not None else None,
+                    data.scope, codec_options=codec_options, root_document=True
+                )
+                if data.scope is not None
+                else None,
             )
             return DocumentCodec._apply_codec_scalar_options(
                 converted, codec_options=codec_options
             )
-        if BsonDBRef is not None and isinstance(data, BsonDBRef):
+        local_reference = isinstance(data, DBRef)
+        if local_reference or (BsonDBRef is not None and isinstance(data, BsonDBRef)):
             document = DocumentCodec._apply_codec_options_recursive(
-                data.as_doc(), codec_options=codec_options
+                data.as_document() if local_reference else data.as_doc(),
+                codec_options=codec_options, root_document=True,
+            )
+            converted = (
+                DBRef(
+                    document["$ref"], document["$id"], document.get("$db"),
+                    {key: item for key, item in document.items() if key not in {"$ref", "$id", "$db"}},
+                ) if local_reference else decoded_document_reference(document)
             )
             return DocumentCodec._apply_codec_scalar_options(
-                decoded_document_reference(document), codec_options=codec_options
+                converted, codec_options=codec_options
             )
         if isinstance(data, dict):
             converted = {
-                key: DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)
+                key: DocumentCodec._apply_codec_options_recursive(
+                    value, codec_options=codec_options
+                )
                 for key, value in data.items()
             }
-            return (
-                converted if codec_options.document_class is dict
+            converted = (
+                converted
+                if codec_options.document_class is dict
                 else codec_options.document_class(converted)
             )
+            if not root_document:
+                converted = decoded_document_reference(converted)
+            return (
+                converted
+                if root_document
+                else DocumentCodec._apply_codec_scalar_options(
+                    converted, codec_options=codec_options
+                )
+            )
         if isinstance(data, list):
-            return [
-                DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)
+            converted = [
+                DocumentCodec._apply_codec_options_recursive(
+                    value, codec_options=codec_options
+                )
                 for value in data
             ]
+            return DocumentCodec._apply_codec_scalar_options(
+                converted, codec_options=codec_options
+            )
         if isinstance(data, tuple):
             return tuple(
-                DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)
+                DocumentCodec._apply_codec_options_recursive(
+                    value, codec_options=codec_options
+                )
                 for value in data
             )
-        return DocumentCodec._apply_codec_scalar_options(data, codec_options=codec_options)
+        return DocumentCodec._apply_codec_scalar_options(
+            data, codec_options=codec_options
+        )
 
     @staticmethod
     def _apply_codec_scalar_options(
@@ -589,16 +623,16 @@ class DocumentCodec:
                 transformed,
                 codec_options=codec_options,
             )
-        elif isinstance(transformed, uuid.UUID):
+        elif isinstance(transformed, (uuid.UUID, bytes)):
             transformed = DocumentCodec._apply_uuid_codec_options(
                 transformed,
                 codec_options=codec_options,
             )
 
         for value_type, decoder in codec_options.type_registry:
-            if isinstance(transformed, value_type):
+            if type(transformed) is value_type:
                 try:
-                    transformed = decoder(transformed)
+                    return decoder(transformed)
                 except Exception as error:
                     if BsonInvalidBSON is None:
                         raise
@@ -624,16 +658,38 @@ class DocumentCodec:
 
     @staticmethod
     def _apply_uuid_codec_options(
-        value: uuid.UUID,
+        value: uuid.UUID | bytes,
         *,
         codec_options: CodecOptions,
-    ) -> uuid.UUID | Binary:
+    ) -> uuid.UUID | bytes:
         uuid_representation = codec_options.uuid_representation
-        if uuid_representation is UuidRepresentation.STANDARD:
+        subtype = 4 if isinstance(value, uuid.UUID) else getattr(value, "subtype", 0)
+        uuid_size, standard_subtype, legacy_subtype = 16, 4, 3
+        if not isinstance(value, uuid.UUID) and (
+            subtype not in (standard_subtype, legacy_subtype) or len(value) != uuid_size
+        ):
             return value
-        if uuid_representation is UuidRepresentation.UNSPECIFIED:
-            return Binary(value.bytes, subtype=4)
-        return Binary(value.bytes, subtype=3)
+        payload = value.bytes if isinstance(value, uuid.UUID) else bytes(value)
+        if len(payload) == uuid_size:
+            if (
+                subtype == standard_subtype
+                and uuid_representation is UuidRepresentation.STANDARD
+            ):
+                return uuid.UUID(bytes=payload)
+            if subtype == legacy_subtype and uuid_representation in (
+                UuidRepresentation.PYTHON_LEGACY,
+                UuidRepresentation.JAVA_LEGACY,
+                UuidRepresentation.CSHARP_LEGACY,
+            ):
+                if uuid_representation is UuidRepresentation.JAVA_LEGACY:
+                    payload = payload[:8][::-1] + payload[8:][::-1]
+                if uuid_representation is UuidRepresentation.CSHARP_LEGACY:
+                    return uuid.UUID(bytes_le=payload)
+                return uuid.UUID(bytes=payload)
+        if isinstance(value, uuid.UUID):
+            binary_class = BsonBinary or Binary
+            return binary_class(payload, subtype=4)
+        return value
 
     @staticmethod
     def _decode_list_fast(data: list[Any], *, preserve_bson_wrappers: bool) -> list[Any]:

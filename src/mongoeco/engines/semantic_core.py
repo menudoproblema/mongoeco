@@ -374,10 +374,10 @@ def filter_documents(
 def find_has_primary_key_order(semantics: EngineFindSemantics) -> bool:
     """The implicit primary index can provide this order before residuals."""
     return (
-        semantics.sort in ([('_id', 1)], [('_id', -1)])
-        and semantics.collation is None
+        semantics.sort in ([("_id", 1)], [("_id", -1)])
+        and (semantics.collation is None or semantics.collation.locale == "simple")
         and semantics.text_query is None
-        and semantics.hint in (None, '_id_')
+        and semantics.hint in (None, "_id_", [("_id", 1)])
     )
 
 

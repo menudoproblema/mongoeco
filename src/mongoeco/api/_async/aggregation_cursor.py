@@ -205,6 +205,12 @@ class _CursorPageSource:
         self._offset += len(page)
         return page
 
+    @property
+    def exhausted(self):
+        if self._materialized is not None:
+            return self._offset >= len(self._materialized)
+        return getattr(self._cursor, "alive", True) is False
+
     async def aclose(self) -> None:
         close_cursor = getattr(self._cursor, "close", None)
         if callable(close_cursor):
@@ -332,12 +338,15 @@ class AsyncAggregationCursor:
 
     async def _read_driver_response(self):
         await self._initialize()
-        return await self._read_response(
-            max(2, self._batch_size) if self._batch_size else None
-        )
+        while True:
+            batch = await self._read_response(
+                max(2, self._batch_size) if self._batch_size else None
+            )
+            if batch or self._closed or self._response_failed:
+                return batch
 
     async def _fill_response(self, maximum, *, initial=False):
-        if self._closed or self._response_failed or maximum == 0:
+        if self._closed or self._response_failed:
             return
         self._response_remaining = maximum
 
@@ -346,11 +355,11 @@ class AsyncAggregationCursor:
             return await self._next_source_document()
 
         try:
-            batch = await self._response_reader.read(
-                pull, maximum, initial=initial
-            )
+            batch = await self._response_reader.read(pull, maximum, initial=initial)
+            if self._known_source_eof and self._response_reader._pending is None:
+                await finish_cleanup(self.close())
             # No user decoder runs until the server-side response is complete.
-            decoded = [self._materialize_document(document) for document in batch]
+            decoded = self._materialize_response(batch, initial=initial)
         except BaseException as error:
             self._response_failed = True
             try:
@@ -359,7 +368,9 @@ class AsyncAggregationCursor:
                 error.add_note(f"aggregation response cleanup failed: {cleanup_error}")
             if isinstance(error, OperationFailure):
                 resolved = response_operation_error(
-                    error, "aggregate_runtime", self._operation_context.dialect.key,
+                    error,
+                    "aggregate_runtime",
+                    self._operation_context.dialect.key,
                     initial=initial,
                     namespace=getattr(self._collection, "full_name", None),
                 )
@@ -411,6 +422,7 @@ class AsyncAggregationCursor:
         self._comment = operation.comment
         self._max_time_ms = operation.max_time_ms
         self._batch_size = operation.batch_size
+        self._known_source_eof = False
         self._allow_disk_use = operation.allow_disk_use
         self._collation = normalize_collation(operation.collation)
         self._let = operation.let
@@ -1676,6 +1688,14 @@ class AsyncAggregationCursor:
             return applier(document)
         return DocumentCodec.to_public(document)
 
+    def _materialize_response(self, batch, *, initial):
+        materialize = getattr(self._collection, "_materialize_cursor_response", None)
+        if self._apply_codec_options and callable(materialize):
+            return list(materialize(
+                batch, cursor_id=0 if self._closed else id(self), initial=initial
+            ))
+        return [self._materialize_document(document) for document in batch]
+
     async def _accumulate_group_source(
         self,
         plan: _IncrementalGroupPlan,
@@ -2068,7 +2088,9 @@ class AsyncAggregationCursor:
             "deadline": deadline,
         }
 
-    def _iter_response_rows(self, documents, pipeline, window, *, runtime_options):
+    def _iter_response_rows(
+        self, documents, pipeline, window, *, runtime_options, source_exhausted=False
+    ):
         """Schedule a streamable suffix within the response's document-count demand.
 
         An expanding stage may produce a whole array from one source row. Its
@@ -2090,7 +2112,13 @@ class AsyncAggregationCursor:
             if expanding is not None:
                 pending.append((iter(transformed), current[expanding + 1 :]))
             else:
-                yield from window.apply(transformed)
+                output = window.apply(transformed)
+                for index, document in enumerate(output):
+                    if index == len(output) - 1 and (
+                        not window.open or (not pipeline and source_exhausted)
+                    ):
+                        self._known_source_eof = True
+                    yield document
 
     async def _stream_sorted_group_result(
         self,
@@ -2219,7 +2247,8 @@ class AsyncAggregationCursor:
                     break
                 enforce_deadline(deadline)
                 for document in self._iter_response_rows(
-                    page, streamable_pipeline, window, runtime_options=options
+                    page, streamable_pipeline, window, runtime_options=options,
+                    source_exhausted=source.exhausted,
                 ):
                     yield strip_search_result_metadata(document)
         finally:
@@ -2332,11 +2361,21 @@ class AsyncAggregationCursor:
         started_at = time.perf_counter_ns()
         try:
             documents: list[Document] = []
+            await self._initialize()
             while length is None or len(documents) < length:
-                try:
-                    documents.append(await self.__anext__())
-                except StopAsyncIteration:
-                    break
+                if not self._response_buffer:
+                    if self._closed or self._response_failed:
+                        break
+                    batch = await self._read_response(
+                        max(2, self._batch_size) if self._batch_size else None
+                    )
+                    if not batch:
+                        break
+                    self._response_buffer.extend(batch)
+                count = len(self._response_buffer)
+                if length is not None:
+                    count = min(count, length - len(documents))
+                documents.extend(self._response_buffer.popleft() for _ in range(count))
         except Exception as exc:
             profiler = getattr(self._collection, "_profile_operation", None)
             if callable(profiler):
@@ -2643,17 +2682,14 @@ class AsyncAggregationCursor:
 
     @command_errors
     async def __anext__(self) -> Document:
-        if not self._response_buffer and not self._closed and not self._response_failed:
-            await self._initialize()
-            if not self._response_buffer and not self._closed:
-                # PyMongo command cursors promote a requested getMore size 1
-                # to 2; aggregate's firstBatch retains the requested size.
-                await self._fill_response(
-                    max(2, self._batch_size) if self._batch_size else None
-                )
-        if self._response_buffer:
-            return self._response_buffer.popleft()
-        raise StopAsyncIteration
+        while True:
+            while self._response_buffer:
+                row = self._response_buffer.popleft()
+                if row is not None or not self._apply_codec_options:
+                    return row
+            if self._closed or self._response_failed:
+                raise StopAsyncIteration
+            self._response_buffer.extend(await self._read_driver_response())
 
     @command_errors
     async def _next_source_document(self) -> Document:

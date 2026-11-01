@@ -76,6 +76,7 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
 )
 from mongoeco.core._public_materialization import (
+    materialize_cursor_response,
     materialize_public_document,
     materialize_public_value,
 )
@@ -476,6 +477,24 @@ class AsyncCollection:
                 "codec_options.document_class must produce dict-compatible documents"
             )
         return materialized
+
+    def _materialize_cursor_response(self, batch, *, cursor_id, initial):
+        return materialize_cursor_response(
+            batch,
+            codec_options=self._codec_options,
+            namespace=self.full_name,
+            cursor_id=cursor_id,
+            initial=initial,
+        )
+
+    def _materialize_query_response(self, batch, *, cursor_id, initial):
+        decoded = self._materialize_cursor_response(
+            batch, cursor_id=cursor_id, initial=initial
+        )
+        documents = list(decoded)
+        # Query cursors count the decoder's batch, after consuming it. Command
+        # cursors have no query limit and accept unsized iterable batches.
+        return documents, len(decoded)
 
     def _apply_codec_options_to_optional_document(
         self,

@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from mongoeco import AsyncMongoClient
+from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.api._async import _response
 from mongoeco.core.aggregation.extensions import (
     register_aggregation_stage,
@@ -14,6 +14,87 @@ from mongoeco.engines import MemoryEngine, SQLiteEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.types import CodecOptions
 from mongoeco.wire._lifecycle import finish_cleanup
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_known_limit_eof_preserves_the_final_document_pending_by_bytes(
+    monkeypatch, engine_factory
+):
+    monkeypatch.setattr(_response, "_RESPONSE_BYTES", 256)
+    final_id = 2
+
+    async def exercise():
+        async with AsyncMongoClient(engine_factory()) as client:
+            collection = client.responses.rows
+            await collection.insert_many(
+                [{"_id": n, "p": "x" * 100} for n in range(1, 3)]
+            )
+            cursor = await collection.aggregate([{"$limit": 2}])
+            assert cursor._response_reader._pending["_id"] == final_id
+            assert not cursor._closed
+            assert [row["_id"] for row in await cursor.to_list()] == [1, 2]
+            assert cursor._closed
+            assert cursor._response_reader._pending is None
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_empty_client_batch_finalizer_cannot_close_a_resumable_cursor(
+    monkeypatch, engine_factory
+):
+    cleanup = []
+    calls = []
+
+    def empty(rows):
+        calls.append([row["_id"] for row in rows])
+        return []
+
+    with MongoClient(engine_factory()) as client:
+        monkeypatch.setattr(
+            client, "_defer_cleanup", lambda close: cleanup.append(close) or True
+        )
+        collection = client.responses.rows
+        collection.insert_many([{"_id": n} for n in range(1, 4)])
+        collection = collection.with_options(
+            codec_options=CodecOptions(type_registry={list: empty})
+        )
+        cursor = collection.find({}, batch_size=1, sort=[("_id", 1)])
+        assert list(cursor) == []
+        # Drain GC work synchronously so the race cannot hide behind timing.
+        while cleanup:
+            cleanup.pop(0)()
+        assert cursor.to_list(1) == []
+        assert calls == [[1], [2]]
+        cursor.close()
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("query", [{}, {"_id": 1}])
+def test_find_one_checks_response_capacity_before_any_decoder(
+    monkeypatch, engine_factory, query
+):
+    calls = []
+    expected_error_code = 10334
+
+    def observe(row):
+        calls.append(row["_id"])
+        return row
+
+    with MongoClient(engine_factory()) as client:
+        collection = client.responses.rows
+        collection.insert_one({"_id": 1, "p": "x" * 70})
+        collection = collection.with_options(
+            codec_options=CodecOptions(type_registry={dict: observe})
+        )
+        assert collection.find_one(query)["_id"] == 1
+        assert calls == [1]
+        calls.clear()
+        monkeypatch.setattr(_response, "_MAX_RETURNED_DOCUMENT_BYTES", 64)
+        with pytest.raises(OperationFailure) as error:
+            collection.find_one(query)
+        assert error.value.code == expected_error_code
+        assert calls == []
 
 
 @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])

@@ -242,17 +242,26 @@ class _AsyncAggregationCursorStub:
         self.first_calls = 0
         self.close_calls = 0
         self._iterator = None
+        self._closed = False
 
-    async def to_list(self):
+    async def to_list(self, length=None):
         self.to_list_calls += 1
-        return list(self.documents)
+        result = []
+        while length is None or len(result) < length:
+            try:
+                result.append(await self.__anext__())
+            except StopAsyncIteration:
+                self._closed = True
+                break
+        return result
 
     async def first(self):
         self.first_calls += 1
         return self.documents[0] if self.documents else None
 
     def __aiter__(self):
-        self._iterator = iter(self.documents)
+        if self._iterator is None:
+            self._iterator = iter(self.documents)
         return self
 
     async def __anext__(self):
@@ -3192,12 +3201,12 @@ class SyncAggregationCursorTests(unittest.TestCase):
         self.assertEqual(client.run_calls, 4)
         self.assertEqual(async_cursor.close_calls, 1)
 
-    def test_iter_uses_cache_when_loaded(self):
+    def test_to_list_consumes_without_replaying_a_cached_copy(self):
         async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         self.assertEqual(cursor.to_list(), [{"_id": "1"}])
-        self.assertEqual(list(cursor), [{"_id": "1"}])
+        self.assertEqual(list(cursor), [])
 
     def test_iterator_raises_stop_iteration_when_closed_explicitly(self):
         async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])

@@ -5,6 +5,7 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from mongoeco.core._public_materialization import cursor_response_document
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._lifecycle import finish_cleanup
 from mongoeco.wire._session_identity import wire_session_key
@@ -105,7 +106,9 @@ class WireCursorStore:
             else:
                 await finish_cleanup(source.close())
             return {
-                "cursor": {"id": cursor_id, "ns": namespace, "firstBatch": batch},
+                "cursor": cursor_response_document(
+                    batch, cursor_id=cursor_id, namespace=namespace, initial=True
+                ),
                 "ok": 1.0,
             }
         except BaseException as error:
@@ -135,7 +138,9 @@ class WireCursorStore:
         async with state.lock:
             if self._state.get(cursor_id) is not state:
                 return {
-                    "cursor": {"id": 0, "ns": state.namespace, "nextBatch": []},
+                    "cursor": cursor_response_document(
+                        [], cursor_id=0, namespace=state.namespace, initial=False
+                    ),
                     "ok": 1.0,
                 }
             try:
@@ -146,11 +151,12 @@ class WireCursorStore:
                     next_cursor_id = 0
                     await finish_cleanup(state.source.close())
                 return {
-                    "cursor": {
-                        "id": next_cursor_id,
-                        "ns": state.namespace,
-                        "nextBatch": batch,
-                    },
+                    "cursor": cursor_response_document(
+                        batch,
+                        cursor_id=next_cursor_id,
+                        namespace=state.namespace,
+                        initial=False,
+                    ),
                     "ok": 1.0,
                 }
             except BaseException as error:
@@ -275,11 +281,12 @@ class WireCursorStore:
         )
         if state is None:
             return {
-                "cursor": {
-                    "id": 0,
-                    "ns": f"{db_name}.{command_document.get('collection', '')}",
-                    "nextBatch": [],
-                },
+                "cursor": cursor_response_document(
+                    [],
+                    cursor_id=0,
+                    namespace=f"{db_name}.{command_document.get('collection', '')}",
+                    initial=False,
+                ),
                 "ok": 1.0,
             }
         effective_batch_size = (
@@ -292,11 +299,12 @@ class WireCursorStore:
             self._state.pop(cursor_id, None)
             next_cursor_id = 0
         return {
-            "cursor": {
-                "id": next_cursor_id,
-                "ns": state.namespace,
-                "nextBatch": next_batch,
-            },
+            "cursor": cursor_response_document(
+                next_batch,
+                cursor_id=next_cursor_id,
+                namespace=state.namespace,
+                initial=False,
+            ),
             "ok": 1.0,
         }
 

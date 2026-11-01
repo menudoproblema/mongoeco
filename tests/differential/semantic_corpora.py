@@ -26,6 +26,10 @@ from tests.differential.semantic_binary_surface_cases import (
     SEED as BINARY_SURFACE_SEED,
     SEMANTIC_BINARY_SURFACE_CASES,
 )
+from tests.differential.semantic_bson_dispatch_cases import (
+    SEED as BSON_DISPATCH_SEED,
+    SEMANTIC_BSON_DISPATCH_CASES,
+)
 from tests.differential.semantic_bson_grammar_context_cases import (
     SEED as BSON_GRAMMAR_CONTEXT_SEED,
     SEMANTIC_BSON_GRAMMAR_CONTEXT_CASES,
@@ -213,6 +217,11 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "bson_dispatch": SemanticCorpus(
+        "bson-dispatch", "semantic_bson_dispatch_cases",
+        BSON_DISPATCH_SEED, SEMANTIC_BSON_DISPATCH_CASES,
+        observation_encoding="canonical-json",
+    ),
     "response_command": SemanticCorpus(
         "response-command", "semantic_response_command_cases",
         RESPONSE_COMMAND_SEED, SEMANTIC_RESPONSE_COMMAND_CASES,

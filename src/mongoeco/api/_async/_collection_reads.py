@@ -5,6 +5,7 @@ import time
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async._active_operations import track_active_operation
+from mongoeco.api._async._response import ResponseBatchReader
 from mongoeco.api.operations import compile_find_operation
 from mongoeco.api.public_api import (
     COLLECTION_COUNT_DOCUMENTS_SPEC,
@@ -17,6 +18,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors, error_message
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.server_errors import response_operation_error
 
 
 if TYPE_CHECKING:
@@ -117,7 +119,22 @@ async def find_one(
                 ):
                     document = candidate
                     break
+        documents = iter([] if document is None else [document])
+
+        async def pull(_remaining):
+            try:
+                return next(documents)
+            except StopIteration:
+                raise StopAsyncIteration from None
+
+        batch = await ResponseBatchReader(dialect=collection._mongodb_dialect).read(
+            pull, 1, initial=True
+        )
     except Exception as exc:
+        resolved = response_operation_error(
+            exc, "find_runtime", collection._mongodb_dialect.key,
+            initial=True, namespace=collection.full_name,
+        )
         await collection._profile_operation(
             op="query",
             command={
@@ -126,8 +143,10 @@ async def find_one(
             },
             duration_ns=time.perf_counter_ns() - started_at,
             operation=operation,
-            errmsg=error_message(exc),
+            errmsg=error_message(resolved),
         )
+        if resolved is not exc:
+            raise resolved from exc
         raise
     await collection._profile_operation(
         op="query",
@@ -135,7 +154,10 @@ async def find_one(
         duration_ns=time.perf_counter_ns() - started_at,
         operation=operation,
     )
-    return collection._apply_codec_options_to_optional_document(document)
+    decoded, _count = collection._materialize_query_response(
+        batch, cursor_id=0, initial=True
+    )
+    return decoded[0] if decoded else None
 
 
 @command_errors

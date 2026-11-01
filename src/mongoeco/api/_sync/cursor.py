@@ -1,4 +1,5 @@
 from contextlib import suppress
+from typing import Any
 
 from mongoeco.api._async.cursor import (
     _DEFAULT_LOCAL_PREFETCH_SIZE,
@@ -19,6 +20,7 @@ from mongoeco.types import (
 
 
 _CURSOR_UNSET = object()
+_CURSOR_END = object()
 
 
 class _CursorIterator:
@@ -26,6 +28,7 @@ class _CursorIterator:
         self._cursor = cursor
         self._async_iterable = async_iterable
         self._closed = False
+        self._suspended = False
 
     def __iter__(self):
         return self
@@ -36,13 +39,15 @@ class _CursorIterator:
         if self._cursor._active_async_iterable is not self._async_iterable:
             self._closed = True
             raise StopIteration
+        self._suspended = False
         try:
             value = self._cursor._next_document()
         except Exception:
             self._closed = True
             raise
-        if value is None:
-            self._closed = True
+        if value is _CURSOR_END:
+            self._suspended = self._cursor.alive
+            self._closed = not self._suspended
             raise StopIteration
         return value
 
@@ -51,8 +56,14 @@ class _CursorIterator:
             return
         self._cursor._close_active_iterator(self._async_iterable)
         self._closed = True
+        self._suspended = False
 
     def __del__(self):
+        # A client decoder may empty a response while the owning cursor still
+        # has a live server source. GC of list(cursor)'s temporary iterator
+        # must not race a later read through that cursor.
+        if getattr(self, "_suspended", False):
+            return
         if not finalize_best_effort(
             getattr(self._cursor, "_client", None),
             self.close,
@@ -224,13 +235,19 @@ class Cursor:
         if self._exhausted and self._cache is None:
             return []
         if self._cache is None:
-            if self._limit == 1:
+            if self._limit == 1 and not getattr(
+                getattr(self._async_collection, "codec_options", None),
+                "type_registry", (),
+            ):
                 first = self.first()
                 self._cache = [] if first is None else [first]
                 self._exhausted = True
                 return self._cache
-            self._cache = self._client._run(self._async_cursor.to_list())
-            self._exhausted = True
+            documents = self._client._run(self._async_cursor.to_list())
+            self._exhausted = not self._async_cursor.alive
+            if self._exhausted:
+                self._cache = documents
+            return documents
         return self._cache
 
     def _close_active_iterator(self, async_iterable) -> None:
@@ -252,9 +269,15 @@ class Cursor:
             return iter(self._cache)
         if self._exhausted:
             return iter(())
-        if self._limit == 1 and self._active_async_iterable is None:
+        if (
+            self._limit == 1
+            and self._active_async_iterable is None
+            and not getattr(
+                getattr(self._async_collection, "codec_options", None),
+                "type_registry", (),
+            )
+        ):
             return iter(self._load())
-
         self._started = True
         async_iterable = self._active_async_iterable
         if async_iterable is None:
@@ -275,7 +298,7 @@ class Cursor:
         documents: list[Document] = []
         while length is None or len(documents) < length:
             document = self._next_document()
-            if document is None:
+            if document is _CURSOR_END:
                 break
             documents.append(document)
         return documents
@@ -296,9 +319,9 @@ class Cursor:
         self._sync_buffer_index = 0
         return bool(self._sync_buffer)
 
-    def _next_document(self) -> Document | None:
+    def _next_document(self) -> Any:
         if self._exhausted:
-            return None
+            return _CURSOR_END
         self._started = True
         active = self._active_async_iterable
         if active is None:
@@ -312,11 +335,16 @@ class Cursor:
                     self._sync_buffer = []
                     self._sync_buffer_index = 0
                 return document
+            if callable(getattr(active, "_read_driver_response", None)):
+                if not self._async_cursor.alive:
+                    self._exhausted = True
+                    self._close_active_iterator(active)
+                return _CURSOR_END
             return self._client._run(active.__anext__())
         except StopAsyncIteration:
             self._exhausted = True
             self._close_active_iterator(active)
-            return None
+            return _CURSOR_END
         except Exception:
             with suppress(Exception):
                 self._close_active_iterator(active)
@@ -330,7 +358,8 @@ class Cursor:
             return None
         active = self._active_async_iterable
         if active is not None:
-            return self._next_document()
+            value = self._next_document()
+            return None if value is _CURSOR_END else value
         self._started = True
         return self._client._run(self._async_cursor.first())
 

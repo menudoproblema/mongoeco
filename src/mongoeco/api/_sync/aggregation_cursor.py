@@ -54,18 +54,18 @@ class _AggregationCursorIterator:
         if self._cursor._active_async_iterable is not self._async_iterable:
             self._closed = True
             raise StopIteration
-        try:
-            has_chunk = self._pull_chunk()
-        except Exception:
+        while True:
             try:
-                self.close()
+                has_chunk = self._pull_chunk()
             except Exception:
-                pass
-            raise
-        if not has_chunk:
-            self._cursor._exhausted = True
-            raise StopIteration
-        if has_chunk:
+                try:
+                    self.close()
+                except Exception:
+                    pass
+                raise
+            if not has_chunk:
+                self._cursor._exhausted = True
+                raise StopIteration
             value = self._cursor._sync_buffer[self._cursor._sync_buffer_index]
             self._cursor._sync_buffer_index += 1
             if self._cursor._sync_buffer_index >= len(
@@ -73,8 +73,8 @@ class _AggregationCursorIterator:
             ):
                 self._cursor._sync_buffer = []
                 self._cursor._sync_buffer_index = 0
-            return value
-        raise StopIteration
+            if value is not None:
+                return value
 
     def close(self) -> None:
         if self._closed:
@@ -167,38 +167,23 @@ class AggregationCursor:
             raise ValueError("length must be non-negative or None")
         if length == 0:
             return []
-        if length is None and not self._started and self._active_async_iterable is None:
-            return list(self._load())
-
-        documents: list[Document] = []
-        while length is None or len(documents) < length:
-            document = self._next_for_to_list()
-            if document is None:
-                break
-            documents.append(document)
-        return documents
-
-    def _next_for_to_list(self) -> Document | None:
-        if self._sync_buffer_index < len(self._sync_buffer):
-            value = self._sync_buffer[self._sync_buffer_index]
-            self._sync_buffer_index += 1
-            if self._sync_buffer_index >= len(self._sync_buffer):
-                self._sync_buffer = []
-                self._sync_buffer_index = 0
-            return value
-        if self._exhausted:
-            return None
         self._started = True
-        active = self._active_async_iterable
-        if active is None:
-            active = self._async_aggregation_cursor.__aiter__()
-            self._active_async_iterable = active
-        try:
-            return self._client._run(active.__anext__())
-        except StopAsyncIteration:
-            self._exhausted = True
-            self._close_active_iterator(active)
-            return None
+        documents: list[Document] = []
+        available = self._sync_buffer[self._sync_buffer_index:]
+        count = len(available) if length is None else min(length, len(available))
+        documents.extend(available[:count])
+        self._sync_buffer_index += count
+        if self._sync_buffer_index == len(self._sync_buffer):
+            self._sync_buffer = []
+            self._sync_buffer_index = 0
+        if not self._exhausted and (length is None or len(documents) < length):
+            remaining = None if length is None else length - len(documents)
+            documents.extend(self._client._run(self._async_aggregation_cursor.to_list(remaining)))
+            self._exhausted = (
+                getattr(self._async_aggregation_cursor, "_closed", False)
+                and not getattr(self._async_aggregation_cursor, "_response_buffer", ())
+            )
+        return documents
 
     def first(self) -> Document | None:
         self._ensure_open()

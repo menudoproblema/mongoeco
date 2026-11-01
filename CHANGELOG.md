@@ -10,6 +10,14 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Match exact-type, single-pass codec dispatch across completed find, find_one
+  and aggregation responses, including nested containers and cursor metadata.
+  Preserve decoder effects, distinguish decoded None from cursor exhaustion,
+  and retain the SDK's iteration/to_list differences and resumable empty batches.
+  Apply query limits to decoded batch counts while retaining raw source offsets.
+  Decode legacy UUID byte order without changing stored subtype 4, and recognize
+  equivalent primary-index hints and simple collations before residual filtering.
+
 - Form cursor responses with native byte and count boundaries before invoking
   user decoders; preserve pending output, raw BSON and opening/getMore errors.
   Share computed String capacity checks, retain numeric result conversion without

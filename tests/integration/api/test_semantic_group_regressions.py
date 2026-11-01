@@ -91,6 +91,9 @@ class _AsyncCursorView:
     def try_next(self):
         return self._invoke("try_next")
 
+    def to_list(self, length=None):
+        return self._invoke("to_list", length)
+
     @property
     def alive(self):
         return self.cursor.alive

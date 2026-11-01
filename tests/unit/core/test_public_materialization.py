@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from mongoeco.api._async.collection import AsyncCollection
-from mongoeco.core import codec
+from mongoeco.core import _public_materialization as materializer, codec
 from mongoeco.core._public_materialization import materialize_public_document
 from mongoeco.core.bson_scalars import BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.codec import DocumentCodec
@@ -38,6 +38,52 @@ def shape(value):
     if isinstance(value, (list, tuple)):
         return type(value), [shape(item) for item in value]
     return type(value), value
+
+
+@pytest.mark.parametrize("representation", list(UuidRepresentation))
+@pytest.mark.parametrize("subtype", [3, 4])
+def test_uuid_read_policy_matches_independent_bson_decode(representation, subtype):
+    bson = pytest.importorskip("bson")
+
+    payload = bytes(range(16))
+    stored = bson.Binary(payload, subtype)
+    expected = bson.BSON(bson.BSON.encode({"v": stored})).decode(
+        codec_options=bson.CodecOptions(
+            uuid_representation=getattr(
+                bson.binary.UuidRepresentation, representation.name
+            )
+        )
+    )
+    options = CodecOptions(uuid_representation=representation)
+    assert shape(
+        DocumentCodec.apply_codec_options({"v": stored}, codec_options=options)
+    ) == shape(expected)
+    assert shape(
+        materialize_public_document({"v": stored}, codec_options=options)
+    ) == shape(expected)
+
+
+@pytest.mark.parametrize("kind", [dict, list])
+def test_portable_response_walk_preserves_nested_and_batch_callbacks(monkeypatch, kind):
+    value = [{"_id": 1, "object": {"v": 2}, "array": [{"v": 3}]}]
+    observations = []
+
+    def observe(container):
+        observations.append(list(container) if kind is dict else len(container))
+        return container
+
+    options = CodecOptions(type_registry={kind: observe})
+    expected = materializer.materialize_cursor_response(
+        value, codec_options=options, cursor_id=0, namespace="test.rows", initial=True
+    )
+    expected_observations = observations[:]
+    observations.clear()
+    monkeypatch.setattr(materializer, "_BSON", None)
+    actual = materializer.materialize_cursor_response(
+        value, codec_options=options, cursor_id=0, namespace="test.rows", initial=True
+    )
+    assert shape(actual) == shape(expected)
+    assert observations == expected_observations
 
 
 def test_decoded_binary_zero_matches_sdk_inside_containers_and_bson_values():
@@ -263,7 +309,8 @@ def test_decoded_dbref_shapes_and_code_scopes_follow_sdk_root_boundaries(aware):
     date = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC).replace(tzinfo=None)
     reference = {"$id": date, "$ref": "c"}
     value = {
-        "$ref": "root", "$id": 1,
+        "$ref": "root",
+        "$id": 1,
         "nested": [reference],
         "code": bson.Code("$literal", {"$ref": "scope", "$id": 2, "v": reference}),
     }
@@ -302,9 +349,9 @@ def test_dbref_and_code_nested_values_are_decoded_once_before_container_callback
     }
     actual = materialize_public_document(
         DocumentCodec.to_internal(value),
-        codec_options=CodecOptions(type_registry={
-            datetime.datetime: decode_date, bson.DBRef: decode_ref
-        }),
+        codec_options=CodecOptions(
+            type_registry={datetime.datetime: decode_date, bson.DBRef: decode_ref}
+        ),
     )
     assert actual["literal"].id == actual["sdk"].id == "decoded-date"
     assert actual["code"].scope["d"] == "decoded-date"
@@ -312,13 +359,16 @@ def test_dbref_and_code_nested_values_are_decoded_once_before_container_callback
     assert [value for kind, value in seen if kind == "ref"] == ["decoded-date"] * 2
 
 
-@pytest.mark.parametrize("document", [
-    {"$ref": "c", "$id": 1},
-    {"$id": 1, "$ref": "c", "$db": None},
-    {"$ref": "c", "$id": 1, "$db": 42},
-    {"$ref": 42, "$id": 1},
-    {"$ref": "c"},
-])
+@pytest.mark.parametrize(
+    "document",
+    [
+        {"$ref": "c", "$id": 1},
+        {"$id": 1, "$ref": "c", "$db": None},
+        {"$ref": "c", "$id": 1, "$db": 42},
+        {"$ref": 42, "$id": 1},
+        {"$ref": "c"},
+    ],
+)
 def test_response_dbref_hook_matches_sdk_shape_rules(document):
     bson = pytest.importorskip("bson")
     value = {"v": document}

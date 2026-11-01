@@ -6,11 +6,10 @@ import threading
 import unittest
 import uuid
 
-from bson import decode_all
+from bson import Binary as PublicBinary, decode_all
 
 from mongoeco import (
     AsyncMongoClient,
-    Binary,
     ClientSession,
     CodecOptions,
     DeleteMany,
@@ -4774,7 +4773,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             codec_options=codec_options,
         ) as client:
             collection = client.alpha.get_collection("events")
-            await collection.insert_one(
+            await collection.with_options(
+                codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD)
+            ).insert_one(
                 {
                     "_id": "evt-1",
                     "created_at": aware_datetime,
@@ -4791,7 +4792,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             found["created_at"],
             datetime.datetime(2026, 4, 8, 8, 30, tzinfo=datetime.UTC),
         )
-        self.assertEqual(found["trace"], Binary(trace_id.bytes, subtype=4))
+        self.assertEqual(found["trace"], PublicBinary(trace_id.bytes, subtype=4))
 
     async def test_with_options_clones_database_and_collection_without_mutating_parent(
         self,
