@@ -111,7 +111,7 @@ class AsyncSearchRegressionTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
-                    empty_pipeline = [_search_stage(), {"$limit": 0}]
+                    empty_pipeline = [_search_stage(), {"$match": {"_id": {"$in": []}}}]
                     self.assertEqual(
                         await collection.aggregate(empty_pipeline).to_list(),
                         [],
@@ -121,7 +121,7 @@ class AsyncSearchRegressionTests(unittest.IsolatedAsyncioTestCase):
                     ).explain("queryPlanner")
                     self.assertEqual(
                         empty_explain["pushdown"]["searchTopKStrategy"],
-                        "empty",
+                        None,
                     )
                     missing = collection.aggregate(
                         [
@@ -131,7 +131,7 @@ class AsyncSearchRegressionTests(unittest.IsolatedAsyncioTestCase):
                                     "text": {"query": "ada", "path": "title"},
                                 },
                             },
-                            {"$limit": 0},
+                            {"$match": {"_id": {"$in": []}}},
                         ],
                     )
                     with self.assertRaises(OperationFailure):
@@ -455,12 +455,12 @@ class SyncSearchRegressionTests(unittest.TestCase):
                 collection.insert_one({"_id": 1, "title": "Ada", "kind": "note"})
                 collection.create_search_index(SEARCH_INDEX)
 
-                empty_pipeline = [_search_stage(), {"$limit": 0}]
+                empty_pipeline = [_search_stage(), {"$match": {"_id": {"$in": []}}}]
                 self.assertEqual(collection.aggregate(empty_pipeline).to_list(), [])
                 explain = collection.aggregate(empty_pipeline).explain("queryPlanner")
                 self.assertEqual(
                     explain["pushdown"]["searchTopKStrategy"],
-                    "empty",
+                    None,
                 )
 
                 collection.aggregate(

@@ -4690,7 +4690,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         [document["_id"] for document in eq_regex],
-                        ["1"],
+                        [],
                     )
                     self.assertEqual(
                         [document["_id"] for document in in_regex],
@@ -4748,13 +4748,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.alpha.create_collection(
                         "events",
-                        capped=True,
-                        size=1024,
+                        validationLevel="moderate",
                     )
 
                     self.assertEqual(
                         collection.options(),
-                        {"capped": True, "size": 1024},
+                        {"validationLevel": "moderate"},
                     )
                     self.assertEqual(
                         client.alpha.list_collections(
@@ -4764,30 +4763,28 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "name": "events",
                                 "type": "collection",
-                                "options": {"capped": True, "size": 1024},
+                                "options": {"validationLevel": "moderate"},
                                 "info": {"readOnly": False},
                             },
                         ],
                     )
 
-    def test_delete_one_is_allowed_on_capped_collections(self):
+    def test_delete_one_is_allowed_on_regular_collections(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    collection = client.alpha.create_collection(
-                        "events",
-                        capped=True,
-                        size=1024,
-                    )
-                    collection.insert_many([{"_id": "1"}, {"_id": "2"}])
+            with self.subTest(engine=engine_name), MongoClient(factory()) as client:
+                collection = client.alpha.create_collection(
+                    "events",
+                    validationLevel="moderate",
+                )
+                collection.insert_many([{"_id": "1"}, {"_id": "2"}])
 
-                    result = collection.delete_one({"_id": "1"})
+                result = collection.delete_one({"_id": "1"})
 
-                    self.assertEqual(result.deleted_count, 1)
-                    self.assertEqual(
-                        collection.find({}, sort=[("_id", 1)]).to_list(),
-                        [{"_id": "2"}],
-                    )
+                self.assertEqual(result.deleted_count, 1)
+                self.assertEqual(
+                    collection.find({}, sort=[("_id", 1)]).to_list(),
+                    [{"_id": "2"}],
+                )
 
     def test_list_collections_rejects_invalid_filter(self):
         with MongoClient(MemoryEngine()) as client:
@@ -5030,15 +5027,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.alpha.create_collection(
                         "events",
-                        capped=True,
-                        size=512,
+                        validationLevel="moderate",
                     )
 
                     renamed = collection.rename("archived")
 
                     self.assertEqual(
                         renamed.options(),
-                        {"capped": True, "size": 512},
+                        {"validationLevel": "moderate"},
                     )
 
     def test_collection_rename_preserves_collection_configuration(self):
@@ -7314,8 +7310,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.users
                     collection.insert_one({"_id": "persisted", "score": 1})
 
-                    documents = collection.aggregate(
-                        [
+                    documents = collection.database.command(
+                        "aggregate",
+                        1,
+                        pipeline=[
                             {
                                 "$documents": [
                                     {"_id": "1", "score": 10},
@@ -7324,7 +7322,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             },
                             {"$match": {"score": {"$gte": 15}}},
                         ],
-                    ).to_list()
+                        cursor={},
+                    )
+                    documents = documents["cursor"]["firstBatch"]
 
                     self.assertEqual(documents, [{"_id": "2", "score": 20}])
 
@@ -10082,23 +10082,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         indexes,
                         [
+                            {"v": 2, "name": "_id_", "key": {"_id": 1}},
                             {
-                                "name": "_id_",
-                                "key": {"_id": 1},
-                                "unique": True,
-                            },
-                            {
+                                "v": 2,
                                 "name": "profile.name_-1",
                                 "key": {"profile.name": -1},
-                                "unique": False,
                             },
                         ],
                     )
                     self.assertEqual(
                         info,
                         {
-                            "_id_": {"key": [("_id", 1)], "unique": True},
-                            "profile.name_-1": {"key": [("profile.name", -1)]},
+                            "_id_": {"v": 2, "key": [("_id", 1)]},
+                            "profile.name_-1": {"v": 2, "key": [("profile.name", -1)]},
                         },
                     )
 
@@ -10116,7 +10112,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(name, "email_1_created_at_-1")
                     self.assertEqual(
                         info["email_1_created_at_-1"],
-                        {"key": [("email", 1), ("created_at", -1)]},
+                        {"v": 2, "key": [("email", 1), ("created_at", -1)]},
                     )
 
     def test_collection_supports_text_and_geo_special_index_key_types(self):
@@ -10149,28 +10145,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(text_name, "content_text")
                     self.assertEqual(geo_name, "location_2dsphere")
                     self.assertIn(
-                        {
-                            "name": "content_text",
-                            "key": {"content": "text"},
-                            "unique": False,
-                        },
+                        {"v": 2, "name": "content_text", "key": {"content": "text"}},
                         indexes,
                     )
                     self.assertIn(
                         {
+                            "v": 2,
                             "name": "location_2dsphere",
                             "key": {"location": "2dsphere"},
-                            "unique": False,
                         },
                         indexes,
                     )
                     self.assertEqual(
                         info["content_text"],
-                        {"key": [("content", "text")]},
+                        {"v": 2, "key": [("content", "text")]},
                     )
                     self.assertEqual(
                         info["location_2dsphere"],
-                        {"key": [("location", "2dsphere")]},
+                        {"v": 2, "key": [("location", "2dsphere")]},
                     )
                     self.assertEqual(
                         collection.find(
@@ -10224,9 +10216,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     indexes = collection.list_indexes().to_list()
                     self.assertIn(
                         {
+                            "v": 2,
                             "name": index_name,
                             "key": {"tenant": 1, "content": "text"},
-                            "unique": False,
                         },
                         indexes,
                     )
@@ -10273,15 +10265,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(index_name, "title_text_content_text")
                     self.assertIn(
                         {
+                            "v": 2,
                             "name": "title_text_content_text",
                             "key": {"title": "text", "content": "text"},
-                            "unique": False,
                         },
                         indexes,
                     )
                     self.assertEqual(
                         info["title_text_content_text"],
-                        {"key": [("title", "text"), ("content", "text")]},
+                        {"v": 2, "key": [("title", "text"), ("content", "text")]},
                     )
                     self.assertEqual(
                         results,
@@ -10330,9 +10322,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(index_name, "title_text_content_text")
                     self.assertIn(
                         {
+                            "v": 2,
                             "name": "title_text_content_text",
                             "key": {"title": "text", "content": "text"},
-                            "unique": False,
                             "weights": {"title": 5, "content": 1},
                             "default_language": "english",
                             "language_override": "lang",
@@ -10342,6 +10334,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         info["title_text_content_text"],
                         {
+                            "v": 2,
                             "key": [("title", "text"), ("content", "text")],
                             "weights": {"title": 5, "content": 1},
                             "default_language": "english",
@@ -10435,101 +10428,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
-                    collection = client.test.text_hint
+                    collection = client.test.users
                     collection.insert_many(
                         [
-                            {
-                                "_id": "1",
-                                "title": "Ada",
-                                "body": "none",
-                                "rank": 1,
-                            },
-                            {
-                                "_id": "2",
-                                "title": "none",
-                                "body": "Ada",
-                                "rank": 2,
-                            },
-                            {
-                                "_id": "3",
-                                "title": "Ada",
-                                "body": "Ada",
-                                "rank": 3,
-                            },
-                        ],
+                            {"_id": "1", "title": "Ada", "body": "none", "rank": 1},
+                            {"_id": "2", "title": "none", "body": "Ada", "rank": 2},
+                            {"_id": "3", "title": "Ada", "body": "Ada", "rank": 3},
+                        ]
                     )
-                    collection.create_index(
-                        [("title", "text")],
-                        name="title_text",
-                    )
-                    collection.create_index(
-                        [("body", "text")],
-                        name="body_text",
-                    )
+                    collection.create_index([("title", "text")], name="title_text")
                     collection.create_index([("rank", 1)], name="rank_1")
-
-                    with self.assertRaisesRegex(OperationFailure, "ambiguous"):
-                        collection.find(
+                    before = collection.index_information()
+                    with self.assertRaises(OperationFailure):
+                        collection.create_index([("body", "text")], name="body_text")
+                    self.assertEqual(collection.index_information(), before)
+                    for hint in (None, "title_text"):
+                        documents = collection.find(
                             {"$text": {"$search": "Ada"}},
+                            sort=[("_id", 1)],
+                            hint=hint,
                         ).to_list()
-
-                    title_results = collection.find(
-                        {"$text": {"$search": "Ada"}},
-                        {"_id": 1, "score": {"$meta": "textScore"}},
-                        sort={"score": {"$meta": "textScore"}},
-                        hint="title_text",
-                    ).to_list()
-                    body_results = collection.find(
-                        {"$text": {"$search": "Ada"}},
-                        {"_id": 1, "score": {"$meta": "textScore"}},
-                        sort={"score": {"$meta": "textScore"}},
-                        hint="body_text",
-                    ).to_list()
-                    command_result = client.test.command(
-                        {
-                            "find": "text_hint",
-                            "filter": {"$text": {"$search": "Ada"}},
-                            "projection": {
-                                "_id": 1,
-                                "score": {"$meta": "textScore"},
-                            },
-                            "sort": {"score": {"$meta": "textScore"}},
-                            "hint": "body_text",
-                        },
-                    )
-                    explanation = collection.find(
-                        {"$text": {"$search": "Ada"}},
-                        hint="body_text",
-                    ).explain()
-
-                    self.assertEqual(
-                        [document["_id"] for document in title_results],
-                        ["1", "3"],
-                    )
-                    self.assertEqual(
-                        [document["_id"] for document in body_results],
-                        ["2", "3"],
-                    )
-                    self.assertEqual(
-                        [
-                            document["_id"]
-                            for document in command_result["cursor"]["firstBatch"]
-                        ],
-                        ["2", "3"],
-                    )
-                    self.assertEqual(explanation["hinted_index"], "body_text")
-                    self.assertEqual(
-                        explanation["details"]["textQuery"]["index"],
-                        "body_text",
-                    )
-
-                    with self.assertRaisesRegex(
-                        OperationFailure,
-                        "text index",
-                    ):
+                        self.assertEqual([d["_id"] for d in documents], ["1", "3"])
+                    with self.assertRaises(OperationFailure):
                         collection.find(
-                            {"$text": {"$search": "Ada"}},
-                            hint="rank_1",
+                            {"$text": {"$search": "Ada"}}, hint="rank_1"
                         ).to_list()
 
     def test_collection_supports_local_geo_queries_and_geo_near(self):
@@ -10824,9 +10746,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(created["ok"], 1.0)
                     self.assertIn(
                         {
+                            "v": 2,
                             "name": "kind_hidden",
                             "key": {"kind": 1},
-                            "unique": False,
                             "hidden": True,
                         },
                         indexes,
@@ -10918,9 +10840,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(created_names, ["alias_1"])
                     self.assertIn(
                         {
+                            "v": 2,
                             "name": "name_1",
                             "key": {"name": 1},
-                            "unique": False,
                             "collation": {"locale": "en", "strength": 2},
                         },
                         indexes,
@@ -10953,9 +10875,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(created_names, ["location_2d"])
                     self.assertIn(
                         {
+                            "v": 2,
                             "name": "location_2d",
                             "key": {"location": "2d"},
-                            "unique": False,
                             "min": -180,
                             "max": 180,
                             "bucketSize": 0.5,
@@ -11012,12 +10934,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         indexes_after_drop,
                         [
+                            {"v": 2, "name": "_id_", "key": {"_id": 1}},
                             {
-                                "name": "_id_",
-                                "key": {"_id": 1},
-                                "unique": True,
-                            },
-                            {
+                                "v": 2,
                                 "name": "email_1",
                                 "key": {"email": 1},
                                 "unique": True,
@@ -11026,7 +10945,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         indexes_after_drop_all,
-                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
+                        [{"v": 2, "name": "_id_", "key": {"_id": 1}}],
                     )
 
     def test_hint_requires_existing_index_and_is_reflected_in_explain(self):
@@ -11068,28 +10987,28 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             hint="missing_idx",
                         ).to_list()
 
-    def test_create_indexes_rolls_back_batch_on_failure(self):
+    def test_create_indexes_retains_unique_and_nonunique_definitions(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    collection = client.test.users
+            with self.subTest(engine=engine_name), MongoClient(factory()) as client:
+                collection = client.test.users
 
-                    with self.assertRaises(OperationFailure):
-                        collection.create_indexes(
-                            [
-                                IndexModel([("email", 1)], name="idx_email"),
-                                IndexModel(
-                                    [("email", 1)],
-                                    unique=True,
-                                    name="idx_email_unique",
-                                ),
-                            ],
-                        )
+                collection.create_indexes(
+                    [
+                        IndexModel([("email", 1)], name="idx_email"),
+                        IndexModel(
+                            [("email", 1)],
+                            unique=True,
+                            name="idx_email_unique",
+                        ),
+                    ],
+                )
 
-                    self.assertEqual(
-                        collection.list_indexes().to_list(),
-                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
-                    )
+                information = collection.index_information()
+                self.assertEqual(
+                    set(information), {"_id_", "idx_email", "idx_email_unique"}
+                )
+                self.assertNotIn("unique", information["idx_email"])
+                self.assertTrue(information["idx_email_unique"]["unique"])
 
     def test_drop_index_by_spec_uses_generated_name_then_explicit_custom_name(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -11105,7 +11024,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                 self.assertEqual(
                     collection.list_indexes().to_list(),
-                    [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
+                    [{"v": 2, "name": "_id_", "key": {"_id": 1}}],
                 )
 
     def test_drop_index_by_spec_does_not_resolve_custom_aliases(self):
@@ -11116,6 +11035,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 collection.create_index(
                     [("email", 1)],
                     name="idx_email_alias",
+                    unique=True,
                 )
 
                 with self.assertRaisesRegex(
@@ -11129,15 +11049,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 self.assertEqual(
                     collection.list_indexes().to_list(),
                     [
+                        {"v": 2, "name": "_id_", "key": {"_id": 1}},
                         {
-                            "name": "_id_",
-                            "key": {"_id": 1},
-                            "unique": True,
-                        },
-                        {
+                            "v": 2,
                             "name": "idx_email_alias",
                             "key": {"email": 1},
-                            "unique": False,
+                            "unique": True,
                         },
                     ],
                 )

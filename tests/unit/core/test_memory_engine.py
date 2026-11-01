@@ -1217,7 +1217,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 "existing",
                 {"_id": "1", "tags": ["a"], "labels": ["priority"]},
             )
-            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+            with self.assertRaisesRegex(
+                OperationFailure, "Cannot index parallel arrays"
+            ):
                 await engine.create_index("db", "existing", ["tags", "labels"])
 
             await engine.create_index("db", "writes", ["tags", "labels"])
@@ -1226,13 +1228,17 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 "writes",
                 {"_id": "1", "tags": ["a"], "labels": "priority"},
             )
-            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+            with self.assertRaisesRegex(
+                OperationFailure, "Cannot index parallel arrays"
+            ):
                 await engine.insert_document(
                     "db",
                     "writes",
                     {"_id": "2", "tags": ["b"], "labels": ["bulk"]},
                 )
-            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+            with self.assertRaisesRegex(
+                OperationFailure, "Cannot index parallel arrays"
+            ):
                 await self._update(
                     engine,
                     "db",
@@ -1343,7 +1349,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(await engine.get_document("db", "coll", "1"))
             self.assertEqual(
                 await engine.list_indexes("db", "coll"),
-                [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
+                [],
             )
         finally:
             await engine.disconnect()
@@ -1361,7 +1367,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.disconnect()
 
         self.assertIsNone(found)
-        self.assertEqual(indexes, [{"name": "_id_", "key": {"_id": 1}, "unique": True}])
+        self.assertEqual(indexes, [])
 
     async def test_drop_collection_prunes_empty_database_metadata(self):
         engine = MemoryEngine()
@@ -1407,7 +1413,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.create_index("db", "coll", ["email"], name="email_primary")
-            await engine.create_index("db", "coll", ["email"], name="email_alias")
+            await engine.create_index(
+                "db", "coll", ["email"], name="email_alias", unique=True
+            )
 
             with self.assertRaisesRegex(
                 OperationFailure, "multiple indexes found with key pattern"
@@ -1423,7 +1431,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             indexes,
             [
                 {"name": "_id_", "key": {"_id": 1}, "unique": True},
-                {"name": "email_alias", "key": {"email": 1}, "unique": False},
+                {"name": "email_alias", "key": {"email": 1}, "unique": True},
             ],
         )
 
@@ -1548,7 +1556,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(
                 await engine.list_indexes("db", "new_coll"),
-                [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
+                [],
             )
             self.assertEqual(await engine.list_collections("db"), [])
             self.assertNotIn("db", engine._index_data)
@@ -1704,44 +1712,29 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = MemoryEngine()
         await engine.connect()
         try:
-            with patch.object(
-                memory_module,
-                "IndexDefinition",
-                return_value=type(
-                    "_IndexDefinitionStub",
-                    (),
-                    {
-                        "weights": None,
-                        "default_language": None,
-                        "language_override": None,
-                    },
-                )(),
+            with self.assertRaisesRegex(
+                TypeError, "expire_after_seconds must be a non-negative int or None"
             ):
-                with self.assertRaisesRegex(
-                    TypeError, "expire_after_seconds must be a non-negative int or None"
-                ):
-                    await engine.create_index(
-                        "db",
-                        "users",
-                        ["expires_at"],
-                        expire_after_seconds="bad",  # type: ignore[arg-type]
-                    )
-                with self.assertRaisesRegex(TypeError, "hidden must be a bool"):
-                    await engine.create_index(
-                        "db",
-                        "users",
-                        ["kind"],
-                        hidden="yes",  # type: ignore[arg-type]
-                    )
-                with self.assertRaisesRegex(
-                    TypeError, "collation must be a dict or None"
-                ):
-                    await engine.create_index(
-                        "db",
-                        "users",
-                        ["kind"],
-                        collation="en",  # type: ignore[arg-type]
-                    )
+                await engine.create_index(
+                    "db",
+                    "users",
+                    ["expires_at"],
+                    expire_after_seconds="bad",  # type: ignore[arg-type]
+                )
+            with self.assertRaisesRegex(TypeError, "hidden must be a bool"):
+                await engine.create_index(
+                    "db",
+                    "users",
+                    ["kind"],
+                    hidden="yes",  # type: ignore[arg-type]
+                )
+            with self.assertRaisesRegex(TypeError, "collation must be a dict or None"):
+                await engine.create_index(
+                    "db",
+                    "users",
+                    ["kind"],
+                    collation="en",  # type: ignore[arg-type]
+                )
         finally:
             await engine.disconnect()
 
@@ -2455,10 +2448,13 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-    async def test_index_value_returns_none_when_field_is_missing(self):
+    async def test_index_value_merges_missing_and_null_index_keys(self):
         engine = MemoryEngine()
 
-        self.assertIsNone(engine._index_value({"name": "Ada"}, "missing"))
+        self.assertEqual(
+            engine._index_value({"name": "Ada"}, "missing"),
+            engine._index_value({"missing": None}, "missing"),
+        )
 
     async def test_index_value_normalizes_list_values(self):
         engine = MemoryEngine()

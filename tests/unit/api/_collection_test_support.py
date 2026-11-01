@@ -101,6 +101,9 @@ class _SpiV2EngineStub:
         explicit_read_snapshots=False,
     )
 
+    async def index_information(self, *_args, **_kwargs):
+        return {}
+
     async def insert_document(self, *args, **_kwargs):
         return InsertOutcome(applied=True, document=args[2])
 

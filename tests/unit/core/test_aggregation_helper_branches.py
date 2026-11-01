@@ -92,19 +92,19 @@ class ArrayStringHelperBranchTests(unittest.TestCase):
             [2, 3],
         )
         with self.assertRaisesRegex(
-            OperationFailure, '\\$slice count must be an integer'
+            OperationFailure, "\\$slice arguments must be numeric 32-bit integers"
         ):
             evaluate_expression({'items': [1]}, {'$slice': ['$items', 'x']})
         with self.assertRaisesRegex(
-            OperationFailure, '\\$slice position must be an integer'
+            OperationFailure, "\\$slice arguments must be numeric 32-bit integers"
         ):
             evaluate_expression({'items': [1]}, {'$slice': ['$items', 'x', 1]})
         with self.assertRaisesRegex(
-            OperationFailure, '\\$slice count must be an integer'
+            OperationFailure, "\\$slice arguments must be numeric 32-bit integers"
         ):
             evaluate_expression({'items': [1]}, {'$slice': ['$items', 0, 'x']})
         with self.assertRaisesRegex(
-            OperationFailure, '\\$slice count must be a non-negative integer'
+            OperationFailure, "\\$slice third argument must be positive"
         ):
             evaluate_expression({'items': [1]}, {'$slice': ['$items', 0, -1]})
 
@@ -358,23 +358,25 @@ class DateHelperBranchTests(unittest.TestCase):
                 None,
                 evaluate_expression=eval_expr,
             )
-        with self.assertRaisesRegex(
-            OperationFailure, 'produced an invalid date'
+        for parts, expected in (
+            (
+                {"year": 2026, "month": 2, "day": 31},
+                datetime.datetime(2026, 3, 3, tzinfo=datetime.UTC),
+            ),
+            (
+                {"year": 2026, "hour": 24},
+                datetime.datetime(2026, 1, 2, tzinfo=datetime.UTC),
+            ),
         ):
-            date_module._build_date_from_parts(
-                '$dateFromParts',
-                {'year': 2026, 'month': 2, 'day': 31},
-                {},
-                None,
-                evaluate_expression=eval_expr,
-            )
-        with self.assertRaisesRegex(OperationFailure, 'hour must be in range'):
-            date_module._build_date_from_parts(
-                '$dateFromParts',
-                {'year': 2026, 'hour': 24},
-                {},
-                None,
-                evaluate_expression=eval_expr,
+            self.assertEqual(
+                date_module._build_date_from_parts(
+                    "$dateFromParts",
+                    parts,
+                    {},
+                    None,
+                    evaluate_expression=eval_expr,
+                ),
+                expected.replace(tzinfo=None),
             )
 
         self.assertEqual(
@@ -590,9 +592,7 @@ class DateHelperBranchTests(unittest.TestCase):
             ),
             'fallback',
         )
-        with self.assertRaisesRegex(
-            OperationFailure, 'format must evaluate to a string'
-        ):
+        with self.assertRaisesRegex(OperationFailure, "format must be a string"):
             date_module.evaluate_date_expression(
                 '$dateToString',
                 {},

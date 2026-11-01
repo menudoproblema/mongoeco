@@ -341,7 +341,9 @@ async def assert_list_collections_command_supports_name_only(
         with case.subTest(engine=engine_name):
             async with open_client(engine_name) as client:
                 await _maybe_await(
-                    client.alpha.create_collection("events", capped=True, size=512),
+                    client.alpha.create_collection(
+                        "events", validationLevel="moderate"
+                    ),
                 )
                 await _maybe_await(client.alpha.create_collection("logs"))
 
@@ -387,7 +389,9 @@ async def assert_database_command_supports_ping_list_collections_and_drop_databa
                         client.alpha.create_collection("events", capped=True),
                     )
                 await _maybe_await(
-                    client.alpha.create_collection("events", capped=True, size=512),
+                    client.alpha.create_collection(
+                        "events", validationLevel="moderate"
+                    ),
                 )
                 await _maybe_await(client.beta.create_collection("logs"))
 
@@ -398,7 +402,8 @@ async def assert_database_command_supports_ping_list_collections_and_drop_databa
                 case.assertEqual(
                     await _maybe_await(
                         client.alpha.command(
-                            "listCollections", filter={"name": "events"},
+                            "listCollections",
+                            filter={"name": "events"},
                         ),
                     ),
                     {
@@ -409,7 +414,7 @@ async def assert_database_command_supports_ping_list_collections_and_drop_databa
                                 {
                                     "name": "events",
                                     "type": "collection",
-                                    "options": {"capped": True, "size": 512},
+                                    "options": {"validationLevel": "moderate"},
                                     "info": {"readOnly": False},
                                 },
                             ],
@@ -461,7 +466,7 @@ async def assert_database_command_supports_collection_index_count_and_distinct_c
                 case.assertEqual(
                     await _maybe_await(
                         client.alpha.command(
-                            {"create": "events", "capped": True, "size": 512},
+                            {"create": "events", "validationLevel": "moderate"},
                         ),
                     ),
                     {"ok": 1.0},
@@ -511,18 +516,8 @@ async def assert_database_command_supports_collection_index_count_and_distinct_c
                             "id": 0,
                             "ns": "alpha.events",
                             "firstBatch": [
-                                {
-                                    "name": "_id_",
-                                    "key": {"_id": 1},
-                                    "unique": True,
-                                    "ns": "alpha.events",
-                                },
-                                {
-                                    "name": "kind_idx",
-                                    "key": {"kind": 1},
-                                    "unique": False,
-                                    "ns": "alpha.events",
-                                },
+                                {"v": 2, "name": "_id_", "key": {"_id": 1}},
+                                {"v": 2, "name": "kind_idx", "key": {"kind": 1}},
                             ],
                         },
                         "ok": 1.0,

@@ -50,6 +50,7 @@ from mongoeco.core.aggregation.information_stages import (
 )
 from mongoeco.core.aggregation.planning import (
     _require_group_spec,
+    _require_non_negative_int,
     _require_projection_for_dialect,
     _require_replace_root_spec,
     _require_sample_spec,
@@ -546,6 +547,8 @@ def _validate_stage_structure(operator, spec, dialect):
     ):
         message = f"Unrecognized pipeline stage name: '{operator}'"
         raise server_error(message, code=40324)
+    if operator == "$limit":
+        _require_non_negative_int(operator, spec)
     if operator == "$match" and not isinstance(spec, dict):
         message = "$match requires an expression object"
         raise server_error(message, code=15959)
@@ -635,7 +638,11 @@ def _parse_stage_containers(pipeline, dialect, context, relocating):
         builtin = get_registered_aggregation_stage_registration(operator) is None
         if builtin:
             _validate_stage_structure(operator, raw_spec, dialect)
-            if operator == "$documents" and context.collection is not None:
+            if (
+                operator == "$documents"
+                and context.collection is not None
+                and not context.scopes
+            ):
                 message = "$documents can only run with a database-level namespace"
                 raise server_error(message, code=73)
             _validate_placement(operator, address, context.scopes)

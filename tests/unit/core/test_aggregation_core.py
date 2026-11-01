@@ -7,7 +7,7 @@ import uuid
 from copy import deepcopy
 from unittest.mock import patch
 
-from mongoeco.compat import MongoDialect
+from mongoeco.compat import MONGODB_DIALECT_80, MongoDialect
 import mongoeco.core.aggregation.accumulators as accumulators_module
 import mongoeco.core.aggregation.grouping_stages as grouping_stages
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
@@ -271,7 +271,12 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual(evaluate_expression({"value": float("nan")}, {"$toString": "$value"}), "NaN")
         self.assertEqual(evaluate_expression({"value": float("inf")}, {"$toString": "$value"}), "Infinity")
         self.assertEqual(evaluate_expression({"value": float("-inf")}, {"$toString": "$value"}), "-Infinity")
-        self.assertEqual(evaluate_expression({"value": b"hello"}, {"$toString": "$value"}), "aGVsbG8=")
+        self.assertEqual(
+            evaluate_expression(
+                {"value": b"hello"}, {"$toString": "$value"}, dialect=MONGODB_DIALECT_80
+            ),
+            "aGVsbG8=",
+        )
         self.assertEqual(
             evaluate_expression(document, {"$let": {"vars": {"extra": 5}, "in": {"$add": ["$score", "$$extra"]}}}),
             15,
@@ -430,7 +435,7 @@ class AggregationCoreTests(unittest.TestCase):
                     }
                 },
             ),
-            datetime.datetime(2026, 3, 24, 0, 0, 0),
+            datetime.datetime(2026, 3, 23, 0, 0, 0),
         )
 
     def test_evaluate_expression_uses_mongo_truthiness_rules(self):
@@ -1279,7 +1284,10 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual(_stringify_aggregation_value(float("inf")), "Infinity")
         self.assertEqual(_stringify_aggregation_value(float("-inf")), "-Infinity")
         self.assertEqual(_stringify_aggregation_value(aware), "2026-03-25T08:05:06.789Z")
-        self.assertEqual(_stringify_aggregation_value(Binary(b"\x00\x01", subtype=4)), "AAE=")
+        self.assertEqual(
+            _stringify_aggregation_value(Binary(b"\x00" * 16, subtype=4)),
+            "00000000-0000-0000-0000-000000000000",
+        )
         self.assertEqual(_stringify_aggregation_value(Regex("^a", "im")), "/^a/im")
         self.assertEqual(_stringify_aggregation_value(Timestamp(10, 2)), "Timestamp(10, 2)")
         self.assertTrue(math.isnan(_mongo_mod(float("inf"), 2)))

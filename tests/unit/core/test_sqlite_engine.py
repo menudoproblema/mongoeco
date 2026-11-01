@@ -1939,7 +1939,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(
                 engine,
                 "_load_indexes",
-                return_value=[{"unique": False, "fields": ["items.name"]}],
+                return_value=[
+                    {
+                        "unique": False,
+                        "fields": ["items.name"],
+                        "key": [("items.name", 1)],
+                    }
+                ],
             ):
                 engine._validate_document_against_unique_indexes(
                     "db", "coll", {"items": [{"name": "a"}]}
@@ -1956,7 +1962,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 "existing",
                 {"_id": "1", "tags": ["a"], "labels": ["priority"]},
             )
-            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+            with self.assertRaisesRegex(
+                OperationFailure, "Cannot index parallel arrays"
+            ):
                 await engine.create_index("db", "existing", ["tags", "labels"])
 
             await engine.create_index("db", "writes", ["tags", "labels"])
@@ -1965,13 +1973,17 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 "writes",
                 {"_id": "1", "tags": ["a"], "labels": "priority"},
             )
-            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+            with self.assertRaisesRegex(
+                OperationFailure, "Cannot index parallel arrays"
+            ):
                 await engine.insert_document(
                     "db",
                     "writes",
                     {"_id": "2", "tags": ["b"], "labels": ["bulk"]},
                 )
-            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+            with self.assertRaisesRegex(
+                OperationFailure, "Cannot index parallel arrays"
+            ):
                 await self._update(
                     engine,
                     "db",
@@ -3779,7 +3791,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 "db", "coll", ["email"], unique=False, name="email_primary"
             )
             await engine.create_index(
-                "db", "coll", ["email"], unique=False, name="email_alias"
+                "db", "coll", ["email"], unique=True, name="email_alias"
             )
 
             with self.assertRaisesRegex(
@@ -3796,7 +3808,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             indexes,
             [
                 {"name": "_id_", "key": {"_id": 1}, "unique": True},
-                {"name": "email_alias", "key": {"email": 1}, "unique": False},
+                {"name": "email_alias", "key": {"email": 1}, "unique": True},
             ],
         )
 
@@ -6522,13 +6534,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     "db", "coll", ["expires_at"], expire_after_seconds=-1
                 )
             with self.assertRaisesRegex(
-                OperationFailure, "TTL indexes require a single-field key pattern"
+                OperationFailure, "TTL indexes are single-field indexes"
             ):
                 await engine.create_index(
                     "db", "coll", [("a", 1), ("b", 1)], expire_after_seconds=10
                 )
             with self.assertRaisesRegex(
-                OperationFailure, "TTL indexes cannot be created on _id"
+                OperationFailure, "Invalid option for an _id index specification"
             ):
                 await engine.create_index(
                     "db", "coll", ["_id"], expire_after_seconds=10

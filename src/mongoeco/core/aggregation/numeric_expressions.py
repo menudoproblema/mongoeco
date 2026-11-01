@@ -683,7 +683,7 @@ def _mongo_mod(left: float, right: float) -> int | float:
 
 
 def _normalize_numeric_place(
-    operator: str, place: Any, *, dialect: MongoDialect
+    operator: str, place: Any, *, dialect: MongoDialect = MONGODB_DIALECT_70
 ) -> int:
     numeric = wrap_bson_numeric(place)
     if numeric is None:

@@ -18935,8 +18935,57 @@
             ]
           ],
           "unique": true
+        },
+        "f10_nonunique": {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": [
+            [
+              "f10",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ]
         }
       },
+      "list_explicit": [
+        {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": {
+            "_id": {
+              "$numberInt": "1"
+            }
+          },
+          "name": "_id_"
+        },
+        {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": {
+            "f10": {
+              "$numberInt": "1"
+            }
+          },
+          "name": "f10_1",
+          "unique": true
+        },
+        {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": {
+            "f10": {
+              "$numberInt": "1"
+            }
+          },
+          "name": "f10_nonunique"
+        }
+      ],
       "no_ghost": true
     },
     "semantic_followup_f10_metadata": {
@@ -19112,14 +19161,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793567638082"
+          "$numberLong": "1793568272197"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "101"
+        "$numberInt": "108"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -19135,7 +19184,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "7eb861087bfd81852e344a56036b130d9999774376557d5d0bdb2ab0e7ca5e32",
+    "sha256": "14b4189ae23256881caf13a7ccb6602099bf93d7ada2248f296dbfd4bdadb195",
     "topology": "standalone"
   },
   "case_manifests": [

@@ -2437,7 +2437,9 @@ def facade_metadata_contexts(collection):
     result["ping_keyword"] = database.command("ping", value=1)["ok"] == 1
     result["id"] = collection.index_information()
     collection.create_index([("f10", 1)], unique=True)
+    collection.create_index([("f10", 1)], name="f10_nonunique")
     result["explicit"] = collection.index_information()
+    result["list_explicit"] = list(collection.list_indexes())
     result["no_ghost"] = absent.name not in database.list_collection_names()
     collection.drop_indexes()
     return result

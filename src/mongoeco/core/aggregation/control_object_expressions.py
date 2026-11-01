@@ -13,8 +13,8 @@ from mongoeco.core.aggregation.evaluation_environment import (
 from mongoeco.core.aggregation.expression_values import expression_values_equal
 from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
 from mongoeco.core.bson_values import is_bson_string
-from mongoeco.core.expression_context import validate_user_variable_names
 from mongoeco.core.collation import compare_with_collation
+from mongoeco.core.expression_context import validate_user_variable_names
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, UndefinedType

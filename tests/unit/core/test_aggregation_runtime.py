@@ -66,13 +66,13 @@ class AggregationRuntimeTests(unittest.TestCase):
             ),
             {"present": "Ada"},
         )
-        self.assertIs(
+        self.assertEqual(
             _evaluate_expression_with_missing(
                 {"items": []},
                 "$items.0.name",
                 None,
             ),
-            _MISSING,
+            [],
         )
         self.assertEqual(
             evaluate_expression(

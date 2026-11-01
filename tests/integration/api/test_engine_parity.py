@@ -1291,7 +1291,9 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
             async with open_client(engine_name) as client:
                 collection = client.get_database("db").get_collection("events")
                 await collection.create_index([("alias", 1)], name="alias_one")
-                await collection.create_index([("alias", 1)], name="alias_two")
+                await collection.create_index(
+                    [("alias", 1)], name="alias_two", unique=True
+                )
 
                 with self.assertRaises(OperationFailure) as missing_ctx:
                     await collection.drop_index([("missing", 1)])

@@ -252,6 +252,8 @@ def create_index(
             commit_write=commit_write,
             rollback_write=rollback_write,
         ):
+            if ensure_collection is not None:
+                ensure_collection()
             if physical_name is not None and expressions is not None:
                 # Physical indexes span every namespace in the shared table.
                 # Unique constraints are enforced above and during writes instead.

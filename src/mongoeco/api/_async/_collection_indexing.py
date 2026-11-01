@@ -103,7 +103,7 @@ def _validate_wildcard_projection(collection, projection):
 
 def _project_index_document(collection, document):
     document = {"v": document.get("v", 2), "key": document["key"], **document}
-    if document.get("name") == "_id_":
+    if document.get("name") == "_id_" or document.get("unique") is False:
         document.pop("unique", None)
     if collection._mongodb_dialect.behavior_flag(
         "list_indexes_includes_simple_collation", default=False
