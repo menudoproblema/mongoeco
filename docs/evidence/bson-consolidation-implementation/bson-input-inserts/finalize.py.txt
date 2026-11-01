@@ -1,0 +1,24 @@
+import hashlib,json,re,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-inserts')
+r=json.loads((root/'receipt.json').read_text())
+assert r['implementation_commit']==subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+for filename,digest in r['artifacts_sha256'].items():
+ assert hashlib.sha256((root/filename).read_bytes()).hexdigest()==digest,filename
+for filename,digest in json.loads((root/'runtime-sources.json').read_text()).items():
+ assert hashlib.sha256(Path(filename).read_bytes()).hexdigest()==digest,filename
+for filename,digest in json.loads((root/'changed-sources.json').read_text()).items():
+ assert hashlib.sha256(Path(filename).read_bytes()).hexdigest()==digest,filename
+for filename,digest in json.loads((root/'protected.json').read_text()).items():
+ assert hashlib.sha256(Path(filename).read_bytes()).hexdigest()==digest,filename
+missing=[]
+for p in [Path('docs/bson-semantics-consolidation-plan.md'),Path('docs/bson-consolidation-implementation.md'),root/'README.md']:
+ for target in re.findall(r'\]\(([^)]+)\)',p.read_text()):
+  if '://' not in target and not target.startswith('#'):
+   if not (p.parent/target.split('#')[0]).exists():missing.append([str(p),target])
+assert not missing,missing
+subprocess.run(['git','diff','--check'],check=True)
+assert not subprocess.check_output(['git','status','--porcelain','--','src','tests'],text=True)
+r['document_checks']={'relative_links_missing':missing,'diff_check':'passed','runtime_and_tests_match_implementation_commit':True,'project_markdown_validator':'none found'}
+(root/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+print('Acceptance evidence, source hashes, historical protection and document links verified')

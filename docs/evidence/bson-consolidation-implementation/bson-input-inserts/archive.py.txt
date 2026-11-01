@@ -1,0 +1,117 @@
+import gzip,hashlib,io,json,re,shutil,subprocess,tarfile
+from pathlib import Path
+
+ROOT=Path('docs/evidence/bson-consolidation-implementation/bson-input-inserts')
+ROOT.mkdir(exist_ok=True)
+wheel=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+info=json.loads((wheel/'wheel.json').read_text())
+runtime=json.loads((wheel/'runtime.json').read_text())
+assert len(runtime)==285
+for path,digest in runtime.items():
+ assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==digest,path
+ assert hashlib.sha256((Path(info['site_packages'])/Path(path).relative_to('src')).read_bytes()).hexdigest()==digest,path
+
+wide=Path('/tmp/mongoeco-bson-insert-wheel-all-delivery.log').read_text()
+unit=Path('/tmp/mongoeco-bson-insert-wheel-unit-delivery.log').read_text()
+baseline=Path('/tmp/mongoeco-bson-insert-baseline-accepted.log').read_text()
+assert '96 failed, 8856 passed' in wide
+failures=[line for line in wide.splitlines() if line.startswith('FAILED ')]
+assert len(failures)==96 and all('[bson_admission-' in line for line in failures)
+assert '1403 passed, 4535 subtests passed' in unit
+assert '60 failed, 63 passed' in baseline
+proofs=sorted(wheel.glob('wheel-imports-*.json'))
+assert len(proofs)==6
+for proof in proofs:
+ data=json.loads(proof.read_text());assert data['modules']
+ assert data['exit_code'] == (0 if 'unit' in proof.name else 1) or ('gw' in proof.name and data['exit_code']==0)
+ assert Path(data['site']).resolve()==Path(info['site_packages']).resolve()
+ shutil.copy2(proof,ROOT/proof.name)
+
+for source,name in [
+ ('/tmp/mongoeco-bson-insert-wheel-all-delivery.log','replay.txt.gz'),
+ ('/tmp/mongoeco-bson-insert-wheel-unit-delivery.log','unit.txt.gz'),
+ ('/tmp/mongoeco-bson-insert-baseline-accepted.log','baseline.txt.gz'),
+ ('/tmp/mongoeco-bson-insert-build-delivery.log','build.txt.gz'),
+]:
+ (ROOT/name).write_bytes(gzip.compress(Path(source).read_bytes(),mtime=0))
+
+for source,name in [
+ ('/tmp/mongoeco-bson-insert-sdk-free-delivery.log','sdk-free-inserts.json'),
+ ('/tmp/mongoeco-bson-insert-sdk-free-reads-delivery.log','sdk-free-reads.json'),
+]:
+ data=json.loads(Path(source).read_text());assert data['sdk_available'] is False and data['site']==info['site_packages']
+ assert data['checks']==(942 if 'inserts' in name else 748)
+ (ROOT/name).write_text(json.dumps(data,indent=2)+'\n')
+
+programs={
+ '/tmp/mongoeco-dispatch-build.py':'build.py.txt',
+ '/tmp/mongoeco-bson-insert-wheel-all.py':'replay.py.txt',
+ '/tmp/mongoeco-bson-insert-wheel-unit-final.py':'unit.py.txt',
+ '/tmp/mongoeco_dispatch_artifact_guard.py':'artifact-guard.py.txt',
+ '/tmp/mongoeco-bson-insert-baseline.py':'baseline.py.txt',
+ '/tmp/mongoeco-bson-insert-native-v7.py':'native-controller.py.txt',
+ '/tmp/mongoeco-bson-insert-sdk-free.py':'sdk-free.py.txt',
+ '/tmp/mongoeco-bson-insert-sdk-free-prepare.py':'sdk-free-prepare.py.txt',
+ '/tmp/mongoeco-bson-insert-resources.py':'resources.py.txt',
+ '/tmp/mongoeco-bson-insert-cost.py':'cost.py.txt',
+ '/tmp/mongoeco-bson-insert-archive.py':'archive.py.txt',
+}
+for source,name in programs.items():shutil.copy2(source,ROOT/name)
+shutil.copy2('/tmp/mongoeco-bson-input-typing.txt',ROOT/'typing.txt')
+assert 'positive=1, negative-errors=20' in (ROOT/'typing.txt').read_text()
+assert 'positive=1, negative-errors=25' in (ROOT/'typing.txt').read_text()
+shutil.copy2('/tmp/mongoeco-bson-insert-resources.json',ROOT/'resources.json')
+resources=json.loads((ROOT/'resources.json').read_text());assert len(resources)==63 and all(r['absent'] for r in resources)
+shutil.copy2('/tmp/mongoeco-bson-insert-cost.json',ROOT/'cost.json')
+
+# Fresh public manifest, from actual isolated baseline/candidate imports.
+manifest=[]
+base=Path(Path('/tmp/mongoeco-bson-insert-baseline-location.txt').read_text().strip())
+for path in (base,wheel):
+ site=json.loads((path/'wheel.json').read_text())['site_packages']
+ result=subprocess.run(['.venv/bin/python','-I','/tmp/mongoeco-dispatch-manifest.py',site],check=True,capture_output=True,text=True)
+ manifest.append(json.loads(result.stdout))
+assert manifest[0]==manifest[1]
+shutil.copy2(base/'runtime.json',ROOT/'baseline-runtime-sources.json')
+base_proofs=list(base.glob('wheel-imports-*.json'))
+assert len(base_proofs)==1
+assert json.loads(base_proofs[0].read_text())['exit_code']==1
+shutil.copy2(base_proofs[0],ROOT/'baseline-imports.json')
+(ROOT/'public-api.json').write_text(json.dumps(manifest[1],indent=2,sort_keys=True)+'\n')
+
+native=[]
+for iteration in range(1,8):
+ folder=Path('/tmp/mongoeco-bson-insert-native'+('' if iteration==1 else f'-v{iteration}'))
+ for target in ('7.0','8.0','9.0'):
+  fixture=json.loads((folder/target/'fixture.json').read_text());assert fixture['status']=='succeeded'
+  (ROOT/f'native-{iteration}-{target}.json').write_text(json.dumps(fixture,indent=2)+'\n')
+  (ROOT/f'native-{iteration}-{target}.txt.gz').write_bytes(gzip.compress((folder/(target+'.log')).read_bytes(),mtime=0))
+  if iteration==7:
+   reference=Path(f'tests/fixtures/semantic_bson_insert_{target.replace(".","_")}.json')
+   check=folder/target/'bson_insert-check.json'
+   assert reference.read_bytes()==check.read_bytes()
+   shutil.copy2(check,ROOT/f'native-check-{target}.json')
+   native.append({'target':target,'reference':str(reference),'sha256':hashlib.sha256(reference.read_bytes()).hexdigest(),'case_count':5,'observations':169,'check_byte_identical':True})
+
+# All historical tracked fixtures and independent observers remain byte exact.
+blob=subprocess.check_output(['git','archive','29504ca','tests/fixtures','tests/support_write_parity.py','tests/support_bson_observation.py'])
+protected={}
+with tarfile.open(fileobj=io.BytesIO(blob)) as archive:
+ for entry in archive.getmembers():
+  if entry.isfile():
+   digest=hashlib.sha256(archive.extractfile(entry).read()).hexdigest()
+   assert hashlib.sha256(Path(entry.name).read_bytes()).hexdigest()==digest,entry.name
+   protected[entry.name]=digest
+(ROOT/'protected.json').write_text(json.dumps(protected,indent=2)+'\n')
+(ROOT/'runtime-sources.json').write_text(json.dumps(runtime,indent=2)+'\n')
+files=subprocess.check_output(['git','diff','--name-only','--','src','tests'],text=True).splitlines()
+files+=subprocess.check_output(['git','ls-files','--others','--exclude-standard','--','tests'],text=True).splitlines()
+(ROOT/'changed-sources.json').write_text(json.dumps({p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in files},indent=2)+'\n')
+receipt={
+ 'base_commit':'29504ca','scope':'B07 insert_one/insert_many, builtin write-error replies and ID preparation; B07 remains open',
+ 'wheel':info,'checks':{'native':native,'baseline':{'failed':60,'passed':63},'new_corpus_candidate':{'passed':123},'wide':{'failed':96,'passed':8856,'all_failures':'bson_admission; existing B07 backlog'},'unit':{'passed':1403,'subtests':4535},'sdk_free_insert_observations':942,'sdk_free_read_controls':748,'protected_files':len(protected),'resources_absent':63,'public_api':'unchanged','typing':{'positive':2,'negative_errors':[20,25]}},
+ 'limits':['No complete B07/D06/D05 acceptance','UUID default remains STANDARD; other writes/commands still pending','SDK-free observations exclude SDK-only Code and int64 input constructors; Decimal128 observed as public decimal text','Cost is diagnostic, not a D05 budget acceptance','Intermediate runs are feedback; native round 7 and installed delivery logs own acceptance'],
+ 'artifacts_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.is_file() and p.name not in ('receipt.json','README.md')},
+}
+(ROOT/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print(json.dumps({'wheel':info['sha256'],'protected':len(protected),'runtime':len(runtime),'native_cases':5,'new_checks':123,'status':'verified slice; whole goal open'}))

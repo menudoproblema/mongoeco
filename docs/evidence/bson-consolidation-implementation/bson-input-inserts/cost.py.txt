@@ -1,0 +1,36 @@
+import json,subprocess,sys
+from pathlib import Path
+roots={'base':Path(Path('/tmp/mongoeco-bson-insert-baseline-location.txt').read_text().strip()),'candidate':Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())}
+program='''import sys,time,json
+sys.path.insert(0,sys.argv[1])
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+rows=[]
+for factory in (MemoryEngine,SQLiteEngine):
+ for batch in (1,4):
+  with MongoClient(factory()) as client:
+   c=client.test.rows
+   for index in range(10):c.insert_one({'_id':-index-1,'v':[1,'a']})
+   start=time.process_time()
+   for index in range(200):
+    documents=[{'_id':index*batch+j,'v':[1,'a']} for j in range(batch)]
+    if batch==1:
+     assert c.insert_one(documents[0]).inserted_id==index
+    else:assert c.insert_many(documents).inserted_ids==[d['_id'] for d in documents]
+   cpu=time.process_time()-start
+   assert c.count_documents({})==10+200*batch
+   rows.append({'engine':factory.__name__,'batch':batch,'cpu':cpu})
+print(json.dumps(rows))
+'''
+samples=[]
+for label in ('base','candidate','candidate','base')*2:
+ site=json.loads((roots[label]/'wheel.json').read_text())['site_packages']
+ result=subprocess.run([sys.executable,'-I','-c',program,site],check=True,capture_output=True,text=True)
+ samples.append({'label':label,'rows':json.loads(result.stdout)})
+ratios=[]
+for i,row in enumerate(samples[0]['rows']):
+ base=sum(s['rows'][i]['cpu'] for s in samples if s['label']=='base')
+ candidate=sum(s['rows'][i]['cpu'] for s in samples if s['label']=='candidate')
+ ratios.append({'engine':row['engine'],'batch':row['batch'],'cpu_ratio':candidate/base})
+output={'scope':'diagnostic only: ABBA x2, 200 requests per case, concurrent replay; no D05 budget acceptance','samples':samples,'ratios':ratios}
+Path('/tmp/mongoeco-bson-insert-cost.json').write_text(json.dumps(output,indent=2)+'\n');print(json.dumps(ratios))

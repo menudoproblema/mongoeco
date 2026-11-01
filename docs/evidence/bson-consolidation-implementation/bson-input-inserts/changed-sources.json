@@ -1,0 +1,17 @@
+{
+  "src/mongoeco/_types/documents.py": "2ba20f44ab32ec860eaa0b7e3fddcf6bbc1008a81d34da263c329a75528716f3",
+  "src/mongoeco/api/_async/_collection_bulk.py": "30af57109425676188efb8b81305eab8de702e63d5bc1d509ff51c059dcafa59",
+  "src/mongoeco/api/_async/_collection_insert.py": "dc911bd6c437830f9b63e529ef4edeafd65420cb852845baffe00288bc0678c5",
+  "src/mongoeco/api/_async/_database_admin_write_commands.py": "dc28c070f0a49b2551de3fdc3adb7a73820e860d5dfa8536f25177f07fbf5fc1",
+  "src/mongoeco/api/_async/_write_errors.py": "e06bec36c39e53dc8fedd7a3813a365b2d4b5a625016380fda71b28f770dfe41",
+  "src/mongoeco/api/_async/collection.py": "771ac5a38e45f322b11a7d82fb1b242aab78a8edb0053bed9451c044c58b717d",
+  "tests/differential/semantic_corpora.py": "11979f811c018fac7d40724028fa87c98229d750da59cdbc32b54b843b33f1f3",
+  "tests/integration/api/test_bson_consumer_plans.py": "ae3bd67dcd618a9112896817648dae9fe6de4f39ed68093e6b9d9114c2f56486",
+  "tests/integration/api/test_semantic_group_regressions.py": "ec7cd08955bbf6ef5b97b427e97c494f101d590d3e8ff24f46d03e8050596f0c",
+  "tests/unit/api/test_collection_validation_helpers.py": "017b3a6ef260efe732407b4b0776a8b766b1c62a64b25ea7b7fd3cc0057cf434",
+  "tests/differential/semantic_bson_insert_cases.py": "e01d78fbae7f31514a77fcffdb9cbee866c95f34112893e472056c6a4a6f4270",
+  "tests/fixtures/semantic_bson_insert_7_0.json": "b8b5f930cf9e018ac96ab561ea37dd957c63eb6b64c0e5b18183c5d1be5414a4",
+  "tests/fixtures/semantic_bson_insert_8_0.json": "b852ad6994bb80ee29ae013c87ba4e30d136b03d6be70b219c5412d4d557982f",
+  "tests/fixtures/semantic_bson_insert_9_0.json": "78b7db9658cacb0a1d379a396c014f4a5f088ece3c72ae9ce4d822da4988c209",
+  "tests/integration/api/test_bson_insert_boundary.py": "8542579879cead4c07b3b99c90f31e37fcee2d0958234d1d64d5e52eac04f6f2"
+}

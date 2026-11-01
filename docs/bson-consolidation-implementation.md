@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: el corte de [codificación de lecturas](#b07--codificación-de-lecturas-y-solicitudes-find-diferidas) entrega el componente común y el lifecycle find. El preflight conserva su baseline histórico (96 fallos / 51 checks correctos); el gate amplio del corte mantiene 96 fallos B07 obligatorios, sin aceptar escrituras/comandos ni el default UUID. Véase el [corte activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos). Admisión BSON general (tipos arbitrarios y Decimal crudo) permanece fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
+- B07: lecturas y lifecycle find tienen aceptación propia. `b713e52` añade [inserciones, IDs y errores públicos](#b07--inserciones-ids-y-errores-públicos), sin cerrar la admisión general. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen otras escrituras, codificación por familia bulk, comandos/índices/validators, UUID coordinado y positivos de proyección/sobres/resultados. STANDARD permanece hasta completar las entradas restantes; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1769,3 +1769,36 @@ Este corte no acepta B07 completo. Siguen escrituras por lote, comandos,
 índices/validators, el corte UUID de entrada antes del nuevo default,
 proyecciones calculadas y sobres/resultados positivos D06/B08. STANDARD sigue
 siendo el default. El resto D06, H53, decisión D07 y D05 conserva sus owners.
+
+
+## B07 — Inserciones, IDs y errores públicos
+
+`b713e52` entrega el [corte de inserciones](evidence/bson-consolidation-implementation/bson-input-inserts/README.md)
+y su [receipt](evidence/bson-consolidation-implementation/bson-input-inserts/receipt.json).
+Insert_one/insert_many reutilizan el codificador común antes de ejecutar;
+la preparación de documentos/IDs es común y conserva las asignaciones parciales
+del iterable. Los IDs devueltos proceden de la entrada, conservando tipo y
+precisión; las copias no anticipan un error Python al rechazo BSON del driver.
+El ejecutor privado sirve a comandos/bulk internos sin recodificar sus entradas.
+
+El materializador público de errores conserva opciones builtin UUID/fecha,
+excluye fábricas/decoders del usuario y añade la operación original bulk después
+de decodificar. El DTO común corrige el orden de sus contadores. La normalización
+DBRef tiene controles de lookup actuales y de wrappers antiguos sembrados por
+el SPI real; conserva residuales/fallback y referencias nativas. El adaptador
+async delega drop_collection real, sin simular resultados.
+
+- Cinco acciones / 169 observaciones nativas por versión 7/8/9; fuente congelada
+  y checks idénticos. Baseline 60 fallos/63 correctas; los 123 checks nuevos pasan.
+- Gate instalado: 8.856 correctas y 96 fallos, todos B07 preexistentes y visibles.
+  No hay regresiones adicionales de schema/Binary/lookup ni gate global verde.
+- 1.403 pruebas y 4.535 subtests pasan; 942 observaciones de inserción y 748
+  controles de lectura pasan en Python 3.13.15 sin SDK. Typing, API y lint pasan.
+- 272 fixtures/observadores históricos intactos y 63 recursos temporales propios
+  verificados ausentes. El receipt identifica wheel/imports y límites del perfil
+  portable. Coste diagnóstico: MemoryEngine lote 1: 1.05; MemoryEngine lote 4: 1.02; SQLiteEngine lote 1: 1.01; SQLiteEngine lote 4: 0.98; no cierra D05.
+
+→ Sigue: integrar las otras escrituras y la codificación por familia bulk antes
+de los grupos, conservando prefijos confirmados. Comandos/índices/validators,
+UUID por defecto y positivos D06/B08 mantienen su aceptación pendiente. B07,
+resto D06, H53, decisión D07 y D05 siguen abiertos.

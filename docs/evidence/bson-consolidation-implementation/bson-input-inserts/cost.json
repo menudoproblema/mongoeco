@@ -1,0 +1,227 @@
+{
+  "scope": "diagnostic only: ABBA x2, 200 requests per case, concurrent replay; no D05 budget acceptance",
+  "samples": [
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.07864600000000005
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.26359400000000005
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.23509499999999994
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.5632640000000001
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.08207599999999998
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.27260199999999996
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.236676
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.50306
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.08056400000000002
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.26633300000000004
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.23473
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.5050060000000001
+        }
+      ]
+    },
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.076845
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.26071500000000003
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.224456
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.498101
+        }
+      ]
+    },
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.078459
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.267126
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.23248400000000002
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.5012460000000001
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.082312
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.26938399999999996
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.23286799999999996
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.509881
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.08098700000000003
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.26702400000000004
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.23056600000000005
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.500063
+        }
+      ]
+    },
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "batch": 1,
+          "cpu": 0.077457
+        },
+        {
+          "engine": "MemoryEngine",
+          "batch": 4,
+          "cpu": 0.25971399999999994
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 1,
+          "cpu": 0.23038999999999998
+        },
+        {
+          "engine": "SQLiteEngine",
+          "batch": 4,
+          "cpu": 0.50109
+        }
+      ]
+    }
+  ],
+  "ratios": [
+    {
+      "engine": "MemoryEngine",
+      "batch": 1,
+      "cpu_ratio": 1.0466656176643427
+    },
+    {
+      "engine": "MemoryEngine",
+      "batch": 4,
+      "cpu_ratio": 1.023016717896321
+    },
+    {
+      "engine": "SQLiteEngine",
+      "batch": 1,
+      "cpu_ratio": 1.013459088814809
+    },
+    {
+      "engine": "SQLiteEngine",
+      "batch": 4,
+      "cpu_ratio": 0.977859680254068
+    }
+  ]
+}

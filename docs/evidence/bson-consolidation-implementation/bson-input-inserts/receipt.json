@@ -1,0 +1,160 @@
+{
+  "base_commit": "29504ca",
+  "scope": "B07 insert_one/insert_many, builtin write-error replies and ID preparation; B07 remains open",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-455fa4j3/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "ef0a66d311757fe72cb12c48781da884f1d32006aaa4784308521e465f6f0a23",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-455fa4j3/site-packages",
+    "modules": 285
+  },
+  "checks": {
+    "native": [
+      {
+        "target": "7.0",
+        "reference": "tests/fixtures/semantic_bson_insert_7_0.json",
+        "sha256": "b8b5f930cf9e018ac96ab561ea37dd957c63eb6b64c0e5b18183c5d1be5414a4",
+        "case_count": 5,
+        "observations": 169,
+        "check_byte_identical": true
+      },
+      {
+        "target": "8.0",
+        "reference": "tests/fixtures/semantic_bson_insert_8_0.json",
+        "sha256": "b852ad6994bb80ee29ae013c87ba4e30d136b03d6be70b219c5412d4d557982f",
+        "case_count": 5,
+        "observations": 169,
+        "check_byte_identical": true
+      },
+      {
+        "target": "9.0",
+        "reference": "tests/fixtures/semantic_bson_insert_9_0.json",
+        "sha256": "78b7db9658cacb0a1d379a396c014f4a5f088ece3c72ae9ce4d822da4988c209",
+        "case_count": 5,
+        "observations": 169,
+        "check_byte_identical": true
+      }
+    ],
+    "baseline": {
+      "failed": 60,
+      "passed": 63
+    },
+    "new_corpus_candidate": {
+      "passed": 123
+    },
+    "wide": {
+      "failed": 96,
+      "passed": 8856,
+      "all_failures": "bson_admission; existing B07 backlog"
+    },
+    "unit": {
+      "passed": 1403,
+      "subtests": 4535
+    },
+    "sdk_free_insert_observations": 942,
+    "sdk_free_read_controls": 748,
+    "protected_files": 272,
+    "resources_absent": 63,
+    "public_api": "unchanged",
+    "typing": {
+      "positive": 2,
+      "negative_errors": [
+        20,
+        25
+      ]
+    }
+  },
+  "limits": [
+    "No complete B07/D06/D05 acceptance",
+    "UUID default remains STANDARD; other writes/commands still pending",
+    "SDK-free observations exclude SDK-only Code and int64 input constructors; Decimal128 observed as public decimal text",
+    "Cost is diagnostic, not a D05 budget acceptance",
+    "Intermediate runs are feedback; native round 7 and installed delivery logs own acceptance"
+  ],
+  "artifacts_sha256": {
+    "archive.py.txt": "35ebf081cd45639728186540098a0e9788220dc1be7793cef56fe014857885bd",
+    "artifact-guard.py.txt": "d3f1ddd3376418a72b6ec4aea27b7df0f1be19b17a7114f4339eaf0efae9307f",
+    "baseline-imports.json": "2aecec80844b897f7a26ac3fa908b6700ef8299b803743ea80c51e7c0d7f2901",
+    "baseline-runtime-sources.json": "a8cce73f7a38bb8b86f2af8d1a86dcb2e2ddb418f392836b608f6d813fc3b886",
+    "baseline.py.txt": "cea21463e0f5037ebf9ab0ae08141a0cd81f1e4d8bb494af4a07d932982fea5a",
+    "baseline.txt.gz": "eef35d7810786d2ec5addb66c74cc062aa5c3eebcc2407567eb14bf9883cdff5",
+    "build.py.txt": "55a5db04fba04438231168079e62c6e25be012c9d3f3f485eaf684973c8718ad",
+    "build.txt.gz": "fd2914d593edebc0c13c918946ec7306644b8abb3345d94c1ccef6a9ea94704e",
+    "changed-sources.json": "cb13d202b2d5cb134fd7b5b54f0518a7859a242038a90e03b6d141e92d4f2f80",
+    "cost.json": "8217cb16d4270d035453af4084d0f1207aad4840112d75bba9708fcf262fbd94",
+    "cost.py.txt": "e164432863f2e1740b4f1127157b3b8f7c82b95a1928d02d1367527af38ea944",
+    "native-1-7.0.json": "1f0439ca38e955fe1e600362d035663868ce460b1beba824abf9447af191c2f4",
+    "native-1-7.0.txt.gz": "eb2f8d9e9e4d336177f48625588d03224c4be55a270ee9c6543dcd0e976995e2",
+    "native-1-8.0.json": "ae4ad85e23f9525864a40a5037b5c88054b2233656359894ff08198e6f053744",
+    "native-1-8.0.txt.gz": "89afbb84768a6019da15fe284bd7d472d1bcd8b7bc3249b32db70def7fa84c8f",
+    "native-1-9.0.json": "009e8287e68df417fdf664d1264f35105054a73dd3a36b4a4d1fdbe49b8f786b",
+    "native-1-9.0.txt.gz": "69d451a9dd50f757854ca1474ee9d46b383957f7d8527874adf90299accbdb0b",
+    "native-2-7.0.json": "54258f730bccd6a72f57496cf260aad22e88dc02d6b314e0f98920e6b4ca6706",
+    "native-2-7.0.txt.gz": "5d51910b7dbae456370c448fe23df46b2c89fdacac95020e9234bc75d0fe6349",
+    "native-2-8.0.json": "714a29da53a4ecf677022cf73c06fd9437e8fff9ea0e90da29718690d02ae5db",
+    "native-2-8.0.txt.gz": "c0e1d9ec167c10b19aa82c80372dd771309f2edc1e915b760d13bf7c268153fc",
+    "native-2-9.0.json": "205e775669ac16f2a035ec815b1a1e96e846c7126a651cfa763893008d8941ae",
+    "native-2-9.0.txt.gz": "e7ede26814f890275a22ea47db07eae9a2c10beb8db252ed8ba63a59183dbd69",
+    "native-3-7.0.json": "f33fc09ee51ef652a442c888efc211670c21e817ad81db1f9bb5a62226047523",
+    "native-3-7.0.txt.gz": "20e56db7be7f30dcbe6dd4e0e28f49bbe755453e5a56f25f0dd4dceb9dac5665",
+    "native-3-8.0.json": "82497afd46230187fb6ee9f3d883255a9bad5aa8c3b620921d734d211599f258",
+    "native-3-8.0.txt.gz": "81ef96b5a387ec9e2dab01291f6a127379bbc22929c12ef4c7c9471b51920d1f",
+    "native-3-9.0.json": "c4b9e522cc569d10b020a28a84a15febcafb8734687576977365730b26869b4e",
+    "native-3-9.0.txt.gz": "2fd1d1059cca9d7260afd67649eda28d1b033d171fc759205e7111416aa48d53",
+    "native-4-7.0.json": "098d089c36a8ce17b8839b7885920645110db75dae140530e38a37a062eb3b1c",
+    "native-4-7.0.txt.gz": "6c577d1b4da73156e73900560ec963e70bae20989fae279c6ac503a843587304",
+    "native-4-8.0.json": "dee45feed9997185a749164680c1031669abba8297f16a78fbcdc1c6eb020793",
+    "native-4-8.0.txt.gz": "48b0d26c7e3941b99a113baf49889cb4033c2115804cda6c9b1d727accef625d",
+    "native-4-9.0.json": "32b5c55c5c4068b673dbf3697e8c2d0ae488193f92a233fee26bd7f42aeb8c91",
+    "native-4-9.0.txt.gz": "fe864f775d051b033866a2a4f386042fd19ce1b34f3ed4c73df3d8dacf7768eb",
+    "native-5-7.0.json": "ca4c285c6c29d83de3766170f28314adcc3deae407ae13639463cb94eafef924",
+    "native-5-7.0.txt.gz": "d0fdd8a2434e38858e448a5f5c592f50d248ec6fa993269dfc6800efd214a276",
+    "native-5-8.0.json": "261bec7a34546692d43e9f45e5731e4ebe3f7958aba461d926d47b4807847aa1",
+    "native-5-8.0.txt.gz": "090f4cb059c74ce47934bcd3002197769829003e3f94640b5d31db99d0be4f59",
+    "native-5-9.0.json": "983440e353724f07e557db53e62c0065cff1c06c623da884787485c6e290dc41",
+    "native-5-9.0.txt.gz": "3de37dc81ff9b20921d9e3fb27b2d99c91820f9ab465a468d8c52016d37c0ba9",
+    "native-6-7.0.json": "9d9a4c5c0ade9ae2861509168b82ef7ab2208ded1f82616ed42bac0a8599393c",
+    "native-6-7.0.txt.gz": "b6305cc2397d6377b717d5eea8b0efd7415b3e6464e3f8fd53ed0070d1bd235d",
+    "native-6-8.0.json": "3ed5e30948f6bc16d7d1cfa08acb6884a468e42dadf6ac043f4217de435a5503",
+    "native-6-8.0.txt.gz": "ed819391b7f37d52c9db47d52ce32100acfae06f4034c8ed3644907c4601def8",
+    "native-6-9.0.json": "aa2dd25fd44632f9b47f032773ad42a72aa3afe926221f2f707a9d00a16b651b",
+    "native-6-9.0.txt.gz": "bcc358f57c7f76d17a5525eae78dd98fc00a6455ac4dbfbdf065e2d36fb3d8a7",
+    "native-7-7.0.json": "0c8b4da233ecba9f067c0125189797bb1f154ce46443fb5dc17614fcb57f346f",
+    "native-7-7.0.txt.gz": "a3d72f5e51bbbfd6b24d7cd5389fd4a4611cb59f5af6c55a6fa5feaeb284db66",
+    "native-7-8.0.json": "01c4d7b3d45cb183031226c75b568a2036bc1aa17630dd8f74c34b39de0cc874",
+    "native-7-8.0.txt.gz": "e8f2196a8da727fc523cc4477203729e8c3c6d559fb1f8cfabb891b9f3cbd298",
+    "native-7-9.0.json": "58c077dc058d2d73d028d16780d7c56e42c91673931d8c0877df8d6cbeb5f736",
+    "native-7-9.0.txt.gz": "36105c4ff4fecbac0adb22558490417a9735c45e5261c5ecb9aa73ca90facf6d",
+    "native-check-7.0.json": "b8b5f930cf9e018ac96ab561ea37dd957c63eb6b64c0e5b18183c5d1be5414a4",
+    "native-check-8.0.json": "b852ad6994bb80ee29ae013c87ba4e30d136b03d6be70b219c5412d4d557982f",
+    "native-check-9.0.json": "78b7db9658cacb0a1d379a396c014f4a5f088ece3c72ae9ce4d822da4988c209",
+    "native-controller.py.txt": "624d368ecd7eba7249cceba0d9d18ba00bb6804e55c5bae1b9555a76a2371e1a",
+    "protected.json": "5bbbe805c8f472eb566acd72d27a0ac495d2f7dce0c9324f11d9ce7febb5df4d",
+    "public-api.json": "18f336380aa25bc6fecff86f5e353671059f3576b3913964f20dabfeae19ad7a",
+    "replay.py.txt": "75254a6ddacededd05a7a44e13f93589628aabb4d43a3ceb0db18a4b081d9ec2",
+    "replay.txt.gz": "c38c9bdf6ab45497ec7e4bb08b5d1741b8daca098b34865b7f9e48f5b59d310d",
+    "resources.json": "58c6ceb7772c818db69eade396b5e79e12fd4c9c42418e9d3b14cec9125c3bce",
+    "resources.py.txt": "55d4d851111b3e882ef78cd0295e9c63d04cdcfab1562d19d6232827937c0b67",
+    "runtime-sources.json": "ddf020f747b777c4e19b9f56a22ffbd9096adec176ef3dd362c419a0e313c9af",
+    "sdk-free-inserts.json": "71b6e6a55607d789ce508ef535661ada0bc6444d456b67ed791785fe7eb51277",
+    "sdk-free-prepare.py.txt": "fa1947aa267ca073177da5252dec97df0c27ffbd9a1d18d39052b5c706fbda9d",
+    "sdk-free-reads.json": "5381f0f261de4950fbd62dd2c47c49b267b6d0aaca8bf5a74b50c27fab32a088",
+    "sdk-free.py.txt": "5ed41964b05e51b48be86c01d00a054af7ba8ffd2d68aa0516175e52e5e95857",
+    "typing.txt": "966627c75016896aa50b07034ca99b2ee74838d60272b742c102f0dd3af9e00b",
+    "unit.py.txt": "09595781904a8f72bd70471115ea34d7f84c4dea7c2b801a4ba3d11be4b10cf8",
+    "unit.txt.gz": "96df652f1497335de02db533b0722d6d3b6529194b6a6526d2bd054c995fd34c",
+    "wheel-imports-bson-insert-replay-final-gw0.json": "d62333c9f18aab6f13f198d4dfa834776e262e5a63c9e637ebd13fb093432968",
+    "wheel-imports-bson-insert-replay-final-gw1.json": "181332bbd2054f102f19a6f4f37136044766ba12a0d95d13f9832b0c05fba233",
+    "wheel-imports-bson-insert-replay-final-gw2.json": "181332bbd2054f102f19a6f4f37136044766ba12a0d95d13f9832b0c05fba233",
+    "wheel-imports-bson-insert-replay-final-gw3.json": "d62333c9f18aab6f13f198d4dfa834776e262e5a63c9e637ebd13fb093432968",
+    "wheel-imports-bson-insert-replay-final-master.json": "90d66c259cf0624c50fed9d55270dda01fbb6b322b0490c551df480b6bda0d41",
+    "wheel-imports-bson-insert-unit-final-master.json": "1952052d26991cc6fcfe4da467ea75becf3b11174d246a330feadb737846ea3b",
+    "finalize.py.txt": "fe5109de3c07d44cd3895728438884bba9d39057c0a34030fff4938f7c00e93d"
+  },
+  "implementation_commit": "b713e52d824849f72e5e72aac87948007513fcab",
+  "document_checks": {
+    "relative_links_missing": [],
+    "diff_check": "passed",
+    "runtime_and_tests_match_implementation_commit": true,
+    "project_markdown_validator": "none found"
+  }
+}

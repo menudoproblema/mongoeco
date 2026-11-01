@@ -1341,12 +1341,23 @@ amplio (8.727 correctas), junto con 1.199 pruebas/181 subtests y 748 controles
 SDK-free correctos. La tabla siguiente conserva criterios; no vuelve a pedir
 crear el componente, otra caché o reemplazar el cursor entregados.
 
-La implementación restante empieza por los lotes de escritura (unidad 3) y
-comandos/índices/validators de la unidad 2, reutilizando encode_bson_request y
-encode_operation_bson. La unidad 4 completa el default UUID; unidad 5 conserva
-proyecciones y sobres/resultados. No reintroducir admisión por cada helper de
+**Entrega de inserciones `b713e52`.** El
+[registro](bson-consolidation-implementation.md#b07--inserciones-ids-y-errores-públicos)
+y su [evidencia](evidence/bson-consolidation-implementation/bson-input-inserts/README.md)
+aceptan insert_one/insert_many, preparación común de IDs, copias después de la
+admisión y materialización de sus errores públicos. Se conservan 123 checks nuevos
+frente a 60 fallos de la base, con 169 observaciones nativas por versión. El gate
+amplio mantiene 96 fallos B07 y 8.856 correctos. No se reextraen estos mecanismos
+ni se acepta por ello todo bulk, todas las escrituras o el default UUID.
+
+La implementación restante continúa con update/delete/findAndModify y lotes
+bulk de la unidad 3, además de comandos/índices/validators de la unidad 2,
+reutilizando encode_bson_request, encode_operation_bson y la preparación común
+de documentos/IDs. Cada familia bulk debe preservar la entrada hasta su
+codificación: el ejecutor interno no es otro chequeo cliente. La unidad 4
+completa el default UUID; unidad 5 conserva proyecciones y sobres/resultados. No reintroducir admisión por cada helper de
 campo ni volver a codificar una operación interna preparada. D05 incorpora el
-coste diagnóstico Memory find_one 1,12 y find(limit=1) 1,06 de este corte; no se
+coste diagnóstico Memory find_one 1,12 y find(limit=1) 1,06 del corte de lectura; no se
 acepta su presupuesto global por el buen resultado de otras rutas.
 
 **Causa compartida.** La API mezcla normalización interna con codificación de
@@ -1368,15 +1379,18 @@ al reconstruir un DBRef con el decoder SDK.
 
 **Precisiones tras contrastar la autocrítica con el código actual.**
 
-- Conservar un snapshot de entrada pública sin normalizar hasta la admisión
-  del lote. La preparación bulk actual convierte valores con `to_internal`;
+- Conservar la entrada pública sin normalizar hasta la admisión del lote,
+  sin copiar objetos arbitrarios antes de que BSON los admita. La preparación
+  bulk actual convierte valores con `to_internal`;
   validar solo ese resultado puede admitir un tipo cliente originalmente
   inválido. Reutilizar la preparación y los modelos existentes, sin introducir
   otro normalizador, journal ni flag público para saltarse la frontera.
 - Separar validación de parámetros cliente, codificación del lote y validación
-  semántica servidor. `insert_one` y la preparación bulk comprueban hoy el `_id`
-  raíz antes de codificar. Añadir diferencial de errores simultáneos (`_id`
-  inválido y valor no codificable) antes de fijar la precedencia; no declararla
+  semántica servidor. La preparación bulk conserva la comprobación del `_id`
+  raíz previa a la codificación; insert_one/insert_many ya corrigen esa
+  precedencia en su corte. Añadir diferencial de errores simultáneos (`_id`
+  inválido y valor no codificable) para cada nueva entrada antes de fijar la
+  precedencia; no declararla
   corregida por el éxito de errores aislados. Observar también asignación de
   IDs y efectos ya confirmados en familias anteriores.
 - Un error de codificación impide enviar su lote; no revierte lotes anteriores
