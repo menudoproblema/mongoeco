@@ -17,6 +17,7 @@ try:
     from bson.code import Code as BsonCode
     from bson.dbref import DBRef as BsonDBRef
     from bson.decimal128 import Decimal128 as BsonDecimal128Public
+    from bson.errors import InvalidBSON as BsonInvalidBSON
     from bson.int64 import Int64 as BsonInt64Public
     from bson.max_key import MaxKey as BsonMaxKey
     from bson.min_key import MinKey as BsonMinKey
@@ -29,6 +30,7 @@ except Exception:  # pragma: no cover - optional dependency
     BsonCode = None
     BsonDBRef = None
     BsonDecimal128Public = None
+    BsonInvalidBSON = None
     BsonInt64Public = None
     BsonMaxKey = None
     BsonMinKey = None
@@ -595,7 +597,12 @@ class DocumentCodec:
 
         for value_type, decoder in codec_options.type_registry:
             if isinstance(transformed, value_type):
-                transformed = decoder(transformed)
+                try:
+                    transformed = decoder(transformed)
+                except Exception as error:
+                    if BsonInvalidBSON is None:
+                        raise
+                    raise BsonInvalidBSON(str(error)) from error
         return transformed
 
     @staticmethod

@@ -42,7 +42,8 @@ def test_first_batch_copies_only_requested_rows_and_projected_fields(
                 )
                 iterator = aiter(cursor)
                 assert await anext(iterator) == {"_id": 0}
-                expected_count = batch_size or 1
+                # Native default firstBatch is bounded at 101, not one row.
+                expected_count = batch_size or 101
                 assert len(roots) == expected_count
                 assert all(fields == {"_id"} for fields in roots)
                 await cursor.close()
@@ -112,11 +113,11 @@ def test_snapshot_releases_lazy_source_frame_on_terminal_state(finish):
         async with AsyncMongoClient(MemoryEngine()) as client:
             collection = client.test.records
             await collection.insert_many([{"_id": i} for i in range(5)])
-            cursor = collection.find({})
+            cursor = collection.find({}, batch_size=1)
             iterator = aiter(cursor)
             assert await anext(iterator) == {"_id": 0}
 
-            snapshot = iterator._source
+            snapshot = cursor._batch_source
             source = snapshot._source
             assert source.ag_frame is not None
             # The suspended scan retains only its result pipeline, not mutable

@@ -1,4 +1,3 @@
-import asyncio
 import sys
 import time
 
@@ -7,6 +6,7 @@ from collections.abc import AsyncIterable, Mapping
 from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
+from mongoeco.api._async._response import ResponseBatchReader
 from mongoeco.api.argument_validation import (
     HintSpec,
     normalize_sort_spec as _normalize_sort_spec,
@@ -23,7 +23,7 @@ from mongoeco.core.operation_context import (
     resolve_operation_session,
 )
 from mongoeco.core.query_plan import QueryNode
-from mongoeco.core.server_errors import operation_error
+from mongoeco.core.server_errors import response_operation_error
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.semantic_core import EngineFindSemantics
@@ -38,6 +38,7 @@ from mongoeco.types import (
     QueryPlanExplanation,
     SortSpec,
 )
+from mongoeco.wire._lifecycle import finish_cleanup
 
 
 if TYPE_CHECKING:
@@ -120,6 +121,8 @@ class _AsyncCursorIterator:
         self._closed = False
         self._position = 0
         self._source = source
+        self._response_reader = ResponseBatchReader(dialect=cursor._current_dialect())
+        self._initial_response = True
 
     def __aiter__(self):
         return self
@@ -127,14 +130,7 @@ class _AsyncCursorIterator:
     async def _close_after_failure(self) -> None:
         failure = sys.exception()
         try:
-            # Memory's synchronous runner can advance this coroutine inline.
-            # Use a task only when cancellation/loop ownership actually exists.
-            try:
-                asyncio.get_running_loop()
-            except RuntimeError:
-                await self.close()
-            else:
-                await asyncio.shield(self.close())
+            await finish_cleanup(self.close())
         except BaseException as cleanup_error:
             if failure is None:
                 raise
@@ -150,20 +146,6 @@ class _AsyncCursorIterator:
         if self._enforce_ownership and self._cursor._active_async_iterable is not self:
             self._closed = True
             raise StopAsyncIteration
-        if self._source is not None:
-            try:
-                document = await self._source.__anext__()
-                if self._cursor._apply_codec_options:
-                    return self._cursor._materialize_document(document)
-                return document
-            except StopAsyncIteration:
-                self._cursor._exhausted = True
-                await self.close()
-                raise
-            except BaseException as error:
-                await self._close_after_failure()
-                self._cursor._raise_expression_diagnostic(error)
-                raise
         if not self._buffer:
             if self._cursor._exhausted:
                 await self.close()
@@ -184,9 +166,15 @@ class _AsyncCursorIterator:
 
         items: list[Document] = []
         while len(items) < max_items:
+            if self._buffer:
+                count = min(len(self._buffer), max_items - len(items))
+                items.extend(self._buffer.popleft() for _ in range(count))
+                continue
             if self._source is not None:
                 try:
-                    document = await self._source.__anext__()
+                    document = await self._response_reader.next_document(
+                        self._source.__anext__
+                    )
                     if self._cursor._apply_codec_options:
                         document = self._cursor._materialize_document(document)
                     items.append(document)
@@ -198,6 +186,7 @@ class _AsyncCursorIterator:
                         await self.close()
                     break
                 except BaseException as error:
+                    self._cursor._exhausted = True
                     await self._close_after_failure()
                     self._cursor._raise_expression_diagnostic(error)
                     raise
@@ -209,29 +198,64 @@ class _AsyncCursorIterator:
             if not self._buffer:
                 await self.close()
                 break
-            while self._buffer and len(items) < max_items:
-                items.append(self._buffer.popleft())
         return items
 
-    async def _fill_buffer(self) -> None:
-        target_size = (
-            self._batch_size
-            if self._batch_size not in (None, 0)
-            else _DEFAULT_LOCAL_PREFETCH_SIZE
-        )
+    async def _fetch_response(self, maximum, *, initial=None):
+        if initial is None:
+            initial = self._initial_response
+        self._initial_response = False
+        if maximum == 0:
+            return []
         try:
-            page = await self._cursor._fetch_batch(self._position, target_size)
+            if self._source is not None:
+                async def pull(_remaining):
+                    try:
+                        return await self._source.__anext__()
+                    except StopAsyncIteration:
+                        self._cursor._exhausted = True
+                        raise
+
+                raw = await self._response_reader.read(pull, maximum, initial=initial)
+                page = (
+                    [self._cursor._materialize_document(document) for document in raw]
+                    if self._cursor._apply_codec_options
+                    else raw
+                )
+            else:
+                page = await self._cursor._fetch_batch(
+                    self._position, maximum, initial=initial
+                )
         except BaseException as error:
+            self._cursor._exhausted = True
             await self._close_after_failure()
-            self._cursor._raise_expression_diagnostic(error)
+            self._cursor._raise_expression_diagnostic(error, initial=initial)
             raise
+        self._position += len(page)
         if not page:
             self._cursor._exhausted = True
-            return
-        if len(page) < target_size:
-            self._cursor._exhausted = True
-        self._position += len(page)
-        self._buffer.extend(page)
+        return page
+
+    async def _read_response(self, maximum, *, initial=None):
+        await self._cursor._close_retired_sources()
+        if self._buffer:
+            page = list(self._buffer)
+            self._buffer.clear()
+            return page
+        if self._closed or self._cursor._exhausted:
+            return []
+        return await self._fetch_response(maximum, initial=initial)
+
+    async def _read_driver_response(self):
+        maximum = self._batch_size or (
+            _DEFAULT_LOCAL_PREFETCH_SIZE if self._initial_response else None
+        )
+        return await self._read_response(maximum)
+
+    async def _fill_buffer(self) -> None:
+        maximum = self._batch_size or (
+            _DEFAULT_LOCAL_PREFETCH_SIZE if self._initial_response else None
+        )
+        self._buffer.extend(await self._fetch_response(maximum))
 
     async def close(self) -> None:
         if self._closed:
@@ -240,6 +264,8 @@ class _AsyncCursorIterator:
         if callable(close):
             await close()
         self._source = None
+        self._response_reader.clear()
+        self._cursor._response_reader.clear()
         await self._cursor._close_batch_source()
         if self._cursor._active_async_iterable is self:
             self._cursor._active_async_iterable = None
@@ -255,6 +281,7 @@ class _AsyncCursorIterator:
         self._closed = True
         self._cursor._retire_source(self._source)
         self._source = None
+        self._response_reader.clear()
         if self._cursor._active_async_iterable is self:
             self._cursor._active_async_iterable = None
 
@@ -334,6 +361,7 @@ class AsyncCursor:
         self._semantics_cache: EngineFindSemantics | None = None
         self._batch_source = None
         self._retired_sources: list[object] = []
+        self._response_reader = ResponseBatchReader(dialect=self._current_dialect())
 
     def _ensure_mutable(self) -> None:
         if self._closed:
@@ -363,12 +391,13 @@ class AsyncCursor:
 
     async def _close_batch_source(self) -> None:
         source = self._batch_source
-        self._batch_source = None
         await self._close_source(source)
+        self._batch_source = None
 
     async def _close_retired_sources(self) -> None:
         while self._retired_sources:
-            await self._close_source(self._retired_sources.pop())
+            await self._close_source(self._retired_sources[-1])
+            self._retired_sources.pop()
 
     def _current_dialect(self):
         return getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
@@ -409,14 +438,18 @@ class AsyncCursor:
 
     _expression_error_operation = "find_runtime"
 
-    def _raise_expression_diagnostic(self, error):
+    def _raise_expression_diagnostic(self, error, *, initial=True):
         """Render expression diagnostics once, preserving unrelated failures."""
-        if not isinstance(error, OperationFailure):
+        if (
+            not isinstance(error, OperationFailure)
+            or self._expression_error_operation is None
+        ):
             return
-        resolved = operation_error(
+        resolved = response_operation_error(
             error,
             self._expression_error_operation,
             self._current_dialect().key,
+            initial=initial,
             namespace=getattr(self._collection, "full_name", None),
         )
         if resolved is not error:
@@ -439,7 +472,9 @@ class AsyncCursor:
             limit=self._limit if limit is None else limit,
         )
 
-    async def _fetch_batch(self, offset: int, batch_size: int) -> list[Document]:
+    async def _fetch_batch(
+        self, offset: int, batch_size: int | None, *, initial=None
+    ) -> list[Document]:
         await self._close_retired_sources()
         if self._exhausted:
             return []
@@ -448,7 +483,7 @@ class AsyncCursor:
             if remaining <= 0:
                 self._exhausted = True
                 return []
-            batch_size = min(batch_size, remaining)
+            batch_size = remaining if batch_size is None else min(batch_size, remaining)
         self._started = True
         engine = self._collection._engine
         record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
@@ -461,24 +496,22 @@ class AsyncCursor:
             )
             self._batch_source = source.__aiter__()
 
-        page: list[Document] = []
-        while len(page) < batch_size:
+        async def pull(_remaining):
             try:
-                document = await self._batch_source.__anext__()
+                return await self._batch_source.__anext__()
             except StopAsyncIteration:
                 await self._close_batch_source()
                 self._exhausted = True
-                break
-            except BaseException as error:
-                self._exhausted = True
-                await self._close_batch_source()
-                self._raise_expression_diagnostic(error)
                 raise
-            page.append(
-                self._materialize_document(document)
-                if self._apply_codec_options
-                else document
-            )
+
+        raw = await self._response_reader.read(
+            pull, batch_size, initial=offset == 0 if initial is None else initial
+        )
+        page = (
+            [self._materialize_document(document) for document in raw]
+            if self._apply_codec_options
+            else raw
+        )
         if self._limit is not None and offset + len(page) >= self._limit:
             self._exhausted = True
             await self._close_batch_source()
@@ -499,6 +532,12 @@ class AsyncCursor:
         return _AsyncCursorIterator(
             self, batch_size=batch_size, enforce_ownership=enforce_ownership
         )
+
+    async def _read_response(self, maximum, *, initial=None):
+        if self._closed or (self._exhausted and self._active_async_iterable is None):
+            return []
+        iterator = self.__aiter__()
+        return await iterator._read_response(maximum, initial=initial)
 
     def __aiter__(self):
         if self._closed or (self._exhausted and self._active_async_iterable is None):
@@ -638,6 +677,7 @@ class AsyncCursor:
             await self._close_batch_source()
         await self._close_retired_sources()
         self._active_async_iterable = None
+        self._response_reader.clear()
         self._exhausted = True
         self._closed = True
 
@@ -698,7 +738,7 @@ class AsyncCursor:
             return None
         iterator = _AsyncCursorIterator(
             self,
-            batch_size=None,
+            batch_size=1,
             enforce_ownership=False,
             source=self._scan(limit=1),
         )
@@ -741,6 +781,7 @@ class AsyncCursor:
         elif active is not None:
             self._active_async_iterable = None
         self._retire_batch_source()
+        self._response_reader.clear()
         self._started = False
         self._exhausted = False
         self._semantics_cache = None
@@ -850,7 +891,10 @@ class AsyncCursor:
 
     @property
     def alive(self) -> bool:
-        return not self._exhausted
+        active = self._active_async_iterable
+        return not self._closed and (
+            not self._exhausted or (active is not None and bool(active._buffer))
+        )
 
     @property
     def collection(self):

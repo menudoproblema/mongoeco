@@ -236,6 +236,9 @@ class WireCursorStore:
         ):
             message = "batchSize must be a non-negative integer"
             raise TypeError(message)
+        # A zero getMore size means unbounded count, unlike an initial batch.
+        if batch_size == 0:
+            batch_size = None
         state = self._state.get(cursor_id)
         if state is None:
             return cursor_id, batch_size, state
@@ -338,7 +341,7 @@ class WireCursorStore:
                 killed.append(cursor_id)
         return {
             "cursorsKilled": killed,
-            "cursorsUnknown": not_found,
+            "cursorsUnknown": [],
             "cursorsAlive": [],
             "cursorsNotFound": not_found,
             "ok": 1.0,

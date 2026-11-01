@@ -153,16 +153,14 @@ from mongoeco.engines.results import (
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     EngineReadExecutionPlan,
-    _iter_finalize_documents,
     build_query_plan_explanation,
     compile_collection_validation_semantics,
     compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
-    filter_documents,
-    finalize_documents,
     iter_filtered_documents,
-    stream_finalize_documents,
+    iter_find_documents,
+    python_find_filter_sort_phases,
 )
 from mongoeco.engines.snapshots import (
     ReadSnapshot,
@@ -3852,8 +3850,7 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes=[],
                     semantics=semantics,
                 )
-                documents = filter_documents(documents, semantics)
-                documents = finalize_documents(documents, semantics)
+                documents = iter_find_documents(documents, semantics)
                 for document in documents:
                     enforce_deadline(deadline)
                     yield document
@@ -3930,22 +3927,11 @@ class MemoryEngine(AsyncStorageEngine):
                     else [],
                     semantics=semantics,
                 )
-                filtered = iter_filtered_documents(document_source, semantics)
-
                 # Projection runs before constructing the public fields that
                 # survive it; neither stream keeps the collection lock at yield.
-                if not semantics.sort:
-                    documents = stream_finalize_documents(
-                        filtered,
-                        semantics,
-                        emit_public_documents=False,
-                    )
-                else:
-                    documents = _iter_finalize_documents(
-                        filtered,
-                        semantics,
-                        emit_public_documents=False,
-                    )
+                documents = iter_find_documents(
+                    document_source, semantics, emit_public_documents=False
+                )
                 read_view_token = object()
                 with self._meta_lock:
                     self._active_read_views[read_view_token] = candidate_items
@@ -5666,21 +5652,11 @@ class MemoryEngine(AsyncStorageEngine):
                     detail="classic text filter",
                 ),
             )
-        lineage.append(
-            ExecutionLineageStep(
-                runtime="python",
-                phase="filter",
-                detail="semantic core",
-            ),
+        filter_sort_phases = python_find_filter_sort_phases(semantics)
+        lineage.extend(
+            ExecutionLineageStep(runtime="python", phase=phase, detail="semantic core")
+            for phase in filter_sort_phases
         )
-        if semantics.sort:
-            lineage.append(
-                ExecutionLineageStep(
-                    runtime="python",
-                    phase="sort",
-                    detail="semantic core",
-                ),
-            )
         if semantics.projection is not None:
             lineage.append(
                 ExecutionLineageStep(
@@ -5708,11 +5684,9 @@ class MemoryEngine(AsyncStorageEngine):
                     if semantics.text_query is not None
                     else ()
                 ),
-                PhysicalPlanStep(runtime="python", operation="filter"),
                 *(
-                    (PhysicalPlanStep(runtime="python", operation="sort"),)
-                    if semantics.sort
-                    else ()
+                    PhysicalPlanStep(runtime="python", operation=phase)
+                    for phase in filter_sort_phases
                 ),
                 *(
                     (PhysicalPlanStep(runtime="python", operation="project"),)

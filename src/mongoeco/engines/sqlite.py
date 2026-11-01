@@ -269,8 +269,7 @@ from mongoeco.engines.semantic_core import (
     compile_update_semantics,
     enforce_collection_document_validation,
     finalize_documents,
-    iter_filtered_documents,
-    stream_finalize_documents,
+    iter_find_documents,
 )
 from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy, _OwnedReadSnapshot
 from mongoeco.engines.sqlite_planner import (
@@ -6337,10 +6336,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @staticmethod
     def _finalize_scan_source(source, semantics: EngineFindSemantics):
-        filtered = iter_filtered_documents(source, semantics)
-        if semantics.sort is None:
-            return iter(stream_finalize_documents(filtered, semantics))
-        return iter(finalize_documents(list(filtered), semantics))
+        return iter_find_documents(source, semantics)
 
     def _update_matching_document_sync(
         self,

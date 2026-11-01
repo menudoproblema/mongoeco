@@ -1219,12 +1219,13 @@ class AsyncCollection:
         cursor._apply_codec_options = False
 
         async def _fetch(size: int | None) -> list[Document]:
-            return await cursor.to_list(length=size)
+            return await cursor._read_response(size)
 
         return AsyncRawBatchCursor(
             _fetch,
             batch_size=options.get("batch_size"),
             close=cursor.close,
+            alive=lambda: cursor.alive,
         )
 
     def aggregate_raw_batches(

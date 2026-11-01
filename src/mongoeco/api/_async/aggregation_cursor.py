@@ -9,7 +9,9 @@ from dataclasses import dataclass
 from itertools import islice
 
 from mongoeco.api._async._active_operations import track_active_operation
+from mongoeco.api._async._response import ResponseBatchReader
 from mongoeco.api._async.cursor import (
+    AsyncCursor,
     HintSpec,
     _engine_spi,
     _ensure_operation_executable,
@@ -87,7 +89,11 @@ from mongoeco.core.search_planning import (
     search_prefix_output_limit,
     search_result_limit_hint,
 )
-from mongoeco.core.server_errors import operation_error, retain_diagnostic, server_error
+from mongoeco.core.server_errors import (
+    response_operation_error,
+    retain_diagnostic,
+    server_error,
+)
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import DuplicateKeyError, OperationFailure, WriteError
@@ -99,6 +105,7 @@ from mongoeco.types import (
     ObjectId,
     QueryPlanExplanation,
 )
+from mongoeco.wire._lifecycle import finish_cleanup
 
 
 @dataclass(frozen=True, slots=True)
@@ -310,35 +317,56 @@ class AsyncAggregationCursor:
             # aggregate commands keep their requested size via _read_response.
             if maximum == 0 and self._split_terminal_writeback_stage(self._pipeline)[1]:
                 maximum = 101
-            await self._fill_response(maximum)
+            await self._fill_response(maximum, initial=True)
         return self
 
     async def _read_response(self, maximum, *, initial=False):
         """One server response, without the driver's getMore size promotion."""
         if initial:
             self._initialized = True
-        await self._fill_response(maximum)
+        if not self._response_buffer:
+            await self._fill_response(maximum, initial=initial)
         batch = list(self._response_buffer)
         self._response_buffer.clear()
         return batch
 
-    async def _fill_response(self, maximum):
-        if self._closed or maximum == 0:
+    async def _read_driver_response(self):
+        await self._initialize()
+        return await self._read_response(
+            max(2, self._batch_size) if self._batch_size else None
+        )
+
+    async def _fill_response(self, maximum, *, initial=False):
+        if self._closed or self._response_failed or maximum == 0:
             return
-        batch = []
         self._response_remaining = maximum
+
+        async def pull(remaining):
+            self._response_remaining = remaining
+            return await self._next_source_document()
+
         try:
-            while maximum is None or len(batch) < maximum:
-                try:
-                    batch.append(await self._next_source_document())
-                except StopAsyncIteration:
-                    break
-                if self._response_remaining is not None:
-                    self._response_remaining -= 1
-        except BaseException:
-            await self.close()
+            batch = await self._response_reader.read(
+                pull, maximum, initial=initial
+            )
+            # No user decoder runs until the server-side response is complete.
+            decoded = [self._materialize_document(document) for document in batch]
+        except BaseException as error:
+            self._response_failed = True
+            try:
+                await finish_cleanup(self.close())
+            except BaseException as cleanup_error:
+                error.add_note(f"aggregation response cleanup failed: {cleanup_error}")
+            if isinstance(error, OperationFailure):
+                resolved = response_operation_error(
+                    error, "aggregate_runtime", self._operation_context.dialect.key,
+                    initial=initial,
+                    namespace=getattr(self._collection, "full_name", None),
+                )
+                if resolved is not error:
+                    raise resolved from error
             raise
-        self._response_buffer.extend(batch)
+        self._response_buffer.extend(decoded)
 
     _force_full_search_execution = False
 
@@ -432,8 +460,12 @@ class AsyncAggregationCursor:
         )
         self._active_async_iterator: AsyncIterator[Document] | None = None
         self._response_buffer = deque()
+        self._response_reader = ResponseBatchReader(
+            dialect=self._operation_context.dialect, aggregate=True
+        )
         self._initialized = False
         self._response_remaining = None
+        self._response_failed = False
         self._pipeline_resources = None
         self._closed = False
 
@@ -869,7 +901,7 @@ class AsyncAggregationCursor:
         *,
         dialect=MONGODB_DIALECT_70,
     ) -> tuple[Pipeline, int, int | None] | None:
-        streamable_pipeline: Pipeline = []
+        streamable_count = 0
         trailing_window = _StreamWindow()
         seen_trailing_window = False
 
@@ -889,10 +921,10 @@ class AsyncAggregationCursor:
                 return None
             if not is_streamable_aggregation_stage(operator, dialect=dialect):
                 return None
-            streamable_pipeline.append(stage)
+            streamable_count += 1
 
         trailing_skip, trailing_limit = trailing_window.as_skip_limit()
-        return streamable_pipeline, trailing_skip, trailing_limit
+        return pipeline[:streamable_count], trailing_skip, trailing_limit
 
     @classmethod
     def _split_incremental_group_pipeline(
@@ -1347,7 +1379,7 @@ class AsyncAggregationCursor:
         build_cursor = getattr(self._collection, "_build_cursor", None)
         if callable(build_cursor):
             try:
-                return build_cursor(
+                cursor = build_cursor(
                     operation,
                     session=self._session,
                     apply_codec_options=False,
@@ -1356,37 +1388,44 @@ class AsyncAggregationCursor:
             except TypeError as exc:
                 if "apply_codec_options" not in str(exc):
                     raise
-                return build_cursor(
+                cursor = build_cursor(
                     operation,
                     session=self._session,
                 )
-        options = {
-            "collation": operation.collation,
-            "sort": operation.sort,
-            "skip": operation.skip,
-            "limit": operation.limit,
-            "hint": operation.hint,
-            "comment": operation.comment,
-            "max_time_ms": operation.max_time_ms,
-            "batch_size": operation.batch_size,
-            "let": operation.let,
-            "session": self._session,
-        }
-        try:
-            return self._collection.find(
-                operation.filter_spec,
-                operation.projection,
-                **options,
-            )
-        except TypeError as exc:
-            if "let" not in str(exc):
-                raise
-            options.pop("let")
-            return self._collection.find(
-                operation.filter_spec,
-                operation.projection,
-                **options,
-            )
+        else:
+            options = {
+                "collation": operation.collation,
+                "sort": operation.sort,
+                "skip": operation.skip,
+                "limit": operation.limit,
+                "hint": operation.hint,
+                "comment": operation.comment,
+                "max_time_ms": operation.max_time_ms,
+                "batch_size": operation.batch_size,
+                "let": operation.let,
+                "session": self._session,
+            }
+            try:
+                cursor = self._collection.find(
+                    operation.filter_spec,
+                    operation.projection,
+                    **options,
+                )
+            except TypeError as exc:
+                if "let" not in str(exc):
+                    raise
+                options.pop("let")
+                cursor = self._collection.find(
+                    operation.filter_spec,
+                    operation.projection,
+                    **options,
+                )
+        if isinstance(cursor, AsyncCursor):
+            # The enclosing aggregate response owns codecs and diagnostics,
+            # including cursors returned by either legacy builder fallback.
+            cursor._apply_codec_options = False
+            cursor._expression_error_operation = None
+        return cursor
 
     def _source_materialization_probe(
         self,
@@ -1635,7 +1674,7 @@ class AsyncAggregationCursor:
         )
         if callable(applier):
             return applier(document)
-        return document
+        return DocumentCodec.to_public(document)
 
     async def _accumulate_group_source(
         self,
@@ -1960,11 +1999,7 @@ class AsyncAggregationCursor:
         source = iter(documents)
         try:
             for document in source:
-                yield self._materialize_document(
-                    DocumentCodec.to_public(
-                        strip_search_result_metadata(document),
-                    ),
-                )
+                yield strip_search_result_metadata(document)
         finally:
             close_source = getattr(source, "close", None)
             if callable(close_source):
@@ -1993,9 +2028,7 @@ class AsyncAggregationCursor:
             for document in self._iter_response_rows(
                 source, pipeline, _RemainingWindow(skip, limit), runtime_options=options
             ):
-                yield self._materialize_document(
-                    DocumentCodec.to_public(strip_search_result_metadata(document))
-                )
+                yield strip_search_result_metadata(document)
         finally:
             close_source = getattr(source, "close", None)
             if callable(close_source):
@@ -2015,11 +2048,9 @@ class AsyncAggregationCursor:
         )
 
     def _response_input_size(self, pipeline, window):
-        maximum = (
-            1
-            if self._first_expanding_stage(pipeline) is not None
-            else (self._batch_size or 256)
-        )
+        # A byte cut is only known after evaluating an output document. Do not
+        # evaluate the rest of an input page before that cut can be observed.
+        maximum = 1
         if self._response_remaining is not None:
             maximum = min(maximum, max(1, self._response_remaining))
         if window.limit is not None:
@@ -2090,9 +2121,7 @@ class AsyncAggregationCursor:
             for document in self._iter_response_rows(
                 sorted_documents, plan.suffix, window, runtime_options=options
             ):
-                yield self._materialize_document(
-                    DocumentCodec.to_public(strip_search_result_metadata(document))
-                )
+                yield strip_search_result_metadata(document)
         finally:
             sorted_documents.close()
 
@@ -2153,9 +2182,7 @@ class AsyncAggregationCursor:
             for document in self._iter_response_rows(
                 sorted_documents, plan.suffix, output_window, runtime_options=options
             ):
-                yield self._materialize_document(
-                    DocumentCodec.to_public(strip_search_result_metadata(document))
-                )
+                yield strip_search_result_metadata(document)
         finally:
             close_output = getattr(sorted_documents, "close", None)
             if callable(close_output):
@@ -2194,11 +2221,7 @@ class AsyncAggregationCursor:
                 for document in self._iter_response_rows(
                     page, streamable_pipeline, window, runtime_options=options
                 ):
-                    yield self._materialize_document(
-                        DocumentCodec.to_public(
-                            strip_search_result_metadata(document),
-                        ),
-                    )
+                    yield strip_search_result_metadata(document)
         finally:
             await source.aclose()
 
@@ -2207,7 +2230,11 @@ class AsyncAggregationCursor:
         documents: Iterable[Document],
     ) -> AsyncIterator[Document]:
         for document in documents:
-            yield self._materialize_document(document)
+            yield (
+                prepare_public_document(document)
+                if isinstance(document, RuntimeDocumentState)
+                else strip_search_result_metadata(document)
+            )
 
     def _stream_batches(self) -> AsyncIterator[Document]:
         return _DeferredAggregationStream(self)
@@ -2224,7 +2251,9 @@ class AsyncAggregationCursor:
                 self._effective_pipeline(),
             )
         if leading_search or writeback_stage is not None:
-            return self._stream_materialized_documents(await self._materialize())
+            return self._stream_materialized_documents(
+                await self._materialize_pipeline()
+            )
 
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(
@@ -2283,7 +2312,9 @@ class AsyncAggregationCursor:
                     dialect=dialect,
                     deadline=deadline,
                 )
-            return self._stream_materialized_documents(await self._materialize())
+            return self._stream_materialized_documents(
+                await self._materialize_pipeline()
+            )
         return self._stream_windowed_pipeline(
             stream_plan,
             dialect=dialect,
@@ -2333,6 +2364,7 @@ class AsyncAggregationCursor:
 
     async def close(self) -> None:
         self._response_buffer.clear()
+        self._response_reader.clear()
         self._pipeline_resources = None
         if self._closed:
             return
@@ -2611,7 +2643,7 @@ class AsyncAggregationCursor:
 
     @command_errors
     async def __anext__(self) -> Document:
-        if not self._response_buffer and not self._closed:
+        if not self._response_buffer and not self._closed and not self._response_failed:
             await self._initialize()
             if not self._response_buffer and not self._closed:
                 # PyMongo command cursors promote a requested getMore size 1
@@ -2632,17 +2664,6 @@ class AsyncAggregationCursor:
         except StopAsyncIteration:
             await self.close()
             raise
-
-        except OperationFailure as error:
-            diagnostic = getattr(error, "_server_diagnostic", None)
-            if diagnostic is None or diagnostic.reason != "expression_type":
-                raise
-            raise operation_error(
-                error,
-                "aggregate_runtime",
-                self._collection.mongodb_dialect.key,
-                namespace=self._collection.full_name,
-            ) from error
 
     def _spill_policy(self) -> AggregationSpillPolicy | None:
         if self._allow_disk_use is False:

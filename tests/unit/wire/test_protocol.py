@@ -25,6 +25,20 @@ from mongoeco.wire.protocol import (
 
 
 class WireProtocolTests(unittest.TestCase):
+    def test_killed_cursor_metadata_uses_int64_without_rewriting_user_arrays(self):
+        fields = ("cursorsKilled", "cursorsNotFound", "cursorsAlive", "cursorsUnknown")
+        document = {
+            "ok": 1.0,
+            **{field: [1] for field in fields},
+            "value": {"cursorsKilled": [1]},
+        }
+        raw = encode_op_msg_response(document, request_id=2, response_to=1)[21:]
+        decoded = BSON(raw).decode()
+        for field in fields:
+            self.assertIs(type(decoded[field][0]), Int64)
+            self.assertIs(type(document[field][0]), int)
+        self.assertIs(type(decoded["value"]["cursorsKilled"][0]), int)
+
     def test_cursor_metadata_is_int64_without_changing_documents_or_input(self):
         for cursor_id in (0, 4):
             with self.subTest(cursor_id=cursor_id):

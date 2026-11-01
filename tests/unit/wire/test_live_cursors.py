@@ -33,6 +33,16 @@ class Source:
 
 
 class LiveCursorTests(unittest.IsolatedAsyncioTestCase):
+    async def test_get_more_zero_reads_an_unbounded_count_after_empty_open(self):
+        source = Source([{"_id": n} for n in range(3)])
+        cursor_id = await self.open(source)
+        reply = await self.store.get_more_async(
+            {"getMore": cursor_id, "collection": "rows", "batchSize": 0}, db_name="db"
+        )
+        self.assertEqual(reply["cursor"]["nextBatch"], [{"_id": n} for n in range(3)])
+        self.assertEqual(reply["cursor"]["id"], 0)
+        self.assertEqual(source.reads, [(0, True), (None, False)])
+
     async def asyncSetUp(self):
         self.store = WireCursorStore()
         self.addAsyncCleanup(self.store.aclear)

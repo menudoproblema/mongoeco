@@ -371,6 +371,53 @@ def filter_documents(
     return list(iter_filtered_documents(documents, semantics))
 
 
+def find_has_primary_key_order(semantics: EngineFindSemantics) -> bool:
+    """The implicit primary index can provide this order before residuals."""
+    return (
+        semantics.sort in ([('_id', 1)], [('_id', -1)])
+        and semantics.collation is None
+        and semantics.text_query is None
+        and semantics.hint in (None, '_id_')
+    )
+
+
+def python_find_filter_sort_phases(semantics: EngineFindSemantics) -> tuple[str, ...]:
+    if find_has_primary_key_order(semantics):
+        return "sort", "filter"
+    return ("filter", "sort") if semantics.sort else ("filter",)
+
+
+def iter_find_documents(
+    documents: Iterable[Document],
+    semantics: EngineFindSemantics,
+    *,
+    emit_public_documents: bool = True,
+) -> Iterable[Document]:
+    """Compose candidate order, residuals and the final window in one owner.
+
+    An implicit primary-index order precedes residual evaluation. Sorting all
+    candidates here does not apply skip/top-N before the residual can accept
+    them; only the final window may discard matching rows.
+    """
+    if semantics.limit == 0:
+        return
+    primary_order = find_has_primary_key_order(semantics)
+    if primary_order:
+        documents = sort_documents(
+            documents, semantics.sort, dialect=semantics.dialect, collation=None
+        )
+        enforce_deadline(semantics.deadline)
+    filtered = iter_filtered_documents(documents, semantics)
+    if primary_order or not semantics.sort:
+        yield from stream_finalize_documents(
+            filtered, semantics, emit_public_documents=emit_public_documents
+        )
+    else:
+        yield from _iter_finalize_documents(
+            filtered, semantics, emit_public_documents=emit_public_documents
+        )
+
+
 def iter_filtered_documents(
     documents: Iterable[Document],
     semantics: EngineFindSemantics,

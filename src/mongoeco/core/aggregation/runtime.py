@@ -8,6 +8,7 @@ import uuid
 from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import wraps
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -33,6 +34,7 @@ from mongoeco.core.aggregation.expression_values import (
     compare_expression_values,
     expression_values_equal,
     null_if_missing,
+    require_expression_string_capacity,
 )
 from mongoeco.core.aggregation.extensions import (
     AggregationExpressionExtensionContext,
@@ -734,6 +736,21 @@ def _evaluate_nullable_expression(document, expression, variables=None, *, diale
     )
 
 
+def _with_expression_string_capacity(evaluate):
+    @wraps(evaluate)
+    def checked(
+        document, expression, variables=None, *,
+        dialect=MONGODB_DIALECT_70, collation=None,
+    ):
+        value = evaluate(
+            document, expression, variables, dialect=dialect, collation=collation
+        )
+        return require_expression_string_capacity(value, dialect)
+
+    return checked
+
+
+@_with_expression_string_capacity
 def evaluate_expression(
     document: Document | RuntimeDocumentState,
     expression: object,

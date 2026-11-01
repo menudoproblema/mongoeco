@@ -16,6 +16,16 @@ class _AggregationCursorIterator:
             self.close()
             return False
 
+        read_response = getattr(self._async_iterable, "_read_driver_response", None)
+        if callable(read_response):
+            self._cursor._sync_buffer = self._cursor._client._run(read_response())
+            self._cursor._sync_buffer_index = 0
+            if not self._cursor._sync_buffer:
+                self._cursor._exhausted = True
+                self.close()
+                return False
+            return True
+
         batch_size = self._cursor._batch_size or 101
 
         async def _pull() -> list[Document]:

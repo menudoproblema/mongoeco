@@ -88,7 +88,9 @@ def materialize_public_document(
     ):
         return DocumentCodec.apply_codec_options(
             _decode_dbrefs(
-                DocumentCodec.to_pymongo(data, binary_subtype_zero_as_bytes=True),
+                DocumentCodec.to_pymongo(
+                    DocumentCodec.to_public(data), binary_subtype_zero_as_bytes=True
+                ),
                 root_document=True,
             ),
             codec_options=codec_options,
@@ -133,7 +135,9 @@ def _convert_into(
         parent[key] = value
     else:
         converted = _decode_dbrefs(
-            DocumentCodec.to_pymongo(value, binary_subtype_zero_as_bytes=True),
+            DocumentCodec.to_pymongo(
+                DocumentCodec.to_public(value), binary_subtype_zero_as_bytes=True
+            ),
             root_document=root_document,
         )
         parent[key] = converted

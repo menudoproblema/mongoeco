@@ -278,7 +278,7 @@ class WireProxyUnitTests(unittest.TestCase):
             killed,
             {
                 "cursorsKilled": [cursor_id],
-                "cursorsUnknown": [999],
+                "cursorsUnknown": [],
                 "cursorsAlive": [],
                 "cursorsNotFound": [999],
                 "ok": 1.0,
@@ -355,7 +355,7 @@ class WireProxyUnitTests(unittest.TestCase):
         )
 
         self.assertEqual(response["cursorsKilled"], [cursor_id])
-        self.assertEqual(response["cursorsUnknown"], [999])
+        self.assertEqual(response["cursorsUnknown"], [])
 
     def test_cursor_namespace_is_required_for_get_more_and_kill(self):
         store = AsyncMongoEcoProxyServer()._cursor_store
@@ -384,7 +384,7 @@ class WireProxyUnitTests(unittest.TestCase):
                     db_name=db_name,
                 )
                 self.assertEqual(rejected_kill["cursorsKilled"], [])
-                self.assertEqual(rejected_kill["cursorsUnknown"], [cursor_id])
+                self.assertEqual(rejected_kill["cursorsUnknown"], [])
                 self.assertEqual(rejected_kill["cursorsAlive"], [])
                 self.assertEqual(rejected_kill["cursorsNotFound"], [cursor_id])
                 self.assertEqual(rejected_kill["ok"], 1.0)
@@ -1798,7 +1798,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             connection=connection,
         )
         self.assertEqual(rejected["cursorsKilled"], [])
-        self.assertEqual(rejected["cursorsUnknown"], [cursor_id])
+        self.assertEqual(rejected["cursorsUnknown"], [])
         correct = await proxy._executor.execute_command(
             {"getMore": cursor_id, "collection": "events", "$db": "alpha"},
             connection=connection,
@@ -1901,7 +1901,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             connection=connection,
         )
         self.assertEqual(rejected_kill["cursorsKilled"], [])
-        self.assertEqual(rejected_kill["cursorsUnknown"], [another["cursor"]["id"]])
+        self.assertEqual(rejected_kill["cursorsUnknown"], [])
         killed = await proxy._executor.execute_command(
             {
                 "killCursors": "events",
@@ -1993,7 +1993,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             connection=bob,
         )
         self.assertEqual(rejected["cursorsKilled"], [])
-        self.assertEqual(rejected["cursorsUnknown"], [cursor_id])
+        self.assertEqual(rejected["cursorsUnknown"], [])
 
         another_ada = proxy._connections.create(("127.0.0.1", 27019))
         another_ada.authenticate(

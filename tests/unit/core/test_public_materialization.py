@@ -11,7 +11,7 @@ import pytest
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.core import codec
 from mongoeco.core._public_materialization import materialize_public_document
-from mongoeco.core.bson_scalars import BsonInt64
+from mongoeco.core.bson_scalars import BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.types import (
     SON,
@@ -28,7 +28,7 @@ from mongoeco.types import (
 
 def reference(value, options):
     return DocumentCodec.apply_codec_options(
-        DocumentCodec.to_pymongo(value), codec_options=options
+        DocumentCodec.to_pymongo(DocumentCodec.to_public(value)), codec_options=options
     )
 
 
@@ -198,6 +198,21 @@ def test_optional_bson_unavailable_keeps_original_boundary(document, options):
     with patch.object(codec, "BsonObjectId", None):
         actual = materialize_public_document(document, codec_options=options)
         assert shape(actual) == shape(reference(document, options))
+
+
+@pytest.mark.parametrize("options", [None, CodecOptions()])
+def test_sdk_free_numeric_results_leave_no_engine_wrappers(options):
+    value = {"n": [BsonInt32(1), BsonInt64(2), {"v": BsonDouble(3.5)}]}
+    with (
+        patch.object(codec, "BsonObjectId", None),
+        patch.object(codec, "BsonInt64Public", None),
+    ):
+        actual = materialize_public_document(value, codec_options=options)
+    assert actual == {"n": [1, 2, {"v": 3.5}]}
+    assert type(actual["n"][0]) is int
+    assert type(actual["n"][1]) is int
+    assert type(actual["n"][2]["v"]) is float
+    assert isinstance(value["n"][0], BsonInt32)
 
 
 def test_bson_code_scope_nested_date_follows_sdk_timezone_decoding():

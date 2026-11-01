@@ -1,5 +1,3 @@
-import asyncio
-
 from collections.abc import Awaitable, Callable
 
 
@@ -61,12 +59,7 @@ class AsyncRawBatchCursor:
     async def _close_after_failure(self, error):
         self._failed = True
         try:
-            try:
-                asyncio.get_running_loop()
-            except RuntimeError:
-                await self.close()
-            else:
-                await finish_cleanup(self.close())
+            await finish_cleanup(self.close())
         except BaseException as cleanup_error:
             error.add_note(f"raw cursor cleanup failed: {cleanup_error}")
 

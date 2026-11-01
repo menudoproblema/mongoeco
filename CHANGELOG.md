@@ -10,6 +10,13 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Form cursor responses with native byte and count boundaries before invoking
+  user decoders; preserve pending output, raw BSON and opening/getMore errors.
+  Share computed String capacity checks, retain numeric result conversion without
+  the SDK and keep prepared aggregation slices reusable. Preserve the original
+  failure and resource ownership when cursor cleanup must be retried; encode
+  killCursors metadata as int64 and treat zero getMore size as unbounded count.
+
 - Keep vector validity consistent across materialization and reference scoring;
   reject nonfinite query coordinates and use dense USearch slots after invalid
   documents are skipped. Preserve eligibility through binary/collated cache use,

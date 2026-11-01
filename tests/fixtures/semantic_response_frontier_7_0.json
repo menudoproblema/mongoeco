@@ -1,0 +1,4341 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_response_byte_aggregate": {
+      "4194286-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194286-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777144"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777144"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4194286"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "d882d6480044fab64ed0cce0019de5330196d358d2721e06963320370ccc05e2"
+      },
+      "4194287-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194287-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777148"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777148"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4194287"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "c3f204f86611f04478b1d189b47c8e047fb16bffb4b034676cf52bd391dc330c"
+      },
+      "4194288-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194288-False-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194288-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582864"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582864"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582864"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "42411652c3fe19d0f5b2b578a5566d1218a90a2e9e679211cd0a4b6de3469eca"
+      },
+      "4194288-True-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4194288"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "42411652c3fe19d0f5b2b578a5566d1218a90a2e9e679211cd0a4b6de3469eca"
+      },
+      "4194289-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194289-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582867"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582867"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582867"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "06d5078f23c552c00f6172721312aa4c4fc452fdd759cca232b2a15351b87586"
+      }
+    },
+    "semantic_response_byte_errors": {
+      "3-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "3-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "3-False-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "3-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "3-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "3-True-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388632"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "6d0cda75dd3f0f9a4f785ee0e87bf92f731507a2ff008513439094502b6402d3"
+      },
+      "4-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "4-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "4-False-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "4-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "4-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "4-True-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388632"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "6d0cda75dd3f0f9a4f785ee0e87bf92f731507a2ff008513439094502b6402d3"
+      },
+      "5-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      "5-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ]
+      },
+      "5-False-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          }
+        ]
+      },
+      "5-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582948"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "3dbe31fe5eb617c48e44ec9c04e09f3361f5d61a23049441d1cccb3b954e12f1"
+      },
+      "5-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582948"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "3dbe31fe5eb617c48e44ec9c04e09f3361f5d61a23049441d1cccb3b954e12f1"
+      },
+      "5-True-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388632"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388632"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "4183a38557aacd5acf708327df00d65f35ae3e547f0e92dde3c2d1329c731aea"
+      }
+    },
+    "semantic_response_byte_find": {
+      "4194286-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194286-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777144"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777144"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4194286"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "d882d6480044fab64ed0cce0019de5330196d358d2721e06963320370ccc05e2"
+      },
+      "4194287-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194287-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777148"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777148"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4194287"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "c3f204f86611f04478b1d189b47c8e047fb16bffb4b034676cf52bd391dc330c"
+      },
+      "4194288-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194288-False-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194288-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "16777152"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582864"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "42411652c3fe19d0f5b2b578a5566d1218a90a2e9e679211cd0a4b6de3469eca"
+      },
+      "4194288-True-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "8388576"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4194288"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "42411652c3fe19d0f5b2b578a5566d1218a90a2e9e679211cd0a4b6de3469eca"
+      },
+      "4194289-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "3"
+            }
+          ],
+          [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "6"
+            }
+          ],
+          [
+            {
+              "$numberInt": "7"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ],
+          [
+            {
+              "$numberInt": "8"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ],
+          [
+            {
+              "$numberInt": "9"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ]
+      },
+      "4194289-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582867"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582867"
+            }
+          ],
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "12582867"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "06d5078f23c552c00f6172721312aa4c4fc452fdd759cca232b2a15351b87586"
+      }
+    },
+    "semantic_response_client_decoder_errors": {
+      "False-False-None-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "iterate",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "False-False-None-2": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "iterate",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "False-False-1-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "iterate",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "False-False-1-2": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "iterate",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "False-False-2-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "iterate",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "False-False-2-2": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "iterate",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "False-True-None-1": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "42"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "False-True-None-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "42"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "False-True-1-1": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "False-True-1-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "False-True-2-1": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "28"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "False-True-2-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "28"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "True-False-None-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "open",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "True-False-None-2": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "open",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "True-False-1-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "open",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "True-False-1-2": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "iterate",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "True-False-2-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "open",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "True-False-2-2": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "open",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "True-True-None-1": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "42"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "True-True-None-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "42"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "True-True-1-1": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "28"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "True-True-1-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "28"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "True-True-2-1": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "28"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      },
+      "True-True-2-2": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "28"
+            }
+          ],
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "14"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
+      }
+    },
+    "semantic_response_document_limits": {
+      "1-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777217"
+          }
+        ]
+      },
+      "1-False-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777217"
+          }
+        ]
+      },
+      "1-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777217"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "0654ffe4be01935552cbc708936087d86d59922809d577addb96a8ac057ea474"
+      },
+      "1-True-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777217"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "0654ffe4be01935552cbc708936087d86d59922809d577addb96a8ac057ea474"
+      },
+      "16383-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16793599"
+          }
+        ]
+      },
+      "16383-False-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16793599"
+          }
+        ]
+      },
+      "16383-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16793599"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "b97e18bd3e18ea02de30629815240fb29929e751d79779fc763e20c3b52d676b"
+      },
+      "16383-True-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16793599"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "b97e18bd3e18ea02de30629815240fb29929e751d79779fc763e20c3b52d676b"
+      },
+      "16384-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16793600"
+          }
+        ]
+      },
+      "16384-False-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16793600"
+          }
+        ]
+      },
+      "16384-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16793600"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "0f7a13f0679d006ea490fe7e26d220a91bd4863eef2e5301b9f18d6cfd7d8675"
+      },
+      "16384-True-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16793600"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "0f7a13f0679d006ea490fe7e26d220a91bd4863eef2e5301b9f18d6cfd7d8675"
+      },
+      "16385-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "open",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: _id: 1",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "16385-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: _id: 1",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "16385-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: _id: 1",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "16385-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: _id: 1",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "first-string-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "open",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\"",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "first-string-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\"",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "first-string-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\"",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "first-string-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\"",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "first-binary-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "open",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: z: BinData(0, FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF...)",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "first-binary-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: z: BinData(0, FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF...)",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "first-binary-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: z: BinData(0, FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF...)",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "first-binary-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: z: BinData(0, FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF...)",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "first-object-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "open",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: o: { a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\" }",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "first-object-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: o: { a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\" }",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "first-object-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: o: { a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\" }",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "first-object-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "10334"
+        },
+        "phase": "iterate",
+        "codeName": "BSONObjectTooLarge",
+        "errmsg": "Executor error during getMore :: caused by :: BSONObj size: 16793601 (0x1004001) is invalid. Size must be between 0 and 16793600(16MB) First element: o: { a: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\" }",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "semantic_response_expanded_filter_errors": {
+      "False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "semantic_response_expansion_callbacks": {
+      "False-False-None-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-False-None-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-False-1-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "False-False-1-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "open",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "False-False-2-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-False-2-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-True-None-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "False-True-None-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "False-True-1-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "False-True-1-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "False-True-2-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "False-True-2-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-False-None-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "True-False-None-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "True-False-1-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "True-False-1-1": {
+        "ok": false,
+        "exception": "InvalidBSON",
+        "code": null,
+        "phase": "open",
+        "codeName": null,
+        "errmsg": "client decoder stopped",
+        "seen": [],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "True-False-2-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "True-False-2-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "True-True-None-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-True-None-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-True-1-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-True-1-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-True-2-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-True-2-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "semantic_response_filter_errors": {
+      "False-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during find command :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-False-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "False-False-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during find command :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "False-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during find command :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "False-True-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "21"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "3911dae1d2bb52bc6fb27552cb560641912d14aa385914321e681624100720fe"
+      },
+      "False-True-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during find command :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "True-False-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "True-False-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "open",
+        "codeName": "BadValue",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "True-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-True-1": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "True-True-2": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "hint-_id_-False": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "hint-_id_-True": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during getMore :: caused by :: can't $divide by zero",
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "21"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "3911dae1d2bb52bc6fb27552cb560641912d14aa385914321e681624100720fe"
+      },
+      "hint-v_1-False": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during find command :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": []
+      },
+      "hint-v_1-True": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "phase": "iterate",
+        "codeName": "BadValue",
+        "errmsg": "Executor error during find command :: caused by :: can't $divide by zero",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "semantic_response_string_limits": {
+      "concat--1-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777237"
+          }
+        ]
+      },
+      "concat--1-False-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777237"
+          }
+        ]
+      },
+      "concat--1-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777237"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "12e7cd1a979af6caa54acc68029c8ce6d322ed75eac3c72dd659c628825c7652"
+      },
+      "concat--1-True-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777237"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "12e7cd1a979af6caa54acc68029c8ce6d322ed75eac3c72dd659c628825c7652"
+      },
+      "concat-0-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "open",
+        "codeName": "Location16493",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "concat-0-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "concat-0-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "concat-0-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "concat-1-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "open",
+        "codeName": "Location16493",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "concat-1-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "concat-1-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "concat-1-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "replaceAll--1-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777237"
+          }
+        ]
+      },
+      "replaceAll--1-False-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777237"
+          }
+        ]
+      },
+      "replaceAll--1-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777237"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "12e7cd1a979af6caa54acc68029c8ce6d322ed75eac3c72dd659c628825c7652"
+      },
+      "replaceAll--1-True-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777237"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "12e7cd1a979af6caa54acc68029c8ce6d322ed75eac3c72dd659c628825c7652"
+      },
+      "replaceAll-0-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "open",
+        "codeName": "Location16493",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "replaceAll-0-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "replaceAll-0-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "replaceAll-0-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "replaceAll-1-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "open",
+        "codeName": "Location16493",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "replaceAll-1-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "replaceAll-1-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "replaceAll-1-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "utf8_concat--1-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777237"
+          }
+        ]
+      },
+      "utf8_concat--1-False-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "16777237"
+          }
+        ]
+      },
+      "utf8_concat--1-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777237"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "a8e93aa72a165f57e620c0d29ed7afdf24a674996de72fc2d2c7a034bb4b51af"
+      },
+      "utf8_concat--1-True-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "16777237"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "a8e93aa72a165f57e620c0d29ed7afdf24a674996de72fc2d2c7a034bb4b51af"
+      },
+      "utf8_concat-0-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "open",
+        "codeName": "Location16493",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "utf8_concat-0-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "utf8_concat-0-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "utf8_concat-0-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "utf8_concat-1-False-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "open",
+        "codeName": "Location16493",
+        "errmsg": "PlanExecutor error during aggregation :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "utf8_concat-1-False-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "document_bytes": []
+      },
+      "utf8_concat-1-True-None": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "utf8_concat-1-True-0": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16493"
+        },
+        "phase": "iterate",
+        "codeName": "Location16493",
+        "errmsg": "Executor error during getMore :: caused by :: Tried to create string longer than 16MB",
+        "seen": [],
+        "decoder_calls": [],
+        "bson_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "concat_null_tail-0-False-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "17"
+          }
+        ]
+      },
+      "concat_null_tail-0-False-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "1"
+            }
+          ]
+        ],
+        "decoder_calls": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "document_bytes": [
+          {
+            "$numberInt": "17"
+          }
+        ]
+      },
+      "concat_null_tail-0-True-None": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "17"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "e94ff01fe95daf8c1def9db3f5a0e456b57a6469c6a191b05324fba5b29baa67"
+      },
+      "concat_null_tail-0-True-0": {
+        "ok": true,
+        "seen": [
+          [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "17"
+            }
+          ]
+        ],
+        "decoder_calls": [],
+        "bson_sha256": "e94ff01fe95daf8c1def9db3f5a0e456b57a6469c6a191b05324fba5b29baa67"
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793491138,
+            "i": 23
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793491138,
+          "i": 23
+        }
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_response_frontier_cases.py",
+    "sha256": "eb23caf7da74ebc5bd5e8c4c976758c8b6f1f2025faaf62fc69eb99e99b773d6"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_response_byte_find",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_byte_find"
+    },
+    {
+      "name": "semantic_response_byte_aggregate",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_byte_aggregate"
+    },
+    {
+      "name": "semantic_response_byte_errors",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_byte_errors"
+    },
+    {
+      "name": "semantic_response_filter_errors",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_filter_errors"
+    },
+    {
+      "name": "semantic_response_expansion_callbacks",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_expansion_callbacks"
+    },
+    {
+      "name": "semantic_response_client_decoder_errors",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_client_decoder_errors"
+    },
+    {
+      "name": "semantic_response_document_limits",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_document_limits"
+    },
+    {
+      "name": "semantic_response_string_limits",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_string_limits"
+    },
+    {
+      "name": "semantic_response_expanded_filter_errors",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_expanded_filter_errors"
+    }
+  ]
+}

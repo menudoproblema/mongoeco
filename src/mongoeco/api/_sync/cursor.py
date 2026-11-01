@@ -283,6 +283,11 @@ class Cursor:
     def _pull_chunk(self, active) -> bool:
         if self._sync_buffer_index < len(self._sync_buffer):
             return True
+        read_response = getattr(active, "_read_driver_response", None)
+        if callable(read_response):
+            self._sync_buffer = self._client._run(read_response())
+            self._sync_buffer_index = 0
+            return bool(self._sync_buffer)
         pull_chunk = getattr(active, "pull_chunk", None)
         if not callable(pull_chunk):
             return False

@@ -2646,7 +2646,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             batch_size=2,
         )
         with patch.object(
-            search_cursor, "_materialize", return_value=[{"_id": "a"}]
+            search_cursor, "_materialize_pipeline", return_value=[{"_id": "a"}]
         ) as materialize:
             self.assertEqual(
                 [document async for document in search_cursor._stream_batches()],
@@ -2660,7 +2660,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             batch_size=2,
         )
         with patch.object(
-            merge_cursor, "_materialize", return_value=[{"_id": "m"}]
+            merge_cursor, "_materialize_pipeline", return_value=[{"_id": "m"}]
         ) as materialize:
             self.assertEqual(
                 [document async for document in merge_cursor._stream_batches()],
@@ -2683,7 +2683,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch.object(cursor, "_split_streamable_pipeline", return_value=None),
             patch.object(
-                cursor, "_materialize", return_value=[{"_id": "p"}]
+                cursor, "_materialize_pipeline", return_value=[{"_id": "p"}]
             ) as materialize,
         ):
             self.assertEqual(
@@ -2878,7 +2878,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             source, [{"$merge": {"into": "archive"}}], batch_size=2
         )
         with patch.object(
-            merge_cursor, "_materialize", return_value=[{"_id": "m"}]
+            merge_cursor, "_materialize_pipeline", return_value=[{"_id": "m"}]
         ) as materialize:
             self.assertEqual(
                 [document async for document in merge_cursor._stream_batches()],

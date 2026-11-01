@@ -100,18 +100,7 @@ def retain_diagnostic(source, target):
     return target
 
 
-def _expression_operation_error(diagnostic, operation, dialect, namespace):
-    if (
-        diagnostic.reason == "expression_optimization"
-        and operation == "aggregate_match"
-    ):
-        return server_error(
-            "Failed to optimize pipeline :: caused by :: " + diagnostic.message,
-            code=diagnostic.code,
-            reason="expression_optimized_pipeline",
-        )
-    if diagnostic.reason != "expression_type":
-        return None
+def _runtime_execution_prefix(operation, dialect, namespace):
     if operation in {"aggregate_runtime", "count_documents"}:
         prefix = (
             f"Executor error during aggregate command on namespace: {namespace} "
@@ -135,6 +124,24 @@ def _expression_operation_error(diagnostic, operation, dialect, namespace):
     elif dialect == "9.0" and operation in {"update_one", "update_many"}:
         prefix = "Plan executor error during update :: caused by :: "
     else:
+        return None
+    return prefix
+
+
+def _expression_operation_error(diagnostic, operation, dialect, namespace):
+    if (
+        diagnostic.reason == "expression_optimization"
+        and operation == "aggregate_match"
+    ):
+        return server_error(
+            "Failed to optimize pipeline :: caused by :: " + diagnostic.message,
+            code=diagnostic.code,
+            reason="expression_optimized_pipeline",
+        )
+    if diagnostic.reason != "expression_type":
+        return None
+    prefix = _runtime_execution_prefix(operation, dialect, namespace)
+    if prefix is None:
         return None
     return server_error(
         prefix + diagnostic.message, code=diagnostic.code, reason="expression_execution"
@@ -188,3 +195,31 @@ def operation_error(error, operation, dialect, *, namespace=None):
         context=diagnostic.context,
         reason=diagnostic.reason,
     )
+
+
+def response_operation_error(error, operation, dialect, *, initial, namespace=None):
+    """Render a semantic read error at its actual command-response boundary."""
+    diagnostic = getattr(error, "_server_diagnostic", None)
+    if (
+        diagnostic is None
+        or diagnostic.reason not in {
+            "expression_type", "expression_runtime", "bson_document_size"
+        }
+        or operation not in {"find_runtime", "aggregate_runtime"}
+    ):
+        return operation_error(error, operation, dialect, namespace=namespace)
+    prefix = (
+        _runtime_execution_prefix(operation, dialect, namespace)
+        if initial
+        else "Executor error during getMore :: caused by :: "
+    )
+    rendered = server_error(
+        prefix + diagnostic.message,
+        code=diagnostic.code,
+        scope=diagnostic.scope,
+        context=diagnostic.context,
+        reason="response_execution",
+    )
+    for note in getattr(error, "__notes__", ()):
+        rendered.add_note(note)
+    return rendered

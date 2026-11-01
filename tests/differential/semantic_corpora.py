@@ -117,6 +117,14 @@ from tests.differential.semantic_rename_command_cases import (
     SEED as RENAME_COMMAND_SEED,
     SEMANTIC_RENAME_COMMAND_CASES,
 )
+from tests.differential.semantic_response_command_cases import (
+    SEED as RESPONSE_COMMAND_SEED,
+    SEMANTIC_RESPONSE_COMMAND_CASES,
+)
+from tests.differential.semantic_response_frontier_cases import (
+    SEED as RESPONSE_FRONTIER_SEED,
+    SEMANTIC_RESPONSE_FRONTIER_CASES,
+)
 from tests.differential.semantic_schema_cases import (
     SEED as SCHEMA_SEED,
     SEMANTIC_SCHEMA_CASES,
@@ -205,6 +213,15 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "response_command": SemanticCorpus(
+        "response-command", "semantic_response_command_cases",
+        RESPONSE_COMMAND_SEED, SEMANTIC_RESPONSE_COMMAND_CASES,
+        surfaces=("wire-sync", "wire-async"),
+    ),
+    "response_frontier": SemanticCorpus(
+        "response-frontier", "semantic_response_frontier_cases",
+        RESPONSE_FRONTIER_SEED, SEMANTIC_RESPONSE_FRONTIER_CASES,
+    ),
     "raw_response": SemanticCorpus(
         "raw-response", "semantic_raw_response_cases",
         RAW_RESPONSE_SEED, SEMANTIC_RAW_RESPONSE_CASES,

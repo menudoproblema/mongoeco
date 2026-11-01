@@ -714,8 +714,8 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor = AsyncCursor(collection, {}, MatchAll(), None)
         iterator = cursor.__aiter__()
 
-        self.assertEqual(await iterator.__anext__(), {"_id": "1"})
         with self.assertRaisesRegex(RuntimeError, "boom"):
+            # Failure invalidates the first response before any row is exposed.
             await iterator.__anext__()
         self.assertEqual(collection._engine.created_scans[0].close_calls, 1)
 

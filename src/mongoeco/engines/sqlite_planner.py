@@ -3,7 +3,11 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from mongoeco.core.query_plan import QueryNode
-from mongoeco.engines.semantic_core import EngineFindSemantics, EngineReadExecutionPlan
+from mongoeco.engines.semantic_core import (
+    EngineFindSemantics,
+    EngineReadExecutionPlan,
+    python_find_filter_sort_phases,
+)
 from mongoeco.types import ExecutionLineageStep, IndexKeySpec, PhysicalPlanStep
 
 
@@ -448,12 +452,11 @@ def _python_lineage(
 ) -> tuple[ExecutionLineageStep, ...]:
     lineage = [
         ExecutionLineageStep(runtime="python", phase="scan", detail=reason),
-        ExecutionLineageStep(runtime="python", phase="filter", detail="semantic core"),
     ]
-    if semantics.sort:
-        lineage.append(
-            ExecutionLineageStep(runtime="python", phase="sort", detail="semantic core")
-        )
+    lineage.extend(
+        ExecutionLineageStep(runtime="python", phase=phase, detail="semantic core")
+        for phase in python_find_filter_sort_phases(semantics)
+    )
     if semantics.skip or semantics.limit is not None:
         lineage.append(
             ExecutionLineageStep(
@@ -515,10 +518,11 @@ def _python_physical_plan(
 ) -> tuple[PhysicalPlanStep, ...]:
     steps: list[PhysicalPlanStep] = [
         PhysicalPlanStep(runtime="python", operation="scan", detail=reason),
-        PhysicalPlanStep(runtime="python", operation="filter"),
     ]
-    if semantics.sort:
-        steps.append(PhysicalPlanStep(runtime="python", operation="sort"))
+    steps.extend(
+        PhysicalPlanStep(runtime="python", operation=phase)
+        for phase in python_find_filter_sort_phases(semantics)
+    )
     if semantics.projection is not None:
         steps.append(PhysicalPlanStep(runtime="python", operation="project"))
     if semantics.skip or semantics.limit is not None:

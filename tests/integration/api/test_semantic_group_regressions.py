@@ -209,6 +209,10 @@ class _AsyncView:
         return _AsyncView(self.collection.database, self.loop, self._session_client)
 
     @property
+    def full_name(self):
+        return self.collection.full_name
+
+    @property
     def client(self):
         return _AsyncView(self._session_client, self.loop, self._session_client)
 

@@ -218,6 +218,18 @@ def _encode_response_document(document: dict[str, Any]) -> bytes:
         cursor_id = cursor.get("id")
         if isinstance(cursor_id, int) and not isinstance(cursor_id, bool):
             document = {**document, "cursor": {**cursor, "id": BsonInt64(cursor_id)}}
+    for field in ("cursorsKilled", "cursorsNotFound", "cursorsAlive", "cursorsUnknown"):
+        values = document.get(field)
+        if isinstance(values, list):
+            document = {
+                **document,
+                field: [
+                    BsonInt64(value)
+                    if isinstance(value, int) and not isinstance(value, bool)
+                    else value
+                    for value in values
+                ],
+            }
     return BSON.encode(encode_wire_value(document))
 
 
