@@ -239,6 +239,7 @@ def encode_operation_bson(options, *, codec_options):
     from mongoeco.api.argument_validation import (  # noqa: PLC0415
         normalize_sort_spec,
         projection_document,
+        sort_document,
         validate_batch_size,
         validate_max_time_ms,
     )
@@ -266,15 +267,22 @@ def encode_operation_bson(options, *, codec_options):
     for field in ("sort", "hint"):
         value = options.get(field)
         if value is not None:
-            request[field] = (
-                value
-                if field == "hint" and isinstance(value, str)
-                else dict(normalize_sort_spec(value))
-            )
+            if field == "hint" and isinstance(value, str):
+                request[field] = value
+            else:
+                request[field] = (
+                    sort_document(value)
+                    if field == "sort"
+                    else dict(normalize_sort_spec(value))
+                )
     encoded = encode_bson_request(request, codec_options=codec_options)
     for field in ("sort", "hint"):
         if isinstance(encoded.get(field), dict):
-            encoded[field] = list(encoded[field].items())
+            encoded[field] = (
+                normalize_sort_spec(encoded[field])
+                if field == "sort"
+                else list(encoded[field].items())
+            )
     return {**options, **encoded}
 
 

@@ -3,20 +3,21 @@ import time
 
 from collections import deque
 from collections.abc import AsyncIterable, Mapping
-from dataclasses import replace
 from copy import deepcopy
+from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
 from mongoeco.api._async._response import ResponseBatchReader
 from mongoeco.api.argument_validation import (
     HintSpec,
     normalize_sort_spec as _normalize_sort_spec,
+    sort_document,
     validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
 )
-from mongoeco.api.operations import FindOperation
 from mongoeco.api.bson_input import encode_operation_bson
+from mongoeco.api.operations import FindOperation
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
@@ -24,14 +25,13 @@ from mongoeco.core.operation_context import (
     OperationContext,
     resolve_operation_session,
 )
-from mongoeco.core.query_plan import QueryNode
 from mongoeco.core.projections import _ProjectionExecutor
+from mongoeco.core.query_plan import QueryNode
 from mongoeco.core.runtime_metadata import (
     _RuntimeReadDocument,
     ensure_runtime_state,
     runtime_read_document,
 )
-from mongoeco.engines.virtual_indexes import query_can_use_index_order
 from mongoeco.core.server_errors import response_operation_error
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
@@ -39,6 +39,7 @@ from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     find_has_primary_key_order,
 )
+from mongoeco.engines.virtual_indexes import query_can_use_index_order
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -552,11 +553,13 @@ class AsyncCursor:
             await self._close_source(source)
         self._bounded_source_count = len(documents)
         for document in documents:
-            projected = project(document)
             if isinstance(document, _RuntimeReadDocument):
+                state = ensure_runtime_state(document)
                 projected = runtime_read_document(
-                    ensure_runtime_state(document).with_document(projected)
+                    state.with_document(project(state))
                 )
+            else:
+                projected = project(document)
             yield projected
 
     def _bounded_source_reached(self, position):
@@ -734,7 +737,9 @@ class AsyncCursor:
             if isinstance(key_or_list, str)
             else key_or_list
         )
-        self._sort = _normalize_sort_spec(sort)
+        self._sort = (
+            sort_document(sort) if self._plan is None else _normalize_sort_spec(sort)
+        )
         self._invalidate_execution_cache()
         return self
 

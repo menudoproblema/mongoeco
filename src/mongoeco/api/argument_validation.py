@@ -67,6 +67,14 @@ def normalize_sort_spec(sort: object | None) -> SortSpec | None:
     return sort
 
 
+def sort_document(sort: object | None) -> Mapping[str, Any] | None:
+    """Validate public shape without replacing metadata with execution keys."""
+    normalized = normalize_sort_spec(sort)
+    if normalized is None:
+        return None
+    return dict(sort) if isinstance(sort, Mapping) else dict(normalized)
+
+
 def validate_sort_spec(sort: object) -> None:
     if not isinstance(sort, list):
         raise TypeError("sort must be a list of (field, direction) tuples")

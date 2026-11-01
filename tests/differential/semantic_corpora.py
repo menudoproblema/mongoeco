@@ -235,6 +235,10 @@ from tests.differential.semantic_sum_cases import (
     SEMANTIC_SUM_STREAM_CASES,
     STREAM_SEED as SUM_STREAM_SEED,
 )
+from tests.differential.semantic_text_sort_admission_cases import (
+    SEED as TEXT_SORT_ADMISSION_SEED,
+    SEMANTIC_TEXT_SORT_ADMISSION_CASES,
+)
 from tests.differential.semantic_ttl_publication_cases import (
     SEED as TTL_PUBLICATION_SEED,
     SEMANTIC_TTL_PUBLICATION_CASES,
@@ -322,6 +326,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "text_sort_admission": SemanticCorpus(
+        "text-sort-admission",
+        "semantic_text_sort_admission_cases",
+        TEXT_SORT_ADMISSION_SEED,
+        SEMANTIC_TEXT_SORT_ADMISSION_CASES,
+        requires_standalone=True,
+    ),
     "response_transform": SemanticCorpus(
         "response-transform",
         "semantic_response_transform_cases",
