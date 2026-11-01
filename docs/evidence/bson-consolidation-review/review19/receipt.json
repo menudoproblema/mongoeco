@@ -1,0 +1,33 @@
+{
+  "base_commit": "cb77581b83ef365cdd99c8abdd98955327564405",
+  "runtime_tree": "a92dd987edac5bbbc46256fab04d50d699158830",
+  "attachment_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "checks": {
+    "focal_passed": 115,
+    "input_encoder_passed": 38,
+    "engine_dialect_pairs": 6,
+    "matcher_traces": 18,
+    "downloaded_sources_matching": 16,
+    "original_manifest_entries": 14
+  },
+  "limits": [
+    "No new native MongoDB run or capture",
+    "No installed wheel or global acceptance",
+    "No production changes"
+  ],
+  "document_checks": {
+    "relative_links_missing": [],
+    "diff_check": "passed",
+    "runtime_tests_and_historical_evidence_unchanged": true,
+    "project_markdown_validator": "none found"
+  },
+  "artifacts_sha256": {
+    "README.md": "799c3551788e1871f2300f1c54e9392dfa7b91cf698c19295849bf8c8bedbc9d",
+    "focal.txt": "c3a95c6a1bf3bc0fb535c9323ca50a816f5852b1220ccacec3f5beeeb587637e",
+    "representation-probe.py.txt": "233adbce01388f46f6e340b892848f63686726dc8215308e03ff87edb93ca16e",
+    "representations.json": "7b8f086cfe09507b8209453beb3d638501b4d15d55fbec5358b0160c93c3bc63",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e",
+    "sources-check.py.txt": "33116687689080becd700fa24978c9117a735241b4de5783e5da5337fd81e951"
+  },
+  "plan_sha256": "70b96bf87580a04c0e3135143e09b9048405acfb99419f935700b728446008de"
+}

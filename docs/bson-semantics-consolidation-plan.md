@@ -1,5 +1,11 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
+**Entrada vigente (1 de noviembre, revisión 19 sobre `cb77581`):**
+[contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
+[detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
+[estado de implementación](bson-consolidation-implementation.md).
+Las revisiones numeradas anteriores conservan historia, no otro backlog activo.
+
 Fecha: 31 de octubre de 2026. Base de runtime inspeccionada:
 `734c57f4026c602491bdc6f62aa5dc44369dfcb4`.
 
@@ -1112,28 +1118,18 @@ sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
 ### Contraste actual y orden mínimo de ejecución
 
-Relectura vigente sobre HEAD `b49d521`, con el mismo adjunto (SHA-256
-`a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`).
-La [revisión 18](evidence/bson-consolidation-review/review18/README.md) vuelve a
-contrastar el adjunto con el código actual: 97 regresiones locales y 18 trazas
-del matcher en seis pares motor/dialecto. Conserva los cierres posteriores de
-grupo/conjuntos y Search, y no acepta el corte de conversión sin commitear.
-La revisión 17 conserva su alcance histórico sobre `3c4032b` e identifica
-las comprobaciones de entonces y el corpus de consumidores preexistente, que
-no modificó ni aceptó. La [revisión 16](evidence/bson-consolidation-review/review16/receipt.json)
-conserva su caracterización sobre `5348004`, anterior a los cierres acotados de
-fábricas documentales y consumo/propiedad de cursores sync.
-La caracterización anterior sobre
-`eb85ea3` y sus 12 archivos sin commitear permanece identificada en el
-[receipt de revisión 15](evidence/bson-consolidation-review/review15/receipt.json).
-El [receipt de revisión 14](evidence/bson-consolidation-review/review14/receipt.json)
-conserva la caracterización del candidato anterior a `381aa10`.
-El [contraste anterior](evidence/bson-consolidation-review/response-frontier-plan/receipt.json)
-conserva la identidad del trabajo raw anterior a su aceptación.
-El adjunto conserva el SHA-256 de revisiones 3–13: no añade siete defectos
-actuales ni justifica volver a ejecutar sus correcciones. Este apartado sustituye
-las instrucciones de ejecución anteriores; el registro de implementación sigue
-poseyendo el estado y aceptación de cada corte.
+Relectura vigente sobre HEAD `cb77581`, con árbol limpio y el mismo adjunto
+(SHA-256 `a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`).
+La [revisión 19](evidence/bson-consolidation-review/review19/README.md) contrasta
+las retractaciones y sugerencias con código, 153 regresiones locales y 18 trazas
+del matcher en seis pares motor/dialecto. Vuelve a descargar las 16 fuentes
+fijadas r8.0.0 y comprueba sus hashes; no ejecuta nuevos servidores MongoDB.
+El informe no aporta hallazgos nuevos respecto de las revisiones anteriores.
+Sus cuatro huecos ya están incorporados y tienen aceptación o pendientes por
+consumidor. La conversión y la lectura B07, posteriores a revisión 18, tienen
+aceptación propia; no repetir su extracción. El registro de implementación
+posee el estado de cada corte. Este apartado mantiene el único orden actual;
+las caracterizaciones y receipts anteriores conservan sus límites históricos.
 
 | Afirmación del informe | Contraste actual y decisión |
 | --- | --- |
@@ -1143,7 +1139,7 @@ poseyendo el estado y aceptación de cada corte.
 | El literal DBRef se rechaza y el decoder wire puede ocultarlo. | El parser común actual reconoce el literal por primer campo/contexto y presencia de campos. El parser oficial r8.0.0 comprueba nombres, no tipos. Conservar controles de orden, extras, incompletos y tipos de `$ref`/`$db`; no sustituir gramática por el predicado del decoder SDK ni aceptar todos los documentos con claves `$`. |
 | La frontera del matcher necesita observar ambas representaciones. | Mantener trazas separadas de documento y operando, además del resultado público. Las propiedades de `test_bson_binary_coherence.py` ya cubren igualdad⇒clave entre formas. D00 sigue acompañando cada corte; las clases privadas observadas no se convierten en contrato público. |
 | TTL solo puede retrasarse un milisegundo y es irrelevante. | No adoptar esa cota ni esa tolerancia. SQLite actual calcula auxiliares/cutoff con milisegundos enteros y conserva residual exacto; D02 prueba migración/reapertura. El residual impide ciertos borrados indebidos, pero nunca recupera un candidato omitido. Separar inclusión de candidatos, decisión de expiración y cadencia del monitor. |
-| Watch exige clase/código/fase; H53 y fuentes no estaban totalmente verificados. | Clase/código/fase y contexto ya forman parte de la aceptación D04. H53 mantiene disposición pendiente C03/B08. Revisión 15 registra 16 hashes oficiales r8.0.0 coincidentes: los 14 del manifiesto original más parser y pipeline_executor. Esta revisión comprueba la correspondencia documental, sin descargar otra vez esos 16 archivos. Las fuentes explican mecanismos; no sustituyen diferenciales 7/8/9. |
+| Watch exige clase/código/fase; H53 y fuentes no estaban totalmente verificados. | Clase/código/fase y contexto ya forman parte de la aceptación D04. H53 mantiene disposición pendiente C03/B08. Revisión 15 registra 16 hashes oficiales r8.0.0 coincidentes: los 14 del manifiesto original más parser y pipeline_executor. La revisión 19 vuelve a descargar y verificar las 16 fuentes: coinciden con los hashes fijados, incluidos los 14 del manifiesto original. Las fuentes explican mecanismos; no sustituyen diferenciales 7/8/9. |
 
 **Caracterización histórica de revisión 14.** Se repiten las 78 pruebas focales de coherencia
 Binary, gramática auxiliar, traductor SQL, migración TTL y contexto watch: pasan.
@@ -1247,18 +1243,48 @@ identidad física, gramática y límites de valores siguen siendo primitivas
 separadas: una clase universal no reduce estas obligaciones. La pérdida de
 PreparedPipeline se corrige conservando slices; no exige otra caché.
 
-| Orden / prioridad | Trabajo, dependencia y simplificación | Aceptación necesaria |
+| Orden / prioridad | Trabajo y dependencia | Aceptación / owner |
 | --- | --- | --- |
-| 1 / P1 — D06a/b, raw y representación | Conservar el corte raw de contenido/cantidades aceptado y completar contextos String/Code/DBRef/raw que falten sobre cursor/materializador/bridge actuales. No llamar a la apertura normal de aggregate y asumir que raw tiene la misma primera tanda. | Diferenciales 7/8/9 de find/aggregate raw y decodificado, sync/async y wire soportado. BSON exacto independiente del decoder productivo; orden/extras/`$db:null`, Binary 0/5 y Code scope anidados. Codec mutante con control decodificado activo y cero callbacks en raw. Batch ausente/0/1/2, fase de error y ejecución de `$merge` al abrir observadas por superficie. Fuente final congelada y `--check` de las referencias nuevas; no regenerar goldens para ocultar fallos. |
-| 2 / P1 — D06a/b, demanda, bytes y callbacks | Conservar el corte `381aa10` aceptado y usar sus primitivas en los contextos/planes restantes. Mantener la prelectura demostrada y salida pendiente sin reevaluar. Reusar `bson_size`; distinguir String calculada, documento devuelto, tanda y mensaje, además de admisión B07. Retirar guardas reemplazadas; no repetir otro lector, evaluador o caché. | Mantener las fronteras y controles del apartado siguiente, con cantidad simultánea y expansión/materialización. Nuevos contextos/planes requieren testigo nativo propio, no aceptación por asociación. Documentos/tandas, fase/clase/código/codeName/errmsg, orden y callbacks deben coincidir. Un fallo del servidor invalida su respuesta antes de decoders; un fallo del decoder cliente conserva los efectos anteriores observados en el SDK. |
-| 3 / P1 — D06c, consumidores y claves | Después de las vistas disponibles y preservación necesarias, revisar group/sets/lookup/spill/Search según equivalencia propia. Compartir átomos, retirar duplicación junto con sus guardas; no cambiar storage keys ni desempates persistidos. | Mismo resultado BSON con/sin hash/spill y bajo collation. Clave exclusiva: equivalencia en ambos sentidos; hash: colisiones permitidas solo con comparación posterior. Prefiltros Search conservan candidatos antes de residual y ventana. Contextos de subpipeline y persistencia tienen testigos propios. |
-| 4 / P2 — H53 y D07; conversión entregada | H53 conserva C03/B08; D07 requiere decisión continuar/descartar con hipótesis medible y puede descartarse. Son independientes del cierre completo D06c. `51ff167` entrega el corte de conversión reutilizando evaluación/preparación y tipos BSON existentes. | H53 separa evaluación, permiso y warning en strict/moderate/off × error/warn/bypass, antiguo/candidato, sin logging implícito. Conservar la aceptación de conversión y sus garantías siguientes; no usarla para cerrar B07 ni otros contextos D06. |
-| 5 — D05 integrado y B07 por su owner | Congelar el candidato después de revisión/focales, ejecutar gates alcanzados y cerrar commits semánticos por bloque. La admisión BSON general conserva su obligación independiente: no depende de adoptar otro normalizador ni queda resuelta por raw. | Matrices Python/SDK/pytest del contrato, wheel instalado, SPI/typing, cobertura, persistencia y coste; recursos sin fugas. B07 prueba tipos arbitrarios/Decimal crudo y clases/fases de rechazo en filtros y escrituras. Evidencia de fuente exacta, baseline que falla y candidato que pasa; no presentar un gate previo al último cambio como aceptación final. |
+| 1 / P1 — B07, escrituras y comandos | Extender el codificador de lectura ya entregado a la frontera cliente y al lote real. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
+| 2 / P1 — B07, UUID | Después de integrar entradas de escritura, aplicar opciones del dueño de la solicitud y coordinar el default. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte. |
+| 3 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
+| 4 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
+| 5 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
+| 6 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
 
-Los pasos 1 y 2 comparten mecanismo y pueden entregarse juntos si simplifica el
-cambio, pero conservan testigos y aceptación separados. H53/conversión pueden
-avanzar de forma independiente de D06c. No hace falta esperar un fixture RS ya
-aceptado ni repetir D01/D02/D03/D04 para empezar estos pendientes.
+Los criterios detallados de las seis unidades B07 se mantienen en su apartado;
+esta tabla solo ordena sus dependencias con D06 y D05. No es necesario cerrar
+todos los consumidores D06 para corregir la admisión cliente. Las unidades de
+escritura, UUID y respuesta conservan aceptaciones separadas aunque compartan
+un commit lógico; lectura y conversión ya entregadas no se reimplementan.
+
+**Garantías D06 conservadas al simplificar el orden.** La tabla anterior no
+reduce la aceptación de las familias pendientes:
+
+- Representación/raw: diferenciales 7/8/9 de find/aggregate, sync/async y wire
+  soportado; BSON exacto con observador independiente, orden/extras/`$db:null`,
+  Binary 0/5 y Code scope anidados. Codec mutante con control decodificado
+  activo y cero callbacks raw. Batch ausente/0/1/2 y ejecución de `$merge` al
+  abrir se observan por superficie; raw no hereda sin prueba la primera tanda
+  de aggregate normal. Congelar nuevas referencias y ejecutar `--check` sin
+  regenerar goldens históricos para ocultar fallos.
+- Demanda/bytes/callbacks: conservar prelectura y salida pendiente sin reevaluar;
+  distinguir String calculada, documento devuelto, tanda y mensaje. Verificar
+  cantidades junto con expansión/materialización, fase/clase/código/codeName/
+  errmsg, orden y callbacks. El fallo servidor invalida la respuesta antes de
+  decoders; el error del decoder cliente conserva los efectos previos que
+  observe el SDK. Cada contexto/plan nuevo exige testigo nativo propio.
+- Claves/consumidores: mismo BSON con/sin hash/spill y bajo collation. Las claves
+  exclusivas exigen equivalencia en ambos sentidos; los hashes admiten colisiones
+  solo con comparación posterior. Prefiltros Search conservan candidatos antes
+  de residual/ventana; subpipeline y persistencia tienen testigos propios.
+  Conservar storage keys y desempates persistidos.
+
+H53 conserva strict/moderate/off × error/warn/bypass y antiguo/candidato,
+separando evaluación, permiso y warning; su disposición no altera por sorpresa
+la aceptación de escrituras. D05 conserva baseline que falla, candidato final
+instalado que pasa y recursos sin fugas; ningún gate previo al último cambio
+acredita la fuente posterior.
 
 **Conversión: criterios del corte, sin otro componente semántico.** `51ff167`
 tiene [aceptación propia](bson-consolidation-implementation.md#conversión-escalar--gramática-tipos-y-preservación-bson).
@@ -1340,8 +1366,31 @@ al reconstruir un DBRef con el decoder SDK.
 | 5. Consumidores positivos D06/B08 | La proyección de find debe reutilizar la preparación/evaluación de proyección existente para valores calculados. Sobres raw y resultado bulk reutilizan materialización y contratos DTO: tipos, orden de campos y callbacks una vez. | Preservar proyecciones Decimal128/Binary/datetime/arrays/documentos y el error 9 de la constante Binary 5; no reducirlas a flags Python. Raw find conserva firstBatch/id/ns e id BSON int64; update conserva n/nModified/ok; bulk expone el resultado público nativo. No ordenar claves ni borrar metadata del oráculo. Decoders/fábricas activas detectan doble pase y diferencias de fase. |
 | 6. Aceptación conjunta | Baseline/candidato, referencias nuevas congeladas/check, wheel instalado y gates alcanzados; D05 conserva matrices/cobertura/costes integrados. | Todos los testigos anteriores por directa sync/async y wire × Memory/SQLite × 7/8/9, subset portable real, persistencia/reapertura y recursos limpios. Referencias/observadores históricos intactos y commits semánticos. El preflight rojo no acepta ninguna unidad productiva. |
 
-Las unidades 1 y 2 se implementan juntas donde comparten la frontera de lectura;
-3 requiere ese codificador común, y 4 completa su política de escritura antes
+**Precisiones tras contrastar la autocrítica con el código actual.**
+
+- Conservar un snapshot de entrada pública sin normalizar hasta la admisión
+  del lote. La preparación bulk actual convierte valores con `to_internal`;
+  validar solo ese resultado puede admitir un tipo cliente originalmente
+  inválido. Reutilizar la preparación y los modelos existentes, sin introducir
+  otro normalizador, journal ni flag público para saltarse la frontera.
+- Separar validación de parámetros cliente, codificación del lote y validación
+  semántica servidor. `insert_one` y la preparación bulk comprueban hoy el `_id`
+  raíz antes de codificar. Añadir diferencial de errores simultáneos (`_id`
+  inválido y valor no codificable) antes de fijar la precedencia; no declararla
+  corregida por el éxito de errores aislados. Observar también asignación de
+  IDs y efectos ya confirmados en familias anteriores.
+- Un error de codificación impide enviar su lote; no revierte lotes anteriores
+  ni constituye un fallo servidor dentro de BulkWriteError. Los errores de
+  validación/duplicados servidor conservan sus propios efectos ordered/unordered.
+  La barrera de eventos debe comprobar ambas situaciones, además del estado.
+- Las trazas de representación son diagnóstico de frontera. Mantener las leyes
+  entre formas y el BSON público como garantías permanentes; no fijar nombres
+  de wrappers privados ni multiplicar tablas de clases. El fallback SQL probado
+  sigue siendo la alternativa mínima correcta mientras no haya un pushdown
+  exacto acreditado.
+
+Las unidades 1 y 2 ya comparten la frontera de lectura entregada;
+3 reutiliza ese codificador común, y 4 completa su política de escritura antes
 del default. Los consumidores positivos tienen owner propio: una codificación
 correcta no acepta su proyección/sobre. No se crea otro comparador, planificador,
 contexto o formato de almacenamiento para resolver esta frontera. Los demás
