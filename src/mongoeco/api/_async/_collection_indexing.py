@@ -408,6 +408,10 @@ async def index_information(
         entry = dict(document)
         name = entry.pop("name")
         entry["key"] = list(entry["key"].items())
+        # The typed catalog includes its default; the information view, like
+        # IndexDefinition.to_information_entry, exposes uniqueness only if set.
+        if entry.get("unique") is False:
+            del entry["unique"]
         information[name] = entry
     return information
 

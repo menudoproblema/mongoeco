@@ -151,6 +151,10 @@ from tests.differential.semantic_find_projection_cases import (
     SEMANTIC_FIND_PROJECTION_CASES,
 )
 from tests.differential.semantic_group_cases import SEMANTIC_GROUP_CASES
+from tests.differential.semantic_index_information_cases import (
+    SEED as INDEX_INFORMATION_SEED,
+    SEMANTIC_INDEX_INFORMATION_CASES,
+)
 from tests.differential.semantic_materialized_context_cases import (
     SEED as MATERIALIZED_CONTEXT_SEED,
     SEMANTIC_MATERIALIZED_CONTEXT_CASES,
@@ -326,6 +330,14 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "index_information": SemanticCorpus(
+        "index-information",
+        "semantic_index_information_cases",
+        INDEX_INFORMATION_SEED,
+        SEMANTIC_INDEX_INFORMATION_CASES,
+        surfaces=("sync", "async"),
+        requires_standalone=True,
+    ),
     "text_sort_admission": SemanticCorpus(
         "text-sort-admission",
         "semantic_text_sort_admission_cases",
