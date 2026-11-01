@@ -1,0 +1,50 @@
+{
+  "7.0": {
+    "fixture_sha256": "93953800247c17fd5dcdc92b53b4cca48046c0923a9b28429dccbed50e0f542a",
+    "capture_check_sha256": "4abf6701ca7863300549d7cadec8c77508bba1ba76b34d73a173895892840d96",
+    "cases_equal": true,
+    "case_count": 6,
+    "version": "7.0.43",
+    "fcv": {
+      "version": "7.0"
+    },
+    "owned_fixture_status": "succeeded",
+    "cleanup": {
+      "removed": true,
+      "container_id": "eac106cf781c8b0de6ec268c29100c2a0b52a96e092468deb219d98595901ec0",
+      "volumes_removed": true
+    }
+  },
+  "8.0": {
+    "fixture_sha256": "9df2eafd537145eab96d9b5241f399c7d10236706029e0e30cd4fe9e1340193a",
+    "capture_check_sha256": "2e8efd0c01c7f67e844cf43e7501ad5e58d1d90f9684232a88c528c3b7a2c800",
+    "cases_equal": true,
+    "case_count": 6,
+    "version": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "owned_fixture_status": "succeeded",
+    "cleanup": {
+      "removed": true,
+      "container_id": "603e8466e25e5f1b0fffda270f4b333c7a637c7d5ec1d115bff6d9cacd66f7a8",
+      "volumes_removed": true
+    }
+  },
+  "9.0": {
+    "fixture_sha256": "12b646996eea60c3cde94d86298b46ca31e265239e8e7a3105ade59111b3059a",
+    "capture_check_sha256": "cbcc1079744032193c69b20f80d8f5c4e064321cf5ef73467146c0e172c0f795",
+    "cases_equal": true,
+    "case_count": 6,
+    "version": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "owned_fixture_status": "succeeded",
+    "cleanup": {
+      "removed": true,
+      "container_id": "acb5a4f455e1461c8743cde02e1157eb6a8133e12508fc8f5b64a0fe0430ee95",
+      "volumes_removed": true
+    }
+  }
+}

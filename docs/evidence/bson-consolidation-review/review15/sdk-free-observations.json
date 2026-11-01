@@ -1,0 +1,100 @@
+{
+  "python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "sdk_present": false,
+  "containers": {
+    "dict": {
+      "calls": [
+        [
+          "_id",
+          "obj",
+          "arr"
+        ]
+      ],
+      "rows": [
+        {
+          "_id": 1,
+          "obj": {
+            "v": 2
+          },
+          "arr": [
+            {
+              "v": 3
+            }
+          ]
+        }
+      ]
+    },
+    "list": {
+      "calls": [
+        1
+      ],
+      "rows": [
+        {
+          "_id": 1,
+          "obj": {
+            "v": 2
+          },
+          "arr": [
+            {
+              "v": 3
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "uuid": {
+    "STANDARD": {
+      "portable_helper": {
+        "type": "UUID",
+        "hex": "000102030405060708090a0b0c0d0e0f"
+      }
+    },
+    "PYTHON_LEGACY": {
+      "portable_helper": {
+        "type": "Binary",
+        "subtype": 3,
+        "hex": "000102030405060708090a0b0c0d0e0f"
+      }
+    },
+    "JAVA_LEGACY": {
+      "portable_helper": {
+        "type": "Binary",
+        "subtype": 3,
+        "hex": "000102030405060708090a0b0c0d0e0f"
+      }
+    },
+    "CSHARP_LEGACY": {
+      "portable_helper": {
+        "type": "Binary",
+        "subtype": 3,
+        "hex": "000102030405060708090a0b0c0d0e0f"
+      }
+    },
+    "UNSPECIFIED": {
+      "portable_helper": {
+        "type": "Binary",
+        "subtype": 4,
+        "hex": "000102030405060708090a0b0c0d0e0f"
+      }
+    }
+  },
+  "admission": {
+    "MemoryEngine": {
+      "accepted": true,
+      "returned": {
+        "type": "Binary",
+        "subtype": 4,
+        "hex": "000102030405060708090a0b0c0d0e0f"
+      }
+    },
+    "SQLiteEngine": {
+      "accepted": true,
+      "returned": {
+        "type": "Binary",
+        "subtype": 4,
+        "hex": "000102030405060708090a0b0c0d0e0f"
+      }
+    }
+  }
+}

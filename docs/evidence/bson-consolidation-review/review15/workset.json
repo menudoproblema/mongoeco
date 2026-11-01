@@ -1,0 +1,14 @@
+{
+  "src/mongoeco/_types/concerns.py": "a8bc000501403ae244707646567d5e732729844a10a32b467da863260b5e9901",
+  "src/mongoeco/api/_async/aggregation_cursor.py": "4631a009e98568af8b226c9b7fbed5561b597717ef795df233a67659151dd458",
+  "src/mongoeco/api/_async/collection.py": "48f4f350730fcbab209ff7dfbab1184b94f69b639b13cea14848758e0b0590a1",
+  "src/mongoeco/api/_async/cursor.py": "6db426cc0a15efd41fab2e246307443fac19a30785873d19fc0c269c5ec3fa8d",
+  "src/mongoeco/core/_public_materialization.py": "6e19c287533b0c3c8ccaa96bebcc59f2374154e04fcb82caea08278cf37d1773",
+  "src/mongoeco/core/codec.py": "430bbdb7e9b0ac764604468024767dcaa23820d340c2b8f90808ef30c7544f09",
+  "src/mongoeco/engines/semantic_core.py": "d1eef2479b3a56ec8abd16bbe8f5098a8dc4a9ae4d1ff6588de4e610b504b687",
+  "tests/differential/semantic_bson_dispatch_cases.py": "9304798f23605663f9e4cc97cc734153472ebc00ebc187182f811d646c392e5c",
+  "tests/differential/semantic_corpora.py": "0c43fc8afc742a43fe37af8df0b0bf0e9695e5f7e7ab9cc6673f34d48cfb4b27",
+  "tests/fixtures/semantic_bson_dispatch_7_0.json": "93953800247c17fd5dcdc92b53b4cca48046c0923a9b28429dccbed50e0f542a",
+  "tests/fixtures/semantic_bson_dispatch_8_0.json": "9df2eafd537145eab96d9b5241f399c7d10236706029e0e30cd4fe9e1340193a",
+  "tests/fixtures/semantic_bson_dispatch_9_0.json": "12b646996eea60c3cde94d86298b46ca31e265239e8e7a3105ade59111b3059a"
+}

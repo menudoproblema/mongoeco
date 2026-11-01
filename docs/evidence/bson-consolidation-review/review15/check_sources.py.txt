@@ -1,0 +1,23 @@
+"""Re-download only the historical pinned source URLs; never rewrite receipts."""
+import hashlib
+import json
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from urllib.request import urlopen
+
+root = Path(__file__).resolve().parents[1]
+previous = json.loads((root / "response-frontier-plan/sources-check.json").read_text())
+def check(row):
+    result = {k: row[k] for k in ("file", "url", "expected_sha256")}
+    try:
+        with urlopen(row["url"], timeout=20) as response:
+            content = response.read()
+        result.update(bytes=len(content), actual_sha256=hashlib.sha256(content).hexdigest())
+        result["matches"] = result["actual_sha256"] == row["expected_sha256"]
+    except Exception as error:
+        result.update(matches=False, error=f"{type(error).__name__}: {error}")
+    return result
+with ThreadPoolExecutor(max_workers=4) as executor:
+    results = list(executor.map(check, previous))
+(root / "review15/sources-check.json").write_text(json.dumps(results, indent=2) + "\n")
+print(json.dumps({"checked": len(results), "matched": sum(r["matches"] for r in results)}))

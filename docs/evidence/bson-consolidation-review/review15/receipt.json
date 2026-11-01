@@ -1,0 +1,97 @@
+{
+  "scope": "Plan review only; no production or test implementation edits in this review",
+  "head": "eb85ea368042b6f18a6db1329167a3313f93fdb6",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_review14": true,
+  "workset": "workset.json",
+  "runtime_modules": 284,
+  "runtime_manifest": "runtime-sources.json",
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "pymongo": "4.19.0",
+  "sdk_source": {
+    "path": "/Users/uve/Proyectos/mongoeco/.venv/lib/python3.14/site-packages/bson/__init__.py",
+    "sha256": "e08980a68096cd0dfe09a2be00af6d76bc5f8af83001c68cc1705a6fd6621c40"
+  },
+  "protected_observers_and_catalogs": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329",
+    "tests/fixtures/legacy_error_emitters.json": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14"
+  },
+  "checks": [
+    {
+      "scope": "Binary/query/SQL/TTL/watch focal regression",
+      "passed": 78,
+      "exit_code": 0,
+      "seconds": 1.98
+    },
+    {
+      "scope": "Preexisting bson_dispatch native replay on identified candidate",
+      "passed": 111,
+      "failed": 36,
+      "deselected": 7447,
+      "exit_code": 1,
+      "seconds": 5.59,
+      "log": "dispatch.txt.gz",
+      "failures": {
+        "wire scalar dispatch": 12,
+        "wire single-pass dispatch": 12,
+        "wire DBRef callback order": 12
+      }
+    },
+    {
+      "scope": "Codec/public materializer/configuration unit feedback",
+      "passed": 101,
+      "failed": 1,
+      "subtests": 21,
+      "exit_code": 1,
+      "seconds": 0.74,
+      "log": "codecs.txt.gz",
+      "failure": "public UUID default differs from existing assertion"
+    },
+    {
+      "scope": "SDK vs portable nested callbacks, UUID read policy and default admission",
+      "script": "probe.py.txt",
+      "results": [
+        "sdk-observations.json",
+        "sdk-free-observations.json",
+        "sdk-python313-observations.json"
+      ]
+    },
+    {
+      "scope": "Pinned r8.0.0 official source hashes, freshly downloaded",
+      "checked": 16,
+      "matched": 16,
+      "results": "sources-check.json"
+    }
+  ],
+  "limits": [
+    "No new MongoDB process or native capture in this review. Existing uncommitted references inspected and replayed, not accepted.",
+    "No full candidate review, full replay, wheel, global coverage, performance or D05 acceptance.",
+    "SDK-free and SDK probes use checkout source, not installed candidate wheel. Python 3.13 SDK control appends installed SDK Python sources; it is not an official matrix cell.",
+    "Preexisting runtime/tests and historical artifacts must remain unchanged by this documentation review."
+  ],
+  "document_checks": {
+    "relative_links_missing": [],
+    "preexisting_workset_changed": [],
+    "runtime_changed": [],
+    "protected_changed": [],
+    "diff_whitespace": 0,
+    "scope": "active plan, implementation pointer, review15 evidence; no project-specific Markdown validator found"
+  },
+  "artifacts_sha256": {
+    "README.md": "702fbc9c7c874e6b508b04910948b838a1fe11b18351b30407ba4c37ea07c83b",
+    "check_sources.py.txt": "2331fc7bbe9120e7bbf9e2ba71a847173ea0f6839ed5407c8bb694eff0e30fa5",
+    "codecs.txt.gz": "50256f1dacaa33553840ddd485ab0fbde285b14edfc3275a70f2e2ca4a4f03c6",
+    "dispatch.txt.gz": "a74c3a781b2d60e77435f290340c72371614d65c1811654e2cccdedf39a521c9",
+    "preexisting-native-checks.json": "42de8236ec8f2ec4e8826158861ac5995563a032f6e658979aecb29f2ba437f0",
+    "probe.py.txt": "5f2bcb328c4c6d26648e874be165e170a2f54bed60ff97d5d03d81ce7ef67e7b",
+    "runtime-sources.json": "c79ae29ffce86cb486b255927f7cd2af80bd7c4e5f2efca3387cc86aedc0b5c2",
+    "sdk-free-observations.json": "d7bb00ca8f191bee71b179dfe3965c4ba54fbfdeafb2513caa2b1c706f2e7b5e",
+    "sdk-observations.json": "689a68aee1b046ea0731c410a83ae08705f82c0b0cb2a3ff2088e97928c6ebf4",
+    "sdk-python313-observations.json": "ebae3b7796a78ae788609b084d121a8b14e09060238a5333ac4c65bc9b7e04ed",
+    "sources-check.json": "d3c9cc6b5a3d43cb08fdeb13f04babd76aba140b1dc05a72da6a9e086265bf74",
+    "workset.json": "bfa3bd08fa0f06226c01d88c6ab50df96371d228105151f1a1d6f0bd6f340bb5"
+  }
+}

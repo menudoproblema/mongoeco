@@ -697,15 +697,17 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 ## Trabajo restante
 
 El orden vigente se mantiene en el [plan, contraste actual](bson-semantics-consolidation-plan.md#contraste-actual-y-orden-mínimo-de-ejecución).
-La revisión 14 caracteriza demanda interna y límites String del candidato;
-no acepta sus cambios ni vuelve a abrir los cortes funcionalmente cerrados.
+La [revisión 15](evidence/bson-consolidation-review/review15/README.md) contrasta el
+candidato preexistente de dispatch/planes sobre `eb85ea3`. Precisa codecs con/sin
+SDK, orden de metadatos wire y coordinación UUID con B07; no acepta sus cambios
+ni vuelve a abrir los cortes funcionalmente cerrados.
 
 - D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. El corte de bytes/callbacks y String calculada de `381aa10` tiene aceptación acotada, además de los cortes previos de sufijos y raw por cantidades/contenido. Conservar sus controles; no repetir la extracción del lector ni declarar D06 completo por este cierre.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre.
-- B07: admisión BSON general (tipos arbitrarios y Decimal crudo), fuera de las normalizaciones parciales aceptadas.
+- B07: admisión BSON general (tipos arbitrarios y Decimal crudo), fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
 
 Los cortes focales no acreditan el cierre integrado del programa ni D05.
 

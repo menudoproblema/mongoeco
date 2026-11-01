@@ -96,6 +96,12 @@ identifica inputs, verificaciones y trabajo preexistente sin aceptarlo. Las base
 y resultados de las revisiones anteriores son históricos; repetir el adjunto
 no crea nuevos bloques ni vuelve a abrir los aceptados.
 
+Revisión 15, 1 de noviembre de 2026: mismo adjunto por SHA-256, contrastado con
+HEAD `eb85ea3` y el candidato de dispatch/planes sin commitear. Se actualiza el
+apartado activo en lugar de añadir otra secuencia de ejecución. El
+[contraste de revisión 15](evidence/bson-consolidation-review/review15/README.md)
+separa regresiones aceptadas, fallos del candidato y controles todavía necesarios.
+
 ## 1. Evidencia y alcance del contraste
 
 Se contrastaron los dos textos adjuntos, las propuestas previas de este chat,
@@ -1100,9 +1106,11 @@ sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
 ### Contraste actual y orden mínimo de ejecución
 
-Relectura sobre HEAD `e941554` y el candidato de respuestas, tests y referencias
-sin commitear, identificados por hash en el
-[receipt de revisión 14](evidence/bson-consolidation-review/review14/receipt.json).
+Relectura vigente sobre HEAD `eb85ea3` y los 12 archivos de runtime/tests/referencias
+preexistentes sin commitear, identificados por hash en el
+[receipt de revisión 15](evidence/bson-consolidation-review/review15/receipt.json).
+El [receipt de revisión 14](evidence/bson-consolidation-review/review14/receipt.json)
+conserva la caracterización del candidato anterior a `381aa10`.
 El [contraste anterior](evidence/bson-consolidation-review/response-frontier-plan/receipt.json)
 conserva la identidad del trabajo raw anterior a su aceptación.
 El adjunto conserva el SHA-256 de revisiones 3–13: no añade siete defectos
@@ -1118,9 +1126,9 @@ poseyendo el estado y aceptación de cada corte.
 | El literal DBRef se rechaza y el decoder wire puede ocultarlo. | El parser común actual reconoce el literal por primer campo/contexto y presencia de campos. El parser oficial r8.0.0 comprueba nombres, no tipos. Conservar controles de orden, extras, incompletos y tipos de `$ref`/`$db`; no sustituir gramática por el predicado del decoder SDK ni aceptar todos los documentos con claves `$`. |
 | La frontera del matcher necesita observar ambas representaciones. | Mantener trazas separadas de documento y operando, además del resultado público. Las propiedades de `test_bson_binary_coherence.py` ya cubren igualdad⇒clave entre formas. D00 sigue acompañando cada corte; las clases privadas observadas no se convierten en contrato público. |
 | TTL solo puede retrasarse un milisegundo y es irrelevante. | No adoptar esa cota ni esa tolerancia. SQLite actual calcula auxiliares/cutoff con milisegundos enteros y conserva residual exacto; D02 prueba migración/reapertura. El residual impide ciertos borrados indebidos, pero nunca recupera un candidato omitido. Separar inclusión de candidatos, decisión de expiración y cadencia del monitor. |
-| Watch exige clase/código/fase; H53 y fuentes no estaban totalmente verificados. | Clase/código/fase y contexto ya forman parte de la aceptación D04. H53 mantiene disposición pendiente C03/B08. La relectura anterior verificó los 16 hashes r8.0.0; esta consulta de nuevo parser y comparación oficiales, sin repetir aquella auditoría de hashes. Las fuentes explican mecanismos; no sustituyen diferenciales 7/8/9. |
+| Watch exige clase/código/fase; H53 y fuentes no estaban totalmente verificados. | Clase/código/fase y contexto ya forman parte de la aceptación D04. H53 mantiene disposición pendiente C03/B08. Revisión 15 vuelve a descargar y verificar los 16 hashes oficiales r8.0.0: coinciden. Las fuentes explican mecanismos; no sustituyen diferenciales 7/8/9. |
 
-**Resultado de esta relectura.** Se repiten las 78 pruebas focales de coherencia
+**Caracterización histórica de revisión 14.** Se repiten las 78 pruebas focales de coherencia
 Binary, gramática auxiliar, traductor SQL, migración TTL y contexto watch: pasan.
 Las sondas locales nuevas observan en ambos motores que un `pull(1)` interno
 evalúa cinco filas antes de devolver una; el pipeline de entrada pequeña/salida
@@ -1134,6 +1142,21 @@ buffer no limita la evaluación que lo llena. Falta su diferencial exacto 7/8/9.
 No se ejecutan servidores MongoDB ni nuevas capturas en esta revisión. Las 167
 pruebas citadas por el informe son históricas. El corte de sufijos por cantidad
 aceptado conserva su receipt y no acredita bytes/callbacks.
+
+**Resultado vigente de revisión 15.** Las 78 regresiones focales siguen pasando.
+El corpus `bson_dispatch` preexistente, con seis acciones y referencias 7/8/9,
+da 111 casos correctos y 36 fallos en el candidato: 12 por familia de dispatch
+escalar, pase único y orden de callbacks DBRef, todos en wire. Las comparaciones
+de los archivos de captura/`--check` preexistentes coinciden; no se ejecuta un
+servidor nuevo ni se acepta por ello el corpus o el candidato. Las unitarias
+de codec/materialización/configuración dan 101 correctas, 21 subtests y un fallo
+por el cambio del default UUID. La sonda SDK-free confirma que el fallback omite
+callbacks dict/list anidados; un control con el mismo Python 3.13 y el SDK añadido
+recupera esos callbacks. El helper portable UUID aún transforma Binary 4 canónico
+a subtipo 3 bajo modos legacy, frente a Binary 4 conservado por el SDK. Ambos
+motores aceptan UUID crudo con el nuevo default, mientras la codificación SDK
+predeterminada lo rechaza con ValueError. Estos son pendientes del corte actual,
+sin retirar la aceptación acotada de `381aa10`.
 
 **Actualización de ejecución.** El corte raw de contenido/apertura/cantidades
 `30c8ae2` ya tiene su aceptación acotada en el [registro](bson-consolidation-implementation.md#d06ab--lecturas-raw-apertura-y-cantidades).
@@ -1157,8 +1180,9 @@ La respuesta del cursor ya comparte `ResponseBatchReader` y pospone la
 materialización hasta completar la respuesta en el corte aceptado. Reutilizar
 ese componente y el cálculo BSON existente, sin otra abstracción equivalente.
 Demanda interna, formación de respuesta y decodificación pública conservan
-dueños distintos, incluidas las rutas legacy. Raw y wire consumen BSON sin
-codecs del usuario. Los adaptadores mantienen sus reglas de apertura/getMore;
+dueños distintos, incluidas las rutas legacy. Raw y el servidor wire consumen
+BSON sin codecs del usuario; el cliente wire aplica sus propios decoders SDK.
+Los adaptadores mantienen sus reglas de apertura/getMore;
 no duplicar evaluador, contexto ni almacén de cursores. Las vistas de tipos,
 identidad física, gramática y límites de valores siguen siendo primitivas
 separadas: una clase universal no reduce estas obligaciones. La pérdida de
@@ -1226,6 +1250,63 @@ al cerrar, la precedencia de error original frente a cleanup y las extensiones
 que sustituyen built-ins: el nombre de una etapa no garantiza cardinalidad.
 Reutilizar el ciclo de vida existente; no otro journal ni otra política de dueño.
 No ampliar soporte wire no implementado para completar artificialmente la matriz.
+
+**Precisiones para el siguiente corte D06a/b y su frontera B07.** No son nuevos
+bloques ni obligan a rehacer los cortes aceptados:
+
+1. **Una respuesta, políticas de decodificación explícitas.** Reutilizar
+   `ResponseBatchReader` y un constructor de la envoltura cursor para find/aggregate
+   directa y wire, conservando orden y tipos de metadatos. El orden batch/id/ns
+   es observable por callbacks del SDK, aunque se descarten sus valores
+   transformados. No añadir un registro de cursores o un ciclo de vida paralelo.
+   Watch conserva sus metadatos y aceptación propios; no extenderle la regla sin
+   testigo. Un cambio en la envoltura debe probar initial/getMore, EOF y error.
+2. **Tipo exacto y contexto, sin cascada.** El decoder se selecciona por el tipo
+   público decodificado exacto, una vez; su salida no vuelve a despacharse por
+   otro decoder. Cubrir bool/int/Int64, str/Code y bytes/Binary, dict/SON/list y
+   UUID. Distinguir raíz BSON, fila embebida en batch, contenedor batch y
+   Code.scope: no todas las raíces documentales tienen los mismos hooks. El
+   DBRef se reconoce después de recorrer sus campos en orden; reconocerlo antes
+   puede cambiar efectos aunque el valor final parezca idéntico. Capturar también
+   decoder que transforma un contenedor, falla o devuelve un valor no documental;
+   observar efectos previos, fase/clase del error y cierre, sin normalizar su salida.
+3. **SDK opcional, una garantía portable.** Puede reutilizarse el codec público
+   instalado al materializar la respuesta completa si reduce semántica duplicada.
+   No adoptar APIs privadas, modificar globals del SDK ni importar su dependencia
+   desde el núcleo semántico. La alternativa sin SDK debe conservar los contratos
+   soportados usando los conversores existentes; un branch SDK correcto no acepta
+   el fallback. Las sondas de checkout de esta revisión son feedback. La entrega
+   exige wheel instalado con/sin SDK y cobertura de ambos caminos, además de
+   comparar bytes/orden/callbacks contra un observador independiente. Medir coste
+   con opciones explícitas STANDARD y codecs activos, además del default rápido.
+4. **UUID: separar escritura de lectura.** La representación de lectura decide
+   cómo interpretar subtipo 3/4; nunca debe reescribir el subtipo almacenado 4 a
+   3 por seleccionar un modo legacy. Probar los bytes y bits UUID bajo STANDARD,
+   UNSPECIFIED, PYTHON/JAVA/CSHARP_LEGACY, con y sin decoder; conservarlos tras
+   persistencia/reapertura. El cambio de default a UNSPECIFIED es un cambio público
+   y se coordina con el corte UUID de B07: filtros y escrituras UUID predeterminados
+   deben rechazar con la clase/fase del SDK, sin mutación ni eventos; modos
+   explícitos válidos conservan controles positivos. No diferir esta incoherencia
+   al B07 general ni actualizar un snapshot para ocultarla. Puede entregarse el
+   dispatch antes conservando el default anterior hasta completar ese corte.
+   Object/Decimal/set y demás admisión B07 siguen independientes; no asumir que
+   todo error de codificación es InvalidDocument: UUID puede producir ValueError.
+5. **Opciones equivalentes, planes comprobados.** Reutilizar `EngineFindSemantics`
+   normalizado y el owner de orden/residual ya extraído. Conservar testigos de
+   `_id_`, hint por lista/mapa, collation ausente/simple, asc/desc, y controles de
+   índice secundario/collation no simple que requieren otra ruta. La equivalencia
+   sintáctica no autoriza ignorar la validación del hint ni adelantar ventana al
+   residual. Observar primer resultado y fase del error con batch 1; extender a
+   getMore y plan físico alcanzado, no solo explicar el helper.
+
+Aceptar conjuntamente estos mecanismos cuando simplifique la entrega, pero
+mantener las garantías por superficie. Los 36 fallos wire y los fallos portables
+son condiciones de cierre distintas. No crear otro runner: incorporar los
+testigos al registro/capturador/replay y a las propiedades existentes. Antes de
+aceptar, congelar el corpus final, comprobar las nuevas referencias contra el
+servidor correspondiente y acreditar baseline/candidato con esa misma fuente.
+Un test que aún exige la política UUID errónea necesita corregirse con el oráculo
+independiente; su estado verde previo no era garantía de corrección.
 
 **Detección y mantenimiento.** Ampliar registro/capturador/replay y propiedades
 existentes, sin otro runner. Por frontera modificada, un testigo que active el

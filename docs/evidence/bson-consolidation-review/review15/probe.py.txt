@@ -1,0 +1,66 @@
+"""Review characterization only; temporary local databases, no MongoDB server."""
+import json
+import sys
+from uuid import UUID
+
+from mongoeco import MongoClient
+from mongoeco.core._public_materialization import materialize_cursor_response
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.types import CodecOptions, UuidRepresentation
+
+try:
+    from bson import BSON, Binary
+    from bson.binary import UuidRepresentation as SDKRepresentation
+    from bson.codec_options import CodecOptions as SDKOptions
+except ImportError:
+    BSON = None
+
+
+def describe(value):
+    if isinstance(value, bytes):
+        return {"type": type(value).__name__, "subtype": getattr(value, "subtype", 0), "hex": value.hex()}
+    if isinstance(value, UUID):
+        return {"type": "UUID", "hex": value.hex}
+    return {"type": type(value).__name__}
+
+
+result = {"python": sys.version, "sdk_present": BSON is not None, "containers": {}, "uuid": {}, "admission": {}}
+for kind in (dict, list):
+    calls = []
+    def transform(value):
+        calls.append(list(value) if isinstance(value, dict) else len(value))
+        return value
+    rows = materialize_cursor_response(
+        [{"_id": 1, "obj": {"v": 2}, "arr": [{"v": 3}]}],
+        codec_options=CodecOptions(type_registry={kind: transform}),
+        namespace="review.rows", cursor_id=0, initial=True,
+    )
+    result["containers"][kind.__name__] = {"calls": calls, "rows": rows}
+
+value = UUID(bytes=bytes(range(16)))
+for representation in UuidRepresentation:
+    observed = DocumentCodec.apply_codec_options(
+        value, codec_options=CodecOptions(uuid_representation=representation)
+    )
+    item = {"portable_helper": describe(observed)}
+    if BSON is not None:
+        raw = BSON.encode({"v": Binary(value.bytes, 4)})
+        expected = BSON(raw).decode(codec_options=SDKOptions(uuid_representation=getattr(SDKRepresentation, representation.name)))["v"]
+        item["sdk_decoding_stored_binary4"] = describe(expected)
+    result["uuid"][representation.name] = item
+
+if BSON is not None:
+    try:
+        BSON.encode({"_id": 1, "v": value})
+    except Exception as error:
+        result["admission"]["SDK default encoding"] = type(error).__name__
+for factory in (MemoryEngine, SQLiteEngine):
+    with MongoClient(factory()) as client:
+        c = client.review.rows
+        try:
+            c.insert_one({"_id": 1, "v": value})
+            result["admission"][factory.__name__] = {"accepted": True, "returned": describe(c.find_one({"_id": 1})["v"])}
+        except Exception as error:
+            result["admission"][factory.__name__] = {"accepted": False, "exception": type(error).__name__}
+print(json.dumps(result, indent=2))
