@@ -1,9 +1,12 @@
 import asyncio
 import unittest
 
+
 try:
-    from pymongo import MongoClient as PyMongoClient
-    from pymongo import ReturnDocument as PyMongoReturnDocument
+    from pymongo import (
+        MongoClient as PyMongoClient,
+        ReturnDocument as PyMongoReturnDocument,
+    )
     from pymongo.errors import OperationFailure as PyMongoOperationFailure
 except Exception:  # pragma: no cover
     PyMongoClient = None
@@ -14,8 +17,8 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
 from tests.integration.api.admin_command_cases import (
-    RAW_COMMAND_SHAPES,
     _COMMAND_SHAPE_REFERENCE,
+    RAW_COMMAND_SHAPES,
 )
 
 
