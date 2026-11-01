@@ -1,0 +1,504 @@
+{
+  "order": "ABBAABBA",
+  "scope": "diagnostic process CPU, identical BSON; not a D05 global budget",
+  "samples": [
+    {
+      "runtime": "A",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.055473,
+            0.055406,
+            0.055212
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.054469,
+            0.054549,
+            0.054787
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.175391,
+            0.176157,
+            0.175014
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.074004,
+            0.072954,
+            0.073359
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.070751,
+            0.070687,
+            0.070994
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.210428,
+            0.210329,
+            0.209465
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.054293,
+            0.055118,
+            0.055119
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.053982,
+            0.053913,
+            0.053824
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.170745,
+            0.1686,
+            0.170168
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.074327,
+            0.073994,
+            0.07388
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.071153,
+            0.072251,
+            0.072429
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.207991,
+            0.206802,
+            0.208146
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.05501,
+            0.055486,
+            0.055523
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.054411,
+            0.054283,
+            0.05411
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.169584,
+            0.170446,
+            0.170808
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.075087,
+            0.074965,
+            0.074378
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.071336,
+            0.071336,
+            0.0729
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.21238,
+            0.211003,
+            0.210074
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    },
+    {
+      "runtime": "A",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.055443,
+            0.055184,
+            0.05493
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.053698,
+            0.053287,
+            0.053686
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.170571,
+            0.171958,
+            0.170567
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.074551,
+            0.073646,
+            0.073863
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.071411,
+            0.070941,
+            0.071719
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.206925,
+            0.207543,
+            0.206247
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    },
+    {
+      "runtime": "A",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.054802,
+            0.054464,
+            0.054464
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.053324,
+            0.053356,
+            0.053234
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.170978,
+            0.169897,
+            0.169888
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.075246,
+            0.074736,
+            0.074577
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.071536,
+            0.071312,
+            0.071264
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.208103,
+            0.206918,
+            0.207196
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.055443,
+            0.056107,
+            0.054796
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.054771,
+            0.053885,
+            0.053836
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.170511,
+            0.172882,
+            0.172692
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.074448,
+            0.074026,
+            0.074072
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.071428,
+            0.072008,
+            0.072025
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.209759,
+            0.209137,
+            0.209143
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.055558,
+            0.055537,
+            0.054458
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.054145,
+            0.053794,
+            0.054428
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.171584,
+            0.172189,
+            0.170444
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.074393,
+            0.073584,
+            0.07401
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.071865,
+            0.071669,
+            0.072963
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.208208,
+            0.208397,
+            0.208814
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    },
+    {
+      "runtime": "A",
+      "results": {
+        "MemoryEngine/numeric-group": {
+          "cpu_seconds": [
+            0.055466,
+            0.054915,
+            0.055375
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/document-group": {
+          "cpu_seconds": [
+            0.05408,
+            0.053503,
+            0.055123
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "MemoryEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.171744,
+            0.173185,
+            0.176285
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/numeric-group": {
+          "cpu_seconds": [
+            0.0787,
+            0.076655,
+            0.077192
+          ],
+          "bson_sha256": "3e1def51723dc26661c3cc9c2a5490d0128dd1433b188db3e38892dc514a8e79",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/document-group": {
+          "cpu_seconds": [
+            0.073605,
+            0.074345,
+            0.072639
+          ],
+          "bson_sha256": "b3e8f581815f932f733990fb287ece06a1d1ef1ea24ab2b988358dfa4f8012d3",
+          "operations_per_sample": 8
+        },
+        "SQLiteEngine/bounded-sets": {
+          "cpu_seconds": [
+            0.209362,
+            0.20674,
+            0.205766
+          ],
+          "bson_sha256": "febbeca44a50c9b26564c8df0fdadf94bd8511b2c44ba4591bcf5ea05c9d1c61",
+          "operations_per_sample": 8
+        }
+      }
+    }
+  ],
+  "summary": {
+    "MemoryEngine/numeric-group": {
+      "candidate_over_baseline_cpu": 1.0015036776694808,
+      "samples_per_runtime": 12
+    },
+    "MemoryEngine/document-group": {
+      "candidate_over_baseline_cpu": 1.0065931609923264,
+      "samples_per_runtime": 12
+    },
+    "MemoryEngine/bounded-sets": {
+      "candidate_over_baseline_cpu": 0.9928833698960146,
+      "samples_per_runtime": 12
+    },
+    "SQLiteEngine/numeric-group": {
+      "candidate_over_baseline_cpu": 0.9951115819966739,
+      "samples_per_runtime": 12
+    },
+    "SQLiteEngine/document-group": {
+      "candidate_over_baseline_cpu": 1.0080575660545252,
+      "samples_per_runtime": 12
+    },
+    "SQLiteEngine/bounded-sets": {
+      "candidate_over_baseline_cpu": 1.007744629755099,
+      "samples_per_runtime": 12
+    }
+  }
+}

@@ -1,10 +1,9 @@
 import datetime
-import decimal
 import unittest
 
 from mongoeco.core.aggregation.runtime import (
     _MISSING,
-    _aggregation_key,
+    aggregation_equality_key,
     _bson_cstring_size,
     _evaluate_expression_with_missing,
     evaluate_expression,
@@ -30,17 +29,12 @@ class AggregationRuntimeTests(unittest.TestCase):
     def test_aggregation_runtime_helpers_cover_runtime_key_bson_and_missing_expression_paths(
         self,
     ):
-        self.assertEqual(_aggregation_key(1 << 40), ("long", 1 << 40))
-        self.assertEqual(_aggregation_key(1.5), ("float", 1.5))
         self.assertEqual(
-            _aggregation_key(decimal.Decimal("1.5")),
-            ("decimal", decimal.Decimal("1.5")),
+            aggregation_equality_key(1 << 40),
+            aggregation_equality_key(float(1 << 40)),
         )
-        self.assertEqual(
-            _aggregation_key(Timestamp(1, 2)),
-            ("timestamp", Timestamp(1, 2)),
-        )
-        self.assertIs(_aggregation_key(object())[0], object)
+        self.assertEqual(aggregation_equality_key(Timestamp(1, 2)), ("timestamp", 1, 2))
+        self.assertIs(aggregation_equality_key(object())[0], object)
         with self.assertRaisesRegex(ValueError, "NUL bytes"):
             _bson_cstring_size("a\x00b")
         self.assertEqual(

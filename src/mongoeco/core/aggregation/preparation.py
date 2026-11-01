@@ -31,9 +31,9 @@ from mongoeco.core.aggregation.extensions import (
     get_registered_aggregation_expression_operator,
     get_registered_aggregation_stage_registration,
 )
-from mongoeco.core.aggregation.group_average import (
-    group_average_prefix_compatible,
-    group_average_uses_sum,
+from mongoeco.core.aggregation.group_execution import (
+    group_prefix_slot_compatible,
+    group_uses_slot_semantics,
 )
 from mongoeco.core.aggregation.grouping_stages import validate_date_range_window
 from mongoeco.core.aggregation.information_stages import (
@@ -111,7 +111,7 @@ class PreparedStage(dict):
         super().__init__({operator: spec})
         self.address = address
         self.context = context
-        self.group_average_uses_sum = False
+        self.group_uses_slot_semantics = False
 
 
 class PreparedPipeline(list):
@@ -658,7 +658,7 @@ def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope bound
     # In particular, a later invalid write policy precedes a constant-fold error.
     parsed = _parse_stage_containers(pipeline, dialect, context, relocating)
     stages, addresses, requests = [], [], []
-    average_prefix_compatible = (
+    group_prefix_compatible = (
         dialect.server_version in {"8.0", "9.0"}
         and not ({"$facet", "$lookup"} & set(scopes))
     )
@@ -698,16 +698,16 @@ def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope bound
         requests.extend(_discover_stage_requests(operator, spec, collection))
         prepared_stage = PreparedStage(operator, spec, address, context)
         if operator == "$group":
-            prepared_stage.group_average_uses_sum = (
-                stage.group_average_uses_sum
+            prepared_stage.group_uses_slot_semantics = (
+                stage.group_uses_slot_semantics
                 if isinstance(stage, PreparedStage) and not relocating
                 and stage.context == context
-                else average_prefix_compatible
-                and group_average_uses_sum(spec, dialect=dialect)
+                else group_prefix_compatible
+                and group_uses_slot_semantics(spec, dialect=dialect)
             )
-        average_prefix_compatible = (
-            average_prefix_compatible
-            and group_average_prefix_compatible(operator, spec, dialect=dialect)
+        group_prefix_compatible = (
+            group_prefix_compatible
+            and group_prefix_slot_compatible(operator, spec, dialect=dialect)
         )
         stages.append(prepared_stage)
         addresses.append(address)

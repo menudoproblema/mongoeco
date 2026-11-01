@@ -5,7 +5,7 @@ import re
 import unittest
 import uuid
 from copy import deepcopy
-from unittest.mock import ANY, patch
+from unittest.mock import patch
 
 from mongoeco.compat import MongoDialect
 import mongoeco.core.aggregation.accumulators as accumulators_module
@@ -14,6 +14,7 @@ from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, Bs
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import _AccumulatorBucket, _OrderedAccumulator
 from mongoeco.core.aggregation.runtime import (
+    aggregation_equality_key,
     _bson_value_size,
     _mongo_mod,
     _normalize_numeric_place,
@@ -26,7 +27,6 @@ from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
     _accumulator_flags,
-    _aggregation_key,
     _apply_accumulators,
     _apply_group,
     _finalize_accumulators,
@@ -61,34 +61,27 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual(flags, {})
         self.assertIs(bucket[_ACCUMULATOR_FLAGS_KEY], flags)
 
-    def test_aggregation_key_covers_supported_scalar_and_container_types(self):
-        self.assertEqual(_aggregation_key(1.5), ("float", 1.5))
-        self.assertEqual(_aggregation_key(b"abc"), ("bytes", b"abc"))
-        session_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
-        self.assertEqual(_aggregation_key(session_id), ("uuid", session_id))
-        object_id = ObjectId("0123456789abcdef01234567")
-        self.assertEqual(_aggregation_key(object_id), ("objectid", object_id))
-        created_at = datetime.datetime(2026, 3, 25, 10, 0, 0)
-        self.assertEqual(_aggregation_key(created_at), ("datetime", created_at))
+    def test_group_key_preserves_scalar_guard_and_semantic_numeric_identity(self):
+        self.assertEqual(aggregation_equality_key(1), aggregation_equality_key(1.0))
         self.assertEqual(
-            _aggregation_key({"a": [1, 2]}),
-            ("dict", (("a", ("list", (("int", 1), ("int", 2)))),)),
+            aggregation_equality_key({"a": [1, 2]}),
+            aggregation_equality_key({"a": [1.0, 2.0]}),
         )
 
         class _Hashable:
             def __hash__(self) -> int:
                 return 1
 
-        self.assertEqual(_aggregation_key(_Hashable()), (_Hashable, ANY))
+        # General BSON admission remains independent of this legacy guard.
+        value = _Hashable()
+        self.assertEqual(aggregation_equality_key(value), (_Hashable, value))
 
         class _Unhashable:
             __hash__ = None
 
-            def __repr__(self) -> str:
-                return "unhashable"
-
-        with self.assertRaisesRegex(OperationFailure, "BSON-compatible values"):
-            _aggregation_key(_Unhashable())
+        for value in (_Unhashable(), {"a": [_Unhashable()]}):
+            with self.assertRaisesRegex(OperationFailure, "BSON-compatible values"):
+                aggregation_equality_key(value)
 
     def test_match_spec_contains_expr_and_field_path_resolution_cover_edge_cases(self):
         self.assertFalse(_match_spec_contains_expr("invalid"))

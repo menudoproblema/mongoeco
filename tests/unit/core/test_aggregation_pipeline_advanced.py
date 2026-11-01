@@ -25,7 +25,6 @@ from mongoeco.core.aggregation import (
     _ACCUMULATOR_FLAGS_KEY,
     _MISSING,
     _accumulator_flags,
-    _aggregation_key,
     _apply_accumulators,
     _apply_group,
     _finalize_accumulators,

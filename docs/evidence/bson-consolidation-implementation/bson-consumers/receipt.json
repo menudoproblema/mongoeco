@@ -1,0 +1,182 @@
+{
+  "scope": "D06c bounded consumer keys and group execution semantics; full goal remains in progress",
+  "base": "7629ea6",
+  "mechanism": "reuse document_mapping, bson_equality_key and existing prepared group decision; retire duplicate key and redundant dialect finalization parameter",
+  "runtime_sources": "runtime-sources.json",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-u8aue9ks/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "ac4d4a2b36e35b48bfe050219341724b514ca9ccc2ee88acca7e226b9ac9eeaa",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-u8aue9ks/site-packages",
+    "modules": 284
+  },
+  "native_references": {
+    "7.0": {
+      "file": "tests/fixtures/semantic_bson_consumer_7_0.json",
+      "sha256": "8eca40af5b515f94e3524e09bd355b70b5b2ac13a2cd1f0aa8fc4aeaa41d954f",
+      "version": "7.0.43",
+      "fcv": "7.0",
+      "cases": [
+        "semantic_bson_add_to_set_consumers",
+        "semantic_bson_group_consumers",
+        "semantic_bson_group_representatives",
+        "semantic_bson_lookup_consumers",
+        "semantic_bson_set_consumers"
+      ]
+    },
+    "8.0": {
+      "file": "tests/fixtures/semantic_bson_consumer_8_0.json",
+      "sha256": "720c1b2d25c5677146fb56305524b89d353ede10dd04cc703d695b5eede05e26",
+      "version": "8.0.32",
+      "fcv": "8.0",
+      "cases": [
+        "semantic_bson_add_to_set_consumers",
+        "semantic_bson_group_consumers",
+        "semantic_bson_group_representatives",
+        "semantic_bson_lookup_consumers",
+        "semantic_bson_set_consumers"
+      ]
+    },
+    "9.0": {
+      "file": "tests/fixtures/semantic_bson_consumer_9_0.json",
+      "sha256": "800bbb4dfc79722a1bbd3eef72e207407697449be3197c763b76de61160148dc",
+      "version": "9.0.2",
+      "fcv": "9.0",
+      "cases": [
+        "semantic_bson_add_to_set_consumers",
+        "semantic_bson_group_consumers",
+        "semantic_bson_group_representatives",
+        "semantic_bson_lookup_consumers",
+        "semantic_bson_set_consumers"
+      ]
+    }
+  },
+  "native_capture_and_check": {
+    "targets": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "topology": "standalone",
+    "final_actions": 5,
+    "historical_goldens_unchanged": true,
+    "new_corpus_rounds": 2
+  },
+  "baseline": {
+    "source": "Git archive 7629ea6, imports verified, final corpus",
+    "failed": 88,
+    "passed": 101,
+    "exit_code": 1
+  },
+  "final_checks": {
+    "installed_replay": {
+      "passed": 8221,
+      "seconds": 200.26,
+      "warnings": 0,
+      "runtime_and_resource_warnings_as_errors": true,
+      "workers_loaded_modules": {
+        "wheel-imports-gw3.json": 262,
+        "wheel-imports-gw2.json": 262,
+        "wheel-imports-gw1.json": 262,
+        "wheel-imports-gw0.json": 262
+      }
+    },
+    "installed_unit_properties_contracts": {
+      "passed": 675,
+      "subtests": 159,
+      "seconds": 5.51
+    },
+    "typing": {
+      "positive": 2,
+      "negative_expected_errors": [
+        20,
+        25
+      ]
+    },
+    "public_api_manifest": "unchanged",
+    "lint_ratchet": "passed, 21 changed Python files; new files checked independently",
+    "sdk_free": {
+      "python": "3.13.15",
+      "new_supported_native_actions": 12,
+      "excluded": "Code requires SDK; native ID subset projection documented in script",
+      "prior_controls": [
+        186,
+        72
+      ],
+      "prior_cursor_actions": 30,
+      "prior_cursor_typed_traces": 1278
+    },
+    "resources": {
+      "containers_absent": 6,
+      "volumes_absent": 12
+    },
+    "cpu_diagnostic": {
+      "order": "ABBAABBA",
+      "equivalent_bson": true,
+      "cases": 6,
+      "samples_per_runtime_case": 12,
+      "ratio_range": [
+        0.9928833698960146,
+        1.0080575660545252
+      ]
+    }
+  },
+  "review_feedback": [
+    "Initial four-action public replay:28 failed71 passed; after alias/atom fix16 failed83passed exposed facet group-ID representation.",
+    "Shared preparation decision fixes physical-ID policy without changing group equivalence.",
+    "Initial physical-plan test confused candidate budget with materialization cap and assumed foreign SQLite order; corrected test design before final gate.",
+    "CPU prototype used unsupported aggregate context manager; final probe uses explicit close on both runtimes."
+  ],
+  "protected_sources": "protected-sources.json",
+  "documentation_links_missing": [],
+  "limits": [
+    "No full D06/D05 closure, global coverage, remote CI or full Python/SDK/pytest matrix.",
+    "Search assertions cover materialized indexes; public persistence/reopen remains pending.",
+    "Group route decision covers characterized native default semantics, not arbitrary server planner configuration.",
+    "B07 general BSON admission and coordinated UUID default cut remain pending; STANDARD retained."
+  ],
+  "artifacts_sha256": {
+    "7.0/bson_consumer-check.json": "8eca40af5b515f94e3524e09bd355b70b5b2ac13a2cd1f0aa8fc4aeaa41d954f",
+    "7.0/fixture.json": "9888e110668e705436de245269f1ec8f557817cea4b97b4ece9d7659442c2c84",
+    "8.0/bson_consumer-check.json": "720c1b2d25c5677146fb56305524b89d353ede10dd04cc703d695b5eede05e26",
+    "8.0/fixture.json": "a778e0eb1648d845ef080f658e7509cfcf09f25f5f4f2ecd5e28db672800a9d3",
+    "9.0/bson_consumer-check.json": "800bbb4dfc79722a1bbd3eef72e207407697449be3197c763b76de61160148dc",
+    "9.0/fixture.json": "2fc7a4da73e540cea1ea104ec3e56cc9581e3135c829f86f16f7fe880166f146",
+    "README.md": "7b1abc592de351866b4095d18453fd6939708f5ad2639566688754119fa36cec",
+    "after-context.txt.gz": "87d86962559cc9cd960ba4db99a6ef4dc84b84c324ffc9d1dc2c0e593feca8ae",
+    "after-initial.txt.gz": "88e2a6cd8b459e8923ec6a11afdc1d2a48bf378625d9ae90c3fc8ca7b426ba18",
+    "baseline-imports.json": "e6b079f34cbb1e3b8d743133e25cfd462b08fbde0f300afbe213d89fc3b77987",
+    "baseline-runtime-sources.json": "6b289205269cae72f75b5692e65ad21773088fa157fb9bd9d7fdadfa2cfa6cb1",
+    "baseline.txt.gz": "b3105a5f3c03aabc56c83e44ebdabe5898e7ac05513176ffddee0f0fd4ec77a5",
+    "before.txt.gz": "59911944d40820e26c83d0e53fec3acfb06743cd8da0e0dc58fa3e2befdec807",
+    "build.txt.gz": "b231f219bc21cb97442522e51c5d2a7205fbb93b4a55e0d023513bcdcf26ad95",
+    "consumer-baseline.py.txt": "59f0377de378414ff138fde4e135dbb6621aaf26b5101f52792f48ebd9d0dfca",
+    "consumer-native-v2.py.txt": "7567a744ec6d094cc073d6d5b4b22366c4151fce68c1db6e2b8363007128fa3f",
+    "consumer-resources.py.txt": "c6073ef7a79ff44764790d2dc47b4dd36e894d69af7ed4053ba8e4bcacb2be1b",
+    "consumer-sdk-free.py.txt": "50583b6416482522d6111aa2afbebeff4a0cf57935ac6b45748be44d886e853d",
+    "consumer-wheel-all.py.txt": "ba079db077c15da116510f9459abda30230dc5d97b709b8e3cc03f24ce3dcaaa",
+    "consumer-wheel-unit.py.txt": "78f4f9cbdce5b460f3fda52ff7ea0c68fc1d4b420b69d8ffbe52fb62d3b60e15",
+    "cost-worker.py.txt": "73d71068fce1b0e71fe87071ded08fedf0c4c234fd4051254e8057d0c063b771",
+    "cost.json": "eee36ac5b012ef2af8067321fa0cefa69e93eb7c803a0d89aa8a511501b0e3e4",
+    "cost.py.txt": "4adc34194096f5957cf2325c11eb5d79badc76f8ffe6a183f5b293cc9d6848a2",
+    "final-corpus.txt.gz": "a6f36fff79ef1df094f24843f1e45306cf5f7df3560105ec87bc71faaf0260d4",
+    "lint-final.txt.gz": "daa7683b98a24aec3c2385143b2a925eb1ed9c8ecf737b02c7f7f43138645a80",
+    "plans-final.txt.gz": "eeef442dff57c524c3bc51e7e1a9583adf6c09faecc744becd1363c952fbe660",
+    "plans.txt.gz": "4dd40657b9bda1554bab4f846aebd3f21dc50b2252bedf27ff8f26e2c47cea64",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "public-api-manifest.json": "18f336380aa25bc6fecff86f5e353671059f3576b3913964f20dabfeae19ad7a",
+    "resource-audit.json": "5ff9ac4d7a9852d5828429cb0284eb9a20aeae99b67a5d99b4d3cc8a1f99823a",
+    "runtime-sources.json": "82440f51bf174e71e01731cafa434964a42ac1fea78d43ea104d1bc475027458",
+    "sdk-free-prior.txt.gz": "223dc97430f720e36d4ab9658158844e0f6c343837f4d8e25cb304412f61b6cb",
+    "sdk-free.txt.gz": "81bbfcd2a5d8fa709a0a84c1bf2cb0b95de45e6069ccb251939009e278decb99",
+    "typing.txt": "966627c75016896aa50b07034ca99b2ee74838d60272b742c102f0dd3af9e00b",
+    "unit-initial.txt.gz": "34427bf9ef8549680937e1344bf930a4207b4a411a7b8cc2fe9536bdf11f9347",
+    "wheel-all.txt.gz": "1a73f85f5380abfa5aee27250d8055d29bf8d1b9a1147cb4d9fc09957ca59862",
+    "wheel-imports-gw0.json": "43331ef4caa3bfafdc797adc3b226ed5da66dd4834f909eb208db477420b34e1",
+    "wheel-imports-gw1.json": "43331ef4caa3bfafdc797adc3b226ed5da66dd4834f909eb208db477420b34e1",
+    "wheel-imports-gw2.json": "43331ef4caa3bfafdc797adc3b226ed5da66dd4834f909eb208db477420b34e1",
+    "wheel-imports-gw3.json": "43331ef4caa3bfafdc797adc3b226ed5da66dd4834f909eb208db477420b34e1",
+    "wheel-imports-master.json": "4a0195f90e90bc2d459412e1e8ccb37ac54db959c8aac155c68bf586d92463e8",
+    "wheel-unit.txt.gz": "adb1826ec287a1ee9cf0f14e62b24961a9fa1b45ddc7ae82af8e6c55725dd027",
+    "wheel.json": "848ed43abe60cc4337e0f5b43c1cba7ec241ef23d519034c21326245df49b731"
+  }
+}

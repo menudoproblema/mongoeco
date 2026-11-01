@@ -104,7 +104,7 @@ class _AccumulatorBucket:
     values: dict[str, Any]
     flags: dict[str, bool] = field(default_factory=dict)
     include_bucket_id: bool = True
-    group_average_uses_sum: bool = False
+    group_uses_slot_semantics: bool = False
 
 
 def _accumulator_flags(bucket: dict[object, Any] | _AccumulatorBucket) -> dict[str, bool]:
@@ -652,25 +652,23 @@ def _apply_accumulators(
             state.values.extend(deepcopy(candidates))
 
 
-def _group_output_id(value, *, dialect):
+def _group_output_id(value):
     value = null_if_missing(value)
-    if dialect.key == "7.0":
-        return deepcopy(value)
-    # MongoDB 8/9 materializes JavaScript without scope as a string in group IDs,
-    # while preserving a separate typed group identity and scoped code values.
+    # Only slot-based groups materialize unscoped JavaScript as String.
+    # Classic subpipelines preserve its BSON type independently of the dialect.
     if isinstance(value, Code) and value.scope is None:
         return str(value)
     if isinstance(value, dict):
         return {
-            key: _group_output_id(item, dialect=dialect) for key, item in value.items()
+            key: _group_output_id(item) for key, item in value.items()
         }
     if isinstance(value, list):
-        return [_group_output_id(item, dialect=dialect) for item in value]
+        return [_group_output_id(item) for item in value]
     return deepcopy(value)
 
 
 def _finalize_accumulators(
-    bucket: _AccumulatorBucket | dict[str, Any], *, group_dialect=None
+    bucket: _AccumulatorBucket | dict[str, Any]
 ) -> Document:
     document: Document = {}
     include_bucket_id = (
@@ -679,8 +677,8 @@ def _finalize_accumulators(
     if include_bucket_id:
         document["_id"] = (
             deepcopy(bucket.bucket_id)
-            if group_dialect is None
-            else _group_output_id(bucket.bucket_id, dialect=group_dialect)
+            if not bucket.group_uses_slot_semantics
+            else _group_output_id(bucket.bucket_id)
         )
     values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
     for field, value in values.items():
@@ -695,7 +693,7 @@ def _finalize_accumulators(
             document[field] = value.total.average(
                 value.count, finalize_sum=(
                     isinstance(bucket, _AccumulatorBucket)
-                    and bucket.group_average_uses_sum
+                    and bucket.group_uses_slot_semantics
                 ),
             )
         elif isinstance(value, _StdDevAccumulator):

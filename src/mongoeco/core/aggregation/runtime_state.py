@@ -780,7 +780,7 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                     dialect=dialect,
                     collation=collation,
                     deadline=deadline,
-                    group_average_uses_sum=stage.group_average_uses_sum,
+                    group_uses_slot_semantics=stage.group_uses_slot_semantics,
                 )
             elif operator == "$bucket":
                 output = _apply_bucket(

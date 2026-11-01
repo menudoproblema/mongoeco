@@ -138,7 +138,7 @@ class _IncrementalGroupPlan:
     prefix_limit: int | None
     group_spec: object
     suffix: Pipeline
-    group_average_uses_sum: bool = False
+    group_uses_slot_semantics: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -963,8 +963,8 @@ class AsyncAggregationCursor:
                     prefix_limit=prefix_limit,
                     group_spec=spec,
                     suffix=pipeline[index + 1 :],
-                    group_average_uses_sum=getattr(
-                        stage, "group_average_uses_sum", False
+                    group_uses_slot_semantics=getattr(
+                        stage, "group_uses_slot_semantics", False
                     ),
                 )
             if operator not in _LOCAL_STREAM_PREFIX_OPERATORS:
@@ -1717,7 +1717,7 @@ class AsyncAggregationCursor:
             dialect=dialect,
             collation=self._collation,
             deadline=deadline,
-            group_average_uses_sum=plan.group_average_uses_sum,
+            group_uses_slot_semantics=plan.group_uses_slot_semantics,
         )
         group_spool = None
         try:
@@ -1907,7 +1907,7 @@ class AsyncAggregationCursor:
                     dialect=dialect,
                     collation=self._collation,
                     deadline=deadline,
-                    group_average_uses_sum=plan.group_average_uses_sum,
+                    group_uses_slot_semantics=plan.group_uses_slot_semantics,
                 )
                 for record in partition:
                     if record[0] == "state":

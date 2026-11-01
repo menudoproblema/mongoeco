@@ -231,7 +231,7 @@ def _stage_group(
         dialect=context.dialect,
         collation=context.collation,
         deadline=context.deadline,
-        group_average_uses_sum=context.group_average_uses_sum,
+        group_uses_slot_semantics=context.group_uses_slot_semantics,
     )
 
 
@@ -1269,7 +1269,7 @@ def apply_pipeline(
             spec,
             AggregationStageContext(
                 stage_index=pipeline.addresses[index].index,
-                group_average_uses_sum=stage.group_average_uses_sum,
+                group_uses_slot_semantics=stage.group_uses_slot_semantics,
                 collection_resolver=collection_resolver,
                 collection_stats_resolver=collection_stats_resolver,
                 index_stats_resolver=index_stats_resolver,

@@ -1,0 +1,2304 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_bson_add_to_set_consumers": {
+      "simple": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collated": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      }
+    },
+    "semantic_bson_group_consumers": {
+      "simple-top": {
+        "ok": true,
+        "rows": [
+          {
+            "members": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "1"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "3"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "4"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "4"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "6"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "5"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "7"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "7"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "8"
+              },
+              {
+                "$numberInt": "9"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "8"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "10"
+            },
+            "kind": "array"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "13"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "12"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "14"
+              },
+              {
+                "$numberInt": "15"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "14"
+            },
+            "kind": "binData"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "16"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "16"
+            },
+            "kind": "binData"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "17"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "17"
+            },
+            "kind": "javascript"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "18"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "18"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "19"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "19"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "21"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "21"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "22"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "22"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "23"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "23"
+            },
+            "kind": "string"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "24"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "24"
+            },
+            "kind": "string"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "25"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "25"
+            },
+            "kind": "bool"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "26"
+              },
+              {
+                "$numberInt": "27"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "26"
+            },
+            "kind": "int"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "28"
+              },
+              {
+                "$numberInt": "29"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "28"
+            },
+            "kind": "null"
+          }
+        ]
+      },
+      "simple-facet": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": [
+              {
+                "members": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "1"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "3"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "3"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "4"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "4"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "5"
+                  },
+                  {
+                    "$numberInt": "6"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "5"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "7"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "7"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "8"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "8"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "10"
+                  },
+                  {
+                    "$numberInt": "11"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "10"
+                },
+                "kind": "array"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "12"
+                  },
+                  {
+                    "$numberInt": "13"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "12"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "14"
+                  },
+                  {
+                    "$numberInt": "15"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "14"
+                },
+                "kind": "binData"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "16"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "16"
+                },
+                "kind": "binData"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "17"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "17"
+                },
+                "kind": "javascript"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "18"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "18"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "19"
+                  },
+                  {
+                    "$numberInt": "20"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "19"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "21"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "21"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "22"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "22"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "23"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "23"
+                },
+                "kind": "string"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "24"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "24"
+                },
+                "kind": "string"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "25"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "25"
+                },
+                "kind": "bool"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "26"
+                  },
+                  {
+                    "$numberInt": "27"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "26"
+                },
+                "kind": "int"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "28"
+                  },
+                  {
+                    "$numberInt": "29"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "28"
+                },
+                "kind": "null"
+              }
+            ]
+          }
+        ]
+      },
+      "collated-top": {
+        "ok": true,
+        "rows": [
+          {
+            "members": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ],
+            "count": {
+              "$numberInt": "3"
+            },
+            "first": {
+              "$numberInt": "1"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "3"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "6"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "5"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "7"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "7"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "8"
+              },
+              {
+                "$numberInt": "9"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "8"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "10"
+            },
+            "kind": "array"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "13"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "12"
+            },
+            "kind": "object"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "14"
+              },
+              {
+                "$numberInt": "15"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "14"
+            },
+            "kind": "binData"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "16"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "16"
+            },
+            "kind": "binData"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "17"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "17"
+            },
+            "kind": "javascript"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "18"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "18"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "19"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "19"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "21"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "21"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "22"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "22"
+            },
+            "kind": "javascriptWithScope"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "23"
+              },
+              {
+                "$numberInt": "24"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "23"
+            },
+            "kind": "string"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "25"
+              }
+            ],
+            "count": {
+              "$numberInt": "1"
+            },
+            "first": {
+              "$numberInt": "25"
+            },
+            "kind": "bool"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "26"
+              },
+              {
+                "$numberInt": "27"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "26"
+            },
+            "kind": "int"
+          },
+          {
+            "members": [
+              {
+                "$numberInt": "28"
+              },
+              {
+                "$numberInt": "29"
+              }
+            ],
+            "count": {
+              "$numberInt": "2"
+            },
+            "first": {
+              "$numberInt": "28"
+            },
+            "kind": "null"
+          }
+        ]
+      },
+      "collated-facet": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": [
+              {
+                "members": [
+                  {
+                    "$numberInt": "1"
+                  },
+                  {
+                    "$numberInt": "2"
+                  },
+                  {
+                    "$numberInt": "4"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "3"
+                },
+                "first": {
+                  "$numberInt": "1"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "3"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "3"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "5"
+                  },
+                  {
+                    "$numberInt": "6"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "5"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "7"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "7"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "8"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "8"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "10"
+                  },
+                  {
+                    "$numberInt": "11"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "10"
+                },
+                "kind": "array"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "12"
+                  },
+                  {
+                    "$numberInt": "13"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "12"
+                },
+                "kind": "object"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "14"
+                  },
+                  {
+                    "$numberInt": "15"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "14"
+                },
+                "kind": "binData"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "16"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "16"
+                },
+                "kind": "binData"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "17"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "17"
+                },
+                "kind": "javascript"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "18"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "18"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "19"
+                  },
+                  {
+                    "$numberInt": "20"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "19"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "21"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "21"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "22"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "22"
+                },
+                "kind": "javascriptWithScope"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "23"
+                  },
+                  {
+                    "$numberInt": "24"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "23"
+                },
+                "kind": "string"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "25"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "1"
+                },
+                "first": {
+                  "$numberInt": "25"
+                },
+                "kind": "bool"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "26"
+                  },
+                  {
+                    "$numberInt": "27"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "26"
+                },
+                "kind": "int"
+              },
+              {
+                "members": [
+                  {
+                    "$numberInt": "28"
+                  },
+                  {
+                    "$numberInt": "29"
+                  }
+                ],
+                "count": {
+                  "$numberInt": "2"
+                },
+                "first": {
+                  "$numberInt": "28"
+                },
+                "kind": "null"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_bson_group_representatives": {
+      "simple-top": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAACwAAAADX2lkACIAAAACJHJlZgAGAAAASVRFTVMAAiRpZAAEAAAAQUJDAAAANwAAAANfaWQALQAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAnRhZwACAAAAdAAAADEAAAADX2lkACcAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAokZGIAAAAwAAAAA19pZAAmAAAAAiRyZWYABgAAAGl0ZW1zAAMkaWQADAAAABBuAAEAAAAAAAA0AAAABF9pZAAqAAAAAzAAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAOQAAAANfaWQALwAAAANuZXN0ZWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAEAAAAAVfaWQAAQAAAAB4ABAAAAAFX2lkAAEAAAAFeAARAAAADV9pZAADAAAAJGEAABoAAAAPX2lkABAAAAADAAAAJGEABQAAAAAAIQAAAA9faWQAFwAAAAMAAAAkYQAMAAAAEG4AAQAAAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAAjAAAAD19pZAAZAAAAAwAAACRhAA4AAAACcwACAAAAQQAAABAAAAACX2lkAAIAAABhAAAQAAAAAl9pZAACAAAAQQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "simple-classic-unwind": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAACwAAAADX2lkACIAAAACJHJlZgAGAAAASVRFTVMAAiRpZAAEAAAAQUJDAAAANwAAAANfaWQALQAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAnRhZwACAAAAdAAAADEAAAADX2lkACcAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAokZGIAAAAwAAAAA19pZAAmAAAAAiRyZWYABgAAAGl0ZW1zAAMkaWQADAAAABBuAAEAAAAAAAA0AAAABF9pZAAqAAAAAzAAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAOQAAAANfaWQALwAAAANuZXN0ZWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAEAAAAAVfaWQAAQAAAAB4ABAAAAAFX2lkAAEAAAAFeAARAAAADV9pZAADAAAAJGEAABoAAAAPX2lkABAAAAADAAAAJGEABQAAAAAAIQAAAA9faWQAFwAAAAMAAAAkYQAMAAAAEG4AAQAAAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAAjAAAAD19pZAAZAAAAAwAAACRhAA4AAAACcwACAAAAQQAAABAAAAACX2lkAAIAAABhAAAQAAAAAl9pZAACAAAAQQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "simple-set-prefix": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAACwAAAADX2lkACIAAAACJHJlZgAGAAAASVRFTVMAAiRpZAAEAAAAQUJDAAAANwAAAANfaWQALQAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAnRhZwACAAAAdAAAADEAAAADX2lkACcAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAokZGIAAAAwAAAAA19pZAAmAAAAAiRyZWYABgAAAGl0ZW1zAAMkaWQADAAAABBuAAEAAAAAAAA0AAAABF9pZAAqAAAAAzAAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAOQAAAANfaWQALwAAAANuZXN0ZWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAEAAAAAVfaWQAAQAAAAB4ABAAAAAFX2lkAAEAAAAFeAARAAAADV9pZAADAAAAJGEAABoAAAAPX2lkABAAAAADAAAAJGEABQAAAAAAIQAAAA9faWQAFwAAAAMAAAAkYQAMAAAAEG4AAQAAAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAAjAAAAD19pZAAZAAAAAwAAACRhAA4AAAACcwACAAAAQQAAABAAAAACX2lkAAIAAABhAAAQAAAAAl9pZAACAAAAQQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "simple-facet": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "1AIAAARyb3dzAMkCAAADMAAsAAAAA19pZAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAMxACwAAAADX2lkACIAAAACJGlkAAQAAABhYmMAAiRyZWYABgAAAGl0ZW1zAAAAAzIALAAAAANfaWQAIgAAAAIkcmVmAAYAAABJVEVNUwACJGlkAAQAAABBQkMAAAADMwA3AAAAA19pZAAtAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwACdGFnAAIAAAB0AAAAAzQAMQAAAANfaWQAJwAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMACiRkYgAAAAM1ADAAAAADX2lkACYAAAACJHJlZgAGAAAAaXRlbXMAAyRpZAAMAAAAEG4AAQAAAAAAAAM2ADQAAAAEX2lkACoAAAADMAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAADNwA5AAAAA19pZAAvAAAAA25lc3RlZAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAADOAAQAAAABV9pZAABAAAAAHgAAzkAEAAAAAVfaWQAAQAAAAV4AAMxMAARAAAADV9pZAADAAAAJGEAAAMxMQAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAAAMxMgAhAAAAD19pZAAXAAAAAwAAACRhAAwAAAAQbgABAAAAAAADMTMAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAADMTQAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAADMTUAEAAAAAJfaWQAAgAAAGEAAAMxNgAQAAAAAl9pZAACAAAAQQAAAzE3AAsAAAAIX2lkAAEAAzE4AA4AAAAQX2lkAAEAAAAAAzE5AAoAAAAKX2lkAAAAAA==",
+            "subType": "00"
+          }
+        }
+      },
+      "simple-lookup": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "1AIAAARyb3dzAMkCAAADMAAsAAAAA19pZAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAMxACwAAAADX2lkACIAAAACJGlkAAQAAABhYmMAAiRyZWYABgAAAGl0ZW1zAAAAAzIALAAAAANfaWQAIgAAAAIkcmVmAAYAAABJVEVNUwACJGlkAAQAAABBQkMAAAADMwA3AAAAA19pZAAtAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwACdGFnAAIAAAB0AAAAAzQAMQAAAANfaWQAJwAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMACiRkYgAAAAM1ADAAAAADX2lkACYAAAACJHJlZgAGAAAAaXRlbXMAAyRpZAAMAAAAEG4AAQAAAAAAAAM2ADQAAAAEX2lkACoAAAADMAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAADNwA5AAAAA19pZAAvAAAAA25lc3RlZAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAADOAAQAAAABV9pZAABAAAAAHgAAzkAEAAAAAVfaWQAAQAAAAV4AAMxMAARAAAADV9pZAADAAAAJGEAAAMxMQAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAAAMxMgAhAAAAD19pZAAXAAAAAwAAACRhAAwAAAAQbgABAAAAAAADMTMAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAADMTQAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAADMTUAEAAAAAJfaWQAAgAAAGEAAAMxNgAQAAAAAl9pZAACAAAAQQAAAzE3AAsAAAAIX2lkAAEAAzE4AA4AAAAQX2lkAAEAAAAAAzE5AAoAAAAKX2lkAAAAAA==",
+            "subType": "00"
+          }
+        }
+      },
+      "simple-union": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAACwAAAADX2lkACIAAAACJHJlZgAGAAAASVRFTVMAAiRpZAAEAAAAQUJDAAAANwAAAANfaWQALQAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAnRhZwACAAAAdAAAADEAAAADX2lkACcAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAokZGIAAAAwAAAAA19pZAAmAAAAAiRyZWYABgAAAGl0ZW1zAAMkaWQADAAAABBuAAEAAAAAAAA0AAAABF9pZAAqAAAAAzAAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAOQAAAANfaWQALwAAAANuZXN0ZWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAEAAAAAVfaWQAAQAAAAB4ABAAAAAFX2lkAAEAAAAFeAARAAAADV9pZAADAAAAJGEAABoAAAAPX2lkABAAAAADAAAAJGEABQAAAAAAIQAAAA9faWQAFwAAAAMAAAAkYQAMAAAAEG4AAQAAAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAAjAAAAD19pZAAZAAAAAwAAACRhAA4AAAACcwACAAAAQQAAABAAAAACX2lkAAIAAABhAAAQAAAAAl9pZAACAAAAQQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "collated-top": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAADcAAAADX2lkAC0AAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAJ0YWcAAgAAAHQAAAAxAAAAA19pZAAnAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAKJGRiAAAAMAAAAANfaWQAJgAAAAIkcmVmAAYAAABpdGVtcwADJGlkAAwAAAAQbgABAAAAAAAANAAAAARfaWQAKgAAAAMwACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAADkAAAADX2lkAC8AAAADbmVzdGVkACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAABAAAAAFX2lkAAEAAAAAeAAQAAAABV9pZAABAAAABXgAEQAAAA1faWQAAwAAACRhAAAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAACEAAAAPX2lkABcAAAADAAAAJGEADAAAABBuAAEAAAAAACMAAAAPX2lkABkAAAADAAAAJGEADgAAAAJzAAIAAABhAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAAQAAAAAl9pZAACAAAAYQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "collated-classic-unwind": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAADcAAAADX2lkAC0AAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAJ0YWcAAgAAAHQAAAAxAAAAA19pZAAnAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAKJGRiAAAAMAAAAANfaWQAJgAAAAIkcmVmAAYAAABpdGVtcwADJGlkAAwAAAAQbgABAAAAAAAANAAAAARfaWQAKgAAAAMwACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAADkAAAADX2lkAC8AAAADbmVzdGVkACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAABAAAAAFX2lkAAEAAAAAeAAQAAAABV9pZAABAAAABXgAEQAAAA1faWQAAwAAACRhAAAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAACEAAAAPX2lkABcAAAADAAAAJGEADAAAABBuAAEAAAAAACMAAAAPX2lkABkAAAADAAAAJGEADgAAAAJzAAIAAABhAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAAQAAAAAl9pZAACAAAAYQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "collated-set-prefix": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAADcAAAADX2lkAC0AAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAJ0YWcAAgAAAHQAAAAxAAAAA19pZAAnAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAKJGRiAAAAMAAAAANfaWQAJgAAAAIkcmVmAAYAAABpdGVtcwADJGlkAAwAAAAQbgABAAAAAAAANAAAAARfaWQAKgAAAAMwACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAADkAAAADX2lkAC8AAAADbmVzdGVkACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAABAAAAAFX2lkAAEAAAAAeAAQAAAABV9pZAABAAAABXgAEQAAAA1faWQAAwAAACRhAAAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAACEAAAAPX2lkABcAAAADAAAAJGEADAAAABBuAAEAAAAAACMAAAAPX2lkABkAAAADAAAAJGEADgAAAAJzAAIAAABhAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAAQAAAAAl9pZAACAAAAYQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "collated-facet": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "kAIAAARyb3dzAIUCAAADMAAsAAAAA19pZAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAMxACwAAAADX2lkACIAAAACJGlkAAQAAABhYmMAAiRyZWYABgAAAGl0ZW1zAAAAAzIANwAAAANfaWQALQAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAnRhZwACAAAAdAAAAAMzADEAAAADX2lkACcAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAokZGIAAAADNAAwAAAAA19pZAAmAAAAAiRyZWYABgAAAGl0ZW1zAAMkaWQADAAAABBuAAEAAAAAAAADNQA0AAAABF9pZAAqAAAAAzAAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAAzYAOQAAAANfaWQALwAAAANuZXN0ZWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAAzcAEAAAAAVfaWQAAQAAAAB4AAM4ABAAAAAFX2lkAAEAAAAFeAADOQARAAAADV9pZAADAAAAJGEAAAMxMAAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAAAMxMQAhAAAAD19pZAAXAAAAAwAAACRhAAwAAAAQbgABAAAAAAADMTIAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAADMTMAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAADMTQAEAAAAAJfaWQAAgAAAGEAAAMxNQALAAAACF9pZAABAAMxNgAOAAAAEF9pZAABAAAAAAMxNwAKAAAACl9pZAAAAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "collated-lookup": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "kAIAAARyb3dzAIUCAAADMAAsAAAAA19pZAAiAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAAAAMxACwAAAADX2lkACIAAAACJGlkAAQAAABhYmMAAiRyZWYABgAAAGl0ZW1zAAAAAzIANwAAAANfaWQALQAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAnRhZwACAAAAdAAAAAMzADEAAAADX2lkACcAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAokZGIAAAADNAAwAAAAA19pZAAmAAAAAiRyZWYABgAAAGl0ZW1zAAMkaWQADAAAABBuAAEAAAAAAAADNQA0AAAABF9pZAAqAAAAAzAAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAAzYAOQAAAANfaWQALwAAAANuZXN0ZWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAAAzcAEAAAAAVfaWQAAQAAAAB4AAM4ABAAAAAFX2lkAAEAAAAFeAADOQARAAAADV9pZAADAAAAJGEAAAMxMAAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAAAMxMQAhAAAAD19pZAAXAAAAAwAAACRhAAwAAAAQbgABAAAAAAADMTIAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAGEAAAADMTMAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAADMTQAEAAAAAJfaWQAAgAAAGEAAAMxNQALAAAACF9pZAABAAMxNgAOAAAAEF9pZAABAAAAAAMxNwAKAAAACl9pZAAAAAA=",
+            "subType": "00"
+          }
+        }
+      },
+      "collated-union": {
+        "ok": true,
+        "bson": {
+          "$binary": {
+            "base64": "LAAAAANfaWQAIgAAAAIkcmVmAAYAAABpdGVtcwACJGlkAAQAAABhYmMAAAAsAAAAA19pZAAiAAAAAiRpZAAEAAAAYWJjAAIkcmVmAAYAAABpdGVtcwAAADcAAAADX2lkAC0AAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAJ0YWcAAgAAAHQAAAAxAAAAA19pZAAnAAAAAiRyZWYABgAAAGl0ZW1zAAIkaWQABAAAAGFiYwAKJGRiAAAAMAAAAANfaWQAJgAAAAIkcmVmAAYAAABpdGVtcwADJGlkAAwAAAAQbgABAAAAAAAANAAAAARfaWQAKgAAAAMwACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAADkAAAADX2lkAC8AAAADbmVzdGVkACIAAAACJHJlZgAGAAAAaXRlbXMAAiRpZAAEAAAAYWJjAAAAABAAAAAFX2lkAAEAAAAAeAAQAAAABV9pZAABAAAABXgAEQAAAA1faWQAAwAAACRhAAAaAAAAD19pZAAQAAAAAwAAACRhAAUAAAAAACEAAAAPX2lkABcAAAADAAAAJGEADAAAABBuAAEAAAAAACMAAAAPX2lkABkAAAADAAAAJGEADgAAAAJzAAIAAABhAAAAIwAAAA9faWQAGQAAAAMAAAAkYQAOAAAAAnMAAgAAAEEAAAAQAAAAAl9pZAACAAAAYQAACwAAAAhfaWQAAQAOAAAAEF9pZAABAAAAAAoAAAAKX2lkAAA=",
+            "subType": "00"
+          }
+        }
+      }
+    },
+    "semantic_bson_lookup_consumers": {
+      "simple": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "matches": [
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "matches": [
+              {
+                "$numberInt": "4"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "matches": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "6"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "6"
+            },
+            "matches": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "6"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "7"
+            },
+            "matches": [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "8"
+            },
+            "matches": [
+              {
+                "$numberInt": "8"
+              },
+              {
+                "$numberInt": "9"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "9"
+            },
+            "matches": [
+              {
+                "$numberInt": "8"
+              },
+              {
+                "$numberInt": "9"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "10"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "11"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "12"
+            },
+            "matches": [
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "13"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "13"
+            },
+            "matches": [
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "13"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "14"
+            },
+            "matches": [
+              {
+                "$numberInt": "14"
+              },
+              {
+                "$numberInt": "15"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "15"
+            },
+            "matches": [
+              {
+                "$numberInt": "14"
+              },
+              {
+                "$numberInt": "15"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "16"
+            },
+            "matches": [
+              {
+                "$numberInt": "16"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "17"
+            },
+            "matches": [
+              {
+                "$numberInt": "17"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "18"
+            },
+            "matches": [
+              {
+                "$numberInt": "18"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "19"
+            },
+            "matches": [
+              {
+                "$numberInt": "19"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "20"
+            },
+            "matches": [
+              {
+                "$numberInt": "19"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "21"
+            },
+            "matches": [
+              {
+                "$numberInt": "21"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "22"
+            },
+            "matches": [
+              {
+                "$numberInt": "22"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "23"
+            },
+            "matches": [
+              {
+                "$numberInt": "23"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "24"
+            },
+            "matches": [
+              {
+                "$numberInt": "24"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "25"
+            },
+            "matches": [
+              {
+                "$numberInt": "25"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "26"
+            },
+            "matches": [
+              {
+                "$numberInt": "26"
+              },
+              {
+                "$numberInt": "27"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "27"
+            },
+            "matches": [
+              {
+                "$numberInt": "26"
+              },
+              {
+                "$numberInt": "27"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "28"
+            },
+            "matches": [
+              {
+                "$numberInt": "28"
+              },
+              {
+                "$numberInt": "29"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "29"
+            },
+            "matches": [
+              {
+                "$numberInt": "28"
+              },
+              {
+                "$numberInt": "29"
+              }
+            ]
+          }
+        ]
+      },
+      "collated": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "matches": [
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "matches": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "6"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "6"
+            },
+            "matches": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "6"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "7"
+            },
+            "matches": [
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "8"
+            },
+            "matches": [
+              {
+                "$numberInt": "8"
+              },
+              {
+                "$numberInt": "9"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "9"
+            },
+            "matches": [
+              {
+                "$numberInt": "8"
+              },
+              {
+                "$numberInt": "9"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "10"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "11"
+            },
+            "matches": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "10"
+              },
+              {
+                "$numberInt": "11"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "12"
+            },
+            "matches": [
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "13"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "13"
+            },
+            "matches": [
+              {
+                "$numberInt": "12"
+              },
+              {
+                "$numberInt": "13"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "14"
+            },
+            "matches": [
+              {
+                "$numberInt": "14"
+              },
+              {
+                "$numberInt": "15"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "15"
+            },
+            "matches": [
+              {
+                "$numberInt": "14"
+              },
+              {
+                "$numberInt": "15"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "16"
+            },
+            "matches": [
+              {
+                "$numberInt": "16"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "17"
+            },
+            "matches": [
+              {
+                "$numberInt": "17"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "18"
+            },
+            "matches": [
+              {
+                "$numberInt": "18"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "19"
+            },
+            "matches": [
+              {
+                "$numberInt": "19"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "20"
+            },
+            "matches": [
+              {
+                "$numberInt": "19"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "21"
+            },
+            "matches": [
+              {
+                "$numberInt": "21"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "22"
+            },
+            "matches": [
+              {
+                "$numberInt": "22"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "23"
+            },
+            "matches": [
+              {
+                "$numberInt": "23"
+              },
+              {
+                "$numberInt": "24"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "24"
+            },
+            "matches": [
+              {
+                "$numberInt": "23"
+              },
+              {
+                "$numberInt": "24"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "25"
+            },
+            "matches": [
+              {
+                "$numberInt": "25"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "26"
+            },
+            "matches": [
+              {
+                "$numberInt": "26"
+              },
+              {
+                "$numberInt": "27"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "27"
+            },
+            "matches": [
+              {
+                "$numberInt": "26"
+              },
+              {
+                "$numberInt": "27"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "28"
+            },
+            "matches": [
+              {
+                "$numberInt": "28"
+              },
+              {
+                "$numberInt": "29"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "29"
+            },
+            "matches": [
+              {
+                "$numberInt": "28"
+              },
+              {
+                "$numberInt": "29"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_bson_set_consumers": {
+      "simple": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      },
+      "collated": {
+        "ok": false,
+        "phase": "open",
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        }
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_bson_consumer_cases.py",
+    "sha256": "f7921782536fb07ad191e0d42b041c46bb8652859a8349786147d76926866a6a"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_bson_group_representatives",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_bson_group_representatives"
+    },
+    {
+      "name": "semantic_bson_group_consumers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_bson_group_consumers"
+    },
+    {
+      "name": "semantic_bson_set_consumers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_bson_set_consumers"
+    },
+    {
+      "name": "semantic_bson_add_to_set_consumers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_bson_add_to_set_consumers"
+    },
+    {
+      "name": "semantic_bson_lookup_consumers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_bson_lookup_consumers"
+    }
+  ]
+}

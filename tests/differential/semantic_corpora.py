@@ -26,6 +26,10 @@ from tests.differential.semantic_binary_surface_cases import (
     SEED as BINARY_SURFACE_SEED,
     SEMANTIC_BINARY_SURFACE_CASES,
 )
+from tests.differential.semantic_bson_consumer_cases import (
+    SEED as BSON_CONSUMER_SEED,
+    SEMANTIC_BSON_CONSUMER_CASES,
+)
 from tests.differential.semantic_bson_dispatch_cases import (
     SEED as BSON_DISPATCH_SEED,
     SEMANTIC_BSON_DISPATCH_CASES,
@@ -226,6 +230,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "bson_consumer": SemanticCorpus(
+        "bson-consumer", "semantic_bson_consumer_cases",
+        BSON_CONSUMER_SEED, SEMANTIC_BSON_CONSUMER_CASES,
+    ),
     "cursor_consumption": SemanticCorpus(
         "cursor-consumption", "semantic_cursor_consumption_cases",
         CURSOR_CONSUMPTION_SEED, SEMANTIC_CURSOR_CONSUMPTION_CASES,

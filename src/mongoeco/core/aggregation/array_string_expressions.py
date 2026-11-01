@@ -16,12 +16,14 @@ from mongoeco.core.aggregation.evaluation_environment import (
     scoped_environment,
 )
 from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
+from mongoeco.core.bson_ordering import bson_equality_key
 from mongoeco.core.bson_scalars import (
     INT32_MAX,
     INT32_MIN,
     unwrap_bson_numeric,
     wrap_bson_numeric,
 )
+from mongoeco.core.bson_values import is_bson_string
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.filtering import QueryEngine
@@ -193,16 +195,13 @@ def _hashable_set_lookup_key(
 ) -> tuple[str, Any] | None:
     if dialect is not MONGODB_DIALECT_70:
         return None
-    if value is None:
-        return ("none", None)
-    if isinstance(value, bool):
-        return ("bool", value)
-    if isinstance(value, str):
-        return ("str", value)
-    if isinstance(value, bytes):
-        return ("bytes", value)
-    if isinstance(value, uuid.UUID):
-        return ("uuid", value)
+    # Keep this bounded optimization's domain; the key owns BSON equivalence.
+    if (
+        value is None
+        or isinstance(value, (bool, bytes, uuid.UUID))
+        or is_bson_string(value)
+    ):
+        return bson_equality_key(value)
     return None
 
 

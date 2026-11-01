@@ -1,0 +1,16 @@
+import json,subprocess
+from pathlib import Path
+records=[]
+for version in (1,2):
+ for target in ('7.0','8.0','9.0'):
+  p=Path(f'/tmp/mongoeco-consumer-native-v{version}/{target}/fixture.json')
+  fixture=json.loads(p.read_text())
+  row={'capture_round':version,'target':target,'image':fixture['image'],'topology':fixture['topology'],'fixture_cleanup':fixture['cleanup'],'resources':[]}
+  for kind,identifier in [('container',fixture['container_id']),*(('volume',v) for v in fixture['anonymous_volumes'])]:
+   result=subprocess.run(['docker',kind,'inspect',identifier],text=True,capture_output=True)
+   absent=result.returncode==1 and ('No such' in result.stderr or 'no such' in result.stderr)
+   assert absent,(kind,identifier,result.returncode,result.stderr)
+   row['resources'].append({'kind':kind,'id':identifier,'absent':True})
+  records.append(row)
+Path('/tmp/mongoeco-consumer-resources.json').write_text(json.dumps(records,indent=2)+'\n')
+print(json.dumps({'containers_absent':len(records),'volumes_absent':sum(len(r['resources'])-1 for r in records)}))

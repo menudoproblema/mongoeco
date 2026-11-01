@@ -1,0 +1,19 @@
+import os,subprocess,sys
+from pathlib import Path
+import yaml
+root=Path('/tmp/mongoeco-consumer-native-v2');root.mkdir(exist_ok=True)
+payload=root/'capture.py'
+payload.write_text('''import os,subprocess,sys
+from pathlib import Path
+v=os.environ['MONGOECO_REAL_MONGODB_TARGET']; suffix=v.replace('.','_')
+for case_set,key in [('bson-consumer','bson_consumer')]:
+ reference=f'tests/fixtures/semantic_{key}_{suffix}.json'
+ subprocess.run([sys.executable,'scripts/capture_differential_replay_golden.py','--target',v,'--case-set',case_set,'--output',reference],check=True)
+ subprocess.run([sys.executable,'scripts/capture_differential_replay_golden.py','--target',v,'--case-set',case_set,'--output',f'/tmp/mongoeco-consumer-native-v2/{v}/{key}-check.json','--check',reference],check=True)
+''')
+for row in yaml.safe_load(Path('.github/workflows/mongodb-differential.yml').read_text())['jobs']['differential']['strategy']['matrix']['include']:
+ v=row['target']
+ with (root/(v+'.log')).open('w') as log:
+  result=subprocess.run([sys.executable,'scripts/with_mongodb_replica_set.py','--image',row['image'],'--target',v,'--artifacts',str(root/v),'--topology','standalone','--timeout','600','--',sys.executable,str(payload)],env=dict(os.environ,MONGOECO_REAL_MONGODB_TARGET=v),stdout=log,stderr=subprocess.STDOUT)
+ print(v,result.returncode,flush=True)
+ if result.returncode:raise SystemExit(result.returncode)

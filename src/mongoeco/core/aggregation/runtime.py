@@ -3,7 +3,6 @@ import datetime
 import decimal
 import math
 import re
-import uuid
 
 from collections.abc import Callable, Mapping
 from copy import deepcopy
@@ -52,11 +51,9 @@ from mongoeco.core.aggregation.scalar_expressions import (
     evaluate_scalar_expression,
 )
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
-from mongoeco.core.bson_ordering import Code, bson_engine_key, bson_equality_key
-from mongoeco.core.bson_values import is_bson_string
+from mongoeco.core.bson_ordering import Code, bson_equality_key
 from mongoeco.core.bson_scalars import (
     BsonInt64,
-    bson_numeric_alias,
     is_bson_numeric,
 )
 from mongoeco.core.bson_size import (
@@ -66,6 +63,7 @@ from mongoeco.core.bson_size import (
     bson_string_size as _bson_string_size,  # noqa: F401 - private compatibility export
     bson_value_size as _bson_value_size,  # noqa: F401 - private compatibility export
 )
+from mongoeco.core.bson_values import document_mapping, is_bson_string
 from mongoeco.core.collation import (
     CollationSpec,
     string_equality_key,
@@ -93,7 +91,6 @@ from mongoeco.types import (
     DBRef,
     Decimal128,
     Document,
-    ObjectId,
     Regex,
     Timestamp,
 )
@@ -105,50 +102,6 @@ type AggregationStageHandler = Callable[
 ]
 
 _CURRENT_COLLECTION_RESOLVER_KEY = "__mongoeco_current_collection__"
-
-
-def _aggregation_key(value: Any) -> Any:
-    if value is None:
-        return ("none", None)
-    if isinstance(value, bool):
-        return ("bool", value)
-    numeric_alias = bson_numeric_alias(value)
-    if numeric_alias == "int":
-        return ("int", value)
-    if numeric_alias == "long":
-        return ("long", value)
-    if numeric_alias == "double":
-        return ("float", value)
-    if numeric_alias == "decimal":
-        return ("decimal", value)
-    if isinstance(value, Code):
-        return bson_engine_key(value)
-    if isinstance(value, str):
-        return ("str", value)
-    if isinstance(value, (bytes, Binary)):
-        return ("bytes", value)
-    if isinstance(value, uuid.UUID):
-        return ("uuid", value)
-    if isinstance(value, ObjectId):
-        return ("objectid", value)
-    if isinstance(value, datetime.datetime):
-        return ("datetime", value)
-    if isinstance(value, Timestamp):
-        return ("timestamp", value)
-    if isinstance(value, dict):
-        return (
-            "dict",
-            tuple((key, _aggregation_key(item)) for key, item in value.items()),
-        )
-    if isinstance(value, list):
-        return ("list", tuple(_aggregation_key(item) for item in value))
-    try:
-        hash(value)
-        return (value.__class__, value)
-    except TypeError:
-        raise OperationFailure(
-            "$group _id must resolve to BSON-compatible values",
-        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,7 +120,7 @@ class AggregationStageContext:
     lookup_hash_max_associations: int | None = None
     deadline: float | None = None
 
-    group_average_uses_sum: bool = False
+    group_uses_slot_semantics: bool = False
 
 def aggregation_equality_key(value: Any, collation: CollationSpec | None = None) -> Any:
     """Semantic group identity, independent of physical numeric representation."""
@@ -175,15 +128,16 @@ def aggregation_equality_key(value: Any, collation: CollationSpec | None = None)
     if is_bson_numeric(value):
         return bson_equality_key(value)
     if isinstance(value, Code):
-        return bson_engine_key(value)
+        return bson_equality_key(value)
     if isinstance(value, str):
         return ("str", string_equality_key(value, collation))
-    if isinstance(value, dict):
+    document = document_mapping(value)
+    if document is not None:
         return (
             "dict",
             tuple(
                 (key, aggregation_equality_key(item, collation))
-                for key, item in value.items()
+                for key, item in document.items()
             ),
         )
     if isinstance(value, list):
@@ -191,7 +145,12 @@ def aggregation_equality_key(value: Any, collation: CollationSpec | None = None)
             "list",
             tuple(aggregation_equality_key(item, collation) for item in value),
         )
-    _aggregation_key(value)  # Preserve rejection of non-BSON, unhashable scalars.
+    # Keep the legacy scalar guard; BSON admission belongs to the input boundary.
+    try:
+        hash(value)
+    except TypeError:
+        message = "$group _id must resolve to BSON-compatible values"
+        raise OperationFailure(message) from None
     return bson_equality_key(value)
 
 

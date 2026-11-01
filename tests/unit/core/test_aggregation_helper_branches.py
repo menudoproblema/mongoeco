@@ -45,7 +45,7 @@ class ArrayStringHelperBranchTests(unittest.TestCase):
         self.assertIn(('none', None), lookup)
         self.assertIn(('bool', True), lookup)
         self.assertIn(('str', 'name'), lookup)
-        self.assertIn(('bytes', b'bytes'), lookup)
+        self.assertIn(('binary', 0, b'bytes'), lookup)
         self.assertEqual(len(residual), 1)
         self.assertTrue(
             array_module._set_contains(

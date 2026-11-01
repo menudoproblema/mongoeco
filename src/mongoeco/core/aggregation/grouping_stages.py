@@ -623,7 +623,7 @@ def _apply_group(  # noqa: PLR0913
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
     deadline: float | None = None,
-    group_average_uses_sum: bool = False,
+    group_uses_slot_semantics: bool = False,
 ) -> list[Document]:
     spec = _require_group_spec(spec)
 
@@ -635,7 +635,7 @@ def _apply_group(  # noqa: PLR0913
         dialect=dialect,
         collation=collation,
         deadline=deadline,
-        group_average_uses_sum=group_average_uses_sum,
+        group_uses_slot_semantics=group_uses_slot_semantics,
     )
     accumulator.consume(documents)
     return accumulator.finish()
@@ -652,13 +652,13 @@ class _IncrementalGroup:
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
         deadline: float | None = None,
-        group_average_uses_sum: bool = False,
+        group_uses_slot_semantics: bool = False,
     ) -> None:
         spec = _require_group_spec(spec)
         self._id_expression = spec["_id"]
         _validate_empty_group_fields(spec, dialect=dialect)
         self._variables = aggregation_environment(variables, collation)
-        self._group_average_uses_sum = group_average_uses_sum
+        self._group_uses_slot_semantics = group_uses_slot_semantics
         self._dialect = dialect
         self._collation = collation
         self._deadline = deadline
@@ -712,7 +712,7 @@ class _IncrementalGroup:
         if group_key not in self._groups:
             self._groups[group_key] = _AccumulatorBucket(
                 bucket_id=_copy_if_mutable(group_id),
-                group_average_uses_sum=self._group_average_uses_sum,
+                group_uses_slot_semantics=self._group_uses_slot_semantics,
                 values=_create_accumulator_state(
                     self._prepared,
                     unsupported_message="Unsupported $group accumulator",
@@ -758,7 +758,7 @@ class _IncrementalGroup:
             (
                 self._first_positions[group_key],
                 group_key,
-                _finalize_accumulators(bucket, group_dialect=self._dialect),
+                _finalize_accumulators(bucket),
             )
             for group_key, bucket in iter_with_deadline(
                 self._groups.items(),

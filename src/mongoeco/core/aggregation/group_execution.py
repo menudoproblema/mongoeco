@@ -1,8 +1,7 @@
-"""Select the captured native average finalization before physical slicing.
+"""Retain captured native group execution semantics before physical slicing.
 
-This is numeric compatibility metadata, not a second execution planner. The
-classic evaluator uses the double total; native slot-based groups finalize the
-BSON sum first. Grammar support remains owned by the existing dialect catalog.
+The prepared decision controls average finalization and group-ID representation.
+It does not select another local engine or expand grammar support.
 """
 
 from mongoeco.core.aggregation.extensions import (
@@ -94,7 +93,7 @@ def _expression_compatible(value, dialect):
     return True
 
 
-def group_average_uses_sum(spec, *, dialect):
+def group_uses_slot_semantics(spec, *, dialect):
     return (
         isinstance(spec, dict)
         and _expression_compatible(spec.get("_id"), dialect)
@@ -110,7 +109,7 @@ def group_average_uses_sum(spec, *, dialect):
     )
 
 
-def group_average_prefix_compatible(operator, spec, *, dialect):
+def group_prefix_slot_compatible(operator, spec, *, dialect):
     if get_registered_aggregation_stage_registration(operator) is not None:
         return False
     if operator in {"$sort", "$skip", "$limit"}:
