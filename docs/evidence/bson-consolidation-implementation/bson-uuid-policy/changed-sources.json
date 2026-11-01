@@ -1,0 +1,16 @@
+{
+  "src/mongoeco/_types/concerns.py": "a8bc000501403ae244707646567d5e732729844a10a32b467da863260b5e9901",
+  "src/mongoeco/api/_async/_collection_reads.py": "1e183a97269d8173812ad60c1c4cd7a200f16bdc9d3a81f0b4fd9160fd50652c",
+  "tests/differential/semantic_bson_uuid_policy_cases.py": "2eaf689575b5c1b669e92074711535fb7f395179d40aed3f607552c78c6d1c69",
+  "tests/differential/semantic_corpora.py": "ac46b67b6de109d09294ddf771f82dffed5b71093b09a6bba5e0e48a7f766c1a",
+  "tests/fixtures/semantic_bson_uuid_policy_7_0.json": "d56b79e9d59ee5cdcdf9b8b474ca24a20754b607dc5de7ebda76e2adaef36464",
+  "tests/fixtures/semantic_bson_uuid_policy_8_0.json": "dc049380b5d56e6e02740e3ac04f23243d33501d90eb00bebbf13d778fa55502",
+  "tests/fixtures/semantic_bson_uuid_policy_9_0.json": "b0bbf70373d9bb140167f4ad0a8f98031700fdf873f87a9ee37f4a6233b669e7",
+  "tests/fixtures/sqlite_uuid_standard_4_11.sqlite": "479d6291b3935f21dfb397cc673b582ef69d966b749b9a3fb156111e09160008",
+  "tests/integration/api/test_uuid_policy_boundary.py": "00077582fdb3a2e4647c3d9bbbf8d721f5f09764b8d34684e627a5e267753669",
+  "tests/unit/api/test_collection_find_modify.py": "f03cd433fa4b8d852487b7bf799227b2de1c6fa23d1ec68c26e40814d8a1ea90",
+  "tests/unit/api/test_collection_write_helpers.py": "0311c4ee8ed7f66ec5eb6638eeec8e130aa86add2805579ab70b532190f3c839",
+  "tests/unit/core/test_binary_storage_paths.py": "4eb64dc1d7f3772b1b865d11c8dddbac42f6d56e5e5484df1e6cf2e6a4241902",
+  "tests/unit/test_architecture_types_metadata.py": "d46d09f8c1a24702b482acfb4436bfcb4268110b628559cf76e2aa328a01d901",
+  "tests/unit/test_database_admin.py": "2905db6544c7923d2d00439354a5db66fb1da33a6f1947dda136f0ec16f78078"
+}

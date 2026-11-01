@@ -1,0 +1,44 @@
+import json,subprocess,sys
+from pathlib import Path
+candidate=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+baseline=Path(Path('/tmp/mongoeco-uuid-policy-baseline-location.txt').read_text().strip())
+body='''import json,sys,time
+sys.path.insert(0,sys.argv[1])
+from uuid import UUID
+from bson import Binary
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import CodecOptions,UuidRepresentation
+from pathlib import Path
+import mongoeco
+assert Path(mongoeco.__file__).resolve().is_relative_to(Path(sys.argv[1]).resolve())
+factory=MemoryEngine if sys.argv[2]=='memory' else SQLiteEngine
+route=sys.argv[3];collections=[];value=UUID('00112233-4455-6677-8899-aabbccddeeff')
+with MongoClient(factory()) as client:
+ for n in range(110):
+  coll=client.test['source_'+str(n)];coll.insert_one({'_id':0,'u':Binary(value.bytes,4)});collections.append(coll)
+ total=0
+ for n,coll in enumerate(collections):
+  start=time.perf_counter_ns()
+  if route=='read-default':coll.find_one({'_id':0})
+  elif route=='write-standard':coll.with_options(codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD)).insert_one({'_id':1,'u':value})
+  elif route=='write-java':coll.with_options(codec_options=CodecOptions(uuid_representation=UuidRepresentation.JAVA_LEGACY)).insert_one({'_id':1,'u':value})
+  else:coll.database.command({'find':coll.name,'filter':{'_id':0}})
+  if n>=10:total+=time.perf_counter_ns()-start
+print(json.dumps({'ns':total,'operations':100}))
+'''
+observations=[]
+for backend in ('memory','sqlite'):
+ for route in ('read-default','write-standard','write-java','command-default'):
+  for round_no in range(2):
+   for tag,root in [('baseline',baseline),('candidate',candidate),('candidate',candidate),('baseline',baseline)]:
+    site=json.loads((root/'wheel.json').read_text())['site_packages']
+    result=subprocess.run([sys.executable,'-I','-c',body,site,backend,route],check=True,capture_output=True,text=True)
+    observations.append({'backend':backend,'route':route,'round':round_no,'variant':tag,**json.loads(result.stdout)})
+ratios={}
+for backend in ('memory','sqlite'):
+ for route in ('read-default','write-standard','write-java','command-default'):
+  sums={v:sum(r['ns'] for r in observations if r['backend']==backend and r['route']==route and r['variant']==v) for v in ('baseline','candidate')}
+  ratios[backend+'/'+route]=sums['candidate']/sums['baseline']
+Path('/tmp/mongoeco-uuid-policy-cost-focused.json').write_text(json.dumps({'method':'diagnostic ABBA x 2; 100 fresh collections + 10 warmups; concurrent gates; default read intentionally changes UUID to Binary, explicit writes do not; not D05 budget acceptance','ratios':ratios,'observations':observations},indent=2)+'\n')
+print(ratios)

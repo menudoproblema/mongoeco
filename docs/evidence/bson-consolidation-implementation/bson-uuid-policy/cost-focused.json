@@ -1,0 +1,527 @@
+{
+  "method": "diagnostic ABBA x 2; 100 fresh collections + 10 warmups; concurrent gates; default read intentionally changes UUID to Binary, explicit writes do not; not D05 budget acceptance",
+  "ratios": {
+    "memory/read-default": 0.962125986865848,
+    "memory/write-standard": 1.0256253933526347,
+    "memory/write-java": 1.005827432159252,
+    "memory/command-default": 1.0102563900236705,
+    "sqlite/read-default": 1.0053105690622004,
+    "sqlite/write-standard": 0.9765144606962254,
+    "sqlite/write-java": 0.9948552206136768,
+    "sqlite/command-default": 1.0149251799756622
+  },
+  "observations": [
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 9485620,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 9191249,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 9272077,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 9445252,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 9721330,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 9454582,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 9499086,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "read-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 10237709,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 14557120,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 16127701,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 15026244,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 15227912,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 14524118,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 14189245,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 13888659,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 13442783,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 13821821,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 14000335,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 14229123,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 14368164,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 14869371,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 15134863,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 14193497,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "write-java",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 14164991,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 23006621,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 22526209,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 23559047,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 22331330,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 22400956,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 22111836,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 23472506,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "command-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 23000037,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 28636211,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 26895336,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 30192330,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 27778960,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 27952504,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 29785041,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 28442043,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "read-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 30337923,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 54870249,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 58068750,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 54717622,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 59666788,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 61246126,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 56352497,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 56271584,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-standard",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 55048496,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 52023666,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 56538960,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 49798332,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 56720797,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 55237331,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 55365578,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 58137462,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "write-java",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 56995417,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 61651587,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 60387550,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 60953420,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 61288669,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 58790956,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 62793459,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 62898917,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "command-default",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 61669337,
+      "operations": 100
+    }
+  ]
+}

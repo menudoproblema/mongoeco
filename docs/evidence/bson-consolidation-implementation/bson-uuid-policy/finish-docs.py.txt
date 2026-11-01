@@ -1,0 +1,138 @@
+from pathlib import Path
+import json,subprocess
+root=Path('docs/evidence/bson-consolidation-implementation/bson-uuid-policy')
+code=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();short=code[:8]
+assert subprocess.check_output(['git','log','-1','--format=%s'],text=True).strip()=='fix(api): align default UUID policy with request owners'
+distinct=subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip();assert distinct.startswith('b29e9bf1')
+r=json.loads((root/'receipt.json').read_text());r['code_commit']=code;r['distinct_commit']=distinct
+(root/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+(root/'README.md').write_text(f'''# B07 — UUID coordinado y ausencia en distinct
+
+Base `30365046`; UUID `{short}`, distinct `{distinct[:8]}`. Se acepta la unidad 4
+de B07 sobre los cortes de admisión ya entregados. No cierra positivos/respuestas,
+batching, todos los contextos D06, H53/D07 ni D05.
+
+## Causa, cambio y uso
+
+El encoder de solicitudes ya aplicaba las opciones del dueño y el materializador
+separaba lectura/escritura; la divergencia restante era el default STANDARD en
+el constructor y el campo dataclass de CodecOptions. Ambos usan UNSPECIFIED.
+No se añade otro normalizador ni comparador, no cambia DocumentCodec interno,
+SPI, serialización o esquema SQLite. Las constantes STANDARD del encoder de
+respuestas internas conservan su función: no son el default del cliente.
+
+UUID de Python se rechaza con ValueError por defecto, en la fase nativa de cada
+API. Para escribirlo, elegir CodecOptions(uuid_representation=
+UuidRepresentation.STANDARD) o un legacy explícito en el dueño de la solicitud.
+La lectura default conserva Binary/subtipo/bytes. Database.command conserva
+su default propio; no hereda el codec de la base/colección. Sus opciones se
+pasan explícitamente cuando corresponde. No reescribir Binary 4 a 3 al leer.
+
+El diferencial halló otra autoridad compartida: resolve_distinct_candidates
+convertía ausencia en [None]. Un solo cambio omite esos candidatos y conserva
+null explícito, arrays y comparación previa a materializar, tanto en fachada
+como en comando. Tres tests antiguos exigían el error y se corrigen contra
+los testigos nativos, no contra una coincidencia Memory/SQLite. Solo el orden
+exterior no garantizado de distinct se estabiliza en el corpus; los valores,
+tipos BSON y orden de campos se observan completos, sin deduplicación artificial.
+
+La fixture de ordenación binaria que escribe UUID ahora elige STANDARD de forma
+explícita: conserva UUID, SQL ejecutado, fallback antes de ventana, índice,
+invalidación y reapertura. El test de catálogo de opciones tenía dos fallos
+previos por buscar métodos de base en AsyncCollection. Se reproducen en la
+base archivada y se comprueban ahora contra AsyncDatabase y su spec de kwargs.
+No se añaden métodos falsos ni se retiran campos del catálogo.
+
+## Evidencia
+
+- Cuatro acciones/216 observaciones por MongoDB 7.0.43/8.0.32/9.0.2 standalone,
+  PyMongo 4.19.0; capture y --check finales idénticos. Se cruzan seis opciones
+  de escritor y lector, Binary 3/4, bytes/orden legacy, IDs, filtros/in y
+  comandos con opciones implícitas/expresas; ausencia/null/arrays por API/comando.
+- Base del nuevo corpus: 72 fallos/27 correctos; candidato instalado: 99 checks
+  correctos. La selección UUID ampliada anterior conserva su log separado.
+- Replay completo: 10.278 correctos/24 fallos previos de admission_options.
+  Resuelve exactamente 48 de los 72 nodos anteriores sin modificar su oráculo.
+  Los 24 restantes pertenecen a positivos/proyecciones; no se ocultan.
+- Cohorte instalada: 2.330 correctos/4.709 subtests y dos fallos previos de batching.
+  Los 24 controles nuevos incluyen rechazo sin prefijo de datos/eventos usando
+  barrera de commit, estado/índice/reapertura, herencia y override de opciones,
+  lectura independiente y una fixture SQLite creada por el runtime 30365046
+  con default STANDARD. Ese archivo anterior de 122.880 bytes no se regenera
+  con el candidato: conserva UUID, índice único y actualización por su clave.
+- Python 3.13.15 realmente sin SDK: 1.296 observaciones, cuatro acciones completas,
+  sin omitir casos ni normalizar el observador. Diez familias anteriores pasan.
+- Wheel con 287 módulos verificados y guards de import en master/cuatro workers.
+  API: 18 tests/13 subtests; typing instalado: dos positivos y 20/25 negativos.
+  El manifiesto público cambia exactamente dos valores default de CodecOptions,
+  constructor y dataclass; no es una firma accidental ni una snapshot actualizada.
+- Los 302 fixtures/observadores históricos permanecen idénticos. Nueve
+  contenedores y 18 volúmenes propios se comprueban ausentes con Docker operativo.
+- ABBA×2 sobre lectura default, escrituras explícitas STANDARD/Java y comando,
+  en ambos motores, es diagnóstico bajo gates concurrentes; no acepta D05.
+
+Los logs de feedback distinguen el defecto real, las expectativas espejo y el
+uso de UUID que dependía del default anterior. La aceptación usa la wheel final
+y los tests finales. No hay captura nueva de change streams distribuido:
+rechazo cliente nativo y barrera local tienen alcances separados. Sigue la
+unidad 5 de positivos/respuestas, con los 24 nodos y dos tests de batching como
+testigos obligatorios; permanecen D06, H53, D07 y D05.
+''')
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text()
+s=s.replace('último corte aceptado `2723fb28`',f'último corte aceptado `{short}`',1)
+s=s.replace('los cortes administrativos y namespace; el siguiente corte es UUID coordinado.',f'los cortes administrativos y namespace. `{short}` entrega después UUID coordinado;\nel siguiente corte es positivos/respuestas, no repetir admisión.')
+s=s.replace('El orden activo es UUID coordinado; positivos/respuestas; contextos D06;', 'El orden activo es positivos/respuestas; contextos D06;')
+start=s.index('| 1 / P1 — B07, UUID |');end=s.index('\n| 2 / P1 — B07, positivos y respuestas',start)
+s=s[:start]+f'''| Control previo cerrado — B07, UUID | `{short}` acepta [default UNSPECIFIED, dueños y lectura independiente](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md), sobre la admisión ya entregada. `{distinct[:8]}` corrige ausencia en distinct, compartida por API/comando. | Mantener STANDARD/legacy explícitos, bytes/subtipos y lectura/reapertura de archivos previos. No cambiar otra vez el default ni reextraer el codec; no implica cierre D06 ni positivos completos. |'''+s[end:]
+s=s.replace('| 2 / P1 — B07, positivos y respuestas','| 1 / P1 — B07, positivos y respuestas').replace('| 3 / P1 — Resto D06a/b/c','| 2 / P1 — Resto D06a/b/c').replace('| 4 / P2 — H53 y D07','| 3 / P2 — H53 y D07').replace('| 5 — D05 integrado','| 4 — D05 integrado')
+s=s.replace('''UUID coordinado. Comandos, creación de catálogo,''',f'''`{short}` entrega UUID coordinado; sigue la unidad 5 de positivos/respuestas,
+con los 24 nodos admission_options y dos tests de batching aún rojos. Comandos, creación de catálogo,''')
+s=s.replace('''Unidad 4 completa UUID antes del cambio de default; unidad 5 conserva positivos
+de proyección/sobres y otros efectos de respuesta. STANDARD permanece. D06,''',f'''`{short}` entrega la unidad 4 con default UNSPECIFIED; STANDARD/legacy requieren
+selección explícita. La unidad 5 conserva positivos de proyección/sobres y otros
+efectos de respuesta. D06,''')
+old='''Aplicar opciones de escritura antes del almacenamiento, separadas de la interpretación de lectura. Mantener STANDARD hasta que el corte completo permita cambiar el default a UNSPECIFIED de forma consistente. Usar CodecOptions del dueño de cada solicitud: las de colección no reemplazan las de database.command.'''
+assert old in s;s=s.replace(old,f'''Entregado en `{short}`: opciones de escritura antes del almacenamiento, lectura independiente y default UNSPECIFIED coordinado. STANDARD/legacy siguen explícitos. Reusar estas políticas; CodecOptions del dueño de la solicitud no se sustituye por el de otra fachada ni por un nuevo codec.''')
+s=s.replace('''entradas Search del censo. La unidad 4 coordina las opciones de sus dueños
+y el nuevo default.''',f'''entradas Search del censo. `{short}` entrega la unidad 4 y el default UNSPECIFIED,
+con [lecturas, bytes y persistencia](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md).''')
+p.write_text(s)
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text();start=s.index('## Trabajo restante');end=s.index('\n## ',start+3);block=s[start:end]
+block=block.replace('El replay conserva 72 fallos previos obligatorios', 'El replay conserva 24 fallos previos obligatorios de admission_options')
+block=block.replace('Sigue el default UUID coordinado.',f'`{short}` entrega el default UUID coordinado y `{distinct[:8]}` omite ausencia en distinct.')
+block=block.replace('STANDARD global permanece', 'UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente')
+s=s[:start]+block+s[end:]
+s+=f'''
+## B07 — UUID coordinado y ausencia en distinct
+
+UUID `{short}` y distinct `{distinct[:8]}` sobre `30365046`, con [evidencia final](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md).
+El constructor y el campo dataclass de CodecOptions pasan a UNSPECIFIED. Se
+reutilizan admisión, dueños y políticas de lectura/escritura existentes; no se
+cambia almacenamiento, SPI ni se reescribe Binary 4 como legacy. La selección
+STANDARD/legacy explícita conserva bytes y resultados nativos. Database.command
+mantiene su dueño propio. El consumidor común de distinct deja de fabricar null
+por ausencia, con testigos API/comando y controles null/arrays.
+
+- Cuatro acciones/216 observaciones por MongoDB 7.0.43/8.0.32/9.0.2, --check
+  idéntico. Base del corpus: 72 fallos/27 correctos; instalado: 99 correctos.
+- Replay: 10.278 correctos/24 fallos previos de opciones/proyecciones; se resuelven
+  exactamente 48 nodos anteriores sin cambiar referencias históricas.
+- Cohorte: 2.330 correctos/4.709 subtests y dos fallos previos de batching. Incluye
+  24 controles nuevos, commit barrier, herencia, lectura independiente e índice/
+  reapertura de un SQLite creado por el runtime anterior STANDARD. Los tests
+  espejo de ausencia, la fixture binaria con UUID y el test de owner de opciones
+  se corrigen contra los contratos observados, conservando sus controles.
+- SDK-free real 3.13.15: 1.296 observaciones completas; diez familias previas pasan.
+  API 18/13 subtests y typing instalado correctos. El manifiesto cambia solo los
+  dos defaults deliberados de CodecOptions; 287 módulos de wheel verificados.
+- Los 302 testigos históricos siguen intactos. Recursos Docker propios: 27
+  ausentes. La fixture SQLite antigua nueva tiene procedencia 30365046 y hash;
+  no la genera el candidato. Costes ABBA diagnósticos, sin cierre de presupuesto.
+
+Sigue la unidad 5 de positivos/respuestas: 24 nodos admission_options y dos
+pruebas de batching obligatorios, con testigo físico antes de corregir sus
+expectativas. Contextos D06, H53, decisión D07 y D05 siguen abiertos. El cambio
+de default está aceptado; no volver a aplazarlo ni reiniciar el censo cerrado.
+'''
+p.write_text(s)
+print('documents projected',short,distinct[:8])

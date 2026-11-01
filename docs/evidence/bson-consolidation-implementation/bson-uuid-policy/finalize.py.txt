@@ -1,0 +1,32 @@
+import gzip,hashlib,json,re,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-uuid-policy')
+sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
+r=json.loads((root/'receipt.json').read_text());code=r['code_commit']
+for commit in (code,r['distinct_commit']):subprocess.run(['git','merge-base','--is-ancestor',commit,'HEAD'],check=True)
+assert not subprocess.check_output(['git','status','--porcelain','--','src','tests'],text=True)
+for name in ('changed-sources.json','runtime-sources.json','protected.json'):
+ for p,digest in json.loads((root/name).read_text()).items():assert sha(p)==digest,(name,p)
+for p,digest in json.loads((root/'changed-sources.json').read_text()).items():
+ assert hashlib.sha256(subprocess.check_output(['git','show',code+':'+p])).hexdigest()==digest,p
+wheel=json.loads((root/'wheel.json').read_text());assert sha(wheel['wheel'])==wheel['sha256']
+for p,digest in json.loads((root/'runtime-sources.json').read_text()).items():assert sha(Path(wheel['site_packages'])/Path(p).relative_to('src'))==digest,p
+legacy=json.loads((root/'legacy-fixture.json').read_text());assert sha(legacy['fixture'])==legacy['sha256']
+for p,digest in json.loads((root/'legacy-runtime-sources.json').read_text()).items():
+ assert hashlib.sha256(subprocess.check_output(['git','show','30365046:'+p])).hexdigest()==digest,p
+for target,reference in r['native'].items():
+ assert sha(reference['fixture'])==reference['sha256']
+ assert Path(reference['fixture']).read_bytes()==gzip.open(root/f'native-final-{target}-check.json.gz','rb').read()
+for label in ('replay-final','unit-final'):
+ proof=json.loads((root/f'wheel-imports-uuid-policy-{label}-master.json').read_text());assert proof['exit_code']==1
+for worker in range(4):assert (root/f'wheel-imports-uuid-policy-replay-final-gw{worker}.json').exists()
+assert len(json.loads((root/'api-delta.json').read_text()))==2
+resources=json.loads((root/'resources.json').read_text());assert len(resources)==27 and all(row['absent'] for row in resources)
+for p in (Path('docs/bson-semantics-consolidation-plan.md'),Path('docs/bson-consolidation-implementation.md'),root/'README.md'):
+ text=p.read_text();assert code[:8] in text
+ for link in re.findall(r'\]\(([^)]+)\)',text):
+  if '://' in link or link.startswith('#'):continue
+  assert (p.parent/link.split('#')[0]).exists(),(str(p),link)
+for p,digest in json.loads((root/'artifacts.json').read_text()).items():assert sha(root/p)==digest,p
+subprocess.run(['git','diff','--check'],check=True)
+print('verified both code ancestors, 287-module wheel, 302 protected witnesses, prior-runtime SQLite, native captures, docs and artifacts')

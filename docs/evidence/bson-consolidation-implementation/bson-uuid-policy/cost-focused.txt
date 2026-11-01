@@ -1,0 +1,1 @@
+{'memory/read-default': 0.962125986865848, 'memory/write-standard': 1.0256253933526347, 'memory/write-java': 1.005827432159252, 'memory/command-default': 1.0102563900236705, 'sqlite/read-default': 1.0053105690622004, 'sqlite/write-standard': 0.9765144606962254, 'sqlite/write-java': 0.9948552206136768, 'sqlite/command-default': 1.0149251799756622}

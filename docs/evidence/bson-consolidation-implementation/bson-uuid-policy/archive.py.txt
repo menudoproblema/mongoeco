@@ -1,0 +1,56 @@
+import gzip,hashlib,json,re,shutil,subprocess
+from pathlib import Path
+repo=Path.cwd();root=repo/'docs/evidence/bson-consolidation-implementation/bson-uuid-policy';root.mkdir(exist_ok=True)
+sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
+wheel=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());info=json.loads((wheel/'wheel.json').read_text());runtime=json.loads((wheel/'runtime.json').read_text())
+assert info['modules']==287 and sha(info['wheel'])==info['sha256']
+for p,digest in runtime.items():assert sha(p)==digest and sha(Path(info['site_packages'])/Path(p).relative_to('src'))==digest,p
+replay=Path('/tmp/mongoeco-uuid-policy-replay-final.txt').read_text();unit=Path('/tmp/mongoeco-uuid-policy-unit-final.txt').read_text();baseline=Path('/tmp/mongoeco-uuid-policy-baseline-focused.txt').read_text()
+assert '10278 passed' in replay and '24 failed' in replay and 'KeyboardInterrupt' not in replay
+assert '2330 passed' in unit and '2 failed' in unit and '4709 subtests passed' in unit
+assert '72 failed, 27 passed' in baseline
+failnodes=lambda s:set(re.findall(r'^FAILED (\S+)',s,re.M))
+previous=json.loads(Path('docs/evidence/bson-consolidation-implementation/bson-input-search/receipt.json').read_text())['known_failure_nodes']
+assert failnodes(replay)<set(previous['replay']) and len(set(previous['replay'])-failnodes(replay))==48
+assert all('semantic_admission_options' in node for node in failnodes(replay))
+assert failnodes(unit)==set(previous['unit'])
+protected=json.loads(Path('/tmp/mongoeco-uuid-policy-protected.json').read_text());assert len(protected)==302
+for p,digest in protected.items():assert sha(p)==digest,p
+native={}
+for target in ('7.0','8.0','9.0'):
+ fixture=Path(f'tests/fixtures/semantic_bson_uuid_policy_{target.replace(".","_")}.json');check=Path('/tmp/mongoeco-uuid-policy-native-final')/target/'bson_uuid_policy-check.json'
+ assert fixture.read_bytes()==check.read_bytes()
+ document=json.loads(fixture.read_text());assert len(document['cases'])==4 and sum(map(len,document['cases'].values()))==216
+ native[target]={'fixture':str(fixture),'sha256':sha(fixture),'actions':4,'observations':216,'version':document['runtime']['build_info']['version'],'git_version':document['runtime']['build_info']['gitVersion']}
+for label in ('native','native-frozen','native-final'):
+ for target in ('7.0','8.0','9.0'):
+  source=Path('/tmp/mongoeco-uuid-policy-'+label)
+  shutil.copyfile(source/(target+'.log'),root/f'{label}-{target}.txt');shutil.copyfile(source/target/'fixture.json',root/f'{label}-{target}-fixture.json')
+  if label=='native-final':
+   with gzip.open(root/f'{label}-{target}-check.json.gz','wb') as f:f.write((source/target/'bson_uuid_policy-check.json').read_bytes())
+for label in ['replay-final','unit-final','baseline-final','baseline-focused','unit-feedback','focal','old-metadata']:
+ with gzip.open(root/(label+'.txt.gz'),'wb') as f:f.write(Path('/tmp/mongoeco-uuid-policy-'+label+'.txt').read_bytes())
+for label in ['build-final','lint','api','api-compare','boundary-accepted','adjusted-tests','sdk-free','source-final','cost-focused','previous-sdk-free']:
+ shutil.copyfile('/tmp/mongoeco-uuid-policy-'+label+'.txt',root/(label+'.txt'))
+for label in ['resources','cost-focused','protected','api-delta','legacy-fixture']:
+ shutil.copyfile('/tmp/mongoeco-uuid-policy-'+label+'.json',root/(label+'.json'))
+legacy=json.loads((root/'legacy-fixture.json').read_text());assert sha(legacy['fixture'])==legacy['sha256'];shutil.copyfile(legacy['runtime_manifest'],root/'legacy-runtime-sources.json')
+shutil.copyfile('/tmp/mongoeco-bson-input-typing.txt',root/'typing-installed.txt')
+for label in ['search-input','namespace','admin-read','index-admin','catalog','commands','bulk','mutations','inserts','reads']:
+ shutil.copyfile('/tmp/mongoeco-uuid-policy-previous-'+label+'-sdk-free.txt',root/('previous-'+label+'-sdk-free.txt'))
+for variant in ('baseline','candidate'):shutil.copyfile('/tmp/mongoeco-uuid-policy-api-'+variant+'.json.gz',root/f'api-{variant}.json.gz')
+deltas=json.loads((root/'api-delta.json').read_text());assert len(deltas)==2
+assert all('CodecOptions/' in path and before.endswith('.STANDARD') and after.endswith('.UNSPECIFIED') for path,before,after in deltas)
+for p in wheel.glob('wheel-imports-*.json'):shutil.copyfile(p,root/p.name)
+shutil.copyfile(wheel/'runtime.json',root/'runtime-sources.json');shutil.copyfile(wheel/'wheel.json',root/'wheel.json')
+base=Path(Path('/tmp/mongoeco-uuid-policy-baseline-focused-location.txt').read_text().strip())
+for p in base.glob('wheel-imports-*.json'):shutil.copyfile(p,root/('baseline-'+p.name))
+shutil.copyfile(base/'runtime.json',root/'baseline-runtime-sources.json')
+for label in ['native','native-final','native-frozen','baseline','baseline-focused','replay','unit','sdk-free-prepare','sdk-free','previous-sdk-free','api-compare','resources','cost-focused','legacy-fixture','old-metadata','archive']:
+ shutil.copyfile('/tmp/mongoeco-uuid-policy-'+label+'.py',root/(label+'.py.txt'))
+shutil.copyfile('/tmp/mongoeco-dispatch-build.py',root/'build.py.txt');shutil.copyfile('/tmp/mongoeco_dispatch_artifact_guard.py',root/'installed-guard.py.txt');shutil.copyfile('/tmp/mongoeco-bson-input-typing.py',root/'typing.py.txt')
+changed=subprocess.check_output(['git','diff','--name-only','30365046','--','src','tests'],text=True).splitlines()+subprocess.check_output(['git','ls-files','--others','--exclude-standard','--','src','tests'],text=True).splitlines()
+(root/'changed-sources.json').write_text(json.dumps({p:sha(p) for p in sorted(set(changed))},indent=2)+'\n')
+receipt={'base_commit':subprocess.check_output(['git','rev-parse','30365046'],text=True).strip(),'code_commit':None,'scope':'B07 coordinated UUID default/ownership with distinct missing-value consumer; no complete positives/replies/batching, D06 or D05 closure','native':native,'wheel':info,'legacy_sqlite':legacy,'checks':{'new_replay':99,'broad_passed':10278,'broad_remaining_failures':24,'broad_previous_failures_resolved':48,'unit_passed':2330,'unit_subtests_passed':4709,'unit_known_batching_failures':2,'baseline_new_failed':72,'baseline_new_passed':27,'boundary':24,'sdk_free_observations':1296,'previous_sdk_free_families':10,'api_tests_passed':18,'api_subtests_passed':13,'public_default_delta_nodes':2,'protected_files':302,'absent_native_resources':27},'remaining_failure_nodes':{'replay':sorted(failnodes(replay)),'unit':sorted(failnodes(unit))},'resolved_replay_nodes':sorted(set(previous['replay'])-failnodes(replay)),'limits':['No old semantic references or observers regenerated','Distinct outer arrays stabilized only for unspecified result order; BSON values and document field order fully observed','Prior SQLite file generated by archived 30365046, never regenerated by candidate','No new distributed watch capture: native client rejection plus local commit barriers','Costs diagnostic; D05 matrices/coverage/budgets remain mandatory','Existing public API gate passes; manifest deliberately changes only CodecOptions constructor and dataclass defaults']}
+(root/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print('archived and verified',len(list(root.iterdir())),'files')

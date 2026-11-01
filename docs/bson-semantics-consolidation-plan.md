@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre; último corte aceptado `2723fb28`):**
+**Entrada vigente (1 de noviembre; último corte aceptado `d5bdadb8`):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1152,7 +1152,8 @@ del matcher en D03a/D00; eq/in SQL con fallback binario en D03a/D03b; literal
 DBRef básico aceptado, con contextos restantes en D06; clase/código/fase de
 watch en D04. No se reabren por repetir el informe. H53 conserva su disposición
 pendiente y las 167 pruebas citadas son históricas. La entrega posterior `2723fb28` acepta las cinco entradas Search después de
-los cortes administrativos y namespace; el siguiente corte es UUID coordinado. Los 72 fallos previos de replay y dos de batching
+los cortes administrativos y namespace. `d5bdadb8` entrega después UUID coordinado;
+el siguiente corte es positivos/respuestas, no repetir admisión. Los 24 nodos restantes de admission_options y dos de batching
 siguen visibles allí: no hay cierre global.
 
 **Simplificación de la aceptación pendiente.** Usar los owners y el runner
@@ -1203,7 +1204,7 @@ Conservar cinco obligaciones independientes:
   candidatos omitidos. No aceptar «un milisegundo irrelevante» ni ausencia de
   eventos basada únicamente en un timeout.
 
-El orden activo es UUID coordinado; positivos/respuestas; contextos D06;
+El orden activo es positivos/respuestas; contextos D06;
 disposición H53/D07; integración D05. La admisión entregada queda como control
 previo, sin repetir su implementación. La historia y sus receipts conservan
 sus límites; el registro de implementación posee la evidencia de aceptación.
@@ -1323,11 +1324,11 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 | Orden / prioridad | Trabajo y dependencia | Aceptación / owner |
 | --- | --- | --- |
 | Control previo cerrado — B07, admisión | `2723fb28` acepta las [cinco entradas Search](evidence/bson-consolidation-implementation/bson-input-search/README.md), opciones propias y creación preparada compartida. Completa las 17 disposiciones del censo administrativo histórico tras comandos, catálogo, índices, lectores y namespace, con sus aceptaciones en el registro. Lecturas, inserciones, mutaciones y bulk conservan sus cortes propios. No implica positivos Atlas ni una API universal ya censada. | Conservar originales, codificar una vez, errores cliente/precedencia y efectos. El wire ya decodificado no vuelve a codificarse; unidad 5 conserva positivos y batching. |
-| 1 / P1 — B07, UUID | Censo administrativo dispuesto; coordinar las opciones del dueño de la solicitud y el default, conservando todos los cortes de admisión. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte coordinado. |
-| 2 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
-| 3 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
-| 4 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
-| 5 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
+| Control previo cerrado — B07, UUID | `d5bdadb8` acepta [default UNSPECIFIED, dueños y lectura independiente](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md), sobre la admisión ya entregada. `b29e9bf1` corrige ausencia en distinct, compartida por API/comando. | Mantener STANDARD/legacy explícitos, bytes/subtipos y lectura/reapertura de archivos previos. No cambiar otra vez el default ni reextraer el codec; no implica cierre D06 ni positivos completos. |
+| 1 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
+| 2 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
+| 3 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
+| 4 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
 
 Los criterios detallados de las seis unidades B07 se mantienen en su apartado;
 esta tabla solo ordena sus dependencias con D06 y D05. No es necesario cerrar
@@ -1446,7 +1447,8 @@ cierra ese testigo de unidad 5, sin cerrar todos los efectos de respuestas.
 **Entrega Search `2723fb28` y siguiente corte.** Las cinco entradas del censo
 tienen [aceptación de admisión](evidence/bson-consolidation-implementation/bson-input-search/README.md),
 opciones propias y ejecución compartida; no acreditan positivos Atlas. Sigue
-UUID coordinado. Comandos, creación de catálogo,
+`d5bdadb8` entrega UUID coordinado; sigue la unidad 5 de positivos/respuestas,
+con los 24 nodos admission_options y dos tests de batching aún rojos. Comandos, creación de catálogo,
 cuatro admisiones de índices y seis entradas de listados/validate conservan
 aceptación acotada; no se reimplementan por repetir el censo. Reutilizar encoder,
 parsing y ejecutores. La
@@ -1461,8 +1463,9 @@ comparten el default de null para su orden: conservar ambas decisiones y sus
 testigos. Los documentos antiguos con _id no inicial se siembran por SPI; no
 migrar almacenamiento ni retirar sus controles para normalizar escrituras nuevas.
 
-Unidad 4 completa UUID antes del cambio de default; unidad 5 conserva positivos
-de proyección/sobres y otros efectos de respuesta. STANDARD permanece. D06,
+`d5bdadb8` entrega la unidad 4 con default UNSPECIFIED; STANDARD/legacy requieren
+selección explícita. La unidad 5 conserva positivos de proyección/sobres y otros
+efectos de respuesta. D06,
 H53, decisión D07 y cierre integrado D05 siguen abiertos. D05 conserva costes
 de lectura, mutaciones y bulk (hasta aproximadamente 1,28 en Memory update lote
 1), ligados al runtime final; no se acepta presupuesto por otras rutas verdes.
@@ -1480,7 +1483,7 @@ al reconstruir un DBRef con el decoder SDK.
 | 1. Solicitud find sin codificar | Reutilizar `AsyncCursor._as_operation`, caché/contexto actuales y validadores de forma. Retirar la compilación/normalización anticipada de la entrada pública find. El camino interno con FindOperation preparado conserva su artefacto; no otra clase de cursor o caché. | Find difiere InvalidDocument/OverflowError hasta consumir; cerrar no codifica. Filtro inválido→válido y válido→inválido antes del primer I/O, clone/rewind/explain, contexto temporal, sesión, codecs y cursores raw. No guardar un error al construir: el filtro todavía puede cambiar. Preservar validaciones de forma que el SDK sí hace eager. |
 | 2. Codificación pública común | Separar admisión estricta y codec interno reversible. Integrar en el límite cliente de documentos/filtros/proyecciones/updates/replacements/pipelines/let/array_filters/comments y comandos/índices/validators. Reusar vistas/normalización y capacidades SDK/portable existentes; no dependencia obligatoria PyMongo ni marca/flag público de «validado». | Clase y fase nativas para Decimal crudo/object/set/frozenset/bytearray/date, claves NUL/no String, entero fuera de int64, UTF-8 inválido, Code.scope y DBRef anidados. Controles Decimal128/Binary/datetime/documentos/tuplas siguen válidos. Distinguir codificación inválida del error semántico servidor; comparar estado/aux_exists y no inventar rollback de efectos semánticos nativos. Un solo chequeo de admisión por solicitud, sin repetirlo en fachada/comando/motor. |
 | 3. Lotes de escritura | Entregado en `5a89dcc` para bulk clásico, sobre el agrupador y encoder existentes. Conservar la admisión del frame que se va a enviar y el orden entre frames/familias; no admitir todo el bulk anticipadamente. | Un segundo insert/update inválido impide el primer write válido de su mismo frame. Un lookahead inválido aborta el frame pendiente; uno válido que demuestra desbordamiento permite confirmar el prefijo. Los frames/familias anteriores permanecen, también unordered. Clase cliente conserva InvalidDocument/OverflowError/etc.; no envolver como BulkWriteError/WriteError servidor. IDs asignados, contadores, estado, índices y ausencia/entrega de eventos tienen controles de frontera y barrera. |
-| 4. UUID coordinado D06a/b | Aplicar opciones de escritura antes del almacenamiento, separadas de la interpretación de lectura. Mantener STANDARD hasta que el corte completo permita cambiar el default a UNSPECIFIED de forma consistente. Usar CodecOptions del dueño de cada solicitud: las de colección no reemplazan las de database.command. | Default/UNSPECIFIED rechazan UUID con ValueError en fase SDK, sin mutación/eventos. STANDARD y tres legacy conservan bytes/subtipos y lectura correctos, también wire y reapertura, con/sin SDK. No reescribir Binary 4 almacenado a 3 al leer; no retocar el snapshot para ocultar la diferencia. |
+| 4. UUID coordinado D06a/b | Entregado en `d5bdadb8`: opciones de escritura antes del almacenamiento, lectura independiente y default UNSPECIFIED coordinado. STANDARD/legacy siguen explícitos. Reusar estas políticas; CodecOptions del dueño de la solicitud no se sustituye por el de otra fachada ni por un nuevo codec. | Default/UNSPECIFIED rechazan UUID con ValueError en fase SDK, sin mutación/eventos. STANDARD y tres legacy conservan bytes/subtipos y lectura correctos, también wire y reapertura, con/sin SDK. No reescribir Binary 4 almacenado a 3 al leer; no retocar el snapshot para ocultar la diferencia. |
 | 5. Consumidores positivos D06/B08 | La proyección de find debe reutilizar la preparación/evaluación de proyección existente para valores calculados. Sobres raw y resultado bulk reutilizan materialización y contratos DTO: tipos, orden de campos y callbacks una vez. | Preservar proyecciones Decimal128/Binary/datetime/arrays/documentos y el error 9 de la constante Binary 5; no reducirlas a flags Python. Raw find conserva firstBatch/id/ns e id BSON int64; update conserva n/nModified/ok; bulk expone el resultado público nativo. No ordenar claves ni borrar metadata del oráculo. Decoders/fábricas activas detectan doble pase y diferencias de fase. |
 | 6. Aceptación conjunta | Baseline/candidato, referencias nuevas congeladas/check, wheel instalado y gates alcanzados; D05 conserva matrices/cobertura/costes integrados. | Todos los testigos anteriores por directa sync/async y wire × Memory/SQLite × 7/8/9, subset portable real, persistencia/reapertura y recursos limpios. Referencias/observadores históricos intactos y commits semánticos. El preflight rojo no acepta ninguna unidad productiva. |
 
@@ -1513,8 +1516,8 @@ Las unidades 1 y 3 tienen aceptación acotada; 2 comparte el encoder entregado
 e integra comandos en `3bfe5fb`, creación de catálogo en `7524e39` y las cuatro
 admisiones de índices en `c715ae7`; `d9c9c80` entrega las seis entradas de
 listados/validate y `b938556d` entrega drop/rename. `2723fb28` dispone las cinco
-entradas Search del censo. La unidad 4 coordina las opciones de sus dueños
-y el nuevo default. Los consumidores positivos tienen owner propio: una codificación
+entradas Search del censo. `d5bdadb8` entrega la unidad 4 y el default UNSPECIFIED,
+con [lecturas, bytes y persistencia](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md). Los consumidores positivos tienen owner propio: una codificación
 correcta no acepta su proyección/sobre. No se crea otro comparador, planificador,
 contexto o formato de almacenamiento para resolver esta frontera. Los demás
 contextos D06, H53, D07 y el cierre integrado D05 conservan sus obligaciones.

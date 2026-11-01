@@ -1,0 +1,21 @@
+import hashlib,json,os,sys
+from pathlib import Path
+ROOT=Path(os.environ['MONGOECO_DISPATCH_ARTIFACT_ROOT'])
+SITE=Path(json.loads((ROOT/'wheel.json').read_text())['site_packages']).resolve()
+MANIFEST=json.loads((ROOT/'runtime.json').read_text())
+def pytest_sessionstart(session):
+ for name,digest in MANIFEST.items():assert hashlib.sha256((SITE/Path(name).relative_to('src')).read_bytes()).hexdigest()==digest,name
+def pytest_sessionfinish(session,exitstatus):
+ modules={}
+ for name,module in list(sys.modules.items()):
+  if name=='mongoeco' or name.startswith('mongoeco.'):
+   location=getattr(module,'__file__',None)
+   if location is not None:
+    path=Path(location).resolve();assert path.is_relative_to(SITE),(name,str(path),str(SITE))
+    if path.suffix=='.py':
+     key=str(Path('src')/path.relative_to(SITE));assert hashlib.sha256(path.read_bytes()).hexdigest()==MANIFEST[key],name
+    modules[name]=str(path)
+ worker=os.environ.get('PYTEST_XDIST_WORKER','master')
+ label=os.environ.get('MONGOECO_ARTIFACT_PROOF_LABEL','')
+ worker=f'{label}-{worker}' if label else worker
+ (ROOT/f'wheel-imports-{worker}.json').write_text(json.dumps({'exit_code':int(exitstatus),'site':str(SITE),'modules':modules},indent=2)+'\n')

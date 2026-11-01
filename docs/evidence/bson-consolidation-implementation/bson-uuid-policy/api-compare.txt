@@ -1,0 +1,12 @@
+[
+  [
+    "/modules/mongoeco/symbols/CodecOptions/callable/parameters/3/default",
+    "mongoeco._types.concerns.UuidRepresentation.STANDARD",
+    "mongoeco._types.concerns.UuidRepresentation.UNSPECIFIED"
+  ],
+  [
+    "/modules/mongoeco/symbols/CodecOptions/fields/3/default",
+    "mongoeco._types.concerns.UuidRepresentation.STANDARD",
+    "mongoeco._types.concerns.UuidRepresentation.UNSPECIFIED"
+  ]
+]

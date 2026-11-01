@@ -1,0 +1,7 @@
+import json,sys,os
+from pathlib import Path
+root=Path(Path('/tmp/mongoeco-uuid-policy-baseline-location.txt').read_text().strip());site=json.loads((root/'wheel.json').read_text())['site_packages']
+sys.path[:0]=[site,'/tmp',str(Path.cwd())]
+os.environ['MONGOECO_TEST_INSTALLED_ARTIFACT']='1';os.environ['MONGOECO_DISPATCH_ARTIFACT_ROOT']=str(root)
+import pytest
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/unit/test_architecture_types_metadata.py','-k','matches_tracked_async_collection_signatures','--tb=short']))

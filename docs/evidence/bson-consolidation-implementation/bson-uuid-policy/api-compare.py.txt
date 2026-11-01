@@ -1,0 +1,23 @@
+import gzip,json,subprocess,sys
+from pathlib import Path
+roots={key:Path(Path('/tmp/mongoeco-'+name+'-location.txt').read_text().strip()) for key,name in [('baseline','uuid-policy-baseline'),('candidate','dispatch-wheel')]}
+results={}
+for key,root in roots.items():
+ site=json.loads((root/'wheel.json').read_text())['site_packages']
+ body='import sys,json;sys.path.insert(0,sys.argv[1]);from mongoeco.compat import public_api_manifest;print(json.dumps(public_api_manifest(),sort_keys=True))'
+ result=subprocess.run([sys.executable,'-I','-c',body,site],check=True,capture_output=True,text=True)
+ results[key]=json.loads(result.stdout)
+ with gzip.open('/tmp/mongoeco-uuid-policy-api-'+key+'.json.gz','wt') as file:json.dump(results[key],file,sort_keys=True)
+deltas=[]
+def walk(a,b,path=''):
+ if type(a)!=type(b):deltas.append([path,a,b]);return
+ if isinstance(a,dict):
+  assert a.keys()==b.keys(),path
+  for key in a:walk(a[key],b[key],path+'/'+key)
+ elif isinstance(a,list):
+  assert len(a)==len(b),path
+  for index,(l,r) in enumerate(zip(a,b,strict=True)):walk(l,r,path+'/'+str(index))
+ elif a!=b:deltas.append([path,a,b])
+walk(results['baseline'],results['candidate'])
+Path('/tmp/mongoeco-uuid-policy-api-delta.json').write_text(json.dumps(deltas,indent=2)+'\n')
+print(json.dumps(deltas,indent=2))

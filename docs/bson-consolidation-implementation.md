@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. Sigue el default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 24 fallos previos obligatorios de admission_options y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. `d5bdadb8` entrega el default UUID coordinado y `b29e9bf1` omite ausencia en distinct. Continúan positivos/batching y otros contextos D06/B08. UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -2038,3 +2038,34 @@ varios conservan rollback, plazo y nombres preexistentes.
 El censo administrativo histórico queda dispuesto: cero entradas pendientes
 allí. No cierra B07 ni redefine su alcance. Sigue UUID coordinado; positivos/
 respuestas/batching, contextos D06, H53, decisión D07 y D05 conservan obligaciones.
+
+## B07 — UUID coordinado y ausencia en distinct
+
+UUID `d5bdadb8` y distinct `b29e9bf1` sobre `30365046`, con [evidencia final](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md).
+El constructor y el campo dataclass de CodecOptions pasan a UNSPECIFIED. Se
+reutilizan admisión, dueños y políticas de lectura/escritura existentes; no se
+cambia almacenamiento, SPI ni se reescribe Binary 4 como legacy. La selección
+STANDARD/legacy explícita conserva bytes y resultados nativos. Database.command
+mantiene su dueño propio. El consumidor común de distinct deja de fabricar null
+por ausencia, con testigos API/comando y controles null/arrays.
+
+- Cuatro acciones/216 observaciones por MongoDB 7.0.43/8.0.32/9.0.2, --check
+  idéntico. Base del corpus: 72 fallos/27 correctos; instalado: 99 correctos.
+- Replay: 10.278 correctos/24 fallos previos de opciones/proyecciones; se resuelven
+  exactamente 48 nodos anteriores sin cambiar referencias históricas.
+- Cohorte: 2.330 correctos/4.709 subtests y dos fallos previos de batching. Incluye
+  24 controles nuevos, commit barrier, herencia, lectura independiente e índice/
+  reapertura de un SQLite creado por el runtime anterior STANDARD. Los tests
+  espejo de ausencia, la fixture binaria con UUID y el test de owner de opciones
+  se corrigen contra los contratos observados, conservando sus controles.
+- SDK-free real 3.13.15: 1.296 observaciones completas; diez familias previas pasan.
+  API 18/13 subtests y typing instalado correctos. El manifiesto cambia solo los
+  dos defaults deliberados de CodecOptions; 287 módulos de wheel verificados.
+- Los 302 testigos históricos siguen intactos. Recursos Docker propios: 27
+  ausentes. La fixture SQLite antigua nueva tiene procedencia 30365046 y hash;
+  no la genera el candidato. Costes ABBA diagnósticos, sin cierre de presupuesto.
+
+Sigue la unidad 5 de positivos/respuestas: 24 nodos admission_options y dos
+pruebas de batching obligatorios, con testigo físico antes de corregir sus
+expectativas. Contextos D06, H53, decisión D07 y D05 siguen abiertos. El cambio
+de default está aceptado; no volver a aplazarlo ni reiniciar el censo cerrado.

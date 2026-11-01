@@ -10,6 +10,12 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Match PyMongo's UNSPECIFIED UUID default: reject native Python UUID input
+  unless STANDARD or a legacy representation is selected explicitly through
+  CodecOptions. Preserve stored binary subtypes across reads and SQLite reopen.
+- Omit absent fields from distinct values instead of synthesizing null; retain
+  explicit null and array values through the shared API/command consumer.
+
 - Match exact-type, single-pass codec dispatch across completed find, find_one
   and aggregation responses, including nested containers and cursor metadata.
   Preserve decoder effects, distinguish decoded None from cursor exhaustion,
