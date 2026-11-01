@@ -24,10 +24,10 @@ from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.bson_ordering import bson_engine_key, bson_equality_key
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.change_events import (
-    namespace_change_payloads,
     build_change_payload,
     captures_changes,
     committed_change_content,
+    namespace_change_payloads,
     post_image_enabled,
 )
 from mongoeco.core.codec import DocumentCodec
@@ -74,6 +74,7 @@ from mongoeco.core.query_plan import (
     QueryNode,
     ensure_query_plan,
 )
+from mongoeco.core.runtime_metadata import _RuntimeReadDocument
 from mongoeco.core.search import (
     MaterializedSearchDocument,
     SearchVectorQuery,
@@ -98,7 +99,6 @@ from mongoeco.core.search_models import (
 )
 from mongoeco.core.server_errors import server_error
 from mongoeco.core.sorting import sort_documents
-from mongoeco.core.runtime_metadata import _RuntimeReadDocument
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
 from mongoeco.engines._memory_collection import MemoryCollection, MemoryIndexMap
@@ -121,6 +121,7 @@ from mongoeco.engines._shared_namespace_admin import (
     namespace_collection_names,
     namespace_collection_options,
     namespace_database_names,
+    namespace_exists,
 )
 from mongoeco.engines._shared_search_admin import (
     build_search_index_documents,
@@ -169,10 +170,18 @@ from mongoeco.engines.snapshots import (
     _ImmediateOwnedReadSnapshot,
 )
 from mongoeco.engines.virtual_indexes import (
+    array_paths_for_index_field,
+    collated_id_conflict,
+    compound_multikey_array_paths,
     describe_virtual_index_usage,
     document_in_virtual_index,
+    existing_index_for_definition,
     normalize_partial_filter_expression,
     query_can_use_index,
+    unique_index_values,
+    validate_index_definition,
+    validate_index_document,
+    values_at_index_path,
 )
 from mongoeco.errors import (
     CollectionInvalid,
@@ -183,7 +192,6 @@ from mongoeco.errors import (
 from mongoeco.session import ClientSession, EngineTransactionContext
 from mongoeco.types import (
     CollationDocument,
-    DBRef,
     DeleteResult,
     Document,
     DocumentId,
@@ -2608,11 +2616,14 @@ class MemoryEngine(AsyncStorageEngine):
             )
             raise
 
-    def _namespace_exists_locked(self, db_name: str, coll_name: str) -> bool:
-        return (
-            coll_name in self._collections.get(db_name, set())
-            or coll_name in self._storage.get(db_name, {})
-            or coll_name in self._indexes.get(db_name, {})
+    def _namespace_exists_locked(
+        self, db_name: str, coll_name: str, *, context=None
+    ) -> bool:
+        return namespace_exists(
+            db_name, coll_name,
+            storage=self._storage_view(context), indexes=self._indexes_view(context),
+            search_indexes=self._search_indexes_view(context),
+            collections=self._collections_view(context),
         )
 
     def _collection_options_snapshot_locked(
@@ -2639,7 +2650,7 @@ class MemoryEngine(AsyncStorageEngine):
     def _index_value(self, document: Document, field: str) -> Any:
         values = QueryEngine.extract_values(document, field)
         if not values:
-            return None
+            return self._index_equality_key(None)
 
         primary = values[0]
         return self._index_equality_key(primary)
@@ -2661,167 +2672,30 @@ class MemoryEngine(AsyncStorageEngine):
 
         values = QueryEngine.extract_values(document, fields[0])
         if not values:
-            return {(None,)}
-        return {(self._index_equality_key(value),) for value in values}
+            return {(self._index_equality_key(None),)}
+        return {
+            (self._index_equality_key(value),) for value in values
+        } | self._unique_index_keys(document, fields)
 
-    @staticmethod
-    def _array_paths_for_index_field(
-        document: Document,
-        field: str,
-    ) -> set[str]:
-        array_paths: set[str] = set()
-        parts = field.split(".")
+    _array_paths_for_index_field = staticmethod(array_paths_for_index_field)
 
-        def collect(value: Any, position: int, path: str) -> None:
-            if isinstance(value, DBRef):
-                value = value.as_document()
-            if isinstance(value, list):
-                if position == len(parts):
-                    array_paths.add(path)
-                    return
-                part = parts[position]
-                if part.isdigit():
-                    item_index = int(part)
-                    if item_index < len(value):
-                        next_path = f"{path}.{part}" if path else part
-                        collect(value[item_index], position + 1, next_path)
-                    return
-                array_paths.add(path)
-                for item in value:
-                    collect(item, position, path)
-                return
-            if position == len(parts) or not isinstance(value, dict):
-                return
-            part = parts[position]
-            if part not in value:
-                return
-            next_path = f"{path}.{part}" if path else part
-            collect(value[part], position + 1, next_path)
+    _compound_multikey_array_paths = staticmethod(compound_multikey_array_paths)
 
-        collect(document, 0, "")
-        return array_paths
+    _values_at_index_path = staticmethod(values_at_index_path)
 
-    def _compound_multikey_array_paths(
-        self,
-        document: Document,
-        fields: list[str],
-    ) -> set[str]:
-        source_paths: set[str] = set()
-        for field in fields:
-            array_paths = self._array_paths_for_index_field(document, field)
-            if array_paths:
-                source_paths.add(
-                    min(array_paths, key=lambda path: len(path.split("."))),
-                )
-        return source_paths
-
-    @staticmethod
-    def _values_at_index_path(document: Document, path: str) -> list[Any]:
-        values: list[Any] = [document]
-        for part in path.split("."):
-            next_values: list[Any] = []
-            for value in values:
-                if isinstance(value, DBRef):
-                    value = value.as_document()
-                if isinstance(value, list):
-                    if part.isdigit():
-                        item_index = int(part)
-                        if item_index < len(value):
-                            next_values.append(value[item_index])
-                    else:
-                        for item in value:
-                            if isinstance(item, DBRef):
-                                item = item.as_document()
-                            if isinstance(item, dict) and part in item:
-                                next_values.append(item[part])
-                elif isinstance(value, dict) and part in value:
-                    next_values.append(value[part])
-            values = next_values
-        return values
-
-    def _unique_index_values(
-        self,
-        document: Document,
-        fields: list[str],
-    ) -> list[tuple[Any, ...]]:
-        if len(fields) == 1:
-            values = QueryEngine.extract_values(document, fields[0])
-            return [(value,) for value in values or [None]]
-
-        array_source_paths = self._compound_multikey_array_paths(
-            document,
-            fields,
-        )
-        if len(array_source_paths) == 1:
-            array_path = next(iter(array_source_paths))
-            array_values = [
-                value
-                for value in self._values_at_index_path(document, array_path)
-                if isinstance(value, list)
-            ]
-            if array_values:
-                keys: list[tuple[Any, ...]] = []
-                for array_value in array_values:
-                    for element in array_value:
-                        candidates_per_field: list[list[Any]] = []
-                        for field in fields:
-                            if field == array_path:
-                                candidates_per_field.append([element])
-                            elif field.startswith(f"{array_path}."):
-                                suffix = field.removeprefix(f"{array_path}.")
-                                candidates_per_field.append(
-                                    QueryEngine.extract_values(element, suffix)
-                                    or [None],
-                                )
-                            else:
-                                candidates_per_field.append(
-                                    QueryEngine.extract_values(document, field)
-                                    or [None],
-                                )
-                        element_keys: list[tuple[Any, ...]] = [()]
-                        for candidates in candidates_per_field:
-                            element_keys = [
-                                (*key, candidate)
-                                for key in element_keys
-                                for candidate in candidates
-                            ]
-                        keys.extend(element_keys)
-                return keys
-
-        keys: list[tuple[Any, ...]] = [()]
-        for field in fields:
-            keys = [
-                (*key, value)
-                for key in keys
-                for value in (QueryEngine.extract_values(document, field) or [None])
-            ]
-        return keys
+    _unique_index_values = staticmethod(unique_index_values)
 
     def _unique_index_keys(
         self,
         document: Document,
         fields: list[str],
     ) -> set[tuple[Any, ...]]:
-        if len(fields) == 1:
-            return self._index_keys(document, fields)
         return {
             tuple(self._index_equality_key(value) for value in key)
             for key in self._unique_index_values(document, fields)
         }
 
-    def _validate_compound_multikey_shape(
-        self,
-        document: Document,
-        index: EngineIndexRecord,
-    ) -> None:
-        fields = index["fields"]
-        if len(fields) < 2:
-            return
-
-        if len(self._compound_multikey_array_paths(document, fields)) > 1:
-            raise OperationFailure(
-                "compound indexes do not support more than one array field",
-            )
+    _validate_compound_multikey_shape = staticmethod(validate_index_document)
 
     def _unique_index_conflict(
         self,
@@ -2887,6 +2761,7 @@ class MemoryEngine(AsyncStorageEngine):
         index_data_view: dict | None = None,
         check_id_storage: bool = False,
         scan_payload_id: bool = False,
+        collection_options: Document | None = None,
     ) -> None:
         indexes = (
             (self._indexes if indexes_view is None else indexes_view)
@@ -2901,6 +2776,20 @@ class MemoryEngine(AsyncStorageEngine):
         normalized_exclude = exclude_storage_key
         if exclude_storage_key is not None and exclude_storage_key not in coll:
             normalized_exclude = self._storage_key(exclude_storage_key)
+        options = (
+            self._collection_options_snapshot_locked(db_name, coll_name)
+            if collection_options is None else collection_options
+        )
+        id_index = collated_id_conflict(
+            candidate,
+            ((key, self._borrow_storage_document(data)) for key, data in coll.items()),
+            options, exclude=normalized_exclude,
+        )
+        if id_index is not None:
+            message = "Duplicate _id for collection collation"
+            raise self._unique_key_error(
+                message, f"{db_name}.{coll_name}", candidate, index=id_index,
+            )
         if check_id_storage and "_id" in candidate:
             candidate_id_storage_key = self._storage_key(candidate["_id"])
             if (
@@ -2958,8 +2847,12 @@ class MemoryEngine(AsyncStorageEngine):
                     matches = index_map.get(candidate_key)
                     if matches is None:
                         continue
-                    if normalized_exclude is None or any(
-                        m != normalized_exclude for m in matches
+                    if any(
+                        key != normalized_exclude
+                        and candidate_key in self._unique_index_keys(
+                            self._borrow_storage_document(coll[key]), fields
+                        )
+                        for key in matches
                     ):
                         raise self._unique_key_error(
                             f"Duplicate key for unique index '{index['name']}': "
@@ -3301,6 +3194,10 @@ class MemoryEngine(AsyncStorageEngine):
                             dialect=effective_dialect,
                         )
                 for document in documents:
+                    for index in indexes_view.get(db_name, {}).get(coll_name, []):
+                        if document_in_virtual_index(document, index):
+                            validate_index_document(document, index)
+                for document in documents:
                     doc_id = document.get("_id")
                     storage_key = self._storage_key(doc_id)
                     original_document = None
@@ -3344,6 +3241,7 @@ class MemoryEngine(AsyncStorageEngine):
                             index_data_view=index_data_view,
                             check_id_storage=not semantic_id,
                             scan_payload_id=len(documents) == 1,
+                            collection_options=collection_options,
                         )
                     except DuplicateKeyError as error:
                         if overwrite or len(documents) == 1:
@@ -3579,6 +3477,7 @@ class MemoryEngine(AsyncStorageEngine):
                 index_data_view=index_data_view,
                 check_id_storage=True,
                 scan_payload_id=True,
+                collection_options=collection_options,
             )
 
             with self._document_state_rollback_locked(
@@ -4173,6 +4072,7 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     check_id_storage=True,
                     scan_payload_id=False,
+                    collection_options=collection_options,
                 )
                 with self._document_state_rollback_locked(
                     db_name,
@@ -4330,6 +4230,7 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     check_id_storage=True,
                     scan_payload_id=False,
+                    collection_options=collection_options,
                 )
                 self._invalidate_search_runtime_cache(db_name, coll_name)
                 self._set_storage_document_locked(
@@ -4701,28 +4602,10 @@ class MemoryEngine(AsyncStorageEngine):
             )
         except ValueError as exc:
             raise OperationFailure(str(exc)) from exc
+        validate_index_definition(index_definition)
         fields = index_fields(normalized_keys)
         special_directions = special_index_directions(normalized_keys)
         deadline = operation_deadline(max_time_ms)
-        if expire_after_seconds is not None:
-            if (
-                not isinstance(expire_after_seconds, int)
-                or isinstance(expire_after_seconds, bool)
-                or expire_after_seconds < 0
-            ):
-                raise TypeError(
-                    "expire_after_seconds must be a non-negative int or None",
-                )
-            if len(fields) != 1:
-                raise OperationFailure(
-                    "TTL indexes require a single-field key pattern",
-                )
-            if fields[0] == "_id":
-                raise OperationFailure("TTL indexes cannot be created on _id")
-        if not isinstance(hidden, bool):
-            raise TypeError("hidden must be a bool")
-        if collation is not None and not isinstance(collation, dict):
-            raise TypeError("collation must be a dict or None")
         if special_directions:
             if not all(direction == "text" for direction in special_directions):
                 if len(normalized_keys) != 1:
@@ -4752,6 +4635,8 @@ class MemoryEngine(AsyncStorageEngine):
                 raise OperationFailure(
                     "Conflicting index definition for '_id_'",
                 )
+            if not self._namespace_exists_locked(db_name, coll_name, context=context):
+                await self.create_collection(db_name, coll_name, context=context)
             return "_id_"
         if index_name == "_id_":
             raise OperationFailure("Conflicting index definition for '_id_'")
@@ -4783,55 +4668,9 @@ class MemoryEngine(AsyncStorageEngine):
                         collection_options=option_store,
                     )
 
-                for index in coll_indexes:
-                    enforce_deadline(deadline)
-                    if index["name"] == index_name:
-                        if (
-                            index["key"] != normalized_keys
-                            or index["unique"] != unique
-                            or index.get("sparse") != sparse
-                            or index.get("hidden") != hidden
-                            or index.get("collation") != collation
-                            or index.get("partial_filter_expression")
-                            != partial_filter_expression
-                            or index.get("expire_after_seconds") != expire_after_seconds
-                            or index.get("weights") != index_definition.weights
-                            or index.get("default_language")
-                            != index_definition.default_language
-                            or index.get("language_override")
-                            != index_definition.language_override
-                            or index.get("min_value") != index_definition.min_value
-                            or index.get("max_value") != index_definition.max_value
-                            or index.get("bucket_size") != index_definition.bucket_size
-                        ):
-                            raise OperationFailure(
-                                f"Conflicting index definition for '{index_name}'",
-                                code=86,
-                                details={"codeName": "IndexKeySpecsConflict"},
-                            )
-                        return index_name
-                    if index["key"] == normalized_keys:
-                        if (
-                            index["unique"] != unique
-                            or index.get("sparse") != sparse
-                            or index.get("hidden") != hidden
-                            or index.get("collation") != collation
-                            or index.get("partial_filter_expression")
-                            != partial_filter_expression
-                            or index.get("expire_after_seconds") != expire_after_seconds
-                            or index.get("weights") != index_definition.weights
-                            or index.get("default_language")
-                            != index_definition.default_language
-                            or index.get("language_override")
-                            != index_definition.language_override
-                            or index.get("min_value") != index_definition.min_value
-                            or index.get("max_value") != index_definition.max_value
-                            or index.get("bucket_size") != index_definition.bucket_size
-                        ):
-                            raise OperationFailure(
-                                f"Conflicting index definition for key pattern '{normalized_keys!r}'",
-                            )
-                        continue
+                existing_name = existing_index_for_definition(index_definition, coll_indexes)
+                if existing_name is not None:
+                    return existing_name
 
                 new_index = EngineIndexRecord(
                     name=index_name,
@@ -4860,7 +4699,9 @@ class MemoryEngine(AsyncStorageEngine):
                     document = self._borrow_storage_document(data)
                     if not document_in_virtual_index(document, new_index):
                         continue
-                    self._validate_compound_multikey_shape(document, new_index)
+                    self._validate_compound_multikey_shape(
+                        document, new_index, building=True
+                    )
                     if unique:
                         for existing_document in seen_documents:
                             duplicate_key = self._unique_index_conflict(
@@ -4923,6 +4764,8 @@ class MemoryEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> list[IndexDocument]:
         async with self._get_lock(db_name, coll_name):
+            if not self._namespace_exists_locked(db_name, coll_name, context=context):
+                return []
             indexes = self._indexes_view(context).get(db_name, {}).get(coll_name, [])
         result = [default_id_index_definition().to_list_document()]
         result.extend(
@@ -4939,6 +4782,8 @@ class MemoryEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> IndexInformation:
         async with self._get_lock(db_name, coll_name):
+            if not self._namespace_exists_locked(db_name, coll_name, context=context):
+                return {}
             indexes = deepcopy(
                 self._indexes_view(context).get(db_name, {}).get(coll_name, []),
             )

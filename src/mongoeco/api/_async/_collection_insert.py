@@ -18,6 +18,7 @@ from mongoeco.core.identity import (
     is_valid_root_document_id,
 )
 from mongoeco.core.operation_context import ChangePublicationPolicy
+from mongoeco.engines.virtual_indexes import INDEX_DOCUMENT_ERROR_CODES
 from mongoeco.errors import (
     BulkWriteError,
     DocumentValidationFailure,
@@ -127,7 +128,12 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
                 raise
             failed(offset, error)
             return
-        except DocumentValidationFailure as error:
+        except WriteError as error:
+            if (
+                not isinstance(error, DocumentValidationFailure)
+                and error.code not in INDEX_DOCUMENT_ERROR_CODES
+            ):
+                raise
             # The batch SPI validates before publishing anything. Divide only a
             # rejected batch, retaining block preparation for the successful path.
             # Each sub-batch still validates under the engine's write authority.

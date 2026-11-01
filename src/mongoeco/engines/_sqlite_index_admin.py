@@ -13,7 +13,9 @@ from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.sqlite_query import index_expressions_sql
 from mongoeco.engines.virtual_indexes import (
     document_in_virtual_index,
+    existing_index_for_definition,
     normalize_partial_filter_expression,
+    validate_index_definition,
 )
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.types import (
@@ -97,6 +99,7 @@ def create_index(
     min_value: float | None = None,
     max_value: float | None = None,
     bucket_size: float | None = None,
+    ensure_collection: Callable[[], None] | None = None,
 ) -> str:
     normalized_keys = normalize_index_keys(keys)
     partial_filter_expression = normalize_partial_filter_expression(
@@ -122,23 +125,9 @@ def create_index(
         )
     except ValueError as exc:
         raise OperationFailure(str(exc)) from exc
+    validate_index_definition(definition)
     fields = index_fields(normalized_keys)
     special_directions = special_index_directions(normalized_keys)
-    if expire_after_seconds is not None:
-        if (
-            not isinstance(expire_after_seconds, int)
-            or isinstance(expire_after_seconds, bool)
-            or expire_after_seconds < 0
-        ):
-            raise TypeError("expire_after_seconds must be a non-negative int or None")
-        if len(fields) != 1:
-            raise OperationFailure("TTL indexes require a single-field key pattern")
-        if fields[0] == "_id":
-            raise OperationFailure("TTL indexes cannot be created on _id")
-    if not isinstance(hidden, bool):
-        raise TypeError("hidden must be a bool")
-    if collation is not None and not isinstance(collation, dict):
-        raise TypeError("collation must be a dict or None")
     if special_directions:
         if not all(direction == "text" for direction in special_directions):
             if len(normalized_keys) != 1:
@@ -166,6 +155,8 @@ def create_index(
             or not unique
         ):
             raise OperationFailure("Conflicting index definition for '_id_'")
+        if ensure_collection is not None:
+            ensure_collection()
         return "_id_"
     if index_name == "_id_":
         raise OperationFailure("Conflicting index definition for '_id_'")
@@ -187,49 +178,9 @@ def create_index(
 
     enforce_deadline_fn(deadline)
     indexes = load_indexes(db_name, coll_name)
-    for index in indexes:
-        enforce_deadline_fn(deadline)
-        if index["name"] == index_name:
-            if (
-                index["key"] != normalized_keys
-                or index["unique"] != unique
-                or index.get("sparse") != sparse
-                or index.get("hidden") != hidden
-                or index.get("collation") != collation
-                or index.get("partial_filter_expression") != partial_filter_expression
-                or index.get("expire_after_seconds") != expire_after_seconds
-                or index.get("weights") != definition.weights
-                or index.get("default_language") != definition.default_language
-                or index.get("language_override") != definition.language_override
-                or index.get("min_value") != definition.min_value
-                or index.get("max_value") != definition.max_value
-                or index.get("bucket_size") != definition.bucket_size
-            ):
-                raise OperationFailure(
-                    f"Conflicting index definition for '{index_name}'",
-                    code=86,
-                    details={"codeName": "IndexKeySpecsConflict"},
-                )
-            return index_name
-        if index["key"] == normalized_keys:
-            if (
-                index["unique"] != unique
-                or index.get("sparse") != sparse
-                or index.get("hidden") != hidden
-                or index.get("collation") != collation
-                or index.get("partial_filter_expression") != partial_filter_expression
-                or index.get("expire_after_seconds") != expire_after_seconds
-                or index.get("weights") != definition.weights
-                or index.get("default_language") != definition.default_language
-                or index.get("language_override") != definition.language_override
-                or index.get("min_value") != definition.min_value
-                or index.get("max_value") != definition.max_value
-                or index.get("bucket_size") != definition.bucket_size
-            ):
-                raise OperationFailure(
-                    f"Conflicting index definition for key pattern '{normalized_keys!r}'"
-                )
-            continue
+    existing_name = existing_index_for_definition(definition, indexes)
+    if existing_name is not None:
+        return existing_name
 
     expressions = None
     if ordered_index:

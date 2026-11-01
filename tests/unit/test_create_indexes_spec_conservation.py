@@ -13,6 +13,7 @@ from mongoeco import MongoClient
 from mongoeco.api._async.database_commands import list_commands_document
 from mongoeco.api.admin_parsing import normalize_index_models_from_command
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.errors import OperationFailure
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -138,8 +139,13 @@ def test_each_field_rejects_invalid_sample(
     invalid: object,
     attribute: str,
 ) -> None:
-    with pytest.raises((TypeError, ValueError)):
-        normalize_index_models_from_command([_spec(field, keys, invalid)])
+    if field in {"name", "collation"}:
+        with pytest.raises(OperationFailure) as error:
+            normalize_index_models_from_command([_spec(field, keys, invalid)])
+        assert error.value.code == {"name": 67, "collation": 14}[field]
+    else:
+        with pytest.raises((TypeError, ValueError)):
+            normalize_index_models_from_command([_spec(field, keys, invalid)])
 
 
 def test_accepted_noop_fields_are_not_installed_index_guarantees() -> None:

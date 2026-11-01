@@ -138,6 +138,37 @@ def resolve_collection_reference(value: object, field_name: str) -> str:
     raise TypeError(f"{field_name} must be a collection name or collection object")
 
 
+def validate_index_request_options(index):
+    if "name" in index:
+        require_command_type(index["name"], "name", "string")
+        if not index["name"] or "\x00" in index["name"]:
+            message = "Index name must be non-empty and cannot contain a null byte"
+            raise server_error(message, code=67)
+        if index["name"] == "_id_" and index.get("key") != {"_id": 1}:
+            message = "The index name '_id_' is reserved for the _id index"
+            raise server_error(message, code=2)
+    builtin_id = index.get("key") == {"_id": 1}
+    if builtin_id:
+        for field in ("unique", "sparse", "hidden"):
+            if field in index and not (
+                isinstance(index[field], bool)
+                or matches_bson_type(index[field], "number")
+            ):
+                raise command_type_error(index[field], field, ("bool", "number"))
+    if builtin_id and any(
+        field in index
+        for field in (
+            "unique",
+            "sparse",
+            "hidden",
+            "partialFilterExpression",
+            "expireAfterSeconds",
+        )
+    ):
+        message = "Invalid option for an _id index specification"
+        raise server_error(message, code=197)
+
+
 def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
     if not isinstance(indexes, list):
         raise TypeError("indexes must be a non-empty list")
@@ -157,6 +188,7 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             raise OperationFailure(message)
         if "collation" in raw_index:
             require_command_type(raw_index["collation"], "collation", "object")
+        validate_index_request_options(raw_index)
 
         unsupported = set(raw_index) - CREATE_INDEXES_SPEC_FIELDS
         if unsupported:

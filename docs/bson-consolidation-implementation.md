@@ -2933,7 +2933,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F03 | Cerrado | 315 diferenciales/metadatos; 36 planes forzados y regresiones de consumidores. |
 | F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
 | F05 | Cerrado | 492 diferenciales/contexto/metadatos, 54 spill y fronteras focales. |
-| F06 | Pendiente | Integridad/validación de catálogo e índices. |
+| F06 | En curso | Runtime y diferenciales completos; falta actualizar los inventarios ligados al commit de código. |
 | F07 | Pendiente | Escrituras, identidad, campos, contadores y efectos. |
 | F08 | Pendiente | Sort/natural y acumuladores del inventario. |
 | F09 | Pendiente | Gramática/recursos, fechas y texto; tres subunidades. |
@@ -3049,3 +3049,23 @@ Reapertura, metadata no reescrita, planes hash y residual Search quedan dentro
 del replay focal; no se acredita ANN Atlas. Ratchet verde en 17 archivos Python.
 Se conservan los rojos intermedios corregidos y logs f05. Gates globales/coste
 quedan exclusivamente en F11; X01–X06 no se implementan.
+
+F06, candidato funcional: construcción y mantenimiento comparten extracción de
+claves unique, null/ausencia, arrays vacíos y correlación multikey; las claves de
+selección pueden sobreaproximar pero la colisión confirma la clave canónica.
+SQLite conserva claves físicas y formato; ante entradas escalares históricas
+incompletas verifica el payload. Las reglas de catálogo/hashed/paralelos se
+comparten entre motores; la fachada conserva la presencia de opciones _id,
+incluidos false explícitos, y aplica la diferencia hidden de 7 frente a 8/9.
+Insert_many reutiliza su partición de lotes rechazados para preservar prefijos,
+contadores y eventos, sin publicar candidatos rechazados.
+
+Las 197 observaciones anteriores permanecen idénticas en 7/8/9. Se capturan 229
+casos standalone y catorce flujos de eventos por replica set. El replay focal
+registra 1.352 pases y ocho rojos del único contrato hidden de 7; corregido,
+sus ocho superficies pasan. Hay 248 controles directos 8 verdes; 107 controles
+de consumidores/archivos previos, 27 reaperturas adicionales y 118 de modelos,
+comandos y gramática. Los eventos confirman exclusivamente escrituras aceptadas.
+El commit funcional precede a la actualización de las dos matrices CXP para que
+source_revision identifique bytes reales de código. F06 no se acepta aún: queda
+ese gate documental con sus tests; suites globales/coste siguen en F11.

@@ -3,11 +3,13 @@ from __future__ import annotations
 import re
 
 from copy import deepcopy
+from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core._filtering_support import query_field_values
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_scalars import _is_nan_numeric_value, unwrap_bson_numeric
-from mongoeco.core.bson_values import matches_bson_type
+from mongoeco.core.bson_values import document_mapping, matches_bson_type
 from mongoeco.core.collation import (
     CollationSpec,
     compare_with_collation,
@@ -15,6 +17,7 @@ from mongoeco.core.collation import (
     values_equal_with_collation,
 )
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.query_operators import DBREF_FIELDS
 from mongoeco.core.query_plan import (
     AndCondition,
     EqualsCondition,
@@ -33,7 +36,309 @@ from mongoeco.core.query_plan import (
     TypeCondition,
     compile_filter,
 )
-from mongoeco.types import Document, EngineIndexRecord, Filter, is_ordered_index_spec
+from mongoeco.core.server_errors import server_error
+from mongoeco.errors import WriteError
+from mongoeco.types import (
+    UNDEFINED,
+    DBRef,
+    Document,
+    EngineIndexRecord,
+    Filter,
+    is_ordered_index_spec,
+)
+
+
+HASHED_ARRAY_ERROR = 16766
+PARALLEL_ARRAY_ERROR = 171
+INDEX_DOCUMENT_ERROR_CODES = frozenset({HASHED_ARRAY_ERROR, PARALLEL_ARRAY_ERROR})
+
+
+def validate_index_definition(definition):
+    """Server invariants shared by catalog construction in both engines."""
+    if len(definition.keys) > 32:  # noqa: PLR2004 - server compound-key limit
+        message = "Too many fields in compound key"
+        raise server_error(message, code=13103)
+    for field, _direction in definition.keys:
+        parts = field.split(".")
+        if any(
+            not part or (
+                part.startswith("$")
+                and not (part == "$**" and position == len(parts) - 1)
+                and not (position > 0 and part in DBREF_FIELDS)
+            )
+            for position, part in enumerate(parts)
+        ):
+            message = f"Invalid index field path: {field}"
+            raise server_error(message, code=67)
+    if definition.keys == [("_id", 1)] and (
+        definition.sparse
+        or definition.hidden
+        or definition.partial_filter_expression is not None
+        or definition.expire_after_seconds is not None
+    ):
+        message = "Invalid option for an _id index specification"
+        raise server_error(message, code=197)
+    if definition.expire_after_seconds is not None and len(definition.keys) != 1:
+        message = "TTL indexes are single-field indexes"
+        raise server_error(message, code=67)
+
+
+def validate_index_document(document, index, *, building=False):
+    message = None
+    code = None
+    for field, direction in index["key"]:
+        if direction != "hashed":
+            continue
+        value = document
+        for part in field.split("."):
+            if isinstance(value, list):
+                break
+            mapping = document_mapping(value)
+            value = MISSING if mapping is None else mapping.get(part, MISSING)
+        if isinstance(value, list):
+            message = "Hashed indexes do not currently support array values"
+            code = HASHED_ARRAY_ERROR
+            break
+    if (
+        message is None
+        and len(compound_multikey_array_paths(document, index["fields"])) > 1
+    ):
+        message = "Cannot index parallel arrays"
+        code = PARALLEL_ARRAY_ERROR
+    if message is not None:
+        if building:
+            raise server_error(message, code=code)
+        raise WriteError(message, code=code)
+
+
+def _identity_collation(value):
+    collation = normalize_collation(value)
+    return None if collation is None or collation.locale == "simple" else collation
+
+
+def collated_id_conflict(document, documents, options, *, exclude=None):
+    collation = _identity_collation(options.get("collation"))
+    if collation is None or "_id" not in document:
+        return None
+    try:
+        for storage_key, existing in documents:
+            if (
+                storage_key != exclude
+                and "_id" in existing
+                and values_equal_with_collation(
+                    document["_id"], existing["_id"], collation=collation
+                )
+            ):
+                return {
+                    "name": "_id_",
+                    "key": [("_id", 1)],
+                    "fields": ["_id"],
+                    "collation": collation.to_document(),
+                }
+    finally:
+        close = getattr(documents, "close", None)
+        if callable(close):
+            close()
+    return None
+
+
+def existing_index_for_definition(definition, indexes):
+    """Return an identical named index, or reject conflicting catalog identity."""
+    collation = _identity_collation(definition.collation)
+    options = (
+        "hidden",
+        "expire_after_seconds",
+        "weights",
+        "default_language",
+        "language_override",
+        "min_value",
+        "max_value",
+        "bucket_size",
+    )
+    for index in indexes:
+        existing = index.to_definition()
+        same_identity = (
+            existing.keys == definition.keys
+            and existing.unique == definition.unique
+            and existing.sparse == definition.sparse
+            and _identity_collation(existing.collation) == collation
+            and values_equal_with_collation(
+                existing.partial_filter_expression,
+                definition.partial_filter_expression,
+                collation=collation,
+            )
+        )
+        if existing.name == definition.name:
+            if not same_identity:
+                message = "Index name already has a different key specification"
+                raise server_error(message, code=86)
+            if any(
+                getattr(existing, field) != getattr(definition, field)
+                for field in options
+            ):
+                message = "Index already exists with different options"
+                raise server_error(message, code=85)
+            return existing.name
+        if same_identity or (
+            any(direction == "text" for _, direction in existing.keys)
+            and any(direction == "text" for _, direction in definition.keys)
+        ):
+            message = "Index already exists with a different name"
+            raise server_error(message, code=85)
+    return None
+
+
+def index_field_values(document, field):
+    """Stored index keys expand terminal arrays once, independently of MQL matching."""
+    if isinstance(document, list):
+        document = {str(index): value for index, value in enumerate(document)}
+    values = []
+    for value, _traverse in query_field_values(document, field):
+        if value is MISSING:
+            values.append(None)
+        elif isinstance(value, list):
+            values.extend(value or [UNDEFINED])
+        else:
+            values.append(value)
+    return values or [None]
+
+
+def array_paths_for_index_field(
+    document: Document,
+    field: str,
+) -> set[str]:
+    array_paths: set[str] = set()
+    parts = field.split(".")
+
+    def collect(value: Any, position: int, path: str) -> None:
+        if isinstance(value, DBRef):
+            value = value.as_document()
+        if isinstance(value, list):
+            if position == len(parts):
+                array_paths.add(path)
+                return
+            part = parts[position]
+            if part.isdigit():
+                item_index = int(part)
+                if item_index < len(value):
+                    next_path = f"{path}.{part}" if path else part
+                    collect(value[item_index], position + 1, next_path)
+                return
+            array_paths.add(path)
+            for item in value:
+                collect(item, position, path)
+            return
+        if position == len(parts) or not isinstance(value, dict):
+            return
+        part = parts[position]
+        if part not in value:
+            return
+        next_path = f"{path}.{part}" if path else part
+        collect(value[part], position + 1, next_path)
+
+    collect(document, 0, "")
+    return array_paths
+
+
+def compound_multikey_array_paths(
+    document: Document,
+    fields: list[str],
+) -> set[str]:
+    source_paths: set[str] = set()
+    for field in fields:
+        array_paths = array_paths_for_index_field(document, field)
+        if array_paths:
+            source_paths.add(
+                min(array_paths, key=lambda path: len(path.split("."))),
+            )
+    return source_paths
+
+
+def values_at_index_path(document: Document, path: str) -> list[Any]:
+    values: list[Any] = [document]
+    for part in path.split("."):
+        next_values: list[Any] = []
+        for source_value in values:
+            value = (
+                source_value.as_document()
+                if isinstance(source_value, DBRef)
+                else source_value
+            )
+            if isinstance(value, list):
+                if part.isdigit():
+                    item_index = int(part)
+                    if item_index < len(value):
+                        next_values.append(value[item_index])
+                else:
+                    for source_item in value:
+                        item = (
+                            source_item.as_document()
+                            if isinstance(source_item, DBRef)
+                            else source_item
+                        )
+                        if isinstance(item, dict) and part in item:
+                            next_values.append(item[part])
+            elif isinstance(value, dict) and part in value:
+                next_values.append(value[part])
+        values = next_values
+    return values
+
+
+def unique_index_values(
+    document: Document,
+    fields: list[str],
+) -> list[tuple[Any, ...]]:
+    if len(fields) == 1:
+        values = index_field_values(document, fields[0])
+        return [(value,) for value in values or [None]]
+
+    array_source_paths = compound_multikey_array_paths(
+        document,
+        fields,
+    )
+    if len(array_source_paths) == 1:
+        array_path = next(iter(array_source_paths))
+        array_values = [
+            value
+            for value in values_at_index_path(document, array_path)
+            if isinstance(value, list)
+        ]
+        if array_values:
+            keys: list[tuple[Any, ...]] = []
+            for array_value in array_values:
+                for element in array_value:
+                    candidates_per_field: list[list[Any]] = []
+                    for field in fields:
+                        if field == array_path:
+                            candidates_per_field.append([element])
+                        elif field.startswith(f"{array_path}."):
+                            suffix = field.removeprefix(f"{array_path}.")
+                            candidates_per_field.append(
+                                index_field_values(element, suffix) or [None],
+                            )
+                        else:
+                            candidates_per_field.append(
+                                index_field_values(document, field) or [None],
+                            )
+                    element_keys: list[tuple[Any, ...]] = [()]
+                    for candidates in candidates_per_field:
+                        element_keys = [
+                            (*key, candidate)
+                            for key in element_keys
+                            for candidate in candidates
+                        ]
+                    keys.extend(element_keys)
+            if keys:
+                return keys
+
+    keys: list[tuple[Any, ...]] = [()]
+    for field in fields:
+        keys = [
+            (*key, value)
+            for key in keys
+            for value in (index_field_values(document, field) or [None])
+        ]
+    return keys
 
 
 def normalize_partial_filter_expression(
@@ -50,7 +355,9 @@ def normalize_partial_filter_expression(
 
 
 def is_virtual_index(index: EngineIndexRecord | dict[str, object]) -> bool:
-    return bool(_index_sparse(index) or _index_partial_filter_expression(index) is not None)
+    return bool(
+        _index_sparse(index) or _index_partial_filter_expression(index) is not None
+    )
 
 
 def document_in_virtual_index(

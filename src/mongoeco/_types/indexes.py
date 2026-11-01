@@ -435,6 +435,7 @@ def default_id_index_document() -> IndexDocument:
 @dataclass(frozen=True, slots=True)
 class IndexModel:
     keys: IndexKeySpec
+    _explicit_options: frozenset[str]
     name: str | None = None
     unique: bool = False
     sparse: bool = False
@@ -452,6 +453,7 @@ class IndexModel:
     bucket_size: float | int | None = None
 
     def __init__(self, keys: object, **kwargs: Any):
+        explicit_options = frozenset(kwargs)
         normalized = normalize_index_keys(keys)
         name = kwargs.pop("name", None)
         unique = kwargs.pop("unique", False)
@@ -550,6 +552,7 @@ class IndexModel:
             unsupported = ", ".join(sorted(kwargs))
             raise TypeError(f"unsupported IndexModel options: {unsupported}")
         object.__setattr__(self, "keys", normalized)
+        object.__setattr__(self, "_explicit_options", explicit_options)
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
@@ -599,6 +602,9 @@ class IndexModel:
         document = self.definition.to_model_document()
         if self.background:
             document["background"] = True
+        for name in ("unique", "sparse", "hidden", "background"):
+            if name in self._explicit_options:
+                document[name] = getattr(self, name)
         return document
 
 

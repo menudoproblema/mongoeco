@@ -186,19 +186,23 @@ def test_builtin_id_engine_contract_is_characterized_separately(dialect, backend
     engine = MemoryEngine() if backend == "memory" else SQLiteEngine()
     with MongoClient(engine, mongodb_dialect=dialect) as client:
         records = client.test.records
-        listed = list(records.list_indexes())
-        assert listed[0]["name"] == "_id_"
-        assert listed[0]["unique"] is True
-        # Native omits unique and lists nothing before namespace creation.
+        assert list(records.list_indexes()) == []
         native = FIXTURES[dialect]["index_id_unique_true_fresh"]
         assert native["before"] == {"ok": True, "result": []}
-        invalid_index_specification_code = 197
-        assert native["calls"][0]["code"] == invalid_index_specification_code
-        assert records.create_index("_id", unique=True, name="_id_") == "_id_"
-        if dialect == "9.0":
-            assert (
-                records.create_index(
-                    "_id", unique=True, name="_id_", collation={"locale": "simple"}
+        with pytest.raises(OperationFailure) as error:
+            records.create_index("_id", unique=True, name="_id_")
+        assert error.value.code == native["calls"][0]["code"]
+        assert list(records.list_indexes()) == []
+        # Intrinsic uniqueness belongs to the immutable SPI definition; it is
+        # not an explicitly accepted unique option in a public _id request.
+        assert (
+            client._runner.run(
+                engine.create_index(
+                    "test", "records", [("_id", 1)], name="_id_", unique=True
                 )
-                == "_id_"
             )
+            == "_id_"
+        )
+        raw = client._runner.run(engine.list_indexes("test", "records"))
+        assert raw[0]["name"] == "_id_"
+        assert raw[0]["unique"] is True

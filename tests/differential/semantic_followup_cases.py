@@ -6,9 +6,10 @@ from copy import deepcopy
 from functools import partial
 
 from bson import BSON, Binary, Decimal128, Int64, ObjectId, Regex, Timestamp
-from pymongo import ReplaceOne
+from pymongo import IndexModel, InsertOne, ReplaceOne, UpdateOne
 
 from tests.differential.semantic_bson_grammar_context_cases import _aggregate
+from tests.differential.semantic_update_event_cases import _drain
 from tests.support_write_parity import BSONObservation, public_error
 
 
@@ -230,7 +231,9 @@ def index_rule(collection, *, keys, options, populated):
     collection.drop()
     if populated:
         collection.insert_one({"_id": 1, "a": 1, "b": 2})
-    result = outcome(lambda: collection.create_index(keys, **options))
+    result = outcome(
+        lambda keys=keys, options=options: collection.create_index(keys, **options)
+    )
     result["indexes"] = sorted(collection.index_information())
     result["ids"] = [r["_id"] for r in collection.find({}, sort=[("_id", 1)])]
     return result
@@ -915,6 +918,12 @@ PIPELINES = {
     "f09_documents_collection": ([{"$documents": [{"x": 1}]}], [{"_id": 1}]),
 }
 INDEX_RULES = [
+    ("dbref_nested", "a.$id", {}),
+    ("dbref_top", "$id", {}),
+    ("name_empty", "a", {"name": ""}),
+    ("name_null", "a", {"name": None}),
+    ("name_nul", "a", {"name": "n\x00x"}),
+    ("name_id", "a", {"name": "_id_"}),
     ("trailing", "a.", {}),
     ("dollar", "$a", {}),
     ("fields33", [(f"a{i}", 1) for i in range(33)], {}),
@@ -1090,6 +1099,314 @@ def index_conflict(collection, *, kind):
     return result
 
 
+def index_catalog_matrix(collection):
+    result = {}
+    for label, first, second in [
+        ("same_name", {}, {"name": "first"}),
+        ("new_name", {}, {"name": "second"}),
+        ("unique", {}, {"name": "second", "unique": True}),
+        ("nonunique", {"unique": True}, {"name": "second"}),
+        ("sparse", {}, {"name": "second", "sparse": True}),
+        (
+            "unique_sparse",
+            {"unique": True},
+            {"name": "second", "unique": True, "sparse": True},
+        ),
+        (
+            "partial",
+            {"partialFilterExpression": {"p": 1}},
+            {"name": "second", "partialFilterExpression": {"p": 2}},
+        ),
+        (
+            "collation",
+            {},
+            {"name": "second", "collation": {"locale": "en", "strength": 2}},
+        ),
+        (
+            "equivalent_collation",
+            {"collation": {"locale": "en"}},
+            {"name": "second", "collation": {"locale": "en", "strength": 3}},
+        ),
+        ("hidden", {}, {"name": "second", "hidden": True}),
+        ("same_name_unique", {}, {"name": "first", "unique": True}),
+        ("same_name_hidden", {}, {"name": "first", "hidden": True}),
+        (
+            "same_name_ttl",
+            {"expireAfterSeconds": 1},
+            {"name": "first", "expireAfterSeconds": 2},
+        ),
+        ("same_name_sparse", {}, {"name": "first", "sparse": True}),
+        (
+            "same_name_partial",
+            {"partialFilterExpression": {"p": 1}},
+            {"name": "first", "partialFilterExpression": {"p": 2}},
+        ),
+        (
+            "same_name_collation",
+            {},
+            {"name": "first", "collation": {"locale": "en", "strength": 2}},
+        ),
+        ("same_name_key", {}, {"name": "first", "keys": "b"}),
+        ("ttl", {"expireAfterSeconds": 1}, {"name": "second", "expireAfterSeconds": 2}),
+    ]:
+        collection.drop()
+        collection.create_index("a", name="first", **first)
+        options = dict(second)
+        keys = options.pop("keys", "a")
+        entry = outcome(
+            lambda keys=keys, options=options: collection.create_index(keys, **options)
+        )
+        entry["indexes"] = sorted(collection.index_information())
+        result[label] = entry
+    return result
+
+
+def index_id_options(collection):
+    result = {}
+    for label, options in [
+        ("default", {}),
+        ("name", {"name": "custom"}),
+        ("unique_false", {"unique": False}),
+        ("unique_true", {"unique": True}),
+        ("unique_none", {"unique": None}),
+        ("unique_number", {"unique": 1}),
+        ("unique_string", {"unique": "true"}),
+        ("named_unique_true", {"name": "_id_", "unique": True}),
+        ("named_unique_false", {"name": "_id_", "unique": False}),
+        ("hidden", {"hidden": True}),
+        ("hidden_false", {"hidden": False}),
+        ("sparse_false", {"sparse": False}),
+        ("partial", {"partialFilterExpression": {"p": 1}}),
+        ("simple", {"collation": {"locale": "simple"}}),
+        ("en", {"collation": {"locale": "en", "strength": 2}}),
+    ]:
+        collection.drop()
+        result[label] = outcome(
+            lambda options=options: collection.create_index("_id", **options)
+        )
+        result[label]["indexes"] = sorted(collection.index_information())
+    collection.drop()
+    collection.database.create_collection(
+        collection.name, collation={"locale": "en", "strength": 2}
+    )
+    result["inherited"] = outcome(lambda: collection.create_index("_id"))
+    collection.insert_one({"_id": "A"})
+    result["collated_id"] = outcome(
+        lambda: collection.insert_one({"_id": "a"}).inserted_id
+    )
+    return result
+
+
+def index_id_models(collection, *, model_factory=IndexModel):
+    result = {}
+    for label, options in [
+        ("omitted", {}),
+        ("unique_true", {"unique": True}),
+        ("unique_false", {"unique": False}),
+        ("sparse_false", {"sparse": False}),
+        ("hidden_false", {"hidden": False}),
+    ]:
+        collection.drop()
+        result[label] = outcome(
+            lambda options=options: collection.create_indexes(
+                [model_factory("_id", **options)]
+            )
+        )
+        result[label]["indexes"] = sorted(collection.index_information())
+    return result
+
+
+def index_names_raw(collection):
+    result = {}
+    for label, name in [
+        ("null", None),
+        ("empty", ""),
+        ("nul", "n\x00x"),
+        ("reserved", "_id_"),
+        ("number", 1),
+        ("bool", False),
+    ]:
+        collection.drop()
+        result[label] = outcome(
+            lambda name=name: collection.database.command(
+                {
+                    "createIndexes": collection.name,
+                    "indexes": [{"key": {"a": 1}, "name": name}],
+                }
+            )["numIndexesAfter"]
+        )
+        result[label]["indexes"] = sorted(collection.index_information())
+    return result
+
+
+def unique_index_arrays(collection):
+    pairs = [
+        ("missing_null", "a", {}, {"a": None}),
+        ("empty_null", "a", {"a": []}, {"a": None}),
+        ("empty_missing", "a", {"a": []}, {}),
+        ("empty_empty", "a", {"a": []}, {"a": []}),
+        ("flat_nested", "a", {"a": [1, 2]}, {"a": [[1, 2]]}),
+        ("nested_nested", "a", {"a": [[1, 2]]}, {"a": [[1, 2]]}),
+        ("dot_empty_missing", "a.b", {"a": []}, {}),
+        ("dot_scalar_missing", "a.b", {"a": [1, 2]}, {}),
+        ("dot_leaf_null", "a.b", {"a": [{"b": []}]}, {"a": {"b": None}}),
+        ("repeated_elements", "a", {"a": [1, 1]}, {"a": [2]}),
+        ("numeric_scalar", "a", {"a": 1}, {"a": 1.0}),
+        ("numeric_array", "a", {"a": [1]}, {"a": [1.0]}),
+        ("numeric_nested", "a", {"a": [[1]]}, {"a": [[1.0]]}),
+        ("bool_number", "a", {"a": [True]}, {"a": [1]}),
+        (
+            "correlated",
+            [("a.b", 1), ("a.c", 1)],
+            {"a": [{"b": 1, "c": 2}, {"b": 2, "c": 3}]},
+            {"a": [{"b": 1, "c": 3}]},
+        ),
+        ("compound_empty", [("a.b", 1), ("a.c", 1)], {"a": []}, {}),
+    ]
+    result = {}
+    for label, keys, first, second in pairs:
+        for profile in ["plain", "sparse", "partial"]:
+            collection.drop()
+            options = {"sparse": True} if profile == "sparse" else {}
+            if profile == "partial":
+                options["partialFilterExpression"] = {"active": True}
+            collection.create_index(keys, unique=True, **options)
+            collection.insert_one({"_id": 1, "active": True, **first})
+            entry = outcome(
+                lambda second=second: (
+                    collection.insert_one(
+                        {"_id": 2, "active": True, **second}
+                    ).inserted_id
+                )
+            )
+            entry["rows"] = list(collection.find({}, sort=[("_id", 1)]))
+            result[f"{label}/{profile}"] = entry
+    return result
+
+
+def index_write_flow(collection, *, kind, ordered=True, observe_events=False):
+    collection.drop()
+    hashed = kind.startswith("hashed")
+    collection.create_index([("a", "hashed")] if hashed else "a", unique=not hashed)
+    collection.insert_many([{"_id": 1, "a": None}, {"_id": 2, "a": 5}])
+    stream = collection.watch(max_await_time_ms=50) if observe_events else None
+    try:
+        try:
+            if kind in {"bulk", "hashed_bulk"}:
+                bad = [1] if hashed else None
+                result = collection.bulk_write(
+                    [
+                        InsertOne({"_id": 3, "a": 7}),
+                        InsertOne({"_id": 4, "a": bad}),
+                        UpdateOne({"_id": 2}, {"$set": {"done": True}}),
+                    ],
+                    ordered=ordered,
+                )
+                observed = {
+                    "ok": True,
+                    "inserted": result.inserted_count,
+                    "modified": result.modified_count,
+                }
+            elif kind in {"insert_many", "hashed_insert_many"}:
+                result = collection.insert_many(
+                    [
+                        {"_id": 3, "a": 7},
+                        {"_id": 4, "a": [1] if hashed else None},
+                        {"_id": 5, "a": 9},
+                    ],
+                    ordered=ordered,
+                )
+                observed = {"ok": True, "inserted": len(result.inserted_ids)}
+            else:
+                if kind == "unset":
+                    result = collection.update_one({"_id": 2}, {"$unset": {"a": 1}})
+                elif kind == "replacement":
+                    result = collection.replace_one({"_id": 2}, {"_id": 2, "a": None})
+                elif kind == "upsert":
+                    result = collection.update_one(
+                        {"_id": 3}, {"$set": {"a": None}}, upsert=True
+                    )
+                elif kind == "pipeline":
+                    result = collection.update_one({"_id": 2}, [{"$set": {"a": None}}])
+                else:
+                    result = collection.update_one(
+                        {"_id": 2}, {"$set": {"a": [1] if hashed else None}}
+                    )
+                observed = {
+                    "ok": True,
+                    "matched": result.matched_count,
+                    "modified": result.modified_count,
+                    "upserted": result.upserted_id is not None,
+                }
+        except Exception as error:
+            observed = {
+                key: value
+                for key, value in public_error(error, BSONObservation([])).items()
+                if key in {"family", "code", "write_errors", "partial"}
+            } | {"ok": False}
+        if stream is not None:
+            collection.insert_one({"_id": "__event_barrier", "a": "__barrier_value"})
+            observed["events"] = _drain(stream, collection)
+        observed["state"] = [
+            BSON.encode(dict(sorted(row.items()))).hex()
+            for row in collection.find(
+                {"_id": {"$ne": "__event_barrier"}}, sort=[("_id", 1)]
+            )
+        ]
+        return observed
+    finally:
+        if stream is not None:
+            stream.close()
+
+
+def index_build_documents(collection):
+    result = {}
+    for label, keys, options, rows in [
+        ("unique_missing", "a", {"unique": True}, [{"_id": 1}, {"_id": 2, "a": None}]),
+        (
+            "unique_arrays",
+            "a",
+            {"unique": True},
+            [{"_id": 1, "a": [1, 2]}, {"_id": 2, "a": [[1, 2]]}],
+        ),
+        ("hashed", [("a", "hashed")], {}, [{"_id": 1, "a": [1]}]),
+        ("hashed_dotted", [("a.b", "hashed")], {}, [{"_id": 1, "a": [{"b": 1}]}]),
+        ("parallel", [("a", 1), ("b", 1)], {}, [{"_id": 1, "a": [1], "b": [2]}]),
+    ]:
+        collection.drop()
+        collection.insert_many(rows)
+        entry = outcome(
+            lambda keys=keys, options=options: collection.create_index(keys, **options)
+        )
+        entry["indexes"] = sorted(collection.index_information())
+        entry["ids"] = [r["_id"] for r in collection.find({}, sort=[("_id", 1)])]
+        result[label] = entry
+    return result
+
+
+SEMANTIC_FOLLOWUP_WRITE_CASES = tuple(
+    (
+        f"semantic_followup_f06_events_{kind}_{ordered}",
+        partial(index_write_flow, kind=kind, ordered=ordered, observe_events=True),
+    )
+    for kind in [
+        "set",
+        "unset",
+        "replacement",
+        "upsert",
+        "pipeline",
+        "hashed_set",
+        "bulk",
+        "hashed_bulk",
+        "insert_many",
+        "hashed_insert_many",
+    ]
+    for ordered in (
+        [True, False] if "bulk" in kind or "insert_many" in kind else [True]
+    )
+)
+
+
 def facade(collection, *, kind):
     reset(collection, [{"_id": 1}])
     db = collection.database
@@ -1107,6 +1424,33 @@ def facade(collection, *, kind):
 
 
 SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f06_catalog_matrix", index_catalog_matrix),
+    ("semantic_followup_f06_id_options", index_id_options),
+    ("semantic_followup_f06_id_models", index_id_models),
+    ("semantic_followup_f06_names_raw", index_names_raw),
+    ("semantic_followup_f06_unique_arrays", unique_index_arrays),
+    ("semantic_followup_f06_build_documents", index_build_documents),
+    *(
+        (
+            f"semantic_followup_f06_write_{kind}_{ordered}",
+            partial(index_write_flow, kind=kind, ordered=ordered),
+        )
+        for kind in [
+            "set",
+            "unset",
+            "replacement",
+            "upsert",
+            "pipeline",
+            "hashed_set",
+            "bulk",
+            "hashed_bulk",
+            "insert_many",
+            "hashed_insert_many",
+        ]
+        for ordered in (
+            [True, False] if "bulk" in kind or "insert_many" in kind else [True]
+        )
+    ),
     ("semantic_followup_f03_lookup_empty", lookup_empty),
     *(
         (f"semantic_followup_f06_conflict_{kind}", partial(index_conflict, kind=kind))

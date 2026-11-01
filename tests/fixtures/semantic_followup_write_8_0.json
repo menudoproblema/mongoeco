@@ -1,0 +1,963 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "8.0",
+  "cases": {
+    "semantic_followup_f06_events_bulk_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "1"
+        },
+        "nModified": {
+          "$numberInt": "1"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        },
+        {
+          "operationType": "update",
+          "documentKey": "0e000000105f6964000200000000",
+          "scope_matches": true,
+          "updateDescription": "4a00000003757064617465644669656c6473000c00000008646f6e650001000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "1c000000105f696400020000001061000500000008646f6e65000100",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_events_bulk_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_events_hashed_bulk_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "1"
+        },
+        "nModified": {
+          "$numberInt": "1"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        },
+        {
+          "operationType": "update",
+          "documentKey": "0e000000105f6964000200000000",
+          "scope_matches": true,
+          "updateDescription": "4a00000003757064617465644669656c6473000c00000008646f6e650001000472656d6f7665644669656c6473000500000000047472756e636174656441727261797300050000000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "1c000000105f696400020000001061000500000008646f6e65000100",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_events_hashed_bulk_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_events_hashed_insert_many_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "2"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        },
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000500000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400050000001061000900000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000",
+        "15000000105f696400050000001061000900000000"
+      ]
+    },
+    "semantic_followup_f06_events_hashed_insert_many_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_events_hashed_set_True": {
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "16766"
+      },
+      "write_errors": [],
+      "ok": false,
+      "events": [],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_events_insert_many_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "2"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        },
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000500000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400050000001061000900000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000",
+        "15000000105f696400050000001061000900000000"
+      ]
+    },
+    "semantic_followup_f06_events_insert_many_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "events": [
+        {
+          "operationType": "insert",
+          "documentKey": "0e000000105f6964000300000000",
+          "scope_matches": true,
+          "fullDocument": "15000000105f696400030000001061000700000000"
+        }
+      ],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_events_pipeline_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "events": [],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_events_replacement_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "events": [],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_events_set_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "events": [],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_events_unset_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "events": [],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_events_upsert_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "events": [],
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "8.0.32",
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "modules": [],
+      "allocator": "tcmalloc-google",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "32"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.13 30 Jan 2024",
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2404",
+        "distarch": "aarch64",
+        "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793564008,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793564008,
+          "i": 1
+        }
+      }
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "topologyVersion": {
+        "processId": {
+          "$oid": "6ae79a7227f38815eed1660f"
+        },
+        "counter": {
+          "$numberLong": "6"
+        }
+      },
+      "hosts": [
+        "localhost:27017"
+      ],
+      "setName": "mongoecoF8",
+      "setVersion": {
+        "$numberInt": "1"
+      },
+      "isWritablePrimary": true,
+      "secondary": false,
+      "primary": "localhost:27017",
+      "me": "localhost:27017",
+      "electionId": {
+        "$oid": "7fffffff0000000000000001"
+      },
+      "lastWrite": {
+        "opTime": {
+          "ts": {
+            "$timestamp": {
+              "t": 1793564008,
+              "i": 1
+            }
+          },
+          "t": {
+            "$numberLong": "1"
+          }
+        },
+        "lastWriteDate": {
+          "$date": {
+            "$numberLong": "1793564008000"
+          }
+        },
+        "majorityOpTime": {
+          "ts": {
+            "$timestamp": {
+              "t": 1793564008,
+              "i": 1
+            }
+          },
+          "t": {
+            "$numberLong": "1"
+          }
+        },
+        "majorityWriteDate": {
+          "$date": {
+            "$numberLong": "1793564008000"
+          }
+        }
+      },
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "maxMessageSizeBytes": {
+        "$numberInt": "48000000"
+      },
+      "maxWriteBatchSize": {
+        "$numberInt": "100000"
+      },
+      "localTime": {
+        "$date": {
+          "$numberLong": "1793564017302"
+        }
+      },
+      "logicalSessionTimeoutMinutes": {
+        "$numberInt": "30"
+      },
+      "connectionId": {
+        "$numberInt": "11"
+      },
+      "minWireVersion": {
+        "$numberInt": "0"
+      },
+      "maxWireVersion": {
+        "$numberInt": "25"
+      },
+      "readOnly": false,
+      "ok": {
+        "$numberDouble": "1.0"
+      },
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": {
+            "t": 1793564008,
+            "i": 1
+          }
+        },
+        "signature": {
+          "hash": {
+            "$binary": {
+              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+              "subType": "00"
+            }
+          },
+          "keyId": {
+            "$numberLong": "0"
+          }
+        }
+      },
+      "operationTime": {
+        "$timestamp": {
+          "t": 1793564008,
+          "i": 1
+        }
+      }
+    }
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_followup_cases.py",
+    "sha256": "027b9bc6aeee600772a074d553eba9dfe253cd04220859cc59afcae88ef7506b"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_followup_f06_events_set_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_set_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_unset_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_unset_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_replacement_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_replacement_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_upsert_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_upsert_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_pipeline_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_pipeline_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_hashed_set_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_hashed_set_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_bulk_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_bulk_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_bulk_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_bulk_False"
+    },
+    {
+      "name": "semantic_followup_f06_events_hashed_bulk_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_hashed_bulk_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_hashed_bulk_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_hashed_bulk_False"
+    },
+    {
+      "name": "semantic_followup_f06_events_insert_many_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_insert_many_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_insert_many_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_insert_many_False"
+    },
+    {
+      "name": "semantic_followup_f06_events_hashed_insert_many_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_hashed_insert_many_True"
+    },
+    {
+      "name": "semantic_followup_f06_events_hashed_insert_many_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_events_hashed_insert_many_False"
+    }
+  ]
+}

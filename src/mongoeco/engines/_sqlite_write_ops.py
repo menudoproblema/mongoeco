@@ -11,8 +11,12 @@ from mongoeco.core.identity import (
 )
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.semantic_core import (
-    enforce_collection_document_validation,
     compile_collection_validation_semantics,
+    enforce_collection_document_validation,
+)
+from mongoeco.engines.virtual_indexes import (
+    document_in_virtual_index,
+    validate_index_document,
 )
 from mongoeco.errors import DuplicateKeyError
 
@@ -254,6 +258,11 @@ def insert_document_batch(  # noqa: PLR0912, PLR0913, PLR0915 - SQLite batch tra
                 dialect=dialect,
             )
     indexes = load_indexes(db_name, coll_name)
+    for document in documents:
+        for index in indexes:
+            if document_in_virtual_index(document, index):
+                validate_index_document(document, index)
+
     search_indexes = load_search_index_rows(db_name, coll_name)
     results: list[bool] = []
     with sqlite_write_scope(

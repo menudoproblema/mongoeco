@@ -115,33 +115,22 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
                 quote_identifier=lambda value: f'"{value}"',
             )
 
-    def test_create_index_validates_ttl_hidden_and_collation_after_definition_init(self):
-        kwargs = self._base_create_index_kwargs()
-        kwargs["expire_after_seconds"] = "bad"
-        with patch(
-            "mongoeco.engines._sqlite_index_admin.IndexDefinition",
-            return_value=SimpleNamespace(weights=None, default_language=None, language_override=None),
-        ):
-            with self.assertRaisesRegex(TypeError, "expire_after_seconds must be a non-negative int or None"):
-                index_admin.create_index(Mock(), **kwargs)
-
-        kwargs = self._base_create_index_kwargs()
-        kwargs["hidden"] = "yes"
-        with patch(
-            "mongoeco.engines._sqlite_index_admin.IndexDefinition",
-            return_value=SimpleNamespace(weights=None, default_language=None, language_override=None),
-        ):
-            with self.assertRaisesRegex(TypeError, "hidden must be a bool"):
-                index_admin.create_index(Mock(), **kwargs)
-
-        kwargs = self._base_create_index_kwargs()
-        kwargs["collation"] = "en"
-        with patch(
-            "mongoeco.engines._sqlite_index_admin.IndexDefinition",
-            return_value=SimpleNamespace(weights=None, default_language=None, language_override=None),
-        ):
-            with self.assertRaisesRegex(TypeError, "collation must be a dict or None"):
-                index_admin.create_index(Mock(), **kwargs)
+    def test_index_definition_owns_ttl_hidden_and_collation_types(self):
+        for field, value, message in [
+            (
+                "expire_after_seconds",
+                "bad",
+                "expire_after_seconds must be a non-negative int or None",
+            ),
+            ("hidden", "yes", "hidden must be a bool"),
+            ("collation", "en", "collation must be a dict or None"),
+        ]:
+            kwargs = self._base_create_index_kwargs()
+            kwargs[field] = value
+            conn = Mock()
+            with self.subTest(field=field), self.assertRaisesRegex(TypeError, message):
+                index_admin.create_index(conn, **kwargs)
+            conn.execute.assert_not_called()
 
     def test_drop_index_rolls_back_when_sql_drop_fails(self):
         conn = Mock()

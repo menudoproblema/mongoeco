@@ -4269,6 +4269,272 @@
         }
       }
     },
+    "semantic_followup_f06_build_documents": {
+      "unique_missing": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "indexes": [
+          "_id_"
+        ],
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "unique_arrays": {
+        "ok": true,
+        "value": "a_1",
+        "indexes": [
+          "_id_",
+          "a_1"
+        ],
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "hashed": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16766"
+        },
+        "indexes": [
+          "_id_"
+        ],
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "hashed_dotted": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16766"
+        },
+        "indexes": [
+          "_id_"
+        ],
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "parallel": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "171"
+        },
+        "indexes": [
+          "_id_"
+        ],
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f06_catalog_matrix": {
+      "same_name": {
+        "ok": true,
+        "value": "first",
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "new_name": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "85"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "unique": {
+        "ok": true,
+        "value": "second",
+        "indexes": [
+          "_id_",
+          "first",
+          "second"
+        ]
+      },
+      "nonunique": {
+        "ok": true,
+        "value": "second",
+        "indexes": [
+          "_id_",
+          "first",
+          "second"
+        ]
+      },
+      "sparse": {
+        "ok": true,
+        "value": "second",
+        "indexes": [
+          "_id_",
+          "first",
+          "second"
+        ]
+      },
+      "unique_sparse": {
+        "ok": true,
+        "value": "second",
+        "indexes": [
+          "_id_",
+          "first",
+          "second"
+        ]
+      },
+      "partial": {
+        "ok": true,
+        "value": "second",
+        "indexes": [
+          "_id_",
+          "first",
+          "second"
+        ]
+      },
+      "collation": {
+        "ok": true,
+        "value": "second",
+        "indexes": [
+          "_id_",
+          "first",
+          "second"
+        ]
+      },
+      "equivalent_collation": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "85"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "hidden": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "85"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "same_name_unique": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "86"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "same_name_hidden": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "85"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "same_name_ttl": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "85"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "same_name_sparse": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "86"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "same_name_partial": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "86"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "same_name_collation": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "86"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "same_name_key": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "86"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      },
+      "ttl": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "85"
+        },
+        "indexes": [
+          "_id_",
+          "first"
+        ]
+      }
+    },
     "semantic_followup_f06_conflict_hashed_array": {
       "ok": false,
       "family": "WriteError",
@@ -4310,6 +4576,52 @@
       "indexes": [
         "_id_",
         "a_text"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_dbref_nested_False": {
+      "ok": true,
+      "value": "a.$id_1",
+      "indexes": [
+        "_id_",
+        "a.$id_1"
+      ],
+      "ids": []
+    },
+    "semantic_followup_f06_dbref_nested_True": {
+      "ok": true,
+      "value": "a.$id_1",
+      "indexes": [
+        "_id_",
+        "a.$id_1"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_dbref_top_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_dbref_top_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [
+        "_id_"
       ],
       "ids": [
         {
@@ -4365,6 +4677,179 @@
         }
       ]
     },
+    "semantic_followup_f06_id_models": {
+      "omitted": {
+        "ok": true,
+        "value": [
+          "_id_1"
+        ],
+        "indexes": [
+          "_id_"
+        ]
+      },
+      "unique_true": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "unique_false": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "sparse_false": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "hidden_false": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      }
+    },
+    "semantic_followup_f06_id_options": {
+      "default": {
+        "ok": true,
+        "value": "_id_1",
+        "indexes": [
+          "_id_"
+        ]
+      },
+      "name": {
+        "ok": true,
+        "value": "custom",
+        "indexes": [
+          "_id_"
+        ]
+      },
+      "unique_false": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "unique_true": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "unique_none": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "indexes": []
+      },
+      "unique_number": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "unique_string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "indexes": []
+      },
+      "named_unique_true": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "named_unique_false": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "hidden": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "hidden_false": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "sparse_false": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "partial": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "197"
+        },
+        "indexes": []
+      },
+      "simple": {
+        "ok": true,
+        "value": "_id_1",
+        "indexes": [
+          "_id_"
+        ]
+      },
+      "en": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "indexes": []
+      },
+      "inherited": {
+        "ok": true,
+        "value": "_id_1"
+      },
+      "collated_id": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        }
+      }
+    },
     "semantic_followup_f06_id_sparse_False": {
       "ok": false,
       "family": "OperationFailure",
@@ -4388,6 +4873,150 @@
           "$numberInt": "1"
         }
       ]
+    },
+    "semantic_followup_f06_name_empty_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_name_empty_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_name_id_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_name_id_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_name_nul_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_name_nul_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_name_null_False": {
+      "ok": true,
+      "value": "a_1",
+      "indexes": [
+        "_id_",
+        "a_1"
+      ],
+      "ids": []
+    },
+    "semantic_followup_f06_name_null_True": {
+      "ok": true,
+      "value": "a_1",
+      "indexes": [
+        "_id_",
+        "a_1"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_names_raw": {
+      "null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "indexes": []
+      },
+      "empty": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "67"
+        },
+        "indexes": []
+      },
+      "nul": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "67"
+        },
+        "indexes": []
+      },
+      "reserved": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "indexes": []
+      },
+      "number": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "indexes": []
+      },
+      "bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "indexes": []
+      }
     },
     "semantic_followup_f06_trailing_False": {
       "ok": false,
@@ -4461,6 +5090,1196 @@
         }
       ]
     },
+    "semantic_followup_f06_unique_arrays": {
+      "missing_null/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true
+          }
+        ]
+      },
+      "missing_null/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": null
+          }
+        ]
+      },
+      "missing_null/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true
+          }
+        ]
+      },
+      "empty_null/plain": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": null
+          }
+        ]
+      },
+      "empty_null/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": null
+          }
+        ]
+      },
+      "empty_null/partial": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": null
+          }
+        ]
+      },
+      "empty_missing/plain": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true
+          }
+        ]
+      },
+      "empty_missing/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true
+          }
+        ]
+      },
+      "empty_missing/partial": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true
+          }
+        ]
+      },
+      "empty_empty/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          }
+        ]
+      },
+      "empty_empty/sparse": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          }
+        ]
+      },
+      "empty_empty/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          }
+        ]
+      },
+      "flat_nested/plain": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "flat_nested/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "flat_nested/partial": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "nested_nested/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "nested_nested/sparse": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "nested_nested/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "dot_empty_missing/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          }
+        ]
+      },
+      "dot_empty_missing/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true
+          }
+        ]
+      },
+      "dot_empty_missing/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          }
+        ]
+      },
+      "dot_scalar_missing/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      },
+      "dot_scalar_missing/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true
+          }
+        ]
+      },
+      "dot_scalar_missing/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      },
+      "dot_leaf_null/plain": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": []
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": {
+              "b": null
+            }
+          }
+        ]
+      },
+      "dot_leaf_null/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": []
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": {
+              "b": null
+            }
+          }
+        ]
+      },
+      "dot_leaf_null/partial": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": []
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": {
+              "b": null
+            }
+          }
+        ]
+      },
+      "repeated_elements/plain": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "1"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      },
+      "repeated_elements/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "1"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      },
+      "repeated_elements/partial": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "1"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      },
+      "numeric_scalar/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      "numeric_scalar/sparse": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      "numeric_scalar/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      "numeric_array/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "numeric_array/sparse": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "numeric_array/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "numeric_nested/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "numeric_nested/sparse": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "numeric_nested/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "bool_number/plain": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              true
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "bool_number/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              true
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "bool_number/partial": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              true
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "correlated/plain": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                },
+                "c": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "b": {
+                  "$numberInt": "2"
+                },
+                "c": {
+                  "$numberInt": "3"
+                }
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                },
+                "c": {
+                  "$numberInt": "3"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "correlated/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                },
+                "c": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "b": {
+                  "$numberInt": "2"
+                },
+                "c": {
+                  "$numberInt": "3"
+                }
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                },
+                "c": {
+                  "$numberInt": "3"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "correlated/partial": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                },
+                "c": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "b": {
+                  "$numberInt": "2"
+                },
+                "c": {
+                  "$numberInt": "3"
+                }
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true,
+            "a": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                },
+                "c": {
+                  "$numberInt": "3"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "compound_empty/plain": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          }
+        ]
+      },
+      "compound_empty/sparse": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "active": true
+          }
+        ]
+      },
+      "compound_empty/partial": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        },
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "active": true,
+            "a": []
+          }
+        ]
+      }
+    },
     "semantic_followup_f06_unique_null": {
       "insert_missing": {
         "ok": false,
@@ -4481,6 +6300,400 @@
             "$numberInt": "1"
           }
         }
+      ]
+    },
+    "semantic_followup_f06_write_bulk_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "1"
+        },
+        "nModified": {
+          "$numberInt": "1"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "1c000000105f696400020000001061000500000008646f6e65000100",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_write_bulk_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_write_hashed_bulk_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "1"
+        },
+        "nModified": {
+          "$numberInt": "1"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "1c000000105f696400020000001061000500000008646f6e65000100",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_write_hashed_bulk_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_write_hashed_insert_many_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "2"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000",
+        "15000000105f696400050000001061000900000000"
+      ]
+    },
+    "semantic_followup_f06_write_hashed_insert_many_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "16766"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_write_hashed_set_True": {
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "16766"
+      },
+      "write_errors": [],
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_write_insert_many_False": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "2"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000",
+        "15000000105f696400050000001061000900000000"
+      ]
+    },
+    "semantic_followup_f06_write_insert_many_True": {
+      "family": "BulkWriteError",
+      "code": {
+        "$numberInt": "65"
+      },
+      "write_errors": [
+        [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "11000"
+          }
+        ]
+      ],
+      "partial": {
+        "nInserted": {
+          "$numberInt": "1"
+        },
+        "nMatched": {
+          "$numberInt": "0"
+        },
+        "nModified": {
+          "$numberInt": "0"
+        },
+        "nRemoved": {
+          "$numberInt": "0"
+        },
+        "nUpserted": {
+          "$numberInt": "0"
+        },
+        "upserted": []
+      },
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000",
+        "15000000105f696400030000001061000700000000"
+      ]
+    },
+    "semantic_followup_f06_write_pipeline_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_write_replacement_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_write_set_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_write_unset_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
+      ]
+    },
+    "semantic_followup_f06_write_upsert_True": {
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      },
+      "write_errors": [],
+      "ok": false,
+      "state": [
+        "11000000105f696400010000000a610000",
+        "15000000105f696400020000001061000500000000"
       ]
     },
     "semantic_followup_f07_bit": {
@@ -6140,14 +8353,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793561631900"
+          "$numberLong": "1793563981309"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "102"
+        "$numberInt": "108"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -6163,7 +8376,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "f35ca24995ec483b4feb6f3c957e9201d775ee6317aaea133c46e6a4b46ffd1a",
+    "sha256": "027b9bc6aeee600772a074d553eba9dfe253cd04220859cc59afcae88ef7506b",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -8258,6 +10471,234 @@
       "selector": "semantic_followup_f09_documents_collection"
     },
     {
+      "name": "semantic_followup_f06_dbref_nested_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_dbref_nested_False"
+    },
+    {
+      "name": "semantic_followup_f06_dbref_nested_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_dbref_nested_True"
+    },
+    {
+      "name": "semantic_followup_f06_dbref_top_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_dbref_top_False"
+    },
+    {
+      "name": "semantic_followup_f06_dbref_top_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_dbref_top_True"
+    },
+    {
+      "name": "semantic_followup_f06_name_empty_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_empty_False"
+    },
+    {
+      "name": "semantic_followup_f06_name_empty_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_empty_True"
+    },
+    {
+      "name": "semantic_followup_f06_name_null_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_null_False"
+    },
+    {
+      "name": "semantic_followup_f06_name_null_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_null_True"
+    },
+    {
+      "name": "semantic_followup_f06_name_nul_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_nul_False"
+    },
+    {
+      "name": "semantic_followup_f06_name_nul_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_nul_True"
+    },
+    {
+      "name": "semantic_followup_f06_name_id_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_id_False"
+    },
+    {
+      "name": "semantic_followup_f06_name_id_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_name_id_True"
+    },
+    {
       "name": "semantic_followup_f06_trailing_False",
       "min_version": [
         {
@@ -9168,6 +11609,386 @@
         }
       ],
       "selector": "semantic_followup_f10_metadata"
+    },
+    {
+      "name": "semantic_followup_f06_catalog_matrix",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_catalog_matrix"
+    },
+    {
+      "name": "semantic_followup_f06_id_options",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_id_options"
+    },
+    {
+      "name": "semantic_followup_f06_id_models",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_id_models"
+    },
+    {
+      "name": "semantic_followup_f06_names_raw",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_names_raw"
+    },
+    {
+      "name": "semantic_followup_f06_unique_arrays",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_unique_arrays"
+    },
+    {
+      "name": "semantic_followup_f06_build_documents",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_build_documents"
+    },
+    {
+      "name": "semantic_followup_f06_write_set_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_set_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_unset_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_unset_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_replacement_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_replacement_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_upsert_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_upsert_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_pipeline_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_pipeline_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_hashed_set_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_hashed_set_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_bulk_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_bulk_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_bulk_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_bulk_False"
+    },
+    {
+      "name": "semantic_followup_f06_write_hashed_bulk_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_hashed_bulk_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_hashed_bulk_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_hashed_bulk_False"
+    },
+    {
+      "name": "semantic_followup_f06_write_insert_many_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_insert_many_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_insert_many_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_insert_many_False"
+    },
+    {
+      "name": "semantic_followup_f06_write_hashed_insert_many_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_hashed_insert_many_True"
+    },
+    {
+      "name": "semantic_followup_f06_write_hashed_insert_many_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_write_hashed_insert_many_False"
     },
     {
       "name": "semantic_followup_f03_lookup_empty",

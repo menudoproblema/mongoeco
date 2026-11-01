@@ -4,6 +4,8 @@ import asyncio
 import hashlib
 import inspect
 import pickle
+import shutil
+import sqlite3
 
 from copy import deepcopy
 from decimal import ROUND_DOWN, ROUND_UP, FloatOperation, Inexact, localcontext
@@ -37,6 +39,7 @@ from tests.differential.semantic_command_let_cases import VALID as COMMAND_LET_V
 from tests.differential.semantic_corpora import SEMANTIC_CORPORA
 from tests.differential.semantic_followup_cases import (
     lookup_paths,
+    index_write_flow,
     path_contexts,
     read_collation_persisted,
     setup_collation_persisted,
@@ -727,6 +730,54 @@ def test_followup_collation_survives_sqlite_reopen(tmp_path, dialect):
             collection = client.followup.rows
             assert read_collation_persisted(collection) == expected[phase]
             assert collection.index_information() == metadata
+
+
+@pytest.mark.parametrize("dialect", DIALECTS)
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "unset",
+        "replacement",
+        "upsert",
+        "pipeline",
+        "hashed_set",
+        "bulk",
+        "hashed_bulk",
+        "insert_many",
+        "hashed_insert_many",
+    ],
+)
+def test_followup_f06_legacy_file_keeps_catalog_and_failed_write_state(
+    tmp_path, dialect, kind
+):
+    path = tmp_path / "legacy.sqlite"
+    shutil.copyfile(FIXTURES / "sqlite/mongoeco-4.10.1-preparation.sqlite", path)
+    with sqlite3.connect(path) as conn:
+        before = conn.execute(
+            "SELECT * FROM indexes ORDER BY db_name,coll_name,name"
+        ).fetchall()
+    expected = _capture(dialect, "followup")["cases"][
+        f"semantic_followup_f06_write_{kind}_False"
+        if "bulk" in kind or "insert_many" in kind
+        else f"semantic_followup_f06_write_{kind}_True"
+    ]
+    with MongoClient(SQLiteEngine(str(path)), mongodb_dialect=dialect) as client:
+        collection = client.followup.rows
+        assert index_write_flow(collection, kind=kind, ordered=False) == expected
+        metadata = collection.index_information()
+    with MongoClient(SQLiteEngine(str(path)), mongodb_dialect=dialect) as client:
+        collection = client.followup.rows
+        assert [
+            BSON.encode(dict(sorted(row.items()))).hex()
+            for row in collection.find({}, sort=[("_id", 1)])
+        ] == expected["state"]
+        assert collection.index_information() == metadata
+    with sqlite3.connect(path) as conn:
+        after = conn.execute(
+            "SELECT * FROM indexes WHERE db_name != 'followup' "
+            "ORDER BY db_name,coll_name,name"
+        ).fetchall()
+    assert after == before
 
 
 @pytest.mark.parametrize("dialect", DIALECTS)

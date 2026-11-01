@@ -292,10 +292,16 @@ from mongoeco.engines.sqlite_query import (
     value_expression_sql,
 )
 from mongoeco.engines.virtual_indexes import (
+    array_paths_for_index_field,
+    collated_id_conflict,
+    compound_multikey_array_paths,
     describe_virtual_index_usage,
     document_in_virtual_index,
     normalize_partial_filter_expression,
     query_can_use_index,
+    unique_index_values,
+    validate_index_document,
+    values_at_index_path,
 )
 from mongoeco.errors import (
     DuplicateKeyError,
@@ -307,7 +313,6 @@ from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters,
     CollationDocument,
-    DBRef,
     Document,
     DocumentId,
     EngineIndexRecord,
@@ -1813,67 +1818,11 @@ class SQLiteEngine(AsyncStorageEngine):
         fields: list[str],
     ) -> set[tuple[object, ...]]:
         return {
-            tuple(self._typed_engine_key(value) for value in key)
+            tuple(bson_equality_key(value) for value in key)
             for key in self._unique_index_values(document, fields)
         }
 
-    def _unique_index_values(
-        self,
-        document: Document,
-        fields: list[str],
-    ) -> list[tuple[Any, ...]]:
-        if len(fields) == 1:
-            values = QueryEngine.extract_values(document, fields[0])
-            return [(value,) for value in values or [None]]
-
-        array_source_paths = self._compound_multikey_array_paths(
-            document,
-            fields,
-        )
-        if len(array_source_paths) == 1:
-            array_path = next(iter(array_source_paths))
-            array_values = [
-                value
-                for value in self._values_at_index_path(document, array_path)
-                if isinstance(value, list)
-            ]
-            if array_values:
-                keys: list[tuple[Any, ...]] = []
-                for array_value in array_values:
-                    for element in array_value:
-                        candidates_per_field: list[list[Any]] = []
-                        for field in fields:
-                            if field == array_path:
-                                candidates_per_field.append([element])
-                            elif field.startswith(f"{array_path}."):
-                                suffix = field.removeprefix(f"{array_path}.")
-                                candidates_per_field.append(
-                                    QueryEngine.extract_values(element, suffix)
-                                    or [None],
-                                )
-                            else:
-                                candidates_per_field.append(
-                                    QueryEngine.extract_values(document, field)
-                                    or [None],
-                                )
-                        element_keys: list[tuple[Any, ...]] = [()]
-                        for candidates in candidates_per_field:
-                            element_keys = [
-                                (*key, candidate)
-                                for key in element_keys
-                                for candidate in candidates
-                            ]
-                        keys.extend(element_keys)
-                return keys
-
-        keys: list[tuple[Any, ...]] = [()]
-        for field in fields:
-            keys = [
-                (*key, value)
-                for key in keys
-                for value in (QueryEngine.extract_values(document, field) or [None])
-            ]
-        return keys
+    _unique_index_values = staticmethod(unique_index_values)
 
     def _unique_index_conflict(
         self,
@@ -1932,94 +1881,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 return True
         return False
 
-    @staticmethod
-    def _array_paths_for_index_field(
-        document: Document,
-        field: str,
-    ) -> set[str]:
-        array_paths: set[str] = set()
-        parts = field.split(".")
+    _array_paths_for_index_field = staticmethod(array_paths_for_index_field)
 
-        def collect(value: Any, position: int, path: str) -> None:
-            if isinstance(value, DBRef):
-                value = value.as_document()
-            if isinstance(value, list):
-                if position == len(parts):
-                    array_paths.add(path)
-                    return
-                part = parts[position]
-                if part.isdigit():
-                    item_index = int(part)
-                    if item_index < len(value):
-                        next_path = f"{path}.{part}" if path else part
-                        collect(value[item_index], position + 1, next_path)
-                    return
-                array_paths.add(path)
-                for item in value:
-                    collect(item, position, path)
-                return
-            if position == len(parts) or not isinstance(value, dict):
-                return
-            part = parts[position]
-            if part not in value:
-                return
-            next_path = f"{path}.{part}" if path else part
-            collect(value[part], position + 1, next_path)
+    _compound_multikey_array_paths = staticmethod(compound_multikey_array_paths)
 
-        collect(document, 0, "")
-        return array_paths
+    _values_at_index_path = staticmethod(values_at_index_path)
 
-    def _compound_multikey_array_paths(
-        self,
-        document: Document,
-        fields: list[str],
-    ) -> set[str]:
-        source_paths: set[str] = set()
-        for field in fields:
-            array_paths = self._array_paths_for_index_field(document, field)
-            if array_paths:
-                source_paths.add(
-                    min(array_paths, key=lambda path: len(path.split("."))),
-                )
-        return source_paths
-
-    @staticmethod
-    def _values_at_index_path(document: Document, path: str) -> list[Any]:
-        values: list[Any] = [document]
-        for part in path.split("."):
-            next_values: list[Any] = []
-            for value in values:
-                if isinstance(value, DBRef):
-                    value = value.as_document()
-                if isinstance(value, list):
-                    if part.isdigit():
-                        item_index = int(part)
-                        if item_index < len(value):
-                            next_values.append(value[item_index])
-                    else:
-                        for item in value:
-                            if isinstance(item, DBRef):
-                                item = item.as_document()
-                            if isinstance(item, dict) and part in item:
-                                next_values.append(item[part])
-                elif isinstance(value, dict) and part in value:
-                    next_values.append(value[part])
-            values = next_values
-        return values
-
-    def _validate_compound_multikey_shape(
-        self,
-        document: Document,
-        index: EngineIndexRecord,
-    ) -> None:
-        fields = index["fields"]
-        if len(fields) < 2:
-            return
-
-        if len(self._compound_multikey_array_paths(document, fields)) > 1:
-            raise OperationFailure(
-                "compound indexes do not support more than one array field",
-            )
+    _validate_compound_multikey_shape = staticmethod(validate_index_document)
 
     @staticmethod
     def _supports_multikey_index(fields: list[str], unique: bool) -> bool:
@@ -3164,7 +3032,7 @@ class SQLiteEngine(AsyncStorageEngine):
             index=index,
             values=self._unique_index_values(document, index["fields"]),
             conflict=conflict,
-            equality=self._typed_engine_key,
+            equality=bson_equality_key,
         )
         return error
 
@@ -3180,6 +3048,16 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         conn = self._require_connection()
         collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        options = self._collection_options_or_empty_sync(conn, db_name, coll_name)
+        id_index = collated_id_conflict(
+            document, self._load_documents(db_name, coll_name),
+            options, exclude=exclude_storage_key,
+        )
+        if id_index is not None:
+            message = "Duplicate _id for collection collation"
+            raise self._unique_key_error(
+                message, f"{db_name}.{coll_name}", document, index=id_index,
+            )
         if "_id" in document and not skip_id_check:
             document_id_storage_key = self._storage_key(document["_id"])
             if exclude_storage_key != document_id_storage_key:
@@ -3327,7 +3205,7 @@ class SQLiteEngine(AsyncStorageEngine):
         # Existing SQLite files may omit tagged numeric values from scalar rows.
         # Physical type identity is not MongoDB numeric uniqueness; the semantic
         # fallback remains authoritative without rebuilding persisted indexes.
-        if found and is_bson_numeric(value):
+        if not found or value is None or is_bson_numeric(value):
             return None
         signature = self._scalar_value_signature_for_document(document, field)
         if signature is None:
@@ -6638,9 +6516,14 @@ class SQLiteEngine(AsyncStorageEngine):
         deadline = operation_deadline(max_time_ms)
         with self._lock:
             conn = self._require_connection(context)
+            def ensure_collection():
+                if not self._collection_exists_sync(conn, db_name, coll_name):
+                    self._create_collection_sync(db_name, coll_name, context=context)
+
             with self._bind_connection(conn):
                 return _sqlite_create_index(
                     conn,
+                    ensure_collection=ensure_collection,
                     db_name=db_name,
                     coll_name=coll_name,
                     keys=keys,
@@ -6698,7 +6581,11 @@ class SQLiteEngine(AsyncStorageEngine):
                     replace_multikey_entries_for_document=self._replace_multikey_entries_for_index_for_document,
                     replace_scalar_entries_for_document=self._replace_scalar_entries_for_index_for_document,
                     load_documents=self._load_documents,
-                    validate_compound_multikey_document=self._validate_compound_multikey_shape,
+                    validate_compound_multikey_document=lambda document, index: (
+                        self._validate_compound_multikey_shape(
+                            document, index, building=True
+                        )
+                    ),
                     unique_index_conflict=self._unique_index_conflict,
                     quote_identifier=self._quote_identifier,
                 )
@@ -6711,6 +6598,8 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> list[IndexDocument]:
         with self._lock:
             conn = self._require_connection(context)
+            if not self._collection_exists_sync(conn, db_name, coll_name):
+                return []
             with self._bind_connection(conn):
                 indexes = deepcopy(self._load_indexes(db_name, coll_name))
         return _sqlite_list_index_documents(indexes)
@@ -6723,6 +6612,8 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> IndexInformation:
         with self._lock:
             conn = self._require_connection(context)
+            if not self._collection_exists_sync(conn, db_name, coll_name):
+                return {}
             with self._bind_connection(conn):
                 indexes = deepcopy(self._load_indexes(db_name, coll_name))
         return _sqlite_build_index_information(indexes)

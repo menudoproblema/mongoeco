@@ -7,8 +7,12 @@ from typing import TYPE_CHECKING
 
 from mongoeco._types.indexes import default_index_name
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
-from mongoeco.api.admin_parsing import normalize_index_models_from_command
+from mongoeco.api.admin_parsing import (
+    normalize_index_models_from_command,
+    validate_index_request_options,
+)
 from mongoeco.api.bson_input import encode_bson_request
+from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.core._public_materialization import materialize_command_response
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors
@@ -66,6 +70,7 @@ def index_model_document(model):
             value = getattr(model, attribute)
             if value is not None and (
                 value is not False
+                or field in model._explicit_options
                 or field not in {"unique", "sparse", "background", "hidden"}
             ):
                 document[field] = value
@@ -105,6 +110,18 @@ def _project_index_document(collection, document):
     return document
 
 
+async def _index_hidden_for_create(collection, name, hidden, session):
+    # MongoDB 7 ignores a changed hidden option on an otherwise identical
+    # existing named index. Keep the catalog's value; 8/9 reject the conflict.
+    if collection._mongodb_dialect.key == "7.0":
+        existing = await collection._engine.index_information(
+            collection._db_name, collection._collection_name, context=session
+        )
+        if name in existing:
+            return existing[name].get("hidden", False)
+    return hidden
+
+
 async def _index_collation_for_create(collection, keys, collation, session):
     if collation == {}:
         message = "The field 'collation' cannot be an empty object"
@@ -112,15 +129,24 @@ async def _index_collation_for_create(collection, keys, collation, session):
     context = await collection._resolve_operation_context(
         collection._new_operation_context(session=session, collation=collation)
     )
+    if keys == [("_id", 1)]:
+        default = await collection._resolve_operation_context(
+            collection._new_operation_context(session=session)
+        )
+        requested = context.collation
+        inherited = default.collation
+        if requested is not None and requested.locale == "simple":
+            requested = None
+        if inherited is not None and inherited.locale == "simple":
+            inherited = None
+        if requested != inherited:
+            message = "The _id index must have the collection's default collation"
+            raise server_error(message, code=2)
+        return None
     if not collation:
         collation = (
             None if context.collation is None else context.collation.to_document()
         )
-    if keys == [("_id", 1)] and (
-        context.collation is None or context.collation.locale == "simple"
-    ):
-        # The SPI's builtin definition is immutable and intrinsically unique.
-        return None
     if not collection._mongodb_dialect.behavior_flag(
         "list_indexes_includes_simple_collation", default=False
     ):
@@ -147,11 +173,11 @@ async def create_index(
     collection: AsyncCollection,
     keys: object,
     *,
-    unique: bool = False,
+    unique: bool | object = ARG_UNSET,
     name: str | None = None,
-    sparse: bool = False,
+    sparse: bool | object = ARG_UNSET,
     background: bool = False,
-    hidden: bool = False,
+    hidden: bool | object = ARG_UNSET,
     collation: dict[str, object] | None = None,
     partial_filter_expression: dict[str, object] | None = None,
     expire_after_seconds: int | None = None,
@@ -185,11 +211,22 @@ async def create_index(
         ("default_language", default_language),
         ("language_override", language_override),
     )
-    index.update({field: value for field, value in options if value is not None})
+    index.update(
+        {
+            field: value
+            for field, value in options
+            if value is not ARG_UNSET
+            and (value is not None or field in {"unique", "sparse", "hidden"})
+        }
+    )
     admitted = _admit_index_request(
         collection, [index], comment=comment, max_time_ms=max_time_ms
     )
     index = admitted["indexes"][0]
+    validate_index_request_options(index)
+    unique = index.get("unique", False)
+    sparse = index.get("sparse", False)
+    hidden = index.get("hidden", False)
     normalized_keys = list(index["key"].items())
     partial_filter_expression = index.get("partialFilterExpression")
     collation = index.get("collation")
@@ -229,6 +266,7 @@ async def create_index(
             )
             raise OperationFailure(message, code=code, details={"codeName": code_name})
     requested_name = name or default_index_name(normalized_keys)
+    hidden = await _index_hidden_for_create(collection, requested_name, hidden, session)
     with (
         collection._runtime._engine_change_delivery_scope(session=session),
         execution_now_scope(collection._resolve_now()),
@@ -318,6 +356,9 @@ async def execute_create_indexes(
                     collection, index.keys, index.collation, session
                 )
                 builtin_id = index.keys == [("_id", 1)]
+                hidden = await _index_hidden_for_create(
+                    collection, index.resolved_name, index.hidden, session
+                )
                 name = await collection._engine.create_index(
                     collection._db_name,
                     collection._collection_name,
@@ -325,7 +366,7 @@ async def execute_create_indexes(
                     unique=True if builtin_id else index.unique,
                     name="_id_" if builtin_id else index.name,
                     sparse=index.sparse,
-                    hidden=index.hidden,
+                    hidden=hidden,
                     collation=collation,
                     partial_filter_expression=normalized_partial_filter,
                     expire_after_seconds=index.expire_after_seconds,
