@@ -1,0 +1,6219 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_index_admin_codec_owners": {
+      "list/factory-fails-False": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "726f6f74"
+              },
+              {
+                "type": "str",
+                "utf8": "534f4e"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "6b6579"
+              },
+              {
+                "type": "str",
+                "utf8": "534f4e"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "7061796c6f6164"
+              },
+              {
+                "type": "document",
+                "fields": [
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "74797065"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "62696e617279"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "73756274797065"
+                    },
+                    {
+                      "type": "int",
+                      "value": {
+                        "$numberInt": "4"
+                      }
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "686578"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "3030303130323033303430353036303730383039306130623063306430653066"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "metadata",
+          "subject"
+        ],
+        "callbacks": []
+      },
+      "list/factory-fails-True": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "726f6f74"
+              },
+              {
+                "type": "str",
+                "utf8": "534f4e"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "6b6579"
+              },
+              {
+                "type": "str",
+                "utf8": "534f4e"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "7061796c6f6164"
+              },
+              {
+                "type": "document",
+                "fields": [
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "74797065"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "62696e617279"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "73756274797065"
+                    },
+                    {
+                      "type": "int",
+                      "value": {
+                        "$numberInt": "4"
+                      }
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "686578"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "3030303130323033303430353036303730383039306130623063306430653066"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "metadata",
+          "subject"
+        ],
+        "callbacks": []
+      },
+      "information/factory-fails-False": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "726f6f74"
+              },
+              {
+                "type": "str",
+                "utf8": "64696374"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "6b6579"
+              },
+              {
+                "type": "str",
+                "utf8": "6c697374"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "7061796c6f6164"
+              },
+              {
+                "type": "document",
+                "fields": [
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "74797065"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "62696e617279"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "73756274797065"
+                    },
+                    {
+                      "type": "int",
+                      "value": {
+                        "$numberInt": "4"
+                      }
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "686578"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "3030303130323033303430353036303730383039306130623063306430653066"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "metadata",
+          "subject"
+        ],
+        "callbacks": []
+      },
+      "information/factory-fails-True": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "726f6f74"
+              },
+              {
+                "type": "str",
+                "utf8": "64696374"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "6b6579"
+              },
+              {
+                "type": "str",
+                "utf8": "6c697374"
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "7061796c6f6164"
+              },
+              {
+                "type": "document",
+                "fields": [
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "74797065"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "62696e617279"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "73756274797065"
+                    },
+                    {
+                      "type": "int",
+                      "value": {
+                        "$numberInt": "4"
+                      }
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "utf8": "686578"
+                    },
+                    {
+                      "type": "str",
+                      "utf8": "3030303130323033303430353036303730383039306130623063306430653066"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "metadata",
+          "subject"
+        ],
+        "callbacks": []
+      },
+      "drop/factory-fails-False": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "metadata"
+        ],
+        "callbacks": [
+          "factory",
+          {
+            "field": "nIndexesWas",
+            "value": {
+              "type": "int",
+              "value": {
+                "$numberInt": "3"
+              }
+            }
+          },
+          {
+            "field": "ok",
+            "value": {
+              "type": "float",
+              "value": {
+                "$numberDouble": "1.0"
+              }
+            }
+          }
+        ]
+      },
+      "drop/factory-fails-True": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "RuntimeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "metadata"
+        ],
+        "callbacks": [
+          "factory"
+        ]
+      },
+      "drop-all/factory-fails-False": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ],
+        "callbacks": [
+          "factory",
+          {
+            "field": "nIndexesWas",
+            "value": {
+              "type": "int",
+              "value": {
+                "$numberInt": "3"
+              }
+            }
+          },
+          {
+            "field": "msg",
+            "value": {
+              "type": "str",
+              "utf8": "6e6f6e2d5f696420696e64657865732064726f7070656420666f7220636f6c6c656374696f6e"
+            }
+          },
+          {
+            "field": "ok",
+            "value": {
+              "type": "float",
+              "value": {
+                "$numberDouble": "1.0"
+              }
+            }
+          }
+        ]
+      },
+      "drop-all/factory-fails-True": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "RuntimeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ],
+        "callbacks": [
+          "factory"
+        ]
+      }
+    },
+    "semantic_index_admin_headers": {
+      "raw-decimal/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "raw-decimal/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "raw-decimal/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "raw-decimal/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "object/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "object/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "object/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "object/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "set/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "set/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "set/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "set/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "frozenset/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "frozenset/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "frozenset/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "frozenset/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-object/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-object/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-object/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-object/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-decimal/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-decimal/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-decimal/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nested-decimal/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nul-key/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nul-key/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nul-key/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "nul-key/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "integer-key/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "integer-key/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "integer-key/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "integer-key/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "overflow-int/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "OverflowError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "overflow-int/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "OverflowError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "overflow-int/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "OverflowError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "overflow-int/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "OverflowError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "bytearray/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "bytearray/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "bytearray/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "bytearray/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "date/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "date/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "date/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "date/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "surrogate/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "UnicodeEncodeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "surrogate/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "UnicodeEncodeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "surrogate/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "UnicodeEncodeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "surrogate/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "UnicodeEncodeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "code-scope-decimal/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "code-scope-decimal/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "code-scope-decimal/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "code-scope-decimal/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "dbref-object/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "dbref-object/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "dbref-object/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "dbref-object/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "uuid/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "uuid/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "uuid/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "uuid/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "decimal128/list": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "decimal128/information": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "decimal128/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "decimal128/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "binary0/list": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "binary0/information": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "binary0/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "binary0/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "binary5/list": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "binary5/information": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "binary5/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "binary5/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "bytes/list": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "bytes/information": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "bytes/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "bytes/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "datetime/list": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "datetime/information": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "datetime/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "datetime/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "tuple/list": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "tuple/information": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "tuple/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "tuple/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "document/list": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "document/information": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "str",
+              "utf8": "5f69645f"
+            },
+            {
+              "type": "str",
+              "utf8": "7375626a656374"
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "document/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "document/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      }
+    },
+    "semantic_index_admin_precedence": {
+      "5/invalid-comment": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "TypeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "{}/invalid-comment": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "TypeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "()/invalid-comment": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "TypeError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "[]/invalid-comment": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "[('v', 1)]/invalid-comment": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "'subject'/invalid-comment": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "'missing'/invalid-comment": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "closed/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidOperation",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "closed/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidOperation",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "closed/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidOperation",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "closed/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidOperation",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      }
+    },
+    "semantic_index_admin_uuid_owners": {
+      "UNSPECIFIED/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "UNSPECIFIED/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "UNSPECIFIED/drop": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "UNSPECIFIED/drop-all": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "STANDARD/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "STANDARD/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "STANDARD/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "STANDARD/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "PYTHON_LEGACY/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "PYTHON_LEGACY/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "PYTHON_LEGACY/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "PYTHON_LEGACY/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "JAVA_LEGACY/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "JAVA_LEGACY/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "JAVA_LEGACY/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "JAVA_LEGACY/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "CSHARP_LEGACY/list": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "CSHARP_LEGACY/information": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "ValueError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_",
+          "subject"
+        ]
+      },
+      "CSHARP_LEGACY/drop": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      },
+      "CSHARP_LEGACY/drop-all": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "index_names": [
+          "_id_"
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "tcmalloc-google",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "OpenSSL 3.0.13 30 Jan 2024",
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2404",
+        "distarch": "aarch64",
+        "cc": "external/mongo_toolchain_v5/stow/llvm-v5/bin/clang++: version unknown",
+        "ccflags": "-std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -B external/mongo_toolchain_v5/v5/bin -B external/mongo_toolchain_v5/stow/gcc-v5/libexec/gcc/aarch64-mongodb-linux/14.2.0 -B external/mongo_toolchain_v5/stow/gcc-v5/lib/gcc/aarch64-mongodb-linux/14.2.0 -B external/mongo_toolchain_v5/stow/llvm-v5/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystem external/mongo_toolchain_v5/stow/gcc-v5/include/c++/14.2.0 -isystem external/mongo_toolchain_v5/stow/gcc-v5/include/c++/14.2.0/aarch64-mongodb-linux -isystem /usr/include/openssl -isystem /usr/include/aarch64-mongodb-linux -isystem /usr/include -isystem external/mongo_toolchain_v5/stow/gcc-v5/include/c++/14.2.0/backward -isystem external/mongo_toolchain_v5/stow/llvm-v5/lib/clang/19/include -gdwarf-5 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -ffp-contract=off -Wunused-exception-parameter -Wno-tautological-constant-out-of-range-compare -Wno-tautological-constant-compare -Wno-tautological-unsigned-zero-compare -Wno-tautological-unsigned-enum-zero-compare -Wno-inconsistent-missing-override -Wno-instantiation-after-specialization -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -fprofile-use=external/_main~_repo_rules~pgo_data/clang_pgo.profdata -Wno-profile-instr-unprofiled -Wno-profile-instr-out-of-date -Wno-backend-plugin -mllvm -profile-accurate-for-symsinlist=false -flto=thin -fno-debug-types-section -ffile-prefix-map=/proc/self/cwd=. -Wimplicit-fallthrough -march=armv8.2-a -mtune=generic -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -Wa,--compress-debug-sections -DNDEBUG -DABSL_ALLOCATOR_NOTHROW -D_FORTIFY_SOURCE=2 -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wno-deprecated-declarations -Wno-deprecated-non-prototype -Wno-missing-template-arg-list-after-template-kw -Wno-sign-compare -Wno-implicit-fallthrough -Wno-shorten-64-to-32 -Wno-unused-but-set-variable -Wno-nullability-completeness -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "None: version unknown",
+        "cxxflags": "-std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -B external/mongo_toolchain_v5/v5/bin -B external/mongo_toolchain_v5/stow/gcc-v5/libexec/gcc/aarch64-mongodb-linux/14.2.0 -B external/mongo_toolchain_v5/stow/gcc-v5/lib/gcc/aarch64-mongodb-linux/14.2.0 -B external/mongo_toolchain_v5/stow/llvm-v5/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystem external/mongo_toolchain_v5/stow/gcc-v5/include/c++/14.2.0 -isystem external/mongo_toolchain_v5/stow/gcc-v5/include/c++/14.2.0/aarch64-mongodb-linux -isystem /usr/include/openssl -isystem /usr/include/aarch64-mongodb-linux -isystem /usr/include -isystem external/mongo_toolchain_v5/stow/gcc-v5/include/c++/14.2.0/backward -isystem external/mongo_toolchain_v5/stow/llvm-v5/lib/clang/19/include -gdwarf-5 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -ffp-contract=off -Wunused-exception-parameter -Wno-tautological-constant-out-of-range-compare -Wno-tautological-constant-compare -Wno-tautological-unsigned-zero-compare -Wno-tautological-unsigned-enum-zero-compare -Wno-inconsistent-missing-override -Wno-instantiation-after-specialization -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -fprofile-use=external/_main~_repo_rules~pgo_data/clang_pgo.profdata -Wno-profile-instr-unprofiled -Wno-profile-instr-out-of-date -Wno-backend-plugin -mllvm -profile-accurate-for-symsinlist=false -flto=thin -fno-debug-types-section -ffile-prefix-map=/proc/self/cwd=. -Wimplicit-fallthrough -march=armv8.2-a -mtune=generic -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -Wa,--compress-debug-sections -DNDEBUG -DABSL_ALLOCATOR_NOTHROW -D_FORTIFY_SOURCE=2 -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wno-deprecated-declarations -Wno-deprecated-non-prototype -Wno-missing-template-arg-list-after-template-kw -Wno-sign-compare -Wno-implicit-fallthrough -Wno-shorten-64-to-32 -Wno-unused-but-set-variable -Wno-nullability-completeness -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-B external/mongo_toolchain_v5/v5/bin -B external/mongo_toolchain_v5/stow/gcc-v5/libexec/gcc/aarch64-mongodb-linux/14.2.0 -B external/mongo_toolchain_v5/stow/gcc-v5/lib/gcc/aarch64-mongodb-linux/14.2.0 -B external/mongo_toolchain_v5/stow/llvm-v5/bin -pie -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -flto=thin -ffile-prefix-map=/proc/self/cwd=. -resource-dir=external/mongo_toolchain_v5/stow/llvm-v5/lib/clang/19/ -Wl,-z,now -Wl,--fatal-warnings -fuse-ld=lld -Lexternal/mongo_toolchain_v5/stow/gcc-v5/lib/gcc/aarch64-mongodb-linux/14.2.0 -Lexternal/mongo_toolchain_v5/v5/lib -Lexternal/mongo_toolchain_v5/v5/lib64",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "opentelemetry": true,
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_bson_index_admin_cases.py",
+    "sha256": "b188ac2b7e4ae4955fe28006ed315c28aa3f79acd4aa6eb2f906a252c84e7ff5"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_index_admin_headers",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "semantic_index_admin_headers"
+    },
+    {
+      "name": "semantic_index_admin_uuid_owners",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "semantic_index_admin_uuid_owners"
+    },
+    {
+      "name": "semantic_index_admin_precedence",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "semantic_index_admin_precedence"
+    },
+    {
+      "name": "semantic_index_admin_codec_owners",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "semantic_index_admin_codec_owners"
+    }
+  ]
+}

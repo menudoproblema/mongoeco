@@ -244,6 +244,15 @@ class _AsyncView:
     def create_index(self, *args, **kwargs):
         return self._call("create_index", *args, **kwargs)
 
+    def drop_index(self, *args, **kwargs):
+        return self._call("drop_index", *args, **kwargs)
+
+    def drop_indexes(self, *args, **kwargs):
+        return self._call("drop_indexes", *args, **kwargs)
+
+    def index_information(self, *args, **kwargs):
+        return self._call("index_information", *args, **kwargs)
+
     def create_indexes(self, *args, **kwargs):
         return self._call("create_indexes", *args, **kwargs)
 

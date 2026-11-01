@@ -311,7 +311,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(info, {"_id_": {"key": [("_id", 1)], "unique": True}})
         self.assertEqual(
             engine.drop_index_args,
-            ("db", "coll", [("email", 1), ("created_at", -1)]),
+            ("db", "coll", "email_1_created_at_-1"),
         )
         self.assertEqual(engine.drop_index_kwargs, {"context": None})
         self.assertEqual(engine.drop_indexes_args, ("db", "coll"))
@@ -1763,6 +1763,9 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.drop_calls = []
+
+            async def index_information(self, *args, **kwargs):
+                return {"name_1": {"key": [("name", 1)]}}
 
             async def drop_index(self, *args, **kwargs):
                 self.drop_calls.append((args, kwargs))

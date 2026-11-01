@@ -54,6 +54,10 @@ from tests.differential.semantic_bson_grammar_context_cases import (
     SEED as BSON_GRAMMAR_CONTEXT_SEED,
     SEMANTIC_BSON_GRAMMAR_CONTEXT_CASES,
 )
+from tests.differential.semantic_bson_index_admin_cases import (
+    SEED as BSON_INDEX_ADMIN_SEED,
+    SEMANTIC_BSON_INDEX_ADMIN_CASES,
+)
 from tests.differential.semantic_bson_insert_cases import (
     SEED as BSON_INSERT_SEED,
     SEMANTIC_BSON_INSERT_CASES,
@@ -550,6 +554,10 @@ SEMANTIC_CORPORA = {
         "semantic_decimal_cases",
         DECIMAL_EDGE_SEED,
         SEMANTIC_DECIMAL_EDGE_CASES,
+    ),
+    "bson_index_admin": SemanticCorpus(
+        "bson-index-admin", "semantic_bson_index_admin_cases", BSON_INDEX_ADMIN_SEED,
+        SEMANTIC_BSON_INDEX_ADMIN_CASES,
     ),
     "bson_catalog": SemanticCorpus(
         "bson-catalog", "semantic_bson_catalog_cases", BSON_CATALOG_SEED,

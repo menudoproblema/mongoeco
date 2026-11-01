@@ -6,6 +6,7 @@ import time
 from hashlib import md5
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async import _collection_indexing
 from mongoeco.api._async._collection_reads import collect_distinct_values
 from mongoeco.api.admin_parsing import (
     normalize_command_max_time_ms,
@@ -504,8 +505,6 @@ class DatabaseAdminReadCommandService:
         session: ClientSession | None = None,
     ) -> object:
         comment = spec.get("comment")
-        if comment is not None and not isinstance(comment, str):
-            raise TypeError("comment must be a string")
         return await self.execute_list_indexes_command(
             self._admin._require_collection_name(
                 spec.get("listIndexes"),
@@ -522,10 +521,13 @@ class DatabaseAdminReadCommandService:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> CommandCursorResult:
-        raw_first_batch = await self._admin._database.get_collection(collection_name).list_indexes(
-            comment=comment,
-            session=session,
-        ).to_list()
+        collection = self._admin._database.get_collection(collection_name)
+        raw_first_batch = await _collection_indexing.load_index_documents(
+            collection, session=session,
+        )
+        collection._record_operation_metadata(
+            operation="list_indexes", comment=comment, session=session,
+        )
         first_batch = [
             self._admin._normalize_list_indexes_document_for_collection(collection_name, document)
             for document in raw_first_batch

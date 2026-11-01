@@ -570,12 +570,10 @@ class DropIndexesCommandResult:
     message: str | None = None
 
     def to_document(self) -> dict[str, object]:
-        document: dict[str, object] = {
-            "nIndexesWas": self.previous_index_count,
-            "ok": 1.0,
-        }
+        document: dict[str, object] = {"nIndexesWas": self.previous_index_count}
         if self.message is not None:
             document["msg"] = self.message
+        document["ok"] = 1.0
         return document
 
 

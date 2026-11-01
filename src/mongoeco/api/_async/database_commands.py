@@ -1335,8 +1335,6 @@ class AsyncDatabaseCommandService:
             )
         if command_name == "listIndexes":
             comment = spec.get("comment")
-            if comment is not None and not isinstance(comment, str):
-                raise TypeError("comment must be a string")
             return self.ListIndexesCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,

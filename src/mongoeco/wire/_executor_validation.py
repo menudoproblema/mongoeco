@@ -353,9 +353,6 @@ def _validate_find(_body: dict[str, Any], command_document: dict[str, Any]) -> N
 
 def _validate_list_indexes(_body: dict[str, Any], command_document: dict[str, Any]) -> None:
     _require_non_empty_string("listIndexes", command_document.get("listIndexes"), "requires a non-empty collection name")
-    comment = command_document.get("comment")
-    if comment is not None and not isinstance(comment, str):
-        raise OperationFailure("wire listIndexes comment must be a string")
 
 
 def _validate_create_indexes(_body: dict[str, Any], command_document: dict[str, Any]) -> None:
@@ -377,9 +374,6 @@ def _validate_drop_indexes(_body: dict[str, Any], command_document: dict[str, An
     target = command_document.get("index")
     if target != "*" and not isinstance(target, (str, list, tuple, dict)):
         raise OperationFailure("wire dropIndexes index must be '*', a name, or a key specification")
-    comment = command_document.get("comment")
-    if comment is not None and not isinstance(comment, str):
-        raise OperationFailure("wire dropIndexes comment must be a string")
 
 
 def _validate_find_and_modify(_body: dict[str, Any], command_document: dict[str, Any]) -> None:

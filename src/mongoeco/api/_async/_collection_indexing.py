@@ -10,25 +10,35 @@ from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.api.admin_parsing import normalize_index_models_from_command
 from mongoeco.api.bson_input import encode_bson_request
+from mongoeco.core._public_materialization import materialize_command_response
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors
 from mongoeco.core.expression_context import execution_now_scope
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.errors import OperationFailure
 from mongoeco.session_guards import ensure_session_can_use_engine
-from mongoeco.types import CodecOptions, IndexModel, UuidRepresentation
+from mongoeco.types import (
+    SON,
+    CodecOptions,
+    DropIndexesCommandResult,
+    IndexModel,
+    UuidRepresentation,
+)
 
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
     from mongoeco.session import ClientSession
-    from mongoeco.types import Document, IndexInformation, IndexKeySpec
+    from mongoeco.types import Document, IndexInformation
 
 
 _INDEX_NOT_FOUND_CODE = 27
 
 _INDEX_REQUEST_OPTIONS = CodecOptions(
     uuid_representation=UuidRepresentation.UNSPECIFIED
+)
+_INDEX_LIST_OPTIONS = CodecOptions(
+    document_class=SON, uuid_representation=UuidRepresentation.UNSPECIFIED
 )
 _INDEX_MODEL_FIELDS = {
     "unique": "unique",
@@ -92,7 +102,7 @@ def _project_index_document(collection, document):
     ):
         document = dict(document)
         document.setdefault("collation", {"locale": "simple"})
-    return collection._apply_codec_options_to_document(document)
+    return document
 
 
 async def _index_collation_for_create(collection, keys, collation, session):
@@ -344,26 +354,42 @@ async def execute_create_indexes(
     return names
 
 
+async def load_index_documents(collection, *, session=None):
+    """Read prepared catalog metadata without public request or response codecs."""
+    documents = await collection._engine.list_indexes(
+        collection._db_name, collection._collection_name, context=session
+    )
+    return [_project_index_document(collection, document) for document in documents]
+
+
+def _admit_list_indexes(collection, *, comment, session):
+    ensure_session_can_use_engine(collection._engine, session)
+    command = {"listIndexes": collection.name, "cursor": {}}
+    if comment is not None:
+        command["comment"] = comment
+    return encode_bson_request(command, codec_options=_INDEX_LIST_OPTIONS)
+
+
+async def _public_index_documents(collection, *, session):
+    return [
+        materialize_command_response(document, codec_options=_INDEX_LIST_OPTIONS)
+        for document in await load_index_documents(collection, session=session)
+    ]
+
+
 def list_indexes(
     collection: AsyncCollection,
     *,
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> AsyncIndexCursor:
-    collection._ensure_session_active(session)
+    admitted = _admit_list_indexes(collection, comment=comment, session=session)
     collection._record_operation_metadata(
-        operation="list_indexes",
-        comment=comment,
-        session=session,
+        operation="list_indexes", comment=admitted.get("comment"), session=session,
     )
 
     async def _load_indexes() -> list[Document]:
-        documents = await collection._engine.list_indexes(
-            collection._db_name,
-            collection._collection_name,
-            context=session,
-        )
-        return [_project_index_document(collection, document) for document in documents]
+        return await _public_index_documents(collection, session=session)
 
     return AsyncIndexCursor(_load_indexes)
 
@@ -374,21 +400,71 @@ async def index_information(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> IndexInformation:
-    collection._ensure_session_active(session)
+    admitted = _admit_list_indexes(collection, comment=comment, session=session)
     collection._record_operation_metadata(
-        operation="index_information",
-        comment=comment,
-        session=session,
+        operation="index_information", comment=admitted.get("comment"), session=session,
     )
-    information = await collection._engine.index_information(
-        collection._db_name,
-        collection._collection_name,
-        context=session,
+    information = {}
+    for document in await _public_index_documents(collection, session=session):
+        entry = dict(document)
+        name = entry.pop("name")
+        entry["key"] = list(entry["key"].items())
+        information[name] = entry
+    return information
+
+
+@command_errors
+async def execute_drop_index(collection, target, *, comment=None, session=None):
+    """Execute an already admitted index removal without client codecs."""
+    before = await collection._engine.index_information(
+        collection._db_name, collection._collection_name, context=session,
     )
-    return {
-        name: _project_index_document(collection, document)
-        for name, document in information.items()
-    }
+    if target == "*":
+        await collection._engine.drop_indexes(
+            collection._db_name, collection._collection_name, context=session,
+        )
+    else:
+        try:
+            await collection._engine.drop_index(
+                collection._db_name, collection._collection_name, target,
+                context=session,
+            )
+        except OperationFailure as error:
+            if (
+                error.code != _INDEX_NOT_FOUND_CODE
+                or collection._mongodb_dialect.key != "9.0"
+            ):
+                raise
+    collection._record_operation_metadata(
+        operation="drop_indexes" if target == "*" else "drop_index",
+        comment=comment, session=session,
+    )
+    return DropIndexesCommandResult(
+        previous_index_count=len(before),
+        message=(
+            "non-_id indexes dropped for collection" if target == "*" else None
+        ),
+    )
+
+
+async def _drop_index_request(collection, target, *, comment, session):
+    if isinstance(target, list):
+        target = default_index_name(target)
+    if not isinstance(target, str):
+        message = "index_or_name must be a string or list of index keys"
+        raise TypeError(message)
+    ensure_session_can_use_engine(collection._engine, session)
+    command = {"dropIndexes": collection.name, "index": target}
+    if comment is not None:
+        command["comment"] = comment
+    admitted = encode_bson_request(command, codec_options=collection.codec_options)
+    response = await execute_drop_index(
+        collection, admitted["index"], comment=admitted.get("comment"), session=session,
+    )
+    # The driver decodes this otherwise discarded response after the write.
+    materialize_command_response(
+        response.to_document(), codec_options=collection.codec_options,
+    )
 
 
 @command_errors
@@ -399,29 +475,8 @@ async def drop_index(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> None:
-    collection._ensure_session_active(session)
-    target: str | IndexKeySpec
-    if isinstance(index_or_name, str):
-        target = index_or_name
-    else:
-        target = collection._normalize_index_keys(index_or_name)
-    try:
-        await collection._engine.drop_index(
-            collection._db_name,
-            collection._collection_name,
-            target,
-            context=session,
-        )
-    except OperationFailure as error:
-        if (
-            error.code != _INDEX_NOT_FOUND_CODE
-            or collection._mongodb_dialect.key != "9.0"
-        ):
-            raise
-    collection._record_operation_metadata(
-        operation="drop_index",
-        comment=comment,
-        session=session,
+    await _drop_index_request(
+        collection, index_or_name, comment=comment, session=session,
     )
 
 
@@ -432,17 +487,7 @@ async def drop_indexes(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> None:
-    collection._ensure_session_active(session)
-    await collection._engine.drop_indexes(
-        collection._db_name,
-        collection._collection_name,
-        context=session,
-    )
-    collection._record_operation_metadata(
-        operation="drop_indexes",
-        comment=comment,
-        session=session,
-    )
+    await _drop_index_request(collection, "*", comment=comment, session=session)
 
 
 async def create_search_index(

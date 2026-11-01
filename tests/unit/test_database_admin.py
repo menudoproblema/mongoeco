@@ -847,8 +847,12 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 await service._read_commands.command_db_hash({"dbHash": 1, "collections": ["", "users"]})
             with self.assertRaisesRegex(TypeError, "comment must be a string"):
                 await service._read_commands.command_db_hash({"dbHash": 1, "comment": 1})
-            with self.assertRaisesRegex(TypeError, "comment must be a string"):
-                await service._read_commands.command_list_indexes({"listIndexes": "events", "comment": 1})
+            indexes = await service._read_commands.command_list_indexes(
+                {"listIndexes": "events", "comment": 1}
+            )
+            self.assertEqual(
+                [entry["name"] for entry in indexes.first_batch], ["_id_"]
+            )
 
         asyncio.run(_run())
 
@@ -911,6 +915,8 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         database = AsyncDatabase(MemoryEngine(), "db")
         service = database._admin
         fake_collection = _FakeCollection([{"_id": 1}])
+
+        real_collection = database.get_collection("users")
 
         async def _run():
             with patch.object(database, "get_collection", return_value=fake_collection):
@@ -1121,27 +1127,31 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 self.assertEqual(operator_result.value, {"_id": "upserted-1"})
                 self.assertEqual(replacement_result.value, {"_id": "upserted-1"})
 
-                indexes_result = await service._execute_list_indexes_command(
-                    "users", comment="trace"
-                )
-                self.assertEqual(
-                    indexes_result.first_batch,
-                    [{"name": "_id_", "key": {"_id": 1}, "ns": "db.users"}],
-                )
-                self.assertEqual(
-                    fake_collection.list_indexes_calls[-1]["comment"], "trace"
-                )
-
-                drop_all = await service._command_drop_indexes(
-                    {"dropIndexes": "users", "index": "*"}
-                )
-                self.assertIn("non-_id indexes", drop_all.message)
-                with self.assertRaisesRegex(
-                    TypeError, "index must be '\\*', a name, or a key specification"
+                # Prepared commands exercise the SPI directly, not the fake public API.
+                with patch.object(
+                    database, "get_collection", return_value=real_collection,
                 ):
-                    await service._command_drop_indexes(
-                        {"dropIndexes": "users", "index": 1.5}
+                    await real_collection.insert_one({"_id": 1})
+                    indexes_result = await service._execute_list_indexes_command(
+                        "users", comment="trace"
                     )
+                    self.assertEqual(
+                        [entry["name"] for entry in indexes_result.first_batch],
+                        ["_id_"],
+                    )
+                    self.assertEqual(indexes_result.first_batch[0]["key"], {"_id": 1})
+                    self.assertEqual(fake_collection.list_indexes_calls, [])
+                    drop_all = await service._command_drop_indexes(
+                        {"dropIndexes": "users", "index": "*"}
+                    )
+                    self.assertIn("non-_id indexes", drop_all.message)
+                    self.assertEqual(fake_collection.drop_indexes_calls, [])
+                    with self.assertRaisesRegex(
+                        TypeError, "index must be '\\*', a name, or a key specification"
+                    ):
+                        await service._command_drop_indexes(
+                            {"dropIndexes": "users", "index": 1.5}
+                        )
 
         asyncio.run(_run())
 
@@ -1175,10 +1185,13 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 "execute_list_indexes_command",
                 return_value={"cursor": {"firstBatch": []}},
             ) as execute_list_indexes:
-                with self.assertRaisesRegex(TypeError, "comment must be a string"):
-                    await service._read_commands.command_list_indexes(
-                        {"listIndexes": "users", "comment": 1}
-                    )
+                await service._read_commands.command_list_indexes(
+                    {"listIndexes": "users", "comment": 1}
+                )
+                execute_list_indexes.assert_awaited_once_with(
+                    "users", comment=1, session=None,
+                )
+                execute_list_indexes.reset_mock()
 
                 result = await service._read_commands.command_list_indexes(
                     {"listIndexes": "users", "comment": "trace"}

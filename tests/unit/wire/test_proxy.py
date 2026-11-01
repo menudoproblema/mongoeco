@@ -89,12 +89,16 @@ class WireProxyUnitTests(unittest.TestCase):
             _validate("validate", {}, {"validate": "events", "scandata": 1})
         with self.assertRaisesRegex(OperationFailure, "wire validate background must be a bool or null"):
             _validate("validate", {}, {"validate": "events", "background": "yes"})
-        with self.assertRaisesRegex(OperationFailure, "wire listIndexes comment must be a string"):
+        self.assertIsNone(
             _validate("listIndexes", {}, {"listIndexes": "events", "comment": 1})
+        )
         with self.assertRaisesRegex(OperationFailure, "wire createIndexes"):
             _validate("createIndexes", {}, {"createIndexes": "events", "indexes": "bad"})
-        with self.assertRaisesRegex(OperationFailure, "wire dropIndexes comment must be a string"):
-            _validate("dropIndexes", {}, {"dropIndexes": "events", "index": "*", "comment": 1})
+        self.assertIsNone(
+            _validate(
+                "dropIndexes", {}, {"dropIndexes": "events", "index": "*", "comment": 1}
+            )
+        )
         with self.assertRaisesRegex(OperationFailure, "let must be a document"):
             _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "let": []})
         with self.assertRaisesRegex(OperationFailure, "wire listCollections comment must be a string"):
@@ -1544,11 +1548,11 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire listIndexes comment must be a string"):
-            await proxy._executor.execute_command(
-                {"listIndexes": "events", "comment": 1, "$db": "alpha"},
-                connection=connection,
-            )
+        listed = await proxy._executor.execute_command(
+            {"listIndexes": "events", "comment": 1, "$db": "alpha"},
+            connection=connection,
+        )
+        self.assertEqual(listed["ok"], 1.0)
 
         with self.assertRaisesRegex(OperationFailure, "wire createIndexes each index specification must be a dict"):
             await proxy._executor.execute_command(
@@ -2224,9 +2228,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             ({"aggregate": "events", "pipeline": [], "cursor": {"batchSize": -1}, "$db": "alpha"}, r"wire aggregate batch_size must be >= 0"),
             ({"validate": "events", "scandata": "yes", "$db": "alpha"}, "wire validate scandata must be a bool"),
             ({"validate": "events", "background": "yes", "$db": "alpha"}, "wire validate background must be a bool or null"),
-            ({"listIndexes": "events", "comment": 1, "$db": "alpha"}, "wire listIndexes comment must be a string"),
             ({"createIndexes": "events", "indexes": [{"key": {"title": 1}, "name": "x"}], "maxTimeMS": -1, "$db": "alpha"}, r"wire createIndexes max_time_ms must be >= 0"),
-            ({"dropIndexes": "events", "index": "x", "comment": 1, "$db": "alpha"}, "wire dropIndexes comment must be a string"),
             ({"findAndModify": "events", "query": {}, "let": [], "$db": "alpha"}, "let must be a document"),
         ]
 

@@ -26,7 +26,6 @@ from mongoeco.types import (
     CreateIndexesCommandResult,
     Document,
     DropDatabaseCommandResult,
-    DropIndexesCommandResult,
     FindAndModifyCommandResult,
     FindAndModifyLastErrorObject,
     NamespaceOkResult,
@@ -574,22 +573,10 @@ class DatabaseAdminWriteCommandService:
         )
         target = spec.get("index")
         collection = self._admin._database.get_collection(collection_name)
-        info_before = await collection.index_information(session=session)
-        if target == "*":
-            await collection.drop_indexes(comment=spec.get("comment"), session=session)
-        elif isinstance(target, (str, list, tuple, dict)):
-            await collection.drop_index(
-                target, comment=spec.get("comment"), session=session
-            )
-        else:
+        if not isinstance(target, (str, list, tuple, dict)):
             raise TypeError("index must be '*', a name, or a key specification")
-        return DropIndexesCommandResult(
-            previous_index_count=len(info_before),
-            message=(
-                f"non-_id indexes for collection {self._admin._db_name}.{collection_name} dropped"
-                if target == "*"
-                else None
-            ),
+        return await _collection_indexing.execute_drop_index(
+            collection, target, comment=spec.get("comment"), session=session,
         )
 
     async def command_drop_database(
