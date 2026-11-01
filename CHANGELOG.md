@@ -10,6 +10,12 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Preserve field-name projection sets through BSON admission, text-score sort
+  metadata through bounded reads, and registered aggregation extension grammar
+  during preparation. Omit `unique: false` from `index_information()` entries.
+- Check decoder-transformed command replies before consuming their values, and
+  preserve standard UUID identity in Search facets after BSON admission.
+
 - Match PyMongo's UNSPECIFIED UUID default: reject native Python UUID input
   unless STANDARD or a legacy representation is selected explicitly through
   CodecOptions. Preserve stored binary subtypes across reads and SQLite reopen.
