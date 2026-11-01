@@ -1,15 +1,16 @@
 from typing import TYPE_CHECKING
 
+from mongoeco.api._sync.database_commands import DatabaseCommandService
+from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.api.public_api import (
     ARG_UNSET,
     DATABASE_LIST_COLLECTION_NAMES_SPEC,
     DATABASE_LIST_COLLECTIONS_SPEC,
     normalize_public_operation_arguments,
 )
-from mongoeco.api._sync.database_commands import DatabaseCommandService
-from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.session import ClientSession
 from mongoeco.types import CollectionValidationDocument, Filter
+
 
 if TYPE_CHECKING:
     from mongoeco.api._sync.client import Database
@@ -85,7 +86,19 @@ class DatabaseAdminService:
         async_database = self._async_database()
         return self._client._run_resource(
             async_database.create_collection(name, session=session, **options),
-            lambda: self._database.get_collection(name),
+            lambda: self._database.get_collection(
+                name,
+                **{
+                    key: options[key]
+                    for key in (
+                        "codec_options",
+                        "read_preference",
+                        "write_concern",
+                        "read_concern",
+                    )
+                    if key in options
+                },
+            ),
         )
 
     def drop_collection(

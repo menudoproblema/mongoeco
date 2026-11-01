@@ -23,10 +23,6 @@ from mongoeco.api._async._collection_bulk import (
     execute_bulk_write,
 )
 from mongoeco.api._async._collection_insert import execute_insert_many
-from mongoeco.api._async._write_errors import (
-    materialize_write_error,
-    materialize_write_response,
-)
 from mongoeco.api._async._collection_runtime import (
     CollectionRuntimeCoordinator,
 )
@@ -35,36 +31,43 @@ from mongoeco.api._async._collection_watch import (
     create_change_stream_hub,
     open_collection_change_stream,
 )
+from mongoeco.api._async._write_errors import (
+    materialize_write_error,
+    materialize_write_response,
+)
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor  # noqa: TC001
 from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
 from mongoeco.api._async.search_index_cursor import (
     AsyncSearchIndexCursor,  # noqa: TC001
 )
+from mongoeco.api.admin_parsing import normalize_index_models_from_command
 from mongoeco.api.argument_validation import (
     HintSpec,
     ProjectionInput,
     normalize_projection_spec,
-    projection_document,
-    update_document,
-    replacement_document,
     normalize_sort_spec as _normalize_sort_spec,
+    projection_document,
+    replacement_document,
+    update_document,
     validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
 )
+from mongoeco.api.bson_input import encode_bson_request, encode_operation_bson
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
     UpdateOperation,
     _normalize_array_filters,
-    _normalize_skip,
     _normalize_limit,
+    _normalize_skip,
     compile_aggregate_operation,
 )
-from mongoeco.api.bson_input import encode_bson_request, encode_operation_bson
 from mongoeco.api.public_api import (
     ARG_UNSET,
+    COLLECTION_CREATE_INDEX_SPEC,
+    COLLECTION_CREATE_INDEXES_SPEC,
     COLLECTION_FIND_RAW_BATCHES_SPEC,
     COLLECTION_FIND_SPEC,
     COLLECTION_LIST_SEARCH_INDEXES_SPEC,
@@ -534,70 +537,11 @@ class AsyncCollection:
             raise TypeError("expire_after_seconds must be a non-negative int or None")
         return value
 
-    @classmethod
-    def _normalize_index_models(cls, indexes: object) -> list[IndexModel]:
-        if not isinstance(indexes, list):
-            raise TypeError("indexes must be a list of IndexModel instances")
-        normalized = [cls._normalize_index_model(index) for index in indexes]
-        if not normalized:
-            raise ValueError("indexes must not be empty")
-        return normalized
-
     @staticmethod
     def _normalize_index_model(model: object) -> IndexModel:
-        if isinstance(model, IndexModel):
-            return model
-        document = getattr(model, "document", None)
-        if not isinstance(document, dict):
-            raise TypeError("indexes must contain only IndexModel instances")
-        if "key" not in document:
-            raise TypeError("index model document must contain 'key'")
-        unsupported = set(document) - {
-            "key",
-            "name",
-            "unique",
-            "sparse",
-            "background",
-            "hidden",
-            "collation",
-            "partialFilterExpression",
-            "partial_filter_expression",
-            "expireAfterSeconds",
-            "expire_after_seconds",
-            "weights",
-            "wildcardProjection",
-            "wildcard_projection",
-            "defaultLanguage",
-            "default_language",
-            "languageOverride",
-            "language_override",
-        }
-        if unsupported:
-            unsupported_names = ", ".join(sorted(unsupported))
-            raise TypeError(f"unsupported IndexModel options: {unsupported_names}")
-        kwargs: dict[str, object] = {}
-        for field in (
-            "name",
-            "unique",
-            "sparse",
-            "background",
-            "hidden",
-            "collation",
-            "partialFilterExpression",
-            "partial_filter_expression",
-            "expireAfterSeconds",
-            "expire_after_seconds",
-            "weights",
-            "wildcardProjection",
-            "wildcard_projection",
-            "defaultLanguage",
-            "default_language",
-            "languageOverride",
-            "language_override",
-        ):
-            if field in document:
-                kwargs[field] = document[field]
-        return IndexModel(document["key"], **kwargs)
+        return normalize_index_models_from_command(
+            [_collection_indexing.index_model_document(model)]
+        )[0]
 
     @staticmethod
     def _normalize_search_index_model(model: object) -> SearchIndexModel:
@@ -1818,26 +1762,40 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> str:
-        return await _collection_indexing.create_index(
-            self,
-            keys,
-            unique=unique,
-            name=name,
-            sparse=sparse,
-            background=background,
-            hidden=hidden,
-            collation=collation,
-            partial_filter_expression=partial_filter_expression,
-            expire_after_seconds=expire_after_seconds,
-            weights=weights,
-            wildcard_projection=wildcard_projection,
-            default_language=default_language,
-            language_override=language_override,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            session=session,
+        options = normalize_public_operation_arguments(
+            COLLECTION_CREATE_INDEX_SPEC,
+            explicit={
+                "unique": unique,
+                "name": name,
+                "sparse": sparse,
+                "background": background,
+                "hidden": hidden,
+                "collation": collation,
+                "weights": weights,
+                "comment": comment,
+                "session": session,
+                "partial_filter_expression": partial_filter_expression
+                if partial_filter_expression is not None
+                else ARG_UNSET,
+                "expire_after_seconds": expire_after_seconds
+                if expire_after_seconds is not None
+                else ARG_UNSET,
+                "wildcard_projection": wildcard_projection
+                if wildcard_projection is not None
+                else ARG_UNSET,
+                "default_language": default_language
+                if default_language is not None
+                else ARG_UNSET,
+                "language_override": language_override
+                if language_override is not None
+                else ARG_UNSET,
+                "max_time_ms": max_time_ms if max_time_ms is not None else ARG_UNSET,
+            },
+            extra_kwargs=kwargs,
         )
+        return await _collection_indexing.create_index(self, keys, **options)
 
     async def create_indexes(
         self,
@@ -1846,12 +1804,20 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> list[str]:
+        options = normalize_public_operation_arguments(
+            COLLECTION_CREATE_INDEXES_SPEC,
+            explicit={
+                "max_time_ms": max_time_ms if max_time_ms is not None else ARG_UNSET
+            },
+            extra_kwargs=kwargs,
+        )
         return await _collection_indexing.create_indexes(
             self,
             indexes,
             comment=comment,
-            max_time_ms=max_time_ms,
+            max_time_ms=options.get("max_time_ms"),
             session=session,
         )
 

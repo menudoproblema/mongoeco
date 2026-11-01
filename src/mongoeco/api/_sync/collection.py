@@ -975,6 +975,7 @@ class Collection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> str:
         return self._client._run(
             self._async_collection().create_index(
@@ -994,6 +995,7 @@ class Collection:
                 comment=comment,
                 max_time_ms=max_time_ms,
                 session=session,
+                **kwargs,
             )
         )
 
@@ -1004,6 +1006,7 @@ class Collection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> list[str]:
         return self._client._run(
             self._async_collection().create_indexes(
@@ -1011,6 +1014,7 @@ class Collection:
                 comment=comment,
                 max_time_ms=max_time_ms,
                 session=session,
+                **kwargs,
             )
         )
 

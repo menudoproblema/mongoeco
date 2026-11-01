@@ -13,7 +13,7 @@ from mongoeco.api._async._database_admin_write_commands import (
 )
 from mongoeco.api._async.database_commands import AsyncDatabaseCommandService
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
-from mongoeco.core._public_materialization import materialize_public_value
+from mongoeco.api._command_bson import command_boolean
 from mongoeco.api.admin_parsing import (
     FindAndModifyCommandOptions,
     normalize_command_batch_size,
@@ -36,6 +36,7 @@ from mongoeco.api.admin_parsing import (
     require_collection_name,
     resolve_collection_reference,
 )
+from mongoeco.api.bson_input import encode_bson_request
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -50,16 +51,23 @@ from mongoeco.api.public_api import (
     DATABASE_LIST_COLLECTIONS_SPEC,
     normalize_public_operation_arguments,
 )
+from mongoeco.core._public_materialization import (
+    materialize_command_response,
+)
+from mongoeco.core.bson_scalars import truncate_bson_int64
+from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.change_events import validate_post_image_options
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.server_errors import server_error
+from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.semantic_core import compile_collection_validation_semantics
-from mongoeco.errors import BulkWriteError, OperationFailure
+from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
+from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
     BulkWriteErrorDetails,
+    CodecOptions,
     CollectionListingDocument,
     CollectionListingSnapshot,
     CollectionStatsDocument,
@@ -87,8 +95,8 @@ from mongoeco.types import (
     Projection,
     ReturnDocument,
     UpsertedWriteEntry,
+    UuidRepresentation,
     WriteCommandResult,
-    WriteErrorEntry,
 )
 
 
@@ -147,26 +155,52 @@ class AsyncDatabaseAdminService:
         normalized.setdefault("ns", f"{self._db_name}.{collection_name}")
         return normalized
 
-    @staticmethod
-    def _validate_create_collection_options(options: dict[str, object]) -> None:
+    def _validate_create_collection_options(self, options: dict[str, object]) -> None:
+        for field in (
+            "validator",
+            "validationLevel",
+            "validationAction",
+            "collation",
+            "capped",
+            "size",
+            "max",
+            "changeStreamPreAndPostImages",
+        ):
+            if field in options and options[field] is None:
+                options.pop(field)
+        for field, kind, description in (
+            ("validator", "object", "document"),
+            ("collation", "object", "document"),
+            ("validationLevel", "string", "string"),
+            ("validationAction", "string", "string"),
+        ):
+            if field in options and not matches_bson_type(options[field], kind):
+                message = f"{field} must be a {description}"
+                raise server_error(message, code=14, scope=ErrorScope.COMMAND)
         validate_post_image_options(options.get("changeStreamPreAndPostImages"))
         if options.get("changeStreamPreAndPostImages") is None:
             options.pop("changeStreamPreAndPostImages", None)
-        capped = options.get("capped")
-        if capped is not None and not isinstance(capped, bool):
-            raise TypeError("capped must be a bool")
-
+        capped = command_boolean(options.get("capped"), "capped", numeric=True)
+        if "capped" in options:
+            options["capped"] = capped
         for field_name in ("size", "max"):
-            value = options.get(field_name)
-            if value is None:
+            if field_name not in options:
                 continue
-            if not isinstance(value, int) or isinstance(value, bool):
-                raise TypeError(f"{field_name} must be a positive integer")
-            if value <= 0:
-                raise ValueError(f"{field_name} must be > 0")
-
+            value = truncate_bson_int64(options[field_name])
+            if value is None:
+                message = f"{field_name} must be a number representable as int64"
+                raise server_error(message, code=14, scope=ErrorScope.COMMAND)
+            if field_name == "size" and value <= 0:
+                message = "size must be > 0"
+                code = 51024 if self._mongodb_dialect.server_version == "7.0" else 2
+                raise server_error(message, code=code, scope=ErrorScope.COMMAND)
+            options[field_name] = value
         if capped and "size" not in options:
-            raise OperationFailure("capped collections require a positive size option")
+            message = "capped collections require a positive size option"
+            raise server_error(message, code=72, scope=ErrorScope.COMMAND)
+        if not capped and any(field in options for field in ("size", "max")):
+            message = "size and max require a capped collection"
+            raise server_error(message, code=72, scope=ErrorScope.COMMAND)
 
     async def list_collection_names(
         self,
@@ -243,7 +277,12 @@ class AsyncDatabaseAdminService:
                 )
             ]
             return [
-                materialize_public_value(document)
+                materialize_command_response(
+                    document,
+                    codec_options=CodecOptions(
+                        uuid_representation=UuidRepresentation.UNSPECIFIED
+                    ),
+                )
                 for document in documents
                 if QueryEngine.match(
                     document,
@@ -261,19 +300,76 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
         **options: object,
     ):
+        ensure_session_can_use_engine(self._engine, session)
+        check_exists = options.pop("check_exists", True)
+        if check_exists and name in await self._engine.list_collections(
+            self._db_name, context=session
+        ):
+            message = f"collection {name} already exists"
+            raise CollectionInvalid(message)
+        collection_options = {
+            key: options.pop(key)
+            for key in (
+                "codec_options",
+                "read_preference",
+                "write_concern",
+                "read_concern",
+            )
+            if key in options
+        }
+        collection = self._database.get_collection(name, **collection_options)
+        collation = options.pop("collation", None)
+        if collation is not None and not isinstance(collation, dict):
+            message = "collation must be a dict or None"
+            raise TypeError(message)
+        if "size" in options:
+            # PyMongo converts size before the create request is BSON encoded.
+            options["size"] = float(options["size"])
+        if collation is not None:
+            options["collation"] = collation
+        encoded = encode_bson_request(
+            {"create": name, **options}, codec_options=collection.codec_options
+        )
+        await self._create_collection_prepared(
+            name,
+            session=session,
+            **{key: value for key, value in encoded.items() if key != "create"},
+        )
+        # The SDK decodes the create reply even though it returns a collection.
+        materialize_command_response(
+            {"ok": 1.0}, codec_options=collection.codec_options
+        )
+        return collection
+
+    async def _create_collection_prepared(self, name, *, session=None, **options):
         self._ensure_session_active(session)
-        normalized_options = dict(options)
+        normalized_options = {
+            key: value
+            for key, value in options.items()
+            if key not in {"comment", "maxTimeMS", "writeConcern", "readConcern"}
+        }
         self._validate_create_collection_options(normalized_options)
         compile_collection_validation_semantics(
             normalized_options,
             dialect=self._mongodb_dialect,
         )
-        await self._engine.create_collection(
-            self._db_name,
-            name,
-            options=normalized_options,
-            context=session,
-        )
+        try:
+            await self._engine.create_collection(
+                self._db_name,
+                name,
+                options=normalized_options,
+                context=session,
+            )
+        except CollectionInvalid as error:
+            existing = await self._engine.collection_options(
+                self._db_name, name, context=session
+            )
+            if not self._namespace_admin.collection_options_match(
+                existing or {}, normalized_options
+            ):
+                raise server_error(
+                    str(error), code=48, scope=ErrorScope.COMMAND
+                ) from error
         return self._database.get_collection(name)
 
     async def drop_collection(

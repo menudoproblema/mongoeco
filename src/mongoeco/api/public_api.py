@@ -371,7 +371,32 @@ DATABASE_LIST_COLLECTIONS_SPEC = PublicOperationSpec(
     aliases=_FILTER_ALIAS,
 )
 
+
+
+COLLECTION_CREATE_INDEX_SPEC = PublicOperationSpec(
+    "create_index", _options(_catalog_options("create_index"), frozenset({
+        "partial_filter_expression", "expire_after_seconds", "wildcard_projection",
+        "default_language", "language_override", "max_time_ms", "session",
+        "keys", "unique", "name", "sparse", "hidden", "collation", "weights",
+    })),
+    aliases=MappingProxyType({
+        "partialFilterExpression": "partial_filter_expression",
+        "expireAfterSeconds": "expire_after_seconds",
+        "wildcardProjection": "wildcard_projection",
+        "defaultLanguage": "default_language",
+        "languageOverride": "language_override",
+        "maxTimeMS": "max_time_ms",
+    }),
+)
+COLLECTION_CREATE_INDEXES_SPEC = PublicOperationSpec(
+    "create_indexes", _options(_catalog_options("create_indexes"), "session"),
+    aliases=MappingProxyType({"maxTimeMS": "max_time_ms"}),
+)
+
+
 for _operation, _spec in (
+    ('create_index', COLLECTION_CREATE_INDEX_SPEC),
+    ('create_indexes', COLLECTION_CREATE_INDEXES_SPEC),
     ('find', COLLECTION_FIND_SPEC),
     ('update_one', COLLECTION_UPDATE_ONE_SPEC),
     ('update_many', COLLECTION_UPDATE_MANY_SPEC),

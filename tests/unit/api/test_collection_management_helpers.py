@@ -351,8 +351,9 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         with self.assertRaises(TypeError):
             asyncio.run(collection.create_indexes((IndexModel([("email", 1)]),)))  # type: ignore[arg-type]
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure) as caught:
             asyncio.run(collection.create_indexes([]))
+        self.assertEqual(caught.exception.code, 2)
 
     def test_create_indexes_accepts_pymongo_style_index_models(self):
         class FakePyMongoIndexModel:
@@ -498,7 +499,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                     ("db", "coll", [("email", 1)]),
                     {
                         "unique": True,
-                        "name": None,
+                        "name": "email_1",
                         "sparse": False,
                         "hidden": False,
                         "collation": None,

@@ -2,16 +2,21 @@ from __future__ import annotations
 
 import time
 
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from mongoeco._types.indexes import default_index_name
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
+from mongoeco.api.admin_parsing import normalize_index_models_from_command
+from mongoeco.api.bson_input import encode_bson_request
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors
 from mongoeco.core.expression_context import execution_now_scope
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.errors import OperationFailure
+from mongoeco.session_guards import ensure_session_can_use_engine
+from mongoeco.types import CodecOptions, IndexModel, UuidRepresentation
 
 
 if TYPE_CHECKING:
@@ -21,6 +26,56 @@ if TYPE_CHECKING:
 
 
 _INDEX_NOT_FOUND_CODE = 27
+
+_INDEX_REQUEST_OPTIONS = CodecOptions(
+    uuid_representation=UuidRepresentation.UNSPECIFIED
+)
+_INDEX_MODEL_FIELDS = {
+    "unique": "unique",
+    "sparse": "sparse",
+    "background": "background",
+    "hidden": "hidden",
+    "collation": "collation",
+    "partial_filter_expression": "partialFilterExpression",
+    "expire_after_seconds": "expireAfterSeconds",
+    "weights": "weights",
+    "wildcard_projection": "wildcardProjection",
+    "default_language": "default_language",
+    "language_override": "language_override",
+    "min_value": "min",
+    "max_value": "max",
+    "bucket_size": "bucketSize",
+}
+
+
+def index_model_document(model):
+    """View a model's request without copying values before BSON admission."""
+    if isinstance(model, IndexModel):
+        document = {"name": model.resolved_name, "key": dict(model.keys)}
+        for attribute, field in _INDEX_MODEL_FIELDS.items():
+            value = getattr(model, attribute)
+            if value is not None and (
+                value is not False
+                or field not in {"unique", "sparse", "background", "hidden"}
+            ):
+                document[field] = value
+        return document
+    document = getattr(model, "document", None)
+    if not isinstance(document, dict):
+        message = "indexes must contain only IndexModel instances"
+        raise TypeError(message)
+    # PyMongo gathers every name before encoding any model in the command.
+    document["name"]
+    return document
+
+
+def _admit_index_request(collection, documents, *, comment, max_time_ms):
+    command = {"createIndexes": collection.name, "indexes": documents}
+    if max_time_ms is not None:
+        command["maxTimeMS"] = max_time_ms
+    if comment is not None:
+        command["comment"] = comment
+    return encode_bson_request(command, codec_options=_INDEX_REQUEST_OPTIONS)
 
 
 def _validate_wildcard_projection(collection, projection):
@@ -87,8 +142,41 @@ async def create_index(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> str:
-    collection._ensure_session_active(session)
     normalized_keys = collection._normalize_index_keys(keys)
+    if collation is not None and not isinstance(collation, dict):
+        message = "collation must be a dict or None"
+        raise TypeError(message)
+    ensure_session_can_use_engine(collection._engine, session)
+    index = {
+        "name": default_index_name(normalized_keys) if name is None else name,
+        "key": dict(normalized_keys),
+    }
+    options = (
+        ("unique", unique),
+        ("sparse", sparse),
+        ("background", background),
+        ("hidden", hidden),
+        ("collation", collation),
+        ("partialFilterExpression", partial_filter_expression),
+        ("expireAfterSeconds", expire_after_seconds),
+        ("weights", weights),
+        ("wildcardProjection", wildcard_projection),
+        ("default_language", default_language),
+        ("language_override", language_override),
+    )
+    index.update({field: value for field, value in options if value is not None})
+    admitted = _admit_index_request(
+        collection, [index], comment=comment, max_time_ms=max_time_ms
+    )
+    index = admitted["indexes"][0]
+    normalized_keys = list(index["key"].items())
+    partial_filter_expression = index.get("partialFilterExpression")
+    collation = index.get("collation")
+    expire_after_seconds = index.get("expireAfterSeconds")
+    weights = index.get("weights")
+    wildcard_projection = index.get("wildcardProjection")
+    comment = admitted.get("comment")
+    max_time_ms = admitted.get("maxTimeMS")
     if not isinstance(background, bool):
         raise TypeError("background must be a bool")
     if wildcard_projection is not None and not isinstance(wildcard_projection, dict):
@@ -159,8 +247,28 @@ async def create_indexes(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> list[str]:
+    if not isinstance(indexes, list):
+        message = "indexes must be a list of IndexModel instances"
+        raise TypeError(message)
+    ensure_session_can_use_engine(collection._engine, session)
+    documents = [index_model_document(index) for index in indexes]
+    admitted = _admit_index_request(
+        collection, documents, comment=comment, max_time_ms=max_time_ms
+    )
+    models = normalize_index_models_from_command(admitted["indexes"])
+    return await execute_create_indexes(
+        collection,
+        models,
+        comment=admitted.get("comment"),
+        max_time_ms=admitted.get("maxTimeMS"),
+        session=session,
+    )
+
+
+async def execute_create_indexes(
+    collection, models, *, comment=None, max_time_ms=None, session=None
+):
     collection._ensure_session_active(session)
-    models = collection._normalize_index_models(indexes)
     for model in models:
         _validate_wildcard_projection(collection, model.wildcard_projection)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
@@ -216,15 +324,13 @@ async def create_indexes(
                 )
         except Exception:
             for created_name in reversed(created_names):
-                try:
+                with suppress(Exception):
                     await collection._engine.drop_index(
                         collection._db_name,
                         collection._collection_name,
                         created_name,
                         context=session,
                     )
-                except Exception:
-                    pass
             raise
         names.append(index.resolved_name if builtin_id else name)
         if name not in existing and name not in created_names:

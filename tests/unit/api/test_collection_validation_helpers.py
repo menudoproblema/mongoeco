@@ -162,9 +162,9 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
             AsyncCollection._normalize_expire_after_seconds(True)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             AsyncCollection._normalize_index_model(type("Model", (), {"document": "bad"})())
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             AsyncCollection._normalize_index_model(type("Model", (), {"document": {"name": "idx"}})())
-        with self.assertRaisesRegex(TypeError, "unsupported IndexModel options"):
+        with self.assertRaisesRegex(TypeError, "unsupported createIndexes options"):
             AsyncCollection._normalize_index_model(
                 type(
                     "Model",

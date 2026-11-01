@@ -134,15 +134,22 @@ def resolve_collection_reference(value: object, field_name: str) -> str:
 
 
 def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
-    if not isinstance(indexes, list) or not indexes:
+    if not isinstance(indexes, list):
         raise TypeError("indexes must be a non-empty list")
+    if not indexes:
+        raise server_error(
+            "Must specify at least one index to create",
+            code=2,
+            scope=ErrorScope.COMMAND,
+        )
 
     normalized: list[IndexModel] = []
     for raw_index in indexes:
         if not isinstance(raw_index, dict):
             raise TypeError("each index specification must be a dict")
         if "key" not in raw_index:
-            raise OperationFailure("index specification must contain 'key'")
+            message = "index specification must contain 'key'"
+            raise OperationFailure(message)
 
         unsupported = set(raw_index) - CREATE_INDEXES_SPEC_FIELDS
         if unsupported:

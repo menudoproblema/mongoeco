@@ -362,7 +362,9 @@ def _validate_create_indexes(_body: dict[str, Any], command_document: dict[str, 
     _require_non_empty_string("createIndexes", command_document.get("createIndexes"), "requires a non-empty collection name")
     try:
         normalize_index_models_from_command(command_document.get("indexes"))
-    except (TypeError, ValueError, OperationFailure) as exc:
+    except OperationFailure:
+        raise
+    except (TypeError, ValueError) as exc:
         _raise_wire_shape_error("createIndexes", str(exc))
     try:
         normalize_command_max_time_ms(command_document.get("maxTimeMS"))

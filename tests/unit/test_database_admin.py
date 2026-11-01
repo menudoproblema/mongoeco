@@ -199,12 +199,14 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         async def _run():
             with self.assertRaisesRegex(OperationFailure, "positive size option"):
                 await service.create_collection("events", capped=True)
-            with self.assertRaisesRegex(TypeError, "size must be a positive integer"):
-                await service.create_collection("events", capped=True, size="1024")
-            with self.assertRaisesRegex(ValueError, "size must be > 0"):
-                await service.create_collection("events", capped=True, size=0)
-            with self.assertRaisesRegex(ValueError, "max must be > 0"):
-                await service.create_collection("events", capped=True, size=1024, max=0)
+            await service.create_collection("events_string", capped=True, size="1024")
+            with self.assertRaises(OperationFailure) as caught:
+                await service.create_collection("events_zero", capped=True, size=0)
+            self.assertEqual(caught.exception.code, 51024)
+            await service.create_collection(
+                "events_unlimited", capped=True, size=1024, max=0
+            )
+
 
         asyncio.run(_run())
 
@@ -242,8 +244,11 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
     def test_database_admin_normalizer_facade_helpers_delegate_and_validate(self):
         service = AsyncDatabase(MemoryEngine(), "db")._admin
 
-        with self.assertRaisesRegex(TypeError, "capped must be a bool"):
+        with self.assertRaisesRegex(
+            OperationFailure, "capped must be a boolean"
+        ) as caught:
             service._validate_create_collection_options({"capped": "yes"})
+        self.assertEqual(caught.exception.code, 14)
 
         self.assertEqual(service._normalize_command({"ping": 1}, {}), {"ping": 1})
         self.assertEqual(service._require_collection_name("users", "find"), "users")

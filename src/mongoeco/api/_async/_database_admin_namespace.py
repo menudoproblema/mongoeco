@@ -1,17 +1,52 @@
 from __future__ import annotations
 
-from mongoeco.api.admin_parsing import normalize_validate_command_options, resolve_collection_reference
+from mongoeco.api.admin_parsing import (
+    normalize_validate_command_options,
+    resolve_collection_reference,
+)
 from mongoeco.core.aggregation import _bson_document_size
+from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.errors import CollectionInvalid
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime
-from mongoeco.session import ClientSession
-from mongoeco.types import CollectionValidationSnapshot, DatabaseListingDocument, DatabaseListingSnapshot, DatabaseStatsSnapshot
+from mongoeco.errors import CollectionInvalid
+from mongoeco.session import ClientSession  # noqa: TC001 - introspectable method annotations
+from mongoeco.types import (
+    CollectionValidationSnapshot,
+    DatabaseListingDocument,
+    DatabaseListingSnapshot,
+    DatabaseStatsSnapshot,
+)
 
 
 class DatabaseNamespaceAdminService:
     def __init__(self, admin_service):
         self._admin = admin_service
+
+    def collection_options_match(self, existing, requested):
+        """Compare parsed storage options, keeping document order within each value."""
+        defaults = {
+            "capped": False,
+            "temp": False,
+            "validator": {},
+            "storageEngine": {},
+            "indexOptionDefaults": {},
+            "changeStreamPreAndPostImages": {"enabled": False},
+        }
+        for field in existing.keys() | requested.keys():
+            left = existing.get(field)
+            right = requested.get(field)
+            if left is None:
+                left = defaults.get(field)
+            if right is None:
+                right = defaults.get(field)
+            if field == "collation":
+                if normalize_collation(
+                    left or {"locale": "simple"}
+                ) != normalize_collation(right or {"locale": "simple"}):
+                    return False
+            elif not self._admin._mongodb_dialect.values_equal(left, right):
+                return False
+        return True
 
     async def collection_stats(self, collection_name: str, *, scale: int = 1, session: ClientSession | None = None):
         self._admin._ensure_session_active(session)

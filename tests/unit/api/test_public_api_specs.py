@@ -2,8 +2,9 @@ import unittest
 
 from mongoeco.api.public_api import (
     ARG_UNSET,
-    PublicOperationSpec,
     COLLECTION_COUNT_DOCUMENTS_SPEC,
+    COLLECTION_CREATE_INDEX_SPEC,
+    COLLECTION_CREATE_INDEXES_SPEC,
     COLLECTION_DELETE_MANY_SPEC,
     COLLECTION_DELETE_ONE_SPEC,
     COLLECTION_DISTINCT_SPEC,
@@ -14,9 +15,10 @@ from mongoeco.api.public_api import (
     COLLECTION_REPLACE_ONE_SPEC,
     COLLECTION_UPDATE_MANY_SPEC,
     COLLECTION_UPDATE_ONE_SPEC,
+    PublicOperationSpec,
     _assert_catalog_alignment,
-    normalize_public_operation_arguments,
     normalize_aggregate_operation_arguments,
+    normalize_public_operation_arguments,
 )
 from mongoeco.compat import PYMONGO_PROFILE_49
 from mongoeco.compat.operation_support import OPERATION_OPTION_SUPPORT
@@ -25,6 +27,8 @@ from mongoeco.compat.operation_support import OPERATION_OPTION_SUPPORT
 class PublicApiSpecTests(unittest.TestCase):
     def test_collection_specs_cover_declared_supported_options(self):
         specs = {
+            "create_index": COLLECTION_CREATE_INDEX_SPEC,
+            "create_indexes": COLLECTION_CREATE_INDEXES_SPEC,
             "find": COLLECTION_FIND_SPEC,
             "update_one": COLLECTION_UPDATE_ONE_SPEC,
             "update_many": COLLECTION_UPDATE_MANY_SPEC,

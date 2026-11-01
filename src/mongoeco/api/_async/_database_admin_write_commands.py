@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mongoeco.api._async import _collection_modify
+from mongoeco.api._async import _collection_indexing, _collection_modify
 from mongoeco.api._async._write_command_validation import (
     validate_delete_command_shapes as _validate_delete_command_shapes,
     validate_update_command_shapes as _validate_update_command_shapes,
@@ -77,7 +77,7 @@ class DatabaseAdminWriteCommandService:
         options = {
             key: value for key, value in spec.items() if key not in {"create", "$db"}
         }
-        await self._admin.create_collection(
+        await self._admin._create_collection_prepared(
             collection_name,
             session=session,
             **options,
@@ -540,14 +540,18 @@ class DatabaseAdminWriteCommandService:
             )
         )
         collection = self._admin._database.get_collection(collection_name)
-        info_before = await collection.index_information(session=session)
-        await collection.create_indexes(
-            indexes,
+        info_before = await self._admin._engine.index_information(
+            self._admin._db_name, collection_name, context=session
+        )
+        await _collection_indexing.execute_create_indexes(
+            collection, indexes,
             comment=spec.get("comment"),
             max_time_ms=max_time_ms,
             session=session,
         )
-        info_after = await collection.index_information(session=session)
+        info_after = await self._admin._engine.index_information(
+            self._admin._db_name, collection_name, context=session
+        )
         return CreateIndexesCommandResult(
             num_indexes_before=len(info_before),
             num_indexes_after=len(info_after),
