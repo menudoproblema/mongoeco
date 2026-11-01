@@ -1,0 +1,232 @@
+{
+  "fixtures": [
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "keywords",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "keywords",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "keywords",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    }
+  ],
+  "per_id_absence": [
+    {
+      "kind": "container",
+      "name": "192e97c74f6a18523bea125ce7c0e0950da449bdcbd290fff21ae4f3d222c26e",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "046d8491b4912ff2552d3ebc0fdfaff9680f4c245025e2cc3747d120a5f72680",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "05af1470242bedc4f5f9c4e0d9a2ca81d8cdb50c200f685798d408504741d939",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "84eabdcaa08d66800282b7c10747623c72d4052501482ff2e4c652ee2460f731",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "56fa0a84def3f0faf8724d3208d76dbdfdd426339c8d2f81997feca5e19537ee",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "123e75140ffab6cda3a1870c99af9015afa9156a8d8a2bcd051e1eff0637cc3b",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "d9b96ab93526e1478c73806695422ce3bff562f57055fb5bc09d20ac222c637c",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "633cc145e132b8d3e5980953a6fc7cd2568b9352f990a63d521f46dde916d23c",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "f36420cea59b1b313ec0014b043fc79f333a8b0a8315e6c591b41a5a14e1371a",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-3s5t_qpr/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "8a4f6db6bfbac28b6bc89d799b503a2f1f149dc467370967a823c84722498f16",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "f197bc831a56a3d858f58420817926039c2bc16b4e97881e2344682ee833c152",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "1fe68c417e32246fcf0ce3072bfee3de70499f17516525ce7bb891eb1b5d0231",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "db89a41c56521af365e08fea60cbef975b808ca02c8786f9c2616f45ed580728",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "0daaa6e521ec2ae0f3e1f3f204901bfd319b08d78d0fc20f398dde6a64e58f01",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "5da75b7785fbfcd7862e9c4ee5c7e8d73781a045f0b27d789dfb1ac43af8dfba",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "d81d795ee6ccd5c0f253630c4bf8585bce2c53b3118587dfa27ccb26d9c44286",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "b10d7a1837aec40f54803b168f2341931302687d67f36e4d70f2c157564ef734",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ee071c1daff83e85b5a84fa129b2cadc7603e59edcdf3fea1887fce64357c396",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-nw5t0_6_/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "17c9bce05f0e77bc9f17dbdc0ac5fc30ac18ae9f836c1727e962e5cf3596fac4",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "fa06e48b598bcd59987ccb26d4ef49a38cc5a96f8e9849a997ba1edb7ff560a4",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "175179c0b7ef3ef52fc63511dd3ac88afe2910b3362d40efb23cad20ceecae7a",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "43feee0ca9beed17d34ce113595a440ef0f649ecb4403d865865c0002ad82c3e",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "5d4cb388e32953eb37f76bbec3e3970f6859313688253c0e319e668ea6d37fa2",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "543d55f04abfd3eaf16b73bd2c995d2e642e1fef511a25d18beb6758a3b79e6a",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "aaf9d1ed2b746f75096dc0e4b19016fb9a40ce86780cd374a8ce73009c428d4d",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "aad06db9e6bc48b691f9744c50ffe97980f230bce2a4cf8a38919f55a1c2a2f9",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "5eebf51a92522911c583d41385cd657ba940733a8ac8d63fa5ab594c82e1c8d3",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-materialized-context-native-9j7tqf8q/9.0/fixture.json"
+    }
+  ],
+  "retention": "Three distinct capture rounds retain their manifests and exclusive claims; no overwrites."
+}

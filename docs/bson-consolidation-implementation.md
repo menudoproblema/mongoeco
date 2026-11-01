@@ -2217,3 +2217,48 @@ solo la fábrica. La decodificación posterior no revierte una escritura confirm
 sin divergencia reproducida y transformaciones de respuesta distintas de los
 constructores/setters que lanzan errores. H53, decisión D07 y B07 unidad 6/D05
 conservan sus obligaciones de integración. Este corte no acredita CI remota.
+
+
+## Fuente materializada y conservación de contexto
+
+✅ Aceptado el candidato `b09292b2`, sin cambio productivo, con
+[evidencia archivada](evidence/bson-consolidation-implementation/bson-grammar-context/materialized-acceptance.json).
+Los callers reales mantienen la primera barrera no pushable dentro del prefijo:
+fuente completa y prefijo conservan filtro, proyección, sort, skip y limit.
+No se reproduce la sospecha histórica; no se refactoriza esta ruta por inspección.
+Las regresiones observan PreparedPipeline, identidad del contexto, dialecto y
+ruta materializada efectiva, con/sin spill y ambos motores.
+
+MongoDB 7.0.43/8.0.32/9.0.2 aporta 128 observaciones por versión para ventanas,
+collation, let, NOW, gramática DBRef/Code y entradas vacías/pobladas. Pasan 78
+pruebas instaladas, incluidas tres propiedades de 500 ejemplos. El perfil sin
+SDK real aporta 288 observaciones de ventanas/contexto; omite la acción que
+necesita el constructor Code. Se reutiliza la wheel a8a81f0e, sin drift en sus
+287 módulos. Permanecen intactos 427 archivos protegidos; 27 recursos de nueve
+manifests distintos están ausentes. El seed del corpus nuevo se hizo neutro
+antes de la captura final para no perder orden DBRef al cargar Extended JSON;
+no se cambiaron observadores ni referencias históricas para aceptar resultados.
+
+## Obligaciones de cierre vigentes
+
+Esta es la única lista ejecutable de pendientes, fijada por el encargo de cierre.
+Los apartados anteriores conservan historia, no generan obligaciones adicionales.
+Estado inicial de esta lista: **1/8 cerradas**. No hay defectos reproducidos
+pendientes en el candidato al fijarla. Un gate rojo se registra en la obligación
+que incumple; no abre una auditoría general. Las hipótesis sin regresión ni
+incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
+
+| ID / clase | Contrato exigido | Evidencia que falta / criterio observable de cierre | Estado |
+| --- | --- | --- | --- |
+| O1 / comprobación obligatoria | Fuente materializada conserva selección, representación y contexto D06. | Aceptación archivada del candidato y commits semánticos; 78 pruebas, nativos 7/8/9, SDK-free y ausencia de recursos acreditados arriba. | Cerrada |
+| O2 / comprobación obligatoria | D06a/b/c conserva gramática, BSON previo al decoder, contexto y equivalencia de claves por consumidor; B07 conserva efectos de fábricas también cuando transforman sin lanzar. | Componer mapa requisito→aceptaciones existentes y completar únicamente el diferencial de transformaciones de documento/metadata aún no acreditado. Cierra con resultados nativos coincidentes por superficie soportada y sin huecos normativos en ese mapa. | Abierta |
+| O3 / comprobación obligatoria | H53 dispone C03/B08 distinguiendo evaluación, permiso y warning, strict/moderate/off, error/warn/bypass y documento anterior/candidato. | Contrastar caracterización retenida y contrato público; documentar disposición explícita y límites. No exige crear un canal nuevo de logging. | Abierta |
+| O4 / decisión exigida | D07 requiere continuar/descartar el piloto opcional con criterio explícito. | Disposición documentada: descartar el piloto en esta entrega conforme al encargo de no hacer refactorizaciones opcionales; conservar implementación y garantías aceptadas. | Abierta |
+| O5 / comprobación obligatoria | D05 exige suite global, cobertura ≥99% y propiedades profundas sobre candidato instalado. | Resultado terminal de los gates; cualquier fallo obligatorio conserva bloqueo de cierre hasta su resolución y verificación causal. | En ejecución |
+| O6 / comprobación obligatoria | D05 exige Python 3.13/3.14/3.15, extremos SDK/pytest admitidos y perfil realmente sin SDK. | Matriz de CI y perfiles ejecutados, imports de artefacto comprobados; reutilizar evidencia idéntica admitida y distinguir omisiones de clases SDK. | Abierta |
+| O7 / comprobación obligatoria | D05 exige distribución reproducible, API/typing/SPI, compatibilidad persistida y presupuestos de coste. | Resultados de runners existentes y evidencia previa causalmente válida; todos los gates requeridos verdes, sin sustituir presupuesto por un benchmark diagnóstico. | Abierta |
+| O8 / comprobación obligatoria | Entrega trazable, revisión del candidato, recursos liberados, commits semánticos y árbol limpio. | Receipt integrado ligado a fuentes/artefactos exactos, obligaciones O1–O7 cerradas y comprobación final del árbol. No requiere publicación ni CI remota. | Abierta |
+
+Hipótesis dispuestas: la reconstrucción de fuente desde pipeline completo queda
+sin defecto reproducido y protegida por O1. Otras sospechas que no incumplan las
+garantías de esta lista se registrarán como seguimiento, sin ampliar el alcance.
