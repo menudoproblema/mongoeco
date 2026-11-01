@@ -399,3 +399,18 @@ class SortingHelpersTests(unittest.TestCase):
             ],
             ["1", "2"],
         )
+
+
+class NestedNumericSortBoundaryTests(unittest.TestCase):
+    def test_nested_array_numeric_path_traverses_present_and_outside_slots(self):
+        rows = [{"_id": 1, "a": [[{"b": 2}]]}, {"_id": 2, "a": [[{"b": 1}]]}]
+        self.assertEqual(
+            [row["_id"] for row in sort_documents(rows, [("a.0.0.b", 1)])], [2, 1]
+        )
+        self.assertEqual(sort_documents(rows, [("a.5.b", 1)]), rows)
+
+    def test_two_empty_arrays_compare_equal_before_following_sort_field(self):
+        rows = [{"_id": 2, "a": []}, {"_id": 1, "a": []}]
+        self.assertEqual(
+            [row["_id"] for row in sort_documents(rows, [("a", 1), ("_id", 1)])], [1, 2]
+        )

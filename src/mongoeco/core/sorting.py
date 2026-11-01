@@ -240,7 +240,9 @@ def sort_value(
         return primary
 
     values = []
-    for value, _traverse in query_field_values(document, field):
+    for value, _traverse in query_field_values(
+        document, field, numeric_array_fields=False
+    ):
         if value is MISSING:
             values.append(None)
         elif isinstance(value, list):

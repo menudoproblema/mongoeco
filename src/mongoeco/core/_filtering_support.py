@@ -189,12 +189,16 @@ class ArrayElementDocument(dict):
 _MAX_ARRAY_INDEX_DIGITS = 20
 
 
-def query_field_values(doc: Any, path: str) -> list[tuple[Any, bool]]:
+def query_field_values(
+    doc: Any, path: str, *, numeric_array_fields: bool = True
+) -> list[tuple[Any, bool]]:
     """MQL terminal values and whether a named field permits array traversal.
 
     Missing object fields yield MISSING. An untraversable array yields no leaf,
     which is distinct for null/negation. A numeric segment can address both an
     array position and a numeric object field. Explicit positions are atomic.
+    Sort paths disable numeric object-field alternatives after validating that
+    the array position is unambiguous. Query paths retain both alternatives.
     This traversal is separate from observable/index and update path access.
     """
     if isinstance(doc, ArrayElementDocument) and path == "value":
@@ -215,9 +219,10 @@ def query_field_values(doc: Any, path: str) -> list[tuple[Any, bool]]:
                         if rest
                         else [(value[position], False)]
                     )
-            for item in value:
-                if path_mapping(item) is not None:
-                    leaves.extend(walk(item, parts))
+            if numeric_array_fields or not canonical_index:
+                for item in value:
+                    if path_mapping(item) is not None:
+                        leaves.extend(walk(item, parts))
             return leaves
         mapping = path_mapping(value)
         if mapping is None:

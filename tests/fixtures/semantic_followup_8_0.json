@@ -8506,6 +8506,106 @@
         "codeName": "Location16746",
         "phase": "open"
       },
+      "nested_position/1/find": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "nested_position/1/aggregate": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "a": [
+              [
+                {
+                  "b": {
+                    "$numberInt": "1"
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "nested_position/1/facet": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": [
+              {
+                "_id": {
+                  "$numberInt": "2"
+                },
+                "a": [
+                  [
+                    {
+                      "b": {
+                        "$numberInt": "1"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "nested_position/-1/find": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "1"
+          }
+        ]
+      },
+      "nested_position/-1/aggregate": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": [
+              [
+                {
+                  "b": {
+                    "$numberInt": "2"
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "nested_position/-1/facet": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": [
+              {
+                "_id": {
+                  "$numberInt": "1"
+                },
+                "a": [
+                  [
+                    {
+                      "b": {
+                        "$numberInt": "2"
+                      }
+                    }
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      },
       "parallel": {
         "empty": {
           "ok": true,
@@ -19161,14 +19261,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793568272197"
+          "$numberLong": "1793571143443"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "108"
+        "$numberInt": "120"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -19184,7 +19284,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "14b4189ae23256881caf13a7ccb6602099bf93d7ada2248f296dbfd4bdadb195",
+    "sha256": "e4241063e29bcf867788fbd635abd757823b9e34e2866bf10c4317acc97121b2",
     "topology": "standalone"
   },
   "case_manifests": [

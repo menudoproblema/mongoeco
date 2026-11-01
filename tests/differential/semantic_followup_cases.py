@@ -1868,6 +1868,27 @@ def sort_path_consumers(collection):
                 collection,
                 [{"$sort": {field: direction, "_id": 1}}, {"$project": {"_id": 1}}],
             )
+    nested = [
+        {"_id": 1, "a": [[{"b": 2}]]},
+        {"_id": 2, "a": [[{"b": 1}]]},
+    ]
+    for direction in [1, -1]:
+        reset(collection, nested)
+        result[f"nested_position/{direction}/find"] = outcome(
+            lambda direction=direction: [
+                row["_id"]
+                for row in collection.find(
+                    {}, sort=[("a.0.0.b", direction), ("_id", 1)], limit=1
+                )
+            ]
+        )
+        stages = [{"$sort": {"a.0.0.b": direction, "_id": 1}}, {"$limit": 1}]
+        result[f"nested_position/{direction}/aggregate"] = _aggregate(
+            collection, stages
+        )
+        result[f"nested_position/{direction}/facet"] = _aggregate(
+            collection, [{"$facet": {"rows": stages}}]
+        )
     for label, documents in [
         ("parallel", [{"_id": 1, "a": [1], "b": [2]}]),
         ("nested_parallel", [{"_id": 1, "a": [{"b": [1], "c": [2]}]}]),
