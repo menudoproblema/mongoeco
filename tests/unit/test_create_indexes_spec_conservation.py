@@ -99,7 +99,7 @@ def test_inventory_matches_exact_advertised_field_set_and_parser_source() -> Non
     assert {row["source"] for row in rows} == {"src/mongoeco/api/admin_parsing.py"}
     assert {row["source_sha256"] for row in rows} == {parser_sha}
     assert {row["source_revision"] for row in rows} == {
-        "073dc33e81528a47b575f295b809633fd21b0cfe"
+        "13c15c45bef83b6b3bf60a40f4bf4d0f55cb2672"
     }
     assert {
         row["alias_of"]: row["element"].rsplit("/", 1)[-1]

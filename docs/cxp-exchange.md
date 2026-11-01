@@ -218,13 +218,17 @@ creation. The 22 fields have individual conditions and positive/negative
 parser cases in
 [`cxp-create-indexes-spec-conservation.csv`](cxp-create-indexes-spec-conservation.csv).
 This operational command inventory remains separate from the 16 authored
-`IndexModel` fields and from deployment compatibility claims.
+`IndexModel` fields, its private request-presence control, and deployment
+compatibility claims.
 For the public `create_index` API, `background` and `wildcard_projection` are
 also accepted and type-checked without being passed to the engine; their owner
 catalog entries now state `accepted-noop`. The same applies when these options
 arrive inside an `IndexModel` passed to `create_indexes`. `IndexModel.document`
 reflects the authored model, including both options, and is not an observation
-of an installed index. The 16 model fields and the exact scope of their current
+of an installed index. Explicit false options retain their presence for
+command-specific validation; `_explicit_options` is private control state and
+never appears in the BSON request or storage. The 16 authored fields and this
+private control, with the exact scope of their current
 evidence are recorded in
 [`cxp-index-model-conservation.csv`](cxp-index-model-conservation.csv). Index
 creation itself remains a local operational contract, separate from a

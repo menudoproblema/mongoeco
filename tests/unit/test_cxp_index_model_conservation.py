@@ -15,7 +15,7 @@ from mongoeco.types import IndexModel
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MATRIX = PROJECT_ROOT / "docs" / "cxp-index-model-conservation.csv"
 NOOP_FIELDS = {"background", "wildcard_projection"}
-EXPECTED_FIELD_COUNT = 16
+EXPECTED_FIELD_COUNT = 17
 GIT_SHA_LENGTH = 40
 
 
@@ -61,7 +61,10 @@ def test_index_model_conservation_matrix_covers_every_field() -> None:
         assert row["product"] == row["owner"] == "Mongoeco"
         assert len(row["source_revision"]) == GIT_SHA_LENGTH
         assert "owner operational" in row["disposition"]
-        if name == "wildcard_projection":
+        if name == "_explicit_options":
+            assert row["status"] == "internal request-control verified"
+            assert "never an index option" in row["conditions_scope"]
+        elif name == "wildcard_projection":
             assert row["status"] == (
                 "bounded accepted-noop verified for 7.0/8.0; rejected for 9.0"
             )

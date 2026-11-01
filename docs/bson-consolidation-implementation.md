@@ -2933,7 +2933,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F03 | Cerrado | 315 diferenciales/metadatos; 36 planes forzados y regresiones de consumidores. |
 | F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
 | F05 | Cerrado | 492 diferenciales/contexto/metadatos, 54 spill y fronteras focales. |
-| F06 | En curso | Runtime y diferenciales completos; falta actualizar los inventarios ligados al commit de código. |
+| F06 | Cerrado | Catálogo/unique/hashed, cuatro superficies, eventos RS 7/8/9, archivos previos e inventarios CXP. |
 | F07 | Pendiente | Escrituras, identidad, campos, contadores y efectos. |
 | F08 | Pendiente | Sort/natural y acumuladores del inventario. |
 | F09 | Pendiente | Gramática/recursos, fechas y texto; tres subunidades. |
@@ -3069,3 +3069,11 @@ comandos y gramática. Los eventos confirman exclusivamente escrituras aceptadas
 El commit funcional precede a la actualización de las dos matrices CXP para que
 source_revision identifique bytes reales de código. F06 no se acepta aún: queda
 ese gate documental con sus tests; suites globales/coste siguen en F11.
+
+F06 aceptado sobre 13c15c45: las matrices identifican su revisión y hashes
+reales, conservan los 22 campos de comando y separan 16 campos de modelo del
+control privado de presencia. Pasan sus 120 controles y ratchet focal. Los
+logs f06 conservan los fallos intermedios, incluida la corrección del observador
+BSON y el error de permisos de una prueba wire no autorizada, sin atribuirlos
+al servidor. No queda una migración pendiente ni se infiere procedencia de
+collation histórica. F07 es el siguiente bloque; F11 sigue pendiente.
