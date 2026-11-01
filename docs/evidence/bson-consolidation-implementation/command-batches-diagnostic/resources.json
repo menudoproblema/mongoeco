@@ -1,0 +1,65 @@
+[
+  {
+    "round": "native",
+    "target": "7.0",
+    "kind": "container",
+    "name": "1b1ba23310250425b5633aac79ebd09efd2892d51e7d4111b12adad997df9217",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "7.0",
+    "kind": "volume",
+    "name": "bbf00c245a5017041b6ee49266793027209daaa7eaa4cbf50f861a8a35553783",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "7.0",
+    "kind": "volume",
+    "name": "a6554699187e180e4f2adb646ac424fd0d65e074929973754ca0be635a392ca2",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "8.0",
+    "kind": "container",
+    "name": "1c5d680fdb12915147daabd513e466475767933ba8e10e765a19a798f870c665",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "8.0",
+    "kind": "volume",
+    "name": "8f0009372cff651ac6ba5384a94ce097de8eb1f2276889642a2274716d2c2094",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "8.0",
+    "kind": "volume",
+    "name": "f3eea3b0f248ad3a75e39a8ea3802cc4d135cd84767a259e7a325daf187583a7",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "9.0",
+    "kind": "container",
+    "name": "35708f905f7e8d5732c6c4ff66bbea2b296740214761a8a9f7a77306ae255a67",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "9.0",
+    "kind": "volume",
+    "name": "8da0f0ddad4469eacab7980091157fe8b3d1fbed1836f6de3d2e4094688198ab",
+    "absent": true
+  },
+  {
+    "round": "native",
+    "target": "9.0",
+    "kind": "volume",
+    "name": "0851c413943e35a4613934621f2c2292e81162baccc68273b8f84279055f0358",
+    "absent": true
+  }
+]

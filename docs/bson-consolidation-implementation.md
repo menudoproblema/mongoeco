@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 24 fallos previos obligatorios de admission_options y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. `d5bdadb8` entrega el default UUID coordinado y `b29e9bf1` omite ausencia en distinct. Continúan positivos/batching y otros contextos D06/B08. UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El corte posterior `8e261c7a` acepta [proyecciones y contexto](evidence/bson-consolidation-implementation/find-projections/README.md): el replay instalado queda sin fallos y los dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. `d5bdadb8` entrega el default UUID coordinado y `b29e9bf1` omite ausencia en distinct. Continúan positivos/batching y otros contextos D06/B08. UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -2069,3 +2069,43 @@ Sigue la unidad 5 de positivos/respuestas: 24 nodos admission_options y dos
 pruebas de batching obligatorios, con testigo físico antes de corregir sus
 expectativas. Contextos D06, H53, decisión D07 y D05 siguen abiertos. El cambio
 de default está aceptado; no volver a aplazarlo ni reiniciar el censo cerrado.
+
+
+## B07 — Proyecciones preparadas, contexto y metadatos
+
+✅ Cerrado el corte de proyecciones de la unidad 5 en `8e261c7a`, con
+[aceptación y evidencia](evidence/bson-consolidation-implementation/find-projections/README.md).
+Find y aggregate comparten expansión y asignación de campos calculados sobre
+el evaluador existente. Flags numéricos BSON, arrays/objetos vacíos, `_id`
+calculado y ausencia/`$$REMOVE` conservan la forma y orden observados. La
+ruta de estados deja de evaluar dos veces las expresiones de `$project`.
+
+Un portador dict interno conserva el `RuntimeMetadata` existente fuera de los
+campos BSON a través de scans, copias y conversiones; no cambia SPI ni formato
+persistido. Preparación distingue proveedor declarado y valor por fila,
+respeta literales y conserva el contexto en sufijos físicos. Los caminos
+optimizados de Memory/SQLite reciben variables y collation. FindAndModify
+conserva la separación nativa entre errores constantes anteriores al commit
+y errores de proyección de la imagen posteriores a él; barreras locales de
+eventos comprueban sus efectos.
+
+- MongoDB real 7.0.43/8.0.32/9.0.2: siete acciones, 252 observaciones por versión,
+  captura y `--check` idénticos. SDK-free real 3.13.15: 1.488 observaciones;
+  cuatro rutas Code por motor/dialecto se omiten expresamente por no existir
+  constructor público portable. Los observadores permanecen intactos.
+- Wheel de 287 módulos verificados: 10.473 pruebas diferenciales correctas,
+  incluidas las 24 admission_options antes fallidas. Cohorte: 2.432 correctas,
+  4.709 subtests y solo los dos pendientes previos de batching.
+- Focales: 181 correctas/seis subtests. Reapertura SQLite instalada: una.
+  API: 18/13 subtests; typing y ratchet correctos. Dos controles de coste y
+  dos subtests pasan, sin atribuirles el presupuesto integrado D05.
+- Los 307 fixtures/observadores protegidos de la base siguen intactos. Los 45
+  recursos Docker de las cinco rondas nativas están ausentes. El gate amplio
+  de feedback encontró una regresión de objetos padres missing/REMOVE: se
+  corrigió en el helper, se amplió el corpus nuevo y se repitió el gate final;
+  no se reescribieron las referencias históricas para ocultarla.
+
+→ Sigue la unidad 5: batching/getMore, sobres/DTO, resultados bulk y las
+combinaciones restantes de respuestas/fábricas/callbacks. La [sonda física de
+batching](evidence/bson-consolidation-implementation/command-batches-diagnostic/README.md)
+es diagnóstico del siguiente corte, sin aceptar todavía sus rutas locales. Contextos D06, H53, decisión D07 y D05 siguen abiertos.

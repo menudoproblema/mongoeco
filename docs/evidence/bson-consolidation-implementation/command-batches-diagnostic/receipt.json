@@ -1,0 +1,25 @@
+{
+  "scope": "native batching diagnostic, not local parity acceptance",
+  "runtime_commit": "8e261c7a",
+  "versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "removed_resources": 9,
+  "artifacts_sha256": {
+    "native-probe.py.txt": "83e8afddcdd72dd621deb5924f0951171c9d197a69e8bdeb01a5e20de8c72788",
+    "9.0-fixture.json": "798d042bf118b2edc0da23d26d04896503156cb24355bd412361673f8adadac9",
+    "7.0.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.0-fixture.json": "aac382916036227918725b5acf60c8a4e7f2e1cb8e706a2a6945a64376a04143",
+    "8.0-fixture.json": "96e1ea364935df4af6c59843fd58fad41334579699a9971476cc4ec6f0f6faf6",
+    "resources.json": "006fca86062db44dee4cade8f5aedded3d0b39f4b99f42379b722fb605a7c791",
+    "README.md": "510b083ce9fffc634b8b6f1b7a2e87e89c4f978b6e2bd2ab22588a501e5a490c",
+    "9.0-observations.json": "84a473dbbfba6abfe1dff87bf5456eca8e5f05be342cd0a39981a33c4464130a",
+    "8.0-observations.json": "addcd80243860ff5204668f0b55c6e7e1a30201190994c47a38e4f9c1bed8d73",
+    "9.0.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.0-observations.json": "2184715a5f89eed3c0a136c7473bd5249c3c1b181ebd2fba21199eb028c46691",
+    "8.0.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "payload.py.txt": "398a72280f630d32e5dc07d5f8a13330a5fb5973931f8a5ea75172747ef46786"
+  }
+}

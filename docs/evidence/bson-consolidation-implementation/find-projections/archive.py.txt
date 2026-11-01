@@ -1,0 +1,41 @@
+import gzip,hashlib,json,shutil,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/find-projections');root.mkdir(exist_ok=True)
+sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
+wheel=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());info=json.loads((wheel/'wheel.json').read_text());runtime=json.loads((wheel/'runtime.json').read_text())
+assert len(runtime)==287 and sha(info['wheel'])==info['sha256']
+for p,h in runtime.items():assert sha(p)==h and sha(Path(info['site_packages'])/Path(p).relative_to('src'))==h
+native={}
+for target in ('7.0','8.0','9.0'):
+ fixture=Path(f'tests/fixtures/semantic_find_projection_{target.replace(".","_")}.json');check=Path('/tmp/mongoeco-find-projection-native-frozen')/target/'find_projection-check.json'
+ assert fixture.read_bytes()==check.read_bytes()
+ data=json.loads(fixture.read_text());assert len(data['cases'])==7 and sum(map(len,data['cases'].values()))==252
+ native[target]={'fixture':str(fixture),'sha256':sha(fixture),'actions':7,'observations':252,'version':data['runtime']['build_info']['version'],'git_version':data['runtime']['build_info']['gitVersion']}
+ for label in ('native','native-expanded','native-context','native-final','native-frozen'):
+  source=Path('/tmp/mongoeco-find-projection-'+label)
+  shutil.copyfile(source/(target+'.log'),root/f'{label}-{target}.txt');shutil.copyfile(source/target/'fixture.json',root/f'{label}-{target}-fixture.json')
+ with gzip.open(root/f'native-frozen-{target}-check.json.gz','wb') as f:f.write(check.read_bytes())
+protected=json.loads(Path('/tmp/mongoeco-find-projection-protected.json').read_text());assert len(protected)==307
+for p,h in protected.items():assert sha(p)==h,p
+for label in ['build-frozen','api-frozen','sdk-free-frozen','cost','resources']:
+ ext='json' if label=='resources' else 'txt';shutil.copyfile(f'/tmp/mongoeco-find-projection-{label}.{ext}',root/f'{label}.{ext}')
+shutil.copyfile('/tmp/mongoeco-bson-input-typing.txt',root/'typing-installed.txt')
+shutil.copyfile('/tmp/mongoeco-find-projection-protected.json',root/'protected.json')
+shutil.copyfile(wheel/'runtime.json',root/'runtime-sources.json');shutil.copyfile(wheel/'wheel.json',root/'wheel.json')
+for label,path in [('baseline-final','/tmp/mongoeco-find-projection-baseline-frozen.txt'),('unit-final','/tmp/mongoeco-find-projection-unit-frozen.txt'),('focal','/tmp/mongoeco-projection-focused-frozen.txt'),('replay-feedback','/tmp/mongoeco-find-projection-replay.txt'),('replay-final','/tmp/mongoeco-find-projection-replay-final.txt')]:
+ with gzip.open(root/(label+'.txt.gz'),'wb') as f:f.write(Path(path).read_bytes())
+for name in ['mongoeco-find-projection-baseline.py','mongoeco-find-projection-native-frozen.py','mongoeco-find-projection-sdk-free.py','mongoeco-find-projection-sdk-free-prepare.py','mongoeco-find-projection-replay-final.py','mongoeco-find-projection-unit-final.py','mongoeco-find-projection-resources-final.py']:
+ shutil.copyfile('/tmp/'+name,root/(name+'.txt'))
+for path in wheel.glob('wheel-imports-*.json'):
+ with gzip.open(root/(path.name+'.gz'),'wb') as f:f.write(path.read_bytes())
+replay=Path('/tmp/mongoeco-find-projection-replay-final.txt').read_text();unit=Path('/tmp/mongoeco-find-projection-unit-frozen.txt').read_text();baseline=Path('/tmp/mongoeco-find-projection-baseline-frozen.txt').read_text()
+assert '10473 passed' in replay and 'failed' not in replay.splitlines()[-1]
+assert '2 failed, 2432 passed, 4709 subtests passed' in unit
+assert '84 failed, 3 passed' in baseline
+failnodes=lambda text:sorted(set(__import__('re').findall(r'^FAILED (\S+)',text,__import__('re').M)))
+prior=json.loads(Path('docs/evidence/bson-consolidation-implementation/bson-uuid-policy/receipt.json').read_text())
+assert set(failnodes(unit))==set(prior['remaining_failure_nodes']['unit'])
+receipt={'base_commit':'a7d27fc9','documentation_predecessor':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'runtime_sources':runtime,'wheel':info,'native':native,'checks':{'replay_passed':10473,'unit_passed':2432,'unit_subtests_passed':4709,'known_unit_failed':2,'baseline_failed':84,'baseline_passed':3,'focal_passed':181,'focal_subtests_passed':6,'sdk_free_observations':1488,'protected_files':307,'removed_docker_resources':45,'api_passed':18,'api_subtests_passed':13,'cost_passed':2,'cost_subtests_passed':2},'known_failure_nodes':{'replay':[],'unit':failnodes(unit)},'limits':['Projection slice only; remaining B07 responses and batches still open','Code constructor unavailable in portable SDK-free profile: four route witnesses per engine/dialect omitted explicitly','No D05 integrated acceptance or remote CI execution','Native characterization uses standalone servers; write event barrier tests are local']}
+receipt['artifacts_sha256']={p.name:sha(p) for p in root.iterdir() if p.name!='receipt.json'}
+(root/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print('archived',len(receipt['artifacts_sha256']), 'artifacts')

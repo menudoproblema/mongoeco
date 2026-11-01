@@ -1,0 +1,2 @@
+public typing contract passed: positive=1, negative-errors=20
+engine boundary typing contract passed: positive=1, negative-errors=25

@@ -1,0 +1,15 @@
+import json,os
+from pathlib import Path
+from pymongo import MongoClient
+client=MongoClient(os.environ['MONGOECO_REAL_MONGODB_URI']);db=client.batch_probe;out={}
+for kind in ['find','aggregate']:
+ db.rows.drop();db.rows.insert_many([{'_id':i} for i in [1,2,3]])
+ request={'find':'rows','sort':{'_id':1},'batchSize':1} if kind=='find' else {'aggregate':'rows','pipeline':[{'$sort':{'_id':1}}],'cursor':{'batchSize':1}}
+ result=db.command(request);batches=[]
+ for index in range(5):
+  cursor=result['cursor'];rows=cursor['firstBatch' if index==0 else 'nextBatch'];batches.append({'ids':[d['_id'] for d in rows],'open':bool(cursor['id'])})
+  if not cursor['id']:break
+  result=db.command({'getMore':cursor['id'],'collection':'rows','batchSize':1})
+ out[kind]=batches
+out['version']=client.server_info()['version'];db.client.drop_database('batch_probe')
+Path('/tmp/mongoeco-command-batches-native/'+os.environ['MONGOECO_REAL_MONGODB_TARGET']+'/observations.json').write_text(json.dumps(out,indent=2)+'\n')

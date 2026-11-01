@@ -1,0 +1,51 @@
+{
+  "find": [
+    {
+      "ids": [
+        1
+      ],
+      "open": true
+    },
+    {
+      "ids": [
+        2
+      ],
+      "open": true
+    },
+    {
+      "ids": [
+        3
+      ],
+      "open": true
+    },
+    {
+      "ids": [],
+      "open": false
+    }
+  ],
+  "aggregate": [
+    {
+      "ids": [
+        1
+      ],
+      "open": true
+    },
+    {
+      "ids": [
+        2
+      ],
+      "open": true
+    },
+    {
+      "ids": [
+        3
+      ],
+      "open": true
+    },
+    {
+      "ids": [],
+      "open": false
+    }
+  ],
+  "version": "8.0.32"
+}

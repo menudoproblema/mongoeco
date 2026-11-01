@@ -1,0 +1,3 @@
+updated tests/fixtures/semantic_find_projection_9_0.json
+updated /tmp/mongoeco-find-projection-native-expanded/9.0/find_projection-check.json
+verified 6 native cases against tests/fixtures/semantic_find_projection_9_0.json
