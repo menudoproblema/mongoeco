@@ -1,0 +1,101 @@
+{
+  "image": "mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72",
+  "target": "7.0",
+  "topology": "standalone",
+  "name": "mongoeco-differential-21f24de7f1904785b32ed7284afe1212",
+  "owner": "21f24de7f1904785b32ed7284afe1212",
+  "status": "succeeded",
+  "cleanup": {
+    "removed": true,
+    "container_id": "0acd5e142e2bc6a774a17d9ddd5eef21001d66d07491c0a8ef7d02afd5a7570c",
+    "volumes_removed": true
+  },
+  "creation_indeterminate": false,
+  "container_id": "0acd5e142e2bc6a774a17d9ddd5eef21001d66d07491c0a8ef7d02afd5a7570c",
+  "uri": "mongodb://127.0.0.1:59153/?directConnection=true&serverSelectionTimeoutMS=3000",
+  "hello": {
+    "setName": null,
+    "isWritablePrimary": true
+  },
+  "server_options": {
+    "net": {
+      "bindIp": "*"
+    },
+    "setParameter": {
+      "ttlMonitorSleepSecs": "1"
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        7,
+        0,
+        43,
+        0
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": 64,
+      "debug": false,
+      "maxBsonObjectSize": 16777216,
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": 1.0
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "isWritablePrimary": true,
+      "topologyVersion": {
+        "processId": "6ae6d5cf714c081bdfc92ea3",
+        "counter": 0
+      },
+      "maxBsonObjectSize": 16777216,
+      "maxMessageSizeBytes": 48000000,
+      "maxWriteBatchSize": 100000,
+      "localTime": "2026-11-01 06:01:51.727000",
+      "logicalSessionTimeoutMinutes": 30,
+      "connectionId": 5,
+      "minWireVersion": 0,
+      "maxWireVersion": 21,
+      "readOnly": false,
+      "ok": 1.0
+    }
+  },
+  "payload": {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+      "/tmp/mongoeco-bson-bulk-native-v3/capture.py"
+    ],
+    "exit_code": 0
+  },
+  "anonymous_volumes": [
+    "48a4d275268a03802490711d85cc3d9dab960053e9d76dbf4d245ca95e7536ca",
+    "61aac301fa52f364ff93a0eae3b192cf23f7da2566533bbb98916878ccfc6c22"
+  ]
+}

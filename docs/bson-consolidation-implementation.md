@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas e inserciones tienen aceptación propia. `c83c95c` añade [mutaciones públicas y respuestas builtin](#b07--mutaciones-públicas-y-respuestas-builtin), con 171 checks nuevos correctos. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen codificación por familia bulk, comandos/índices/validators, UUID coordinado y positivos de proyección/sobres/resultados. STANDARD permanece hasta completar las entradas restantes; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
+- B07: lecturas, inserciones y mutaciones públicas tienen aceptación propia. `5a89dcc` añade [preparación y frames bulk clásicos](#b07--preparación-y-frames-bulk-clásicos), respuestas tipadas y la propiedad bulk_api_result prevista. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen comandos/índices/validators, UUID coordinado y positivos de proyección/sobres y otros efectos de respuesta. STANDARD permanece; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1829,3 +1829,34 @@ codificación completa por familia sigue pendiente.
 → Sigue: admisión bulk por familia, después comandos/índices/validators y
 UUID coordinado. Positivos D06/B08, resto D06, H53, decisión D07 y D05 siguen
 por sus owners; STANDARD sigue siendo el default.
+
+
+## B07 — Preparación y frames bulk clásicos
+
+`5a89dcc` entrega el [corte bulk](evidence/bson-consolidation-implementation/bson-input-bulk/README.md)
+y su [receipt](evidence/bson-consolidation-implementation/bson-input-bulk/receipt.json).
+Preparación secuencial sin copias/normalización prematuras, grupos existentes y
+encoder común por frames de 48 MB. El lookahead inválido impide publicar el
+frame pendiente; se conservan frames/familias anteriores. Orden del driver y
+ordered del servidor son decisiones separadas, especialmente con null.
+
+Las reglas estructurales de comandos tienen owner común. Wire corrige vacío
+como reemplazo y errores ordered con código 14. Inserciones y upserts reutilizan
+el orden raíz _id; datos antiguos siguen comprobados por SPI sin migración.
+Respuestas usan codecs builtin y el DTO común; bulk_api_result es la única
+adición API prevista, con snapshots históricos intactos.
+
+- Nueve acciones / 518 observaciones nativas por versión 7/8/9; checks idénticos.
+  Baseline 144 fallos/75 correctos; 219 checks nuevos correctos en el candidato.
+- Replay instalado: 9246 correctos y 96 fallos B07
+  preexistentes; ningún fallo nuevo ni aceptación global por ese resultado.
+- 1562 pruebas y 4577 subtests correctos; API 18/11,
+  typing y lint correctos. Sin SDK: 2.880 observaciones bulk más 3.918/942/748
+  controles de mutación/inserción/lectura, con límites declarados en el receipt.
+- 278 fixtures/observadores históricos intactos y 45 recursos propios
+  verificados ausentes. Coste diagnóstico hasta aproximadamente 1,28 en Memory
+  update lote 1; conservarlo en D05, sin aceptar presupuesto global.
+
+→ Sigue: admisión cliente de comandos/índices/validators y rutas internas
+preparadas; luego UUID coordinado. Positivos restantes D06/B08, resto D06,
+H53, decisión D07 y D05 mantienen sus owners. STANDARD sigue como default.

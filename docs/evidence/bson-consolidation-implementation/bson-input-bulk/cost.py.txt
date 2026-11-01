@@ -1,0 +1,38 @@
+import json,subprocess,sys
+from pathlib import Path
+roots={'base':Path(Path('/tmp/mongoeco-bson-bulk-baseline-location.txt').read_text().strip()),'candidate':Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())}
+program='''import sys,time,json
+sys.path.insert(0,sys.argv[1])
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import InsertOne,UpdateOne
+rows=[]
+for factory in (MemoryEngine,SQLiteEngine):
+ for family in ('insert','update'):
+  for batch in (1,4):
+   with MongoClient(factory()) as client:
+    c=client.test.rows
+    if family=='update':c.insert_one({'_id':-1,'v':0})
+    start=time.process_time()
+    for index in range(100):
+     requests=[InsertOne({'_id':index*batch+j,'v':1}) if family=='insert' else UpdateOne({'_id':-1},{'$inc':{'v':1}}) for j in range(batch)]
+     result=c.bulk_write(requests)
+     assert (result.inserted_count if family=='insert' else result.modified_count)==batch
+    cpu=time.process_time()-start
+    if family=='update':assert c.find_one({'_id':-1})['v']==100*batch
+    else:assert c.count_documents({})==100*batch
+    rows.append({'engine':factory.__name__,'method':family,'batch':batch,'cpu':cpu})
+print(json.dumps(rows))
+'''
+samples=[]
+for label in ('base','candidate','candidate','base')*2:
+ site=json.loads((roots[label]/'wheel.json').read_text())['site_packages']
+ result=subprocess.run([sys.executable,'-I','-c',program,site],check=True,capture_output=True,text=True)
+ samples.append({'label':label,'rows':json.loads(result.stdout)})
+ratios=[]
+for i,row in enumerate(samples[0]['rows']):
+ base=sum(s['rows'][i]['cpu'] for s in samples if s['label']=='base')
+ candidate=sum(s['rows'][i]['cpu'] for s in samples if s['label']=='candidate')
+ ratios.append({'engine':row['engine'],'method':row['method'],'batch':row['batch'],'cpu_ratio':candidate/base})
+output={'scope':'diagnostic only: ABBA x2, 100 requests per case, concurrent replay; no D05 budget acceptance','samples':samples,'ratios':ratios}
+Path('/tmp/mongoeco-bson-bulk-cost.json').write_text(json.dumps(output,indent=2)+'\n');print(json.dumps(ratios))

@@ -1,0 +1,19 @@
+{
+  "intentional_additions": [
+    [
+      [
+        "modules",
+        "mongoeco",
+        "symbols",
+        "BulkWriteResult",
+        "members",
+        "bulk_api_result"
+      ],
+      null,
+      {
+        "kind": "property"
+      }
+    ]
+  ],
+  "no_other_changes": true
+}

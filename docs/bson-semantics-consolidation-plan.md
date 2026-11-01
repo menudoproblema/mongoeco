@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre, revisión 20 y mutaciones aceptadas en `c83c95c`):**
+**Entrada vigente (1 de noviembre, revisión 20 y frames bulk aceptados en `5a89dcc`):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1130,7 +1130,7 @@ La revisión 19 conserva sus 16 descargas y hashes r8.0.0; esta revisión verifi
 la integridad de ese receipt y relee el parser oficial, sin atribuirse otra
 verificación completa por descarga ni nuevas ejecuciones MongoDB.
 
-Conversión, lectura, inserciones y el corte de mutaciones `c83c95c` tienen
+Conversión, lectura, inserciones, mutaciones y el corte bulk tienen
 aceptación propia; no repetir su
 extracción. El registro de implementación posee el estado aceptado de cada
 corte. Este apartado mantiene el único orden actual; las caracterizaciones y
@@ -1250,7 +1250,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 
 | Orden / prioridad | Trabajo y dependencia | Aceptación / owner |
 | --- | --- | --- |
-| 1 / P1 — B07, escrituras y comandos | Completar admisión bulk por familia y comandos. Lectura, inserciones y mutaciones públicas ya tienen aceptación propia. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
+| 1 / P1 — B07, escrituras y comandos | Completar admisión de comandos e índices/validators y sus entradas internas preparadas. Lecturas, inserciones, mutaciones y bulk clásico ya tienen aceptación propia. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
 | 2 / P1 — B07, UUID | Después de integrar entradas de escritura, aplicar opciones del dueño de la solicitud y coordinar el default. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte. |
 | 3 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
 | 4 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
@@ -1363,25 +1363,32 @@ precedencias y respuestas builtin. Pasan 171 checks nuevos frente a 72 fallos
 previos; el gate amplio mantiene 96 fallos B07 y 9027 correctos.
 No se reextrae esa frontera ni se infiere cierre general de B07.
 
-**Siguiente corte.** Completar admisión por familia bulk y luego comandos,
-índices/validators, conservando los originales hasta codificar. El uso actual
-del dispatcher interno evita doble admisión pero todavía no codifica el grupo
-completo antes de escribir. Reutilizar `_classic_bulk_batches`, preparación de
-IDs y encoder común; no admitir anticipadamente todo bulk ni copiar objetos
-arbitrarios antes del rechazo BSON. Conservar errores cliente de segundo
-miembro, prefijos de grupos previos, ordered/unordered, IDs, contadores, índices,
-estado y eventos con barrera. Los errores servidor conservan su efecto propio.
+**Entrega de bulk `5a89dcc`.** El
+[registro](bson-consolidation-implementation.md#b07--preparación-y-frames-bulk-clásicos)
+y su [evidencia](evidence/bson-consolidation-implementation/bson-input-bulk/README.md)
+aceptan preparación, frames clásicos, lookahead y efectos parciales, con 219
+checks nuevos y 518 observaciones nativas por versión. El replay amplio mantiene
+96 fallos B07 y 9246 correctos. La propiedad bulk_api_result
+cierra ese testigo de unidad 5, sin cerrar todos los efectos de respuestas.
 
-La validación cliente mantiene las fases propias de cada operación y perfil SDK;
-no sustituirlas por una secuencia universal ni flags públicos de omisión. El
-corpus suplementario se congela antes de acreditar baseline y candidato con la
-misma fuente/observador y wheel final. Los controles de copia, representación,
-tipos de respuesta y codecs permanecen; el coste diagnóstico de mutaciones
-(aproximadamente 1,06–1,16) se conserva en D05 junto con el de lecturas.
+**Siguiente corte.** Completar la admisión cliente de comandos e índices/validators
+con las opciones de su dueño, reutilizando encoder, parsing y ejecutores. La
+entrada interna wire ya recibió BSON: conservar orden/undefined y contexto,
+sin imponer otra codificación cliente ni endurecer DocumentCodec.to_internal.
+Mantener errores simultáneos, clase/fase/código, originales, IDs, estado, índices
+y eventos con barrera. No reextraer preparación, agrupador o frame encoder bulk.
+
+Las reglas servidor compartidas conservan la clasificación por primer campo
+(vacío es reemplazo) y los códigos de ordered inválido. Driver y servidor no
+comparten el default de null para su orden: conservar ambas decisiones y sus
+testigos. Los documentos antiguos con _id no inicial se siembran por SPI; no
+migrar almacenamiento ni retirar sus controles para normalizar escrituras nuevas.
 
 Unidad 4 completa UUID antes del cambio de default; unidad 5 conserva positivos
-de proyección/sobres/resultados. STANDARD permanece. D06, H53, decisión D07 y
-cierre integrado D05 siguen abiertos, sin otro comparador o codec interno.
+de proyección/sobres y otros efectos de respuesta. STANDARD permanece. D06,
+H53, decisión D07 y cierre integrado D05 siguen abiertos. D05 conserva costes
+de lectura, mutaciones y bulk (hasta aproximadamente 1,28 en Memory update lote
+1), ligados al runtime final; no se acepta presupuesto por otras rutas verdes.
 
 **Causa compartida.** La API mezcla normalización interna con codificación de
 solicitudes: puede perder el tipo original o compilar antes del momento en que
@@ -1395,7 +1402,7 @@ al reconstruir un DBRef con el decoder SDK.
 | --- | --- | --- |
 | 1. Solicitud find sin codificar | Reutilizar `AsyncCursor._as_operation`, caché/contexto actuales y validadores de forma. Retirar la compilación/normalización anticipada de la entrada pública find. El camino interno con FindOperation preparado conserva su artefacto; no otra clase de cursor o caché. | Find difiere InvalidDocument/OverflowError hasta consumir; cerrar no codifica. Filtro inválido→válido y válido→inválido antes del primer I/O, clone/rewind/explain, contexto temporal, sesión, codecs y cursores raw. No guardar un error al construir: el filtro todavía puede cambiar. Preservar validaciones de forma que el SDK sí hace eager. |
 | 2. Codificación pública común | Separar admisión estricta y codec interno reversible. Integrar en el límite cliente de documentos/filtros/proyecciones/updates/replacements/pipelines/let/array_filters/comments y comandos/índices/validators. Reusar vistas/normalización y capacidades SDK/portable existentes; no dependencia obligatoria PyMongo ni marca/flag público de «validado». | Clase y fase nativas para Decimal crudo/object/set/frozenset/bytearray/date, claves NUL/no String, entero fuera de int64, UTF-8 inválido, Code.scope y DBRef anidados. Controles Decimal128/Binary/datetime/documentos/tuplas siguen válidos. Distinguir codificación inválida del error semántico servidor; comparar estado/aux_exists y no inventar rollback de efectos semánticos nativos. Un solo chequeo de admisión por solicitud, sin repetirlo en fachada/comando/motor. |
-| 3. Lotes de escritura | Reutilizar `_classic_bulk_batches` y la preparación existente. Admitir todo el grupo que se va a enviar antes de ejecutarlo, manteniendo el orden entre grupos. Insert_many codifica su lote antes de escribir; no endurecer globalmente la preparación de todos los modelos bulk. | Un segundo insert/update inválido impide el primer write válido de la misma familia; en bulk mixto el insert previo permanece antes del error del grupo update, también unordered. Clase cliente conserva InvalidDocument/OverflowError/etc.; no envolver como BulkWriteError/WriteError servidor. IDs asignados, contadores, estado, índices y ausencia/entrega de eventos tienen controles de frontera y barrera. |
+| 3. Lotes de escritura | Entregado en `5a89dcc` para bulk clásico, sobre el agrupador y encoder existentes. Conservar la admisión del frame que se va a enviar y el orden entre frames/familias; no admitir todo el bulk anticipadamente. | Un segundo insert/update inválido impide el primer write válido de su mismo frame. Un lookahead inválido aborta el frame pendiente; uno válido que demuestra desbordamiento permite confirmar el prefijo. Los frames/familias anteriores permanecen, también unordered. Clase cliente conserva InvalidDocument/OverflowError/etc.; no envolver como BulkWriteError/WriteError servidor. IDs asignados, contadores, estado, índices y ausencia/entrega de eventos tienen controles de frontera y barrera. |
 | 4. UUID coordinado D06a/b | Aplicar opciones de escritura antes del almacenamiento, separadas de la interpretación de lectura. Mantener STANDARD hasta que el corte completo permita cambiar el default a UNSPECIFIED de forma consistente. Usar CodecOptions del dueño de cada solicitud: las de colección no reemplazan las de database.command. | Default/UNSPECIFIED rechazan UUID con ValueError en fase SDK, sin mutación/eventos. STANDARD y tres legacy conservan bytes/subtipos y lectura correctos, también wire y reapertura, con/sin SDK. No reescribir Binary 4 almacenado a 3 al leer; no retocar el snapshot para ocultar la diferencia. |
 | 5. Consumidores positivos D06/B08 | La proyección de find debe reutilizar la preparación/evaluación de proyección existente para valores calculados. Sobres raw y resultado bulk reutilizan materialización y contratos DTO: tipos, orden de campos y callbacks una vez. | Preservar proyecciones Decimal128/Binary/datetime/arrays/documentos y el error 9 de la constante Binary 5; no reducirlas a flags Python. Raw find conserva firstBatch/id/ns e id BSON int64; update conserva n/nModified/ok; bulk expone el resultado público nativo. No ordenar claves ni borrar metadata del oráculo. Decoders/fábricas activas detectan doble pase y diferencias de fase. |
 | 6. Aceptación conjunta | Baseline/candidato, referencias nuevas congeladas/check, wheel instalado y gates alcanzados; D05 conserva matrices/cobertura/costes integrados. | Todos los testigos anteriores por directa sync/async y wire × Memory/SQLite × 7/8/9, subset portable real, persistencia/reapertura y recursos limpios. Referencias/observadores históricos intactos y commits semánticos. El preflight rojo no acepta ninguna unidad productiva. |
@@ -1404,17 +1411,16 @@ al reconstruir un DBRef con el decoder SDK.
 
 - Conservar la entrada pública sin normalizar hasta la admisión del lote,
   sin copiar objetos arbitrarios antes de que BSON los admita. La preparación
-  bulk actual convierte valores con `to_internal`;
-  validar solo ese resultado puede admitir un tipo cliente originalmente
-  inválido. Reutilizar la preparación y los modelos existentes, sin introducir
+  bulk anterior convertía valores con `to_internal`; `5a89dcc` retira esa
+  normalización anticipada. Conservar el testigo que impedía admitir un tipo
+  cliente originalmente inválido tras transformarlo. Reutilizar la preparación y los modelos existentes, sin introducir
   otro normalizador, journal ni flag público para saltarse la frontera.
 - Separar validación de parámetros cliente, codificación del lote y validación
-  semántica servidor. La preparación bulk conserva la comprobación del `_id`
-  raíz previa a la codificación; insert_one/insert_many ya corrigen esa
-  precedencia en su corte. Añadir diferencial de errores simultáneos (`_id`
-  inválido y valor no codificable) para cada nueva entrada antes de fijar la
-  precedencia; no declararla
-  corregida por el éxito de errores aislados. Observar también asignación de
+  semántica servidor. Inserciones y bulk ya corrigen la comprobación del `_id`
+  raíz previa a la codificación. Conservar sus diferenciales de errores
+  simultáneos (`_id` inválido y valor no codificable), y añadirlos para cada
+  nueva entrada antes de fijar su precedencia; el éxito de errores aislados
+  no acredita la combinación. Observar también asignación de
   IDs y efectos ya confirmados en familias anteriores.
 - Un error de codificación impide enviar su lote; no revierte lotes anteriores
   ni constituye un fallo servidor dentro de BulkWriteError. Los errores de
@@ -1426,9 +1432,9 @@ al reconstruir un DBRef con el decoder SDK.
   sigue siendo la alternativa mínima correcta mientras no haya un pushdown
   exacto acreditado.
 
-Las unidades 1 y 2 ya comparten la frontera de lectura entregada;
-3 reutiliza ese codificador común, y 4 completa su política de escritura antes
-del default. Los consumidores positivos tienen owner propio: una codificación
+Las unidades 1 y 3 tienen aceptación acotada; 2 comparte el encoder entregado
+pero conserva comandos/índices/validators pendientes, y 4 coordina las opciones
+de sus dueños antes del nuevo default. Los consumidores positivos tienen owner propio: una codificación
 correcta no acepta su proyección/sobre. No se crea otro comparador, planificador,
 contexto o formato de almacenamiento para resolver esta frontera. Los demás
 contextos D06, H53, D07 y el cierre integrado D05 conservan sus obligaciones.

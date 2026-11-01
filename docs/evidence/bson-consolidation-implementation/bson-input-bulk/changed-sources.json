@@ -1,0 +1,22 @@
+{
+  "src/mongoeco/_types/writes.py": "94f1c7bfa1c2786ad0878b5788b6153d28cc4c6ae3ae1c1a6b7f849b2a6ba5bf",
+  "src/mongoeco/api/_async/_collection_bulk.py": "56b6e381e727474bcb20d2c5ac24472f98c119e2a83b832ca3fb96deedb38b64",
+  "src/mongoeco/api/_async/_collection_insert.py": "a4b18ab7fdb518e5ce215ff3f94959f210e44adabd777e10080c9e9fe2d0cf49",
+  "src/mongoeco/api/_async/_collection_runtime.py": "6b7eba792404872ac7922e4fadff6ddd18d65a8410b9f630ac6dd7717f2efcc5",
+  "src/mongoeco/api/_async/_database_admin_write_commands.py": "67f999dbeb2c2c1cf25ba53b3c9f834384a5cd0ece0c249393457f5ab230b722",
+  "src/mongoeco/api/_async/_write_command_validation.py": "aa7452a03922e0da52b9b189c9c566f84c3dbde708db99a2cb09f560499d795c",
+  "src/mongoeco/api/_async/collection.py": "f7f0bf56c41f849f29c531134a256ca409d4045f5b182919a478b800b178fabb",
+  "src/mongoeco/api/admin_parsing.py": "626abd6684b1f26727211d8f28907bcbaf7e6cc8c2f8857c3ef2b725d7081728",
+  "src/mongoeco/api/bson_input.py": "a6747602298cd53bfeda67414a4e6470997d4c915b4dd48a0c9943c45360a449",
+  "src/mongoeco/core/identity.py": "79aeaa2d0a5d184aaa7f7b0a462d5edcfdbe7d45946fc3065f106a8c239d059a",
+  "tests/differential/semantic_bson_bulk_cases.py": "907be6be6f9db7f660e43f95ba6953dffff421a2dd7843226935d36bd1fa2061",
+  "tests/differential/semantic_corpora.py": "e0c5881cfc6870da15884c42fd65d1502e0bb470866822c9074dbb233191f81c",
+  "tests/fixtures/semantic_bson_bulk_7_0.json": "c3ce45aaaa0449011a0df754720adaf13276ed3768dd7180369e571e70969084",
+  "tests/fixtures/semantic_bson_bulk_8_0.json": "66f4760c467eb588befc4cc4b96b0f5dbacaf6b02a2c81d208f34624424410b5",
+  "tests/fixtures/semantic_bson_bulk_9_0.json": "cba803b0055511a489fc86ce515caeb6c9df913c6f0bc41a924cdf024d7efb1f",
+  "tests/integration/api/test_bson_bulk_boundary.py": "26a99e87999b52623eb944a08d856c6ad63425adb5c6d6373e35bf204ffb5e16",
+  "tests/unit/api/test_bson_write_frames.py": "b134b7451296ff6b9d6dae8be2c5237a1535901a82f3c456f5e668a48469d70a",
+  "tests/unit/api/test_collection_find_modify.py": "839dc4057421f8910ccd3695a13b06946b454f6f77c32c2d5bd152f544c3d390",
+  "tests/unit/api/test_collection_write_helpers.py": "9d352c4281d5efd179bd106b0fc9ffc7d1865a2552384605e3f6dbb708e013b4",
+  "tests/unit/test_admin_parsing.py": "4beadaeca9046632f05ac37c2291fd1245e5da115f379a28731c53aaabf82652"
+}

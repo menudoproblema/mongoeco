@@ -1,0 +1,207 @@
+import json,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-bulk')
+commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();short=commit[:7]
+assert subprocess.check_output(['git','log','-1','--format=%s'],text=True).startswith('fix(api): admit classic bulk BSON frames')
+r=json.loads((root/'receipt.json').read_text());r['implementation_commit']=commit
+(root/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+wide=r['checks']['wide'];unit=r['checks']['unit'];protected=r['checks']['protected_files']
+ratios=json.loads((root/'cost.json').read_text())['ratios']
+cost='; '.join(f"{x['engine']} {x['method']} lote {x['batch']}: {x['cpu_ratio']:.2f}" for x in ratios)
+(root/'README.md').write_text(f'''# B07: preparación y admisión de frames bulk clásicos
+
+Implementación `{short}`, base `954ba15`. Aceptación acotada del recorrido
+público bulk y de sus comandos wire alcanzados. B07/D06/D05 y el objetivo
+completo permanecen abiertos.
+
+## Causa, cambio y revisión
+
+La preparación anterior normalizaba y copiaba modelos antes de admitir BSON,
+y podía ejecutar un elemento antes de descubrir un error cliente del siguiente.
+La preparación común ahora recorre los modelos secuencialmente, adapta sin
+copiar valores arbitrarios, valida forma y asigna IDs. Un error cliente de
+preparación conserva las asignaciones previas y no escribe datos.
+
+El agrupador existente conserva runs contiguos ordered y familias agrupadas
+unordered, con límite de 100.000 elementos. El encoder común conserva orden,
+tipos y opciones UUID; comparte su primitiva con las lecturas y mutaciones.
+La nueva secuencia cuenta BSON real y forma frames de 48.000.000 bytes con el
+presupuesto de 36 bytes de la sesión UUID nativa del perfil clásico admitido.
+El SDK aporta los tamaños de bytes codificados; el perfil portable reutiliza
+bson_size sobre su dominio cerrado. No se añade otro codec ni comparador.
+
+Se codifica un lookahead antes de decidir el desbordamiento: si no es codificable,
+no se envía el prefijo aún pendiente; si es válido y demuestra desbordamiento,
+el prefijo puede ejecutarse. El elemento pendiente se conserva entre frames.
+Un error posterior no revierte frames ni familias ya confirmados. El encoder
+solo vuelve a codificar la cabecera al comenzar otro frame. La validación
+servidor ocurre después, reutilizando las reglas estructurales de comandos
+movidas a su owner compartido; los ejecutores internos no recodifican.
+
+El caso ordered=None distingue dos decisiones: el driver agrupa como unordered,
+pero el servidor usa el default true dentro de cada comando null. Un fallo de
+item detiene ese frame sin imponer una parada global del driver. Se conserva
+el normalizador de ordered del comando, con errores servidor de código 14;
+no se sustituye por bool() ni por validación cliente TypeError. La clasificación
+de update usa el primer campo: el diccionario vacío es reemplazo. Estos dos
+fallos compartidos aparecieron al ejecutar wire y quedaron corregidos sin
+alterar los observadores ni omitir esa superficie.
+
+El mismo diferencial expuso el orden raíz de _id. Inserciones y upserts de
+reemplazo reutilizan document_with_id_first, sin reordenar documentos embebidos,
+cambiar los IDs devueltos o migrar datos antiguos. Dos tests de preservación de
+orden antiguo se siembran por el SPI real en vez de crear ese estado mediante
+la API pública corregida; conservan sus aserciones de orden y contadores.
+
+Las respuestas bulk usan el materializador builtin UUID/fecha existente y
+conservan operaciones originales de error sin ejecutar decoders/fábricas del
+usuario. BulkWriteResult.bulk_api_result reutiliza el DTO de contadores y
+upserts existente. Es la única adición del manifiesto API, prevista en B07
+unidad 5; no se regeneran snapshots históricos ni se declara equivalencia de
+mutaciones arbitrarias de wrappers de resultados.
+
+## Evidencia
+
+- [Receipt](receipt.json), [runtime](runtime-sources.json), [fuentes del cambio](changed-sources.json)
+  y guards de imports: wheel de 285 módulos, comprobado contra src y los módulos
+  realmente cargados en master/workers, con fuente final del corpus congelada.
+- Nueve acciones / 518 observaciones por MongoDB 7.0.43/8.0.32/9.0.2 standalone,
+  imágenes fijadas, buildInfo/FCV y SDK en manifests native-5. Capturas y checks
+  finales coinciden byte a byte; los checks se conservan comprimidos. Las rondas
+  anteriores son feedback, sin regeneración de goldens históricos.
+- [Baseline](baseline.txt.gz): 144 fallos y 75 checks correctos. Candidato:
+  219 checks nuevos correctos, directa/wire sync/async × Memory/SQLite × 7/8/9.
+  El [replay amplio](replay.txt.gz) tiene {wide['passed']} correctos y
+  {wide['failed']} fallos, todos bson_admission preexistentes, visibles y obligatorios.
+  No es un gate integrado verde. El feedback inicial conserva sus 24 fallos
+  wire nuevos en dos familias; la aceptación posterior los resuelve.
+- [Unitarias/contratos/propiedades](unit.txt.gz): {unit['passed']} pruebas y
+  {unit['subtests']} subtests correctos, con Runtime/unraisable/thread warnings
+  tratados como error. Incluye los dos tests legacy de orden, el parser
+  administrativo y contratos SPI/comandos/errores. El feedback inicial de
+  unitarias conserva las dos siembras públicas inválidas como caracterización.
+- Las pruebas nuevas comprueban efectos de familias previas, ausencia de prefijo
+  de frame inválido, índice único reutilizable, barrera de eventos, reapertura
+  SQLite y objetos que prohíben deepcopy. Los tamaños de frame se contrastan con
+  el builder independiente de PyMongo; los testigos nativos grandes observan IDs
+  y longitudes de payload sin incorporar decenas de MB al modelo de resultados.
+- Las respuestas de upsert y errores conservan tipos/orden BSON en cinco modos
+  UUID y valores Binary 0/5, fecha y DBRef. El corpus usa canonical-json existente
+  para no convertir el modelo EJSON de error en valores SDK antes de comparar;
+  public_error/BSONObservation protegidos permanecen intactos.
+- Python 3.13.15 realmente sin SDK: [2.880 observaciones bulk](sdk-free.json),
+  [3.918 de mutación](sdk-free-mutations.json), [942 de inserción](sdk-free-inserts.json)
+  y [748 controles de lectura](sdk-free-reads.json). Bulk portable omite Code
+  exclusivo del SDK, su acción de formas de constructores SDK y el contrato
+  completo de errores tipados; usa los modelos propios. Decimal128 se observa
+  como texto decimal público; el perfil SDK conserva BID y las acciones completas.
+- [Typing](typing.txt): dos positivos y 20/25 negativos. [API](api-check.txt):
+  18 tests y 11 subtests; [delta](public-api-delta.json) limitado a la propiedad
+  prevista. [Lint](lint.txt) correcto. [Históricos](protected.json): {protected}
+  fixtures/observadores intactos. [Recursos](resources.json): 15 contenedores y
+  30 volúmenes propios verificados ausentes con Docker operativo.
+- [Coste diagnóstico](cost.json), ABBA×2/100 solicitudes y replay concurrente:
+  {cost}. D05 conserva estos incrementos; no es aceptación de presupuesto.
+
+## Pendientes conservados
+
+Comandos públicos e índices/validators todavía necesitan su admisión cliente
+completa y la ruta interna preparada correspondiente. Después, coordinar UUID
+por defecto: STANDARD permanece hasta completar esas entradas. Unidad 5
+conserva proyecciones calculadas, sobres raw/update y otros efectos de respuesta;
+la propiedad bulk aceptada no cierra toda la unidad. Continúan D06, H53,
+decisión opcional D07 y D05 (matrices, cobertura, persistencia, costes y gates
+integrados). No se amplía el soporte a cifrado, compresión ni transacciones
+por el cálculo de frames clásicos.
+''')
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text();a=s.index('- B07: lecturas e inserciones tienen aceptación propia.');b=s.index('\n\n',a)
+s=s[:a]+f'''- B07: lecturas, inserciones y mutaciones públicas tienen aceptación propia. `{short}` añade [preparación y frames bulk clásicos](#b07--preparación-y-frames-bulk-clásicos), respuestas tipadas y la propiedad bulk_api_result prevista. El gate amplio mantiene {wide['failed']} fallos B07 obligatorios. Siguen comandos/índices/validators, UUID coordinado y positivos de proyección/sobres y otros efectos de respuesta. STANDARD permanece; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.''' +s[b:]
+s+=f'''\n\n## B07 — Preparación y frames bulk clásicos
+
+`{short}` entrega el [corte bulk](evidence/bson-consolidation-implementation/bson-input-bulk/README.md)
+y su [receipt](evidence/bson-consolidation-implementation/bson-input-bulk/receipt.json).
+Preparación secuencial sin copias/normalización prematuras, grupos existentes y
+encoder común por frames de 48 MB. El lookahead inválido impide publicar el
+frame pendiente; se conservan frames/familias anteriores. Orden del driver y
+ordered del servidor son decisiones separadas, especialmente con null.
+
+Las reglas estructurales de comandos tienen owner común. Wire corrige vacío
+como reemplazo y errores ordered con código 14. Inserciones y upserts reutilizan
+el orden raíz _id; datos antiguos siguen comprobados por SPI sin migración.
+Respuestas usan codecs builtin y el DTO común; bulk_api_result es la única
+adición API prevista, con snapshots históricos intactos.
+
+- Nueve acciones / 518 observaciones nativas por versión 7/8/9; checks idénticos.
+  Baseline 144 fallos/75 correctos; 219 checks nuevos correctos en el candidato.
+- Replay instalado: {wide['passed']} correctos y {wide['failed']} fallos B07
+  preexistentes; ningún fallo nuevo ni aceptación global por ese resultado.
+- {unit['passed']} pruebas y {unit['subtests']} subtests correctos; API 18/11,
+  typing y lint correctos. Sin SDK: 2.880 observaciones bulk más 3.918/942/748
+  controles de mutación/inserción/lectura, con límites declarados en el receipt.
+- {protected} fixtures/observadores históricos intactos y 45 recursos propios
+  verificados ausentes. Coste diagnóstico hasta aproximadamente 1,28 en Memory
+  update lote 1; conservarlo en D05, sin aceptar presupuesto global.
+
+→ Sigue: admisión cliente de comandos/índices/validators y rutas internas
+preparadas; luego UUID coordinado. Positivos restantes D06/B08, resto D06,
+H53, decisión D07 y D05 mantienen sus owners. STANDARD sigue como default.
+''';p.write_text(s)
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text()
+s=s.replace('**Entrada vigente (1 de noviembre, revisión 20 y mutaciones aceptadas en `c83c95c`):**',f'**Entrada vigente (1 de noviembre, revisión 20 y frames bulk aceptados en `{short}`):**',1)
+s=s.replace('Conversión, lectura, inserciones y el corte de mutaciones `c83c95c` tienen','Conversión, lectura, inserciones, mutaciones y el corte bulk tienen',1)
+s=s.replace('Completar admisión bulk por familia y comandos. Lectura, inserciones y mutaciones públicas ya tienen aceptación propia.', 'Completar admisión de comandos e índices/validators y sus entradas internas preparadas. Lecturas, inserciones, mutaciones y bulk clásico ya tienen aceptación propia.',1)
+a=s.index('**Siguiente corte.** Completar admisión por familia bulk');b=s.index('**Causa compartida.**',a)
+s=s[:a]+f'''**Entrega de bulk `{short}`.** El
+[registro](bson-consolidation-implementation.md#b07--preparación-y-frames-bulk-clásicos)
+y su [evidencia](evidence/bson-consolidation-implementation/bson-input-bulk/README.md)
+aceptan preparación, frames clásicos, lookahead y efectos parciales, con 219
+checks nuevos y 518 observaciones nativas por versión. El replay amplio mantiene
+{wide['failed']} fallos B07 y {wide['passed']} correctos. La propiedad bulk_api_result
+cierra ese testigo de unidad 5, sin cerrar todos los efectos de respuestas.
+
+**Siguiente corte.** Completar la admisión cliente de comandos e índices/validators
+con las opciones de su dueño, reutilizando encoder, parsing y ejecutores. La
+entrada interna wire ya recibió BSON: conservar orden/undefined y contexto,
+sin imponer otra codificación cliente ni endurecer DocumentCodec.to_internal.
+Mantener errores simultáneos, clase/fase/código, originales, IDs, estado, índices
+y eventos con barrera. No reextraer preparación, agrupador o frame encoder bulk.
+
+Las reglas servidor compartidas conservan la clasificación por primer campo
+(vacío es reemplazo) y los códigos de ordered inválido. Driver y servidor no
+comparten el default de null para su orden: conservar ambas decisiones y sus
+testigos. Los documentos antiguos con _id no inicial se siembran por SPI; no
+migrar almacenamiento ni retirar sus controles para normalizar escrituras nuevas.
+
+Unidad 4 completa UUID antes del cambio de default; unidad 5 conserva positivos
+de proyección/sobres y otros efectos de respuesta. STANDARD permanece. D06,
+H53, decisión D07 y cierre integrado D05 siguen abiertos. D05 conserva costes
+de lectura, mutaciones y bulk (hasta aproximadamente 1,28 en Memory update lote
+1), ligados al runtime final; no se acepta presupuesto por otras rutas verdes.
+
+''' +s[b:]
+p.write_text(s)
+print('Owners and evidence updated for',short)
+from pathlib import Path
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text()
+s=s.replace('| 3. Lotes de escritura | Reutilizar `_classic_bulk_batches` y la preparación existente. Admitir todo el grupo que se va a enviar antes de ejecutarlo, manteniendo el orden entre grupos. Insert_many codifica su lote antes de escribir; no endurecer globalmente la preparación de todos los modelos bulk. | Un segundo insert/update inválido impide el primer write válido de la misma familia; en bulk mixto el insert previo permanece antes del error del grupo update, también unordered.', '| 3. Lotes de escritura | Entregado en `5a89dcc` para bulk clásico, sobre el agrupador y encoder existentes. Conservar la admisión del frame que se va a enviar y el orden entre frames/familias; no admitir todo el bulk anticipadamente. | Un segundo insert/update inválido impide el primer write válido de su mismo frame. Un lookahead inválido aborta el frame pendiente; uno válido que demuestra desbordamiento permite confirmar el prefijo. Los frames/familias anteriores permanecen, también unordered.')
+s=s.replace('''  bulk actual convierte valores con `to_internal`;
+  validar solo ese resultado puede admitir un tipo cliente originalmente
+  inválido.''','''  bulk anterior convertía valores con `to_internal`; `5a89dcc` retira esa
+  normalización anticipada. Conservar el testigo que impedía admitir un tipo
+  cliente originalmente inválido tras transformarlo.''')
+s=s.replace('''  semántica servidor. La preparación bulk conserva la comprobación del `_id`
+  raíz previa a la codificación; insert_one/insert_many ya corrigen esa
+  precedencia en su corte. Añadir diferencial de errores simultáneos (`_id`
+  inválido y valor no codificable) para cada nueva entrada antes de fijar la
+  precedencia; no declararla
+  corregida por el éxito de errores aislados.''','''  semántica servidor. Inserciones y bulk ya corrigen la comprobación del `_id`
+  raíz previa a la codificación. Conservar sus diferenciales de errores
+  simultáneos (`_id` inválido y valor no codificable), y añadirlos para cada
+  nueva entrada antes de fijar su precedencia; el éxito de errores aislados
+  no acredita la combinación.''')
+s=s.replace('''Las unidades 1 y 2 ya comparten la frontera de lectura entregada;
+3 reutiliza ese codificador común, y 4 completa su política de escritura antes
+del default.''','''Las unidades 1 y 3 tienen aceptación acotada; 2 comparte el encoder entregado
+pero conserva comandos/índices/validators pendientes, y 4 coordina las opciones
+de sus dueños antes del nuevo default.''')
+p.write_text(s)
