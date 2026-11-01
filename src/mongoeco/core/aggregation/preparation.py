@@ -628,15 +628,16 @@ def _validate_projection_metadata_sources(pipeline, *, text_score=False):
     # inherit the source; foreign pipelines have independent metadata sources.
     for stage in pipeline:
         operator, spec = next(iter(stage.items()))
+        if get_registered_aggregation_stage_registration(operator) is not None:
+            # An override owns its argument grammar, including resource fields.
+            # Its metadata availability remains unknown until runtime.
+            text_score = None
+            continue
         if operator == "$match" and _contains_text_query(spec):
             text_score = True
         elif operator in {"$search", "$searchMeta"}:
             # The local Search contract also supplies text score metadata.
             text_score = True
-        elif get_registered_aggregation_stage_registration(operator) is not None:
-            # Extensions have no declared metadata contract; keep their runtime
-            # behavior rather than assuming their source is statically absent.
-            text_score = None
         if (
             operator
             in {

@@ -2518,3 +2518,22 @@ El control de los 79 padres restantes, posterior a las correcciones causales,
 termina con 77 fallos contando subtests, 48 padres correctos y 40 subtests
 correctos. Se continúa atribuyendo ese conjunto; no es una aceptación global
 ni modifica el umbral de cobertura o las ocho obligaciones.
+
+
+### O5 — Preparación de extensiones y binding diferido
+
+La regresión del test de descubrimiento de extensiones procedía del análisis de
+metadata: reconocía el override pero descendía después por los campos del builtin
+sustituido. El handler conserva ahora su gramática, metadata desconocido y
+descubrimiento de recursos existente. No se invoca durante preparación.
+La wheel fijada en d05-extension-wheel.json pasa 267 pruebas y 83 subtests,
+incluidas preparación, metadata, contexto y proyecciones.
+
+Pasan 37 pruebas y 11 subtests de límites de lectura. Los spies capturan el
+contexto al ligar la ejecución, después de verificar ausencia de trabajo al
+construir; rewind renueva contexto/identidad y deadline conservando sesión.
+Clone de una ejecución ligada prueba reloj independiente; el fixture sync
+observa referencias vivas antes de consumir, conforme al corpus nativo
+bson_request. Se conservan proveedor único, cierre y recuentos de compilación.
+Los logs se archivan con prefijos d05-extension y d05-read-context; O5 sigue
+abierta y mantiene el umbral de cobertura y todos sus fallos restantes.
