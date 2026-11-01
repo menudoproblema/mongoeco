@@ -1,0 +1,8 @@
+{
+  "tests/differential/semantic_decimal_conversion_cases.py": "5881ec3b5c6edb242737b7995d89c081dc16af898ca98667bb59513322497d3c",
+  "tests/fixtures/semantic_decimal_conversion_7_0.json": "1a7c48c98ddf2f34fa8b229e5f1be715a487e6d8b2d691b796c1b9cc33ecab39",
+  "tests/fixtures/semantic_decimal_conversion_8_0.json": "ac6a0660e662f3a71cde6f737efaf870517bd72e2ce6d73034a44e5ff1fcd2b3",
+  "tests/fixtures/semantic_decimal_conversion_9_0.json": "78ff28abc523ace9b90b4ffea9db04e9a7d337d87aa1606fa01effaae44f057c",
+  "src/mongoeco/core/aggregation/scalar_expressions.py": "edda47cf890f19fd7b6c07ae87790a98368afff349aee7b5b40a95e79ff51e09",
+  "tests/differential/semantic_corpora.py": "d1dc11a1bfe36ea6be13987d153409e534b679f2d96e27791a460c6e0bcb739f"
+}

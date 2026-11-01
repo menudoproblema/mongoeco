@@ -725,6 +725,13 @@ conservación de candidatos. Sus 97 regresiones y sondas locales son diagnóstic
 no aceptación de D06c ni del corpus preexistente. El plan conserva un solo orden
 vigente y los owners restantes; no se reabren D01/D02/D03/D04.
 
+La [revisión 18](evidence/bson-consolidation-review/review18/README.md), sobre
+`b49d521`, contrasta otra vez el mismo adjunto: 97 regresiones locales y 18 trazas
+Binary en seis pares motor/dialecto. Mantiene los cierres de grupo/conjuntos y
+Search. Precisa la aceptación pendiente de conversión en el plan: gramática,
+plegado/fase, tipo público BSON y controles numéricos físicos. Los cambios de
+conversión preexistentes siguen sin aceptar; no modifica runtime ni capturas.
+
 Los cortes focales no acreditan el cierre integrado del programa ni D05.
 
 ## Revisión 10: plan restante tras repetir la autocrítica

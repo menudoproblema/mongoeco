@@ -1,0 +1,22 @@
+{
+  "head": "b49d521fc7b48f57b4e7c57da937d8f8adabbcc4",
+  "scope": "Documentation refinement and local regressions only; no native or implementation acceptance",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "checks": {
+    "focal_log": "focal.txt",
+    "representation_pairs": 6,
+    "matcher_traces": 18,
+    "preexisting_workset_unchanged": true,
+    "relative_links_missing": [],
+    "original_sources_entries": 14,
+    "historical_verified_sources_entries": 16,
+    "fresh_source_downloads": false
+  },
+  "artifact_sha256": {
+    "README.md": "4faf63caac36053c9e58be0791fe4ba030f7e6ec3477f611d5c649868c58666e",
+    "focal.txt": "3a245c3442d498dd27f4a85eb32717aa34c281aa6e3b5d8cbab6b5feeb675fd8",
+    "preexisting-workset.json": "0fc2733a730b3b6c0962945a5279230996e0517c074650b3673959995f393730",
+    "representation-probe.py.txt": "434875e5585bf17abe445686e8a60fb2df6ed86e841cc779dbfadaca768b2b89",
+    "representations.json": "a5f82455df2ae32f7f1a0aa81aab119c6743ae09f1808afbc573d8b812b70c82"
+  }
+}
