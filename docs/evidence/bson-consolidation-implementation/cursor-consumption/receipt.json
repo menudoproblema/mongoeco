@@ -1,0 +1,197 @@
+{
+  "scope": "Bounded D06a/b cursor consumption, ownership, close and runner admission; not full D06/D05 closure",
+  "base": "d50ab62",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-lko1jis5/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "cb71319882a00e1d11e9e56b02ef6df7d7fd372a9cc086ed0d3cdfec879d3d8c",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-lko1jis5/site-packages",
+    "modules": 284
+  },
+  "runtime_modules": 284,
+  "runtime_manifest": "runtime-sources.json",
+  "workset": "workset.json",
+  "sdk": "4.19.0",
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "native": {
+    "7.0": {
+      "image": "mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72",
+      "reference_sha256": "f29872a2ec2b386b52ae65d5f224abfa445698a2d7731b1b9c8b5bda2bd88918",
+      "fixture": "native/7.0/fixture.json.gz",
+      "actions": 5
+    },
+    "8.0": {
+      "image": "mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66",
+      "reference_sha256": "5f0c50f0f62b25cd0310e08d3544b43f5db91e389968e211ac81f63720cc447f",
+      "fixture": "native/8.0/fixture.json.gz",
+      "actions": 5
+    },
+    "9.0": {
+      "image": "mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158",
+      "reference_sha256": "35f24d89f796043462e29dc09bb36b8347a081b5ead0300d81ed153a7d19a79d",
+      "fixture": "native/9.0/fixture.json.gz",
+      "actions": 5
+    }
+  },
+  "checks": {
+    "full_installed_replay": {
+      "passed": 8032,
+      "seconds": 210.83,
+      "warnings": 0,
+      "warning_policy": "RuntimeWarning, PytestUnraisableExceptionWarning and PytestUnhandledThreadExceptionWarning are errors",
+      "worker_loaded_modules": {
+        "wheel-imports-gw0": 262,
+        "wheel-imports-gw1": 262,
+        "wheel-imports-gw2": 262,
+        "wheel-imports-gw3": 262
+      }
+    },
+    "installed_unit_spi_runner": {
+      "passed": 421,
+      "subtests": 49
+    },
+    "installed_cursor_integration": {
+      "passed": 20,
+      "subtests": 19
+    },
+    "prior_focal_feedback": {
+      "passed": 261,
+      "subtests": 58,
+      "final_acceptance": false
+    },
+    "counterfactual": {
+      "native_failed": 24,
+      "ownership_failed": 4,
+      "runner_subtests_failed": 2,
+      "pytest_failed_reports": 30,
+      "pytest_passed_reports": 100,
+      "note": "The parent unittest node is reported separately from its failed subtests; exit 1 expected.",
+      "verified_archived_runtime_modules": 284
+    },
+    "sdk_free_python313": {
+      "native_action_comparisons": 30,
+      "typed_public_traces": 1278,
+      "prior_factory_dispatch_controls": 258,
+      "scope": "new sync routes; prior controls include async, whose adapter was not modified"
+    },
+    "typing": {
+      "positives": 2,
+      "public_expected_errors": 20,
+      "boundary_expected_errors": 25
+    },
+    "public_api": "identical to baseline",
+    "lint_ratchet": "passed; no baseline update",
+    "resources": {
+      "containers_absent": 12,
+      "volumes_absent": 24
+    },
+    "cost_diagnostic": {
+      "pairs": 40,
+      "abba_repetitions": 2,
+      "bson_hashes_identical": true,
+      "memory_find_limit_one": {
+        "default": 1.1596330275229358,
+        "standard": 1.1722772277227722
+      },
+      "accepted_global_budget": false
+    }
+  },
+  "protected": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329",
+    "tests/fixtures/legacy_error_emitters.json": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14"
+  },
+  "review": {
+    "fixed": [
+      "Replayed query cache and eager limit-one iteration",
+      "Alive ignored async EOF and sync pending rows",
+      "Borrowed iterator finalization closed or discarded live owner state",
+      "Aggregate async owner exposes close, unlike previous fake aclose-only shape",
+      "Runner closing/closed rejection leaked unsubmitted coroutines; prior test cleanup hid it"
+    ],
+    "retirements": [
+      "query result cache and copying",
+      "unused aggregation cache/load path",
+      "borrowed iterator finalizers and suspended special state"
+    ]
+  },
+  "limits": [
+    "Other D06 contexts/representations, D06c, H53, sNaN, D07 decision, D05 and B07 remain open.",
+    "No full Python/SDK/pytest matrix, global coverage, all persistence or performance-budget acceptance. No remote CI execution claimed.",
+    "Earlier complete replay passed with 114 coroutine warnings on superseded runtime; it is feedback, not acceptance.",
+    "Materialized cursor family and unsupported public methods keep their own contracts; no generic lifecycle/state object introduced.",
+    "CPU ABBA is diagnostic only, own verification gates idle; no controlled isolation of external jobs."
+  ],
+  "document_checks": {
+    "relative_links_missing": [],
+    "native_reference_checks": "all five final actions match each native check; corpus source hashes current",
+    "protected": "five historical observer/catalog hashes unchanged",
+    "whitespace": "git diff --check passed"
+  },
+  "artifacts_sha256": {
+    "README.md": "ac56315f0524924e0ccdabc962f87e9ffe2102e92c3afdd75a6805bdb9ecad74",
+    "baseline-imports.json.gz": "21d056cfea3cb3d52ed3f28a1c389af0147631d210ac74304051168f2e3e9d6f",
+    "cohorts/00-mongoeco-consumption-native-v1-7.0.json": "d5f6335033c32e44e6db0c53a5c193cb847986b2c42ab1b9cb26285321dd483f",
+    "cohorts/01-mongoeco-consumption-native-v1-8.0.json": "53c23c8290bf42f15d67a22446f13dc2dc42000a94d226d2d522f34302ecbde2",
+    "cohorts/02-mongoeco-consumption-native-v1-9.0.json": "1056399ac5d3853da70362c308621c58302df090c1604861bae44e271d06565d",
+    "cohorts/03-mongoeco-consumption-native-v2-7.0.json": "d6bc9ce69bcd7e7bbe64d2d120beb2fe93f81b9af9739eecd15e6cac513e3db4",
+    "cohorts/04-mongoeco-consumption-native-v2-8.0.json": "c3f6066247dfe5bc3efa47a205702184bb0640697c0c283bca892fc4ca6a114c",
+    "cohorts/05-mongoeco-consumption-native-v2-9.0.json": "b83af23c93d0f14c1f4bf4fc7f5b1c5c233b360ed8707ac7b53f33ca6e04acb7",
+    "cohorts/06-mongoeco-consumption-native-final-7.0.json": "68949f87d4923930e97812b38d1fbfad45bf4d666d6ab45eeedc7120cf4cdbe6",
+    "cohorts/07-mongoeco-consumption-native-final-8.0.json": "a36f7bc26eb429efa816bfef476b8992e43a3b7a836dcaee5b7ba4782ae03baa",
+    "cohorts/08-mongoeco-consumption-native-final-9.0.json": "785532e35450e9af84d67e118af56f09479f03676f11954268b50dad784f7cc6",
+    "cohorts/09-mongoeco-consumption-native-v3-7.0.json": "8f1ed8ebf0e38aa52203d78573c35520f3546aa8e51bd44f1bac8007ad572d40",
+    "cohorts/10-mongoeco-consumption-native-v3-8.0.json": "601e44b2b0c27d0ecd9b4d94261aaf3968c049011c36040dfb83ab62cc61eba5",
+    "cohorts/11-mongoeco-consumption-native-v3-9.0.json": "20f8fa496127a83089d63018298ff22152c09b6e8fe70d27a3626bde5953a043",
+    "cost.json": "269db3e7c1c120603932a4fcd9e66867a7fbaa6f2efef28e3bf4835076b714e8",
+    "cursor-imports.json.gz": "047575eb4a1e4760a77c59f6d062aecaf098a84fdf5c09f8d045f94f7ee39948",
+    "feedback/mongoeco-consumption-after2.txt.gz": "3ea9e17ce50fc1e4fc1f20c465a86dd589076723d59abbbc7098a1fbbceea9ad",
+    "feedback/mongoeco-consumption-baseline-final.txt.gz": "18c139710d6de94dfabce500bc6ff375a27442c46a2e8c9549968f31b9c42578",
+    "feedback/mongoeco-consumption-before.txt.gz": "1e71a43ebfeb9c3442b3e38a3f47866231668356f76076cd97a32e8f1f8e8116",
+    "feedback/mongoeco-consumption-ownership-before.txt.gz": "42da8dfc851db30d029fc17e19dd381407087dc7b25a0ec77dd5b2afb7bb9670",
+    "feedback/mongoeco-consumption-unit-feedback.txt.gz": "68fc700df4a5362822857c88bfae5c00cead0e9652b23fe41b1bcaba1fb030f4",
+    "feedback/mongoeco-consumption-unit-final1.txt.gz": "df87a7801cb22e9bc3388c289c4e3648d67a6cbd2490a023714650f3a8838d4c",
+    "feedback/mongoeco-consumption-unit-final5.txt.gz": "6009ed5718478ee34672eff2e2bf05c7f5f497e897328c0d3740e8a359db56b7",
+    "feedback/mongoeco-consumption-wheel-all.txt.gz": "f3d02615a35b988197ae40cd5cb24f113b55af60b20df42f4d27377472deeb0b",
+    "logs/mongoeco-consumption-baseline-closed.txt.gz": "928c19945d8cc716d9245d5cd882804a55874382608846bf8bc3a52de8b507a5",
+    "logs/mongoeco-consumption-lint-frozen.txt.gz": "206859343b49cc87679c99d78af4719bbb2b2468b5c5955b14fc37d75e23622c",
+    "logs/mongoeco-consumption-native-v3.txt.gz": "f69faf5fd74035e4644a657288c7366848935c0ceb546a8b832a8b504339bc4c",
+    "logs/mongoeco-consumption-sdk-free-final-consumption.txt.gz": "1738a0a7117da9f8ffeac06b2577918578bfcfeefabd562414515e410e409920",
+    "logs/mongoeco-consumption-sdk-free-final-dispatch.txt.gz": "f70d680c322cdf408c2fbe9f35465dbe09e5da46bbb9319014d41f85660edf63",
+    "logs/mongoeco-consumption-sdk-free-final-factory.txt.gz": "02a90efdb2e496f03e16d8379d26850ca37e9237acf707fda2e8268a7ceebab3",
+    "logs/mongoeco-consumption-unit-runner.txt.gz": "4333a497459c2602dfca76d1d6033ee05f15c7bfd638f85db7f2c234753fb35f",
+    "logs/mongoeco-consumption-wheel-all-final.txt.gz": "e1edc570ca2d097de8eb7e4583b6702d7cc73cd558c3cebb07996d256a330682",
+    "logs/mongoeco-consumption-wheel-cursors-release.txt.gz": "343f0fd5510c07a9621f77a64e6bd0e82a4233a15327b3db0123400ba9acc4de",
+    "logs/mongoeco-consumption-wheel-final-build.txt.gz": "74091d46ee03c0ae4295224718b5cabcb265dea8c231b9e9d02eae77437b1f59",
+    "logs/mongoeco-consumption-wheel-typing-final.txt.gz": "3882a8febb48c519af0e7dc9b75e0c6cbec917b1e949eee4c95ff6aa60af66c8",
+    "logs/mongoeco-consumption-wheel-unit-final.txt.gz": "75d5af45f760e4085facac521e59662935effb03cb951f2835fbf645329a3fbc",
+    "mongoeco-consumption-audit.py.txt": "035b7897e9489388fe2c64c86f0bcfdb17dd76a0d76ad3d6764b578d8b2e52cd",
+    "mongoeco-consumption-baseline.py.txt": "accfd9d68d21041e00db266aa2407c3666a4eacf477c8e17df6e24b356ff2459",
+    "mongoeco-consumption-benchmark-control.py.txt": "e279ed6f99c743c45f9e53b3d2335c476c0f954153422a8600bf03a228746e3c",
+    "mongoeco-consumption-benchmark.py.txt": "f8160a99ae6ad770ea8f161fb7ad2a47acc70648302d09f12f3c615cb8360f58",
+    "mongoeco-consumption-native-v3.py.txt": "993264d2d5b6a110ae224df138284c7f95d150b9c0902f59a16eb2b1c242aa8e",
+    "mongoeco-consumption-sdk-free.py.txt": "6cc645b1021e4dd309ffbe0bbca520c431af1e2417e8cb1f0f8a4b9766431e5f",
+    "mongoeco-consumption-wheel-all-final.py.txt": "aa19ebbb4994d95b4a1dfb55502ef297ce439f02d9eb9759cd5dfff3005b4019",
+    "mongoeco-consumption-wheel-cursors.py.txt": "50836682bc967d8d70735ae31e47dc1fbcd4872fb3f18ef86f5af26012db29b1",
+    "mongoeco-consumption-wheel-unit-final.py.txt": "45554eaff75ad56d71e8c4d7058fa5c83ab41c209cae7e8417f96c226c8d6367",
+    "mongoeco-dispatch-build.py.txt": "55a5db04fba04438231168079e62c6e25be012c9d3f3f485eaf684973c8718ad",
+    "mongoeco_dispatch_artifact_guard.py.txt": "eca190893e437352238b22167243bb6c82a72efa322b954a2209e9a03169f4dc",
+    "native/7.0/cursor_consumption-check.json.gz": "653e6719220ede5857bec314fe743feb73307998ea65860c2d97912e86d43c22",
+    "native/7.0/fixture.json.gz": "368efb03676d3db4e31fb68b4df94f473108d00706384924a828c71e2ac099bc",
+    "native/8.0/cursor_consumption-check.json.gz": "784444e5d1d3b50bfbf71cbdb0b004835cba096f17a47d2ae72fdefce36975aa",
+    "native/8.0/fixture.json.gz": "f9f3d47f6152b6e96faef7fb99309fba9f2a47768727b17ff95cde3e34fa668b",
+    "native/9.0/cursor_consumption-check.json.gz": "76823a7a3542b9d7f087476fafdffbac40cd163e79b8b9e1ec69bbb80a023ef1",
+    "native/9.0/fixture.json.gz": "0e7e6673c09470cf4542cf4b7cf3742e151f8031b2541719fde5f4312227d5e3",
+    "public-api.json.gz": "e4db18afff83c1ea13739d97b92a408e132d044197629db180dac30a45438f18",
+    "resource-audit.json": "dbd13cea40ebee26a666562fea67889c6ecb915c32794503f32af224da9d0163",
+    "runtime-sources.json": "6b289205269cae72f75b5692e65ad21773088fa157fb9bd9d7fdadfa2cfa6cb1",
+    "unit-imports.json.gz": "9505d92f68c6a9db5dd0a869c91b1b5485ac608df839b618656f94b285bbda5b",
+    "wheel-imports-gw0.json.gz": "705ab8ab0f6646f06d5fda2c9350c847b49b3f3c3730543d3b774329f47fecc1",
+    "wheel-imports-gw1.json.gz": "16939677fe9bc4131e5cb3cc97b4034e6feb74a49e0721df39f5a50bfcce6ed5",
+    "wheel-imports-gw2.json.gz": "0c383c91489406bb0a98846c5d5ebe75f4a6014d27cd51d0767c2b549e4372c2",
+    "wheel-imports-gw3.json.gz": "c674fe1d9cd6f67c3762a14bf35ef398ac153a4ac6a85dcf3f8a44f0a1eb2bab",
+    "wheel.json": "2cded8ed1d75008ab8c8e12c79faabb031e86571836b27f2e1942888b6c4fb4a",
+    "workset.json": "b94fbf5365e3a3e9e484d27548647f0053aa71fe59a7017c31ee45a63f7c1216"
+  }
+}

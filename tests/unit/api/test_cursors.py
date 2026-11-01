@@ -1121,40 +1121,34 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             cursor.hint("")
 
-    def test_sync_cursor_comment_batch_size_and_max_time_ms_mutators_invalidate_caches(
+    def test_sync_cursor_comment_batch_size_and_max_time_ms_invalidate_execution_state(
         self,
     ):
         cursor = Cursor(
             _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
         )
-        cursor._cache = [{"_id": "cached"}]
         cursor._exhausted = True
 
         self.assertIs(cursor.comment("trace"), cursor)
         self.assertEqual(cursor._comment, "trace")
-        self.assertIsNone(cursor._cache)
         self.assertFalse(cursor._exhausted)
 
-        cursor._cache = [{"_id": "cached"}]
         cursor._exhausted = True
         self.assertIs(cursor.max_time_ms(5), cursor)
         self.assertEqual(cursor._max_time_ms, 5)
-        self.assertIsNone(cursor._cache)
         self.assertFalse(cursor._exhausted)
 
-        cursor._cache = [{"_id": "cached"}]
         cursor._exhausted = True
         self.assertIs(cursor.batch_size(2), cursor)
         self.assertEqual(cursor._batch_size, 2)
-        self.assertIsNone(cursor._cache)
         self.assertFalse(cursor._exhausted)
 
-    def test_sync_cursor_first_uses_cache_when_already_loaded(self):
+    def test_sync_cursor_first_does_not_replay_consumed_results(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
         cursor = Cursor(_SyncClientStub(), factory, {}, None)
 
         self.assertEqual(cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
-        self.assertEqual(cursor.first(), {"_id": "1"})
+        self.assertIsNone(cursor.first())
         self.assertEqual(factory.calls, 1)
 
     def test_sync_cursor_public_error_messages_remain_stable(self):
@@ -1197,13 +1191,17 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(client.run_calls, 1)
 
-    def test_sync_cursor_iteration_uses_first_fast_path_for_limit_one(self):
-        factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
+    def test_sync_cursor_limit_one_is_lazy_and_tracks_the_last_buffered_row(self):
+        factory = _BatchTrackingFindCollectionStub([{"_id": "1"}, {"_id": "2"}])
         cursor = Cursor(_SyncClientStub(), factory, {}, None).limit(1)
+        iterator = iter(cursor)
 
-        self.assertEqual(list(cursor), [{"_id": "1"}])
-        self.assertEqual(factory.calls, 1)
-        self.assertEqual(factory.first_calls, 1)
+        self.assertEqual(factory.last_scan.pull_count, 0)
+        self.assertTrue(cursor.alive)
+        self.assertEqual(next(iterator), {"_id": "1"})
+        self.assertFalse(cursor.alive)
+        with self.assertRaises(StopIteration):
+            next(iterator)
 
     def test_sync_cursor_rejects_sort_change_after_materialization(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
@@ -1295,7 +1293,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(InvalidOperation):
             list(cursor)
 
-    def test_sync_cursor_iteration_closes_active_async_iterator_on_early_break(self):
+    def test_sync_cursor_keeps_position_after_temporary_iterator_cleanup(self):
         collection = _StreamingAsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
         client = _DeferredCleanupSyncClientStub()
         cursor = Cursor(client, collection, {}, None)
@@ -1305,6 +1303,22 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             break
 
         self.assertEqual(collection.calls, 1)
+        self.assertEqual(collection.last_cursor.close_calls, 0)
+        client.run_deferred_cleanup()
+        self.assertEqual(list(cursor), [{"_id": "2"}])
+        self.assertEqual(collection.calls, 1)
+        cursor.close()
+        self.assertEqual(collection.last_cursor.close_calls, 1)
+
+    def test_abandoned_cursor_owner_still_defers_source_cleanup(self):
+        collection = _StreamingAsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
+        client = _DeferredCleanupSyncClientStub()
+
+        def read_one():
+            cursor = Cursor(client, collection, {}, None)
+            return next(iter(cursor))
+
+        self.assertEqual(read_one(), {"_id": "1"})
         self.assertEqual(collection.last_cursor.close_calls, 0)
         client.run_deferred_cleanup()
         self.assertEqual(collection.last_cursor.close_calls, 1)
@@ -1369,14 +1383,6 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(StopIteration):
             next(iterator)
 
-    def test_sync_cursor_iterator_del_swallows_close_errors(self):
-        collection = _StreamingAsyncCollectionStub([{"_id": "1"}])
-        cursor = Cursor(_BrokenSyncClientStub(), collection, {}, None)
-        iterator = iter(cursor)
-
-        iterator.__del__()
-        self.assertTrue(iterator._closed)
-
     def test_sync_cursor_first_returns_none_when_active_iterator_is_exhausted(self):
         collection = _StreamingAsyncCollectionStub([{"_id": "1"}])
         cursor = Cursor(_SyncClientStub(), collection, {}, None)
@@ -1395,12 +1401,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(cursor.first())
         self.assertEqual(collection.calls, 1)
 
-    def test_sync_cursor_iter_uses_cache_when_loaded(self):
+    def test_sync_cursor_iteration_does_not_replay_materialized_results(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}])
         cursor = Cursor(_SyncClientStub(), factory, {}, None)
 
         self.assertEqual(cursor.to_list(), [{"_id": "1"}])
-        self.assertEqual(list(cursor), [{"_id": "1"}])
+        self.assertEqual(list(cursor), [])
 
     def test_sync_cursor_iterator_raises_stop_iteration_when_closed_explicitly(self):
         collection = _StreamingAsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])

@@ -1,0 +1,13 @@
+import json,subprocess
+from pathlib import Path
+rows=[]
+for cohort in ('mongoeco-consumption-native-v1','mongoeco-consumption-native-v2','mongoeco-consumption-native-final','mongoeco-consumption-native-v3'):
+ for path in sorted((Path('/tmp')/cohort).glob('*/fixture.json')):
+  report=json.loads(path.read_text());assert report['status']=='succeeded' and report['cleanup']['removed'] and report['cleanup']['volumes_removed'],path
+  for kind,identity in [('container',report['container_id'])]+[('volume',v) for v in report['anonymous_volumes']]:
+   r=subprocess.run(['docker',kind,'inspect',identity],capture_output=True,text=True)
+   assert r.returncode!=0 and ('no such' in r.stderr.lower() or 'not found' in r.stderr.lower()),(kind,identity,r.returncode,r.stderr)
+  rows.append({'report':str(path),'container':report['container_id'],'volumes':report['anonymous_volumes'],'independently_absent':True})
+assert len(rows)==12
+Path('/tmp/mongoeco-consumption-resource-audit.json').write_text(json.dumps(rows,indent=2)+'\n')
+print(json.dumps({'containers_absent':len(rows),'volumes_absent':sum(len(r['volumes']) for r in rows)}))

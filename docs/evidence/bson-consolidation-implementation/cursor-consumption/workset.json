@@ -1,0 +1,14 @@
+{
+  "src/mongoeco/api/_sync/aggregation_cursor.py": "ed2137963242664e1aa533fd4d0ea2a7fbce801e6c0e4de37c05756912d2cf29",
+  "src/mongoeco/api/_sync/client.py": "8d1209352f5eacc09297d6bd3941779b829391de67621630d520fd52ca870f79",
+  "src/mongoeco/api/_sync/cursor.py": "7ac4c6a1f848b77d6cf7878d966b17995a2ab0553a09e2e4b99db084cc9b31bb",
+  "tests/differential/semantic_corpora.py": "43a867e2b61b4c7e26a12c9fe15aff8044f239ab973cb18b8d1474c8cc72dfea",
+  "tests/differential/semantic_cursor_consumption_cases.py": "1b60c093bec8227063d0f82919acca1e579d6107454ca6a37ecb53d90e27c1a9",
+  "tests/fixtures/semantic_cursor_consumption_7_0.json": "f29872a2ec2b386b52ae65d5f224abfa445698a2d7731b1b9c8b5bda2bd88918",
+  "tests/fixtures/semantic_cursor_consumption_8_0.json": "5f0c50f0f62b25cd0310e08d3544b43f5db91e389968e211ac81f63720cc447f",
+  "tests/fixtures/semantic_cursor_consumption_9_0.json": "35f24d89f796043462e29dc09bb36b8347a081b5ead0300d81ed153a7d19a79d",
+  "tests/integration/api/test_sync_cursor_consumption_contract.py": "dea614656f52997f25a526f866794aae55f92b8c28a84ca21ce575a4a20ed89c",
+  "tests/unit/api/test_aggregation_cursor.py": "98cf1fa6f5e55070fec7cbc747c84edba3bcd767b4cc7072b32e971085fe8052",
+  "tests/unit/api/test_cursors.py": "81bd3515797fdc433b5b918288073ccc79aa0254af342654352647bf3d7586b1",
+  "tests/unit/api/test_sync_client.py": "b6dde1577b6ef5b5f974e6f1d719cc634150e7abb851bde588cbd29a226ea8e3"
+}

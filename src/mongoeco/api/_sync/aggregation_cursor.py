@@ -82,13 +82,6 @@ class _AggregationCursorIterator:
         self._cursor._close_active_iterator(self._async_iterable)
         self._closed = True
 
-    def __del__(self):
-        if not finalize_best_effort(
-            getattr(self._cursor, "_client", None),
-            self.close,
-        ):
-            self._closed = True
-
 
 class AggregationCursor:
     """Cursor sync mínimo para resultados de aggregate()."""
@@ -96,7 +89,6 @@ class AggregationCursor:
     def __init__(self, client, async_aggregation_cursor):
         self._client = client
         self._async_aggregation_cursor = async_aggregation_cursor
-        self._cache: list[Document] | None = None
         self._started = False
         self._closed = False
         self._active_async_iterable = None
@@ -115,21 +107,19 @@ class AggregationCursor:
                 "cannot use aggregation cursor after it has been closed",
             )
 
-    def _load(self) -> list[Document]:
-        self._ensure_open()
-        self._started = True
-        if self._exhausted and self._cache is None:
-            return []
-        if self._cache is None:
-            self._cache = self._client._run(
-                self._async_aggregation_cursor.to_list(),
-            )
-        return self._cache
-
     def _close_active_iterator(self, async_iterable) -> None:
         if self._active_async_iterable is not async_iterable:
             return
-        close = getattr(async_iterable, "aclose", None)
+        # The real command cursor is its own iterator and exposes close.
+        # Its owner must also close an initial response before sync iteration.
+        close = getattr(self._async_aggregation_cursor, "close", None)
+        if not callable(close):
+            fallback = (
+                self._async_aggregation_cursor
+                if async_iterable is None
+                else async_iterable
+            )
+            close = getattr(fallback, "aclose", None)
         try:
             if callable(close):
                 self._client._run(close())
@@ -141,8 +131,6 @@ class AggregationCursor:
 
     def __iter__(self):
         self._ensure_open()
-        if self._cache is not None:
-            return iter(self._cache)
         if self._active_async_iterable is not None and self._sync_buffer_index < len(
             self._sync_buffer,
         ):
@@ -169,7 +157,7 @@ class AggregationCursor:
             return []
         self._started = True
         documents: list[Document] = []
-        available = self._sync_buffer[self._sync_buffer_index:]
+        available = self._sync_buffer[self._sync_buffer_index :]
         count = len(available) if length is None else min(length, len(available))
         documents.extend(available[:count])
         self._sync_buffer_index += count
@@ -178,17 +166,16 @@ class AggregationCursor:
             self._sync_buffer_index = 0
         if not self._exhausted and (length is None or len(documents) < length):
             remaining = None if length is None else length - len(documents)
-            documents.extend(self._client._run(self._async_aggregation_cursor.to_list(remaining)))
-            self._exhausted = (
-                getattr(self._async_aggregation_cursor, "_closed", False)
-                and not getattr(self._async_aggregation_cursor, "_response_buffer", ())
+            documents.extend(
+                self._client._run(self._async_aggregation_cursor.to_list(remaining))
             )
+            self._exhausted = getattr(
+                self._async_aggregation_cursor, "_closed", False
+            ) and not getattr(self._async_aggregation_cursor, "_response_buffer", ())
         return documents
 
     def first(self) -> Document | None:
         self._ensure_open()
-        if self._cache is not None:
-            return self._cache[0] if self._cache else None
         if self._sync_buffer_index < len(self._sync_buffer):
             value = self._sync_buffer[self._sync_buffer_index]
             self._sync_buffer_index += 1
@@ -225,11 +212,7 @@ class AggregationCursor:
     def close(self) -> None:
         if self._closed:
             return
-        active = self._active_async_iterable
-        if active is not None:
-            self._close_active_iterator(active)
-        self._active_async_iterable = None
-        self._cache = None
+        self._close_active_iterator(self._active_async_iterable)
         self._closed = True
 
     def __del__(self):

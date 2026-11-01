@@ -1,0 +1,13 @@
+from pathlib import Path
+import hashlib,json,sys,os
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+info=json.loads((root/'wheel.json').read_text());site=Path(info['site_packages']).resolve()
+for p,digest in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==digest,p
+sys.path[:0]=[str(site),'/tmp']
+os.environ['MONGOECO_TEST_INSTALLED_ARTIFACT']='1'
+os.environ['MONGOECO_DISPATCH_ARTIFACT_ROOT']=str(root)
+os.environ['PYTHONPATH']=os.pathsep.join([str(site),'/tmp',str(Path.cwd())])
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site),mongoeco.__file__
+print('verified installed wheel',info,flush=True)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','-p','mongoeco_dispatch_artifact_guard','tests/integration/api/test_sync_cursor_consumption_contract.py','tests/integration/api/test_cursor_snapshot_contract.py','tests/integration/api/test_sync_api.py','-k','cursor','--tb=short']))

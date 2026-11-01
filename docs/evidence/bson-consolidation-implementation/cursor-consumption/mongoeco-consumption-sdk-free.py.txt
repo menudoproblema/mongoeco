@@ -1,0 +1,32 @@
+import hashlib,json,runpy,sys
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());site=Path(json.loads((root/'wheel.json').read_text())['site_packages']).resolve()
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+for name,digest in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(name).relative_to('src')).read_bytes()).hexdigest()==digest,name
+try:import bson
+except ImportError:pass
+else:raise AssertionError('SDK must be absent')
+namespace=runpy.run_path('tests/differential/semantic_cursor_consumption_cases.py')
+def plain(value):
+ if isinstance(value,list):return [plain(x) for x in value]
+ if isinstance(value,dict):
+  if len(value)==1 and ('$numberInt' in value or '$numberLong' in value):return int(next(iter(value.values())))
+  return {key:plain(item) for key,item in value.items()}
+ return value
+def typed(value):
+ if isinstance(value,dict):return ('document',tuple((key,typed(item)) for key,item in value.items()))
+ if isinstance(value,list):return ('array',tuple(typed(item) for item in value))
+ return (type(value).__name__,value)
+checked=0;traces=0
+for engine in (MemoryEngine,SQLiteEngine):
+ for dialect in ('7.0','8.0','9.0'):
+  expected=plain(json.loads(Path(f"tests/fixtures/semantic_cursor_consumption_{dialect.replace('.','_')}.json").read_text()))['cases']
+  with MongoClient(engine(),mongodb_dialect=dialect) as client:
+   for name,action in namespace['SEMANTIC_CURSOR_CONSUMPTION_CASES']:
+    actual=action(client.test.rows)
+    assert typed(actual)==typed(expected[name]),(engine.__name__,dialect,name)
+    checked+=1;traces+=len(actual)
+print(json.dumps({'actions_checked':checked,'public_traces_checked':traces,'native_targets':['7.0','8.0','9.0'],'sdk_absent':True,'python':sys.version,'import':mongoeco.__file__}))

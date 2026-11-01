@@ -1,0 +1,27 @@
+import hashlib,json,sys,time
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from bson import BSON,SON
+import mongoeco
+assert Path(mongoeco.__file__).resolve().is_relative_to(Path(sys.argv[1]).resolve()),mongoeco.__file__
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import CodecOptions,UuidRepresentation
+output={}
+for factory in (MemoryEngine,SQLiteEngine):
+ with MongoClient(factory()) as client:
+  collection=client.cost.rows;collection.insert_many([{'_id':n,'n':n,'p':'x'*4096} for n in range(200)])
+  for mode in ('default','standard','decoder','son'):
+   options={'standard':CodecOptions(uuid_representation=UuidRepresentation.STANDARD),'decoder':CodecOptions(type_registry={int:lambda value:value}),'son':CodecOptions(document_class=SON)}
+   c=collection if mode=='default' else collection.with_options(codec_options=options[mode])
+   for operation in ('find','aggregate','find-limit-one','find-first-page','aggregate-first-page'):
+    def read():
+     if operation=='find-limit-one':cursor=c.find({},sort=[('_id',1)],limit=1)
+     elif operation.startswith('find'):cursor=c.find({},sort=[('_id',1)])
+     else:cursor=c.aggregate([{'$sort':{'_id':1}}])
+     try:return cursor.to_list(1) if operation.endswith('first-page') else list(cursor)
+     finally:cursor.close()
+    read();started=time.process_time_ns();rows=read();cpu=time.process_time_ns()-started
+    digest=hashlib.sha256(b''.join(BSON.encode(row) for row in rows)).hexdigest()
+    output[f'{factory.__name__}-{mode}-{operation}']={'cpu_ns':cpu,'count':len(rows),'bson_sha256':digest}
+print(json.dumps(output))

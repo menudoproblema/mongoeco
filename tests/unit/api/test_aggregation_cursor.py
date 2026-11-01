@@ -272,7 +272,7 @@ class _AsyncAggregationCursorStub:
         except StopIteration as exc:
             raise StopAsyncIteration from exc
 
-    async def aclose(self):
+    async def close(self):
         self.close_calls += 1
 
 
@@ -2960,7 +2960,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SyncAggregationCursorTests(unittest.TestCase):
-    def test_internal_buffer_and_exhausted_load_paths_are_stable(self):
+    def test_prefetched_and_exhausted_list_reads_keep_one_position(self):
         async_cursor = _AsyncAggregationCursorStub([])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         cursor._sync_buffer = [{"_id": "buffered"}]
@@ -2968,7 +2968,7 @@ class SyncAggregationCursorTests(unittest.TestCase):
         self.assertEqual(cursor.to_list(1), [{"_id": "buffered"}])
         cursor._exhausted = True
         cursor._started = False
-        self.assertEqual(cursor._load(), [])
+        self.assertEqual(cursor.to_list(), [])
 
     def test_active_first_closes_when_source_is_already_exhausted(self):
         async_cursor = _AsyncAggregationCursorStub([])
@@ -3098,7 +3098,7 @@ class SyncAggregationCursorTests(unittest.TestCase):
         self.assertEqual(explanation["engine"], "fake")
         self.assertEqual(explanation["details"], ["SCAN"])
 
-    def test_iteration_closes_active_async_iterator_on_early_break(self):
+    def test_temporary_iterator_cleanup_keeps_prefetched_rows_and_the_owner(self):
         async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         client = _DeferredCleanupSyncClientStub()
         cursor = AggregationCursor(client, async_cursor)
@@ -3109,7 +3109,66 @@ class SyncAggregationCursorTests(unittest.TestCase):
 
         self.assertEqual(async_cursor.close_calls, 0)
         client.run_deferred_cleanup()
+        self.assertEqual(cursor.to_list(), [{"_id": "2"}])
+        cursor.close()
         self.assertEqual(async_cursor.close_calls, 1)
+
+    def test_abandoned_owner_still_defers_async_cursor_cleanup(self):
+        owner = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
+        client = _DeferredCleanupSyncClientStub()
+
+        def read_one():
+            cursor = AggregationCursor(client, owner)
+            return next(iter(cursor))
+
+        self.assertEqual(read_one(), {"_id": "1"})
+        self.assertEqual(owner.close_calls, 0)
+        client.run_deferred_cleanup()
+        self.assertEqual(owner.close_calls, 1)
+
+    def test_close_before_iteration_closes_the_async_owner_once(self):
+        owner = _AsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), owner)
+
+        cursor.close()
+        cursor.close()
+
+        self.assertEqual(owner.close_calls, 1)
+
+    def test_close_retries_owner_cleanup_after_failure(self):
+        owner = _AsyncAggregationCursorStub([{"_id": "1"}])
+        close = AsyncMock(side_effect=[RuntimeError("cleanup failed"), None])
+        owner.close = close
+        cursor = AggregationCursor(_SyncClientStub(), owner)
+
+        with self.assertRaisesRegex(RuntimeError, "cleanup failed"):
+            cursor.close()
+        self.assertFalse(cursor._closed)
+        cursor.close()
+        self.assertTrue(cursor._closed)
+        self.assertEqual(close.await_count, 2)
+
+    def test_legacy_async_iterator_close_remains_available(self):
+        class LegacyCursor:
+            def __init__(self):
+                self.aclose = AsyncMock()
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                raise StopAsyncIteration
+
+        for started in (False, True):
+            with self.subTest(started=started):
+                owner = LegacyCursor()
+                cursor = AggregationCursor(_SyncClientStub(), owner)
+                iterator = iter(cursor) if started else None
+                cursor.close()
+                owner.aclose.assert_awaited_once_with()
+                if iterator is not None:
+                    with self.assertRaises(StopIteration):
+                        next(iterator)
 
     def test_close_closes_active_async_iterator(self):
         async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
@@ -3159,14 +3218,6 @@ class SyncAggregationCursorTests(unittest.TestCase):
 
         with self.assertRaises(StopIteration):
             next(iterator)
-
-    def test_iterator_del_swallows_close_errors(self):
-        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
-        cursor = AggregationCursor(_BrokenSyncClientStub(), async_cursor)
-        iterator = iter(cursor)
-
-        iterator.__del__()
-        self.assertTrue(iterator._closed)
 
     def test_first_returns_none_when_active_iterator_is_exhausted(self):
         async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])

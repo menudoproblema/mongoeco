@@ -46,3 +46,43 @@ def test_bounded_list_consumption_crosses_runner_by_batch(engine_factory):
             assert cursor.to_list(length=1) == []
         finally:
             cursor.close()
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("kind", ["find", "aggregate"])
+def test_temporary_iteration_keeps_snapshot_and_allows_followup_writes(
+    engine_factory, kind
+):
+    documents = [{"_id": index} for index in range(257)]
+    with MongoClient(engine_factory()) as client:
+        collection = client.test.records
+        collection.insert_many(documents)
+        cursor = (
+            collection.find({}, sort=[("_id", 1)], batch_size=2)
+            if kind == "find"
+            else collection.aggregate([{"$sort": {"_id": 1}}], batchSize=2)
+        )
+        try:
+            assert next(iter(cursor)) == documents[0]
+            collection.insert_one({"_id": 999})
+            assert cursor.to_list() == documents[1:]
+            assert collection.find_one({"_id": 999}) == {"_id": 999}
+        finally:
+            cursor.close()
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("started", [False, True])
+def test_aggregate_close_reaches_the_real_async_cursor(engine_factory, started):
+    with MongoClient(engine_factory()) as client:
+        collection = client.test.records
+        collection.insert_many([{"_id": index} for index in range(257)])
+        cursor = collection.aggregate([], batchSize=1)
+        owner = cursor._async_aggregation_cursor
+        with patch.object(owner, "close", wraps=owner.close) as close:
+            if started:
+                assert next(iter(cursor)) == {"_id": 0}
+            cursor.close()
+            cursor.close()
+        assert close.call_count == 1
+        assert owner._closed

@@ -28,7 +28,6 @@ class _CursorIterator:
         self._cursor = cursor
         self._async_iterable = async_iterable
         self._closed = False
-        self._suspended = False
 
     def __iter__(self):
         return self
@@ -39,15 +38,13 @@ class _CursorIterator:
         if self._cursor._active_async_iterable is not self._async_iterable:
             self._closed = True
             raise StopIteration
-        self._suspended = False
         try:
             value = self._cursor._next_document()
         except Exception:
             self._closed = True
             raise
         if value is _CURSOR_END:
-            self._suspended = self._cursor.alive
-            self._closed = not self._suspended
+            self._closed = not self._cursor.alive
             raise StopIteration
         return value
 
@@ -56,19 +53,6 @@ class _CursorIterator:
             return
         self._cursor._close_active_iterator(self._async_iterable)
         self._closed = True
-        self._suspended = False
-
-    def __del__(self):
-        # A client decoder may empty a response while the owning cursor still
-        # has a live server source. GC of list(cursor)'s temporary iterator
-        # must not race a later read through that cursor.
-        if getattr(self, "_suspended", False):
-            return
-        if not finalize_best_effort(
-            getattr(self._cursor, "_client", None),
-            self.close,
-        ):
-            self._closed = True
 
 
 class Cursor:
@@ -126,7 +110,6 @@ class Cursor:
                 session=session,
             )
             self._sync_state_from_async_cursor(use_existing_defaults=True)
-        self._cache: list[Document] | None = None
         self._started = False
         self._closed = False
         self._active_async_iterable = None
@@ -166,7 +149,6 @@ class Cursor:
             raise InvalidOperation("cannot use cursor after it has been closed")
 
     def _invalidate(self) -> None:
-        self._cache = None
         self._exhausted = False
         self._sync_buffer = []
         self._sync_buffer_index = 0
@@ -229,26 +211,14 @@ class Cursor:
         self._invalidate()
         return self
 
-    def _load(self) -> list[Document]:
+    def _consume_remaining(self) -> list[Document]:
         self._ensure_open()
         self._started = True
-        if self._exhausted and self._cache is None:
+        if self._exhausted:
             return []
-        if self._cache is None:
-            if self._limit == 1 and not getattr(
-                getattr(self._async_collection, "codec_options", None),
-                "type_registry", (),
-            ):
-                first = self.first()
-                self._cache = [] if first is None else [first]
-                self._exhausted = True
-                return self._cache
-            documents = self._client._run(self._async_cursor.to_list())
-            self._exhausted = not self._async_cursor.alive
-            if self._exhausted:
-                self._cache = documents
-            return documents
-        return self._cache
+        documents = self._client._run(self._async_cursor.to_list())
+        self._exhausted = not self._async_cursor.alive
+        return documents
 
     def _close_active_iterator(self, async_iterable) -> None:
         if self._active_async_iterable is not async_iterable:
@@ -265,19 +235,8 @@ class Cursor:
 
     def __iter__(self):
         self._ensure_open()
-        if self._cache is not None:
-            return iter(self._cache)
         if self._exhausted:
             return iter(())
-        if (
-            self._limit == 1
-            and self._active_async_iterable is None
-            and not getattr(
-                getattr(self._async_collection, "codec_options", None),
-                "type_registry", (),
-            )
-        ):
-            return iter(self._load())
         self._started = True
         async_iterable = self._active_async_iterable
         if async_iterable is None:
@@ -293,7 +252,7 @@ class Cursor:
         if length == 0:
             return []
         if length is None and not self._started and self._active_async_iterable is None:
-            return list(self._load())
+            return self._consume_remaining()
 
         documents: list[Document] = []
         while length is None or len(documents) < length:
@@ -352,8 +311,6 @@ class Cursor:
 
     def first(self) -> Document | None:
         self._ensure_open()
-        if self._cache is not None:
-            return self._cache[0] if self._cache else None
         if self._exhausted:
             return None
         active = self._active_async_iterable
@@ -373,7 +330,6 @@ class Cursor:
             rewind()
         self._started = False
         self._exhausted = False
-        self._cache = None
         return self
 
     def clone(self) -> "Cursor":
@@ -381,7 +337,10 @@ class Cursor:
 
     @property
     def alive(self) -> bool:
-        return not self._closed and not self._exhausted
+        return not self._closed and (
+            self._sync_buffer_index < len(self._sync_buffer)
+            or (not self._exhausted and getattr(self._async_cursor, "alive", True))
+        )
 
     @property
     def collection(self):
@@ -426,7 +385,6 @@ class Cursor:
                     close_awaitable()
                 raise
         self._active_async_iterable = None
-        self._cache = None
         self._closed = True
 
     def __del__(self):

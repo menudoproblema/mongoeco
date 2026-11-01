@@ -42,6 +42,10 @@ from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
 )
+from tests.differential.semantic_cursor_consumption_cases import (
+    SEED as CURSOR_CONSUMPTION_SEED,
+    SEMANTIC_CURSOR_CONSUMPTION_CASES,
+)
 from tests.differential.semantic_datetime_cases import (
     SEED as DATETIME_SEED,
     SEMANTIC_DATETIME_CASES,
@@ -222,6 +226,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "cursor_consumption": SemanticCorpus(
+        "cursor-consumption", "semantic_cursor_consumption_cases",
+        CURSOR_CONSUMPTION_SEED, SEMANTIC_CURSOR_CONSUMPTION_CASES,
+    ),
     "document_factory": SemanticCorpus(
         "document-factory", "semantic_document_factory_cases",
         DOCUMENT_FACTORY_SEED, SEMANTIC_DOCUMENT_FACTORY_CASES,

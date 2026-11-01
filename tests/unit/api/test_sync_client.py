@@ -178,14 +178,22 @@ class SyncClientUnitTests(unittest.TestCase):
                 runner.close()
 
     def test_sync_runner_rejects_use_after_close(self):
-        runner = _SyncRunner()
-        runner.close()
-        coroutine = _noop()
-        try:
-            with self.assertRaises(InvalidOperation):
-                runner.run(coroutine)
-        finally:
-            coroutine.close()
+        for state in ("closing", "closed"):
+            with self.subTest(state=state):
+                runner = _SyncRunner()
+                if state == "closed":
+                    runner.close()
+                else:
+                    # Freeze the admission boundary while close is pending.
+                    runner._closing = True
+                coroutine = _noop()
+                try:
+                    with self.assertRaises(InvalidOperation):
+                        runner.run(coroutine)
+                    self.assertIsNone(coroutine.cr_frame)
+                finally:
+                    coroutine.close()
+                    runner.close()
 
     def test_sync_runner_inline_completes_without_asyncio_runner(self):
         runner = _SyncRunner()

@@ -258,11 +258,15 @@ class _SyncRunner:
             with self._runner_lock:
                 self._runner.run(_shutdown_async_generators())
 
+    @staticmethod
+    def _dispose_rejected_awaitable(awaitable):
+        close = getattr(awaitable, "close", None)
+        if callable(close):
+            close()
+
     def run(self, awaitable, *, inline: bool = False):
         if self._runner_owner_thread_id == threading.get_ident():
-            close = getattr(awaitable, "close", None)
-            if callable(close):
-                close()
+            self._dispose_rejected_awaitable(awaitable)
             message = (
                 "sync MongoClient operations cannot be re-entered "
                 "from an active callback"
@@ -274,6 +278,7 @@ class _SyncRunner:
                 and threading.current_thread() is self._helper_thread
             )
             if self._closed or (self._closing and not helper_cleanup):
+                self._dispose_rejected_awaitable(awaitable)
                 message = "El cliente sincronico ya esta cerrado"
                 raise InvalidOperation(message)
             self._active_runs += 1
