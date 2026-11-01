@@ -697,16 +697,17 @@ reanudacion/cierre filtrado, interacciones adicionales con imagenes y RS de CI.
 ## Trabajo restante
 
 El orden vigente se mantiene en el [plan, contraste actual](bson-semantics-consolidation-plan.md#contraste-actual-y-orden-mínimo-de-ejecución).
-La [revisión 15](evidence/bson-consolidation-review/review15/README.md) contrasta el
-candidato preexistente de dispatch/planes sobre `eb85ea3`. Precisa codecs con/sin
-SDK, orden de metadatos wire y coordinación UUID con B07; no acepta sus cambios
-ni vuelve a abrir los cortes funcionalmente cerrados.
+La [revisión 15](evidence/bson-consolidation-review/review15/README.md) conserva el
+contraste histórico del candidato sobre `eb85ea3`. El corte posterior `a53824d`
+entrega dispatch, consumo y ownership de respuestas con su
+[aceptación acotada](evidence/bson-consolidation-implementation/codec-dispatch/README.md).
+No vuelve a abrir los cortes anteriores ni cierra todos los contextos D06.
 
-- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. El corte de bytes/callbacks y String calculada de `381aa10` tiene aceptación acotada, además de los cortes previos de sufijos y raw por cantidades/contenido. Conservar sus controles; no repetir la extracción del lector ni declarar D06 completo por este cierre.
+- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` añade el corte de dispatch/consumo, sin cerrar fábricas arbitrarias `document_class`, todas las combinaciones de consumo/estado público ni toda la representación portable. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
-- D05: revisión y gates integrados, matrices y commits de cierre.
+- D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
 - B07: admisión BSON general (tipos arbitrarios y Decimal crudo), fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
 
 Los cortes focales no acreditan el cierre integrado del programa ni D05.
@@ -1362,3 +1363,59 @@ no se afirma ausencia de coste ni aceptación del presupuesto global D05.
 La guarda y formación de respuestas añaden trabajo, especialmente con Strings
 grandes. Los demás contextos D06a/b, consumidores D06c, H53, sNaN, decisión D07,
 D05 y B07 mantienen sus obligaciones.
+
+
+## D06a/b — Dispatch de codecs, consumo y ownership de respuesta
+
+El commit `a53824d` entrega este corte funcional acotado, con
+[evidencia y límites](evidence/bson-consolidation-implementation/codec-dispatch/README.md).
+No cierra D06a/b completos, D06c ni D05. Conserva el contrato autorizado y los
+cortes anteriores; el default UUID sigue siendo STANDARD hasta su coordinación
+con admisión B07, conforme a la alternativa de revisión 15.
+
+El materializador común conserva el batch transformado por el SDK, con dispatch
+exacto y de pase único y orden batch/id/ns. Query y command cursors consumen ese
+batch según contratos propios: la cuenta del cliente puede diferir del número
+de documentos del origen; un iterable sin longitud tiene tratamiento distinto.
+Find entrega None como dato, iterar aggregate lo omite y to_list lo conserva.
+La omisión ocurre al consumir cada fila, para que intercalar ambos métodos no
+pierda las restantes. Las tandas vaciadas conservan su origen y la limpieza GC
+del iterador temporal no puede cerrarlo antes de una reanudación.
+
+Se reutilizan lector, contexto de operación, runtime de materialización y
+cierre existentes. Find_one aplica capacidad y codecs a una respuesta completa,
+incluso vacía, preservando el acceso por _id y el diagnóstico de ejecución.
+EOF conocido por límites/ventanas se comunica sin otra evaluación y respeta
+el último documento pendiente por bytes. No se añade otro evaluador, caché,
+registro de cursores ni dependencia obligatoria del SDK. La lectura UUID conserva
+subtipo 4 bajo modos legacy e interpreta los bytes de subtipo 3 por representación.
+El owner de orden/residual reconoce las formas equivalentes de hint _id y
+collation simple; no adelanta skip/limit al residual.
+
+Validación final de la fuente congelada: 15 acciones capturadas/comprobadas en
+MongoDB 7.0.43/8.0.32/9.0.2 con FCV correspondiente; 363 focales públicos y
+7.810 casos del replay completo sobre el wheel instalado. Los cuatro workers
+verifican la procedencia de sus 262 módulos cargados y los hashes de los 284
+archivos disponibles. Pasan 360 unitarias/contratos con 43 subtests, typing con
+dos positivas y 20/25 errores negativos, y 186 escenarios en Python 3.13.15
+real sin SDK. La base archivada `181a922` falla 300 de los 363 focales nuevos.
+El control GC falla en ambos motores sobre el candidato anterior; la barrera
+reproduce fila 1 repetida sin depender de sleeps.
+
+El manifiesto público efectivo conserva su hash frente a `181a922`. No se
+regeneran observadores, catálogos ni goldens históricos. Se verifica ausencia
+de 33 contenedores y 66 volúmenes propios. ABBA dos veces, con gates propios
+inactivos y resultados BSON idénticos, da ratios CPU 0,78–1,03 en 16 pares
+motor/opción/operación; es tendencia diagnóstica, no todo el coste D05.
+
+La suite amplia anterior es feedback, con materiales cambiantes: 42.290 casos
+correctos, 111 reportes de fallo y un skip. Sus 99 nodos únicos dan 97 fallos y
+dos correctos en la base; los dos deltas de Binary público se corrigen con SDK
+y seed STANDARD explícito. D05 conserva los 97 nodos previos y sus gates
+obligatorios, además de matrices Python/SDK/pytest, cobertura y distribución.
+Las proyecciones calculadas de find siguen fuera del subconjunto declarado;
+la sonda final de String/errores de find_one usa $expr soportado.
+
+→ Sigue: contextos restantes D06a/b, incluidas fábricas documentales con efectos
+propios y otras combinaciones de consumo/estado y representación portable;
+consumidores y claves D06c; H53, sNaN, decisión D07, D05 y admisión B07.

@@ -1,0 +1,240 @@
+{
+  "status": "accepted bounded D06a/b codec dispatch and consumption slice; full program remains in progress",
+  "base_runtime_commit": "381aa10e90cd2c992d540b7111f2be9112f908e2",
+  "base_documentation_commit": "181a922f293eaf7fa58d2cc67ba2943d7ace5748",
+  "code_commit": "a53824d038d2550142f146aecf6b82e9dcd3ebe6",
+  "runtime_manifest": "runtime.json",
+  "runtime_manifest_sha256": "ae64d305ba6d869eb2552ddabeef2701bdaf8d3c5b6eea8e6223620e015931f4",
+  "runtime_modules": 284,
+  "corpus_manifest": "corpus.json",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-tn5w0p0r/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "fa2e24b5076269d8a8313032e9cfece7eb4d7fa3b21b7a32e1049cb961e5f1a0",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-tn5w0p0r/site-packages",
+    "modules": 284
+  },
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "pymongo": "4.19.0",
+  "pytest": "9.1.1",
+  "native": {
+    "7.0": {
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "capture_and_check": true,
+      "case_count": 15,
+      "owned_fixture_status": "succeeded",
+      "image": "mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72"
+    },
+    "8.0": {
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "capture_and_check": true,
+      "case_count": 15,
+      "owned_fixture_status": "succeeded",
+      "image": "mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66"
+    },
+    "9.0": {
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "capture_and_check": true,
+      "case_count": 15,
+      "owned_fixture_status": "succeeded",
+      "image": "mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158"
+    }
+  },
+  "cleanup": {
+    "cohorts": 13,
+    "containers_absent": 33,
+    "volumes_absent": 66,
+    "evidence": "native-cleanup.json"
+  },
+  "gates": [
+    {
+      "name": "focal replay",
+      "command": ".venv/bin/python -m pytest -q tests/integration/api/test_semantic_group_regressions.py -k bson_dispatch --tb=short",
+      "passed": 363,
+      "exit_code": 0,
+      "seconds": 9.35,
+      "log": "focal.txt.gz"
+    },
+    {
+      "name": "frozen baseline 181a922 with final corpus",
+      "passed": 63,
+      "failed": 300,
+      "exit_code": 1,
+      "seconds": 16.35,
+      "log": "baseline.txt.gz",
+      "runtime": "baseline-runtime.json"
+    },
+    {
+      "name": "complete installed semantic replay",
+      "command": ".venv/bin/python /tmp/mongoeco-dispatch-wheel-all.py",
+      "passed": 7810,
+      "exit_code": 0,
+      "seconds": 177.24,
+      "log": "full-replay.txt.gz",
+      "workers_loaded_modules": {
+        "wheel-imports-gw3": 262,
+        "wheel-imports-gw2": 262,
+        "wheel-imports-gw1": 262,
+        "wheel-imports-gw0": 262
+      },
+      "all_installed_modules_hashed": 284
+    },
+    {
+      "name": "installed unit and SPI",
+      "command": ".venv/bin/python /tmp/mongoeco-dispatch-wheel-unit.py",
+      "passed": 360,
+      "subtests": 43,
+      "exit_code": 0,
+      "seconds": 4.35,
+      "log": "installed-unit.txt.gz",
+      "module_provenance": "installed-unit-imports.json"
+    },
+    {
+      "name": "installed SDK-free smoke",
+      "python": "3.13.15",
+      "scenarios": 186,
+      "exit_code": 0,
+      "script": "sdk-free.py.txt",
+      "log": "sdk-free.txt.gz"
+    },
+    {
+      "name": "installed typing",
+      "positive_fixtures": 2,
+      "negative_public_errors": 20,
+      "negative_boundary_errors": 25,
+      "exit_code": 0,
+      "log": "installed-typing.txt.gz"
+    },
+    {
+      "name": "Ruff ratchet",
+      "command": ".venv/bin/python scripts/check_lint_ratchet.py --base-ref 181a922",
+      "changed_python_files": 19,
+      "exit_code": 0
+    },
+    {
+      "name": "public API equality against 181a922",
+      "sha256": "18f336380aa25bc6fecff86f5e353671059f3576b3913964f20dabfeae19ad7a",
+      "unchanged": true,
+      "manifest": "public-api.json.gz",
+      "encoding": "gzip"
+    },
+    {
+      "name": "cost",
+      "evidence": "cost.json",
+      "order": "ABBA twice",
+      "own_verification_gates_idle": true,
+      "case_pairs": 16,
+      "all_results_bson_equal": true,
+      "scope": "diagnostic only, not full D05 cost acceptance"
+    }
+  ],
+  "review": {
+    "diff_reviewed": true,
+    "native_observer_unchanged": true,
+    "catalogs_unchanged": true,
+    "gc_counterfactual": {
+      "failed": 2,
+      "passed": 356,
+      "subtests": 43,
+      "runtime": "pre-gc-runtime.json",
+      "log": "gc-counterfactual.txt.gz",
+      "witness": "deferred iterator cleanup replays row 1 instead of continuing with row 2"
+    },
+    "documentation_aligned": true,
+    "runtime_tests_clean_after_commit": true
+  },
+  "feedback_not_acceptance": {
+    "wide_checkout_suite": {
+      "passed": 42290,
+      "failure_reports": 111,
+      "skipped": 1,
+      "subtests": 13971,
+      "seconds": 515.74,
+      "unique_failed_nodes": 99,
+      "baseline_failures": 97,
+      "baseline_passes": 2,
+      "logs": [
+        "broad-feedback.txt.gz",
+        "counterfactual.txt.gz"
+      ],
+      "scope": "runtime and tests changed during this early run; not a final candidate gate; 97 baseline-red nodes remain D05 work"
+    },
+    "superseded_replay": {
+      "status": "interrupted after runtime/corpus changed",
+      "passed_before_interrupt": 4937,
+      "seconds": 549.42,
+      "log": "superseded-replay.txt.gz"
+    },
+    "unsupported_find_projection": {
+      "cohort": "v10",
+      "archive": "native.tar.gz",
+      "disposition": "declared read projection subset does not include computed aggregation expressions; final single-document errors use supported $expr"
+    }
+  },
+  "remaining": [
+    "Other D06a/b representation and grammar contexts, including document_class constructor effects and additional consumption/state combinations",
+    "D06c group/sets/lookup/spill/Search consumers and keys",
+    "H53 disposition in C03/B08",
+    "Scalar String sNaN diagnostic native 241 and version regression",
+    "Optional D07 pilot decision",
+    "D05 complete Python/SDK/pytest, installed distribution, coverage, global, persistence and cost matrices; resolve baseline-red checks",
+    "B07 general BSON admission and coordinated UUID UNSPECIFIED default"
+  ],
+  "limits": [
+    "This slice does not close D06 or D05 and does not complete the goal.",
+    "UUID default remains STANDARD; input BSON admission is not fixed by outbound decoding.",
+    "No support for computed find projection expressions added.",
+    "No remote CI, publication, merge or push performed."
+  ],
+  "document_checks": {
+    "relative_links_missing": [],
+    "whitespace_exit_code": 0,
+    "owner": "docs/bson-consolidation-implementation.md",
+    "scope": "plan, implementation owner, changelog and codec-dispatch evidence; no project-specific Markdown validator found"
+  },
+  "artifacts_sha256": {
+    "README.md": "7026f10b381607fdd2a1ad2712dbf43bd4c09efee470c01c3057bed6452c7e4f",
+    "artifact-guard.py.txt": "eca190893e437352238b22167243bb6c82a72efa322b954a2209e9a03169f4dc",
+    "baseline-runtime.json": "7e4893c0fdac6786d8510749597ad34262c3191dbbc30984a066977fe5737232",
+    "baseline.txt.gz": "9044d18fecca968834312439cd7f4eb006aa0a02ecb94ce372f7a2ed22f43136",
+    "benchmark-control.py.txt": "ce7f347351cd24c6d591e8c8e606d5879296c794181906899535c2aead9d3672",
+    "benchmark.py.txt": "7debc63068d27f74e7186ef9f48b21e16779f0aa257d80d5f2b608b3d00692de",
+    "broad-failed-nodes.json": "21f1b653b9b67194928137b03859bf65b756986c9d97f47ca1467b5cd22886d9",
+    "broad-feedback.txt.gz": "df555c253592733e51f34588dced91e5c8c9d51e827fed6ba92af766cce6640f",
+    "build.py.txt": "55a5db04fba04438231168079e62c6e25be012c9d3f3f485eaf684973c8718ad",
+    "corpus.json": "c61156a9d8dd41383e3fd831fcf8609ee4d53ce3e777c252d9c7e2e4e4be4b62",
+    "cost.json": "3d9c2d11ad6ec4c27901c94a7bd477b49e8e068268ac9f7c73afeb83ad4a3a2f",
+    "counterfactual.txt.gz": "74b1f73a139a22bd8c86c833256ff55ea9fd1471f0a9aa335769c0a0d9c573c2",
+    "focal.txt.gz": "710d07e549258adba9162d10d67dc82292d89a694492788fb1a578ea1a14de48",
+    "full-replay.txt.gz": "7dac8c166f25867028c46cc344a2e74740064dfdf76517b8e6acf21f4cdbd888",
+    "gc-counterfactual.txt.gz": "c651634ceab3ee5ddec09860db0590229cecc698d2926212794d0b389c434574",
+    "installed-typing.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "installed-unit-imports.json": "919a27225dc162fef0cbbaf2d7f856a02616fda1041eb26d3bf9d1dcbeb6e0c7",
+    "installed-unit.txt.gz": "448b9a178527dc93def73c820b8e112695ec04a30ef40ec3471e575678b7de77",
+    "native-audit.py.txt": "641cb155264192dac18d82a8aa75c83332ff9c0e25667ce1725bef1a09b62c4e",
+    "native-cleanup.json": "70b06a9318e0ed43cde49d76b09f15568ffc1cf5dd1c82f1be33116f7304b854",
+    "native.tar.gz": "dee03e22e69d794e1f7e29158c1d97f39ec57903c32655aa1beb56e74376dd24",
+    "pre-gc-runtime.json": "a09bebe23c7c187ded1b4e96d0a7fefd3872a223b65557b18503fe4ba4727c65",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "public-api.json.gz": "220f29fceea54b281b803fceb10b5e78e34ade42600b1b7ea4c81bd080675ef9",
+    "runtime.json": "ae64d305ba6d869eb2552ddabeef2701bdaf8d3c5b6eea8e6223620e015931f4",
+    "sdk-free.py.txt": "32e6652e82b19a26930824881d38a88849d4a95d19e675190b29eeabed142bf4",
+    "sdk-free.txt.gz": "29c4a7b10f5042c0317438a056f7bb84968b317e72ea08647163473c90c64de7",
+    "superseded-replay.txt.gz": "c683e3c5b3af82d1bce83eb5199333b2badbd18dc2698b7fdbd47b95f4b43505",
+    "wheel-all.py.txt": "eda4aeb833ee529d0850835f1289c76107bcd4cf531f2e78ef75f068d2c340af",
+    "wheel-imports-gw0.json": "4abeebce62bd9dbc42c9cac1e698fe0a57339ef63690fbb31c05dbc8b38c3ef2",
+    "wheel-imports-gw1.json": "4abeebce62bd9dbc42c9cac1e698fe0a57339ef63690fbb31c05dbc8b38c3ef2",
+    "wheel-imports-gw2.json": "4abeebce62bd9dbc42c9cac1e698fe0a57339ef63690fbb31c05dbc8b38c3ef2",
+    "wheel-imports-gw3.json": "4abeebce62bd9dbc42c9cac1e698fe0a57339ef63690fbb31c05dbc8b38c3ef2",
+    "wheel-imports-master.json": "95420ad0556cd8a3a464c40669e9e5e41985fb32a7dbc4fcb8aa27914e644ae9",
+    "wheel.json": "90478ac77d52f7cc79a2f92c2b4dc514031bbe47c6f8495cd0cc01b1dbf491fc"
+  }
+}

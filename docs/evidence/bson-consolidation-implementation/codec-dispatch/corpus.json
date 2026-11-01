@@ -1,0 +1,9 @@
+{
+  "tests/differential/semantic_bson_dispatch_cases.py": "743103123cc853af350784bea736f2f0c8c35349f81a41724ac040d2f39f3d3a",
+  "tests/differential/semantic_corpora.py": "cae435dbd232af755fec2eb53dcf1b035e831e19a65414bd28dfad41add5a635",
+  "tests/integration/api/test_semantic_group_regressions.py": "43635fb6cd8a9a7298fc51cccdc05fda19b4259ab4f69eab12f67ef3b504434e",
+  "tests/unit/api/test_response_boundaries.py": "5e8fb21bd88c48784c1207249596452f84cc8be802b517cde7468423957cf79b",
+  "tests/fixtures/semantic_bson_dispatch_7_0.json": "7a62c81d7fcfe965df5b9ec094c234a25c51bef094ee90c50e714c03c5309a9a",
+  "tests/fixtures/semantic_bson_dispatch_8_0.json": "be023768a151ffda9049fc8d3552f39d4d5b2d9878d448e95893591abe559e53",
+  "tests/fixtures/semantic_bson_dispatch_9_0.json": "a9d27a2b1c3bfaefd48828c17cc38c3f1e555dedb64a11e68e7fbb58d7b4b9e6"
+}

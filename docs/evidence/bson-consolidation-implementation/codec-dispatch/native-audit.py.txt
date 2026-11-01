@@ -1,0 +1,19 @@
+import json,subprocess
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+rows=[]
+for cohort in range(1,14):
+ root=Path(f'/tmp/mongoeco-dispatch-native-v{cohort}')
+ for dialect in ('7.0','8.0','9.0'):
+  p=root/dialect/'fixture.json'
+  if p.exists():
+   d=json.loads(p.read_text());rows.append({'cohort':cohort,'dialect':dialect,'name':d['name'],'volumes':d['anonymous_volumes'],'cleanup':d['cleanup'],'status':d['status']})
+def inspect(kind,name):
+ r=subprocess.run(['docker','inspect','--type',kind,name],capture_output=True,text=True)
+ absent=r.returncode!=0 and 'no such' in r.stderr.lower()
+ return {'kind':kind,'name':name,'absent':absent,'exit_code':r.returncode,'error':r.stderr.strip()}
+requests=[('container',r['name']) for r in rows]+[('volume',v) for r in rows for v in r['volumes']]
+with ThreadPoolExecutor(max_workers=4) as executor:results=list(executor.map(lambda args:inspect(*args),requests))
+Path('/tmp/mongoeco-dispatch-cleanup.json').write_text(json.dumps({'fixtures':rows,'inspections':results,'all_absent':all(r['absent'] for r in results)},indent=2)+'\n')
+print(json.dumps({'containers':len(rows),'volumes':len(requests)-len(rows),'all_absent':all(r['absent'] for r in results)}))
+assert all(r['absent'] for r in results)

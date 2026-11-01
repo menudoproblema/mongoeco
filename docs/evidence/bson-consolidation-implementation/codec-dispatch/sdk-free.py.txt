@@ -1,0 +1,90 @@
+import asyncio,hashlib,json,sys
+from pathlib import Path
+from uuid import UUID
+import mongoeco
+from mongoeco import MongoClient,AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import Binary,CodecOptions,DBRef,UuidRepresentation
+root=Path(Path("/tmp/mongoeco-dispatch-wheel-location.txt").read_text().strip());site=Path(json.loads((root/"wheel.json").read_text())["site_packages"]).resolve()
+assert Path(mongoeco.__file__).resolve().is_relative_to(site),mongoeco.__file__
+for name,digest in json.loads((root/"runtime.json").read_text()).items():assert hashlib.sha256((site/Path(name).relative_to("src")).read_bytes()).hexdigest()==digest,name
+try:import bson
+except ImportError:pass
+else:raise AssertionError("SDK must be absent")
+checked=0
+async def exercise():
+ global checked
+ for factory in (MemoryEngine,SQLiteEngine):
+  for dialect in ("7.0","8.0","9.0"):
+   for kind in (dict,list):
+    calls=[]
+    def observe(value):
+     calls.append(list(value) if kind is dict else len(value));return value
+    expected=[["v"],["v"],["_id","obj","arr"]] if kind is dict else [1,1]
+    for aggregate in (False,True):
+     calls.clear()
+     with MongoClient(factory(),mongodb_dialect=dialect) as client:
+      c=client.test.rows;c.insert_one({"_id":"a","obj":{"v":2},"arr":[{"v":3}]})
+      c=c.with_options(codec_options=CodecOptions(type_registry={kind:observe}))
+      cursor=c.aggregate([]) if aggregate else c.find({});assert len(list(cursor))==1;cursor.close()
+      assert calls==expected,(kind,aggregate,calls,expected)
+     checked+=1
+     calls.clear()
+     async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+      c=client.test.rows;await c.insert_one({"_id":"a","obj":{"v":2},"arr":[{"v":3}]})
+      c=c.with_options(codec_options=CodecOptions(type_registry={kind:observe}))
+      cursor=await c.aggregate([]) if aggregate else c.find({});rows=[row async for row in cursor];assert len(rows)==1;await cursor.close()
+      assert calls==expected,(kind,aggregate,calls,expected)
+     checked+=1
+   for aggregate in (False,True):
+    for materialize in (False,True):
+     expected=[None]*3 if materialize or not aggregate else []
+     with MongoClient(factory(),mongodb_dialect=dialect) as client:
+      c=client.test.rows;c.insert_many([{"_id":n} for n in range(3)])
+      c=c.with_options(codec_options=CodecOptions(type_registry={dict:lambda value:None}))
+      cursor=c.aggregate([],batchSize=1) if aggregate else c.find({},batch_size=1)
+      actual=cursor.to_list() if materialize else list(cursor);assert actual==expected,(aggregate,materialize,actual,expected);cursor.close()
+     checked+=1
+     async with AsyncMongoClient(factory(),mongodb_dialect=dialect) as client:
+      c=client.test.rows;await c.insert_many([{"_id":n} for n in range(3)])
+      c=c.with_options(codec_options=CodecOptions(type_registry={dict:lambda value:None}))
+      cursor=await c.aggregate([],batchSize=1) if aggregate else c.find({},batch_size=1)
+      actual=await cursor.to_list() if materialize else [row async for row in cursor]
+      assert actual==expected,(aggregate,materialize,actual,expected);await cursor.close()
+     checked+=1
+   for aggregate in (False,True):
+    with MongoClient(factory(),mongodb_dialect=dialect) as client:
+     c=client.test.rows;c.insert_many([{'_id':n,'n':n} for n in range(1,5)])
+     c=c.with_options(codec_options=CodecOptions(type_registry={dict:lambda row:None if row['n']==2 else {'n':row['n']}}))
+     cursor=c.aggregate([],batchSize=2) if aggregate else c.find({},batch_size=2)
+     iterator=iter(cursor);assert next(iterator)=={'n':1}
+     assert cursor.to_list()==[None,{'n':3},{'n':4}],(aggregate,'mixed')
+     cursor.close()
+    checked+=1
+    with MongoClient(factory(),mongodb_dialect=dialect) as client:
+     c=client.test.rows;c.insert_many([{'_id':n,'n':n} for n in range(1,6)])
+     c=c.with_options(codec_options=CodecOptions(type_registry={list:lambda rows:[row['n'] for row in rows for _ in range(2)]}))
+     cursor=c.aggregate([{'$limit':3}],batchSize=1) if aggregate else c.find({},batch_size=1,limit=3)
+     assert list(cursor)==([1,1,2,2,3,3] if aggregate else [1,1,2,2]),aggregate
+     cursor.close()
+    checked+=1
+   for representation in UuidRepresentation:
+    for subtype in (3,4):
+     payload=bytes(range(16))
+     if subtype==4 and representation is UuidRepresentation.STANDARD:expected=UUID(bytes=payload)
+     elif subtype==3 and representation is UuidRepresentation.PYTHON_LEGACY:expected=UUID(bytes=payload)
+     elif subtype==3 and representation is UuidRepresentation.JAVA_LEGACY:expected=UUID(bytes=payload[:8][::-1]+payload[8:][::-1])
+     elif subtype==3 and representation is UuidRepresentation.CSHARP_LEGACY:expected=UUID(bytes_le=payload)
+     else:expected=Binary(payload,subtype)
+     with MongoClient(factory(),mongodb_dialect=dialect) as client:
+      c=client.test.rows;c.insert_one({"_id":1,"v":Binary(payload,subtype)})
+      c=c.with_options(codec_options=CodecOptions(uuid_representation=representation))
+      actual=c.find_one({})["v"];assert type(actual) is type(expected) and actual==expected,(representation,subtype,actual,expected)
+     checked+=1
+   with MongoClient(factory(),mongodb_dialect=dialect) as client:
+    c=client.test.rows;c.insert_one({"_id":"a","ref":DBRef("other",4,extras={"n":5})})
+    c=c.with_options(codec_options=CodecOptions(type_registry={int:lambda value:value+1}))
+    ref=c.find_one({})["ref"];assert ref.id==5 and ref.extras["n"]==6,ref
+   checked+=1
+asyncio.run(exercise())
+print(json.dumps({"python":sys.version,"import":mongoeco.__file__,"sdk_absent":True,"scenarios":checked,"wheel_modules":len(json.loads((root/"runtime.json").read_text()))}),flush=True)

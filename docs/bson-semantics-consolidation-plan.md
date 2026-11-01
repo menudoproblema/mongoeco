@@ -1143,7 +1143,7 @@ No se ejecutan servidores MongoDB ni nuevas capturas en esta revisión. Las 167
 pruebas citadas por el informe son históricas. El corte de sufijos por cantidad
 aceptado conserva su receipt y no acredita bytes/callbacks.
 
-**Resultado vigente de revisión 15.** Las 78 regresiones focales siguen pasando.
+**Resultado de revisión 15, conservado como historia.** Las 78 regresiones focales siguen pasando.
 El corpus `bson_dispatch` preexistente, con seis acciones y referencias 7/8/9,
 da 111 casos correctos y 36 fallos en el candidato: 12 por familia de dispatch
 escalar, pase único y orden de callbacks DBRef, todos en wire. Las comparaciones
@@ -1167,6 +1167,15 @@ Conservar ambos conjuntos de controles; no volver a extraer el lector ni
 reabrir sus fallos corregidos por repetir el adjunto. Siguen los demás contextos
 D06a/b y los consumidores D06c, según sus dependencias. Ni el replay raw anterior
 ni este corte acotado declaran D06/D05 completos.
+
+El corte posterior `a53824d` entrega dispatch/consumo de respuestas con
+[aceptación propia](evidence/bson-consolidation-implementation/codec-dispatch/README.md):
+15 acciones nativas 7/8/9, 363 focales y 7.810 casos de replay instalado.
+Los fallos de revisión 15 quedan como caracterización anterior a ese arreglo.
+La entrega mantiene STANDARD como default UUID y coordina su cambio futuro
+con B07. Los contextos D06a/b restantes, incluidas fábricas documentales con
+efectos propios y otras combinaciones de consumo/estado y representación
+portable, conservan aceptación pendiente; D06c y los demás owners no se cierran.
 
 **Causa conjunta y refactorización.** Los defectos comparten pérdida de información
 antes de que su consumidor decida: subtipo al comparar, orden al decodificar,
