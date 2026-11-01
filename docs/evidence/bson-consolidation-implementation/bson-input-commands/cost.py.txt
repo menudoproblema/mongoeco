@@ -1,0 +1,34 @@
+import json,statistics,subprocess,sys
+from pathlib import Path
+base=Path(Path('/tmp/mongoeco-bson-command-baseline-location.txt').read_text().strip())
+current=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+code='''import json,sys,time
+sys.path.insert(0,sys.argv[1])
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+out={}
+for factory in (MemoryEngine,SQLiteEngine):
+ with MongoClient(factory()) as c:
+  db=c.test;db.rows.insert_many([{'_id':i,'v':i} for i in range(10)])
+  for label,spec in [('ping',{'ping':1}),('find',{'find':'rows','filter':{'_id':0}}),('distinct',{'distinct':'rows','key':'v'})]:
+   for _ in range(10):db.command(spec)
+   start=time.process_time_ns()
+   for _ in range(100):r=db.command(spec)
+   elapsed=time.process_time_ns()-start
+   assert r['ok']==1
+   if label=='find':assert r['cursor']['firstBatch']==[{'_id':0,'v':0}]
+   if label=='distinct':assert r['values']==list(range(10))
+   out[factory.__name__+'/'+label]=elapsed
+print(json.dumps(out))
+'''
+worker=Path('/tmp/mongoeco-bson-command-cost-worker.py');worker.write_text(code)
+samples=[]
+for tag in ['base','candidate','candidate','base']*2:
+ root=base if tag=='base' else current
+ info=json.loads((root/'wheel.json').read_text())
+ row=json.loads(subprocess.check_output([sys.executable,'-I',str(worker),info['site_packages']]))
+ samples.append({'runtime':tag,'values':row})
+ratios={key:statistics.median(r['values'][key] for r in samples if r['runtime']=='candidate')/statistics.median(r['values'][key] for r in samples if r['runtime']=='base') for key in samples[0]['values']}
+result={'order':'ABBA x2','requests_per_sample':100,'warmup':10,'metric':'process_time_ns','samples':samples,'ratios':ratios,'scope':'diagnostic command CPU cost, not integrated D05 budget acceptance'}
+Path('/tmp/mongoeco-bson-command-cost.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(ratios))

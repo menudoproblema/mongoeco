@@ -1,0 +1,66 @@
+{
+  "results": {
+    "native/sync/empty": {
+      "exception": "StopIteration",
+      "cause": null,
+      "code": null
+    },
+    "native/sync/numeric-name": {
+      "exception": "AttributeError",
+      "cause": null,
+      "code": null
+    },
+    "native/sync/scalar-name": {
+      "exception": "TypeError",
+      "cause": null,
+      "code": null
+    },
+    "native/async/empty": {
+      "exception": "RuntimeError",
+      "cause": "StopIteration",
+      "code": null
+    },
+    "native/async/numeric-name": {
+      "exception": "AttributeError",
+      "cause": null,
+      "code": null
+    },
+    "native/async/scalar-name": {
+      "exception": "TypeError",
+      "cause": null,
+      "code": null
+    },
+    "local/sync/empty": {
+      "exception": "StopIteration",
+      "cause": null,
+      "code": null
+    },
+    "local/sync/numeric-name": {
+      "exception": "AttributeError",
+      "cause": null,
+      "code": null
+    },
+    "local/sync/scalar-name": {
+      "exception": "TypeError",
+      "cause": null,
+      "code": null
+    },
+    "local/async/empty": {
+      "exception": "RuntimeError",
+      "cause": "StopIteration",
+      "code": null
+    },
+    "local/async/numeric-name": {
+      "exception": "AttributeError",
+      "cause": null,
+      "code": null
+    },
+    "local/async/scalar-name": {
+      "exception": "TypeError",
+      "cause": null,
+      "code": null
+    }
+  },
+  "site": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-2fowumii/site-packages",
+  "sdk": "4.19.0"
+}

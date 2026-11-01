@@ -1,0 +1,18 @@
+import json,sys,time
+sys.path.insert(0,sys.argv[1])
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+out={}
+for factory in (MemoryEngine,SQLiteEngine):
+ with MongoClient(factory()) as c:
+  db=c.test;db.rows.insert_many([{'_id':i,'v':i} for i in range(10)])
+  for label,spec in [('ping',{'ping':1}),('find',{'find':'rows','filter':{'_id':0}}),('distinct',{'distinct':'rows','key':'v'})]:
+   for _ in range(10):db.command(spec)
+   start=time.process_time_ns()
+   for _ in range(100):r=db.command(spec)
+   elapsed=time.process_time_ns()-start
+   assert r['ok']==1
+   if label=='find':assert r['cursor']['firstBatch']==[{'_id':0,'v':0}]
+   if label=='distinct':assert r['values']==list(range(10))
+   out[factory.__name__+'/'+label]=elapsed
+print(json.dumps(out))

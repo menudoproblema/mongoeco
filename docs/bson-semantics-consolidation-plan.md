@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre, revisión 20, frames bulk aceptados en `5a89dcc` y recontraste del informe):**
+**Entrada vigente (1 de noviembre, revisión 20, bulk `5a89dcc`, comandos `3bfe5fb` y recontraste del informe):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1295,7 +1295,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 
 | Orden / prioridad | Trabajo y dependencia | Aceptación / owner |
 | --- | --- | --- |
-| 1 / P1 — B07, escrituras y comandos | Completar admisión de comandos e índices/validators y sus entradas internas preparadas. Lecturas, inserciones, mutaciones y bulk clásico ya tienen aceptación propia. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
+| 1 / P1 — B07, escrituras y comandos | Completar wrappers de catálogo/índices/validators y sus entradas internas preparadas. `3bfe5fb` acepta admisión/respuesta de Database.command; no acepta por asociación esos wrappers. Lecturas, inserciones, mutaciones y bulk clásico conservan aceptación propia. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
 | 2 / P1 — B07, UUID | Después de integrar entradas de escritura, aplicar opciones del dueño de la solicitud y coordinar el default. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte. |
 | 3 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
 | 4 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
@@ -1478,7 +1478,7 @@ al reconstruir un DBRef con el decoder SDK.
   exacto acreditado.
 
 Las unidades 1 y 3 tienen aceptación acotada; 2 comparte el encoder entregado
-pero conserva comandos/índices/validators pendientes, y 4 coordina las opciones
+e integra comandos en `3bfe5fb`, pero conserva wrappers de catálogo/índices/validators pendientes, y 4 coordina las opciones
 de sus dueños antes del nuevo default. Los consumidores positivos tienen owner propio: una codificación
 correcta no acepta su proyección/sobre. No se crea otro comparador, planificador,
 contexto o formato de almacenamiento para resolver esta frontera. Los demás

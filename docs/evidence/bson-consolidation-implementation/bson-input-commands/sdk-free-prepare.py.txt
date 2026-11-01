@@ -1,0 +1,16 @@
+import json
+from pathlib import Path
+from bson import Decimal128
+from tests.differential._real_parity_base import _decode_capture
+
+def portable(v):
+    if isinstance(v,dict):
+        if v.get('type')=='decimal128' and 'bid' in v:
+            return {'type':'decimal128','decimal':str(Decimal128.from_bid(bytes.fromhex(v['bid'])).to_decimal())}
+        if v.get('type')=='Int64':
+            return {**v,'type':'int'}
+        return {k:portable(x) for k,x in v.items()}
+    if isinstance(v,list):return [portable(x) for x in v]
+    return v
+result={t:portable(_decode_capture(Path(f'tests/fixtures/semantic_bson_command_{t.replace(".","_")}.json').read_text())['cases']) for t in ('7.0','8.0','9.0')}
+Path('/tmp/mongoeco-bson-command-sdk-free-expected.json').write_text(json.dumps(result))

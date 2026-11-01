@@ -1,0 +1,54 @@
+import ast,importlib.util,json,sys,asyncio,inspect
+from pathlib import Path
+from datetime import datetime,date,timezone
+from decimal import Decimal
+from uuid import UUID
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+site=Path(json.loads((root/'wheel.json').read_text())['site_packages'])
+sys.path[:0]=[str(site),'/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-raw-wheel-vu7alvd0/sdk-free-deps']
+assert importlib.util.find_spec('bson') is None
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import CodecOptions,Decimal128,Binary,DBRef,UuidRepresentation
+from mongoeco.errors import BulkWriteError, WriteError
+from mongoeco.types import InsertOne,UpdateOne,UpdateMany,ReplaceOne,DeleteOne,DeleteMany
+class BSONObservation:
+    def __init__(self, values): pass
+def public_error(error, observer):
+    if isinstance(error, BulkWriteError): return {"family": "BulkWriteError"}
+    if isinstance(error, WriteError): return {"family": "WriteError"}
+    raise error
+Code=()
+UUID_VALUE=UUID('00112233-4455-6677-8899-aabbccddeeff')
+uid=UUID_VALUE
+SEED=[{'_id':0,'v':1}]
+# Use the same closed observer with its public portable Decimal128/DBRef views.
+source=ast.parse(Path('tests/differential/semantic_bson_admission_cases.py').read_text())
+functions=[node for node in source.body if isinstance(node,ast.FunctionDef) and node.name in ('_view','_observe','_reset')]
+observer=ast.unparse(ast.Module(body=functions,type_ignores=[]))
+observer=observer.replace("'bid': value.bid.hex()", "'decimal': str(value.to_decimal())").replace('value.as_doc()', 'value.as_document()')
+exec(compile(observer,'portable-observer','exec'))
+# Preserve the declared native cases; omit SDK-only Code construction and int64 IDs.
+base=Path('/tmp/mongoeco-bson-input-sdk-free.py').read_text()
+values_line=next(line for line in base.splitlines() if line.startswith('values='))
+exec(values_line)
+VALUES=tuple(values.items())
+source=ast.parse(Path('tests/differential/semantic_bson_insert_cases.py').read_text())
+body=[node for node in source.body if isinstance(node,ast.FunctionDef) and node.name=='_selected']
+exec(compile(ast.Module(body=body,type_ignores=[]),'portable-selected','exec'))
+source=ast.parse(Path('tests/differential/semantic_bson_bulk_cases.py').read_text())
+body=[node for node in source.body if (isinstance(node,ast.FunctionDef) and node.name!='mutation_validation_errors') or (isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id in ('SEED','ROUTES') for t in node.targets))]
+exec(compile(ast.Module(body=body,type_ignores=[]),'portable-mutation-cases','exec'))
+NAIVE_ID=datetime(1970,1,1,0,0,1,123456)
+SEMANTIC_BSON_BULK_CASES=[(name,globals()[action]) for name,action in [('semantic_bulk_'+suffix,'bulk_'+suffix) for suffix in ('packet_values','packet_headers','packet_boundaries','uuid_modes','byte_frames','client_phases','upsert_replies')]]
+reference=json.loads(Path('/tmp/mongoeco-bson-bulk-sdk-free-expected.json').read_text())
+checks=0
+for target,cases in reference.items():
+    for factory in (MemoryEngine,SQLiteEngine):
+        with MongoClient(factory(),mongodb_dialect=target) as client:
+            for name,action in SEMANTIC_BSON_BULK_CASES:
+                got=action(client.test.records)
+                expected={k:v for k,v in cases[name].items() if not k.startswith('code-scope-decimal/') and '/long/' not in k}
+                assert got==expected,(target,factory.__name__,name,{k:(v,expected.get(k)) for k,v in got.items() if v!=expected.get(k)})
+                checks+=len(got)
+print(json.dumps({'python':sys.version,'sdk_available':False,'checks':checks,'site':str(site),'scope':'seven bulk actions with portable model constructors; omit SDK-specific constructor-shape action, Code constructor and full typed error-contract action; Decimal128 observed as public decimal text'}))

@@ -1,0 +1,4 @@
+import subprocess,sys,yaml
+from pathlib import Path
+row=next(r for r in yaml.safe_load(Path('.github/workflows/mongodb-differential.yml').read_text())['jobs']['differential']['strategy']['matrix']['include'] if r['target']=='9.0')
+raise SystemExit(subprocess.run([sys.executable,'scripts/with_mongodb_replica_set.py','--image',row['image'],'--target','9.0','--artifacts','/tmp/mongoeco-bson-command-client-native-v2','--topology','standalone','--timeout','120','--',sys.executable,'/tmp/mongoeco-bson-command-client-controls.py']).returncode)

@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones y mutaciones públicas tienen aceptación propia. `5a89dcc` añade [preparación y frames bulk clásicos](#b07--preparación-y-frames-bulk-clásicos), respuestas tipadas y la propiedad bulk_api_result prevista. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen comandos/índices/validators, UUID coordinado y positivos de proyección/sobres y otros efectos de respuesta. STANDARD permanece; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
+- B07: lecturas, inserciones y mutaciones públicas tienen aceptación propia. `5a89dcc` añade [preparación y frames bulk clásicos](#b07--preparación-y-frames-bulk-clásicos), respuestas tipadas y bulk_api_result. `3bfe5fb` añade [admisión y respuesta de comandos públicos](#b07--admisión-y-respuesta-de-comandos-públicos). El gate amplio conserva 72 fallos previos obligatorios; dos tests antiguos de batching siguen rojos y reproducidos en la base. Siguen wrappers de catálogo/índices/validators, UUID coordinado y positivos de proyección/sobres y otros efectos de respuesta. STANDARD global permanece; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1860,3 +1860,33 @@ adición API prevista, con snapshots históricos intactos.
 → Sigue: admisión cliente de comandos/índices/validators y rutas internas
 preparadas; luego UUID coordinado. Positivos restantes D06/B08, resto D06,
 H53, decisión D07 y D05 mantienen sus owners. STANDARD sigue como default.
+
+## B07 — admisión y respuesta de comandos públicos
+
+✅ Cerrado el corte acotado en `3bfe5fb`; [evidencia](evidence/bson-consolidation-implementation/bson-input-commands/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-commands/receipt.json).
+El sender público admite BSON una vez antes del ejecutor preparado; wire y
+las delegaciones internas conservan su entrada sin encoder cliente. Se reutiliza
+el materializador de respuesta completo, con opciones propias de command y
+sin TypeDecoders. Distinct mantiene valores internos hasta esa frontera.
+Los sobres cursor/write conservan tipo int64 y orden nativos, sin otro DTO.
+
+Siete acciones/236 observaciones por servidor 7/8/9 y seis controles pareados
+sync/async acreditan el contrato. La base presenta 120 fallos/51 correctos;
+los 171 checks nuevos pasan. El replay instalado obtiene 9441
+correctos y 72 fallos restantes, todos del conjunto previo.
+La cohorte ampliada tiene 2085 correctas/4677 subtests y dos fallos de batching
+reproducidos en la base; las 25 pruebas finales de frontera pasan. Permanecen
+visibles: no se acredita un gate global verde ni se cierra B07/D05.
+
+Python 3.13.15 realmente sin SDK verifica 1.362 observaciones de comandos y
+conserva bulk/mutación/inserción/lectura. API sin cambios, typing y lint pasan;
+281 fixtures/observadores históricos intactos y
+60 recursos propios verificados ausentes. El coste CPU diagnóstico aumenta
+especialmente en ping (ratios 1.64/1.48 en Memory/SQLite); D05 conserva el presupuesto
+integrado y los demás incrementos, sin aceptación por asociación.
+
+→ Sigue: wrappers públicos de catálogo/índices/validators sobre el encoder y
+los ejecutores existentes; después UUID coordinado. Positivos/batching y los
+demás contextos D06, H53, decisión D07 y D05 mantienen sus owners. STANDARD
+global sigue como default; command usa su propio default UNSPECIFIED del SDK.

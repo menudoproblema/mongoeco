@@ -1,0 +1,16 @@
+import hashlib,json,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-commands')
+r=json.loads((root/'receipt.json').read_text())
+subprocess.run(['git','merge-base','--is-ancestor',r['implementation_commit'],'HEAD'],check=True)
+assert not subprocess.check_output(['git','status','--porcelain','--','src','tests'],text=True)
+for file,digest in json.loads((root/'runtime-sources.json').read_text()).items():assert hashlib.sha256(Path(file).read_bytes()).hexdigest()==digest,file
+for file,digest in json.loads((root/'changed-sources.json').read_text()).items():assert hashlib.sha256(Path(file).read_bytes()).hexdigest()==digest,file
+for file,digest in json.loads((root/'protected.json').read_text()).items():assert hashlib.sha256(Path(file).read_bytes()).hexdigest()==digest,file
+for file,digest in r['artifacts_sha256'].items():assert hashlib.sha256((root/file).read_bytes()).hexdigest()==digest,file
+for doc in [Path('docs/bson-consolidation-implementation.md'),Path('docs/bson-semantics-consolidation-plan.md')]:assert r['implementation_commit'][:7] in doc.read_text()
+assert len(r['checks']['native'])==3 and r['checks']['new_corpus_candidate']['passed']==171
+assert r['checks']['no_new_wide_failure_nodes']
+assert r['checks']['unit']['failed']==2
+assert all('bson_command' not in x for x in r['checks']['unit']['preexisting_failure_nodes'])
+print('Verified code ancestor, final source hashes, historical fixtures, receipt artifacts and active owner links.')

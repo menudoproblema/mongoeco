@@ -1,0 +1,9 @@
+import json,os,sys
+from pathlib import Path
+root=Path(Path('/tmp/mongoeco-bson-command-baseline-location.txt').read_text().strip())
+site=Path(json.loads((root/'wheel.json').read_text())['site_packages'])
+sys.path[:0]=[str(site),str(Path.cwd())]
+os.environ['MONGOECO_TEST_INSTALLED_ARTIFACT']='1'
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/unit/core/test_server_error_contract.py','tests/unit/core/test_shared_error_documents.py','tests/unit/test_database_command_annotations.py','--tb=short']))

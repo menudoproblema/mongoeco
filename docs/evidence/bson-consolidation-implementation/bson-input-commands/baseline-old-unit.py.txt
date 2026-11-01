@@ -1,0 +1,9 @@
+import json,os,sys
+from pathlib import Path
+root=Path(Path('/tmp/mongoeco-bson-command-baseline-location.txt').read_text().strip())
+site=Path(json.loads((root/'wheel.json').read_text())['site_packages'])
+sys.path[:0]=[str(site),str(Path.cwd())]
+os.environ['MONGOECO_TEST_INSTALLED_ARTIFACT']='1'
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/unit/test_database_command_option_conservation.py','tests/unit/test_database_command_option_write_conservation.py','-k','test_batch_size_limits_wire_first_batch or test_find_batch_size_prefetches_locally_without_truncating_api_result or test_ordered_write_batch_rejects_wrong_type_before_mutation','--tb=short']))

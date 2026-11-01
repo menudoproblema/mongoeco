@@ -1,0 +1,105 @@
+{
+  "order": "ABBA x2",
+  "requests_per_sample": 100,
+  "warmup": 10,
+  "metric": "process_time_ns",
+  "samples": [
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/ping": 5155000,
+        "MemoryEngine/find": 17751000,
+        "MemoryEngine/distinct": 36755000,
+        "SQLiteEngine/ping": 4850000,
+        "SQLiteEngine/find": 48809000,
+        "SQLiteEngine/distinct": 62129000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/ping": 8483000,
+        "MemoryEngine/find": 23451000,
+        "MemoryEngine/distinct": 40708000,
+        "SQLiteEngine/ping": 7809000,
+        "SQLiteEngine/find": 54741000,
+        "SQLiteEngine/distinct": 68115000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/ping": 8344000,
+        "MemoryEngine/find": 23110000,
+        "MemoryEngine/distinct": 38964000,
+        "SQLiteEngine/ping": 8178000,
+        "SQLiteEngine/find": 53962000,
+        "SQLiteEngine/distinct": 64799000
+      }
+    },
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/ping": 5156000,
+        "MemoryEngine/find": 18036000,
+        "MemoryEngine/distinct": 38500000,
+        "SQLiteEngine/ping": 5772000,
+        "SQLiteEngine/find": 48042000,
+        "SQLiteEngine/distinct": 63020000
+      }
+    },
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/ping": 5375000,
+        "MemoryEngine/find": 18631000,
+        "MemoryEngine/distinct": 39878000,
+        "SQLiteEngine/ping": 5847000,
+        "SQLiteEngine/find": 52588000,
+        "SQLiteEngine/distinct": 68860000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/ping": 8457000,
+        "MemoryEngine/find": 24209000,
+        "MemoryEngine/distinct": 43376000,
+        "SQLiteEngine/ping": 8495000,
+        "SQLiteEngine/find": 58431000,
+        "SQLiteEngine/distinct": 71312000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/ping": 8953000,
+        "MemoryEngine/find": 23482000,
+        "MemoryEngine/distinct": 41801000,
+        "SQLiteEngine/ping": 7863000,
+        "SQLiteEngine/find": 56946000,
+        "SQLiteEngine/distinct": 64864000
+      }
+    },
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/ping": 5101000,
+        "MemoryEngine/find": 16935000,
+        "MemoryEngine/distinct": 36655000,
+        "SQLiteEngine/ping": 5068000,
+        "SQLiteEngine/find": 44176000,
+        "SQLiteEngine/distinct": 61895000
+      }
+    }
+  ],
+  "ratios": {
+    "MemoryEngine/ping": 1.6429056347589952,
+    "MemoryEngine/find": 1.3114538799005226,
+    "MemoryEngine/distinct": 1.0963922662945984,
+    "SQLiteEngine/ping": 1.4797970479704796,
+    "SQLiteEngine/find": 1.153183756491931,
+    "SQLiteEngine/distinct": 1.0625654220169558
+  },
+  "scope": "diagnostic command CPU cost, not integrated D05 budget acceptance"
+}

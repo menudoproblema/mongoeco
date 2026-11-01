@@ -1,0 +1,139 @@
+import json,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-commands')
+r=json.loads((root/'receipt.json').read_text())
+commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+r['implementation_commit']=commit
+short=commit[:7];wide=r['checks']['wide'];unit=r['checks']['unit'];cost=json.loads((root/'cost.json').read_text())['ratios']
+readme=f'''# B07: admisión BSON y respuesta de comandos públicos
+
+Implementación `{short}`, base `fd37c14`. Aceptación acotada de
+Database.command; el objetivo completo y B07/D06/D05 siguen abiertos.
+
+## Cambio y revisión
+
+La fachada pública compartía el ejecutor servidor: podía normalizar/compilar
+antes de admitir BSON y ejecutar un prefijo de un comando inválido. Ahora
+reutiliza el encoder cliente una vez para la solicitud completa; el ejecutor
+preparado conserva su entrada interna. Wire y las delegaciones internas usan
+esa entrada sin imponerles otra codificación cliente ni codecs del usuario.
+No se añade otro codec, contexto ni evaluador. La revisión del replay detectó
+que RawBSONDocument se recorría como mapping y perdía undefined: el adaptador
+SDK ahora conserva sus bytes. Los errores de comando desconocido comparten
+command_not_found entre directa y wire; la exclusión configurada de un comando
+conocido conserva su rechazo propio.
+
+Database.command posee opciones propias: el default es UNSPECIFIED y no hereda
+los codecs de la base/colección. Las opciones explícitas controlan UUID, fechas
+y la fábrica documental del sobre completo; los TypeDecoders no intervienen,
+como en el SDK. El default global de colección sigue siendo STANDARD hasta
+completar las demás fronteras. La respuesta usa el materializador existente,
+con cursor firstBatch/id/ns e id int64; el resultado write conserva n,
+nModified y ok en orden nativo. Distinct selecciona valores internos y ya no
+aplica prematuramente los codecs de colección dentro del ejecutor servidor.
+
+La mezcla de kwargs conserva la mutación del mapping del llamador antes del
+error; sesión, BSON y parser mantienen su precedencia observada. check y
+allowable_errors son controles del cliente. Comando desconocido usa 59;
+check=False devuelve el error completo materializado. Los nombres inválidos
+y el comando vacío tienen controles pareados nativos sync/async: este último
+lanza StopIteration en sync y RuntimeError con esa causa en async.
+
+Doce expectativas antiguas de ordered se actualizan a OperationFailure/14,
+conservando estado intacto; su origen se acredita en el corte bulk anterior.
+El fake administrativo incorpora las entradas internas reales y su test de
+distinct aporta un valor exacto por cada fila, sin debilitar la deduplicación.
+
+## Evidencia y límites
+
+- [Receipt](receipt.json), [fuentes](runtime-sources.json) y guards de imports:
+  wheel instalado de 285 módulos, SHA `{r['wheel']['sha256']}`.
+- Siete acciones y 236 observaciones por MongoDB 7.0.43/8.0.32/9.0.2,
+  standalone y SDK 4.19.0. Capturas/checks finales coinciden byte a byte y
+  contienen el hash del corpus final. Seis controles pareados adicionales
+  acreditan las excepciones sync/async antes del dispatch.
+- [Base](baseline.txt.gz): 120 fallos/51 correctos; candidato: 171 checks nuevos
+  correctos, directa/wire sync/async × Memory/SQLite × 7/8/9.
+  [Replay amplio](replay.txt.gz): {wide['passed']} correctos y {wide['failed']}
+  fallos; el conjunto restante es subconjunto exacto del conjunto previo,
+  sin nodos nuevos. No equivale a un gate global verde.
+- [Cohorte de unitarias/contratos/propiedades/SPI](unit.txt.gz): {unit['passed']} correctas,
+  {unit['subtests']} subtests y dos fallos de batching reproducidos en la base. No se
+  ocultan ni se atribuyen al nuevo sender. Las [25 pruebas finales](boundary.txt.gz)
+  incluyen doce regresiones de forma de comando añadidas después de esa
+  cohorte inicial y también forman parte de la cohorte final. El módulo final
+  se verifica contra el mismo runtime instalado.
+- [Errores/anotaciones](errors.txt.gz): 40 correctas. Once fallos de la base
+  eran stand-ins sin contexto de colección; se aporta CodecOptions conservando
+  todas las aserciones, sin cambiar el adaptador productivo para los tests.
+- Esas pruebas comprueban admisión única, ausencia de deepcopy previo,
+  estado/índices/catálogo intactos, barrera de eventos y reapertura SQLite.
+  Conservar el error cliente del segundo elemento sin escribir el prefijo.
+- [SDK-free](sdk-free.json): 1.362 observaciones de comandos en Python 3.13.15
+  con bson ausente. Omite el constructor Code exclusivo del SDK; Decimal128
+  usa texto decimal público e Int64 la clase int portable declarada.
+  Se conservan además 2.880 observaciones bulk, 3.918 de mutación,
+  942 de inserción y 748 controles de lectura sobre el mismo wheel.
+- [API](api-check.txt): 18 pruebas/11 subtests, manifiesto sin cambios.
+  [Typing](typing.txt): dos positivos y 20/25 negativos; [lint](lint.txt)
+  correcto. [Históricos](protected.json): {r['checks']['protected_files']}
+  fixtures/observadores intactos. [Recursos](resources.json): 20 contenedores
+  y 40 volúmenes propios verificados ausentes con Docker operativo.
+- [Coste](cost.json), ABBA×2/100 solicitudes, CPU diagnóstico con otros gates
+  concurrentes: {', '.join(f'{k}: {v:.2f}' for k,v in cost.items())}.
+  Estos incrementos quedan en D05; no se acepta su presupuesto integrado.
+
+## Trabajo que conserva su owner
+
+Wrappers create_collection/create_index/create_indexes aún necesitan su
+admisión cliente y separación de ejecutores: raw create/createIndexes verde
+no los acepta. Después coordinar UUID global y completar proyecciones/sobres
+positivos, batching y los demás efectos de respuesta D06/B08. Siguen los nodos
+bson_admission pendientes, H53, decisión D07 y D05 (matrices, cobertura,
+persistencia, costes y gates integrados). No se acredita soporte nuevo de
+transacciones, cifrado ni Atlas por este corte.
+'''
+(root/'README.md').write_text(readme)
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text();old='''- B07: lecturas, inserciones y mutaciones públicas tienen aceptación propia. `5a89dcc` añade [preparación y frames bulk clásicos](#b07--preparación-y-frames-bulk-clásicos), respuestas tipadas y la propiedad bulk_api_result prevista. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen comandos/índices/validators, UUID coordinado y positivos de proyección/sobres y otros efectos de respuesta. STANDARD permanece; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.'''
+new=f'''- B07: lecturas, inserciones y mutaciones públicas tienen aceptación propia. `5a89dcc` añade [preparación y frames bulk clásicos](#b07--preparación-y-frames-bulk-clásicos), respuestas tipadas y bulk_api_result. `{short}` añade [admisión y respuesta de comandos públicos](#b07--admisión-y-respuesta-de-comandos-públicos). El gate amplio conserva {wide['failed']} fallos previos obligatorios; dos tests antiguos de batching siguen rojos y reproducidos en la base. Siguen wrappers de catálogo/índices/validators, UUID coordinado y positivos de proyección/sobres y otros efectos de respuesta. STANDARD global permanece; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.'''
+assert old in s;s=s.replace(old,new)
+s+=f'''
+
+## B07 — admisión y respuesta de comandos públicos
+
+✅ Cerrado el corte acotado en `{short}`; [evidencia](evidence/bson-consolidation-implementation/bson-input-commands/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-commands/receipt.json).
+El sender público admite BSON una vez antes del ejecutor preparado; wire y
+las delegaciones internas conservan su entrada sin encoder cliente. Se reutiliza
+el materializador de respuesta completo, con opciones propias de command y
+sin TypeDecoders. Distinct mantiene valores internos hasta esa frontera.
+Los sobres cursor/write conservan tipo int64 y orden nativos, sin otro DTO.
+
+Siete acciones/236 observaciones por servidor 7/8/9 y seis controles pareados
+sync/async acreditan el contrato. La base presenta 120 fallos/51 correctos;
+los 171 checks nuevos pasan. El replay instalado obtiene {wide['passed']}
+correctos y {wide['failed']} fallos restantes, todos del conjunto previo.
+La cohorte ampliada tiene {unit['passed']} correctas/{unit['subtests']} subtests y dos fallos de batching
+reproducidos en la base; las 25 pruebas finales de frontera pasan. Permanecen
+visibles: no se acredita un gate global verde ni se cierra B07/D05.
+
+Python 3.13.15 realmente sin SDK verifica 1.362 observaciones de comandos y
+conserva bulk/mutación/inserción/lectura. API sin cambios, typing y lint pasan;
+{r['checks']['protected_files']} fixtures/observadores históricos intactos y
+60 recursos propios verificados ausentes. El coste CPU diagnóstico aumenta
+especialmente en ping (ratios {cost['MemoryEngine/ping']:.2f}/{cost['SQLiteEngine/ping']:.2f} en Memory/SQLite); D05 conserva el presupuesto
+integrado y los demás incrementos, sin aceptación por asociación.
+
+→ Sigue: wrappers públicos de catálogo/índices/validators sobre el encoder y
+los ejecutores existentes; después UUID coordinado. Positivos/batching y los
+demás contextos D06, H53, decisión D07 y D05 mantienen sus owners. STANDARD
+global sigue como default; command usa su propio default UNSPECIFIED del SDK.
+''';p.write_text(s)
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text();s=s.replace('**Entrada vigente (1 de noviembre, revisión 20, frames bulk aceptados en `5a89dcc` y recontraste del informe):**',f'**Entrada vigente (1 de noviembre, revisión 20, bulk `5a89dcc`, comandos `{short}` y recontraste del informe):**',1)
+s=s.replace('Completar admisión de comandos e índices/validators y sus entradas internas preparadas. Lecturas, inserciones, mutaciones y bulk clásico ya tienen aceptación propia.',f'Completar wrappers de catálogo/índices/validators y sus entradas internas preparadas. `{short}` acepta admisión/respuesta de Database.command; no acepta por asociación esos wrappers. Lecturas, inserciones, mutaciones y bulk clásico conservan aceptación propia.',1)
+s=s.replace('pero conserva comandos/índices/validators pendientes, y 4 coordina las opciones',f'e integra comandos en `{short}`, pero conserva wrappers de catálogo/índices/validators pendientes, y 4 coordina las opciones',1)
+s+= '' if False else ''
+p.write_text(s)
+r['artifacts_sha256']={p.name:__import__('hashlib').sha256(p.read_bytes()).hexdigest() for p in root.iterdir() if p.is_file() and p.name!='receipt.json'}
+(root/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+print(short,wide)
