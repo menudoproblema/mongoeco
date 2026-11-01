@@ -1898,6 +1898,8 @@ centrales, todas r8.0.0:
 
 Estado: propuesta de planificación, sin implementación ni aceptación nueva.
 Base congelada: 2fa637f6254a09acd6c81aeee5a36384fdbdbfa7.
+Refinamiento 1 sobre c9620e23 (solo documentación; mismo runtime).
+Informe de revisión SHA-256: d88c5971320918ffed6adb7260e6611ec3f2e2f3fc5687492f20f81b4905849d.
 Owner de este plan: este apartado. Los apartados anteriores conservan su
 alcance histórico; el estado aceptado lo posee
 [bson-consolidation-implementation.md](bson-consolidation-implementation.md).
@@ -1936,8 +1938,22 @@ los consumidores por similitud ni agrega una caché global.
 
 Disposiciones previas a la lista de defectos:
 
-- limit(0) y la indexación numérica de rutas de expresión son defectos
-  anteriores al último P2. Su mayor exposición no prueba una regresión nueva.
+- limit(0) es una regresión de Memory respecto al corte anterior, aunque
+  precede a los commits P2: snapshots propios de 30c8ae24 devuelven cinco
+  documentos y de 381aa10e/2fa637f6 devuelven cero para setter y keyword.
+  SQLite ya devolvía cero en 30c8ae24. La antigüedad de un guard aislado no
+  prueba que la ruta pública anterior lo alcanzara. F00/F01 amplían el corpus
+  semantic_response_frontier de 381aa10e sin reabrir su aceptación histórica.
+- La indexación numérica de rutas de expresión sí existe desde marzo.
+  Su mayor exposición no prueba por sí sola una regresión nueva.
+- to_list(0) no se conserva como vacío sin consumir por suposición local.
+  PyMongo 4.9.2 y 4.19.0 comprobados lanzan ValueError antes de abrir la
+  consulta. F01 fija método/perfil/estado, distinguiéndolo de limit(0).
+- natural pasa a F08: sort/hint de escaneo físico +/-1 se corrigen dentro
+  de los motores incluidos, sin exponer recordId ni migrar formato/SPI.
+  El ascendente actual es accidental: con inserciones 30,10,20, Memory
+  conserva ese orden, pero SQLite devuelve 10,20,30; ambos ignoran -1.
+  No se considera ya implementado ni se rechaza globalmente por F10.
 - Las dos diferencias aportadas de orden de grupos no son defectos de runtime.
   Se comparan grupos sin exigir orden exterior, conservando multiplicidad,
   tipos y orden de campos. Lo mismo se aplica a empates cuyo orden no se garantiza.
@@ -1955,8 +1971,10 @@ Disposiciones previas a la lista de defectos:
 
 ### 9.2. Parte I — Entrega acotada del contrato existente
 
-Prioridades: P1, resultados erróneos, selección o aceptación de escrituras y
-fallos públicos no tipados; P2, otros contratos funcionales y diagnósticos.
+Prioridades: P1, pérdida/alteración de filas o valores, selección/aceptación
+de escrituras y fallos públicos no tipados; P2, firmas de conveniencia,
+metadatos y diagnósticos que no alteren esas garantías. F09b/F09c son P1
+por resultados incorrectos; los detalles solo diagnósticos pueden ser P2.
 Todos los bloques empiezan pendientes. F00 fija los casos antes de editar.
 F11 es el cierre integrado; un bloque focal verde no acepta toda la entrega.
 
@@ -1970,14 +1988,15 @@ F11 es el cierre integrado; un bloque focal verde no acepta toda la entrega.
 | F05 | P1 | Collation efectiva y validación del subset | F00 |
 | F06 | P1 | Integridad y reglas de catálogo de índices | F00; F05 para herencia/collation |
 | F07 | P1/P2 | Candidatos de escritura, campos e identidad física | F00; integrar F03/F04/F06 al seleccionar/validar |
-| F08 | P1/P2 | Claves de sort y acumuladores/buckets afectados | F00; F03 para rutas, F05 para collation |
-| F09 | P2 | Argumentos BSON, calendario y texto de las familias retenidas | F00 |
+| F08 | P1/P2 | Claves de sort, natural sort/hint y acumuladores/buckets | F00; F03 para rutas, F05 para collation; integrar F01 |
+| F09 | P1/P2 | Argumentos BSON y gramática; calendario/texto P1 | F00 |
 | F10 | P2 | Fachadas, metadata y capacidades explícitas | F00; F06 para índices |
 | F11 | P1 | Regresión, coste, packaging y entrega integrada | F01–F10 dispuestos y aceptados |
 
 Las dependencias de integración no obligan a serializar las reproducciones
-independientes. Orden recomendado: F00; F01/F02/F04 y F05; F03/F06; F07/F08;
-F09/F10; F11. Pueden adelantarse arreglos pequeños de F09/F10 ya caracterizados.
+independientes. Orden recomendado: F00; F01/F02/F04/F05 y subunidades P1
+de F09 (incluido range); F03/F06; F07/F08; diagnósticos P2 de F09 y F10; F11.
+Las correcciones P1 no esperan al final de los P2 por pertenecer a F09.
 No se añade una dependencia de F01 hacia F02 ni una cadena entre todas las
 familias numéricas: compartir un archivo no demuestra dependencia semántica.
 
@@ -1986,8 +2005,14 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
 - Fijar estímulo mínimo, seed y orden BSON, superficie, consumidor, versiones,
   efectos observables, diagnóstico, prioridad y bloque para cada recomendación.
   Clasificar: defecto reproducido, comprobación obligatoria o hipótesis/capacidad.
-- Cubrir las familias explícitas de F01–F10; no importar como obligaciones
-  todas las discrepancias de las 1.688 sondas ni lanzar otra auditoría general.
+- Cubrir las familias explícitas de F01–F10 y la tabla de disposición siguiente.
+  Las 1.688 son sondas, no 1.688 defectos; las 724 discrepancias aportadas
+  tampoco son causas independientes. No importar todas como obligaciones
+  ni lanzar otra auditoría general. No dejar una familia de la revisión
+  omitida: cada caso queda en F, X o seguimiento con razón contractual.
+- Priorizar el testigo limit(0) de Memory y añadirlo a semantic_response_frontier:
+  la reproducción de snapshots identifica su regresión; el corpus existente
+  no la protegía. No crear un corpus/runner exclusivo para este caso.
 - Capturar los contraejemplos con el inventario/capturador/replay existentes.
   MongoDB 7.0.43, 8.0.32 y 9.0.2 fijados por imagen/buildInfo/FCV conforme a CI;
   las versiones que difieran conservan expectativas distintas.
@@ -1999,6 +2024,35 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
   explícita razonada; cada prueba obligatoria tiene oráculo y ruta productiva.
   Ninguna hipótesis se convierte en defecto o en garantía aceptada por inspección.
 
+#### Disposición de las familias señaladas en la revisión
+
+Esta tabla fija destinos, no afirma que todos los casos sean defectos
+reproducidos. F00 conserva estímulo, perfil, versión, resultado y evidencia de
+cada entrada. La igualdad entre motores o una descripción de familia no cierra
+el caso. Un control que ya pasa se conserva como positivo, sin inventar un fix.
+
+| Familia retenida | Destino y alcance | Evidencia/criterio de disposición |
+| --- | --- | --- |
+| all mezclado con elemMatch | F04: gramática de consulta. | Arrays mixtos y permutaciones; rechazo/aceptación, código y fase nativos, no vacío silencioso para una forma inválida. |
+| Orden de push/firstN en SQLite | F08, con F03 si interviene traversal. | Reproducir con sort previo total/desempate o fuente ordenada exigida. Conservar el orden de entrada en el acumulador; no ordenar el array resultante para hacer coincidir. Una sonda sin orden de entrada garantizado queda como seguimiento no concluyente, no como obligación de imitar un plan físico nativo. |
+| Range que materializa un array enorme | F09a, P1: límite de recursos y error antes de reservar memoria. | Calcular cardinalidad/tamaño o comprobar el límite de la referencia antes de list(range); nativos fijan límite/código/fase. Pruebas acotadas o en el aislamiento de procesos existente, sin intentar agotar el host; comprobar rechazo previo a materializar, continuidad y ausencia de hijos vivos. No crear otro framework de ejecución. |
+| Null/missing en ambos lados de operadores | F09a y F02 donde hay materialización. | Matriz por operador retenido, izquierda/derecha/ambos, literal/campo/constante, tipo inválido y error alcanzado/no alcanzado. No imponer conmutatividad ni una política global de null; no cambiar la semántica MQL de consulta. |
+| Timestamp/ObjectId como fechas | F09b. | Casos de entrada por operador soportado, incluyendo extracción/formato y suma/diferencia; valor UTC, tipo de resultado, null/error y fase según versión. No se amplía el dominio de fecha por asociación. |
+| dateDiff/startOfWeek y formatos desconocidos | F09b. | week frente a otras unidades, nombres válidos/inválidos y validación de formato dateToString: constante/dinámico, % desconocido y % final, con valor/error/fase nativos. |
+| toString de Decimal128/UUID | F09c, conectado a F02 por representación. | Conservar cohort/escala decimal y formato Binary UUID por versión. UUID Python solo con CodecOptions que lo admitan; no relajar UNSPECIFIED ni extrapolar novedades de versiones posteriores. |
+| Coerción toUpper/toLower/strcasecmp | F09c: dominio de operandos y formato, independiente del casing Unicode. | Números/long/decimal/fecha/string, bool/ObjectId y null/missing, también ambos órdenes de strcasecmp; comprobar resultados y error 16007 donde corresponda. Compartir formato solo después de validar el dominio propio de cada operador, no una coerción universal. |
+| Nombres y contexto de stages/let | F09a; F10 consume sus reglas de namespace. | group con _id punteado, nombres de facet, count "_id", sort vacío, documents en colección frente a DB y variables de let/nombre/scope. Cada forma conserva aceptación o diagnóstico/fase nativos; no usar reglas de nombres Python o de otro stage por analogía. |
+| Familia geo | Seguimiento del subset declarado; ampliación geodésica/planner en X04d (X05 si cambia formato). | COMPATIBILITY 7.2 declara distancias planares, nearSphere local y ausencia de planner geoespacial. Diferencias derivadas de esos límites no obligan a paridad esférica en F. F00 registra cada testigo y motivo; un fallo que incumpla el subset ya prometido requiere disposición explícita F04/F09, no se excusa por el límite de geodesia. |
+| Int64 público materializado como int | F02 para frontera/codec; F09a si el productor pierde el ancho. | Hace falta el estímulo y perfil exactos. Los casos propios básicos de long almacenado y toLong conservan Int64/BSON 0x12 en ambos motores y son controles positivos. Exigir tipo/bytes en el caso que falle, diferenciando SDK-free y decoder intencional; no envolver todos los int en Int64. |
+| Índice sobre a. y otros nombres inválidos | F06. | Vacío/poblado, a ausente/presente, create e insert posterior, raw/método: rechazo nativo (67 para el caso aportado), sin OperationalError público ni índice/datos parcialmente aceptados. El mínimo reejecutado acepta a. en ambos motores; no se afirma que toda población produzca el error SQLite descrito. |
+| sortArray con escalares y documentos | F08. | El TypeError local está reproducido; comprobar elementos sin campo, null, arrays y empates conforme al servidor, sin convertir escalares en documentos ni imponer orden entre empates no garantizados. |
+| Reglas de catálogo y vista _id_ | F06 valida; F10 proyecta. | 32/33 campos, opciones de _id, campos con $, TTL compuesto/_id, códigos/fases y estado; index_information omite unique intrínseco si el servidor lo omite y expone v según la referencia (v:2 en el caso retenido), sin modificar la unicidad interna. |
+
+La disposición geo o de un orden no garantizado es un seguimiento razonado,
+no una corrección implementada ni una exclusión silenciosa. El caso Int64
+queda como comprobación obligatoria de representación hasta identificar una
+reproducción negativa; no obliga a reescribir materialización que ya es correcta.
+
 #### F01 — Contrato de límites y consumo del cursor
 
 - Distinguir límite público cero sin límite, ausencia de límite, ventana
@@ -2008,7 +2062,10 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
   incluido su efecto de singleBatch, sin sustituirlo por abs indiscriminado.
 - Diferenciales: límite omitido, 0, 1, -1 y varios lotes; limit(1).limit(0);
   keyword y setter; skip, sort, primera página, first, iteración, to_list,
-  agotamiento y cierre. Conservar to_list(0) vacío sin consumir.
+  agotamiento y cierre. to_list(0) debe conservar la validación del perfil:
+  ValueError en los SDK 4.9.2/4.19.0 comprobados, antes de consulta/decoder.
+  Capturar la precedencia con cursor agotado/cerrado y otras formas de length;
+  no extrapolar la validación de Cursor a CommandCursor u otro método.
 - Cubrir directa sync/async y driver/wire, ambos motores; observar IDs, orden
   garantizado, offsets y estado de cursor, getMore y errores en su fase.
 - Cierre: todos los accesos al mismo cursor conservan la secuencia esperada,
@@ -2094,7 +2151,11 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
 - Aplicar herencia de F05 y caracterizar conflictos por patrón/opciones/nombre:
   emitir 85 solo donde lo exige la referencia por versión.
 - Rechazar segundo text y arrays en hashed en construcción y escritura según
-  el contrato retenido. No implementar recuperación por text/hashed nueva.
+  el contrato retenido. Validar nombres de índice/rutas (incluido a. y campos
+  con $), límite de 32 campos, opciones de _id y TTL compuesto/sobre _id:
+  aceptación, código y fase por forma y dialecto, antes de usar SQL inválido.
+  No limitarse a envolver OperationalError ni implementar recuperación por
+  text/hashed nueva.
 - Diferenciales: crear antes/después de datos; insert/update/unset/replacement/
   upsert/bulk; colisión/no colisión y mismo documento; perfiles sparse/partial;
   mismo patrón con opciones/colación distintas. Capturar contadores, índices,
@@ -2133,6 +2194,15 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
 
 - Corregir clave de array vacío y rutas numéricas/anidadas en sort documental;
   detectar arrays paralelos según la referencia, también antes de una ventana.
+- Implementar/corregir natural sort/hint +/-1 como escaneo físico de Memory y
+  SQLite: forward/reverse coherentes, sin compararlo como campo ausente ni
+  ordenar por _id. Reutilizar almacenamiento/lectores (diccionario/rowid)
+  sin migración/SPI nuevo; SQLite debe especificar el orden físico, no confiar
+  en un SELECT sin ORDER BY. Capturar mezclas con otras claves, dirección/tipo
+  inválidos, sort+hint, filtros, skip/limit, reapertura y reemplazo/reinserción.
+  Se valida el orden local del escaneo; no se promete que MongoDB y los motores
+  mantengan idéntico orden físico tras cualquier relocalización/concurrencia.
+  No extender natural de find a un stage de agregación por analogía.
 - Separar extracción de claves documentales para sort/top/bottom de sortArray,
   que no tiene el mismo traversal. Mantener comparación BSON/collation común.
 - Evaluar n de topN/bottomN en su contexto de inicialización de grupo, no
@@ -2143,7 +2213,10 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
   Reutilizar estado numérico donde corresponda sin convertir todo a float
   prematuramente ni extrapolar las reglas de sum/avg.
 - Diferenciales: asc/desc, empates con/sin desempate contractual, arrays vacíos/
-  anidados, missing/null, collation, límites y grupos/tamaños extremos retenidos.
+  anidados y mezcla escalar/documento en sortArray (sin TypeError crudo),
+  missing/null, collation, límites y grupos/tamaños extremos retenidos.
+  Push/firstN conservan la secuencia de entrada ordenada, incluido SQLite:
+  comprobar antes/después de materializar o de spill, sin ordenar su resultado.
   Top-level, facet/lookup, ventanas/spill cuando la ruta afectada los consume.
 - Cierre: claves y resultados nativos sin exigir órdenes no garantizados;
   selección antes de limit/top-k; mismos resultados en fast path/fallback y
@@ -2151,15 +2224,26 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
 
 #### F09 — Argumentos, calendario y formato: tres unidades de corrección
 
+- Prioridad F09: las subunidades b/c son P1 por valor erróneo; a es P1 para
+  selección/valores, coerciones y recursos, P2 para detalles solo diagnósticos.
 - F09a: extender tablas de aridad existentes para los variádicos retenidos;
   incorporar primitivas BSON a limit/sample.size/slice/range/round.place/
   dateAdd.amount/dateTrunc.binSize/maxN.n. Cada argumento conserva aceptación,
   truncamiento o entero exacto según su referencia, rango y fase propios.
+  Añadir las formas de null/missing, nombres de stages/variables y contexts
+  enumeradas en la tabla de disposición. Range debe rechazar tamaños fuera
+  del contrato antes de materializar el array, no después de un OOM.
+  Un aborto del host previo es evidencia aportada, no una ejecución a repetir.
 - F09b: corregir anclas/bins de dateTrunc, duración frente a calendario/DST de
   dateAdd/dateSubtract, acarreo de dateFromParts y formatos j/U/w/Z/%% de
-  dateToString. No deshacer los helpers enteros de milisegundos ya aceptados.
-- F09c: formato double de toString y conjunto explícito de trim por defecto;
-  preservar chars explícitos, null, tipos y errores. No imitar casing Unicode
+  dateToString, el diagnóstico de formatos desconocidos, startOfWeek de
+  dateDiff y entradas Timestamp/ObjectId de los operadores retenidos.
+  No deshacer los helpers enteros de milisegundos ya aceptados.
+- F09c: formato double/Decimal128/UUID de toString, coerción de operandos
+  toUpper/toLower/strcasecmp y conjunto explícito de trim por defecto;
+  preservar chars explícitos, null, tipos y errores. Validar tipos antes
+  de reutilizar stringify: bool/ObjectId admitidos por toString no quedan
+  admitidos por toUpper por esa sola razón. No imitar casing Unicode
   indefinido ni sustituir el backend regex.
 - Diferenciales de a: cero/uno/varios argumentos, tipos SDK/local/internos,
   long/double/decimal, bool, NaN/infinito, rangos y vacío/poblado. Preparación,
@@ -2181,12 +2265,17 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
   async y clones; command(nombre, valor) y rename(dropTarget) respetan su
   contrato PyMongo, aliases y guardas Python sin alterar parsers raw P2.
 - Index_information de namespace ausente devuelve la vista nativa sin crearlo;
-  proyectar metadata pública, incluido _id_, sin debilitar el índice intrínseco.
+  proyectar metadata pública, incluido _id_: unique:true intrínseco se omite
+  donde lo omite el servidor y v se conserva (v:2 en el testigo retenido).
+  La eliminación previa de unique:false no resolvía ese caso; no debilitar
+  la unicidad del índice intrínseco ni imponer v:2 a índices con otra versión.
   Conservar la diferencia raw listIndexes/error frente a método de listado.
 - Distinguir stage reconocido no implementado (out/graphLookup) de desconocido,
   usando catálogo y diagnóstico locales existentes. No falsificar paridad de
   error con MongoDB, donde el stage válido puede ejecutarse.
-- Para natural, viewOn, capped, return_key/show_record_id y demás capacidades
+- Natural sort/hint se acepta y corrige por F08, con su gramática compartida
+  en métodos/raw. No introducir aquí un rechazo general de esa opción.
+- Para viewOn, capped, return_key/show_record_id y demás capacidades
   ausentes: documentar soporte/rechazo explícito coherente, sin ejecutar una
   interpretación silenciosamente incorrecta ni declararlas implementadas.
   El soporte efectivo de esas capacidades pertenece a X03/X04.
@@ -2224,7 +2313,15 @@ familias numéricas: compartir un archivo no demuestra dependencia semántica.
   Para los dos workloads P2 retenidos, A/A y tres ABBA con workers existentes:
   conservar identidad BSON de resultados y, para cada uno de los 44 casos,
   razón agrupada candidato/base <= 1 + ruido A/A. Ruido: máxima desviación
-  relativa de los cuatro valores A/A respecto a su mediana; razón agrupada:
+  relativa de los cuatro valores A/A respecto a su mediana. Para este nuevo
+  incremento se fija antes de medir un máximo admisible de ruido A/A de 0,05
+  (5%) en cada caso. Si cualquiera lo supera, la calibración no es válida:
+  se registra, estabiliza el entorno o alarga la muestra y se repite el
+  protocolo completo; no se compara para aceptar ni se recorta el ruido a 5%.
+  El umbral no se eleva a la vista de resultados ni reevalúa receipts históricos.
+  Es un criterio nuevo de calidad de medición de esta propuesta, no un SLA
+  universal ni un requisito histórico de CI.
+  Razón agrupada:
   mediana de los seis B dividida por mediana de los seis A de las tres ABBA.
   Las repeticiones internas y agregación por worker se conservan. No se exige
   razón <1 ni mejora mayor que ruido. Un caso fuera del criterio deja el gate
@@ -2249,7 +2346,7 @@ Prioridad aquí es de evaluación, no autorización de ejecución.
 | --- | --- | --- | --- |
 | X01 | P2 | Backend y contrato PCRE compatibles | Límites de F04/F09; decisión de dependencia |
 | X02 | P2 | Collation adicional y tailoring | F05; backend/índices persistidos |
-| X03 | P2/P3 | Views, capped y orden/identidad física de registros | F05/F06/F10; contrato de almacenamiento |
+| X03 | P2/P3 | Views, capped e identidad pública/opciones avanzadas de registros | F05/F06/F08/F10; contrato de almacenamiento |
 | X04 | P2/P3 | Stages, operadores y dominios adicionales | F02/F03/F08/F09/F10 según capacidad |
 | X05 | P3 | Migración persistida o refactorización transversal | Perfil medido de un bloque que lo necesite |
 | X06 | P2/P3 | Ampliación sistemática de garantías O1–O8 y corpus P2 | Decisión de cobertura finita y owners |
@@ -2286,9 +2383,11 @@ Prioridad aquí es de evaluación, no autorización de ejecución.
   herencia de collation, comandos permitidos, ciclos/errores y persistencia.
 - X03b, capped: decidir unidades de tamaño, límites/max y expulsión,
   restricciones de updates/delete, atomicidad, recuperación y eventos.
-- X03c, natural/recordId/return_key/show_record_id: fijar identidad/orden físico
-  local y relación con hint/índices, cursores, borrados, updates y reapertura.
-  No emular natural ordenando por _id ni inventar un recordId público inestable.
+- X03c, recordId/return_key/show_record_id: fijar identidad física pública
+  y relación con índices, cursores, borrados, updates y reapertura.
+  Natural sort/hint básico pertenece a F08, no depende de exponer recordId.
+  No inventar un recordId público inestable ni extrapolar un rowid interno
+  a un identificador persistente garantizado tras mantenimiento/reconstrucción.
 - Cada subbloque puede aceptarse independientemente. Diferenciales nativos
   por operación/topología necesaria, estado antes/después y reapertura;
   atomicidad/concurrencia solo con pruebas de intercalación si se prometen.
@@ -2296,7 +2395,7 @@ Prioridad aquí es de evaluación, no autorización de ejecución.
   las capacidades no elegidas mantienen rechazo explícito de F10.
   Un cambio de archivo o SPI requiere X05 o su decisión equivalente.
 
-#### X04 — Ampliaciones de agregación y dominio temporal
+#### X04 — Ampliaciones de operadores, dominios y planificación
 
 - X04a, out: decidir reemplazo de colección, índices/opciones, validadores,
   atomicidad/fallo, permisos y efectos de watch, no implementarlo como merge.
@@ -2304,11 +2403,16 @@ Prioridad aquí es de evaluación, no autorización de ejecución.
   collation, memoria y restricciones del subset/topología.
 - X04c, capacidades escalares: granularity de bucketAuto, formatos/dominios
   de fecha no anunciados, fechas fuera del dominio público representable y
-  otras familias ausentes. No exigir soporte completo de calendarios para
-  aceptar las correcciones específicas de F09.
+  otras familias ausentes. No exigir calendario completo para aceptar F09.
+- X04d, geo ampliado: geodesia/nearSphere real y planner geo especializado
+  fuera del subset planar declarado. Fijar geometrías, distancias/unidades,
+  índices/requisitos, degradación, precisión y recursos; no convertir la
+  comparación con MongoDB en una promesa esférica implícita.
+  Si cambia el almacenamiento de índices, requiere X05.
 - Diferenciales nuevos por capacidad; native replica set cuando existan efectos
   o límites transaccionales requeridos. Usar control de datos, índices y eventos
-  en out; grafos cíclicos y presupuestos en graphLookup; tipos/rangos en fechas.
+  en out; grafos cíclicos y presupuestos en graphLookup; tipos/rangos en fechas;
+  geometrías/límites y precisión/distancia/planner en X04d.
 - Cierre: solo se anuncia la capacidad tras sus pruebas funcionales, efectos,
   fallos y límites; no queda una implementación parcial presentada como paridad.
 
@@ -2355,7 +2459,7 @@ o B1–B4. Las nuevas aceptaciones usarán los IDs F/X y su candidato propio.
 | Antecedente | Parte I: ampliación necesaria | Parte II: trabajo adicional |
 | --- | --- | --- |
 | O1, fuente materializada | Extender testigos a rutas, collation, sort y selección nuevos; mismo resultado/contexto antes y después de materializar. F03/F05/F08/F11. | Inventariar todas las fuentes/backends o rediseñar sus contratos: X05/X06. |
-| O2, BSON/gramática/codecs/contexto | Incluir salidas window/objetos, Regex/size, nuevos argumentos y candidatos de escritura en la matriz de consumidores; batching/decoders previos como regresión. F01–F04/F07/F09/F11. | Garantía general sobre todos los productores/respuestas/tipos o nuevo dominio de representación: X04–X06. |
+| O2, BSON/gramática/codecs/contexto | Incluir salidas window/objetos, Regex/size, nuevos argumentos y candidatos de escritura en la matriz de consumidores; batching/decoders previos como regresión. F01–F04/F07/F09/F11; tipos int64 según productor/codec y perfiles. | Garantía general sobre todos los productores/respuestas/tipos o nuevo dominio de representación: X04–X06. |
 | O3, validadores/permiso/warn | Repetir los casos afectados por collation, índices y candidato de escritura; conservar niveles/acciones/bypass y ausencia de canal nuevo de logs. F05–F07/F11. | Ampliación de cobertura o canal de warnings: X06; validators de capacidades nuevas: X04; rediseño de schema: X05, con decisión. |
 | O4, piloto D07 | Conservar descarte; ninguna obligación de migrar CompiledJsonSchema. | Solo piloto independiente con criterio de beneficio/rechazo: X05. |
 | O5, suite/cobertura/deep | Gate obligatorio del nuevo candidato, sin reabrir aceptación anterior ni rebajar 99,00%. F11. | Cada incremento X vuelve a cerrar su candidato con el gate aplicable. |
@@ -2382,6 +2486,18 @@ se separa el límite del resultado nativo, no se introduce una falsa divergencia
   semantic_corpora.py y las fixtures versionadas; ampliar cuerpos de casos y
   registro solo donde haga falta. Los workflows ya derivan el inventario:
   no añadir un segundo runner ni otra tabla independiente de expectativas.
+- Disposición de este refinamiento: sustituye las afirmaciones sobre la
+  regresión limit(0), to_list(0), natural y prioridad F09 del borrador c9620e23;
+  mantiene F00–F11/X01–X06 y dependencias salvo natural en F08. Se usaron
+  snapshots fuente aislados y SDK reales sin red; no hubo nueva captura
+  mongod, tests masivos ni implementación. Las sondas negativas nuevas
+  siguen siendo caracterización para F00, no aceptación física 7/8/9.
+- Referencias del contraste: [Cursor PyMongo 4.19](https://pymongo.readthedocs.io/en/4.19.0/api/pymongo/cursor.html),
+  [hint natural](https://www.mongodb.com/docs/manual/reference/method/cursor.hint/),
+  [orden de push](https://www.mongodb.com/docs/manual/reference/operator/aggregation/push/)
+  y [toString](https://www.mongodb.com/docs/manual/reference/operator/aggregation/toString/).
+  Las tablas actuales de documentación no sustituyen capturas 7/8/9: pueden
+  incluir formatos o tipos incorporados en versiones posteriores.
 - Estados de F/X en el owner vigente de implementación cuando comience el
   trabajo; propuesta/requisito aquí, ejecuciones/aceptación allí y resultados
   derivados en la estructura de evidencia existente. No copiar historia ni
