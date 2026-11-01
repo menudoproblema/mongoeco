@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+
 from unittest.mock import patch
 
 from mongoeco.compat import MONGODB_DIALECT_70
@@ -7,8 +8,13 @@ from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.search import compile_search_stage
 from mongoeco.engines import _sqlite_search_runtime as search_runtime_module
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.types import SearchIndexDefinition
-from tests.unit.core._sqlite_helper_test_cases import SQLiteInternalHelperTests as _BaseSQLiteHelperTests
+from mongoeco.errors import OperationFailure
+from mongoeco.types import Binary, SearchIndexDefinition
+
+from tests.unit.core._sqlite_helper_test_cases import (
+    SQLiteInternalHelperTests as _BaseSQLiteHelperTests,
+)
+
 
 _BaseSQLiteHelperTests.__test__ = False
 
@@ -48,12 +54,66 @@ SQLiteSearchRuntimeHelperTests = _build_case(
 
 
 class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
-    def test_sqlite_vector_helpers_cover_post_candidate_filter_fallback_paths(self) -> None:
+    def test_vector_residual_is_prepared_once_at_first_candidate(self):
+        context = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        with patch.object(
+            search_runtime_module,
+            "compile_filter",
+            wraps=search_runtime_module.compile_filter,
+        ) as prepare:
+            matches = search_runtime_module._operation_filter_predicate(
+                {"v": Binary(b"x", 5)}, context
+            )
+            self.assertEqual(prepare.call_count, 0)
+            self.assertTrue(matches({"v": Binary(b"x", 5)}))
+            self.assertFalse(matches({"v": Binary(b"x", 0)}))
+            self.assertFalse(matches({"v": None}))
+            self.assertFalse(matches({}))
+            self.assertEqual(prepare.call_count, 1)
+            other = search_runtime_module._operation_filter_predicate({"v": b"x"}, None)
+            self.assertTrue(other({"v": Binary(b"x", 0)}))
+            self.assertEqual(prepare.call_count, 2)
+
+    def test_prepared_residual_keeps_bindings_per_operation(self):
+        for needle in (1, 2):
+            context = OperationContext.create(
+                dialect=MONGODB_DIALECT_70, bindings={"needle": needle}
+            )
+            predicate = search_runtime_module._operation_filter_predicate(
+                {"$expr": {"$eq": ["$v", "$$needle"]}}, context
+            )
+            self.assertTrue(predicate({"v": needle}))
+            self.assertFalse(predicate({"v": needle + 1}))
+
+    def test_lazy_residual_retains_collation_and_error_boundary(self):
+        context = OperationContext.create(
+            dialect=MONGODB_DIALECT_70, collation={"locale": "en", "strength": 2}
+        )
+        matches = search_runtime_module._operation_filter_predicate({"v": "A"}, context)
+        self.assertTrue(matches({"v": "a"}))
+        self.assertFalse(matches({"v": "b"}))
+        with patch.object(
+            search_runtime_module,
+            "compile_filter",
+            wraps=search_runtime_module.compile_filter,
+        ) as prepare:
+            invalid = search_runtime_module._operation_filter_predicate(
+                {"$unknown": 1}, context
+            )
+            self.assertEqual(prepare.call_count, 0)
+            with self.assertRaises(OperationFailure):
+                invalid({})
+            self.assertEqual(prepare.call_count, 1)
+
+    def test_sqlite_vector_helpers_cover_post_candidate_filter_fallback_paths(
+        self,
+    ) -> None:
         async def _run() -> None:
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await _insert_document(engine,
+                await _insert_document(
+                    engine,
                     "db",
                     "coll",
                     {
@@ -62,7 +122,8 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
                         "embedding": [1.0, 0.0],
                     },
                 )
-                await _insert_document(engine,
+                await _insert_document(
+                    engine,
                     "db",
                     "coll",
                     {

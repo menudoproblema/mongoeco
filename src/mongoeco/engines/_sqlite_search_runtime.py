@@ -14,6 +14,7 @@ from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.runtime_metadata import RuntimeDocumentState
 from mongoeco.core.search import (
     VECTOR_SEARCH_SCORE_FIELD,
@@ -32,8 +33,8 @@ from mongoeco.core.search import (
     SearchVectorQuery,
     SearchWildcardQuery,
     attach_vector_search_score,
-    build_search_index_document,
     build_search_count_result,
+    build_search_index_document,
     build_search_stage_option_previews,
     compile_search_stage,
     is_text_search_query,
@@ -111,6 +112,7 @@ from mongoeco.types import (
     SearchIndexDefinition,
     SearchIndexDocument,
 )
+
 
 if TYPE_CHECKING:
     from mongoeco.core.search_execution import SearchRequest
@@ -201,10 +203,13 @@ def _matches_operation_filter(
     document: Document,
     filter_spec: dict[str, object],
     operation_context: OperationContext | None,
+    *,
+    prepared=None,
 ) -> bool:
-    return QueryEngine.match(
+    match = QueryEngine.match if prepared is None else QueryEngine.match_plan
+    return match(
         document,
-        filter_spec,
+        filter_spec if prepared is None else prepared,
         dialect=(
             operation_context.dialect
             if operation_context is not None
@@ -217,6 +222,36 @@ def _matches_operation_filter(
             operation_context.expressions if operation_context is not None else None
         ),
     )
+
+
+def _operation_filter_predicate(filter_spec, operation_context):
+    """Prepare a residual once, lazily at the original first-document boundary."""
+    prepared = None
+
+    def matches(document):
+        nonlocal prepared
+        if prepared is None:
+            dialect = (
+                operation_context.dialect
+                if operation_context is not None
+                else MONGODB_DIALECT_70
+            )
+            variables = (
+                operation_context.expressions if operation_context is not None else None
+            )
+            prepared = compile_filter(
+                filter_spec,
+                dialect=dialect,
+                variables=variables or {},
+            )
+        return _matches_operation_filter(
+            document,
+            filter_spec,
+            operation_context,
+            prepared=prepared,
+        )
+
+    return matches
 
 
 @dataclass(frozen=True, slots=True)
@@ -1537,7 +1572,12 @@ def exact_vector_hits_sync(
     operation_context: OperationContext | None = None,
     skip_query_filter_match: bool = False,
     skip_downstream_filter_match: bool = False,
+    residuals=None,
 ) -> list[tuple[float, Document]]:
+    query_matches, downstream_matches = residuals or (
+        _operation_filter_predicate(query.filter_spec, operation_context),
+        _operation_filter_predicate(downstream_filter_spec, operation_context),
+    )
     vector_hits: list[tuple[float, Document]] = []
     if candidate_storage_keys is not None:
         documents = [
@@ -1554,21 +1594,13 @@ def exact_vector_hits_sync(
         if (
             not skip_query_filter_match
             and query.filter_spec is not None
-            and not _matches_operation_filter(
-                document,
-                query.filter_spec,
-                operation_context,
-            )
+            and not query_matches(document)
         ):
             continue
         if (
             not skip_downstream_filter_match
             and downstream_filter_spec is not None
-            and not _matches_operation_filter(
-                document,
-                downstream_filter_spec,
-                operation_context,
-            )
+            and not downstream_matches(document)
         ):
             continue
         score = score_vector_document(
@@ -1627,6 +1659,7 @@ def _sqlite_vector_candidate_documents(
     downstream_filter_spec: dict[str, object] | None = None,
     downstream_prefilter_exact: bool | None = None,
     operation_context: OperationContext | None = None,
+    residuals=None,
 ) -> tuple[list[Document], int, int, int, int, str | None]:
     if query_filter_spec is None:
         query_filter_spec = query.filter_spec
@@ -1659,6 +1692,11 @@ def _sqlite_vector_candidate_documents(
     )
     current_request = requested
 
+    query_matches, downstream_matches = residuals or (
+        _operation_filter_predicate(query_filter_spec, operation_context),
+        _operation_filter_predicate(downstream_filter_spec, operation_context),
+    )
+
     while current_request > 0:
         ann_hits = search_sqlite_vector_backend(
             backend_state,
@@ -1684,22 +1722,14 @@ def _sqlite_vector_candidate_documents(
             if (
                 query_filter_spec is not None
                 and not query_prefilter_exact
-                and not _matches_operation_filter(
-                    document,
-                    query_filter_spec,
-                    operation_context,
-                )
+                and not query_matches(document)
             ):
                 documents_filtered += 1
                 continue
             if (
                 downstream_filter_spec is not None
                 and not downstream_prefilter_exact
-                and not _matches_operation_filter(
-                    document,
-                    downstream_filter_spec,
-                    operation_context,
-                )
+                and not downstream_matches(document)
             ):
                 documents_filtered += 1
                 continue
@@ -1773,6 +1803,10 @@ def execute_sqlite_search_query(
         physical_name,
     )
     if isinstance(query, SearchVectorQuery):
+        residuals = (
+            _operation_filter_predicate(query.filter_spec, operation_context),
+            _operation_filter_predicate(downstream_filter_spec, operation_context),
+        )
         vector_filter_storage_keys: list[str] | None = None
         vector_filter_description: dict[str, object] | None = None
         downstream_filter_storage_keys: list[str] | None = None
@@ -1854,6 +1888,7 @@ def execute_sqlite_search_query(
                 downstream_filter_spec=downstream_filter_spec,
                 downstream_prefilter_exact=downstream_prefilter_exact,
                 operation_context=operation_context,
+                residuals=residuals,
             )
             if exact_fallback_reason is None:
                 enforce_deadline(deadline)
@@ -1861,11 +1896,7 @@ def execute_sqlite_search_query(
                     filtered_documents = [
                         document
                         for document in filtered_documents
-                        if _matches_operation_filter(
-                            document,
-                            downstream_filter_spec,
-                            operation_context,
-                        )
+                        if residuals[1](document)
                     ]
                 effective_limit = (
                     min(query.limit, result_limit_hint)
@@ -1912,6 +1943,7 @@ def execute_sqlite_search_query(
             ),
             downstream_filter_spec=downstream_filter_spec,
             operation_context=operation_context,
+            residuals=residuals,
             skip_query_filter_match=bool(
                 query.filter_spec is None
                 or (vector_filter_storage_keys is not None and query_prefilter_exact),

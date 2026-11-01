@@ -197,6 +197,10 @@ from tests.differential.semantic_overflow_write_cases import (
     SEMANTIC_OVERFLOW_WRITE_CASES,
     WRITE_SEED as OVERFLOW_WRITE_SEED,
 )
+from tests.differential.semantic_p2_read_cost_cases import (
+    SEED as P2_READ_COST_SEED,
+    SEMANTIC_P2_READ_COST_CASES,
+)
 from tests.differential.semantic_query_batch_callback_cases import (
     SEED as QUERY_BATCH_CALLBACK_SEED,
     SEMANTIC_QUERY_BATCH_CALLBACK_CASES,
@@ -334,6 +338,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "p2_read_cost": SemanticCorpus(
+        "p2-read-cost", "semantic_p2_read_cost_cases", P2_READ_COST_SEED,
+        SEMANTIC_P2_READ_COST_CASES, requires_standalone=True,
+    ),
     "command_shape": SemanticCorpus(
         "command-shape", "semantic_command_shape_cases",
         COMMAND_SHAPE_SEED, SEMANTIC_COMMAND_SHAPE_CASES,

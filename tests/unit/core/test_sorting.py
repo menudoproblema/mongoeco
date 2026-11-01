@@ -3,7 +3,10 @@ import math
 import unittest
 import uuid
 
+from unittest.mock import patch
+
 from mongoeco.compat import MongoDialect
+from mongoeco.core import sorting as sorting_module
 from mongoeco.core.sorting import (
     _compare_native_sort_scalars,
     _extreme_value,
@@ -17,6 +20,57 @@ from mongoeco.types import ObjectId
 
 
 class SortingHelpersTests(unittest.TestCase):
+    def test_homogeneous_integer_sort_uses_native_keys_and_keeps_ties_stable(self):
+        values = [3, -1, 3, 2**63 - 1, -(2**63)]
+        message = "redundant comparator"
+        documents = [{"_id": i, "v": value} for i, value in enumerate(values)]
+        for direction, expected in ((1, [4, 1, 0, 2, 3]), (-1, [3, 0, 2, 1, 4])):
+            with (
+                self.subTest(direction=direction),
+                patch.object(
+                    sorting_module,
+                    "_compare_sort_keys",
+                    side_effect=AssertionError(message),
+                ),
+            ):
+                actual = sort_documents(documents, [("v", direction)])
+                self.assertEqual([row["_id"] for row in actual], expected)
+        self.assertEqual([row["v"] for row in documents], values)
+
+    def test_integer_key_optimization_retains_mixed_and_deadline_comparators(self):
+        for values, deadline in (
+            ([2, 1, 0], float("inf")),
+            ([2, 1.0, True, None, "a"], None),
+        ):
+            documents = [{"_id": i, "v": v} for i, v in enumerate(values)]
+            with (
+                self.subTest(values=values),
+                patch.object(
+                    sorting_module,
+                    "_compare_sort_keys",
+                    wraps=sorting_module._compare_sort_keys,
+                ) as comparator,
+            ):
+                actual = sort_documents(documents, [("v", 1)], deadline=deadline)
+                self.assertGreater(comparator.call_count, 0)
+            reference = sort_documents(documents, [("v", 1)], deadline=float("inf"))
+            self.assertEqual(actual, reference)
+
+    def test_integer_key_optimization_does_not_replace_custom_dialect_order(self):
+        class ReverseIntegerDialect(MongoDialect):
+            def compare_values(self, left, right):
+                return (right > left) - (right < left)
+
+        documents = [{"_id": n, "v": n} for n in (1, 2, 3)]
+        actual = sort_documents(
+            documents,
+            [("v", 1)],
+            dialect=ReverseIntegerDialect(
+                key="test", server_version="test", label="Reverse Integer"
+            ),
+        )
+        self.assertEqual([row["v"] for row in actual], [3, 2, 1])
+
     def test_sort_documents_can_use_custom_dialect_comparator(self):
         class _ReverseStringDialect(MongoDialect):
             def compare_values(self, left, right) -> int:

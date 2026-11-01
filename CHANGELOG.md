@@ -10,6 +10,13 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Align retained raw command shapes with MongoDB 7/8/9 diagnostics,
+  precedence and namespace behavior across direct and wire entrypoints.
+  Share command field validation without changing Python method contracts.
+- Reuse prepared SQLite vector residuals through ANN and exact fallback,
+  preserving late eligible candidates. Sort uniform native integer keys
+  directly while retaining canonical comparisons for mixed/contextual sorts.
+
 - Preserve field-name projection sets through BSON admission, text-score sort
   metadata through bounded reads, and registered aggregation extension grammar
   during preparation. Omit `unique: false` from `index_information()` entries.

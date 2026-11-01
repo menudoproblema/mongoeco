@@ -222,6 +222,19 @@ def sort_documents(
         for doc in iter_with_deadline(documents, deadline)
     ]
 
+    # Exact Python integers already use native ordering in the comparator.
+    # Check that eligibility once rather than dispatching it per comparison.
+    # Mixed BSON types, custom dialects/collations and deadlines keep that path.
+    if (
+        len(sort) == 1
+        and dialect is MONGODB_DIALECT_70
+        and collation is None
+        and deadline is None
+        and all(type(keys[0]) is int for keys, _document in decorated)
+    ):
+        decorated.sort(key=lambda item: item[0][0], reverse=sort[0][1] != 1)
+        return [document for _keys, document in decorated]
+
     def _compare_decorated(
         left_tuple: tuple[list[Any], Document], right_tuple: tuple[list[Any], Document]
     ) -> int:

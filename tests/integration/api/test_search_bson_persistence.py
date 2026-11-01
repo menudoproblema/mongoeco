@@ -1,13 +1,17 @@
 """Native MQL eligibility through Search candidates, writes and SQLite reopen."""
 
 import asyncio
+import math
 
 from functools import partial
 from unittest.mock import patch
 
 import pytest
 
+from bson import Binary
+
 from mongoeco import MongoClient, SearchIndexModel
+from mongoeco.core import filtering as filtering_module
 from mongoeco.engines import (
     MemoryEngine,
     SQLiteEngine,
@@ -41,6 +45,7 @@ TEXT_DEFINITION = {
 }
 ROUTES = ("vector", "vector-downstream", "text", "compound")
 _TOP_K = 2
+_SUBTYPE_BOUNDARY = 32
 
 
 def indexes(collection):
@@ -278,3 +283,57 @@ def test_sqlite_ranks_all_received_ann_candidates_before_truncating(tied):
         ):
             assert ids(collection, pipeline({}, "vector", limit=_TOP_K)) == ["00", "01"]
         assert set(scores) == {"00", "01", "02"}
+
+
+@pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])
+@pytest.mark.parametrize("subtype", [0, 5])
+@pytest.mark.parametrize("limit", [2, 64])
+def test_vector_residual_preparation_is_shared_with_exact_fallback(
+    dialect, subtype, limit
+):
+    expected_ids = _capture(dialect, "p2_read_cost")["cases"][
+        "semantic_p2_vector_filter_eligibility"
+    ]["late"][str(subtype)]
+    expected = sorted(
+        expected_ids, key=lambda n: (-1 / math.sqrt(1 + (int(n) / 64) ** 2), n)
+    )[:limit]
+    with MongoClient(SQLiteEngine(), mongodb_dialect=dialect) as client:
+        collection = client.p2.records
+        collection.insert_many(
+            [
+                {
+                    "_id": f"{n:03}",
+                    "embedding": [1.0, n / 64],
+                    "v": Binary(b"x", 5 if n >= _SUBTYPE_BOUNDARY else 0),
+                }
+                for n in range(64)
+            ]
+        )
+        collection.create_search_index(
+            SearchIndexModel(VECTOR_DEFINITION, name="vectors", type="vectorSearch")
+        )
+        with (
+            patch.object(
+                sqlite_runtime, "compile_filter", wraps=sqlite_runtime.compile_filter
+            ) as prepared,
+            patch.object(
+                filtering_module,
+                "compile_filter",
+                wraps=filtering_module.compile_filter,
+            ) as repeated,
+            patch.object(
+                sqlite_runtime,
+                "exact_vector_hits_sync",
+                wraps=sqlite_runtime.exact_vector_hits_sync,
+            ) as exact,
+        ):
+            actual = ids(
+                collection,
+                pipeline({"v": Binary(b"x", subtype)}, "vector", limit=limit),
+            )
+        assert actual == expected
+        assert prepared.call_count == 1
+        assert exact.call_count == int(limit > len(expected_ids))
+        assert not any(
+            call.args and set(call.args[0]) == {"v"} for call in repeated.call_args_list
+        )

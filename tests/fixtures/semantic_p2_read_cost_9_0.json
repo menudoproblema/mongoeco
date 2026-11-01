@@ -1,0 +1,2015 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_p2_consumption_cost": {
+      "all/1/0/1": {
+        "first": [
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "bson_sha256": "6768d994cd0453291b499a6bec5a2335d86a61cea1b2a22d073ee4b0fe14b883"
+      },
+      "all/1/3/7": {
+        "first": [
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          }
+        ],
+        "bson_sha256": "1b353a25f591fc6f26ecc33ecd2724d3c590a2194178c3b9565f16c07d27c31b"
+      },
+      "all/1/0/0": {
+        "first": [
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "9"
+          },
+          {
+            "$numberInt": "10"
+          },
+          {
+            "$numberInt": "11"
+          },
+          {
+            "$numberInt": "12"
+          },
+          {
+            "$numberInt": "13"
+          },
+          {
+            "$numberInt": "14"
+          },
+          {
+            "$numberInt": "15"
+          },
+          {
+            "$numberInt": "16"
+          },
+          {
+            "$numberInt": "17"
+          },
+          {
+            "$numberInt": "18"
+          },
+          {
+            "$numberInt": "19"
+          },
+          {
+            "$numberInt": "20"
+          },
+          {
+            "$numberInt": "21"
+          },
+          {
+            "$numberInt": "22"
+          },
+          {
+            "$numberInt": "23"
+          },
+          {
+            "$numberInt": "24"
+          },
+          {
+            "$numberInt": "25"
+          },
+          {
+            "$numberInt": "26"
+          },
+          {
+            "$numberInt": "27"
+          },
+          {
+            "$numberInt": "28"
+          },
+          {
+            "$numberInt": "29"
+          },
+          {
+            "$numberInt": "30"
+          },
+          {
+            "$numberInt": "31"
+          },
+          {
+            "$numberInt": "32"
+          },
+          {
+            "$numberInt": "33"
+          },
+          {
+            "$numberInt": "34"
+          },
+          {
+            "$numberInt": "35"
+          },
+          {
+            "$numberInt": "36"
+          },
+          {
+            "$numberInt": "37"
+          },
+          {
+            "$numberInt": "38"
+          },
+          {
+            "$numberInt": "39"
+          },
+          {
+            "$numberInt": "40"
+          },
+          {
+            "$numberInt": "41"
+          },
+          {
+            "$numberInt": "42"
+          },
+          {
+            "$numberInt": "43"
+          },
+          {
+            "$numberInt": "44"
+          },
+          {
+            "$numberInt": "45"
+          },
+          {
+            "$numberInt": "46"
+          },
+          {
+            "$numberInt": "47"
+          },
+          {
+            "$numberInt": "48"
+          },
+          {
+            "$numberInt": "49"
+          },
+          {
+            "$numberInt": "50"
+          },
+          {
+            "$numberInt": "51"
+          },
+          {
+            "$numberInt": "52"
+          },
+          {
+            "$numberInt": "53"
+          },
+          {
+            "$numberInt": "54"
+          },
+          {
+            "$numberInt": "55"
+          },
+          {
+            "$numberInt": "56"
+          },
+          {
+            "$numberInt": "57"
+          },
+          {
+            "$numberInt": "58"
+          },
+          {
+            "$numberInt": "59"
+          },
+          {
+            "$numberInt": "60"
+          },
+          {
+            "$numberInt": "61"
+          },
+          {
+            "$numberInt": "62"
+          },
+          {
+            "$numberInt": "63"
+          },
+          {
+            "$numberInt": "64"
+          },
+          {
+            "$numberInt": "65"
+          },
+          {
+            "$numberInt": "66"
+          },
+          {
+            "$numberInt": "67"
+          },
+          {
+            "$numberInt": "68"
+          },
+          {
+            "$numberInt": "69"
+          },
+          {
+            "$numberInt": "70"
+          },
+          {
+            "$numberInt": "71"
+          },
+          {
+            "$numberInt": "72"
+          },
+          {
+            "$numberInt": "73"
+          },
+          {
+            "$numberInt": "74"
+          },
+          {
+            "$numberInt": "75"
+          },
+          {
+            "$numberInt": "76"
+          },
+          {
+            "$numberInt": "77"
+          },
+          {
+            "$numberInt": "78"
+          },
+          {
+            "$numberInt": "79"
+          },
+          {
+            "$numberInt": "80"
+          },
+          {
+            "$numberInt": "81"
+          },
+          {
+            "$numberInt": "82"
+          },
+          {
+            "$numberInt": "83"
+          },
+          {
+            "$numberInt": "84"
+          },
+          {
+            "$numberInt": "85"
+          },
+          {
+            "$numberInt": "86"
+          },
+          {
+            "$numberInt": "87"
+          },
+          {
+            "$numberInt": "88"
+          },
+          {
+            "$numberInt": "89"
+          },
+          {
+            "$numberInt": "90"
+          },
+          {
+            "$numberInt": "91"
+          },
+          {
+            "$numberInt": "92"
+          },
+          {
+            "$numberInt": "93"
+          },
+          {
+            "$numberInt": "94"
+          },
+          {
+            "$numberInt": "95"
+          },
+          {
+            "$numberInt": "96"
+          },
+          {
+            "$numberInt": "97"
+          },
+          {
+            "$numberInt": "98"
+          },
+          {
+            "$numberInt": "99"
+          },
+          {
+            "$numberInt": "100"
+          },
+          {
+            "$numberInt": "101"
+          },
+          {
+            "$numberInt": "102"
+          },
+          {
+            "$numberInt": "103"
+          },
+          {
+            "$numberInt": "104"
+          },
+          {
+            "$numberInt": "105"
+          },
+          {
+            "$numberInt": "106"
+          },
+          {
+            "$numberInt": "107"
+          },
+          {
+            "$numberInt": "108"
+          },
+          {
+            "$numberInt": "109"
+          },
+          {
+            "$numberInt": "110"
+          },
+          {
+            "$numberInt": "111"
+          },
+          {
+            "$numberInt": "112"
+          },
+          {
+            "$numberInt": "113"
+          },
+          {
+            "$numberInt": "114"
+          },
+          {
+            "$numberInt": "115"
+          },
+          {
+            "$numberInt": "116"
+          },
+          {
+            "$numberInt": "117"
+          },
+          {
+            "$numberInt": "118"
+          },
+          {
+            "$numberInt": "119"
+          },
+          {
+            "$numberInt": "120"
+          },
+          {
+            "$numberInt": "121"
+          },
+          {
+            "$numberInt": "122"
+          },
+          {
+            "$numberInt": "123"
+          },
+          {
+            "$numberInt": "124"
+          },
+          {
+            "$numberInt": "125"
+          },
+          {
+            "$numberInt": "126"
+          },
+          {
+            "$numberInt": "127"
+          },
+          {
+            "$numberInt": "128"
+          },
+          {
+            "$numberInt": "129"
+          },
+          {
+            "$numberInt": "130"
+          },
+          {
+            "$numberInt": "131"
+          },
+          {
+            "$numberInt": "132"
+          },
+          {
+            "$numberInt": "133"
+          },
+          {
+            "$numberInt": "134"
+          },
+          {
+            "$numberInt": "135"
+          },
+          {
+            "$numberInt": "136"
+          },
+          {
+            "$numberInt": "137"
+          },
+          {
+            "$numberInt": "138"
+          },
+          {
+            "$numberInt": "139"
+          },
+          {
+            "$numberInt": "140"
+          },
+          {
+            "$numberInt": "141"
+          },
+          {
+            "$numberInt": "142"
+          },
+          {
+            "$numberInt": "143"
+          },
+          {
+            "$numberInt": "144"
+          },
+          {
+            "$numberInt": "145"
+          },
+          {
+            "$numberInt": "146"
+          },
+          {
+            "$numberInt": "147"
+          },
+          {
+            "$numberInt": "148"
+          },
+          {
+            "$numberInt": "149"
+          },
+          {
+            "$numberInt": "150"
+          },
+          {
+            "$numberInt": "151"
+          },
+          {
+            "$numberInt": "152"
+          },
+          {
+            "$numberInt": "153"
+          },
+          {
+            "$numberInt": "154"
+          },
+          {
+            "$numberInt": "155"
+          },
+          {
+            "$numberInt": "156"
+          },
+          {
+            "$numberInt": "157"
+          },
+          {
+            "$numberInt": "158"
+          },
+          {
+            "$numberInt": "159"
+          },
+          {
+            "$numberInt": "160"
+          },
+          {
+            "$numberInt": "161"
+          },
+          {
+            "$numberInt": "162"
+          },
+          {
+            "$numberInt": "163"
+          },
+          {
+            "$numberInt": "164"
+          },
+          {
+            "$numberInt": "165"
+          },
+          {
+            "$numberInt": "166"
+          },
+          {
+            "$numberInt": "167"
+          },
+          {
+            "$numberInt": "168"
+          },
+          {
+            "$numberInt": "169"
+          },
+          {
+            "$numberInt": "170"
+          },
+          {
+            "$numberInt": "171"
+          },
+          {
+            "$numberInt": "172"
+          },
+          {
+            "$numberInt": "173"
+          },
+          {
+            "$numberInt": "174"
+          },
+          {
+            "$numberInt": "175"
+          },
+          {
+            "$numberInt": "176"
+          },
+          {
+            "$numberInt": "177"
+          },
+          {
+            "$numberInt": "178"
+          },
+          {
+            "$numberInt": "179"
+          },
+          {
+            "$numberInt": "180"
+          },
+          {
+            "$numberInt": "181"
+          },
+          {
+            "$numberInt": "182"
+          },
+          {
+            "$numberInt": "183"
+          },
+          {
+            "$numberInt": "184"
+          },
+          {
+            "$numberInt": "185"
+          },
+          {
+            "$numberInt": "186"
+          },
+          {
+            "$numberInt": "187"
+          },
+          {
+            "$numberInt": "188"
+          },
+          {
+            "$numberInt": "189"
+          },
+          {
+            "$numberInt": "190"
+          },
+          {
+            "$numberInt": "191"
+          },
+          {
+            "$numberInt": "192"
+          },
+          {
+            "$numberInt": "193"
+          },
+          {
+            "$numberInt": "194"
+          },
+          {
+            "$numberInt": "195"
+          },
+          {
+            "$numberInt": "196"
+          },
+          {
+            "$numberInt": "197"
+          },
+          {
+            "$numberInt": "198"
+          },
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+      },
+      "all/-1/0/1": {
+        "first": [
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "bson_sha256": "0bcb654b349e3cf4f6da5c8bd3dde324aac703c5080ece22cdef6f341b80fc3b"
+      },
+      "all/-1/3/7": {
+        "first": [
+          {
+            "$numberInt": "196"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "196"
+          },
+          {
+            "$numberInt": "195"
+          },
+          {
+            "$numberInt": "194"
+          },
+          {
+            "$numberInt": "193"
+          },
+          {
+            "$numberInt": "192"
+          },
+          {
+            "$numberInt": "191"
+          },
+          {
+            "$numberInt": "190"
+          }
+        ],
+        "bson_sha256": "285c850e866d3660ca180fbb69c478e3ee978f10d3c3a5a437f87647fc56dfb4"
+      },
+      "all/-1/0/0": {
+        "first": [
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "199"
+          },
+          {
+            "$numberInt": "198"
+          },
+          {
+            "$numberInt": "197"
+          },
+          {
+            "$numberInt": "196"
+          },
+          {
+            "$numberInt": "195"
+          },
+          {
+            "$numberInt": "194"
+          },
+          {
+            "$numberInt": "193"
+          },
+          {
+            "$numberInt": "192"
+          },
+          {
+            "$numberInt": "191"
+          },
+          {
+            "$numberInt": "190"
+          },
+          {
+            "$numberInt": "189"
+          },
+          {
+            "$numberInt": "188"
+          },
+          {
+            "$numberInt": "187"
+          },
+          {
+            "$numberInt": "186"
+          },
+          {
+            "$numberInt": "185"
+          },
+          {
+            "$numberInt": "184"
+          },
+          {
+            "$numberInt": "183"
+          },
+          {
+            "$numberInt": "182"
+          },
+          {
+            "$numberInt": "181"
+          },
+          {
+            "$numberInt": "180"
+          },
+          {
+            "$numberInt": "179"
+          },
+          {
+            "$numberInt": "178"
+          },
+          {
+            "$numberInt": "177"
+          },
+          {
+            "$numberInt": "176"
+          },
+          {
+            "$numberInt": "175"
+          },
+          {
+            "$numberInt": "174"
+          },
+          {
+            "$numberInt": "173"
+          },
+          {
+            "$numberInt": "172"
+          },
+          {
+            "$numberInt": "171"
+          },
+          {
+            "$numberInt": "170"
+          },
+          {
+            "$numberInt": "169"
+          },
+          {
+            "$numberInt": "168"
+          },
+          {
+            "$numberInt": "167"
+          },
+          {
+            "$numberInt": "166"
+          },
+          {
+            "$numberInt": "165"
+          },
+          {
+            "$numberInt": "164"
+          },
+          {
+            "$numberInt": "163"
+          },
+          {
+            "$numberInt": "162"
+          },
+          {
+            "$numberInt": "161"
+          },
+          {
+            "$numberInt": "160"
+          },
+          {
+            "$numberInt": "159"
+          },
+          {
+            "$numberInt": "158"
+          },
+          {
+            "$numberInt": "157"
+          },
+          {
+            "$numberInt": "156"
+          },
+          {
+            "$numberInt": "155"
+          },
+          {
+            "$numberInt": "154"
+          },
+          {
+            "$numberInt": "153"
+          },
+          {
+            "$numberInt": "152"
+          },
+          {
+            "$numberInt": "151"
+          },
+          {
+            "$numberInt": "150"
+          },
+          {
+            "$numberInt": "149"
+          },
+          {
+            "$numberInt": "148"
+          },
+          {
+            "$numberInt": "147"
+          },
+          {
+            "$numberInt": "146"
+          },
+          {
+            "$numberInt": "145"
+          },
+          {
+            "$numberInt": "144"
+          },
+          {
+            "$numberInt": "143"
+          },
+          {
+            "$numberInt": "142"
+          },
+          {
+            "$numberInt": "141"
+          },
+          {
+            "$numberInt": "140"
+          },
+          {
+            "$numberInt": "139"
+          },
+          {
+            "$numberInt": "138"
+          },
+          {
+            "$numberInt": "137"
+          },
+          {
+            "$numberInt": "136"
+          },
+          {
+            "$numberInt": "135"
+          },
+          {
+            "$numberInt": "134"
+          },
+          {
+            "$numberInt": "133"
+          },
+          {
+            "$numberInt": "132"
+          },
+          {
+            "$numberInt": "131"
+          },
+          {
+            "$numberInt": "130"
+          },
+          {
+            "$numberInt": "129"
+          },
+          {
+            "$numberInt": "128"
+          },
+          {
+            "$numberInt": "127"
+          },
+          {
+            "$numberInt": "126"
+          },
+          {
+            "$numberInt": "125"
+          },
+          {
+            "$numberInt": "124"
+          },
+          {
+            "$numberInt": "123"
+          },
+          {
+            "$numberInt": "122"
+          },
+          {
+            "$numberInt": "121"
+          },
+          {
+            "$numberInt": "120"
+          },
+          {
+            "$numberInt": "119"
+          },
+          {
+            "$numberInt": "118"
+          },
+          {
+            "$numberInt": "117"
+          },
+          {
+            "$numberInt": "116"
+          },
+          {
+            "$numberInt": "115"
+          },
+          {
+            "$numberInt": "114"
+          },
+          {
+            "$numberInt": "113"
+          },
+          {
+            "$numberInt": "112"
+          },
+          {
+            "$numberInt": "111"
+          },
+          {
+            "$numberInt": "110"
+          },
+          {
+            "$numberInt": "109"
+          },
+          {
+            "$numberInt": "108"
+          },
+          {
+            "$numberInt": "107"
+          },
+          {
+            "$numberInt": "106"
+          },
+          {
+            "$numberInt": "105"
+          },
+          {
+            "$numberInt": "104"
+          },
+          {
+            "$numberInt": "103"
+          },
+          {
+            "$numberInt": "102"
+          },
+          {
+            "$numberInt": "101"
+          },
+          {
+            "$numberInt": "100"
+          },
+          {
+            "$numberInt": "99"
+          },
+          {
+            "$numberInt": "98"
+          },
+          {
+            "$numberInt": "97"
+          },
+          {
+            "$numberInt": "96"
+          },
+          {
+            "$numberInt": "95"
+          },
+          {
+            "$numberInt": "94"
+          },
+          {
+            "$numberInt": "93"
+          },
+          {
+            "$numberInt": "92"
+          },
+          {
+            "$numberInt": "91"
+          },
+          {
+            "$numberInt": "90"
+          },
+          {
+            "$numberInt": "89"
+          },
+          {
+            "$numberInt": "88"
+          },
+          {
+            "$numberInt": "87"
+          },
+          {
+            "$numberInt": "86"
+          },
+          {
+            "$numberInt": "85"
+          },
+          {
+            "$numberInt": "84"
+          },
+          {
+            "$numberInt": "83"
+          },
+          {
+            "$numberInt": "82"
+          },
+          {
+            "$numberInt": "81"
+          },
+          {
+            "$numberInt": "80"
+          },
+          {
+            "$numberInt": "79"
+          },
+          {
+            "$numberInt": "78"
+          },
+          {
+            "$numberInt": "77"
+          },
+          {
+            "$numberInt": "76"
+          },
+          {
+            "$numberInt": "75"
+          },
+          {
+            "$numberInt": "74"
+          },
+          {
+            "$numberInt": "73"
+          },
+          {
+            "$numberInt": "72"
+          },
+          {
+            "$numberInt": "71"
+          },
+          {
+            "$numberInt": "70"
+          },
+          {
+            "$numberInt": "69"
+          },
+          {
+            "$numberInt": "68"
+          },
+          {
+            "$numberInt": "67"
+          },
+          {
+            "$numberInt": "66"
+          },
+          {
+            "$numberInt": "65"
+          },
+          {
+            "$numberInt": "64"
+          },
+          {
+            "$numberInt": "63"
+          },
+          {
+            "$numberInt": "62"
+          },
+          {
+            "$numberInt": "61"
+          },
+          {
+            "$numberInt": "60"
+          },
+          {
+            "$numberInt": "59"
+          },
+          {
+            "$numberInt": "58"
+          },
+          {
+            "$numberInt": "57"
+          },
+          {
+            "$numberInt": "56"
+          },
+          {
+            "$numberInt": "55"
+          },
+          {
+            "$numberInt": "54"
+          },
+          {
+            "$numberInt": "53"
+          },
+          {
+            "$numberInt": "52"
+          },
+          {
+            "$numberInt": "51"
+          },
+          {
+            "$numberInt": "50"
+          },
+          {
+            "$numberInt": "49"
+          },
+          {
+            "$numberInt": "48"
+          },
+          {
+            "$numberInt": "47"
+          },
+          {
+            "$numberInt": "46"
+          },
+          {
+            "$numberInt": "45"
+          },
+          {
+            "$numberInt": "44"
+          },
+          {
+            "$numberInt": "43"
+          },
+          {
+            "$numberInt": "42"
+          },
+          {
+            "$numberInt": "41"
+          },
+          {
+            "$numberInt": "40"
+          },
+          {
+            "$numberInt": "39"
+          },
+          {
+            "$numberInt": "38"
+          },
+          {
+            "$numberInt": "37"
+          },
+          {
+            "$numberInt": "36"
+          },
+          {
+            "$numberInt": "35"
+          },
+          {
+            "$numberInt": "34"
+          },
+          {
+            "$numberInt": "33"
+          },
+          {
+            "$numberInt": "32"
+          },
+          {
+            "$numberInt": "31"
+          },
+          {
+            "$numberInt": "30"
+          },
+          {
+            "$numberInt": "29"
+          },
+          {
+            "$numberInt": "28"
+          },
+          {
+            "$numberInt": "27"
+          },
+          {
+            "$numberInt": "26"
+          },
+          {
+            "$numberInt": "25"
+          },
+          {
+            "$numberInt": "24"
+          },
+          {
+            "$numberInt": "23"
+          },
+          {
+            "$numberInt": "22"
+          },
+          {
+            "$numberInt": "21"
+          },
+          {
+            "$numberInt": "20"
+          },
+          {
+            "$numberInt": "19"
+          },
+          {
+            "$numberInt": "18"
+          },
+          {
+            "$numberInt": "17"
+          },
+          {
+            "$numberInt": "16"
+          },
+          {
+            "$numberInt": "15"
+          },
+          {
+            "$numberInt": "14"
+          },
+          {
+            "$numberInt": "13"
+          },
+          {
+            "$numberInt": "12"
+          },
+          {
+            "$numberInt": "11"
+          },
+          {
+            "$numberInt": "10"
+          },
+          {
+            "$numberInt": "9"
+          },
+          {
+            "$numberInt": "8"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "0"
+          }
+        ],
+        "bson_sha256": "5716de893f88484b2bb2586d9cd229a1343f1b2aa7acf775f754e76465684647"
+      },
+      "late/1/0/1": {
+        "first": [
+          {
+            "$numberInt": "150"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "150"
+          }
+        ],
+        "bson_sha256": "3c8e9d75d25b6b6992891ea39896dec48d10257d9d77dfcfe32eff4d435f915a"
+      },
+      "late/1/3/7": {
+        "first": [
+          {
+            "$numberInt": "153"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "153"
+          },
+          {
+            "$numberInt": "154"
+          },
+          {
+            "$numberInt": "155"
+          },
+          {
+            "$numberInt": "156"
+          },
+          {
+            "$numberInt": "157"
+          },
+          {
+            "$numberInt": "158"
+          },
+          {
+            "$numberInt": "159"
+          }
+        ],
+        "bson_sha256": "80142afb4fe3722b4225f7bdc28a4ca2b7aa50baaa1bf45e33a777d7ac2886d2"
+      },
+      "late/1/0/0": {
+        "first": [
+          {
+            "$numberInt": "150"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "150"
+          },
+          {
+            "$numberInt": "151"
+          },
+          {
+            "$numberInt": "152"
+          },
+          {
+            "$numberInt": "153"
+          },
+          {
+            "$numberInt": "154"
+          },
+          {
+            "$numberInt": "155"
+          },
+          {
+            "$numberInt": "156"
+          },
+          {
+            "$numberInt": "157"
+          },
+          {
+            "$numberInt": "158"
+          },
+          {
+            "$numberInt": "159"
+          },
+          {
+            "$numberInt": "160"
+          },
+          {
+            "$numberInt": "161"
+          },
+          {
+            "$numberInt": "162"
+          },
+          {
+            "$numberInt": "163"
+          },
+          {
+            "$numberInt": "164"
+          },
+          {
+            "$numberInt": "165"
+          },
+          {
+            "$numberInt": "166"
+          },
+          {
+            "$numberInt": "167"
+          },
+          {
+            "$numberInt": "168"
+          },
+          {
+            "$numberInt": "169"
+          },
+          {
+            "$numberInt": "170"
+          },
+          {
+            "$numberInt": "171"
+          },
+          {
+            "$numberInt": "172"
+          },
+          {
+            "$numberInt": "173"
+          },
+          {
+            "$numberInt": "174"
+          },
+          {
+            "$numberInt": "175"
+          },
+          {
+            "$numberInt": "176"
+          },
+          {
+            "$numberInt": "177"
+          },
+          {
+            "$numberInt": "178"
+          },
+          {
+            "$numberInt": "179"
+          },
+          {
+            "$numberInt": "180"
+          },
+          {
+            "$numberInt": "181"
+          },
+          {
+            "$numberInt": "182"
+          },
+          {
+            "$numberInt": "183"
+          },
+          {
+            "$numberInt": "184"
+          },
+          {
+            "$numberInt": "185"
+          },
+          {
+            "$numberInt": "186"
+          },
+          {
+            "$numberInt": "187"
+          },
+          {
+            "$numberInt": "188"
+          },
+          {
+            "$numberInt": "189"
+          },
+          {
+            "$numberInt": "190"
+          },
+          {
+            "$numberInt": "191"
+          },
+          {
+            "$numberInt": "192"
+          },
+          {
+            "$numberInt": "193"
+          },
+          {
+            "$numberInt": "194"
+          },
+          {
+            "$numberInt": "195"
+          },
+          {
+            "$numberInt": "196"
+          },
+          {
+            "$numberInt": "197"
+          },
+          {
+            "$numberInt": "198"
+          },
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "bson_sha256": "c81781b30f93527e9a1a37c502d7a19939be08dee67158f177485474ffb23678"
+      },
+      "late/-1/0/1": {
+        "first": [
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "bson_sha256": "0bcb654b349e3cf4f6da5c8bd3dde324aac703c5080ece22cdef6f341b80fc3b"
+      },
+      "late/-1/3/7": {
+        "first": [
+          {
+            "$numberInt": "196"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "196"
+          },
+          {
+            "$numberInt": "195"
+          },
+          {
+            "$numberInt": "194"
+          },
+          {
+            "$numberInt": "193"
+          },
+          {
+            "$numberInt": "192"
+          },
+          {
+            "$numberInt": "191"
+          },
+          {
+            "$numberInt": "190"
+          }
+        ],
+        "bson_sha256": "285c850e866d3660ca180fbb69c478e3ee978f10d3c3a5a437f87647fc56dfb4"
+      },
+      "late/-1/0/0": {
+        "first": [
+          {
+            "$numberInt": "199"
+          }
+        ],
+        "ids": [
+          {
+            "$numberInt": "199"
+          },
+          {
+            "$numberInt": "198"
+          },
+          {
+            "$numberInt": "197"
+          },
+          {
+            "$numberInt": "196"
+          },
+          {
+            "$numberInt": "195"
+          },
+          {
+            "$numberInt": "194"
+          },
+          {
+            "$numberInt": "193"
+          },
+          {
+            "$numberInt": "192"
+          },
+          {
+            "$numberInt": "191"
+          },
+          {
+            "$numberInt": "190"
+          },
+          {
+            "$numberInt": "189"
+          },
+          {
+            "$numberInt": "188"
+          },
+          {
+            "$numberInt": "187"
+          },
+          {
+            "$numberInt": "186"
+          },
+          {
+            "$numberInt": "185"
+          },
+          {
+            "$numberInt": "184"
+          },
+          {
+            "$numberInt": "183"
+          },
+          {
+            "$numberInt": "182"
+          },
+          {
+            "$numberInt": "181"
+          },
+          {
+            "$numberInt": "180"
+          },
+          {
+            "$numberInt": "179"
+          },
+          {
+            "$numberInt": "178"
+          },
+          {
+            "$numberInt": "177"
+          },
+          {
+            "$numberInt": "176"
+          },
+          {
+            "$numberInt": "175"
+          },
+          {
+            "$numberInt": "174"
+          },
+          {
+            "$numberInt": "173"
+          },
+          {
+            "$numberInt": "172"
+          },
+          {
+            "$numberInt": "171"
+          },
+          {
+            "$numberInt": "170"
+          },
+          {
+            "$numberInt": "169"
+          },
+          {
+            "$numberInt": "168"
+          },
+          {
+            "$numberInt": "167"
+          },
+          {
+            "$numberInt": "166"
+          },
+          {
+            "$numberInt": "165"
+          },
+          {
+            "$numberInt": "164"
+          },
+          {
+            "$numberInt": "163"
+          },
+          {
+            "$numberInt": "162"
+          },
+          {
+            "$numberInt": "161"
+          },
+          {
+            "$numberInt": "160"
+          },
+          {
+            "$numberInt": "159"
+          },
+          {
+            "$numberInt": "158"
+          },
+          {
+            "$numberInt": "157"
+          },
+          {
+            "$numberInt": "156"
+          },
+          {
+            "$numberInt": "155"
+          },
+          {
+            "$numberInt": "154"
+          },
+          {
+            "$numberInt": "153"
+          },
+          {
+            "$numberInt": "152"
+          },
+          {
+            "$numberInt": "151"
+          },
+          {
+            "$numberInt": "150"
+          }
+        ],
+        "bson_sha256": "16c6a0443c3a512fa8ca006bb41de9246957f462aea09fd7b7e814a9c6509c0b"
+      }
+    },
+    "semantic_p2_vector_filter_eligibility": {
+      "interleaved": {
+        "0": [
+          "001",
+          "003",
+          "005",
+          "007",
+          "009",
+          "011",
+          "013",
+          "015",
+          "017",
+          "019",
+          "021",
+          "023",
+          "025",
+          "027",
+          "029",
+          "031",
+          "033",
+          "035",
+          "037",
+          "039",
+          "041",
+          "043",
+          "045",
+          "047",
+          "049",
+          "051",
+          "053",
+          "055",
+          "057",
+          "059",
+          "061",
+          "063"
+        ],
+        "5": [
+          "000",
+          "002",
+          "004",
+          "006",
+          "008",
+          "010",
+          "012",
+          "014",
+          "016",
+          "018",
+          "020",
+          "022",
+          "024",
+          "026",
+          "028",
+          "030",
+          "032",
+          "034",
+          "036",
+          "038",
+          "040",
+          "042",
+          "044",
+          "046",
+          "048",
+          "050",
+          "052",
+          "054",
+          "056",
+          "058",
+          "060",
+          "062"
+        ]
+      },
+      "late": {
+        "0": [
+          "000",
+          "001",
+          "002",
+          "003",
+          "004",
+          "005",
+          "006",
+          "007",
+          "008",
+          "009",
+          "010",
+          "011",
+          "012",
+          "013",
+          "014",
+          "015",
+          "016",
+          "017",
+          "018",
+          "019",
+          "020",
+          "021",
+          "022",
+          "023",
+          "024",
+          "025",
+          "026",
+          "027",
+          "028",
+          "029",
+          "030",
+          "031"
+        ],
+        "5": [
+          "032",
+          "033",
+          "034",
+          "035",
+          "036",
+          "037",
+          "038",
+          "039",
+          "040",
+          "041",
+          "042",
+          "043",
+          "044",
+          "045",
+          "046",
+          "047",
+          "048",
+          "049",
+          "050",
+          "051",
+          "052",
+          "053",
+          "054",
+          "055",
+          "056",
+          "057",
+          "058",
+          "059",
+          "060",
+          "061",
+          "062",
+          "063"
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "isWritablePrimary": true,
+      "topologyVersion": {
+        "processId": {
+          "$oid": "6ae74423f97a2580e62f76df"
+        },
+        "counter": {
+          "$numberLong": "0"
+        }
+      },
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "maxMessageSizeBytes": {
+        "$numberInt": "48000000"
+      },
+      "maxWriteBatchSize": {
+        "$numberInt": "100000"
+      },
+      "localTime": {
+        "$date": {
+          "$numberLong": "1793543081488"
+        }
+      },
+      "logicalSessionTimeoutMinutes": {
+        "$numberInt": "30"
+      },
+      "connectionId": {
+        "$numberInt": "110"
+      },
+      "minWireVersion": {
+        "$numberInt": "0"
+      },
+      "maxWireVersion": {
+        "$numberInt": "29"
+      },
+      "readOnly": false,
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    }
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_p2_read_cost_cases.py",
+    "sha256": "50ee3415c47918a19783b8e2806fb9613ffcc1b88575922ea9b8f9bd85997445",
+    "topology": "standalone"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_p2_consumption_cost",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_p2_consumption_cost"
+    },
+    {
+      "name": "semantic_p2_vector_filter_eligibility",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_p2_vector_filter_eligibility"
+    }
+  ]
+}
