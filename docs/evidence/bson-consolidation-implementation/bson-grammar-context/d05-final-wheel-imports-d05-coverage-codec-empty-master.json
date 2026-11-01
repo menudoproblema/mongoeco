@@ -1,0 +1,26 @@
+{
+  "exit_code": 0,
+  "site": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages",
+  "modules": {
+    "mongoeco._version": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_version.py",
+    "mongoeco": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/__init__.py",
+    "mongoeco.core": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/core/__init__.py",
+    "mongoeco.error_catalog": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/error_catalog.py",
+    "mongoeco.errors": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/errors.py",
+    "mongoeco._types": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/__init__.py",
+    "mongoeco._types.documents": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/documents.py",
+    "mongoeco._types._bson_objectid": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/_bson_objectid.py",
+    "mongoeco._types._bson_values": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/_bson_values.py",
+    "mongoeco._types.bson": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/bson.py",
+    "mongoeco._types.writes": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/writes.py",
+    "mongoeco._types.concerns": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/concerns.py",
+    "mongoeco.core._search_contract": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/core/_search_contract.py",
+    "mongoeco._types.indexes": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/indexes.py",
+    "mongoeco._types.aliases": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/_types/aliases.py",
+    "mongoeco.types": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/types.py",
+    "mongoeco.core.bson_scalars": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/core/bson_scalars.py",
+    "mongoeco.core.runtime_metadata": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/core/runtime_metadata.py",
+    "mongoeco.core.bson_values": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/core/bson_values.py",
+    "mongoeco.core.codec": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-k4ecqy67/site-packages/mongoeco/core/codec.py"
+  }
+}

@@ -1,5 +1,7 @@
 """Input encoding uses the driver's BSON contract without its document decoder."""
 
+import re
+
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
@@ -14,9 +16,19 @@ from bson.errors import InvalidDocument
 from mongoeco import MongoClient
 from mongoeco.api import bson_input, operations
 from mongoeco.api.bson_input import encode_bson_request
+from mongoeco.core.bson_scalars import BsonInt32
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.engines import MemoryEngine
-from mongoeco.types import Binary as LocalBinary, CodecOptions, UuidRepresentation
+from mongoeco.types import (
+    Binary as LocalBinary,
+    CodecOptions,
+    DBRef as LocalDBRef,
+    Decimal128 as LocalDecimal128,
+    ObjectId as LocalObjectId,
+    Regex as LocalRegex,
+    Timestamp as LocalTimestamp,
+    UuidRepresentation,
+)
 
 
 UUID_VALUE = UUID("00112233-4455-6677-8899-aabbccddeeff")
@@ -27,6 +39,11 @@ MODES = {
     UuidRepresentation.JAVA_LEGACY: DriverUuidRepresentation.JAVA_LEGACY,
     UuidRepresentation.CSHARP_LEGACY: DriverUuidRepresentation.CSHARP_LEGACY,
 }
+
+
+def test_internal_numeric_wrappers_are_not_admitted_as_public_input():
+    with pytest.raises(InvalidDocument, match="cannot encode object"):
+        encode_bson_request({"v": BsonInt32(1)}, codec_options=CodecOptions())
 
 
 @pytest.mark.parametrize(
@@ -223,3 +240,64 @@ def test_raw_bson_mapping_keeps_undefined_and_document_order():
         assert list(result) == ["a", "ref"]
         assert list(result["ref"]) == ["$id", "$ref"]
         assert result["ref"]["$id"] == 1
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_portable_admission_preserves_bson_and_uuid_policy(monkeypatch, mode):
+    # The actual SDK-free profile is exercised separately. This unit seam also
+    # measures its admission paths in the ordinary suite, using SDK bytes as
+    # the independent oracle rather than reproducing the portable dispatch.
+    request = {
+        "scalars": [None, True, 1.5, b"a", -(2**63), 2**63 - 1, "á"],
+        "tuple": (1, "a"),
+        "ref": LocalDBRef("c", 1, "db", {"extra": [1]}),
+        "binary": LocalBinary(b"ab", 5),
+        "decimal": LocalDecimal128("1.25"),
+        "oid": LocalObjectId("00112233445566778899aabb"),
+        "timestamp": LocalTimestamp(2, 1),
+        "date": datetime(1970, 1, 1, tzinfo=UTC),
+        "regex": LocalRegex("ab", "i"),
+        "uuid": UUID_VALUE,
+    }
+    driver_options = DriverCodecOptions(uuid_representation=MODES[mode])
+    expected = DocumentCodec.to_pymongo(request)
+    monkeypatch.setattr(bson_input, "BSON", None)
+    options = CodecOptions(uuid_representation=mode)
+    if mode is UuidRepresentation.UNSPECIFIED:
+        with pytest.raises(ValueError, match="UNSPECIFIED"):
+            encode_bson_request(request, codec_options=options)
+        request.pop("uuid")
+        expected.pop("uuid")
+    actual = encode_bson_request(request, codec_options=options)
+    assert BSON.encode(
+        DocumentCodec.to_pymongo(actual), codec_options=driver_options
+    ) == BSON.encode(expected, codec_options=driver_options)
+
+
+@pytest.mark.parametrize(
+    ["value", "error"],
+    [
+        ({1: "x"}, InvalidDocument),
+        ({"bad\x00key": 1}, InvalidDocument),
+        (1 << 70, OverflowError),
+        ("\ud800", UnicodeEncodeError),
+        (LocalRegex(b"\xff", ""), bson_input.InvalidStringData),
+        (LocalRegex("a\x00b", ""), InvalidDocument),
+        (Decimal("1.25"), InvalidDocument),
+        (LocalDBRef("c", object()), InvalidDocument),
+    ],
+)
+def test_portable_admission_rejects_invalid_requests(monkeypatch, value, error):
+    monkeypatch.setattr(bson_input, "BSON", None)
+    with pytest.raises(error):
+        encode_bson_request({"v": value}, codec_options=CodecOptions())
+
+
+def test_portable_regex_decodes_valid_utf8_bytes(monkeypatch):
+    monkeypatch.setattr(bson_input, "BSON", None)
+    actual = encode_bson_request(
+        {"v": LocalRegex(b"ab", "i")}, codec_options=CodecOptions()
+    )
+    assert BSON.encode(DocumentCodec.to_pymongo(actual)) == BSON.encode(
+        {"v": re.compile(b"ab", re.IGNORECASE)}
+    )

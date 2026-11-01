@@ -34,7 +34,7 @@ except Exception:  # pragma: no cover - pymongo is optional
 
 
 def _load_errors_module_without_pymongo():
-    module_name = "mongoeco_errors_no_pymongo_test"
+    module_name = "mongoeco.errors_no_pymongo_test"
     if module_name in sys.modules:
         del sys.modules[module_name]
     module_path = Path(errors_module.__file__).resolve()

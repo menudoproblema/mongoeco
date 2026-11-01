@@ -1,0 +1,32 @@
+import hashlib,json,statistics,sys,time
+from pathlib import Path
+root=Path(sys.argv[1]);info=json.loads((root/'wheel.json').read_text());site=Path(info['site_packages']).resolve()
+for p,h in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==h
+sys.path.insert(0,str(site))
+import mongoeco
+from bson import BSON
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+result={}
+for factory in (MemoryEngine,SQLiteEngine):
+ with MongoClient(factory(),mongodb_dialect='9.0') as client:
+  c=client.bench.rows
+  c.insert_many([{'_id':i,'n':i%32,'obj':{'s':str(i%16),'n':i%8},'arr':['a','b',None,True]} for i in range(256)])
+  cases={
+   'numeric-group':[{'$group':{'_id':'$n','s':{'$sum':'$n'},'a':{'$avg':'$n'}}},{'$sort':{'_id':1}}],
+   'document-group':[{'$group':{'_id':'$obj','count':{'$sum':1}}},{'$sort':{'_id':1}}],
+   'bounded-sets':[{'$project':{'v':{'$setIntersection':['$arr',['b',None,True]]}}},{'$sort':{'_id':1}}],
+  }
+  for name,pipeline in cases.items():
+   def execute():
+    cursor=c.aggregate(pipeline)
+    try:return BSON.encode({'rows':list(cursor)})
+    finally:cursor.close()
+   expected=execute();samples=[]
+   for _ in range(3):
+    start=time.process_time_ns()
+    for _ in range(8):assert execute()==expected
+    samples.append((time.process_time_ns()-start)/1e9)
+   result[factory.__name__+'/'+name]={'cpu_seconds':samples,'bson_sha256':hashlib.sha256(expected).hexdigest(),'operations_per_sample':8}
+print(json.dumps(result))

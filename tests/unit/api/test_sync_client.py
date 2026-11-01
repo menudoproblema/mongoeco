@@ -32,6 +32,22 @@ async def _value() -> str:
 
 
 class SyncClientUnitTests(unittest.TestCase):
+    def test_partial_runner_shutdown_does_not_dispatch_cleanup(
+        self,
+    ):
+        runner = _SyncRunner.__new__(_SyncRunner)
+        with patch.object(sys, "is_finalizing", return_value=True):
+            runner.__del__()
+        self.assertTrue(runner._closed)
+
+        def unavailable(_operation):
+            message = "helper unavailable"
+            raise RuntimeError(message)
+
+        runner.defer = unavailable
+        runner.__del__()
+        self.assertTrue(runner._closed)
+
     def test_sync_collection_reuses_its_async_runtime(self):
         client = MongoClient(MemoryEngine())
         try:

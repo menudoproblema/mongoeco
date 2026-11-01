@@ -15,6 +15,30 @@ from mongoeco.types import UNDEFINED
 from mongoeco.wire.bson_bridge import decode_wire_value
 
 
+def test_corrupt_frame_lengths_names_and_utf8_are_rejected_by_both_decoders():
+    binary = BSON.encode({"v": Binary(b"ab", 0)})
+    code = BSON.encode({"v": Code("x", {}), "extra": 1})
+
+    def change_length(raw, offset, value):
+        return raw[:offset] + struct.pack("<i", value) + raw[offset + 4:]
+
+    corruptions = [
+        change_length(binary, 7, 10_000),
+        change_length(code, 7, 1),
+        change_length(code, 11, 0),
+        change_length(code, 7, 16),
+        struct.pack("<i", 7) + b"\x06x\0",
+        change_length(BSON.encode({"v": 1}), 0, 9),
+        BSON.encode({}) + b"\0",
+        BSON.encode({"v": 1}).replace(b"v\0", b"\xff\0"),
+    ]
+    for raw in corruptions:
+        with pytest.raises(InvalidBSON):
+            BSON(raw).decode()
+        with pytest.raises(InvalidBSON):
+            decode_bson_document(raw)
+
+
 @pytest.mark.parametrize(
     "wrapper", [lambda v: v, lambda v: [v], lambda v: Code("x", v)]
 )

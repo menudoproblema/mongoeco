@@ -3,6 +3,7 @@ import decimal
 import unittest
 import uuid
 
+from copy import deepcopy
 from unittest.mock import patch
 
 import pytest
@@ -47,6 +48,22 @@ from mongoeco.types import (
 
 
 class DocumentCodecTests(unittest.TestCase):
+    def test_empty_array_decode_owns_its_public_container(self):
+        original = []
+        decoded = DocumentCodec.decode(DocumentCodec.encode(original))
+        self.assertEqual(decoded, [])
+        self.assertIsNot(decoded, original)
+        decoded.append(1)
+        self.assertEqual(original, [])
+
+    def test_internal_binary_deepcopy_keeps_immutable_subtype_and_payload(self):
+        value = DocumentCodec.to_internal(Binary(b"payload", 5))
+        self.assertIs(deepcopy(value), value)
+        with self.assertRaises(TypeError):
+            value.subtype = 0
+        self.assertEqual(bytes(value), b"payload")
+        self.assertEqual(value.subtype, 5)
+
     def test_to_public_removes_internal_markers_from_nested_containers(self):
         internal_document = DocumentCodec.to_internal({'nested': {'value': 1}})
         internal_array = DocumentCodec.to_internal([{'value': 1}])

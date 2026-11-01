@@ -2254,9 +2254,9 @@ incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
 | O2 / comprobación obligatoria | D06a/b/c conserva gramática, BSON previo al decoder, contexto y equivalencia de claves por consumidor; B07 conserva efectos de fábricas también cuando transforman sin lanzar. | Componer mapa requisito→aceptaciones existentes y completar únicamente el diferencial de transformaciones de documento/metadata aún no acreditado. Cierra con resultados nativos coincidentes por superficie soportada y sin huecos normativos en ese mapa. | Cerrada; aceptación y mapa debajo |
 | O3 / comprobación obligatoria | H53 dispone C03/B08 distinguiendo evaluación, permiso y warning, strict/moderate/off, error/warn/bypass y documento anterior/candidato. | Contrastar caracterización retenida y contrato público; documentar disposición explícita y límites. No exige crear un canal nuevo de logging. | Cerrada; disposición debajo |
 | O4 / decisión exigida | D07 requiere continuar/descartar el piloto opcional con criterio explícito. | Disposición documentada: descartar el piloto en esta entrega conforme al encargo de no hacer refactorizaciones opcionales; conservar implementación y garantías aceptadas. | Cerrada; descarte documentado debajo |
-| O5 / comprobación obligatoria | D05 exige suite global, cobertura ≥99% y propiedades profundas sobre candidato instalado. | Resultado terminal de los gates; cualquier fallo obligatorio conserva bloqueo de cierre hasta su resolución y verificación causal. | En ejecución |
-| O6 / comprobación obligatoria | D05 exige Python 3.13/3.14/3.15, extremos SDK/pytest admitidos y perfil realmente sin SDK. | Matriz de CI y perfiles ejecutados, imports de artefacto comprobados; reutilizar evidencia idéntica admitida y distinguir omisiones de clases SDK. | Abierta |
-| O7 / comprobación obligatoria | D05 exige distribución reproducible, API/typing/SPI, compatibilidad persistida y presupuestos de coste. | Resultados de runners existentes y evidencia previa causalmente válida; todos los gates requeridos verdes, sin sustituir presupuesto por un benchmark diagnóstico. | Abierta |
+| O5 / comprobación obligatoria | D05 exige suite global, cobertura ≥99% y propiedades profundas sobre candidato instalado. | Resultado terminal de los gates; cualquier fallo obligatorio conserva bloqueo de cierre hasta su resolución y verificación causal. | Cerrada; aceptación D05 debajo |
+| O6 / comprobación obligatoria | D05 exige Python 3.13/3.14/3.15, extremos SDK/pytest admitidos y perfil realmente sin SDK. | Matriz de CI y perfiles ejecutados, imports de artefacto comprobados; reutilizar evidencia idéntica admitida y distinguir omisiones de clases SDK. | Cerrada; aceptación D05 debajo |
+| O7 / comprobación obligatoria | D05 exige distribución reproducible, API/typing/SPI, compatibilidad persistida y presupuestos de coste. | Resultados de runners existentes y evidencia previa causalmente válida; todos los gates requeridos verdes, sin sustituir presupuesto por un benchmark diagnóstico. | Cerrada; aceptación D05 debajo |
 | O8 / comprobación obligatoria | Entrega trazable, revisión del candidato, recursos liberados, commits semánticos y árbol limpio. | Receipt integrado ligado a fuentes/artefactos exactos, obligaciones O1–O7 cerradas y comprobación final del árbol. No requiere publicación ni CI remota. | Abierta |
 
 Hipótesis dispuestas: la reconstrucción de fuente desde pipeline completo queda
@@ -2642,3 +2642,68 @@ conservan su wheel congelado y su manifiesto anterior: la aceptación final
 registrará ambos hashes y esta verificación causal, sin atribuir al primero
 los bytes del segundo. O5–O8 siguen abiertas. Evidencia: prefijos d05-lint y
 d05-final-ratchet en el directorio existente.
+
+### Aceptación D05 — O5, O6 y O7
+
+El candidato de runtime final es `9e6b1886`; los cambios posteriores de esta
+aceptación son pruebas y documentación. Se conservan por separado los bytes del
+wheel anterior al lint y del posterior. El global anterior pasa 57.666 pruebas
+y 14.811 subtests en Python 3.14; los de 3.13/3.15 pasan 57.655 pruebas y 14.811
+subtests cada uno. Las omisiones son 485/496/496 respectivamente, sin acreditar
+los fixtures físicos omitidos. Los diferenciales nativos aceptados por bloque
+siguen siendo su oráculo, no esos skips.
+
+El primer global queda rojo por cobertura: 98,61%. Se añaden controles del
+contrato existente en los owners de pruebas actuales: admisión portable y
+frames contra el SDK, corrupción BSON contra ambos decoders, rutas DBRef
+persistidas, contexto/continuidad/cierre de proveedores, resultados SPI inválidos
+y propiedad de contenedores. No se modifican producción, exclusiones ni umbral.
+El loader de errores portable conserva sus aserciones y pasa a nombrarse bajo
+el paquete para que coverage mida el código que realmente ejecuta.
+
+La cobertura final es **99,00116530714166%**, 47.576/48.056 líneas: el gate
+termina verde, sin aceptar el redondeo visual de un intento previo 98,999%.
+Para reutilizar la suite global se trasladan únicamente las trazas de 286
+archivos byte a byte idénticos. Se descartan todas las del codec editado y se
+mide este de nuevo sobre el wheel actual; no se sintetizan marcas ni números
+de línea. Se conservan trazas originales/finales, mapa y hashes. Los controles
+posteriores al lint pasan 469 pruebas/347 subtests en 3.14 y 459/347 con diez
+omisiones SDK en 3.13/3.15; los testigos adicionales del codec también pasan.
+Las propiedades profundas instaladas pasan 66 pruebas.
+
+Unittest pasa 3.654 pruebas en 3.14/3.15 y 3.663 en la repetición final de 3.13,
+con tres omisiones cada uno. Se conserva el rojo anterior de 3.13: un explain
+de dos documentos excedió sus 50 ms bajo las suites concurrentes. La repetición
+completa sin esa carga pasa sin subir el timeout ni cambiar su aserción. Las
+pruebas añadidas se verifican causalmente en los tres Python; no se suman los
+replays solapados como pruebas únicas.
+
+Las doce celdas Python 3.13/3.14/3.15 × pytest 8.4.2/9.1.1 × PyMongo
+4.9.2/4.19.0 pasan. Se comprueban imports/manifiestos del artefacto instalado.
+El perfil realmente sin SDK conserva 288/3.564/570 observaciones portables;
+las omisiones RawBSONDocument/Code y aliases Int64 se mantienen explícitos. El
+entorno mínimo y los controles posteriores del import de codec pasan. Los
+probes independientes del SDK/release publicada se reutilizan porque sus tres
+hashes de entrada siguen idénticos al receipt aceptado de predicate-authorities.
+
+API pública, typing, canary SPI v2 independiente, reapertura de archivos
+anteriores, compat snapshots actuales y ratchet contra la última release pasan.
+Los 424 artefactos protegidos siguen idénticos; las únicas tres excepciones
+son los metadatos generados ya conciliados: manifiesto público, allowlist de
+relojes e inventario de emisores. Los presupuestos deterministas de coste y
+evaluación anticipada pasan en el global; no se introduce un techo de CPU nuevo.
+
+Las medidas finales usan los runners existentes y las mismas semillas/resultados:
+matching/SQL, group/spill, materialización, validadores, consumo, Search y
+fábricas. Los hashes de resultado de los 20 casos de report coinciden entre
+base/candidato; los probes BSON y checksums de escritura también. Se conservan
+medidas por corte anteriores, sin convertir ratios con bases distintas en un
+ratio acumulado. Como límites diagnósticos permanecen hasta 1,28× en demanda
+unitaria de Memory y 1,52× en Binary residual/limit=2; no se promete ausencia
+de sobrecoste. Validadores medidos: ratios 1,02–1,08; matching/SQL y group/spill
+del report: 0,92–1,04. No se hace una optimización opcional para ocultarlos.
+
+Evidencia: prefijos `d05-final`, `d05-post-lint` y `d05-coverage` en el directorio
+existente. Los logs rojos y selecciones diagnósticas fallidas permanecen
+archivados, separados de los terminales verdes. O8 conserva aceptación integrada,
+artefactos con changelog final y comprobación del árbol tras los commits.

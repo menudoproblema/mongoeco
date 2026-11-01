@@ -1,5 +1,6 @@
 import unittest
 
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import mongoeco.api._async.cursor as async_cursor_module
@@ -16,11 +17,148 @@ from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.types import PlanningIssue, PlanningMode
+
 from tests.unit.api._collection_test_support import _SpiV2EngineStub
+
+
+class PreparedCursorContextTests(unittest.IsolatedAsyncioTestCase):
+    async def test_driver_batch_handoff_retains_already_buffered_documents(self):
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": 1}, {"_id": 2}]), {}, MatchAll(), None
+        )
+        iterator = cursor.__aiter__()
+        self.assertEqual(await iterator.__anext__(), {"_id": 1})
+        self.assertEqual(await iterator._read_driver_response(), [{"_id": 2}])
+        self.assertEqual(await iterator._read_driver_response(), [])
+        await iterator.close()
+
+    def test_clone_and_rewind_keep_prepared_command_bindings(self):
+        original_now = datetime(2026, 1, 1, tzinfo=UTC)
+        fresh_now = datetime(2026, 1, 2, tzinfo=UTC)
+
+        class Collection(_AsyncCollectionStub):
+            def _new_execution_context(self):
+                return ExpressionExecutionContext(now=fresh_now)
+
+            def _new_operation_context(self, **kwargs):
+                return OperationContext.create(dialect=MONGODB_DIALECT_70, **kwargs)
+
+        expressions = ExpressionExecutionContext(now=original_now).with_command_let(
+            {"x": {"$add": [1, 1]}}, dialect=MONGODB_DIALECT_70
+        )
+        context = OperationContext.create(
+            dialect=MONGODB_DIALECT_70, expressions=expressions
+        )
+        cursor = AsyncCursor(
+            Collection([]),
+            {},
+            MatchAll(),
+            None,
+            let=expressions,
+            operation_context=context,
+        )
+        clone = cursor.clone()
+        self.assertIsNot(clone._operation_context, context)
+        self.assertEqual(clone._operation_context.expressions["x"], 2)
+        self.assertEqual(
+            clone._operation_context.expressions.now, fresh_now.replace(tzinfo=None)
+        )
+        cursor.rewind()
+        self.assertEqual(cursor._operation_context.expressions["x"], 2)
+        self.assertEqual(
+            cursor._operation_context.expressions.now, original_now.replace(tzinfo=None)
+        )
+
+    def test_prepared_provider_without_expression_factory_gets_fresh_context(self):
+        collection = _ContextFactoryCollectionStub([])
+        for bindings in ({"x": 2}, ExpressionExecutionContext({"x": 2})):
+            with self.subTest(bindings=type(bindings).__name__):
+                cursor = AsyncCursor(collection, {}, MatchAll(), None, let=bindings)
+                cursor.clone()
+                self.assertEqual(collection.context_arguments["bindings"], {"x": 2})
+
+    async def test_chunked_provider_continuation_decodes_once_and_closes_on_error(self):
+        collection = _BatchTrackingCollectionStub([{"_id": 1}, {"_id": 2}, {"_id": 3}])
+        seen = []
+        failing_id = 3
+
+        def decode(document):
+            seen.append(document["_id"])
+            if document["_id"] == failing_id:
+                message = "decoder failed"
+                raise ValueError(message)
+            return document
+
+        collection._apply_codec_options_to_document = decode
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+        iterator = cursor.__aiter__()
+        self.assertEqual(await iterator.pull_chunk(1), [{"_id": 1}])
+        self.assertEqual(await iterator.pull_chunk(1), [{"_id": 2}])
+        with self.assertRaisesRegex(ValueError, "decoder failed"):
+            await iterator.pull_chunk(1)
+        self.assertEqual(seen, [1, 2, 3])
+        self.assertTrue(cursor._exhausted)
+        self.assertEqual(collection._engine.created_scans[0].close_calls, 1)
+
+
+class SyncCursorProviderCapabilityTests(unittest.TestCase):
+    def test_iteration_preserves_rows_without_optional_driver_batch_or_chunk_methods(
+        self,
+    ):
+        for chunks in (False, True):
+            with self.subTest(chunks=chunks):
+                cursor = Cursor(
+                    _SyncClientStub(),
+                    _AsyncCursorFactoryStub([{"_id": 1}, {"_id": 2}]),
+                    {},
+                    None,
+                )
+                iterator = iter(cursor)
+                active = cursor._active_async_iterable
+
+                class Source:
+                    def __init__(self, delegate):
+                        self.delegate = delegate
+
+                    async def __anext__(self):
+                        return await self.delegate.__anext__()
+
+                    async def aclose(self):
+                        await self.delegate.aclose()
+
+                source = Source(active)
+                if chunks:
+                    source.pull_chunk = active.pull_chunk
+                cursor._active_async_iterable = source
+                iterator._async_iterable = source
+                self.assertEqual(list(iterator), [{"_id": 1}, {"_id": 2}])
+                cursor.close()
+
+    def test_failed_sync_dispatch_keeps_close_retryable_and_closes_its_coroutine(self):
+        client = _SyncClientStub()
+        cursor = Cursor(client, _AsyncCursorFactoryStub([]), {}, None)
+        cursor._async_cursor._close_nowait_if_idle = lambda: False
+        run = client._run
+        pending = []
+
+        def fail(awaitable):
+            pending.append(awaitable)
+            message = "dispatch failed"
+            raise RuntimeError(message)
+
+        client._run = fail
+        with self.assertRaisesRegex(RuntimeError, "dispatch failed"):
+            cursor.close()
+        self.assertIsNone(pending[0].cr_frame)
+        self.assertFalse(cursor._closed)
+        client._run = run
+        cursor.close()
+        self.assertTrue(cursor._closed)
 
 
 class _AsyncEngineStub(_SpiV2EngineStub):

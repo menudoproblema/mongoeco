@@ -17,6 +17,29 @@ from mongoeco.engines import _sqlite_read_fast_path_runtime as read_fast_path_ru
 
 
 class SQLiteFastPathsTests(unittest.TestCase):
+    def test_scalar_range_rejects_unsafe_type_or_index_evidence(self):
+        index = {"name": "value_1"}
+        engine = SimpleNamespace(
+            _field_is_top_level_array_in_collection=lambda *_: False,
+            _scalar_range_signature=lambda _: ("string", 15, "a"),
+            _field_has_comparison_type_mismatch_in_collection=lambda *_: False,
+            _find_scalar_fast_path_index=lambda *_: index,
+        )
+        check = read_fast_path_runtime.can_use_scalar_range_fast_path
+        self.assertEqual(check(engine, "db", "coll", "value", "a"), (index, 15, "a"))
+        self.assertIsNone(check(engine, "db", "coll", "nested.value", "a"))
+        engine._field_is_top_level_array_in_collection = lambda *_: True
+        self.assertIsNone(check(engine, "db", "coll", "value", "a"))
+        engine._field_is_top_level_array_in_collection = lambda *_: False
+        engine._scalar_range_signature = lambda _: None
+        self.assertIsNone(check(engine, "db", "coll", "value", "a"))
+        engine._scalar_range_signature = lambda _: ("string", 15, "a")
+        engine._field_has_comparison_type_mismatch_in_collection = lambda *_: True
+        self.assertIsNone(check(engine, "db", "coll", "value", "a"))
+        engine._field_has_comparison_type_mismatch_in_collection = lambda *_: False
+        engine._find_scalar_fast_path_index = lambda *_: None
+        self.assertIsNone(check(engine, "db", "coll", "value", "a"))
+
     def test_plan_and_comparison_fields_cover_recursive_shapes(self):
         plan = AndCondition(
             clauses=(

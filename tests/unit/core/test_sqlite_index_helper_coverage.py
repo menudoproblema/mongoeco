@@ -2,15 +2,45 @@ from __future__ import annotations
 
 import sqlite3
 import unittest
+
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import pytest
+
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.query_plan import MatchAll
-from mongoeco.engines import _sqlite_index_admin as index_admin
-from mongoeco.engines import _sqlite_index_runtime as index_runtime
-from mongoeco.engines import _sqlite_modify_ops as modify_ops
+from mongoeco.engines import (
+    MemoryEngine,
+    SQLiteEngine,
+    _sqlite_index_admin as index_admin,
+    _sqlite_index_runtime as index_runtime,
+    _sqlite_modify_ops as modify_ops,
+)
 from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.types import DBRef
+
+
+@pytest.mark.parametrize("engine", [MemoryEngine, SQLiteEngine])
+def test_legacy_dbref_index_paths_keep_array_positions_and_reference_fields(engine):
+    # Existing persistence can contain DBRef objects, while new requests can
+    # arrive as ordered BSON documents. Their index traversal must agree.
+    document = {
+        "refs": [DBRef("c", {"a": [1, 2]}), DBRef("d", 3), {"$id": 4}, None],
+        "ref": DBRef("c", {"a": [1, 2]}),
+    }
+    assert engine._array_paths_for_index_field(document, "refs.0.$id.a") == {
+        "refs.0.$id.a"
+    }
+    assert engine._array_paths_for_index_field(document, "refs.9.$id.a") == set()
+    assert engine._array_paths_for_index_field(document, "refs.$id.a") == {
+        "refs",
+        "refs.$id.a",
+    }
+    assert engine._values_at_index_path(document, "refs.0.$id.a") == [[1, 2]]
+    assert engine._values_at_index_path(document, "refs.9.$id.a") == []
+    assert engine._values_at_index_path(document, "refs.$id") == [{"a": [1, 2]}, 3, 4]
+    assert engine._values_at_index_path(document, "ref.$id.a") == [[1, 2]]
 
 
 class SQLiteIndexHelperCoverageTests(unittest.TestCase):

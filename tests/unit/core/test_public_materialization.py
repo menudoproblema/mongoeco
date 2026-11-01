@@ -15,6 +15,7 @@ from mongoeco.core.bson_scalars import BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.types import (
     SON,
+    UNDEFINED,
     Binary,
     CodecOptions,
     DBRef,
@@ -24,6 +25,34 @@ from mongoeco.types import (
     Timestamp,
     UuidRepresentation,
 )
+
+
+def test_response_fallback_rejects_arbitrary_objects_but_materializes_undefined():
+    def response(value):
+        return materializer.materialize_cursor_response(
+            [{"v": value}],
+            codec_options=CodecOptions(document_class=SON),
+            cursor_id=0,
+            namespace="test.rows",
+            initial=True,
+        )
+
+    assert response(UNDEFINED) == [{"v": None}]
+    with pytest.raises(TypeError, match="unsupported BSON response type"):
+        response(object())
+
+
+def test_portable_decoder_failure_keeps_the_decoding_boundary(monkeypatch):
+    def fail(value):
+        message = "decode failure"
+        raise ValueError(message)
+
+    monkeypatch.setattr(materializer, "_BSON", None)
+    with pytest.raises(materializer._InvalidBSON, match="decode failure") as error:
+        materialize_public_document(
+            {"v": 1}, codec_options=CodecOptions(type_registry={int: fail})
+        )
+    assert isinstance(error.value.__cause__, ValueError)
 
 
 def reference(value, options):

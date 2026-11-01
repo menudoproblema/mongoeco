@@ -2,11 +2,103 @@ import asyncio
 import datetime
 
 from copy import deepcopy
+from unittest.mock import AsyncMock
 
+import pytest
+
+from mongoeco import AsyncMongoClient
+from mongoeco.api._async import _collection_modify
 from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.api.operations import compile_update_operation
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.collation import CollationSpec
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.memory import MemoryEngine
 
 from tests.unit.api._collection_test_support import *  # noqa: F403
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [
+        "update_one",
+        "update_many",
+        "update_many_upsert",
+        "replace_one",
+        "find_one_and_update",
+        "find_one_and_replace",
+        "find_one_and_delete",
+        "delete_one",
+        "delete_many",
+        "command_delete",
+    ],
+)
+def test_write_rejects_invalid_spi_outcomes_before_reporting_success(
+    operation, monkeypatch
+):
+    async def exercise():
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            collection = client.db.rows
+            await collection.insert_one({"_id": 1, "v": 1})
+            adapter = (
+                "_engine_delete_with_operation"
+                if "delete" in operation
+                else "_engine_update_with_operation"
+            )
+            failure = AsyncMock(return_value=object())
+            monkeypatch.setattr(AsyncCollection, adapter, failure)
+
+            async def perform():
+                if operation == "command_delete":
+                    await client.db.command(
+                        {"findAndModify": "rows", "remove": True, "query": {}}
+                    )
+                elif operation == "update_many_upsert":
+                    await collection.update_many(
+                        {"_id": 2}, {"$set": {"v": 2}}, upsert=True
+                    )
+                elif "replace" in operation:
+                    await getattr(collection, operation)({}, {"v": 2})
+                elif "update" in operation:
+                    await getattr(collection, operation)(
+                        {}, {"$set": {"v": 2}}, collation=CollationSpec()
+                    )
+                else:
+                    await getattr(collection, operation)({})
+
+            with pytest.raises(TypeError, match="engine did not return"):
+                await perform()
+            assert failure.await_count == 1
+            assert await collection.find({}).to_list() == [{"_id": 1, "v": 1}]
+
+    asyncio.run(exercise())
+
+
+def test_prebound_write_retains_its_operation_context():
+    operation = compile_update_operation({}, dialect=MONGODB_DIALECT_70).bind(
+        OperationContext.create(dialect=MONGODB_DIALECT_70)
+    )
+    assert (
+        _collection_modify._bind_execution_context(
+            operation, object(), change_operation_type="update"
+        )
+        is operation
+    )
+
+
+def test_selected_delete_rejects_a_missing_context_before_calling_the_engine():
+    collection = AsyncCollection(MemoryEngine(), "db", "rows")
+    operation = compile_update_operation({}, dialect=MONGODB_DIALECT_70)
+    with pytest.raises(TypeError, match="missing OperationContext"):
+        asyncio.run(
+            _collection_modify._delete_selected_document(
+                collection,
+                {"_id": 1},
+                selector_operation=operation,
+                change_event_index=0,
+                session=None,
+            )
+        )
 
 
 class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):

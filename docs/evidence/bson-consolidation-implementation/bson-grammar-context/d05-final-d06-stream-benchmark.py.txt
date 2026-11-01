@@ -1,0 +1,19 @@
+import hashlib,json,sys,time
+from pathlib import Path
+source=Path(sys.argv[1]).resolve();sys.path.insert(0,str(source))
+from mongoeco import MongoClient
+import mongoeco
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from bson import BSON
+assert Path(mongoeco.__file__).resolve().is_relative_to(source),mongoeco.__file__
+factory={'MemoryEngine':MemoryEngine,'SQLiteEngine':SQLiteEngine}[sys.argv[2]]
+seed=[{'_id':i,'v':i%50} for i in range(3000)]
+pipeline=[{'$sort':{'_id':1}},{'$set':{'v':{'$add':['$v',1]}}},{'$project':{'v':1}}]
+with MongoClient(factory()) as client:
+ c=client.bench.rows;c.insert_many(seed)
+ list(c.aggregate(pipeline))
+ started=time.perf_counter()
+ rows=list(c.aggregate(pipeline))
+ elapsed=time.perf_counter()-started
+ assert rows==[{'_id':i,'v':i%50+1} for i in range(3000)]
+ print(json.dumps({'source':str(source),'engine':factory.__name__,'seconds':elapsed,'rows':len(rows),'bson_sha256':hashlib.sha256(b''.join(BSON.encode(row) for row in rows)).hexdigest()}))

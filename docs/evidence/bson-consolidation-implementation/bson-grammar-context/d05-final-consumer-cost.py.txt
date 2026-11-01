@@ -1,0 +1,14 @@
+import json,os,statistics,subprocess,sys
+from pathlib import Path
+roots={'A':Path(Path('/tmp/mongoeco-consumer-baseline-location.txt').read_text().strip()),'B':Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())}
+results=[]
+for turn in 'ABBAABBA':
+ out=subprocess.check_output([sys.executable,'/tmp/mongoeco-consumer-cost-worker.py',str(roots[turn])],text=True)
+ results.append({'runtime':turn,'results':json.loads(out)})
+summary={}
+for case in results[0]['results']:
+ values={runtime:[n for row in results if row['runtime']==runtime for n in row['results'][case]['cpu_seconds']] for runtime in roots}
+ assert len({row['results'][case]['bson_sha256'] for row in results})==1
+ summary[case]={'candidate_over_baseline_cpu':statistics.median(values['B'])/statistics.median(values['A']),'samples_per_runtime':12}
+Path('/tmp/mongoeco-consumer-cost.json').write_text(json.dumps({'order':'ABBAABBA','scope':'diagnostic process CPU, identical BSON; not a D05 global budget','samples':results,'summary':summary},indent=2)+'\n')
+print(json.dumps(summary))
