@@ -90,6 +90,7 @@ from mongoeco.compat import (
 )
 from mongoeco.core._public_materialization import (
     materialize_cursor_response,
+    materialize_find_modify_response,
     materialize_public_document,
     materialize_public_value,
 )
@@ -127,10 +128,9 @@ from mongoeco.engines.base import (
     AsyncStorageEngine,  # noqa: TC001 - runtime public annotations
 )
 from mongoeco.engines.results import (
-    DeleteOutcome,
-    FindAndModifyOutcome,
-    InsertOutcome,
-    MutationOutcome,
+    DeleteOutcome,  # noqa: TC001 - runtime outcome annotations
+    InsertOutcome,  # noqa: TC001 - runtime outcome annotations
+    MutationOutcome,  # noqa: TC001 - runtime outcome annotations
 )
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, WriteError
 from mongoeco.session import ClientSession  # noqa: TC001
@@ -143,6 +143,8 @@ from mongoeco.types import (
     Document,
     DocumentId,
     Filter,
+    FindAndModifyCommandResult,
+    FindAndModifyLastErrorObject,
     IndexInformation,
     IndexKeySpec,
     IndexModel,
@@ -1431,48 +1433,6 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        outcome = await self._find_one_and_update_outcome(
-            filter_spec,
-            update_spec,
-            filter=filter,
-            update=update,
-            projection=projection,
-            collation=collation,
-            sort=sort,
-            upsert=upsert,
-            return_document=return_document,
-            array_filters=array_filters,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            let=let,
-            bypass_document_validation=bypass_document_validation,
-            session=session,
-            **kwargs,
-        )
-        return outcome.value
-
-    async def _find_one_and_update_outcome(
-        self,
-        filter_spec: Filter | object = _FILTER_UNSET,
-        update_spec: Update | object = _UPDATE_UNSET,
-        *,
-        filter: Filter | object = _FILTER_UNSET,
-        update: Update | object = _UPDATE_UNSET,
-        projection: ProjectionInput | None = None,
-        collation: CollationDocument | None = None,
-        sort: SortSpec | None = None,
-        upsert: bool = False,
-        return_document: ReturnDocument | None = None,
-        array_filters: ArrayFilters | None = None,
-        hint: HintSpec | None = None,
-        comment: object | None = None,
-        max_time_ms: int | None = None,
-        let: dict[str, object] | None = None,
-        bypass_document_validation: bool = False,
-        session: ClientSession | None = None,
-        **kwargs: object,
-    ) -> FindAndModifyOutcome:
         result = await _collection_modify.find_one_and_update_outcome(
             self,
             filter_spec,
@@ -1493,10 +1453,10 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
-        return FindAndModifyOutcome(
-            captured=result.captured,
-            value=self._apply_codec_options_to_optional_document(result.value),
-        )
+        response = _collection_modify.find_and_modify_response(result)
+        return materialize_find_modify_response(
+            response.to_document(), codec_options=self._codec_options
+        ).get("value")
 
     async def find_one_and_replace(
         self,
@@ -1517,44 +1477,6 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        outcome = await self._find_one_and_replace_outcome(
-            filter_spec,
-            replacement,
-            filter=filter,
-            projection=projection,
-            collation=collation,
-            sort=sort,
-            upsert=upsert,
-            return_document=return_document,
-            hint=hint,
-            comment=comment,
-            max_time_ms=max_time_ms,
-            let=let,
-            bypass_document_validation=bypass_document_validation,
-            session=session,
-            **kwargs,
-        )
-        return outcome.value
-
-    async def _find_one_and_replace_outcome(
-        self,
-        filter_spec: Filter | object = _FILTER_UNSET,
-        replacement: Document | object = ARG_UNSET,
-        *,
-        filter: Filter | object = _FILTER_UNSET,
-        projection: ProjectionInput | None = None,
-        collation: CollationDocument | None = None,
-        sort: SortSpec | None = None,
-        upsert: bool = False,
-        return_document: ReturnDocument | None = None,
-        hint: HintSpec | None = None,
-        comment: object | None = None,
-        max_time_ms: int | None = None,
-        let: dict[str, object] | None = None,
-        bypass_document_validation: bool = False,
-        session: ClientSession | None = None,
-        **kwargs: object,
-    ) -> FindAndModifyOutcome:
         result = await _collection_modify.find_one_and_replace_outcome(
             self,
             filter_spec,
@@ -1573,10 +1495,10 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
-        return FindAndModifyOutcome(
-            captured=result.captured,
-            value=self._apply_codec_options_to_optional_document(result.value),
-        )
+        response = _collection_modify.find_and_modify_response(result)
+        return materialize_find_modify_response(
+            response.to_document(), codec_options=self._codec_options
+        ).get("value")
 
     async def find_one_and_delete(
         self,
@@ -1607,7 +1529,15 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
-        return self._apply_codec_options_to_optional_document(document)
+        response = FindAndModifyCommandResult(
+            last_error_object=FindAndModifyLastErrorObject(
+                count=0 if document is None else 1
+            ),
+            value=document,
+        )
+        return materialize_find_modify_response(
+            response.to_document(), codec_options=self._codec_options
+        ).get("value")
 
     async def delete_one(
         self,

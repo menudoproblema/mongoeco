@@ -287,6 +287,14 @@ from tests.differential.semantic_write_effect_cases import (
     SEED as WRITE_EFFECT_SEED,
     SEMANTIC_WRITE_EFFECT_CASES,
 )
+from tests.differential.semantic_write_factory_cases import (
+    SEED as WRITE_FACTORY_SEED,
+    SEMANTIC_WRITE_FACTORY_CASES,
+)
+from tests.differential.semantic_write_factory_event_cases import (
+    SEED as WRITE_FACTORY_EVENT_SEED,
+    SEMANTIC_WRITE_FACTORY_EVENT_CASES,
+)
 from tests.differential.semantic_write_response_cases import (
     SEED as WRITE_RESPONSE_SEED,
     SEMANTIC_WRITE_RESPONSE_CASES,
@@ -306,6 +314,21 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "write_factory_event": SemanticCorpus(
+        "write-factory-event",
+        "semantic_write_factory_event_cases",
+        WRITE_FACTORY_EVENT_SEED,
+        SEMANTIC_WRITE_FACTORY_EVENT_CASES,
+        surfaces=("sync", "async"),
+        requires_replica_set=True,
+    ),
+    "write_factory": SemanticCorpus(
+        "write-factory",
+        "semantic_write_factory_cases",
+        WRITE_FACTORY_SEED,
+        SEMANTIC_WRITE_FACTORY_CASES,
+        requires_standalone=True,
+    ),
     "write_response": SemanticCorpus(
         "write-response",
         "semantic_write_response_cases",

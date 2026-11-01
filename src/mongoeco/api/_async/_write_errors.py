@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from functools import wraps
 
 from mongoeco.core._public_materialization import (
-    materialize_command_response,
+    materialize_find_modify_response,
     materialize_public_document,
 )
 from mongoeco.core.duplicate_keys import duplicate_key_message, write_error_message
@@ -194,7 +194,7 @@ def find_modify_errors[**P, T](
             if name is not None:
                 details["codeName"] = name
             if not kwargs.get("server_command"):
-                details = materialize_command_response(
+                details = materialize_find_modify_response(
                     details,
                     codec_options=args[0]._codec_options,
                 )

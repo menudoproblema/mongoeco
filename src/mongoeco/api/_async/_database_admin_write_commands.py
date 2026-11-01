@@ -403,7 +403,7 @@ class DatabaseAdminWriteCommandService:
             last_error_object=FindAndModifyLastErrorObject(
                 count=0 if before is None else 1,
             ),
-            value=collection._apply_codec_options_to_optional_document(before),
+            value=before,
         )
 
     async def find_and_modify_before_full(
@@ -473,16 +473,7 @@ class DatabaseAdminWriteCommandService:
         )
         if not isinstance(outcome, FindAndModifyOutcome):
             raise TypeError("find_one_and_update did not return an atomic outcome")
-        result = outcome.captured.result
-        applied = result.matched_count > 0 or result.did_upsert
-        return FindAndModifyCommandResult(
-            last_error_object=FindAndModifyLastErrorObject(
-                count=1 if applied else 0,
-                updated_existing=result.matched_count > 0,
-                upserted_id=materialize_public_value(result.upserted_id),
-            ),
-            value=collection._apply_codec_options_to_optional_document(outcome.value),
-        )
+        return _collection_modify.find_and_modify_response(outcome)
 
     async def execute_find_and_modify_replacement(
         self,
@@ -518,16 +509,7 @@ class DatabaseAdminWriteCommandService:
         )
         if not isinstance(outcome, FindAndModifyOutcome):
             raise TypeError("find_one_and_replace did not return an atomic outcome")
-        result = outcome.captured.result
-        applied = result.matched_count > 0 or result.did_upsert
-        return FindAndModifyCommandResult(
-            last_error_object=FindAndModifyLastErrorObject(
-                count=1 if applied else 0,
-                updated_existing=result.matched_count > 0,
-                upserted_id=materialize_public_value(result.upserted_id),
-            ),
-            value=collection._apply_codec_options_to_optional_document(outcome.value),
-        )
+        return _collection_modify.find_and_modify_response(outcome)
 
     @staticmethod
     def is_operator_update(update_spec: dict[str, object] | list[object]) -> bool:

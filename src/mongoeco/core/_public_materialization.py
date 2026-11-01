@@ -17,6 +17,8 @@ from mongoeco.types import UndefinedType
 try:
     from bson import BSON as _BSON
     from bson.binary import UuidRepresentation as _BsonUuidRepresentation
+    from bson.errors import InvalidBSON as _InvalidBSON
+    from bson.raw_bson import RawBSONDocument as _RawBSONDocument
     from bson.codec_options import (
         CodecOptions as _BsonCodecOptions,
         TypeDecoder as _TypeDecoder,
@@ -25,6 +27,11 @@ try:
 except ImportError:  # pragma: no cover - optional SDK
     _BSON = None
     _TypeDecoder = object
+
+    class InvalidBSON(Exception):  # noqa: N818 - native BSON exception spelling
+        """Portable family for a failure inside BSON response decoding."""
+
+    _InvalidBSON = InvalidBSON
 
 
 class _ResponseDecoder(_TypeDecoder):
@@ -56,40 +63,40 @@ def _encode_response_fallback(value):
     raise TypeError(message)
 
 
-def _decode_response_document(document, *, codec_options):
-    """Apply public SDK decoding, or the supported portable codec policy."""
-    if _BSON is None:
-        if codec_options.type_registry:
-            # The selected subtree is a cursor body. Its id is BSON int64,
-            # never an int32 callback, even when the portable public value is
-            # an int. Other fields retain the recursive codec traversal.
-            decoded = codec_options.document_class()
-            for key, value in document.items():
-                public = DocumentCodec.to_pymongo(
-                    DocumentCodec.to_public(value), binary_subtype_zero_as_bytes=True
-                )
-                decoded[key] = (
-                    public
-                    if key == "id"
-                    else DocumentCodec.apply_codec_options(
-                        public, codec_options=codec_options
-                    )
-                )
-            return decoded
-        return DocumentCodec.apply_codec_options(
-            DocumentCodec.to_pymongo(
-                DocumentCodec.to_public(document), binary_subtype_zero_as_bytes=True
-            ),
-            codec_options=codec_options,
-        )
+def _encode_response_document(document):
     encode_options = _BsonCodecOptions(
         uuid_representation=_BsonUuidRepresentation.STANDARD,
         type_registry=_TypeRegistry(fallback_encoder=_encode_response_fallback),
     )
-    encoded = _BSON.encode(
+    return _BSON.encode(
         DocumentCodec.to_pymongo(DocumentCodec.to_public(document)),
         codec_options=encode_options,
     )
+
+
+def _decode_response_document(document, *, codec_options):
+    """Apply public SDK decoding, or the supported portable codec policy."""
+    if _BSON is None:
+        # Root construction is outside BSON element decoding. Nested factory,
+        # setter and decoder failures belong to that decoding boundary.
+        decoded = codec_options.document_class()
+        for key, value in document.items():
+            public = DocumentCodec.to_pymongo(
+                DocumentCodec.to_public(value), binary_subtype_zero_as_bytes=True
+            )
+            try:
+                converted = (
+                    public
+                    if key == "id" and codec_options.type_registry
+                    else DocumentCodec._apply_codec_options_recursive(
+                        public, codec_options=codec_options
+                    )
+                )
+            except Exception as error:
+                raise _InvalidBSON(str(error)) from error
+            decoded[key] = converted
+        return decoded
+    encoded = _encode_response_document(document)
     options = _BsonCodecOptions(
         document_class=codec_options.document_class,
         tz_aware=codec_options.tz_aware,
@@ -116,6 +123,39 @@ def materialize_command_response(document, *, codec_options):
         uuid_representation=codec_options.uuid_representation,
     )
     return _decode_response_document(document, codec_options=options)
+
+
+def _raw_response_value(value, *, codec_options):
+    if not isinstance(value, dict):
+        return value
+    if _BSON is None:
+        return materialize_public_value(value)
+    options = _BsonCodecOptions(
+        document_class=_RawBSONDocument,
+        tz_aware=codec_options.tz_aware,
+        tzinfo=codec_options.tzinfo,
+        uuid_representation=getattr(
+            _BsonUuidRepresentation, codec_options.uuid_representation.name
+        ),
+    )
+    return _RawBSONDocument(_encode_response_document(value), codec_options=options)
+
+
+def materialize_find_modify_response(document, *, codec_options):
+    """Decode the selected value while retaining observable response effects."""
+    if not codec_options.type_registry:
+        return _decode_response_document(document, codec_options=codec_options)
+    reply = codec_options.document_class()
+    for key, value in document.items():
+        if key == "value":
+            # Selection decodes the entire reply at this point. Metadata hooks
+            # run too, but only the selected value survives from this decode.
+            reply[key] = _decode_response_document(
+                document, codec_options=codec_options
+            )[key]
+        else:
+            reply[key] = _raw_response_value(value, codec_options=codec_options)
+    return reply
 
 
 def materialize_cursor_response(batch, *, codec_options, namespace, cursor_id, initial):

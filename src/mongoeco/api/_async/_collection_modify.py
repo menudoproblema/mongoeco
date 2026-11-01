@@ -34,6 +34,7 @@ from mongoeco.api.public_api import (
     COLLECTION_UPDATE_ONE_SPEC,
     normalize_public_operation_arguments,
 )
+from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.operation_context import (
@@ -56,6 +57,8 @@ from mongoeco.types import (
     Document,
     DocumentId,
     Filter,
+    FindAndModifyCommandResult,
+    FindAndModifyLastErrorObject,
     ReturnDocument,
     SortSpec,
     Update,
@@ -69,6 +72,22 @@ if TYPE_CHECKING:
     from mongoeco.compat import MongoDialect
     from mongoeco.core.query_plan import QueryNode
     from mongoeco.session import ClientSession
+
+
+def find_and_modify_response(
+    outcome: FindAndModifyOutcome,
+) -> FindAndModifyCommandResult:
+    """Project the captured mutation into the shared server reply DTO."""
+    result = outcome.captured.result
+    applied = result.matched_count > 0 or result.did_upsert
+    return FindAndModifyCommandResult(
+        last_error_object=FindAndModifyLastErrorObject(
+            count=1 if applied else 0,
+            updated_existing=result.matched_count > 0,
+            upserted_id=materialize_public_value(result.upserted_id),
+        ),
+        value=outcome.value,
+    )
 
 
 def _index_document(value, *, hint=False):
