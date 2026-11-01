@@ -98,6 +98,7 @@ from mongoeco.core.search_models import (
 )
 from mongoeco.core.server_errors import server_error
 from mongoeco.core.sorting import sort_documents
+from mongoeco.core.runtime_metadata import _RuntimeReadDocument
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
 from mongoeco.engines._memory_collection import MemoryCollection, MemoryIndexMap
@@ -1086,6 +1087,11 @@ class MemoryEngine(AsyncStorageEngine):
         return _StoredDocument(self._codec.encode(document))
 
     def _copy_document_containers(self, value: object) -> object:
+
+        if isinstance(value, _RuntimeReadDocument):
+            return _RuntimeReadDocument(
+                self._copy_document_containers(dict(value)), value.runtime_metadata
+            )
         if isinstance(value, dict):
             return {
                 key: self._copy_document_containers(item) for key, item in value.items()
@@ -3679,6 +3685,12 @@ class MemoryEngine(AsyncStorageEngine):
                 document,
                 projection,
                 dialect=effective_dialect,
+                variables=None
+                if operation_context is None
+                else operation_context.expressions,
+                collation=None
+                if operation_context is None
+                else operation_context.collation,
             )
         async with self._get_lock(db_name, coll_name):
             self._purge_expired_documents_locked(
@@ -3724,6 +3736,12 @@ class MemoryEngine(AsyncStorageEngine):
             document,
             projection,
             dialect=effective_dialect,
+            variables=None
+            if operation_context is None
+            else operation_context.expressions,
+            collation=None
+            if operation_context is None
+            else operation_context.collation,
         )
 
     @override

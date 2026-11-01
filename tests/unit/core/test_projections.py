@@ -23,16 +23,18 @@ class ProjectionTests(unittest.TestCase):
                     return None
                 return super().projection_flag(value)
 
-        with self.assertRaises(OperationFailure):
+        document = {"_id": 1, "name": "Val"}
+        self.assertEqual(
             apply_projection(
-                {"_id": 1, "name": "Val"},
+                document,
                 {"name": True},
                 dialect=_NoBooleanFlagDialect(
-                    key="test",
-                    server_version="test",
-                    label="No Bool Projection Flag",
+                    key="test", server_version="test", label="No Bool Projection Flag"
                 ),
-            )
+            ),
+            {"_id": 1, "name": True},
+        )
+        self.assertEqual(apply_projection(document, {"name": True}), document)
 
     def test_inclusion_projection(self):
         doc = {
@@ -126,6 +128,7 @@ class ProjectionTests(unittest.TestCase):
                     {"code": "a"},
                     {"label": "Grace"},
                     {"code": "l", "label": "Lin"},
+                    {},
                 ],
             },
         )
@@ -297,7 +300,7 @@ class ProjectionTests(unittest.TestCase):
             {"_id": 1, "name": "Ada", "profile": {"city": "Madrid"}},
         )
 
-    def test_projection_rejects_mixed_inclusion_exclusion_and_invalid_flags(
+    def test_projection_rejects_mixed_modes_and_invalid_specs(
         self,
     ):
         doc = {"_id": 1, "a": 1, "b": 2}
@@ -306,8 +309,7 @@ class ProjectionTests(unittest.TestCase):
             apply_projection(doc, [("a", 1)])  # type: ignore[arg-type]
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {"a": 1, "b": 0})
-        with self.assertRaises(OperationFailure):
-            apply_projection(doc, {"a": 2})
+        self.assertEqual(apply_projection(doc, {"a": 2}), {"_id": 1, "a": 1})
         with self.assertRaises(OperationFailure):
             apply_projection(doc, {1: 1})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):

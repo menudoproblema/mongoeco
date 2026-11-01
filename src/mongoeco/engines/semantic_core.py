@@ -23,6 +23,7 @@ from mongoeco.core.schema_validation import (
     schema_failure_details,
 )
 from mongoeco.core.search import ClassicTextQuery, strip_search_result_metadata
+from mongoeco.core.runtime_metadata import RuntimeDocumentState, runtime_read_document
 from mongoeco.core.server_errors import ServerDiagnostic
 from mongoeco.core.sorting import sort_documents, sort_documents_limited
 from mongoeco.errors import DocumentValidationFailure
@@ -492,6 +493,8 @@ class FiniteDocumentScan:
             semantics.projection,
             selector_filter=semantics.selector_filter,
             dialect=semantics.dialect,
+            variables=semantics.variables,
+            collation=semantics.collation,
         )
         self._remaining_skip = semantics.skip
         self._remaining_limit = semantics.limit
@@ -523,9 +526,14 @@ class FiniteDocumentScan:
         projected = (
             document if semantics.projection is None else self._project(document)
         )
-        cleaned = _strip_result_metadata(projected)
+        if isinstance(document, RuntimeDocumentState) and not isinstance(
+            projected, RuntimeDocumentState
+        ):
+            projected = document.with_document(projected)
         result = (
-            DocumentCodec.to_public(cleaned) if self._emit_public_documents else cleaned
+            DocumentCodec.to_public(_strip_result_metadata(projected))
+            if self._emit_public_documents
+            else runtime_read_document(projected)
         )
         if self._remaining_limit is not None:
             self._remaining_limit -= 1
@@ -632,6 +640,8 @@ def stream_finalize_documents(
         projection,
         selector_filter=semantics.selector_filter,
         dialect=dialect,
+        variables=semantics.variables,
+        collation=semantics.collation,
     )
     remaining_skip = semantics.skip if apply_skip_limit_phase else 0
     remaining_limit = semantics.limit if apply_skip_limit_phase else None
@@ -641,8 +651,15 @@ def stream_finalize_documents(
                 remaining_skip -= 1
                 continue
             projected = document if projection is None else project(document)
-            cleaned = _strip_result_metadata(projected)
-            yield DocumentCodec.to_public(cleaned) if emit_public_documents else cleaned
+            if isinstance(document, RuntimeDocumentState) and not isinstance(
+                projected, RuntimeDocumentState
+            ):
+                projected = document.with_document(projected)
+            yield (
+                DocumentCodec.to_public(_strip_result_metadata(projected))
+                if emit_public_documents
+                else runtime_read_document(projected)
+            )
             if remaining_limit is not None:
                 remaining_limit -= 1
                 if remaining_limit == 0:
@@ -655,8 +672,15 @@ def stream_finalize_documents(
             remaining_skip -= 1
             continue
         projected = document if projection is None else project(document)
-        cleaned = _strip_result_metadata(projected)
-        yield DocumentCodec.to_public(cleaned) if emit_public_documents else cleaned
+        if isinstance(document, RuntimeDocumentState) and not isinstance(
+            projected, RuntimeDocumentState
+        ):
+            projected = document.with_document(projected)
+        yield (
+            DocumentCodec.to_public(_strip_result_metadata(projected))
+            if emit_public_documents
+            else runtime_read_document(projected)
+        )
         if remaining_limit is not None:
             remaining_limit -= 1
             if remaining_limit == 0:

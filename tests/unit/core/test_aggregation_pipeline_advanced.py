@@ -725,9 +725,7 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
         )
 
     def test_pipeline_count_returns_empty_result_for_empty_input(self):
-        self.assertEqual(
-            apply_pipeline([], [{'$count': 'total'}]), [{'total': 0}]
-        )
+        self.assertEqual(apply_pipeline([], [{"$count": "total"}]), [])
 
     def test_pipeline_rejects_count_field_names_with_dots(self):
         with self.assertRaises(OperationFailure):

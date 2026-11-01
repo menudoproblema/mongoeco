@@ -20,11 +20,17 @@ from mongoeco.core.aggregation.runtime import (
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, set_document_value
-from mongoeco.core.projections import apply_projection
+from mongoeco.core.projections import apply_computed_projection_fields, apply_projection
 from mongoeco.core.query_operators import (
     require_non_empty_document_clause_list,
 )
 from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+    _RuntimeReadDocument,
+    ensure_runtime_state,
+    runtime_read_document,
+)
 from mongoeco.core.server_errors import server_error
 from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.errors import OperationFailure
@@ -181,6 +187,19 @@ def _apply_project(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     deadline: float | None = None,
 ) -> list[Document]:
+    if any(isinstance(document, _RuntimeReadDocument) for document in documents):
+        from mongoeco.core.aggregation.runtime_state import (  # noqa: PLC0415 - state execution delegates to this stage
+            _apply_project_states,
+        )
+
+        states = _apply_project_states(
+            [ensure_runtime_state(document) for document in documents],
+            spec,
+            variables,
+            dialect=dialect,
+            deadline=deadline,
+        )
+        return [runtime_read_document(state) for state in states]
     projection = _require_projection_for_dialect(spec, dialect=dialect)
     computed_fields = {
         key: value
@@ -189,7 +208,13 @@ def _apply_project(
     }
     if not computed_fields:
         return [
-            apply_projection(document, projection, dialect=dialect)
+            apply_projection(
+                document.public_document()
+                if isinstance(document, RuntimeDocumentState)
+                else document,
+                projection,
+                dialect=dialect,
+            )
             for document in iter_with_deadline(documents, deadline)
         ]
 
@@ -198,25 +223,30 @@ def _apply_project(
         for key, value in projection.items()
         if _projection_flag(value, dialect=dialect) is not None
     }
-    include_id = include_fields.get("_id", 1) != 0
+    include_id = "_id" not in computed_fields and include_fields.get("_id", 1) != 0
     result: list[Document] = []
-    for document in iter_with_deadline(documents, deadline):
+    for source in iter_with_deadline(documents, deadline):
+        document = (
+            source.public_document()
+            if isinstance(source, RuntimeDocumentState)
+            else source
+        )
         projected: Document = {}
         include_mode = any(
             value == 1 for key, value in include_fields.items() if key != "_id"
         )
         if include_mode:
-            projected = apply_projection(document, include_fields, dialect=dialect)
+            flags = (
+                {**include_fields, "_id": 0}
+                if "_id" in computed_fields
+                else include_fields
+            )
+            projected = apply_projection(document, flags, dialect=dialect)
         elif include_id and "_id" in document:
             projected["_id"] = deepcopy(document["_id"])
-        for path, expression in computed_fields.items():
-            value = _evaluate_expression_with_missing(
-                document, expression, variables, dialect=dialect
-            )
-            if value is _MISSING:
-                delete_document_value(projected, path)
-                continue
-            set_document_value(projected, path, deepcopy(value))
+        apply_computed_projection_fields(
+            projected, source, computed_fields, variables, dialect=dialect
+        )
         result.append(projected)
     return result
 

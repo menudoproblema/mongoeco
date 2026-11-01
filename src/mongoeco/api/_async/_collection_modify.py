@@ -647,7 +647,10 @@ async def find_one_and_update_outcome(
         raise server_error(message, code=9)
     projection = collection._normalize_projection(options.get("projection"))
     project = _ProjectionExecutor(
-        projection, selector_filter=filter_spec, dialect=collection._mongodb_dialect
+        projection,
+        selector_filter=filter_spec,
+        dialect=collection._mongodb_dialect,
+        variables=options.get("let"),
     )
     return_document = collection._normalize_return_document(
         options.get("return_document")
@@ -692,7 +695,13 @@ async def find_one_and_update_outcome(
         if return_document is ReturnDocument.BEFORE
         else captured.after_document
     )
-    value = None if selected is None else project(selected)
+    value = (
+        None
+        if selected is None
+        else project(
+            selected, variables=operation.let, collation=operation.context.collation
+        )
+    )
     outcome = FindAndModifyOutcome(captured=captured, value=value)
     return outcome
 
@@ -749,7 +758,10 @@ async def find_one_and_replace_outcome(
     replacement = collection._require_replacement(options["replacement"])
     projection = collection._normalize_projection(options.get("projection"))
     project = _ProjectionExecutor(
-        projection, selector_filter=filter_spec, dialect=collection._mongodb_dialect
+        projection,
+        selector_filter=filter_spec,
+        dialect=collection._mongodb_dialect,
+        variables=options.get("let"),
     )
     return_document = collection._normalize_return_document(
         options.get("return_document")
@@ -798,7 +810,13 @@ async def find_one_and_replace_outcome(
         if return_document is ReturnDocument.BEFORE
         else captured.after_document
     )
-    value = None if selected is None else project(selected)
+    value = (
+        None
+        if selected is None
+        else project(
+            selected, variables=operation.let, collation=operation.context.collation
+        )
+    )
     outcome = FindAndModifyOutcome(captured=captured, value=value)
     return outcome
 
@@ -846,7 +864,10 @@ async def find_one_and_delete(
     filter_spec = collection._normalize_filter(options["filter_spec"])
     projection = collection._normalize_projection(options.get("projection"))
     project = _ProjectionExecutor(
-        projection, selector_filter=filter_spec, dialect=collection._mongodb_dialect
+        projection,
+        selector_filter=filter_spec,
+        dialect=collection._mongodb_dialect,
+        variables=options.get("let"),
     )
     session = options.get("session")
     if server_command:
@@ -876,7 +897,9 @@ async def find_one_and_delete(
     if captured.result.deleted_count == 0 or captured.deleted_document is None:
         return None
     before = captured.deleted_document
-    return project(before)
+    return project(
+        before, variables=operation.let, collation=operation.context.collation
+    )
 
 
 @write_command_errors

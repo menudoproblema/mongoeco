@@ -184,12 +184,13 @@ def test_projection_preparation_uses_its_own_dialect():
                 return None
             return super().projection_flag(value)
 
-    with pytest.raises(OperationFailure):
-        projections._ProjectionExecutor(
-            {"name": True},
-            dialect=NoBooleanProjectionDialect(
-                key="no-bool", server_version="test", label="No boolean flags"
-            ),
-        )
+    custom = projections._ProjectionExecutor(
+        {"name": True},
+        dialect=NoBooleanProjectionDialect(
+            key="no-bool", server_version="test", label="No boolean flags"
+        ),
+    )
+    # The custom dialect classifies True as a computed literal, not inclusion.
+    assert custom({"name": "one"}) == {"name": True}
     default = projections._ProjectionExecutor({"name": True})
     assert default({"name": "one"}) == {"name": "one"}

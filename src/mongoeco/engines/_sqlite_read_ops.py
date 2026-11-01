@@ -38,6 +38,8 @@ def get_document(
     dialect: MongoDialect | None,
     storage_key: str,
     deserialize_document: Callable[[str], Document],
+    variables=None,
+    collation=None,
 ) -> Document | None:
     effective_dialect = dialect or MONGODB_DIALECT_70
     row = conn.execute(
@@ -80,6 +82,8 @@ def get_document(
         document,
         projection,
         dialect=effective_dialect,
+        variables=variables,
+        collation=collation,
     )
 
 

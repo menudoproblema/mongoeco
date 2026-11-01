@@ -10,6 +10,7 @@ import uuid
 from typing import Any, Self
 
 from mongoeco._types.concerns import CodecOptions, UuidRepresentation
+from mongoeco.core.runtime_metadata import _RuntimeReadDocument
 
 
 try:
@@ -786,6 +787,11 @@ class DocumentCodec:
     def _to_public_copy_on_write(  # noqa: PLR0911, PLR0912
         data: Any,
     ) -> Any:
+        if isinstance(data, _RuntimeReadDocument):
+            return _RuntimeReadDocument(
+                DocumentCodec._to_public_copy_on_write(dict(data)),
+                data.runtime_metadata,
+            )
         if isinstance(data, _InternalBsonDocument):
             return {
                 key: DocumentCodec._to_public_copy_on_write(value)

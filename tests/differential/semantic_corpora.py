@@ -142,6 +142,10 @@ from tests.differential.semantic_expression_grammar_cases import (
     SEED as EXPRESSION_GRAMMAR_SEED,
     SEMANTIC_EXPRESSION_GRAMMAR_CASES,
 )
+from tests.differential.semantic_find_projection_cases import (
+    SEED as FIND_PROJECTION_SEED,
+    SEMANTIC_FIND_PROJECTION_CASES,
+)
 from tests.differential.semantic_group_cases import SEMANTIC_GROUP_CASES
 from tests.differential.semantic_merge_key_cases import (
     SEED as MERGE_KEY_SEED,
@@ -580,8 +584,16 @@ SEMANTIC_CORPORA = {
         BSON_COMMAND_FLAG_SEED,
         SEMANTIC_BSON_COMMAND_FLAG_CASES,
     ),
+    "find_projection": SemanticCorpus(
+        "find-projection",
+        "semantic_find_projection_cases",
+        FIND_PROJECTION_SEED,
+        SEMANTIC_FIND_PROJECTION_CASES,
+    ),
     "bson_uuid_policy": SemanticCorpus(
-        "bson-uuid-policy", "semantic_bson_uuid_policy_cases", BSON_UUID_POLICY_SEED,
+        "bson-uuid-policy",
+        "semantic_bson_uuid_policy_cases",
+        BSON_UUID_POLICY_SEED,
         SEMANTIC_BSON_UUID_POLICY_CASES,
     ),
     "bson_search_input": SemanticCorpus(

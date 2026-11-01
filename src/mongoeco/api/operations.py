@@ -38,6 +38,7 @@ from mongoeco.core.search import (
     split_classic_text_filter,
     validate_search_stage_pipeline,
 )
+from mongoeco.core.runtime_metadata import requires_text_score
 from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.update_paths import CompiledUpdateInstruction
 from mongoeco.core.validation import is_filter, is_projection
@@ -452,7 +453,9 @@ def compile_find_operation(
     normalized_let = _normalize_let(variables, dialect=dialect)
     if text_query is None:
         if _projection_requests_text_score(normalized_projection):
-            raise OperationFailure("$meta textScore projection requires a $text query")
+            raise OperationFailure(
+                "$meta textScore projection requires a $text query", code=40218
+            )
         if _sort_requests_text_score(normalized_sort):
             raise OperationFailure("$meta textScore sort requires a $text query")
     return FindOperation(
@@ -1017,10 +1020,7 @@ def _normalize_sort(sort: object | None) -> SortSpec | None:
 def _projection_requests_text_score(projection: Projection | None) -> bool:
     if projection is None:
         return False
-    return any(
-        isinstance(value, dict) and value == {"$meta": "textScore"}
-        for value in projection.values()
-    )
+    return any(requires_text_score(value) for value in projection.values())
 
 
 def _sort_requests_text_score(sort: SortSpec | None) -> bool:

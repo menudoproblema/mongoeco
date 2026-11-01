@@ -208,23 +208,12 @@ def _apply_project_states(
     result: list[RuntimeDocumentState] = []
     for state in iter_with_deadline(states, deadline):
         output = _apply_project(
-            [state.public_document()],
+            [state],
             projection,
             variables,
             dialect=dialect,
             deadline=deadline,
         )[0]
-        for path in computed_paths:
-            value = _evaluate_expression_with_missing(
-                state,
-                projection[path],
-                variables,
-                dialect=dialect,
-            )
-            if value is _REMOVE:
-                delete_document_value(output, path)
-            elif value is not _MISSING:
-                set_document_value(output, path, deepcopy(value))
         mappings: list[tuple[str, RuntimeVirtualField]] = []
         for field in state.metadata.virtual_fields:
             if _field_is_shadowed(state, field.path):

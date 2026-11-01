@@ -247,12 +247,33 @@ class RuntimeDocumentState(Mapping[str, Any]):
         return RuntimeDocumentState(materialized, metadata)
 
 
+class _RuntimeReadDocument(dict):
+    """A dict-shaped read row with metadata outside its BSON fields."""
+
+    def __init__(self, document, metadata):
+        super().__init__(document)
+        self.runtime_metadata = metadata
+
+    def __deepcopy__(self, memo):
+        return type(self)(deepcopy(dict(self), memo), self.runtime_metadata)
+
+
+def runtime_read_document(value):
+    if isinstance(value, RuntimeDocumentState):
+        return _RuntimeReadDocument(value.public_document(), value.metadata)
+    return value
+
+
 def ensure_runtime_state(
     value: dict[str, Any] | RuntimeDocumentState,
 ) -> RuntimeDocumentState:
     if isinstance(value, RuntimeDocumentState):
         return deepcopy(value)
-    return RuntimeDocumentState(value)
+    return (
+        RuntimeDocumentState(dict(value), value.runtime_metadata)
+        if isinstance(value, _RuntimeReadDocument)
+        else RuntimeDocumentState(value)
+    )
 
 
 def prepare_public_document(
@@ -322,3 +343,15 @@ def _set_plain_path(
         child = [] if tail.partition(".")[0].isdigit() else {}
         document[head] = child
     _set_plain_path(child, tail, value)
+
+
+def requires_text_score(expression):
+    if isinstance(expression, list):
+        return any(requires_text_score(item) for item in expression)
+    if not isinstance(expression, dict):
+        return False
+    if len(expression) == 1 and next(iter(expression)) in {"$literal", "$const"}:
+        return False
+    if expression.get("$meta") == "textScore":
+        return True
+    return any(requires_text_score(item) for item in expression.values())

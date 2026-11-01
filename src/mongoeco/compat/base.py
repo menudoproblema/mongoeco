@@ -90,12 +90,20 @@ def _expression_truthy_default(value: object) -> bool:
 def _projection_flag_default(value: object) -> int | None:
     if isinstance(value, bool):
         return 1 if value else 0
-    if isinstance(value, int) and value in (0, 1):
-        return value
-    return None
+    numeric = wrap_bson_numeric(value)
+    if numeric is None:
+        return None
+    value = numeric.value
+    return (
+        int(not value.is_zero())
+        if isinstance(value, decimal.Decimal)
+        else int(value != 0)
+    )
 
 
-def _sort_update_path_items_default(params: dict[str, object]) -> list[tuple[str, object]]:
+def _sort_update_path_items_default(
+    params: dict[str, object],
+) -> list[tuple[str, object]]:
     def sort_key(item: tuple[str, object]) -> tuple[int, int | str]:
         path, _ = item
         if not isinstance(path, str):

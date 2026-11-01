@@ -13,6 +13,7 @@ from mongoeco.core.aggregation.extensions import (
 )
 from mongoeco.core.bson_scalars import bson_numeric_alias
 from mongoeco.core.paths import validate_projection_paths
+from mongoeco.core.projections import expand_projection_spec
 from mongoeco.core.server_errors import server_error
 from mongoeco.error_catalog import (
     DENSIFY_FIELD_PREFIX_ERROR,
@@ -146,6 +147,7 @@ def _require_projection_for_dialect(
     if not spec:
         message = "$project requires at least one output field"
         raise server_error(message, code=51272)
+    spec = expand_projection_spec(spec)
     if all(isinstance(key, str) for key in spec):
         validate_projection_paths(set(spec))
     mode = None
@@ -160,7 +162,10 @@ def _require_projection_for_dialect(
                     "cannot include fields or expressions in an exclusion $project"
                 )
                 raise server_error(
-                    message, code=31252 if current == "computed" else 31253
+                    message,
+                    code=(31252 if isinstance(value, dict) else 31310)
+                    if current == "computed"
+                    else 31253,
                 )
             if mode == "include" and current == "exclude":
                 message = "cannot exclude fields in an inclusion $project"

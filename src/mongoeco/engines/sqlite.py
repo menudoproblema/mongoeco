@@ -6018,19 +6018,22 @@ class SQLiteEngine(AsyncStorageEngine):
                 None,
             )
             if callable(profile_document):
-                return profile_document(
+                document = profile_document(
                     db_name,
                     doc_id,
-                    projection=projection,
+                    projection=None,
                     dialect=effective_dialect,
                 )
-            document = self._admin_runtime.profile_document(db_name, doc_id)
+            else:
+                document = self._admin_runtime.profile_document(db_name, doc_id)
             if document is None:
                 return None
             return apply_projection(
                 document,
                 projection,
                 dialect=effective_dialect,
+                variables=operation_context.expressions,
+                collation=operation_context.collation,
             )
         with self._lock:
             conn = self._require_connection(context)
@@ -6052,6 +6055,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     projection=projection,
                     dialect=effective_dialect,
                     storage_key=self._storage_key(doc_id),
+                    variables=operation_context.expressions,
+                    collation=operation_context.collation,
                     deserialize_document=lambda payload: DocumentCodec.to_public(
                         self._deserialize_document(payload),
                     ),
@@ -6203,6 +6208,8 @@ class SQLiteEngine(AsyncStorageEngine):
                             semantics.projection,
                             selector_filter=semantics.filter_spec,
                             dialect=semantics.dialect,
+                            variables=semantics.variables,
+                            collation=semantics.collation,
                         ),
                     )
                 )
@@ -6294,6 +6301,8 @@ class SQLiteEngine(AsyncStorageEngine):
             semantics.projection,
             selector_filter=semantics.filter_spec,
             dialect=semantics.dialect,
+            variables=semantics.variables,
+            collation=semantics.collation,
         )
         source = (self._deserialize_document(payload) for (payload,) in rows)
         return (project(document) for document in source)
@@ -6336,7 +6345,7 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @staticmethod
     def _finalize_scan_source(source, semantics: EngineFindSemantics):
-        return iter_find_documents(source, semantics)
+        return iter_find_documents(source, semantics, emit_public_documents=False)
 
     def _update_matching_document_sync(
         self,

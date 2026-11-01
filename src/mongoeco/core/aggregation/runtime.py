@@ -76,6 +76,8 @@ from mongoeco.core.paths import (
 )
 from mongoeco.core.runtime_metadata import (
     RuntimeDocumentState,
+    _RuntimeReadDocument,
+    ensure_runtime_state,
     RuntimeMetadataKey,
 )
 from mongoeco.core.search import (
@@ -413,7 +415,11 @@ def _require_expression_args(
             f"Expression {operator} takes {requirement} arguments. "
             f"{count} were passed in."
         )
-        raise server_error(message, code=16020, reason="expression_arity")
+        raise server_error(
+            message,
+            code=28667 if operator == "$slice" else 16020,
+            reason="expression_arity",
+        )
     return args
 
 
@@ -718,6 +724,8 @@ def evaluate_expression(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> Any:
+    if isinstance(document, _RuntimeReadDocument):
+        document = ensure_runtime_state(document)
     if collation is not None:
         variables = aggregation_environment(variables, collation)
     variables = _variables_for_document(document, variables)

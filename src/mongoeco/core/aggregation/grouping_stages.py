@@ -1302,7 +1302,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
 def _apply_count(documents: list[Document], spec: object) -> list[Document]:
     if not isinstance(spec, str) or not spec or spec.startswith("$") or "." in spec:
         raise OperationFailure("$count requires a non-empty field name")
-    return [{spec: len(documents)}]
+    return [{spec: len(documents)}] if documents else []
 
 
 def _apply_sort_by_count(  # noqa: PLR0913 - shared execution context

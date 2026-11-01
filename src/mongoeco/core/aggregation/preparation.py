@@ -67,6 +67,8 @@ from mongoeco.core.bson_values import (
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.error_documents import command_error_document, error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.core.search import split_classic_text_filter
+from mongoeco.core.runtime_metadata import requires_text_score
 from mongoeco.core.server_errors import operation_error, server_error
 from mongoeco.errors import OperationFailure
 
@@ -561,8 +563,14 @@ def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
         )
 
         try:
+            selector, text_query = split_classic_text_filter(spec)
+            if text_query is not None and address.index != 0:
+                message = (
+                    "$match with $text is only allowed as the first pipeline stage"
+                )
+                raise server_error(message, code=17313)
             compile_filter(
-                spec, dialect=dialect, variables=dict.fromkeys(context.variables)
+                selector, dialect=dialect, variables=dict.fromkeys(context.variables)
             )
         except OperationFailure as error:
             raise operation_error(error, "aggregate_match", dialect.key) from error
@@ -605,7 +613,61 @@ def _parse_stage_containers(pipeline, dialect, context, relocating):
     return parsed
 
 
-def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
+def _contains_text_query(query):
+    if not isinstance(query, dict):
+        return False
+    return "$text" in query or any(
+        _contains_text_query(clause)
+        for operator in ("$and", "$or", "$nor")
+        for clause in query.get(operator, ())
+    )
+
+
+def _validate_projection_metadata_sources(pipeline, *, text_score=False):
+    # Analyze the complete logical pipeline, never a physical suffix. Facets
+    # inherit the source; foreign pipelines have independent metadata sources.
+    for stage in pipeline:
+        operator, spec = next(iter(stage.items()))
+        if operator == "$match" and _contains_text_query(spec):
+            text_score = True
+        elif operator in {"$search", "$searchMeta"}:
+            # The local Search contract also supplies text score metadata.
+            text_score = True
+        elif get_registered_aggregation_stage_registration(operator) is not None:
+            # Extensions have no declared metadata contract; keep their runtime
+            # behavior rather than assuming their source is statically absent.
+            text_score = None
+        if (
+            operator
+            in {
+                "$project",
+                "$set",
+                "$addFields",
+                "$group",
+                "$replaceRoot",
+                "$replaceWith",
+                "$redact",
+            }
+            and text_score is False
+            and requires_text_score(spec)
+        ):
+            message = "query requires text score metadata, but it is not available"
+            raise server_error(message, code=40218)
+        if operator == "$facet":
+            for branch in spec.values():
+                _validate_projection_metadata_sources(branch, text_score=text_score)
+        elif operator == "$lookup" and isinstance(spec, dict):
+            _validate_projection_metadata_sources(
+                spec.get("pipeline", ()), text_score=False
+            )
+        elif operator == "$unionWith" and isinstance(spec, dict):
+            _validate_projection_metadata_sources(
+                spec.get("pipeline", ()), text_score=False
+            )
+            text_score = None
+
+
+def prepare_pipeline(  # noqa: PLR0912, PLR0913 - logical preparation and metadata boundary
     pipeline,
     *,
     dialect=MONGODB_DIALECT_70,
@@ -711,6 +773,8 @@ def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope bound
         )
         stages.append(prepared_stage)
         addresses.append(address)
+    if previous is None and not context.path:
+        _validate_projection_metadata_sources(stages)
     return PreparedPipeline(
         stages, addresses, requests, dialect=dialect, context=context
     )
@@ -734,6 +798,7 @@ def _validate_documents_namespace(
 # Preparation is structural; constant evaluation is restricted to pure scalar
 # expressions and is enabled only in native phases that optimize constants.
 _EXPRESSION_ARITIES = {
+    "$slice": (2, 3),
     **dict.fromkeys(
         (
             "$divide",
