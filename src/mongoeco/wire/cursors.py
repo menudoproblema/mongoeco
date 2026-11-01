@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.core._public_materialization import cursor_response_document
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._lifecycle import finish_cleanup
 from mongoeco.wire._session_identity import wire_session_key
@@ -89,11 +90,17 @@ class WireCursorStore:
         try:
             session_key = wire_session_key(lsid) if lsid is not None else None
             principal = _principal_key(connection)
+            single_batch = False
+            if "find" in command_document and "singleBatch" in command_document:
+                single_batch = command_document["singleBatch"]
+                if not isinstance(single_batch, bool):
+                    message = "singleBatch must be a boolean"
+                    raise server_error(message, code=14)
             maximum = self._resolve_batch_size(command_document)
             maximum = 101 if maximum is None else maximum
             batch = await self._read_source(source, maximum, initial=True)
             cursor_id = 0
-            if self._source_alive(source):
+            if not single_batch and self._source_alive(source):
                 cursor_id = self._next_cursor_id
                 self._next_cursor_id += 1
                 self._state[cursor_id] = WireCursorState(

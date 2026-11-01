@@ -1,4 +1,7 @@
 MONGODB_DIALECT_HOOK_NAMES = (
+    "bounded_sort_reports_eof",
+    "aggregate_initial_reports_eof",
+    "aggregate_window_reports_eof",
     "supports_dynamic_get_field",
     "supports_now_in_read_command_let",
     "uses_distinct_command_request_field_name",

@@ -1221,7 +1221,7 @@ class AsyncCollection:
         cursor._apply_codec_options = False
 
         async def _fetch(size: int | None) -> list[Document]:
-            return await cursor._read_response(size)
+            return await cursor._read_driver_response(size)
 
         return AsyncRawBatchCursor(
             _fetch,

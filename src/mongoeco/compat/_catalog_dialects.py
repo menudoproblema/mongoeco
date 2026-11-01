@@ -64,6 +64,9 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             aliases=("7", "7.0"),
             behavior_flags=MappingProxyType(
                 {
+                    "bounded_sort_reports_eof": False,
+                    "aggregate_initial_reports_eof": False,
+                    "aggregate_window_reports_eof": False,
                     "uses_distinct_command_request_field_name": False,
                     "supports_now_in_read_command_let": True,
                     "supports_dynamic_get_field": False,
@@ -86,6 +89,9 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             aliases=("8", "8.0"),
             behavior_flags=MappingProxyType(
                 {
+                    "bounded_sort_reports_eof": False,
+                    "aggregate_initial_reports_eof": False,
+                    "aggregate_window_reports_eof": False,
                     "uses_distinct_command_request_field_name": True,
                     "supports_now_in_read_command_let": False,
                     "supports_dynamic_get_field": True,
@@ -108,6 +114,9 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             aliases=("9", "9.0"),
             behavior_flags=MappingProxyType(
                 {
+                    "bounded_sort_reports_eof": True,
+                    "aggregate_initial_reports_eof": True,
+                    "aggregate_window_reports_eof": True,
                     "uses_distinct_command_request_field_name": False,
                     "supports_now_in_read_command_let": False,
                     "supports_dynamic_get_field": True,

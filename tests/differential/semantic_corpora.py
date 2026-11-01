@@ -94,6 +94,10 @@ from tests.differential.semantic_bson_uuid_policy_cases import (
     SEED as BSON_UUID_POLICY_SEED,
     SEMANTIC_BSON_UUID_POLICY_CASES,
 )
+from tests.differential.semantic_command_batch_cases import (
+    SEED as COMMAND_BATCH_SEED,
+    SEMANTIC_COMMAND_BATCH_CASES,
+)
 from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
@@ -180,6 +184,10 @@ from tests.differential.semantic_overflow_cases import (
 from tests.differential.semantic_overflow_write_cases import (
     SEMANTIC_OVERFLOW_WRITE_CASES,
     WRITE_SEED as OVERFLOW_WRITE_SEED,
+)
+from tests.differential.semantic_query_batch_callback_cases import (
+    SEED as QUERY_BATCH_CALLBACK_SEED,
+    SEMANTIC_QUERY_BATCH_CALLBACK_CASES,
 )
 from tests.differential.semantic_query_matching_cases import (
     SEED as QUERY_MATCHING_SEED,
@@ -294,22 +302,46 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "query_batch_callbacks": SemanticCorpus(
+        "query-batch-callbacks",
+        "semantic_query_batch_callback_cases",
+        QUERY_BATCH_CALLBACK_SEED,
+        SEMANTIC_QUERY_BATCH_CALLBACK_CASES,
+        requires_standalone=True,
+    ),
+    "command_batch": SemanticCorpus(
+        "command-batch",
+        "semantic_command_batch_cases",
+        COMMAND_BATCH_SEED,
+        SEMANTIC_COMMAND_BATCH_CASES,
+        surfaces=("wire-sync", "wire-async"),
+        requires_standalone=True,
+    ),
     "bson_consumer": SemanticCorpus(
-        "bson-consumer", "semantic_bson_consumer_cases",
-        BSON_CONSUMER_SEED, SEMANTIC_BSON_CONSUMER_CASES,
+        "bson-consumer",
+        "semantic_bson_consumer_cases",
+        BSON_CONSUMER_SEED,
+        SEMANTIC_BSON_CONSUMER_CASES,
     ),
     "cursor_consumption": SemanticCorpus(
-        "cursor-consumption", "semantic_cursor_consumption_cases",
-        CURSOR_CONSUMPTION_SEED, SEMANTIC_CURSOR_CONSUMPTION_CASES,
+        "cursor-consumption",
+        "semantic_cursor_consumption_cases",
+        CURSOR_CONSUMPTION_SEED,
+        SEMANTIC_CURSOR_CONSUMPTION_CASES,
     ),
     "document_factory": SemanticCorpus(
-        "document-factory", "semantic_document_factory_cases",
-        DOCUMENT_FACTORY_SEED, SEMANTIC_DOCUMENT_FACTORY_CASES,
-        observation_encoding="canonical-json", requires_standalone=True,
+        "document-factory",
+        "semantic_document_factory_cases",
+        DOCUMENT_FACTORY_SEED,
+        SEMANTIC_DOCUMENT_FACTORY_CASES,
+        observation_encoding="canonical-json",
+        requires_standalone=True,
     ),
     "bson_dispatch": SemanticCorpus(
-        "bson-dispatch", "semantic_bson_dispatch_cases",
-        BSON_DISPATCH_SEED, SEMANTIC_BSON_DISPATCH_CASES,
+        "bson-dispatch",
+        "semantic_bson_dispatch_cases",
+        BSON_DISPATCH_SEED,
+        SEMANTIC_BSON_DISPATCH_CASES,
         observation_encoding="canonical-json",
     ),
     "response_command": SemanticCorpus(

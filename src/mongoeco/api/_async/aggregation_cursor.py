@@ -3,7 +3,7 @@ import math
 import time
 
 from collections import deque
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator, Iterable, Sized
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import islice
@@ -47,9 +47,14 @@ from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.preparation import prepare_pipeline
 from mongoeco.core.aggregation.resources import AggregationResources
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
-from mongoeco.core.aggregation.spill import _AggregationGroupStateSerializationError
+from mongoeco.core.aggregation.spill import (
+    _AggregationGroupStateSerializationError,
+    _OwnedSpillOutput,
+)
 from mongoeco.core.aggregation.write_validation import validate_merge_mode_pair
 from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.bson_values import is_bson_string
+from mongoeco.engines.virtual_indexes import query_can_use_index_order
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors, error_message
@@ -192,24 +197,34 @@ class _CursorPageSource:
         self._pull_chunk = getattr(self._iterator, "pull_chunk", None)
         self._materialized: list[Document] | None = None
         self._offset = 0
+        self.blocking_sort = False
 
     async def prepare(self) -> None:
+        classify = getattr(self._cursor, "_sort_uses_index", None)
+        if callable(classify) and getattr(self._cursor, "_sort", None):
+            self.blocking_sort = not await classify(self._cursor._base_operation())
         if not callable(self._pull_chunk):
             self._materialized = list(await self._cursor.to_list())
 
     async def pull(self, maximum: int) -> list[Document]:
         if callable(self._pull_chunk):
-            return list(await self._pull_chunk(maximum))
+            page = list(await self._pull_chunk(maximum))
+            self._offset += len(page)
+            return page
         materialized = self._materialized or []
         page = materialized[self._offset : self._offset + maximum]
         self._offset += len(page)
         return page
 
     @property
-    def exhausted(self):
-        if self._materialized is not None:
-            return self._offset >= len(self._materialized)
-        return getattr(self._cursor, "alive", True) is False
+    def bound_reached(self):
+        if getattr(self._cursor, "_defer_bounded_sort_eof", False):
+            return False
+        limit = getattr(self._cursor, "_limit", None)
+        reached = getattr(self._cursor, "_bounded_source_reached", None)
+        return (limit is not None and self._offset >= limit) or (
+            callable(reached) and reached(self._offset)
+        )
 
     async def aclose(self) -> None:
         close_cursor = getattr(self._cursor, "close", None)
@@ -356,7 +371,16 @@ class AsyncAggregationCursor:
 
         try:
             batch = await self._response_reader.read(pull, maximum, initial=initial)
-            if self._known_source_eof and self._response_reader._pending is None:
+            if (
+                self._known_source_eof
+                and self._response_reader._pending is None
+                and (
+                    not initial
+                    or getattr(
+                        self._collection, "mongodb_dialect", MONGODB_DIALECT_70
+                    ).behavior_flag("aggregate_initial_reports_eof", default=False)
+                )
+            ):
                 await finish_cleanup(self.close())
             # No user decoder runs until the server-side response is complete.
             decoded = self._materialize_response(batch, initial=initial)
@@ -479,6 +503,7 @@ class AsyncAggregationCursor:
         self._response_remaining = None
         self._response_failed = False
         self._pipeline_resources = None
+        self._owned_spill_outputs = []
         self._closed = False
 
     def _execution_variables(self) -> ExpressionExecutionContext:
@@ -1743,13 +1768,17 @@ class AsyncAggregationCursor:
             )
             if group_spool is None:
                 return accumulator.finish()
-            return self._iter_partitioned_group_output(
+            output = self._iter_partitioned_group_output(
                 group_spool,
                 plan,
                 spill_policy=spill_policy,
                 dialect=dialect,
                 deadline=deadline,
             )
+            self._owned_spill_outputs.append(output)
+            if self._closed:
+                output.close()
+            return output
         except BaseException:
             if group_spool is not None:
                 group_spool.close()
@@ -1909,6 +1938,17 @@ class AsyncAggregationCursor:
         )
         partitions = group_spool.iter_partitions()
         sorted_output = None
+
+        def close_output():
+            close = getattr(sorted_output, "close", None)
+            if callable(close):
+                close()
+            close = getattr(partitions, "close", None)
+            if callable(close):
+                close()
+            output_spool.close()
+            group_spool.close()
+
         try:
             for partition in partitions:
                 accumulator = _IncrementalGroup(
@@ -1944,17 +1984,60 @@ class AsyncAggregationCursor:
                     )
                 )
             sorted_output = output_spool.finish()
-            for wrapped in sorted_output:
-                yield wrapped[_GROUP_OUTPUT_DOCUMENT_FIELD]
-        finally:
-            close_output = getattr(sorted_output, "close", None)
-            if callable(close_output):
-                close_output()
-            close_partitions = getattr(partitions, "close", None)
-            if callable(close_partitions):
-                close_partitions()
-            output_spool.close()
-            group_spool.close()
+            return _OwnedSpillOutput(
+                (wrapped[_GROUP_OUTPUT_DOCUMENT_FIELD] for wrapped in sorted_output),
+                output_spool.document_count,
+                close_output,
+            )
+        except BaseException:
+            close_output()
+            raise
+
+    async def _group_uses_distinct_order(self, plan, dialect):
+        if not dialect.behavior_flag("aggregate_window_reports_eof", default=False):
+            return False
+        group_id = plan.group_spec.get("_id")
+        if (
+            plan.prefix
+            or len(plan.group_spec) != 1
+            or not is_bson_string(group_id)
+            or not group_id.startswith("$")
+            or group_id.startswith("$$")
+        ):
+            return False
+        operation = self._pushdown_find_operation()
+        from mongoeco.engines.semantic_core import (  # noqa: PLC0415 - API/core preparation boundary
+            compile_find_semantics_from_operation,
+        )
+
+        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        if semantics.text_query is not None:
+            return False
+        loader = getattr(self._collection._engine, "list_indexes", None)
+        if not callable(loader):
+            return False
+        indexes = await loader(
+            self._collection._db_name,
+            self._collection._collection_name,
+            context=self._session,
+        )
+        sort = [(group_id[1:], 1)]
+        for index in indexes:
+            keys = list(index.get("key", {}).items())
+            if operation.hint is not None and operation.hint not in (
+                index.get("name"),
+                keys,
+            ):
+                continue
+            if query_can_use_index_order(
+                index,
+                semantics.query_plan,
+                sort,
+                dialect=dialect,
+                collation=operation.collation,
+            ):
+                return True
+        return False
 
     async def _open_incremental_group_stream(
         self,
@@ -1964,6 +2047,7 @@ class AsyncAggregationCursor:
         deadline: float | None,
     ) -> AsyncIterator[Document]:
         spill_policy = self._spill_policy()
+        reports_source_eof = await self._group_uses_distinct_order(plan, dialect)
         result = await self._accumulate_group_source(
             plan,
             spill_policy=spill_policy,
@@ -1996,6 +2080,7 @@ class AsyncAggregationCursor:
                 spill_policy=spill_policy,
                 dialect=dialect,
                 deadline=deadline,
+                reports_source_eof=reports_source_eof,
             )
         if plan.suffix:
             referenced_collections = await self._load_pipeline_resources()
@@ -2035,7 +2120,22 @@ class AsyncAggregationCursor:
             if callable(close_source):
                 close_source()
 
-    async def _stream_group_result(
+    def _finite_source_count(
+        self, window, documents, pipeline, *, dialect, reports_source_eof=False
+    ):
+        if not dialect.behavior_flag("aggregate_window_reports_eof", default=False):
+            return None
+        if (
+            window.limit is None and not reports_source_eof
+        ) or self._first_expanding_stage(pipeline) is not None:
+            return None
+        return (
+            len(documents)
+            if isinstance(documents, Sized)
+            else getattr(documents, "document_count", None)
+        )
+
+    async def _stream_group_result(  # noqa: PLR0913 - finite source and execution context
         self,
         documents: Iterable[Document],
         stream_plan: tuple[Pipeline, int, int | None],
@@ -2043,11 +2143,20 @@ class AsyncAggregationCursor:
         spill_policy: AggregationSpillPolicy | None,
         dialect,
         deadline: float | None,
+        reports_source_eof=False,
     ) -> AsyncIterator[Document]:
         pipeline, skip, limit = stream_plan
+        window = _RemainingWindow(skip, limit)
+        source_count = self._finite_source_count(
+            window,
+            documents,
+            pipeline,
+            dialect=dialect,
+            reports_source_eof=reports_source_eof,
+        )
         source = iter(documents)
         try:
-            if limit == 0:
+            if not window.open:
                 return
             referenced_collections = (
                 await self._load_pipeline_resources() if pipeline else {}
@@ -2056,7 +2165,11 @@ class AsyncAggregationCursor:
                 referenced_collections, dialect, spill_policy, deadline
             )
             for document in self._iter_response_rows(
-                source, pipeline, _RemainingWindow(skip, limit), runtime_options=options
+                source,
+                pipeline,
+                window,
+                runtime_options=options,
+                source_count=source_count,
             ):
                 yield strip_search_result_metadata(document)
         finally:
@@ -2098,8 +2211,16 @@ class AsyncAggregationCursor:
             "deadline": deadline,
         }
 
-    def _iter_response_rows(
-        self, documents, pipeline, window, *, runtime_options, source_exhausted=False
+    def _iter_response_rows(  # noqa: PLR0913 - demand and source completion are separate facts
+        self,
+        documents,
+        pipeline,
+        window,
+        *,
+        runtime_options,
+        source_bound_reached=False,
+        reports_window_eof=None,
+        source_count=None,
     ):
         """Schedule a streamable suffix within the response's document-count demand.
 
@@ -2107,6 +2228,11 @@ class AsyncAggregationCursor:
         downstream stages run on demand too, rather than evaluating the rest of
         that array before the first response can be returned.
         """
+        if reports_window_eof is None:
+            reports_window_eof = getattr(
+                self._collection, "mongodb_dialect", MONGODB_DIALECT_70
+            ).behavior_flag("aggregate_window_reports_eof", default=False)
+        read_count = 0
         pending = [(iter(documents), pipeline)]
         while pending and window.open:
             source, current = pending[-1]
@@ -2114,6 +2240,8 @@ class AsyncAggregationCursor:
             if not page:
                 pending.pop()
                 continue
+            if len(pending) == 1:
+                read_count += len(page)
             expanding = self._first_expanding_stage(current)
             prefix = current if expanding is None else current[: expanding + 1]
             transformed = (
@@ -2125,7 +2253,9 @@ class AsyncAggregationCursor:
                 output = window.apply(transformed)
                 for index, document in enumerate(output):
                     if index == len(output) - 1 and (
-                        not window.open or (not pipeline and source_exhausted)
+                        (not window.open and reports_window_eof)
+                        or (not pipeline and source_bound_reached)
+                        or (source_count is not None and read_count >= source_count)
                     ):
                         self._known_source_eof = True
                     yield document
@@ -2145,23 +2275,34 @@ class AsyncAggregationCursor:
             await self._load_pipeline_resources() if plan.suffix else {}
         )
         window = _RemainingWindow(plan.suffix_skip, plan.suffix_limit)
-        sorted_documents = spill_policy.iter_sort_with_spill(
-            documents,
+        spool = spill_policy.open_sort_spool(
             _require_sort(plan.sort_spec),
             dialect=dialect,
             collation=self._collation,
             deadline=deadline,
         )
+        sorted_documents = None
         try:
+            spool.add(documents)
+            sorted_documents = spool.finish()
+            source_count = self._finite_source_count(
+                window, sorted_documents, plan.suffix, dialect=dialect
+            )
             options = self._pipeline_runtime_options(
                 referenced_collections, dialect, spill_policy, deadline
             )
             for document in self._iter_response_rows(
-                sorted_documents, plan.suffix, window, runtime_options=options
+                sorted_documents,
+                plan.suffix,
+                window,
+                runtime_options=options,
+                source_count=source_count,
             ):
                 yield strip_search_result_metadata(document)
         finally:
-            sorted_documents.close()
+            if sorted_documents is not None:
+                sorted_documents.close()
+            spool.close()
 
     async def _stream_incremental_sort(
         self,
@@ -2211,6 +2352,9 @@ class AsyncAggregationCursor:
                     await source.aclose()
 
             sorted_documents = spool.finish()
+            source_count = self._finite_source_count(
+                output_window, sorted_documents, plan.suffix, dialect=dialect
+            )
             referenced_collections = (
                 await self._load_pipeline_resources() if plan.suffix else {}
             )
@@ -2218,7 +2362,11 @@ class AsyncAggregationCursor:
                 referenced_collections, dialect, spill_policy, deadline
             )
             for document in self._iter_response_rows(
-                sorted_documents, plan.suffix, output_window, runtime_options=options
+                sorted_documents,
+                plan.suffix,
+                output_window,
+                runtime_options=options,
+                source_count=source_count,
             ):
                 yield strip_search_result_metadata(document)
         finally:
@@ -2257,8 +2405,17 @@ class AsyncAggregationCursor:
                     break
                 enforce_deadline(deadline)
                 for document in self._iter_response_rows(
-                    page, streamable_pipeline, window, runtime_options=options,
-                    source_exhausted=source.exhausted,
+                    page,
+                    streamable_pipeline,
+                    window,
+                    runtime_options=options,
+                    source_bound_reached=source.bound_reached,
+                    reports_window_eof=(
+                        not source.blocking_sort
+                        or dialect.behavior_flag(
+                            "aggregate_window_reports_eof", default=False
+                        )
+                    ),
                 ):
                     yield strip_search_result_metadata(document)
         finally:
@@ -2415,15 +2572,35 @@ class AsyncAggregationCursor:
         self._response_buffer.clear()
         self._response_reader.clear()
         self._pipeline_resources = None
-        if self._closed:
+        if (
+            self._closed
+            and self._active_async_iterator is None
+            and not self._owned_spill_outputs
+        ):
             return
-        active = self._active_async_iterator
+        active, self._active_async_iterator = self._active_async_iterator, None
+        self._closed = True
+        outputs, self._owned_spill_outputs = self._owned_spill_outputs, []
+        errors = []
+        for output in outputs:
+            try:
+                output.close()
+            except BaseException as error:
+                self._owned_spill_outputs.append(output)
+                errors.append(error)
         if active is not None:
             close = getattr(active, "aclose", None)
             if callable(close):
-                await close()
-        self._active_async_iterator = None
-        self._closed = True
+                try:
+                    await close()
+                except BaseException as error:
+                    self._active_async_iterator = active
+                    errors.append(error)
+        if len(errors) == 1:
+            raise errors[0]
+        if errors:
+            message = "aggregation cursor cleanup failed"
+            raise BaseExceptionGroup(message, errors)
 
     async def first(self) -> Document | None:
         started_at = time.perf_counter_ns()

@@ -19,7 +19,7 @@ from bson.errors import InvalidDocument
 
 from mongoeco import MongoClient
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
-from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async._response import ResponseBatchReader
 from mongoeco.api._async.database_commands import list_commands_document
 from mongoeco.compat._catalog_models import OptionSupportStatus
 from mongoeco.compat._catalog_operation_options import (
@@ -333,7 +333,11 @@ def test_batch_size_limits_wire_first_batch(command: str) -> None:
         )
         command_document: dict[str, object] = {command: "items", "batchSize": 1}
         if command == "aggregate":
-            command_document["pipeline"] = []
+            command_document = {
+                "aggregate": "items",
+                "pipeline": [],
+                "cursor": {"batchSize": 1},
+            }
         first = await execute(command_document)
         cursor = first["cursor"]
         assert [row["_id"] for row in cursor["firstBatch"]] == [1]
@@ -346,7 +350,12 @@ def test_batch_size_limits_wire_first_batch(command: str) -> None:
             {"getMore": cursor["id"], "collection": "items", "batchSize": 1}
         )
         assert [row["_id"] for row in third["cursor"]["nextBatch"]] == [3]
-        assert third["cursor"]["id"] == 0
+        assert third["cursor"]["id"] > 0
+        final = await execute(
+            {"getMore": cursor["id"], "collection": "items", "batchSize": 1}
+        )
+        assert final["cursor"]["nextBatch"] == []
+        assert final["cursor"]["id"] == 0
 
     asyncio.run(run())
 
@@ -377,20 +386,24 @@ def test_batch_size_rejects_invalid_wire_type(
 
 
 def test_find_batch_size_prefetches_locally_without_truncating_api_result() -> None:
-    original = AsyncCursor._fetch_batch
+    original = ResponseBatchReader.read
     requested_sizes: list[int] = []
+    batches: list[list[int]] = []
 
-    async def capture(cursor: AsyncCursor, offset: int, batch_size: int):
-        requested_sizes.append(batch_size)
-        return await original(cursor, offset, batch_size)
+    async def capture(reader, pull, maximum, *, initial):
+        requested_sizes.append(maximum)
+        batch = await original(reader, pull, maximum, initial=initial)
+        batches.append([row["_id"] for row in batch])
+        return batch
 
     with MongoClient(MemoryEngine()) as client:
         client.audit.items.insert_many([{"_id": 1}, {"_id": 2}, {"_id": 3}])
-        with patch.object(AsyncCursor, "_fetch_batch", capture):
+        with patch.object(ResponseBatchReader, "read", capture):
             result = client.audit.command({"find": "items", "batchSize": 1})
         assert [row["_id"] for row in result["cursor"]["firstBatch"]] == [1, 2, 3]
         assert requested_sizes
         assert set(requested_sizes) == {1}
+        assert batches == [[1], [2], [3], []]
         with pytest.raises(TypeError):
             client.audit.command({"find": "items", "batchSize": "invalid"})
 

@@ -110,6 +110,52 @@ def query_can_use_index(
     )
 
 
+def query_can_use_index_order(
+    index, query_plan, sort, *, dialect=MONGODB_DIALECT_70, collation=None
+):
+    """Prove an ordered prefix after equality-constrained index fields."""
+    key = _index_key(index)
+    if isinstance(key, dict):
+        key = list(key.items())
+    if not isinstance(key, list) or not is_ordered_index_spec(key):
+        return False
+    candidate = (
+        index
+        if isinstance(index, EngineIndexRecord)
+        else {**index, "key": key, "fields": [field for field, _ in key]}
+    )
+    if not query_can_use_index(
+        candidate, query_plan, dialect=dialect, collation=collation
+    ):
+        return False
+    if _index_collation(candidate) != collation:
+        return False
+
+    def equalities(plan):
+        if isinstance(plan, EqualsCondition) and not isinstance(
+            plan.value, (list, dict)
+        ):
+            return {plan.field}
+        if isinstance(plan, AndCondition):
+            return set().union(*(equalities(clause) for clause in plan.clauses))
+        return set()
+
+    fields = equalities(query_plan)
+    for start in range(len(key)):
+        prefix = key[start : start + len(sort)]
+        if len(prefix) == len(sort) and (
+            all(a == b for a, b in zip(prefix, sort, strict=True))
+            or all(
+                a[0] == b[0] and a[1] == -b[1]
+                for a, b in zip(prefix, sort, strict=True)
+            )
+        ):
+            return True
+        if key[start][0] not in fields:
+            break
+    return False
+
+
 def collect_usable_virtual_index_names(
     indexes: list[EngineIndexRecord] | list[dict[str, object]],
     query_plan: QueryNode,

@@ -25,10 +25,20 @@ from mongoeco.core.operation_context import (
     resolve_operation_session,
 )
 from mongoeco.core.query_plan import QueryNode
+from mongoeco.core.projections import _ProjectionExecutor
+from mongoeco.core.runtime_metadata import (
+    _RuntimeReadDocument,
+    ensure_runtime_state,
+    runtime_read_document,
+)
+from mongoeco.engines.virtual_indexes import query_can_use_index_order
 from mongoeco.core.server_errors import response_operation_error
 from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
-from mongoeco.engines.semantic_core import EngineFindSemantics
+from mongoeco.engines.semantic_core import (
+    EngineFindSemantics,
+    find_has_primary_key_order,
+)
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -200,7 +210,10 @@ class _AsyncCursorIterator:
                 if self._cursor._exhausted:
                     await self.close()
                     break
-                await self._fill_buffer()
+                maximum = self._batch_size or (
+                    _DEFAULT_LOCAL_PREFETCH_SIZE if self._initial_response else None
+                )
+                self._buffer.extend(await self._read_response(maximum))
             if not self._buffer:
                 await self.close()
                 break
@@ -212,9 +225,6 @@ class _AsyncCursorIterator:
         self._initial_response = False
         if maximum == 0:
             return []
-        if self._cursor._limit is not None:
-            remaining = self._cursor._limit - self._retrieved
-            maximum = remaining if maximum is None else min(maximum, remaining)
         try:
             if self._source is not None:
 
@@ -229,6 +239,7 @@ class _AsyncCursorIterator:
                 if (
                     self._cursor._limit is not None
                     and self._position + len(raw) >= self._cursor._limit
+                    and not self._cursor._defer_bounded_sort_eof
                 ):
                     self._cursor._exhausted = True
             else:
@@ -238,11 +249,10 @@ class _AsyncCursorIterator:
             page, count = self._cursor._materialize_response(raw, initial=initial)
             self._retrieved += count
             if (
-                self._cursor._limit is not None
-                and self._retrieved >= self._cursor._limit
+                self._cursor._bounded_source_reached(self._position + len(raw))
+                and self._response_reader._pending is None
             ):
                 self._cursor._exhausted = True
-                await self._close_source()
         except BaseException as error:
             self._cursor._exhausted = True
             await self._close_after_failure()
@@ -261,17 +271,30 @@ class _AsyncCursorIterator:
             return []
         return await self._fetch_response(maximum, initial=initial)
 
-    async def _read_driver_response(self):
-        maximum = self._batch_size or (
-            _DEFAULT_LOCAL_PREFETCH_SIZE if self._initial_response else None
-        )
-        return await self._read_response(maximum)
+    async def _read_driver_response(self, maximum=None):
+        initial = self._initial_response
+        if maximum is None:
+            maximum = self._batch_size or (
+                _DEFAULT_LOCAL_PREFETCH_SIZE if initial else None
+            )
+        limit = self._cursor._limit
+        if initial and self._batch_size is not None and limit == self._batch_size:
+            maximum = self._batch_size + 1
+        elif not initial and limit is not None:
+            remaining = limit - self._retrieved
+            if remaining <= 0:
+                self._cursor._exhausted = True
+                await self._close_source()
+                return []
+            maximum = remaining if maximum is None else min(maximum, remaining)
+        page = await self._read_response(maximum)
+        if limit is not None and self._retrieved >= limit:
+            self._cursor._exhausted = True
+            await self._close_source()
+        return page
 
     async def _fill_buffer(self) -> None:
-        maximum = self._batch_size or (
-            _DEFAULT_LOCAL_PREFETCH_SIZE if self._initial_response else None
-        )
-        self._buffer.extend(await self._fetch_response(maximum))
+        self._buffer.extend(await self._read_driver_response())
 
     async def close(self) -> None:
         if self._closed:
@@ -374,6 +397,9 @@ class AsyncCursor:
         self._apply_codec_options = apply_codec_options
         self._started = False
         self._exhausted = False
+        self._bounded_source_count = None
+        self._defer_bounded_sort_eof = False
+        self._sort_index_order = None
         self._closed = False
         self._active_async_iterable: _AsyncCursorIterator | None = None
         self._operation_cache: FindOperation | None = None
@@ -391,6 +417,9 @@ class AsyncCursor:
     def _invalidate_execution_cache(self) -> None:
         self._operation_cache = None
         self._semantics_cache = None
+        self._bounded_source_count = None
+        self._defer_bounded_sort_eof = False
+        self._sort_index_order = None
         self._retire_batch_source()
 
     def _retire_source(self, source: object | None) -> None:
@@ -444,6 +473,99 @@ class AsyncCursor:
     ) -> AsyncIterable[Document]:
         operation = replace(self._base_operation(), skip=skip, limit=limit)
         _ensure_operation_executable(self._collection, operation)
+        if (
+            operation.sort
+            and all(direction in (1, -1) for _, direction in operation.sort)
+            and limit is not None
+            and limit > 0
+        ):
+            return self._bounded_sorted_source(operation)
+        return self._open_prepared_read_source(operation)
+
+    async def _sort_uses_index(self, operation):
+        if self._sort_index_order is not None:
+            return self._sort_index_order
+        result = await self._resolve_sort_index_order(operation)
+        self._sort_index_order = result
+        return result
+
+    async def _resolve_sort_index_order(self, operation):
+        if self._base_semantics().text_query is not None:
+            return False
+        if find_has_primary_key_order(self._base_semantics()):
+            return True
+        loader = getattr(self._collection._engine, "list_indexes", None)
+        if not callable(loader):
+            # Custom providers retain their existing streaming contract.
+            return True
+        indexes = await loader(
+            self._collection._db_name,
+            self._collection._collection_name,
+            context=self._session,
+        )
+        semantics = self._base_semantics()
+        for index in indexes:
+            keys = list(index.get("key", {}).items())
+            if operation.hint is not None and operation.hint not in (
+                index.get("name"),
+                keys,
+            ):
+                continue
+            if query_can_use_index_order(
+                index,
+                semantics.query_plan,
+                operation.sort,
+                dialect=semantics.dialect,
+                collation=operation.collation,
+            ):
+                return True
+        return False
+
+    async def _bounded_sorted_source(self, operation):
+        index_order = await self._sort_uses_index(operation)
+        reports_eof = self._current_dialect().behavior_flag(
+            "bounded_sort_reports_eof", default=False
+        )
+        if index_order or not reports_eof:
+            self._defer_bounded_sort_eof = not index_order
+            source = self._open_prepared_read_source(operation)
+            try:
+                async for document in source:
+                    yield document
+            finally:
+                await self._close_source(source)
+            return
+        # A bounded blocking sort knows its actual result cardinality. Keep
+        # projection outside materialization: later-row errors and decoders
+        # must remain in the response which consumes that row.
+        project = _ProjectionExecutor(
+            operation.projection,
+            selector_filter=operation.filter_spec,
+            dialect=self._current_dialect(),
+            variables=operation.let,
+            collation=operation.collation,
+        )
+        source = self._open_prepared_read_source(replace(operation, projection=None))
+        try:
+            documents = [document async for document in source]
+        finally:
+            await self._close_source(source)
+        self._bounded_source_count = len(documents)
+        for document in documents:
+            projected = project(document)
+            if isinstance(document, _RuntimeReadDocument):
+                projected = runtime_read_document(
+                    ensure_runtime_state(document).with_document(projected)
+                )
+            yield projected
+
+    def _bounded_source_reached(self, position):
+        return (
+            self._bounded_source_count is not None
+            and position >= self._bounded_source_count
+        )
+
+    def _open_prepared_read_source(self, operation):
         open_snapshot = getattr(self._collection, "_engine_scan_with_operation", None)
         if callable(open_snapshot):
             factory = cast("_ReadSourceFactory", open_snapshot)
@@ -451,7 +573,12 @@ class AsyncCursor:
         return EngineSpiAdapter(self._collection._engine).open_read_snapshot(
             self._collection._db_name,
             self._collection._collection_name,
-            replace(self._base_semantics(), skip=skip, limit=limit),
+            replace(
+                self._base_semantics(),
+                skip=operation.skip,
+                limit=operation.limit,
+                projection=operation.projection,
+            ),
             operation_context=operation.context,
         )
 
@@ -521,7 +648,6 @@ class AsyncCursor:
             if remaining <= 0:
                 self._exhausted = True
                 return []
-            batch_size = remaining if batch_size is None else min(batch_size, remaining)
         self._started = True
         engine = self._collection._engine
         record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
@@ -545,7 +671,14 @@ class AsyncCursor:
         raw = await self._response_reader.read(
             pull, batch_size, initial=offset == 0 if initial is None else initial
         )
-        if self._limit is not None and offset + len(raw) >= self._limit:
+        if (
+            self._limit is not None
+            and offset + len(raw) >= self._limit
+            and not self._defer_bounded_sort_eof
+        ) or (
+            self._bounded_source_reached(offset + len(raw))
+            and self._response_reader._pending is None
+        ):
             self._exhausted = True
             await self._close_batch_source()
         return raw
@@ -571,6 +704,12 @@ class AsyncCursor:
             return []
         iterator = self.__aiter__()
         return await iterator._read_response(maximum, initial=initial)
+
+    async def _read_driver_response(self, maximum=None):
+        if self._closed or (self._exhausted and self._active_async_iterable is None):
+            return []
+        iterator = self.__aiter__()
+        return await iterator._read_driver_response(maximum)
 
     def __aiter__(self):
         if self._closed or (self._exhausted and self._active_async_iterable is None):
@@ -820,6 +959,9 @@ class AsyncCursor:
         self._response_reader.clear()
         self._started = False
         self._exhausted = False
+        self._bounded_source_count = None
+        self._defer_bounded_sort_eof = False
+        self._sort_index_order = None
         self._semantics_cache = None
         if self._plan is None:
             self._operation_cache = None

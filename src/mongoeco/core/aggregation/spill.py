@@ -6,6 +6,7 @@ import os
 import pickle
 import tempfile
 
+from collections.abc import Iterator
 from contextlib import ExitStack, suppress
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,7 +20,7 @@ from mongoeco.core.work_control import DeadlineCheckpoint, iter_with_deadline
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterable
 
     from mongoeco.core.collation import CollationSpec
     from mongoeco.types import Document
@@ -257,6 +258,40 @@ class AggregationGroupSpool:
         self._temporary_paths.discard(path)
 
 
+class _OwnedSpillOutput(Iterator):
+    """Exact output cardinality and cleanup, including close before first read."""
+
+    def __init__(self, source, document_count, close):
+        self._source = iter(source)
+        self.document_count = document_count
+        self._close = close
+        self._closed = False
+
+    def __next__(self):
+        if self._closed:
+            raise StopIteration
+        try:
+            return next(self._source)
+        except BaseException as error:
+            try:
+                self.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"spill output cleanup failed: {cleanup_error}")
+            raise
+
+    def close(self):
+        if self._closed:
+            return
+        self._closed = True
+        source, self._source = self._source, iter(())
+        try:
+            close = getattr(source, "close", None)
+            if callable(close):
+                close()
+        finally:
+            self._close()
+
+
 class AggregationSortSpool:
     """Incrementally own sorted runs and a demand-driven merged output."""
 
@@ -282,6 +317,7 @@ class AggregationSortSpool:
         self._temporary_paths: set[str] = set()
         self._finished = False
         self._closed = False
+        self.document_count = 0
 
     @property
     def buffered_documents(self) -> int:
@@ -300,6 +336,7 @@ class AggregationSortSpool:
                 if len(self._buffer) == self._threshold:
                     self._flush_run(self._threshold)
                 self._buffer.append(document)
+                self.document_count += 1
         except BaseException:
             self.close()
             raise
@@ -314,24 +351,18 @@ class AggregationSortSpool:
                 documents = self._sort_documents(self._buffer)
                 self._buffer = []
 
-                def owned_memory_output() -> Iterator[Document]:
-                    try:
-                        yield from documents
-                    finally:
-                        self.close()
-
-                return owned_memory_output()
+                return _OwnedSpillOutput(
+                    iter(documents), self.document_count, self.close
+                )
             if self._buffer:
                 self._flush_run(len(self._buffer))
             self._consolidate_runs()
 
-            def owned_spilled_output() -> Iterator[Document]:
-                try:
-                    yield from self._merged_documents(self._active_paths)
-                finally:
-                    self.close()
-
-            return owned_spilled_output()
+            return _OwnedSpillOutput(
+                self._merged_documents(self._active_paths),
+                self.document_count,
+                self.close,
+            )
         except BaseException:
             self.close()
             raise

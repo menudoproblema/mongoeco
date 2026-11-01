@@ -534,3 +534,16 @@ class AggregationWorkControlTests(TestCase):
             [document["rank"] for document in spool.finish()],
             [1, 2],
         )
+
+    def test_sort_output_close_before_first_read_removes_finished_runs(self):
+        policy = AggregationSpillPolicy(threshold=1)
+        spool = policy.open_sort_spool([("rank", 1)])
+        spool.add([{"rank": 2}, {"rank": 1}])
+        output = spool.finish()
+        paths = list(Path(tempfile.gettempdir()).glob("*.mongoeco-aggsort"))
+        self.assertTrue(paths)
+        output.close()
+        output.close()
+        self.assertTrue(all(not path.exists() for path in paths))
+        with self.assertRaises(StopIteration):
+            next(output)

@@ -1,0 +1,782 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_aggregate_batch_callbacks": {
+      "1/None": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ]
+      },
+      "1/1": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          false
+        ]
+      },
+      "1/2": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ]
+      },
+      "1/3": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ]
+      },
+      "2/None": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ]
+      },
+      "2/1": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          false
+        ]
+      },
+      "2/2": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          false
+        ]
+      },
+      "2/3": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ]
+      },
+      "4/None": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ]
+      },
+      "4/1": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          true,
+          false
+        ]
+      },
+      "4/2": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          false
+        ]
+      },
+      "4/3": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          false
+        ]
+      }
+    },
+    "semantic_query_batch_callbacks": {
+      "1/None": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "1/1": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "1/2": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "1/3": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "2/None": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "2/1": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          true
+        ],
+        "alive": false
+      },
+      "2/2": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "2/3": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "4/None": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          false
+        ],
+        "alive": false
+      },
+      "4/1": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          true,
+          true,
+          false
+        ],
+        "alive": false
+      },
+      "4/2": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          false
+        ],
+        "alive": false
+      },
+      "4/3": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ],
+        "reply_cursor_ids": [
+          true,
+          false
+        ],
+        "alive": false
+      }
+    },
+    "semantic_raw_query_batch_limits": {
+      "1/None": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "1/1": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "1/2": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "1/3": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "2/None": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "2/1": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "alive": true
+          },
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "2/2": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "2/3": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "4/None": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "4/1": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "alive": true
+          },
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "alive": true
+          },
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "alive": true
+          }
+        ],
+        "calls": []
+      },
+      "4/2": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ],
+            "alive": true
+          },
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "alive": false
+          }
+        ],
+        "calls": []
+      },
+      "4/3": {
+        "frames": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "alive": true
+          }
+        ],
+        "calls": []
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "isWritablePrimary": true,
+      "topologyVersion": {
+        "processId": {
+          "$oid": "6ae71750a9c31a09c158d4b7"
+        },
+        "counter": {
+          "$numberLong": "0"
+        }
+      },
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "maxMessageSizeBytes": {
+        "$numberInt": "48000000"
+      },
+      "maxWriteBatchSize": {
+        "$numberInt": "100000"
+      },
+      "localTime": {
+        "$date": {
+          "$numberLong": "1793529682803"
+        }
+      },
+      "logicalSessionTimeoutMinutes": {
+        "$numberInt": "30"
+      },
+      "connectionId": {
+        "$numberInt": "21"
+      },
+      "minWireVersion": {
+        "$numberInt": "0"
+      },
+      "maxWireVersion": {
+        "$numberInt": "21"
+      },
+      "readOnly": false,
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    }
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_query_batch_callback_cases.py",
+    "sha256": "116ae674698879c800d0f9bb27a152ce2602b76e47a82c785c870cfbe69ea445",
+    "topology": "standalone"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_query_batch_callbacks",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$numberInt": "3"
+          }
+        }
+      ],
+      "selector": "semantic_query_batch_callbacks"
+    },
+    {
+      "name": "semantic_aggregate_batch_callbacks",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$numberInt": "3"
+          }
+        }
+      ],
+      "selector": "semantic_aggregate_batch_callbacks"
+    },
+    {
+      "name": "semantic_raw_query_batch_limits",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "v": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "v": {
+            "$numberInt": "3"
+          }
+        }
+      ],
+      "selector": "semantic_raw_query_batch_limits"
+    }
+  ]
+}
