@@ -172,7 +172,14 @@ def test_cursor_mutation_invalidates_only_its_preparation(
                 assert counts[1].call_count == 1
                 assert counts[-1].call_count == 1
                 for call in counts[2].call_args_list:
-                    assert call.args[0].context is original.context
+                    assert (
+                        call.args[0].context.operation_id
+                        == original.context.operation_id
+                    )
+                    assert (
+                        call.args[0].context.expressions is original.context.expressions
+                    )
+                    assert call.args[0].context.session is original.context.session
                 assert result
 
     asyncio.run(exercise())

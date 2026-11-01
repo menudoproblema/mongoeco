@@ -186,15 +186,17 @@ def test_cancelled_snapshot_releases_lazy_source_frame():
             async with lock:
                 cursor = collection.find({})
                 iterator = aiter(cursor)
-                snapshot = iterator._source
-                source = snapshot._source
+                source = iterator._source
                 task = asyncio.create_task(anext(iterator))
                 await asyncio.sleep(0)
                 task.cancel()
                 with pytest.raises(asyncio.CancelledError):
                     await task
             assert source.ag_frame is None
-            assert snapshot.closed
+            assert (
+                engine._runtime_diagnostics_info()["mvcc"]["activeReadSnapshots"] == 0
+            )
+            await cursor.close()
 
     asyncio.run(exercise())
 

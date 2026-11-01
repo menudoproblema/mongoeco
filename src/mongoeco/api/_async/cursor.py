@@ -640,7 +640,12 @@ class AsyncCursor:
         context = await resolver(context)
         self._operation_context = context
         self._execution_variables = context.expressions
-        self._operation_cache = replace(operation, context=None).bind(context)
+        self._operation_cache = (
+            replace(operation, context=context)
+            if context.collation == operation.context.collation
+            and context.expressions is operation.context.expressions
+            else replace(operation, context=None).bind(context)
+        )
         self._semantics_cache = None
 
     def _scan(self, *, limit: int | None = None) -> AsyncIterable[Document]:
@@ -665,7 +670,17 @@ class AsyncCursor:
             async for document in source:
                 yield document
         finally:
-            await self._close_source(source)
+            failure = sys.exception()
+            try:
+                await finish_cleanup(self._close_source(source))
+            except BaseException as cleanup_error:
+                self._retire_source(source)
+                if failure is None:
+                    raise
+                failure.add_note(
+                    f"cursor cleanup failed: {type(cleanup_error).__name__}: "
+                    f"{cleanup_error}"
+                )
 
     async def _fetch_batch(
         self, offset: int, batch_size: int | None, *, initial=None

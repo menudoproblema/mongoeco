@@ -55,7 +55,9 @@ async def test_collection_source_accepts_plain_async_iterables_and_typed_windows
         assert len(opened) == 1
         assert lookups == [True]
         operation, session = opened[0]
-        assert operation.context is context
+        assert operation.context is cursor._operation_context
+        assert operation.context.operation_id == context.operation_id
+        assert operation.context.expressions is context.expressions
         assert session is context.session
         assert operation.skip == 1
         assert operation.limit == (1 if mode == "first" else configured_limit)
@@ -92,7 +94,11 @@ async def test_fallback_read_source_reuses_context_and_renews_only_execution_dea
             assert await cursor.to_list() == [{"_id": 1}, {"_id": 2}]
             assert clock.call_count == 1
             first_semantics = cursor._base_semantics()
-            assert first_semantics.operation_context is context
+            assert first_semantics.operation_context is cursor._operation_context
+            assert (
+                first_semantics.operation_context.operation_id == context.operation_id
+            )
+            assert first_semantics.operation_context.expressions is context.expressions
             cursor.rewind()
             assert clock.call_count == 1
             assert await cursor.to_list() == [{"_id": 1}, {"_id": 2}]

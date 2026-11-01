@@ -202,6 +202,8 @@ def test_evaluation_error_survives_cleanup_failure_without_reopening_source(mode
                 if mode == "aggregate":
                     await cursor
                 else:
+                    if mode == "find":
+                        assert await iterator.__anext__() == {"_id": 1}
                     await iterator.__anext__()
 
             with pytest.raises(RuntimeError, match="evaluation failed") as error:
