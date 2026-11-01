@@ -154,6 +154,10 @@ from tests.differential.semantic_find_projection_cases import (
     SEED as FIND_PROJECTION_SEED,
     SEMANTIC_FIND_PROJECTION_CASES,
 )
+from tests.differential.semantic_followup_cases import (
+    SEED as FOLLOWUP_SEED,
+    SEMANTIC_FOLLOWUP_CASES,
+)
 from tests.differential.semantic_group_cases import SEMANTIC_GROUP_CASES
 from tests.differential.semantic_index_information_cases import (
     SEED as INDEX_INFORMATION_SEED,
@@ -338,6 +342,10 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "followup": SemanticCorpus(
+        "bounded-followup", "semantic_followup_cases", FOLLOWUP_SEED,
+        SEMANTIC_FOLLOWUP_CASES, requires_standalone=True,
+    ),
     "p2_read_cost": SemanticCorpus(
         "p2-read-cost", "semantic_p2_read_cost_cases", P2_READ_COST_SEED,
         SEMANTIC_P2_READ_COST_CASES, requires_standalone=True,

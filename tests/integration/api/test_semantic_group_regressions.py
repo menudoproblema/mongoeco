@@ -80,6 +80,14 @@ class _AsyncCursorView:
         self._invoke("sort", *args, **kwargs)
         return self
 
+    def limit(self, *args, **kwargs):
+        self._invoke("limit", *args, **kwargs)
+        return self
+
+    def skip(self, *args, **kwargs):
+        self._invoke("skip", *args, **kwargs)
+        return self
+
     def clone(self):
         return _AsyncCursorView(self._invoke("clone"), self.loop)
 

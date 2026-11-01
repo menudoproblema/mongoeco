@@ -2913,3 +2913,40 @@ Límites del cierre: los oráculos nativos son standalone 7.0.43/8.0.32/9.0.2.
 La elegibilidad MQL de Search no acredita Atlas ANN. Los seguimientos ya
 registrados de find(limit=0) directo y aggregate.explain inline no anunciado
 permanecen fuera del corte; no se incorporan ampliaciones P3.
+
+
+## Parte I F00–F11 — incremento autorizado posterior
+
+Contrato: apartado 9 de [plan consolidado](bson-semantics-consolidation-plan.md#incremento-propuesto-20261101),
+refinado en 19138ebb y autorizado por el encargo de implementar F00–F11.
+O1–O8/D05 y B1–B4 P2 conservan sus cierres. X01–X06 no se implementan.
+Gate de entrada: contrato y autorización en conversación, censo de impacto
+actualizado, base de runtime 2fa637f6 verificada contra sus 287 módulos del
+wheel conservado. El proyecto no exige otra transición RFC para este cambio.
+Pruebas focales por bloque; suites globales reservadas a F11.
+
+| Bloque | Estado | Evidencia / siguiente criterio |
+| --- | --- | --- |
+| F00 | Cerrado | Inventario/oráculos congelados; f00-inventory.json y capturas 7/8/9. |
+| F01 | Pendiente | Límites y consumo por perfil/superficie. |
+| F02 | Pendiente | Ventanas/objetos sin sentinels ni errores no tipados. |
+| F03 | Pendiente | Rutas y consumidores de arrays con semántica contextual. |
+| F04 | Pendiente | Regex/size/all y selección de consumidores. |
+| F05 | Pendiente | Collation efectiva y subset validado. |
+| F06 | Pendiente | Integridad/validación de catálogo e índices. |
+| F07 | Pendiente | Escrituras, identidad, campos, contadores y efectos. |
+| F08 | Pendiente | Sort/natural y acumuladores del inventario. |
+| F09 | Pendiente | Gramática/recursos, fechas y texto; tres subunidades. |
+| F10 | Pendiente | Fachadas, metadata y capacidades explícitas. |
+| F11 | Pendiente | Gates globales finales, coste, distribución y entrega. |
+
+F00: se reutiliza el runner y se registran 135 testigos focales de familias
+F02–F10 más el caso de límites en semantic_response_frontier. Capturas físicas
+7.0.43/8.0.32/9.0.2; las nueve observaciones previas de response_frontier por
+versión permanecen idénticas. Se preservan los rojos locales iniciales y de
+límites. Un primer check rechaza hashes de fuente obsoletos por capturas
+tempranas concurrentes sobre el mismo destino; tras terminar sus escritores
+y recapturar fuentes estables pasan siete checks de metadata/registro.
+Range grande solo se capturó en mongod (146 antes de materializar), nunca en
+la base local sin guard. Los efectos/watch requieren controles adicionales
+de sus bloques; este inventario no los acepta por asociación.

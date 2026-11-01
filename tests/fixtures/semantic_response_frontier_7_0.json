@@ -2318,6 +2318,139 @@
         "bson_sha256": "f58ae22926cfd7d5e51162239bb684ceeb8d17d6652f950dcd3417d9918bc30a"
       }
     },
+    "semantic_response_cursor_limits": {
+      "keyword/0": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          }
+        ]
+      },
+      "keyword/1": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      "keyword/-1": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      "setter/0": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          }
+        ]
+      },
+      "setter/1": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      "setter/-1": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      "replace/0": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          },
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          },
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          }
+        ]
+      },
+      "replace/1": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      "replace/-1": {
+        "ok": true,
+        "ids": [
+          {
+            "$numberInt": "0"
+          }
+        ]
+      },
+      "zero_length": {
+        "ok": false,
+        "family": "ValueError"
+      },
+      "after_zero_length": [
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "remainder": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        }
+      ]
+    },
     "semantic_response_document_limits": {
       "1-False-None": {
         "ok": true,
@@ -4128,31 +4261,6 @@
       ],
       "ok": {
         "$numberDouble": "1.0"
-      },
-      "$clusterTime": {
-        "clusterTime": {
-          "$timestamp": {
-            "t": 1793491138,
-            "i": 23
-          }
-        },
-        "signature": {
-          "hash": {
-            "$binary": {
-              "base64": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-              "subType": "00"
-            }
-          },
-          "keyId": {
-            "$numberLong": "0"
-          }
-        }
-      },
-      "operationTime": {
-        "$timestamp": {
-          "t": 1793491138,
-          "i": 23
-        }
       }
     },
     "fcv": {
@@ -4163,7 +4271,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_response_frontier_cases.py",
-    "sha256": "eb23caf7da74ebc5bd5e8c4c976758c8b6f1f2025faaf62fc69eb99e99b773d6"
+    "sha256": "92fe7b06ed81c5ce6fbb21895e1f88810f58692347af3bae71688dee038e61b4"
   },
   "case_manifests": [
     {
@@ -4336,6 +4444,25 @@
         }
       ],
       "selector": "semantic_response_expanded_filter_errors"
+    },
+    {
+      "name": "semantic_response_cursor_limits",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_response_cursor_limits"
     }
   ]
 }

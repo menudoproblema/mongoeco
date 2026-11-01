@@ -433,3 +433,53 @@ SEMANTIC_RESPONSE_FRONTIER_CASES = (
     ("semantic_response_string_limits", string_limits),
     ("semantic_response_expanded_filter_errors", expanded_filter_errors),
 )
+
+
+def cursor_limit_contract(collection):
+    _reset(collection, [{"_id": n} for n in range(5)])
+    result = {}
+    for kind in ("keyword", "setter", "replace"):
+        for limit in (0, 1, -1):
+            phase = "open"
+            cursor = None
+            try:
+                cursor = collection.find(
+                    {},
+                    sort=[("_id", 1)],
+                    **({"limit": limit} if kind == "keyword" else {}),
+                )
+                if kind == "setter":
+                    cursor = cursor.limit(limit)
+                elif kind == "replace":
+                    cursor = cursor.limit(1).limit(limit)
+                phase = "iterate"
+                result[f"{kind}/{limit}"] = {
+                    "ok": True,
+                    "ids": [row["_id"] for row in cursor],
+                }
+            except Exception as error:
+                result[f"{kind}/{limit}"] = {
+                    "ok": False,
+                    "family": type(error).__name__,
+                    "phase": phase,
+                }
+            finally:
+                if cursor is not None:
+                    cursor.close()
+    cursor = collection.find({}, sort=[("_id", 1)])
+    try:
+        try:
+            cursor.to_list(0)
+            result["zero_length"] = {"ok": True}
+        except Exception as error:
+            result["zero_length"] = {"ok": False, "family": type(error).__name__}
+        result["after_zero_length"] = [row["_id"] for row in cursor.to_list(1)]
+        result["remainder"] = [row["_id"] for row in cursor]
+    finally:
+        cursor.close()
+    return result
+
+
+SEMANTIC_RESPONSE_FRONTIER_CASES += (
+    ("semantic_response_cursor_limits", cursor_limit_contract),
+)

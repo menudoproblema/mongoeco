@@ -1,0 +1,5063 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "semantic_followup_f02_linear_missing": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "1"
+            },
+            "r": {
+              "$numberInt": "1"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "r": {
+              "$numberDouble": "2.0"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "3"
+            },
+            "r": {
+              "$numberInt": "3"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f02_object_nul": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "4940400"
+        },
+        "codeName": "Location4940400",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "4940400"
+        },
+        "codeName": "Location4940400",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f02_shift_missing": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "3"
+            },
+            "r": null
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "r": null
+          }
+        ]
+      }
+    },
+    "semantic_followup_f03_distinct": [
+      {
+        "$numberInt": "1"
+      },
+      {
+        "$numberInt": "2"
+      },
+      {
+        "$numberInt": "3"
+      },
+      {
+        "$numberInt": "4"
+      }
+    ],
+    "semantic_followup_f03_lookup_empty": [
+      {
+        "_id": {
+          "$numberInt": "1"
+        },
+        "matches": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "2"
+        },
+        "matches": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$numberInt": "3"
+        },
+        "matches": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      }
+    ],
+    "semantic_followup_f03_numeric_nested": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": []
+          }
+        ]
+      }
+    },
+    "semantic_followup_f03_numeric_object": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "7"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f03_numeric_path": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": []
+          }
+        ]
+      }
+    },
+    "semantic_followup_f03_root_numeric": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": []
+          }
+        ]
+      }
+    },
+    "semantic_followup_f03_unset_array": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": [
+              {
+                "c": {
+                  "$numberInt": "2"
+                }
+              },
+              {}
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f03_unwind_dotted": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "n": {
+                "$numberLong": "0"
+              }
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": {
+              "$numberInt": "2"
+            },
+            "x": {
+              "n": {
+                "$numberLong": "1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f04_all_mixed": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_elem_array": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "distinct": [
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "matched": {
+          "$numberInt": "2"
+        },
+        "deleted": {
+          "$numberInt": "2"
+        }
+      }
+    },
+    "semantic_followup_f04_eq_regex": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "distinct": [
+          {
+            "$numberInt": "1"
+          }
+        ],
+        "matched": {
+          "$numberInt": "1"
+        },
+        "deleted": {
+          "$numberInt": "1"
+        }
+      }
+    },
+    "semantic_followup_f04_not_regex": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          }
+        ],
+        "count": {
+          "$numberInt": "6"
+        },
+        "distinct": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          },
+          {
+            "$numberInt": "7"
+          },
+          {
+            "$numberInt": "8"
+          }
+        ],
+        "matched": {
+          "$numberInt": "6"
+        },
+        "deleted": {
+          "$numberInt": "6"
+        }
+      }
+    },
+    "semantic_followup_f04_size_bool": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_size_decimal": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "distinct": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "matched": {
+          "$numberInt": "4"
+        },
+        "deleted": {
+          "$numberInt": "4"
+        }
+      }
+    },
+    "semantic_followup_f04_size_double": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "distinct": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "matched": {
+          "$numberInt": "4"
+        },
+        "deleted": {
+          "$numberInt": "4"
+        }
+      }
+    },
+    "semantic_followup_f04_size_fraction": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_size_long": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "count": {
+          "$numberInt": "4"
+        },
+        "distinct": [
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "4"
+          },
+          {
+            "$numberInt": "5"
+          },
+          {
+            "$numberInt": "6"
+          }
+        ],
+        "matched": {
+          "$numberInt": "4"
+        },
+        "deleted": {
+          "$numberInt": "4"
+        }
+      }
+    },
+    "semantic_followup_f04_size_negative": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f05_default": {
+      "ids": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "distinct": [
+        "A",
+        "b"
+      ],
+      "groups": [
+        {
+          "_id": "A",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "b",
+          "n": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "override": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "updated": {
+        "$numberInt": "2"
+      },
+      "deleted": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f05_default_unique": {
+      "ok": false,
+      "family": "DuplicateKeyError",
+      "code": {
+        "$numberInt": "11000"
+      }
+    },
+    "semantic_followup_f05_invalid_0": {
+      "ok": true,
+      "value": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": "a"
+        }
+      ]
+    },
+    "semantic_followup_f05_invalid_1": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40414"
+      }
+    },
+    "semantic_followup_f05_invalid_2": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "40415"
+      }
+    },
+    "semantic_followup_f06_conflict_hashed_array": {
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "16766"
+      },
+      "indexes": [
+        "_id_",
+        "a_hashed"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_conflict_same_keys": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "85"
+      },
+      "indexes": [
+        "_id_",
+        "first"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_conflict_second_text": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "85"
+      },
+      "indexes": [
+        "_id_",
+        "a_text"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_dollar_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_dollar_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_fields33_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "13103"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_fields33_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "13103"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_id_sparse_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "197"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_id_sparse_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "197"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_trailing_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_trailing_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_ttl_compound_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_ttl_compound_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "67"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_ttl_id_False": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "197"
+      },
+      "indexes": [],
+      "ids": []
+    },
+    "semantic_followup_f06_ttl_id_True": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "197"
+      },
+      "indexes": [
+        "_id_"
+      ],
+      "ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f06_unique_null": {
+      "insert_missing": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        }
+      },
+      "unset": {
+        "ok": true,
+        "value": {
+          "$numberInt": "1"
+        }
+      },
+      "rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ]
+    },
+    "semantic_followup_f07_bit": {
+      "ok": true,
+      "value": {
+        "$numberInt": "1"
+      },
+      "rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": {
+            "$numberLong": "5"
+          }
+        }
+      ]
+    },
+    "semantic_followup_f07_bulk_replace": {
+      "modified": {
+        "$numberInt": "1"
+      },
+      "keys": [
+        "_id",
+        "a"
+      ]
+    },
+    "semantic_followup_f07_dollar": {
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "52"
+      },
+      "rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          }
+        }
+      ]
+    },
+    "semantic_followup_f07_invalid_id": {
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "52"
+      },
+      "count": {
+        "$numberInt": "0"
+      }
+    },
+    "semantic_followup_f07_order_modify": [
+      [
+        "_id",
+        "z",
+        "b"
+      ],
+      [
+        "_id",
+        "a"
+      ]
+    ],
+    "semantic_followup_f07_order_replace": [
+      [
+        "_id",
+        "a",
+        "b"
+      ]
+    ],
+    "semantic_followup_f07_order_upsert": [
+      [
+        "_id",
+        "z",
+        "b"
+      ],
+      [
+        "_id",
+        "a"
+      ]
+    ],
+    "semantic_followup_f07_pull_path": {
+      "ok": false,
+      "family": "WriteError",
+      "code": {
+        "$numberInt": "28"
+      },
+      "rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": [
+            {
+              "b": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "semantic_followup_f07_timestamp": {
+      "root_replaced": true,
+      "nested_unchanged": true
+    },
+    "semantic_followup_f08_buckets_equal": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "min": {
+                "$numberInt": "1"
+              },
+              "max": {
+                "$numberInt": "2"
+              }
+            },
+            "count": {
+              "$numberInt": "3"
+            }
+          },
+          {
+            "_id": {
+              "min": {
+                "$numberInt": "2"
+              },
+              "max": {
+                "$numberInt": "3"
+              }
+            },
+            "count": {
+              "$numberInt": "2"
+            }
+          },
+          {
+            "_id": {
+              "min": {
+                "$numberInt": "3"
+              },
+              "max": {
+                "$numberInt": "3"
+              }
+            },
+            "count": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f08_natural_-1_False": {
+      "ok": true,
+      "value": [
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "30"
+        }
+      ]
+    },
+    "semantic_followup_f08_natural_-1_True": {
+      "ok": true,
+      "value": [
+        {
+          "$numberInt": "20"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "30"
+        }
+      ]
+    },
+    "semantic_followup_f08_natural_1_False": {
+      "ok": true,
+      "value": [
+        {
+          "$numberInt": "30"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ]
+    },
+    "semantic_followup_f08_natural_1_True": {
+      "ok": true,
+      "value": [
+        {
+          "$numberInt": "30"
+        },
+        {
+          "$numberInt": "10"
+        },
+        {
+          "$numberInt": "20"
+        }
+      ]
+    },
+    "semantic_followup_f08_parallel": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f08_push_order": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": null,
+            "p": [
+              {
+                "$numberInt": "30"
+              },
+              {
+                "$numberInt": "20"
+              },
+              {
+                "$numberInt": "10"
+              }
+            ],
+            "n": [
+              {
+                "$numberInt": "30"
+              },
+              {
+                "$numberInt": "20"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f08_sort_empty": {
+      "ok": true,
+      "value": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ]
+    },
+    "semantic_followup_f08_sortarray_arrays": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              {
+                "x": [
+                  {
+                    "$numberInt": "0"
+                  },
+                  {
+                    "$numberInt": "9"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f08_sortarray_scalar": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "x": {
+                  "$numberInt": "1"
+                }
+              },
+              {
+                "x": {
+                  "$numberInt": "2"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f08_stddev_decimal": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": null,
+            "s": {
+              "$numberDouble": "1.0"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f08_top_array": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": null,
+            "t": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_add_empty": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_add_null_bad": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": null
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_add_one": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_concat_empty": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": ""
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_count_id": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9039800"
+        },
+        "codeName": "Location9039800",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9039800"
+        },
+        "codeName": "Location9039800",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_date_add_days": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1616929200000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_add_hours": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1616932800000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_add_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1609733106000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_diff_bad_week": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "5439016"
+        },
+        "codeName": "Location5439016",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "5439016"
+        },
+        "codeName": "Location5439016",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_date_diff_ignored": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberLong": "0"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_diff_week": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberLong": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_input_oid": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "2020-07-04"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_input_timestamp": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "2020-09-13"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_parts_day": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1609372800000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_parts_hour": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1609549200000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_parts_month": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1640995200000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_parts_negative": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1609459199999"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_trunc_days": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1609545600000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_date_trunc_hour": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$date": {
+                "$numberLong": "1609642800000"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_documents_collection": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "73"
+        },
+        "codeName": "InvalidNamespace",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "73"
+        },
+        "codeName": "InvalidNamespace",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_facet_name": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16412"
+        },
+        "codeName": "Location16412",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16412"
+        },
+        "codeName": "Location16412",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_format_%": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "18535"
+        },
+        "codeName": "Location18535",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "18535"
+        },
+        "codeName": "Location18535",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_format_%%": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "%"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_format_%U": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "01"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_format_%Z": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "330"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_format_%j": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "003"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_format_%q": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "18536"
+        },
+        "codeName": "Location18536",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "18536"
+        },
+        "codeName": "Location18536",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_format_%w": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "1"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_group_dotted": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "40234"
+        },
+        "codeName": "Location40234",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "40234"
+        },
+        "codeName": "Location40234",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_let_bad_name": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "codeName": "FailedToParse",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "codeName": "FailedToParse",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_let_sibling": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "17276"
+        },
+        "codeName": "Location17276",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "17276"
+        },
+        "codeName": "Location17276",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_limit_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_lower_number": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "12.5"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_maxn_double": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_maxn_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_multiply_empty": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_numeric_$limit": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "n": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_numeric_$sample": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "n": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_range_budget": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "146"
+        },
+        "codeName": "ExceededMemoryLimit",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "146"
+        },
+        "codeName": "ExceededMemoryLimit",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_range_double": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "0"
+              },
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_range_fraction": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "34446"
+        },
+        "codeName": "Location34446",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "34446"
+        },
+        "codeName": "Location34446",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_range_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "0"
+              },
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_range_negative": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_round_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberDouble": "12.3"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_sample_double": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "n": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_slice_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_slice_position_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_sort_empty": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "15976"
+        },
+        "codeName": "Location15976",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "15976"
+        },
+        "codeName": "Location15976",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_strcasecmp_number": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_strcasecmp_reverse": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_subtract_bad_null": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": null
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_subtract_missing_right": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": null
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_subtract_null_left": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": null
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_subtract_null_right": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": null
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_tostring_decimal": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "1.50"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_tostring_double": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "1"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_tostring_uuid": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_trim_0085": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "\u0085a\u0085"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_trim_nul": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "a"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_upper_bool": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16007"
+        },
+        "codeName": "Location16007",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16007"
+        },
+        "codeName": "Location16007",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_upper_date": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "2021-01-03T04:05:06.000Z"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_upper_decimal": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "1.50"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_upper_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "5"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_upper_missing": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": ""
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_upper_null": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": ""
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_upper_number": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": "12.5"
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_upper_oid": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16007"
+        },
+        "codeName": "Location16007",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "16007"
+        },
+        "codeName": "Location16007",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f09_year_oid": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "2020"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f09_year_timestamp": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "r": {
+              "$numberInt": "2020"
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f10_metadata": {
+      "absent": {},
+      "present": {
+        "_id_": {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": [
+            [
+              "_id",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ],
+          "collation": {
+            "locale": "simple"
+          }
+        }
+      }
+    },
+    "semantic_followup_f10_positional_command": {
+      "ok": true,
+      "value": {
+        "$numberInt": "1"
+      }
+    },
+    "semantic_followup_f10_rename": {
+      "ok": true,
+      "value": true,
+      "target_ids": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "isWritablePrimary": true,
+      "topologyVersion": {
+        "processId": {
+          "$oid": "6ae78ade365770d3e68171c1"
+        },
+        "counter": {
+          "$numberLong": "0"
+        }
+      },
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "maxMessageSizeBytes": {
+        "$numberInt": "48000000"
+      },
+      "maxWriteBatchSize": {
+        "$numberInt": "100000"
+      },
+      "localTime": {
+        "$date": {
+          "$numberLong": "1793559552609"
+        }
+      },
+      "logicalSessionTimeoutMinutes": {
+        "$numberInt": "30"
+      },
+      "connectionId": {
+        "$numberInt": "28"
+      },
+      "minWireVersion": {
+        "$numberInt": "0"
+      },
+      "maxWireVersion": {
+        "$numberInt": "29"
+      },
+      "readOnly": false,
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    }
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_followup_cases.py",
+    "sha256": "23dcf7f9d68b1d8ecbd342c4fa76db5add29c4a3d7265ed282ffca2887eba12d",
+    "topology": "standalone"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_followup_f03_numeric_path",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_numeric_path"
+    },
+    {
+      "name": "semantic_followup_f03_numeric_object",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_numeric_object"
+    },
+    {
+      "name": "semantic_followup_f03_numeric_nested",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_numeric_nested"
+    },
+    {
+      "name": "semantic_followup_f03_root_numeric",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_root_numeric"
+    },
+    {
+      "name": "semantic_followup_f02_object_nul",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_object_nul"
+    },
+    {
+      "name": "semantic_followup_f08_sortarray_scalar",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_sortarray_scalar"
+    },
+    {
+      "name": "semantic_followup_f08_sortarray_arrays",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_sortarray_arrays"
+    },
+    {
+      "name": "semantic_followup_f09_add_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_add_empty"
+    },
+    {
+      "name": "semantic_followup_f09_add_one",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_add_one"
+    },
+    {
+      "name": "semantic_followup_f09_multiply_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_multiply_empty"
+    },
+    {
+      "name": "semantic_followup_f09_concat_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_concat_empty"
+    },
+    {
+      "name": "semantic_followup_f09_range_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_range_long"
+    },
+    {
+      "name": "semantic_followup_f09_range_double",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_range_double"
+    },
+    {
+      "name": "semantic_followup_f09_range_budget",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_range_budget"
+    },
+    {
+      "name": "semantic_followup_f09_slice_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_slice_long"
+    },
+    {
+      "name": "semantic_followup_f09_round_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_round_long"
+    },
+    {
+      "name": "semantic_followup_f09_subtract_null_left",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_subtract_null_left"
+    },
+    {
+      "name": "semantic_followup_f09_subtract_null_right",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_subtract_null_right"
+    },
+    {
+      "name": "semantic_followup_f09_date_trunc_hour",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_trunc_hour"
+    },
+    {
+      "name": "semantic_followup_f09_date_trunc_days",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_trunc_days"
+    },
+    {
+      "name": "semantic_followup_f09_date_add_hours",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_add_hours"
+    },
+    {
+      "name": "semantic_followup_f09_date_add_days",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_add_days"
+    },
+    {
+      "name": "semantic_followup_f09_date_add_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_add_long"
+    },
+    {
+      "name": "semantic_followup_f09_date_parts_month",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_parts_month"
+    },
+    {
+      "name": "semantic_followup_f09_date_parts_day",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_parts_day"
+    },
+    {
+      "name": "semantic_followup_f09_date_diff_ignored",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_diff_ignored"
+    },
+    {
+      "name": "semantic_followup_f09_tostring_double",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_tostring_double"
+    },
+    {
+      "name": "semantic_followup_f09_tostring_decimal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_tostring_decimal"
+    },
+    {
+      "name": "semantic_followup_f09_tostring_uuid",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_tostring_uuid"
+    },
+    {
+      "name": "semantic_followup_f09_upper_number",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_number"
+    },
+    {
+      "name": "semantic_followup_f09_upper_decimal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_decimal"
+    },
+    {
+      "name": "semantic_followup_f09_upper_date",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_date"
+    },
+    {
+      "name": "semantic_followup_f09_upper_bool",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_bool"
+    },
+    {
+      "name": "semantic_followup_f09_upper_oid",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_oid"
+    },
+    {
+      "name": "semantic_followup_f09_strcasecmp_number",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_strcasecmp_number"
+    },
+    {
+      "name": "semantic_followup_f09_trim_0085",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_trim_0085"
+    },
+    {
+      "name": "semantic_followup_f09_let_bad_name",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_let_bad_name"
+    },
+    {
+      "name": "semantic_followup_f09_format_%j",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_format_%j"
+    },
+    {
+      "name": "semantic_followup_f09_format_%U",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_format_%U"
+    },
+    {
+      "name": "semantic_followup_f09_format_%w",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_format_%w"
+    },
+    {
+      "name": "semantic_followup_f09_format_%Z",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_format_%Z"
+    },
+    {
+      "name": "semantic_followup_f09_format_%%",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_format_%%"
+    },
+    {
+      "name": "semantic_followup_f09_format_%q",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_format_%q"
+    },
+    {
+      "name": "semantic_followup_f09_format_%",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_format_%"
+    },
+    {
+      "name": "semantic_followup_f04_eq_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_eq_regex"
+    },
+    {
+      "name": "semantic_followup_f04_not_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_not_regex"
+    },
+    {
+      "name": "semantic_followup_f04_elem_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_elem_array"
+    },
+    {
+      "name": "semantic_followup_f04_all_mixed",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_all_mixed"
+    },
+    {
+      "name": "semantic_followup_f04_size_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_long"
+    },
+    {
+      "name": "semantic_followup_f04_size_double",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_double"
+    },
+    {
+      "name": "semantic_followup_f04_size_fraction",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_fraction"
+    },
+    {
+      "name": "semantic_followup_f04_size_decimal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_decimal"
+    },
+    {
+      "name": "semantic_followup_f04_size_bool",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_bool"
+    },
+    {
+      "name": "semantic_followup_f04_size_negative",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_negative"
+    },
+    {
+      "name": "semantic_followup_f02_shift_missing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_shift_missing"
+    },
+    {
+      "name": "semantic_followup_f02_linear_missing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f02_linear_missing"
+    },
+    {
+      "name": "semantic_followup_f03_unset_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_unset_array"
+    },
+    {
+      "name": "semantic_followup_f03_unwind_dotted",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_unwind_dotted"
+    },
+    {
+      "name": "semantic_followup_f08_stddev_decimal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_stddev_decimal"
+    },
+    {
+      "name": "semantic_followup_f08_buckets_equal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_buckets_equal"
+    },
+    {
+      "name": "semantic_followup_f08_top_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_top_array"
+    },
+    {
+      "name": "semantic_followup_f08_push_order",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_push_order"
+    },
+    {
+      "name": "semantic_followup_f09_limit_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_limit_long"
+    },
+    {
+      "name": "semantic_followup_f09_sample_double",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_sample_double"
+    },
+    {
+      "name": "semantic_followup_f09_sort_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_sort_empty"
+    },
+    {
+      "name": "semantic_followup_f09_count_id",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_count_id"
+    },
+    {
+      "name": "semantic_followup_f09_group_dotted",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_group_dotted"
+    },
+    {
+      "name": "semantic_followup_f09_facet_name",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_facet_name"
+    },
+    {
+      "name": "semantic_followup_f09_documents_collection",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_documents_collection"
+    },
+    {
+      "name": "semantic_followup_f06_trailing_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_trailing_False"
+    },
+    {
+      "name": "semantic_followup_f06_trailing_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_trailing_True"
+    },
+    {
+      "name": "semantic_followup_f06_dollar_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_dollar_False"
+    },
+    {
+      "name": "semantic_followup_f06_dollar_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_dollar_True"
+    },
+    {
+      "name": "semantic_followup_f06_fields33_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_fields33_False"
+    },
+    {
+      "name": "semantic_followup_f06_fields33_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_fields33_True"
+    },
+    {
+      "name": "semantic_followup_f06_ttl_compound_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_ttl_compound_False"
+    },
+    {
+      "name": "semantic_followup_f06_ttl_compound_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_ttl_compound_True"
+    },
+    {
+      "name": "semantic_followup_f06_ttl_id_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_ttl_id_False"
+    },
+    {
+      "name": "semantic_followup_f06_ttl_id_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_ttl_id_True"
+    },
+    {
+      "name": "semantic_followup_f06_id_sparse_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_id_sparse_False"
+    },
+    {
+      "name": "semantic_followup_f06_id_sparse_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_id_sparse_True"
+    },
+    {
+      "name": "semantic_followup_f03_distinct",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_distinct"
+    },
+    {
+      "name": "semantic_followup_f05_default",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_default"
+    },
+    {
+      "name": "semantic_followup_f05_invalid_0",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_invalid_0"
+    },
+    {
+      "name": "semantic_followup_f05_invalid_1",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_invalid_1"
+    },
+    {
+      "name": "semantic_followup_f05_invalid_2",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_invalid_2"
+    },
+    {
+      "name": "semantic_followup_f06_unique_null",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_unique_null"
+    },
+    {
+      "name": "semantic_followup_f07_order_replace",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_order_replace"
+    },
+    {
+      "name": "semantic_followup_f07_order_upsert",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_order_upsert"
+    },
+    {
+      "name": "semantic_followup_f07_order_modify",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_order_modify"
+    },
+    {
+      "name": "semantic_followup_f07_bit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_bit"
+    },
+    {
+      "name": "semantic_followup_f07_pull_path",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_pull_path"
+    },
+    {
+      "name": "semantic_followup_f07_dollar",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_dollar"
+    },
+    {
+      "name": "semantic_followup_f07_timestamp",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_timestamp"
+    },
+    {
+      "name": "semantic_followup_f08_natural_1_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_natural_1_False"
+    },
+    {
+      "name": "semantic_followup_f08_natural_1_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_natural_1_True"
+    },
+    {
+      "name": "semantic_followup_f08_natural_-1_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_natural_-1_False"
+    },
+    {
+      "name": "semantic_followup_f08_natural_-1_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_natural_-1_True"
+    },
+    {
+      "name": "semantic_followup_f08_sort_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_sort_empty"
+    },
+    {
+      "name": "semantic_followup_f08_parallel",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f08_parallel"
+    },
+    {
+      "name": "semantic_followup_f10_metadata",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f10_metadata"
+    },
+    {
+      "name": "semantic_followup_f03_lookup_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_lookup_empty"
+    },
+    {
+      "name": "semantic_followup_f06_conflict_second_text",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_conflict_second_text"
+    },
+    {
+      "name": "semantic_followup_f06_conflict_same_keys",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_conflict_same_keys"
+    },
+    {
+      "name": "semantic_followup_f06_conflict_hashed_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f06_conflict_hashed_array"
+    },
+    {
+      "name": "semantic_followup_f10_positional_command",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f10_positional_command"
+    },
+    {
+      "name": "semantic_followup_f10_rename",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f10_rename"
+    },
+    {
+      "name": "semantic_followup_f09_date_input_oid",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_input_oid"
+    },
+    {
+      "name": "semantic_followup_f09_date_input_timestamp",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_input_timestamp"
+    },
+    {
+      "name": "semantic_followup_f09_numeric_$limit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_numeric_$limit"
+    },
+    {
+      "name": "semantic_followup_f09_numeric_$sample",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_numeric_$sample"
+    },
+    {
+      "name": "semantic_followup_f09_maxn_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_maxn_long"
+    },
+    {
+      "name": "semantic_followup_f09_maxn_double",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_maxn_double"
+    },
+    {
+      "name": "semantic_followup_f09_slice_position_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_slice_position_long"
+    },
+    {
+      "name": "semantic_followup_f09_range_negative",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_range_negative"
+    },
+    {
+      "name": "semantic_followup_f09_range_fraction",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_range_fraction"
+    },
+    {
+      "name": "semantic_followup_f09_subtract_missing_right",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_subtract_missing_right"
+    },
+    {
+      "name": "semantic_followup_f09_subtract_bad_null",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_subtract_bad_null"
+    },
+    {
+      "name": "semantic_followup_f09_add_null_bad",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_add_null_bad"
+    },
+    {
+      "name": "semantic_followup_f09_date_parts_negative",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_parts_negative"
+    },
+    {
+      "name": "semantic_followup_f09_date_parts_hour",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_parts_hour"
+    },
+    {
+      "name": "semantic_followup_f09_date_diff_week",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_diff_week"
+    },
+    {
+      "name": "semantic_followup_f09_date_diff_bad_week",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_date_diff_bad_week"
+    },
+    {
+      "name": "semantic_followup_f09_year_timestamp",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_year_timestamp"
+    },
+    {
+      "name": "semantic_followup_f09_year_oid",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_year_oid"
+    },
+    {
+      "name": "semantic_followup_f09_upper_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_long"
+    },
+    {
+      "name": "semantic_followup_f09_lower_number",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_lower_number"
+    },
+    {
+      "name": "semantic_followup_f09_upper_null",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_null"
+    },
+    {
+      "name": "semantic_followup_f09_upper_missing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_upper_missing"
+    },
+    {
+      "name": "semantic_followup_f09_strcasecmp_reverse",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_strcasecmp_reverse"
+    },
+    {
+      "name": "semantic_followup_f09_trim_nul",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_trim_nul"
+    },
+    {
+      "name": "semantic_followup_f09_let_sibling",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_let_sibling"
+    },
+    {
+      "name": "semantic_followup_f07_invalid_id",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_invalid_id"
+    },
+    {
+      "name": "semantic_followup_f07_bulk_replace",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f07_bulk_replace"
+    },
+    {
+      "name": "semantic_followup_f05_default_unique",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_default_unique"
+    }
+  ]
+}
