@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre, revisión 20 y frames bulk aceptados en `5a89dcc`):**
+**Entrada vigente (1 de noviembre, revisión 20, frames bulk aceptados en `5a89dcc` y recontraste del informe):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1135,6 +1135,51 @@ aceptación propia; no repetir su
 extracción. El registro de implementación posee el estado aceptado de cada
 corte. Este apartado mantiene el único orden actual; las caracterizaciones y
 receipts anteriores conservan sus límites históricos.
+
+**Recontraste del mismo informe sobre `fd37c14`.** El SHA-256 del adjunto
+sigue siendo el indicado arriba. La lectura actual confirma que sus cuatro
+huecos ya tienen dueño; no añade otro bloque ni justifica repetir la extracción
+de helpers. Pasan 153 regresiones focales de Binary, almacenamiento, gramática,
+SQL, TTL y contexto watch; la [evidencia de esta comprobación](evidence/bson-consolidation-review/recheck-fd37c14/receipt.json)
+distingue ese resultado de las 167 pruebas históricas y de la aceptación de cada
+corte. El árbol contiene un candidato de comandos sin commitear: su presencia,
+sus capturas y estos tests focales no aceptan todavía B07. No se modificó ese
+candidato para revisar el informe. Se verifica la correspondencia de los 14
+registros originales con los 16 de revisión 19; esta relectura no repite sus
+16 descargas ni los diferenciales nativos.
+
+**Simplificación de la aceptación pendiente.** Usar los owners y el runner
+existentes, con una ficha por corte: frontera/consumidor, invariante, testigo
+nativo cuando corresponda, fallo en la base, resultado candidato y alcance
+pendiente. No crear otra matriz paralela ni otro recibo de aceptación por cada
+relectura del mismo informe. Conservar cinco obligaciones independientes:
+
+- **Representación:** observar documento y operando en la frontera real; las
+  clases privadas son diagnóstico, mientras rango, subtipo, bytes y resultado
+  público son las garantías. Reusar `binary_parts`/`binary_order_key`.
+- **Claves:** igualdad implica misma clave dentro de la política del consumidor;
+  añadir controles negativos de subtipo/orden/scope. Si la clave solo selecciona
+  candidatos, exigir inclusión y residual, no ausencia de colisiones. Si define
+  grupos sin residual, exigir también que no fusione valores distintos según
+  esa política. No imponer una igualdad universal entre consulta/grupo/Search.
+- **Especialización:** acreditar la ruta SQL/hash efectivamente ejecutada y
+  compararla con su fallback antes de skip/limit/top-k. Conservar fallback
+  binario; una mejora de rendimiento no es dependencia del arreglo semántico.
+- **Fases y contexto:** watch y comandos comparan apertura/consumo, clase y
+  código de error, además del resultado. Las entradas públicas codifican una
+  vez; las internas ya decodificadas reutilizan el ejecutor preparado. Admitir
+  un comando DDL crudo no acepta por asociación create_collection/create_index/
+  create_indexes ni su precedencia de validación.
+- **Tiempo y efectos:** TTL separa candidatos, residual y cadencia; escrituras
+  separan admisión, confirmación y publicación. Un residual correcto no recupera
+  candidatos omitidos. No aceptar «un milisegundo irrelevante» ni ausencia de
+  eventos basada únicamente en un timeout.
+
+El orden de las seis filas de trabajo siguientes se conserva: B07 comandos y
+wrappers de catálogo; UUID coordinado; positivos/respuestas; contextos D06;
+disposición H53/D07; integración D05. Los arreglos aceptados conservan sus
+regresiones y no vuelven al backlog. La historia detallada permanece donde está;
+esta entrada y el registro de implementación poseen el estado actual.
 
 | Afirmación del informe | Contraste actual y decisión |
 | --- | --- |

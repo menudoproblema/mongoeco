@@ -1,0 +1,29 @@
+{
+  "head": "fd37c14408c800bdc6a71fabbf8aff6277428115",
+  "attachment_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "scope": "Revisión documental; no aceptación del candidato de comandos ni cierre B07/D05",
+  "focal_command": ".venv/bin/python -m pytest -q tests/property/test_bson_binary_coherence.py tests/unit/core/test_binary_storage_paths.py tests/unit/core/test_query_operators.py tests/unit/core/test_sqlite_query.py tests/integration/api/test_ttl_exact_millisecond_migration.py tests/integration/api/test_watch_context_contract.py",
+  "focal_result": "153 passed",
+  "focal_sha256": "b41b4557d1af5fd07ea545925229a56d4229e2cb6f8c12797086b917615bfc74",
+  "sources_manifest_entries": 14,
+  "historical_download_records": 16,
+  "new_native_captures": false,
+  "new_source_hash_downloads": false,
+  "preexisting_candidate_sha256": {
+    "src/mongoeco/error_catalog.py": "abdd005e858dda3a8b54bb75e65935e80aa1726b8bc2651c223d64a52c3f448e",
+    "src/mongoeco/core/_public_materialization.py": "3e2527e1a343a3c02bb53acce025d755578c2623fe06469d391537f6ac03ca47",
+    "src/mongoeco/wire/_executor_passthrough.py": "87b4211303f4a2690a0848d7fd40e5b22e318f20718fcf995a9754ae31b7f08e",
+    "src/mongoeco/_types/documents.py": "ebc81d9dd67c18389f7a13af96fe9984787de5b20165aad01ecfcedef802a5e0",
+    "src/mongoeco/api/_async/_database_admin_read_commands.py": "fbcee34f307d22c1763b80f44a3718629e0061a785499f352c51aff8fcd2eab5",
+    "src/mongoeco/api/_async/_database_admin_routing.py": "85c8e1d1e97b5b16ee1b3bc6f8cff3dd2ee92559519347b706deab1a9c7f099a",
+    "src/mongoeco/api/_async/database_commands.py": "dfeada98481d0dc3f9db2861e7658937c64c13adeebca50cc945f07683bdb466",
+    "src/mongoeco/api/_sync/database_commands.py": "aa7fcf5929646a70301f702e6e64b8fb4818a444e352d894130583c62c7e238e",
+    "tests/differential/semantic_corpora.py": "f37bd85b846aa4e5f83c4455aa3c5aed5a9790dc5367b94e0da6f0c86b0436bc",
+    "tests/differential/semantic_bson_command_cases.py": "0223e18dcda11fbb2f629bfa0bf84cba400942252573f5e9f796be7a1be1e896",
+    "tests/unit/test_database_commands.py": "72994ed79910258e25bf84cb104f154eb9469176a71346afdcfea4f8c8ac8e59",
+    "tests/unit/test_database_admin.py": "9990027b84a679750efe72b184c9ca6af033712134335a9b6268f7d1ccd476b8",
+    "tests/fixtures/semantic_bson_command_8_0.json": "9da990949db218360f1e417920a47a75ee400362a845f21858e6214da0f77d67",
+    "tests/fixtures/semantic_bson_command_9_0.json": "25f09999da4a2b2905aeaa6c492120b2f892228345433cc5716658022acb4f37",
+    "tests/fixtures/semantic_bson_command_7_0.json": "f7e98c1759e833c1d65381a123f9e30333a53f6771534e244380c012a3c536eb"
+  }
+}
