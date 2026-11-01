@@ -1047,6 +1047,406 @@
           "$numberDouble": "1.0"
         }
       },
+      "absent/find-batch-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'find.batchSize' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'cursor.batchSize' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'find.batchSize' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'cursor.batchSize' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-batch-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-batch-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
       "empty/0": {
         "ok": false,
         "family": "OperationFailure",
@@ -2194,6 +2594,466 @@
         }
       },
       "empty/modify-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'find.batchSize' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'cursor.batchSize' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'find.batchSize' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'cursor.batchSize' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-batch-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-batch-decimal-overflow": {
         "ok": true,
         "state": {
           "exists": true,
@@ -3975,6 +4835,736 @@
         "recovery": {
           "$numberDouble": "1.0"
         }
+      },
+      "populated/find-batch-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'find.batchSize' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'cursor.batchSize' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'find.batchSize' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'cursor.batchSize' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-batch-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-batch-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
       }
     }
   },
@@ -4044,7 +5634,7 @@
       "isWritablePrimary": true,
       "topologyVersion": {
         "processId": {
-          "$oid": "6ae74d1d9b9b5a58bf8671ce"
+          "$oid": "6ae7577f3eed2afef64bcbd3"
         },
         "counter": {
           "$numberLong": "0"
@@ -4061,14 +5651,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793543501699"
+          "$numberLong": "1793546428099"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "6"
+        "$numberInt": "11"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -4084,7 +5674,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_command_shape_cases.py",
-    "sha256": "4d3dad26e7bddbb72725bf92faef3ea41c3d60518868c397448ef69bab92099e",
+    "sha256": "bc85155f540f2c36d48767ee1da081ec78f59bd059672a622753e4eaeec2096b",
     "topology": "standalone"
   },
   "case_manifests": [

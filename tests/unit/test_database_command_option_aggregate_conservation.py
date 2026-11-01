@@ -72,7 +72,7 @@ def test_allow_disk_use_requires_real_spill_policy_for_blocking_pipeline(
     engine_type: type[MemoryEngine | SQLiteEngine], surface: str
 ) -> None:
     pipeline = [{"$group": {"_id": "$kind", "n": {"$sum": 1}}}]
-    request = {"aggregate": "items", "pipeline": pipeline}
+    request = {"aggregate": "items", "cursor": {}, "pipeline": pipeline}
     budget = {"aggregation_materialization_limit": 1}
     with pytest.raises(OperationFailure, match="allowDiskUse or spill-to-disk"):
         execute_aggregate_sequence(
@@ -111,6 +111,7 @@ def test_aggregate_hint_is_validated_and_visible_in_explain(
 ) -> None:
     request = {
         "aggregate": "items",
+        "cursor": {},
         "pipeline": [{"$match": {"kind": "view"}}],
         "hint": "kind_idx",
     }
@@ -132,6 +133,7 @@ def test_aggregate_let_binds_top_level_and_lookup_subpipeline(
 ) -> None:
     select = {
         "aggregate": "items",
+        "cursor": {},
         "pipeline": [{"$match": {"$expr": {"$eq": ["$kind", "$$target"]}}}],
     }
     view, click = execute_aggregate_sequence(
@@ -143,6 +145,7 @@ def test_aggregate_let_binds_top_level_and_lookup_subpipeline(
     assert click["cursor"]["firstBatch"] == [ITEMS[1]]
     lookup = {
         "aggregate": "items",
+        "cursor": {},
         "pipeline": [
             {
                 "$lookup": {
@@ -172,7 +175,7 @@ def test_aggregate_let_binds_top_level_and_lookup_subpipeline(
 def test_aggregate_max_time_ms_reaches_execution_and_explain(
     engine_type: type[MemoryEngine | SQLiteEngine], surface: str
 ) -> None:
-    request = {"aggregate": "items", "pipeline": []}
+    request = {"aggregate": "items", "cursor": {}, "pipeline": []}
 
     def fail_if_deadline(deadline: float | None) -> None:
         if deadline is not None:

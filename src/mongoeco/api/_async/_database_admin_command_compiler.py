@@ -223,6 +223,7 @@ class DatabaseAdminCommandCompiler:
                 batch_size=normalize_command_batch_size(
                     cursor_spec.get(batch_size_field),
                     dialect=self._admin._mongodb_dialect.key,
+                    field=f"{cursor_field}.{batch_size_field}",
                 ),
                 allow_disk_use=spec.get(allow_disk_use_field),
                 let=spec.get(let_field),

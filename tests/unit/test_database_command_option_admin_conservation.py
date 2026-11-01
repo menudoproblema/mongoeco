@@ -105,10 +105,10 @@ def test_show_privileges_controls_auth_status_shape(
     assert key not in default["authInfo"]
     assert included["authInfo"][key] == []
     assert key not in omitted["authInfo"]
-    with pytest.raises((TypeError, ValueError, OperationFailure)):
-        execute_sequence(
-            engine_type, surface, [{"connectionStatus": 1, "showPrivileges": 1}]
-        )
+    numeric = execute_sequence(
+        engine_type, surface, [{"connectionStatus": 1, "showPrivileges": 1}]
+    )[0]
+    assert numeric == included
 
 
 @pytest.mark.parametrize("engine_type", ENGINE_TYPES)
@@ -139,7 +139,7 @@ def test_db_hash_collections_selects_exact_names_and_stable_order(
 
 EXPLAINED_COMMANDS = [
     {"find": "items"},
-    {"aggregate": "items", "pipeline": []},
+    {"aggregate": "items", "cursor": {}, "pipeline": []},
     {"count": "items"},
     {"distinct": "items", "key": "kind"},
     {"update": "items", "updates": [{"q": {"_id": 1}, "u": {"$set": {"kind": "new"}}}]},

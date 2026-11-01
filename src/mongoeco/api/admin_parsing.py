@@ -5,6 +5,7 @@ from mongoeco.api._command_bson import (
     command_boolean,
     command_nonnegative,
     command_type_error,
+    legacy_command_int64,
     legacy_command_truth_value,
     require_command_type,
     validate_command_array_filters,
@@ -13,7 +14,6 @@ from mongoeco.api._command_bson import (
 )
 from mongoeco.api.argument_validation import (
     normalize_sort_spec as _normalize_sort_spec,
-    validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
     validate_sort_spec as _validate_sort_spec,
@@ -213,14 +213,19 @@ def normalize_command_projection(
 
 
 def normalize_command_batch_size(
-    batch_size: object | None, *, dialect="7.0"
+    batch_size: object | None, *, dialect="7.0", field=None
 ) -> int | None:
     if batch_size is None:
         return None
-    if isinstance(batch_size, int) and not isinstance(batch_size, bool):
-        command_nonnegative(batch_size, "batchSize", dialect=dialect)
-    _validate_batch_size(batch_size)
-    return batch_size
+    integer = legacy_command_int64(batch_size)
+    if integer is None:
+        field = field or (
+            "find.batchSize" if dialect == "9.0" else "FindCommandRequest.batchSize"
+        )
+        raise command_type_error(
+            batch_size, field, ("long", "int", "decimal", "double")
+        )
+    return command_nonnegative(integer, "batchSize", dialect=dialect)
 
 
 def normalize_command_ordered(value: object | None) -> bool:

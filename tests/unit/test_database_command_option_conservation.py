@@ -15,6 +15,7 @@ from unittest.mock import patch
 
 import pytest
 
+from bson import Decimal128
 from bson.errors import InvalidDocument
 
 from mongoeco import MongoClient
@@ -94,7 +95,7 @@ EFFECTIVE_VERIFIED = {
     ("update", "ordered"),
 }
 COMMENT_COMMANDS = {
-    "aggregate": {"aggregate": "items", "pipeline": []},
+    "aggregate": {"aggregate": "items", "cursor": {}, "pipeline": []},
     "count": {"count": "items"},
     "createIndexes": {
         "createIndexes": "items",
@@ -186,8 +187,7 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
     }
     assert verified == EFFECTIVE_VERIFIED | COMMENT_VERIFIED
     assert all(
-        row["status"] != "profile_scope_verified_other_effects_pending"
-        for row in rows
+        row["status"] != "profile_scope_verified_other_effects_pending" for row in rows
     )
 
 
@@ -237,7 +237,7 @@ def test_accepted_noop_options_reject_invalid_input(command: str, option: str) -
             with pytest.raises(InvalidDocument):
                 database.command({**request, option: Decimal(1)})
         else:
-            with pytest.raises(TypeError):
+            with pytest.raises(OperationFailure):
                 database.command({**request, option: "invalid"})
     finally:
         client.close()
@@ -249,8 +249,9 @@ def test_list_filter_narrows_named_results(command: str) -> None:
         client.alpha.create_collection("events")
         client.alpha.create_collection("logs")
         client.beta.create_collection("items")
-        baseline = client.alpha.command({command: 1})
-        selected = client.alpha.command(
+        database = client.admin if command == "listDatabases" else client.alpha
+        baseline = database.command({command: 1})
+        selected = database.command(
             {
                 command: 1,
                 "filter": {"name": "alpha" if command == "listDatabases" else "events"},
@@ -280,8 +281,9 @@ def test_list_name_only_limits_result_fields(command: str) -> None:
     with MongoClient(MemoryEngine()) as client:
         client.alpha.create_collection("events")
         client.beta.create_collection("items")
-        baseline = client.alpha.command({command: 1})
-        selected = client.alpha.command({command: 1, "nameOnly": True})
+        database = client.admin if command == "listDatabases" else client.alpha
+        baseline = database.command({command: 1})
+        selected = database.command({command: 1, "nameOnly": True})
         rows = (
             baseline["databases"]
             if command == "listDatabases"
@@ -292,6 +294,8 @@ def test_list_name_only_limits_result_fields(command: str) -> None:
             if command == "listDatabases"
             else selected["cursor"]["firstBatch"]
         )
+        if command == "listDatabases":
+            assert database.command({command: 1, "nameOnly": 1}) == selected
         assert len(rows) == len(narrowed)
         assert all(set(row) > {"name"} for row in rows)
         assert all(
@@ -300,24 +304,32 @@ def test_list_name_only_limits_result_fields(command: str) -> None:
         )
 
 
-@pytest.mark.parametrize("command", ["listCollections", "listDatabases"])
-@pytest.mark.parametrize(["option", "invalid"], [("filter", []), ("nameOnly", 1)])
+@pytest.mark.parametrize(
+    ["command", "option", "invalid"],
+    [
+        ("listCollections", "filter", []),
+        ("listDatabases", "filter", []),
+        ("listCollections", "nameOnly", 1),
+    ],
+)
 def test_list_effective_options_reject_wrong_type(
     command: str, option: str, invalid: object
 ) -> None:
     with MongoClient(MemoryEngine()) as client:
         client.alpha.create_collection("events")
-        if command == "listCollections" and option == "filter":
+        database = client.admin if command == "listDatabases" else client.alpha
+        if command == "listCollections":
             with pytest.raises(OperationFailure) as error:
-                client.alpha.command({command: 1, option: invalid})
+                database.command({command: 1, option: invalid})
             assert error.value.code == 14  # noqa: PLR2004 - native TypeMismatch
         else:
             with pytest.raises(TypeError):
-                client.alpha.command({command: 1, option: invalid})
+                database.command({command: 1, option: invalid})
 
 
 @pytest.mark.parametrize("command", ["find", "aggregate"])
-def test_batch_size_limits_wire_first_batch(command: str) -> None:
+@pytest.mark.parametrize("batch_size", [1, 1.5, Decimal128("1.5")])
+def test_batch_size_limits_wire_first_batch(command: str, batch_size: object) -> None:
     async def run() -> None:
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))
@@ -331,12 +343,15 @@ def test_batch_size_limits_wire_first_batch(command: str) -> None:
         await execute(
             {"insert": "items", "documents": [{"_id": 1}, {"_id": 2}, {"_id": 3}]}
         )
-        command_document: dict[str, object] = {command: "items", "batchSize": 1}
+        command_document: dict[str, object] = {
+            command: "items",
+            "batchSize": batch_size,
+        }
         if command == "aggregate":
             command_document = {
                 "aggregate": "items",
                 "pipeline": [],
-                "cursor": {"batchSize": 1},
+                "cursor": {"batchSize": batch_size},
             }
         first = await execute(command_document)
         cursor = first["cursor"]
@@ -377,6 +392,7 @@ def test_batch_size_rejects_invalid_wire_type(
         }
         if command == "aggregate":
             command_document["pipeline"] = []
+            command_document["cursor"] = {}
         with pytest.raises(error_type):
             await proxy._executor.execute_command(
                 command_document, connection=connection
@@ -404,7 +420,7 @@ def test_find_batch_size_prefetches_locally_without_truncating_api_result() -> N
         assert requested_sizes
         assert set(requested_sizes) == {1}
         assert batches == [[1], [2], [3], []]
-        with pytest.raises(TypeError):
+        with pytest.raises(OperationFailure):
             client.audit.command({"find": "items", "batchSize": "invalid"})
 
 
@@ -419,14 +435,21 @@ def test_aggregate_top_level_batch_size_is_wire_only() -> None:
 
     with MongoClient(MemoryEngine()) as client:
         client.audit.items.insert_many([{"_id": 1}, {"_id": 2}, {"_id": 3}])
-        baseline = client.audit.command({"aggregate": "items", "pipeline": []})
+        baseline = client.audit.command(
+            {"aggregate": "items", "cursor": {}, "pipeline": []}
+        )
         top_level = client.audit.command(
-            {"aggregate": "items", "pipeline": [], "batchSize": 1}
+            {"aggregate": "items", "cursor": {}, "pipeline": [], "batchSize": 1}
         )
         assert top_level == baseline
         assert (
             client.audit.command(
-                {"aggregate": "items", "pipeline": [], "batchSize": "ignored"}
+                {
+                    "aggregate": "items",
+                    "cursor": {},
+                    "pipeline": [],
+                    "batchSize": "ignored",
+                }
             )
             == baseline
         )
@@ -436,7 +459,7 @@ def test_aggregate_top_level_batch_size_is_wire_only() -> None:
             )
         assert nested == baseline
         assert requested_sizes == [1]
-        with pytest.raises(TypeError):
+        with pytest.raises(OperationFailure):
             client.audit.command(
                 {
                     "aggregate": "items",
@@ -458,7 +481,9 @@ def test_comment_is_recorded_only_under_enabled_profiling(
     marker = f"audit-{command}"
     for profiling_enabled in (False, True):
         with MongoClient(engine_type()) as client:
-            database = client.audit
+            database = client.get_database(
+                "admin" if command == "listDatabases" else "audit"
+            )
             database.items.insert_one({"_id": 1, "value": 1})
             database.items.create_index([("value", 1)], name="value_idx")
             if profiling_enabled:
@@ -476,9 +501,7 @@ def test_comment_is_recorded_only_under_enabled_profiling(
 
 
 @pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
-@pytest.mark.parametrize(
-    ["command", "command_document"], COMMENT_COMMAND_CASES
-)
+@pytest.mark.parametrize(["command", "command_document"], COMMENT_COMMAND_CASES)
 def test_command_comment_is_retained_in_explicit_session_metadata(
     engine_type: type[MemoryEngine | SQLiteEngine],
     command: str,
@@ -487,7 +510,9 @@ def test_command_comment_is_retained_in_explicit_session_metadata(
     marker = f"session-{command}"
     for supplied in (False, True):
         with MongoClient(engine_type()) as client:
-            database = client.audit
+            database = client.get_database(
+                "admin" if command == "listDatabases" else "audit"
+            )
             database.items.insert_one({"_id": 1, "value": 1})
             database.items.create_index([("value", 1)], name="value_idx")
             session = client.start_session()
@@ -506,9 +531,7 @@ def test_command_comment_is_retained_in_explicit_session_metadata(
 
 
 @pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
-@pytest.mark.parametrize(
-    ["command", "command_document"], COMMENT_COMMAND_CASES
-)
+@pytest.mark.parametrize(["command", "command_document"], COMMENT_COMMAND_CASES)
 def test_wire_command_comment_is_profiled_only_when_enabled(
     engine_type: type[MemoryEngine | SQLiteEngine],
     command: str,
@@ -520,7 +543,11 @@ def test_wire_command_comment_is_profiled_only_when_enabled(
 
             async def execute(document: dict[str, object]) -> dict[str, object]:
                 return await proxy._executor.execute_command(
-                    {**document, "$db": "audit"}, connection=connection
+                    {
+                        **document,
+                        "$db": "admin" if command == "listDatabases" else "audit",
+                    },
+                    connection=connection,
                 )
 
             await execute({"insert": "items", "documents": [{"_id": 1, "value": 1}]})
@@ -555,7 +582,7 @@ def test_wire_command_comment_is_profiled_only_when_enabled(
     "explained_command",
     [
         {"find": "items", "filter": {}},
-        {"aggregate": "items", "pipeline": []},
+        {"aggregate": "items", "cursor": {}, "pipeline": []},
         {"count": "items"},
         {"distinct": "items", "key": "value"},
         {
@@ -859,7 +886,7 @@ def test_find_max_time_ms_reaches_engine_deadline(
 COUNT_DISTINCT_CASES = [
     ("count", "query", {"query": {"kind": "view"}}, 2, {"query": []}),
     ("count", "skip", {"skip": 1}, 2, {"skip": -1}),
-    ("count", "limit", {"limit": 2}, 2, {"limit": -1}),
+    ("count", "limit", {"limit": -2}, 2, {"limit": "invalid"}),
     (
         "distinct",
         "query",

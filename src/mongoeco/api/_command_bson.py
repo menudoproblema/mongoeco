@@ -1,6 +1,11 @@
 """Server BSON grammar shared by raw write command adapters."""
 
-from mongoeco.core.bson_scalars import bson_numeric_alias, wrap_bson_numeric
+from mongoeco.core.bson_scalars import (
+    INT64_MAX,
+    INT64_MIN,
+    bson_numeric_alias,
+    wrap_bson_numeric,
+)
 from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.server_errors import ErrorScope, server_error
@@ -120,6 +125,20 @@ def legacy_command_truth_value(value):
     if numeric is not None:
         return bool(numeric.value)
     return True
+
+
+def legacy_command_int64(value):
+    """BSON safeNumberLong: truncate, saturate and map NaN to zero."""
+    numeric = wrap_bson_numeric(value)
+    if numeric is None:
+        return None
+    try:
+        integer = int(numeric.value)
+    except ValueError:
+        integer = 0
+    except OverflowError:
+        integer = INT64_MAX if numeric.value > 0 else INT64_MIN
+    return max(INT64_MIN, min(INT64_MAX, integer))
 
 
 def command_boolean(value, field, *, numeric=False):

@@ -1,5 +1,8 @@
 """Independent P2 raw-command witnesses; isolated state per retained shape."""
 
+from bson import Decimal128
+
+
 SEED = [{"_id": 0}]
 COMMANDS = [
     {"createIndexes": "events", "indexes": ()},
@@ -123,6 +126,36 @@ CONTROLS = [
 ]
 
 
+_BATCH_TYPES = (
+    ("string", "invalid"),
+    ("bool", True),
+    ("double", 1.5),
+    ("negative-fraction", -0.5),
+    ("negative-double", -1.5),
+    ("nan", float("nan")),
+    ("infinity", float("inf")),
+    ("negative-infinity", float("-inf")),
+    ("overflow", float(2**63)),
+    ("decimal", Decimal128("1.5")),
+    ("decimal-nan", Decimal128("NaN")),
+    ("decimal-snan", Decimal128("sNaN")),
+    ("decimal-infinity", Decimal128("Infinity")),
+    ("decimal-negative-infinity", Decimal128("-Infinity")),
+    ("decimal-overflow", Decimal128("1E100")),
+)
+CONTROLS += [
+    (f"{command}-batch-{label}", spec)
+    for label, value in _BATCH_TYPES
+    for command, spec in (
+        ("find", {"find": "events", "batchSize": value}),
+        (
+            "cursor",
+            {"aggregate": "events", "pipeline": [], "cursor": {"batchSize": value}},
+        ),
+    )
+]
+
+
 def command_shape_contract(collection):
     database = collection.database
     events = database.get_collection("events")
@@ -156,6 +189,14 @@ def command_shape_contract(collection):
                 # Retain every expected type; only repair the bracket/quote order.
                 if "dropIndexes.index" in message and message.endswith("']"):
                     message = message[:-2] + "]'"
+                if ".batchSize'" in message and "expected types '[" in message:
+                    prefix, aliases = message.rsplit("expected types '[", 1)
+                    # IDL type-set order changes with native hash-table seeds.
+                    # Retain all aliases, including their multiplicities.
+                    aliases = aliases[:-2].split(", ")
+                    message = (
+                        prefix + "expected types '[" + ", ".join(sorted(aliases)) + "]'"
+                    )
                 result = {
                     "ok": False,
                     "family": type(error).__name__,

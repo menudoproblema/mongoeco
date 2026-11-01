@@ -5,6 +5,7 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from mongoeco.api._command_bson import legacy_command_int64
 from mongoeco.core._public_materialization import cursor_response_document
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
@@ -371,6 +372,14 @@ class WireCursorStore:
                 batch_size = cursor_spec.get("batchSize")
         if batch_size is None:
             return None
+        native_field = "find" in command_document or (
+            "aggregate" in command_document
+            and command_document.get("batchSize") is None
+        )
+        if native_field:
+            integer = legacy_command_int64(batch_size)
+            if integer is not None:
+                batch_size = integer
         if (
             not isinstance(batch_size, int)
             or isinstance(batch_size, bool)

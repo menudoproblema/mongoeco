@@ -133,10 +133,9 @@ def test_create_indexes_max_time_ms_bounds_index_batch(
             pytest.raises(ExecutionTimeout, match="controlled index deadline"),
         ):
             await execute({**request, "maxTimeMS": 17})
-        indexes = await execute({"listIndexes": "items"})
-        assert "kind_idx" not in {
-            row["name"] for row in indexes["cursor"]["firstBatch"]
-        }
+        with pytest.raises(OperationFailure) as missing:
+            await execute({"listIndexes": "items"})
+        assert missing.value.code == 26  # noqa: PLR2004 - native NamespaceNotFound
         result = await execute(request)
         assert result["numIndexesAfter"] == result["numIndexesBefore"] + 1
         with pytest.raises((TypeError, ValueError, OperationFailure)):
