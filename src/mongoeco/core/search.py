@@ -19,6 +19,7 @@ from mongoeco.core._search_contract import (
     TEXT_SEARCH_OPERATOR_NAMES,
 )
 from mongoeco.core.bson_ordering import bson_engine_key
+from mongoeco.core.bson_scalars import unwrap_bson_numeric
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.runtime_metadata import (
     RUNTIME_METADATA_FIELD,
@@ -951,7 +952,7 @@ def _compile_search_count_spec(spec: object) -> SearchCountSpec | None:
         raise OperationFailure(
             "$search.count.type must be 'total' or 'lowerBound'",
         )
-    threshold = spec.get("threshold")
+    threshold = unwrap_bson_numeric(spec.get("threshold"))
     if threshold is not None:
         if mode != "lowerBound":
             raise OperationFailure(
@@ -992,12 +993,12 @@ def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
             raise OperationFailure(
                 "$search.highlight.path must be a string or list of strings",
             )
-    max_chars = spec.get("maxChars", 120)
+    max_chars = unwrap_bson_numeric(spec.get("maxChars", 120))
     if not isinstance(max_chars, int) or isinstance(max_chars, bool) or max_chars <= 0:
         raise OperationFailure(
             "$search.highlight.maxChars must be a positive integer",
         )
-    max_num_passages = spec.get("maxNumPassages")
+    max_num_passages = unwrap_bson_numeric(spec.get("maxNumPassages"))
     if max_num_passages is not None and (
         not isinstance(max_num_passages, int)
         or isinstance(max_num_passages, bool)
@@ -1061,7 +1062,7 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
                 raise OperationFailure(
                     "$search.facet facet path must be a non-empty string",
                 )
-            facet_num_buckets = facet_spec.get("numBuckets", 10)
+            facet_num_buckets = unwrap_bson_numeric(facet_spec.get("numBuckets", 10))
             if (
                 not isinstance(facet_num_buckets, int)
                 or isinstance(facet_num_buckets, bool)
@@ -1105,7 +1106,7 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
             "$search.facet.type must be one of: "
             + ", ".join(sorted(_SUPPORTED_SEARCH_FACET_TYPES)),
         )
-    num_buckets = spec.get("numBuckets", 10)
+    num_buckets = unwrap_bson_numeric(spec.get("numBuckets", 10))
     if (
         not isinstance(num_buckets, int)
         or isinstance(num_buckets, bool)
@@ -1250,12 +1251,12 @@ def compile_vector_search_query(spec: object) -> SearchVectorQuery:
             "$vectorSearch.queryVector must contain only finite numeric values",
             code=2,
         )
-    limit = spec.get("limit")
+    limit = unwrap_bson_numeric(spec.get("limit"))
     if not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
         raise OperationFailure(
             "$vectorSearch.limit must be a positive integer",
         )
-    num_candidates = spec.get("numCandidates", limit)
+    num_candidates = unwrap_bson_numeric(spec.get("numCandidates", limit))
     if (
         not isinstance(num_candidates, int)
         or isinstance(num_candidates, bool)
@@ -1267,7 +1268,7 @@ def compile_vector_search_query(spec: object) -> SearchVectorQuery:
     filter_spec = spec.get("filter")
     if filter_spec is not None and not isinstance(filter_spec, dict):
         raise OperationFailure("$vectorSearch.filter must be a document")
-    min_score = spec.get("minScore")
+    min_score = unwrap_bson_numeric(spec.get("minScore"))
     if min_score is not None:
         if (
             not isinstance(min_score, (int, float))
@@ -2088,10 +2089,11 @@ def coerce_search_vector(value: object) -> tuple[float, ...] | None:
         return None
     vector = []
     for item in value:
-        if not isinstance(item, (int, float)) or isinstance(item, bool):
+        numeric = unwrap_bson_numeric(item)
+        if not isinstance(numeric, (int, float)) or isinstance(numeric, bool):
             return None
         try:
-            coordinate = float(item)
+            coordinate = float(numeric)
         except OverflowError:
             return None
         if not math.isfinite(coordinate):
@@ -2397,7 +2399,7 @@ def _compile_search_phrase_clause(
         raise OperationFailure(
             "$search.phrase.query must contain at least one searchable token",
         )
-    slop = clause_spec.get("slop", 0)
+    slop = unwrap_bson_numeric(clause_spec.get("slop", 0))
     if not isinstance(slop, int) or isinstance(slop, bool) or slop < 0:
         raise OperationFailure(
             "$search.phrase.slop must be a non-negative integer",
@@ -2479,7 +2481,7 @@ def _compile_search_autocomplete_fuzzy_spec(
             "$search.autocomplete.fuzzy only supports maxEdits, prefixLength and maxExpansions; unsupported keys: "
             + ", ".join(unsupported_options),
         )
-    max_edits = spec.get("maxEdits", 1)
+    max_edits = unwrap_bson_numeric(spec.get("maxEdits", 1))
     if (
         not isinstance(max_edits, int)
         or isinstance(max_edits, bool)
@@ -2488,7 +2490,7 @@ def _compile_search_autocomplete_fuzzy_spec(
         raise OperationFailure(
             "$search.autocomplete.fuzzy.maxEdits must be 1 or 2",
         )
-    prefix_length = spec.get("prefixLength", 0)
+    prefix_length = unwrap_bson_numeric(spec.get("prefixLength", 0))
     if (
         not isinstance(prefix_length, int)
         or isinstance(prefix_length, bool)
@@ -2497,7 +2499,7 @@ def _compile_search_autocomplete_fuzzy_spec(
         raise OperationFailure(
             "$search.autocomplete.fuzzy.prefixLength must be a non-negative integer",
         )
-    max_expansions = spec.get("maxExpansions", 50)
+    max_expansions = unwrap_bson_numeric(spec.get("maxExpansions", 50))
     if (
         not isinstance(max_expansions, int)
         or isinstance(max_expansions, bool)
@@ -2789,13 +2791,13 @@ def _compile_search_near_clause(
         # Nested paths are allowed semantically, but keeping this stage explicit
         # avoids silently broadening runtime support without tests/explain work.
         pass
-    origin = clause_spec.get("origin")
+    origin = unwrap_bson_numeric(clause_spec.get("origin"))
     origin_kind = _search_near_origin_kind(origin)
     if origin_kind is None:
         raise OperationFailure(
             "$search.near.origin must be a finite number or a date/datetime value",
         )
-    pivot = clause_spec.get("pivot")
+    pivot = unwrap_bson_numeric(clause_spec.get("pivot"))
     if (
         not isinstance(pivot, (int, float))
         or isinstance(pivot, bool)
@@ -2870,7 +2872,7 @@ def _compile_search_compound_clause(
     must_not = _compile_clause_list("mustNot")
     if not any((must, should, filter_clauses, must_not)):
         raise OperationFailure("$search.compound requires at least one clause")
-    minimum_should_match = clause_spec.get("minimumShouldMatch")
+    minimum_should_match = unwrap_bson_numeric(clause_spec.get("minimumShouldMatch"))
     if minimum_should_match is None:
         minimum_should_match = 0 if (must or filter_clauses or must_not) else 1
     if (
@@ -2946,7 +2948,7 @@ def _validate_vector_search_definition(definition: Document) -> None:
             raise OperationFailure(
                 "local vectorSearch field path must be a non-empty string",
             )
-        num_dimensions = field.get("numDimensions")
+        num_dimensions = unwrap_bson_numeric(field.get("numDimensions"))
         if (
             not isinstance(num_dimensions, int)
             or isinstance(num_dimensions, bool)
@@ -2961,7 +2963,7 @@ def _validate_vector_search_definition(definition: Document) -> None:
                 "local vectorSearch currently supports cosine, dotProduct and euclidean similarity",
             )
         for option_name in ("connectivity", "expansionAdd", "expansionSearch"):
-            option_value = field.get(option_name)
+            option_value = unwrap_bson_numeric(field.get(option_name))
             if option_value is None:
                 continue
             if (
@@ -4932,6 +4934,7 @@ def _search_path_exists(value: object, path: str) -> bool:
 
 
 def _search_near_origin_kind(value: object) -> str | None:
+    value = unwrap_bson_numeric(value)
     if isinstance(value, bool):
         return None
     if isinstance(value, (int, float)):
@@ -4944,6 +4947,7 @@ def _search_near_origin_kind(value: object) -> str | None:
 
 
 def _normalize_search_scalar_value(value: object) -> tuple[str, object] | None:
+    value = unwrap_bson_numeric(value)
     if value is None:
         return "null", None
     if isinstance(value, bool):
@@ -5017,6 +5021,7 @@ def _search_near_scalar_distance(
     origin: float | datetime.date | datetime.datetime,
     origin_kind: str,
 ) -> float | None:
+    candidate = unwrap_bson_numeric(candidate)
     if origin_kind == "number":
         if not isinstance(candidate, (int, float)) or isinstance(
             candidate,
@@ -5072,7 +5077,7 @@ def _vector_field_specs(
         if not isinstance(field, dict):
             continue
         path = field.get("path")
-        num_dimensions = field.get("numDimensions")
+        num_dimensions = unwrap_bson_numeric(field.get("numDimensions"))
         if (
             field.get("type") == "vector"
             and isinstance(path, str)

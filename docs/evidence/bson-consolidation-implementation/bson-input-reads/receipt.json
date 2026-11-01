@@ -1,0 +1,1196 @@
+{
+  "scope": "B07 read boundary and shared input encoder only; full B07 and the plan remain in progress",
+  "base": "ecfac84",
+  "runtime_sources": "runtime-sources.json",
+  "changed_sources": "changed-sources.json",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-_u8_ymb2/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "021fa10580c34544e6ddda78cd1785cbeeb8ff1bac64cdfc1edf9aa24045e6f7",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-_u8_ymb2/site-packages",
+    "modules": 285
+  },
+  "native": {
+    "references": [
+      {
+        "target": "7.0",
+        "file": "tests/fixtures/semantic_bson_request_7_0.json",
+        "sha256": "635aa61a660466b4c6d20e09fa90b0281d951172860b0d7d885c5b8972d8a3da",
+        "cases": 3,
+        "records": 39,
+        "native_check_identical": true
+      },
+      {
+        "target": "8.0",
+        "file": "tests/fixtures/semantic_bson_request_8_0.json",
+        "sha256": "f066200939837180ee32bbb4501368eaf2f75d27c9488cd17a06d4a963461a4e",
+        "cases": 3,
+        "records": 39,
+        "native_check_identical": true
+      },
+      {
+        "target": "9.0",
+        "file": "tests/fixtures/semantic_bson_request_9_0.json",
+        "sha256": "f162726411dba4f5d889d5c7e5e5ee13ec944c5570a4f75c33325582a7076614",
+        "cases": 3,
+        "records": 39,
+        "native_check_identical": true
+      }
+    ],
+    "final_round": 4,
+    "topology": "standalone",
+    "resources_verified_absent": 36
+  },
+  "baseline": {
+    "failed": 48,
+    "passed": 27,
+    "log": "request-baseline-final.txt.gz"
+  },
+  "gates": {
+    "installed_wide_replay": {
+      "failed": 96,
+      "passed": 8727,
+      "all_failures_in": "bson_admission",
+      "new_bson_request_cases_and_metadata_passed": 75,
+      "status": "not globally green; previously documented B07 work remains",
+      "log": "wheel-all-definitive.txt.gz",
+      "seconds": 225.47
+    },
+    "installed_unit_spi_properties": {
+      "passed": 1199,
+      "subtests": 181,
+      "log": "wheel-unit-definitive.txt.gz",
+      "seconds": 73.19
+    },
+    "sdk_free": {
+      "python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]",
+      "sdk_available": false,
+      "checks": 748,
+      "site": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-_u8_ymb2/site-packages",
+      "note": "explicit UNSPECIFIED subset; global default remains STANDARD until write admission cut"
+    },
+    "typing": "typing.txt.gz",
+    "lint": "lint.txt.gz",
+    "import_proofs": [
+      "wheel-imports-bson-input-replay-final-gw0.json",
+      "wheel-imports-bson-input-replay-final-gw1.json",
+      "wheel-imports-bson-input-replay-final-gw2.json",
+      "wheel-imports-bson-input-replay-final-gw3.json",
+      "wheel-imports-bson-input-replay-final-master.json",
+      "wheel-imports-bson-input-unit-final-master.json"
+    ]
+  },
+  "cost": {
+    "scope": "diagnostic ABBA x2, 200 calls per sample, concurrent verification; not D05 performance acceptance",
+    "samples": [
+      {
+        "label": "base",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.03770600000000002,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.021741999999999984,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.141739,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007371999999999934,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.043435,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.024810999999999916,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.15183100000000005,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.007152999999999965,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.08352400000000004,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.06312300000000004,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.18462800000000001,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007032999999999845,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.08626,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.06526300000000007,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.19335100000000005,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.007060999999999984,
+            "result": "None"
+          }
+        ]
+      },
+      {
+        "label": "candidate",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.043856000000000006,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.024312,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.14624600000000004,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.0016500000000000403,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.047130000000000005,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.029518000000000044,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.15274,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.001735000000000042,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.08359799999999995,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.06394900000000003,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.18713199999999985,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.0016740000000001753,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.08811800000000014,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.06620899999999996,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.19480300000000006,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.001699000000000117,
+            "result": "None"
+          }
+        ]
+      },
+      {
+        "label": "candidate",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.04194500000000001,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.025197000000000025,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.142293,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.0016809999999999325,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.044706000000000023,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.02797700000000003,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.152567,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.0016199999999999548,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.07988099999999998,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.06297200000000003,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.1812299999999999,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.0016380000000000283,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.08604900000000004,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.06843399999999988,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.19343599999999994,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.001654999999999962,
+            "result": "None"
+          }
+        ]
+      },
+      {
+        "label": "base",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.03831199999999996,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.021672000000000025,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.13900900000000005,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007503000000000037,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.04138799999999998,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.026615999999999973,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.15193800000000002,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.007557000000000036,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.082067,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.06086099999999994,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.1821069999999999,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007193999999999923,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.083121,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.06290200000000001,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.19006100000000004,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.007260000000000044,
+            "result": "None"
+          }
+        ]
+      },
+      {
+        "label": "base",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.04062100000000002,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.021278999999999992,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.14150399999999996,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007302999999999948,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.04381500000000005,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.025847000000000064,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.15042599999999995,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.007206000000000046,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.07766100000000009,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.06176300000000001,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.17981000000000003,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007563999999999904,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.08426200000000006,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.06552500000000006,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.19307999999999992,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.006987999999999994,
+            "result": "None"
+          }
+        ]
+      },
+      {
+        "label": "candidate",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.04180800000000001,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.024602999999999986,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.14667599999999997,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.001666999999999974,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.04504799999999998,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.02844000000000002,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.15656800000000004,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.0017220000000000013,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.07913300000000001,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.05949900000000008,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.17418199999999995,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.001730999999999927,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.08326800000000012,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.06473200000000001,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.19531999999999994,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.001683000000000101,
+            "result": "None"
+          }
+        ]
+      },
+      {
+        "label": "candidate",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.04111300000000001,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.024758000000000002,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.1391,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.0016660000000000563,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.04468300000000003,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.028766999999999987,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.14690599999999998,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.0016089999999999716,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.07669100000000006,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.05823900000000004,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.1914150000000001,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.001683000000000101,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.09358900000000014,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.07075900000000002,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.20722600000000013,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.0016540000000000443,
+            "result": "None"
+          }
+        ]
+      },
+      {
+        "label": "base",
+        "rows": [
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.04260999999999998,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.023543000000000036,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.14575300000000002,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007560000000000011,
+            "result": "None"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.04555600000000004,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.025585999999999998,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.15032,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "MemoryEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.0072269999999999834,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_limit1",
+            "cpu": 0.08130599999999999,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "find_one",
+            "cpu": 0.06360300000000008,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "aggregate",
+            "cpu": 0.18493700000000002,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": false,
+            "case": "unused",
+            "cpu": 0.007400999999999991,
+            "result": "None"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_limit1",
+            "cpu": 0.08671099999999998,
+            "result": "[{'_id': 0, 'v': 0}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "find_one",
+            "cpu": 0.06597999999999993,
+            "result": "{'_id': 11, 'v': 11}"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "aggregate",
+            "cpu": 0.19747999999999988,
+            "result": "[{'_id': 31}, {'_id': 32}, {'_id': 33}, {'_id': 34}, {'_id': 35}, {'_id': 36}, {'_id': 37}, {'_id': 38}, {'_id': 39}, {'_id': 40}, {'_id': 41}, {'_id': 42}, {'_id': 43}, {'_id': 44}, {'_id': 45}, {'_id': 46}, {'_id': 47}, {'_id': 48}, {'_id': 49}, {'_id': 50}, {'_id': 51}, {'_id': 52}, {'_id': 53}, {'_id': 54}, {'_id': 55}, {'_id': 56}, {'_id': 57}, {'_id': 58}, {'_id': 59}, {'_id': 60}, {'_id': 61}, {'_id': 62}, {'_id': 63}]"
+          },
+          {
+            "engine": "SQLiteEngine",
+            "codecs": true,
+            "case": "unused",
+            "cpu": 0.007848999999999995,
+            "result": "None"
+          }
+        ]
+      }
+    ],
+    "ratios": [
+      {
+        "engine": "MemoryEngine",
+        "codecs": false,
+        "case": "find_limit1",
+        "cpu_ratio": 1.0594854598772996
+      },
+      {
+        "engine": "MemoryEngine",
+        "codecs": false,
+        "case": "find_one",
+        "cpu_ratio": 1.1205177025250461
+      },
+      {
+        "engine": "MemoryEngine",
+        "codecs": false,
+        "case": "aggregate",
+        "cpu_ratio": 1.0111090571385815
+      },
+      {
+        "engine": "MemoryEngine",
+        "codecs": false,
+        "case": "unused",
+        "cpu_ratio": 0.22409038940076734
+      },
+      {
+        "engine": "MemoryEngine",
+        "codecs": true,
+        "case": "find_limit1",
+        "cpu_ratio": 1.0423263717464435
+      },
+      {
+        "engine": "MemoryEngine",
+        "codecs": true,
+        "case": "find_one",
+        "cpu_ratio": 1.115127357573402
+      },
+      {
+        "engine": "MemoryEngine",
+        "codecs": true,
+        "case": "aggregate",
+        "cpu_ratio": 1.0070568968511948
+      },
+      {
+        "engine": "MemoryEngine",
+        "codecs": true,
+        "case": "unused",
+        "cpu_ratio": 0.22942044401743
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": false,
+        "case": "find_limit1",
+        "cpu_ratio": 0.983808749129585
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": false,
+        "case": "find_one",
+        "cpu_ratio": 0.9811870864247046
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": false,
+        "case": "aggregate",
+        "cpu_ratio": 1.0033862760806143
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": false,
+        "case": "unused",
+        "cpu_ratio": 0.23040559057277027
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": true,
+        "case": "find_limit1",
+        "cpu_ratio": 1.0313497123583104
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": true,
+        "case": "find_one",
+        "cpu_ratio": 1.0402973004197629
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": true,
+        "case": "aggregate",
+        "cpu_ratio": 1.0217230080674755
+      },
+      {
+        "engine": "SQLiteEngine",
+        "codecs": true,
+        "case": "unused",
+        "cpu_ratio": 0.2294739008162501
+      }
+    ]
+  },
+  "limits": [
+    "No acceptance of write/bulk/command/index/validator admission or UUID default change.",
+    "Computed find projections and raw result/envelope consumers remain D06/B08 work.",
+    "The 96 mandatory B07 failures remain visible, not xfailed or omitted.",
+    "D06 remainder, H53, D07 decision and integrated D05/matrix/coverage/performance remain.",
+    "SDK-free subset and standalone native controls do not prove all distributions or native concurrent/transactional behavior."
+  ],
+  "artifact_sha256": {
+    "README.md": "76bcf24fd84913ed01c415db65bd7e1ee7ab4059642c7d43a6be6f4aaf932b9b",
+    "artifact-guard.py.txt": "d3f1ddd3376418a72b6ec4aea27b7df0f1be19b17a7114f4339eaf0efae9307f",
+    "baseline-runtime-sources.json": "6924b59598f166c0bde3f683fecb929b9fade69c8fcc3d506627eefabb4819ca",
+    "baseline-wheel-imports-master.json": "00561a0d9f05347e170b3ef3bb41a279107e462199c541781ae8787e85f97e7a",
+    "baseline.py.txt": "ca94cb5e82e524da3b4ee70d208dd98f9a15de7c423560c6e9e7ef2c4aa05ed7",
+    "build-final3.txt.gz": "221985ea383552a8832a028900fc910fc64c82e3658572d651506e5f9c3fb8a4",
+    "changed-sources.json": "a5a3dc9625dc4fae97f33f695c67ce3734cb82f7e15f455a680cf7a8c7c2ba37",
+    "cost.json": "01e669353f57716916c69ea547909d8b04ccb92f8127cd433a2c6fd193782411",
+    "cost.py.txt": "da094bae0ca2409cb9cc3951d73347633c98f4245a50ab76524363d383457aa1",
+    "environment.json": "672b09d807ed695889a5b4af8884c07dfdb628046e7d2696f71e4a4a6dafea5f",
+    "kernel-review.txt.gz": "1b16e70bb0029fa1f590cef79d75be4cefe846a392a4f24ccffc18ba5866d0cf",
+    "lint.txt.gz": "2dfc7c3f3d3eb91c003dbb2a2effc6de0d89cc128a3ebd19c5b79f1bdd708b96",
+    "native-checks.json": "a18860930e818ce0cd643cf76776409d98c9e555249bebeafce89e8bd35804d3",
+    "native-controller.py.txt": "5fa802a0958ae8096d3a3791f5d5edcb7f0b7789fecc68377bfb93ca8bfc6889",
+    "native-round-1/7.0/capture-check.txt.gz": "98a86203c0828170fdb967d0b3d753879b254cd8c5c4fd96220e7de5900b6f61",
+    "native-round-1/7.0/fixture.json": "e68d73dbabd1493fc283b7f2a3e9799361bde398e95860dfbd00f63b8d7d5a01",
+    "native-round-1/8.0/capture-check.txt.gz": "02f10273b964b85b5534732605d1964080aafa0bb2c1823acd4237c3a84f201e",
+    "native-round-1/8.0/fixture.json": "5e1723eb89d792250b7d0e495b45cb669f68c590183914a354b8a7b39ffa6c64",
+    "native-round-1/9.0/capture-check.txt.gz": "a12b6802c805cb236bc74a84f2169be1bfbeb5647d9b54114361165d8876781e",
+    "native-round-1/9.0/fixture.json": "0300f0ced8ba4195925e923b1770c9bd1b3e67f641704d7180c547d617ac6ef8",
+    "native-round-2/7.0/capture-check.txt.gz": "4294ba401f9ecda0d0a45b1eed3aa6b5bd92f6e900f2869c4b46eed3b028cacf",
+    "native-round-2/7.0/fixture.json": "d1f6f4dcb27c3c44739f13a2f950c2bd5ebb60b369749fc78db5511572ade011",
+    "native-round-2/8.0/capture-check.txt.gz": "9d6956a6e111e78e655ba03f9b7288a4fa225e37678bf2ef9199a08e2aef769c",
+    "native-round-2/8.0/fixture.json": "b7d2d020f8f1401299f26afbdeb842c3c77e01920e5b11e25e3083cc36bfe2f9",
+    "native-round-2/9.0/capture-check.txt.gz": "7c98082929086695bedd6f7b5d2f347363ff921ea6ea30678b2c41d72a884601",
+    "native-round-2/9.0/fixture.json": "25fbbf35d4bd2fe046788d4dc92ecdf2c1f00793d0af897a16e4bdf1250a3ea2",
+    "native-round-3/7.0/capture-check.txt.gz": "7cbc6507d0d4b1108238cd049063a3ad708d950a4278bccabd8fa1f9287c1549",
+    "native-round-3/7.0/fixture.json": "f533bd11b74654e1db9f30f8979211c6f699001f1131e5c6f40938cb54ff6388",
+    "native-round-3/8.0/capture-check.txt.gz": "7c0906972a1e4e3ffbaaf1c27a9690d90e05a8d4ffd9cc2abed744ae718cb5c3",
+    "native-round-3/8.0/fixture.json": "832415ed702aab8d79cece2623caeccc122e4359a044eb241eebc3b3df4c5dce",
+    "native-round-3/9.0/capture-check.txt.gz": "12ded08d3693e79a1d14385e84fd01f194325c4616dc0197823c812fb122d23c",
+    "native-round-3/9.0/fixture.json": "2f1d17db00b629ee260eb9401566202abb610369ba7ee0eb652a86560177da1e",
+    "native-round-4/7.0/capture-check.txt.gz": "be8ad9c68cd521106624fe2024395e63dd56cd3b596e714c582ce84c2450e812",
+    "native-round-4/7.0/fixture.json": "9c30ce8b1cf433d165027836ffed8c32a233ff9602eabd6aa175aeb3c1e05c04",
+    "native-round-4/8.0/capture-check.txt.gz": "d180968993cd2ff00bafcf9d038b3510c55ca0acf4cf535ea0c2b5b4eb3187be",
+    "native-round-4/8.0/fixture.json": "5d5b5bc0e994e95281b94729a92f4272acc97e2cd156c3d3881e20f997b07410",
+    "native-round-4/9.0/capture-check.txt.gz": "89c05f6eb2a77f4f8ddab8b2a4e02a2e5fbfc2a5b666a896699ebe7f726066ec",
+    "native-round-4/9.0/fixture.json": "5b0c0b8731b1e71297f5128424816dc3921d8fbd670448aa25004f18f1610ee0",
+    "omit-none-unit.txt.gz": "5d4c49391a3bea8772a0a27859756d9f3c141bb658d792fc65861230611e62b7",
+    "protected-sources.json": "765ae64e76189ada64223ca928ea41277eba2718b67fa798ab4358acee310be9",
+    "public-api-manifest.json": "18f336380aa25bc6fecff86f5e353671059f3576b3913964f20dabfeae19ad7a",
+    "request-baseline-final.txt.gz": "c667702ca7742a572151991d38f2d6f9d760512a9fad5897f835d0096ec42b0c",
+    "resources.json": "31ce7c44184c6f463afc3d0b68cb84f3c85950ef0bd6416edd9f25497d6a6c6d",
+    "resources.py.txt": "3fc2939b30d182a028eb96c9b3970be556d4cfe6e415fab51c72a8739ce02800",
+    "review-fixes-final.txt.gz": "12fa7c7df69f056a5519a28b775b4d6144174c61f30a4a1b72719447db5e3632",
+    "runtime-sources.json": "a8cce73f7a38bb8b86f2af8d1a86dcb2e2ddb418f392836b608f6d813fc3b886",
+    "sdk-free-definitive.txt.gz": "77ba01373f150290e6dfb8d0188f55ce98b0131f91c4528cf31dd4824015acbd",
+    "sdk-free-expected.json": "24f8c9c4043ab0ff98bf5d8864e3775ad90ca4c290ef783f0a3ee2ba9292c48e",
+    "sdk-free-prepare.py.txt": "ecbb853f66812fd2acd07f9412e80a37ead9eed1f934ee0ec1fdcf90acdd09b6",
+    "sdk-free-uuid.json": "0fcbab9a55d5fc210ecfe39363d50a1ac838fc5b8590c12fc48432a0260b8900",
+    "sdk-free.py.txt": "4c2e1e966f57a2040c328dcf92306faa9bcedba704504ed5dff67296e95723ae",
+    "typing.py.txt": "6d1046084a66172f852b3e425d377d70c91ff270f2db2771cdf175188b712c55",
+    "typing.txt.gz": "2bef93b0c77cddac78a45cfdaf714b4b473b7a2c813b4cc86f70acfd6f3de817",
+    "wheel-all-definitive.txt.gz": "42495b27d0b2bca67b076edd1f593855c546973ba738dd4522a61abfcc19ab40",
+    "wheel-all.py.txt": "3282e0093feb7f1ee5e00443674a34402ccbc4b02b713284ef4078495c7632b5",
+    "wheel-imports-bson-input-replay-final-gw0.json": "288e87bda8d2db74b96bade385073442612f648c84c5f06cf23bede9b5ff1b28",
+    "wheel-imports-bson-input-replay-final-gw1.json": "288e87bda8d2db74b96bade385073442612f648c84c5f06cf23bede9b5ff1b28",
+    "wheel-imports-bson-input-replay-final-gw2.json": "4cfc8e86bc82a1f0000ac6f886a8521cb21b009e942a49a4ef449529229131e7",
+    "wheel-imports-bson-input-replay-final-gw3.json": "288e87bda8d2db74b96bade385073442612f648c84c5f06cf23bede9b5ff1b28",
+    "wheel-imports-bson-input-replay-final-master.json": "0d92b45c367ca3ea1e06e6e4ae2320ade553ebcd5e6ad2c24d9f5b21f7a8bf4f",
+    "wheel-imports-bson-input-unit-final-master.json": "1f436c9ccd65e060c8d301ccf303f6d90744f9686204db7669546f77d137b322",
+    "wheel-unit-definitive.txt.gz": "ff69cc6dcd237671e68a5799ab326988d80c97e68568c773037cfbc8347961d4",
+    "wheel-unit.py.txt": "aed8513d0ff2a2098ddf01af1c685af07ba430587623f81bb1f7f02e81fcb466",
+    "wheel.json": "f2d697c85e908198fbd84073bd2fadbc08d46a77ca30a40a460e54b94a744b44"
+  },
+  "protected_unchanged": 269,
+  "public_api_unchanged": true
+}

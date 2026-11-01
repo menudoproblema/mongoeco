@@ -42,6 +42,7 @@ from mongoeco.api.argument_validation import (
     HintSpec,
     ProjectionInput,
     normalize_projection_spec,
+    projection_document,
     normalize_sort_spec as _normalize_sort_spec,
     validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
@@ -52,9 +53,11 @@ from mongoeco.api.operations import (
     FindOperation,
     UpdateOperation,
     _normalize_array_filters,
+    _normalize_skip,
+    _normalize_limit,
     compile_aggregate_operation,
-    compile_find_operation,
 )
+from mongoeco.api.bson_input import encode_operation_bson
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_FIND_RAW_BATCHES_SPEC,
@@ -1123,23 +1126,25 @@ class AsyncCollection:
             extra_kwargs={"filter": filter, **kwargs},
             profile=self._pymongo_profile,
         )
-        operation = compile_find_operation(
-            self._normalize_filter(options.get("filter_spec")),
-            projection=self._normalize_projection(options.get("projection")),
+        query = options.get("filter_spec")
+        if query is None:
+            query = {}
+        if not is_filter(query):
+            message = "filter_spec must be a dict"
+            raise TypeError(message)
+        # The SDK validates argument shape now, but encodes their current values
+        # only when executing. Keep the caller's filter alive until that point.
+        self._normalize_batch_size(options.get("batch_size"))
+        self._normalize_max_time_ms(options.get("max_time_ms"))
+        return AsyncCursor(
+            self, query, None, projection_document(options.get("projection")),
             collation=options.get("collation"),
-            sort=options.get("sort"),
-            skip=options.get("skip", 0),
-            limit=options.get("limit"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            batch_size=options.get("batch_size"),
-            variables=self._normalize_let(options.get("let")),
-            dialect=self._mongodb_dialect,
-            planning_mode=self._planning_mode,
-        )
-        return self._build_cursor(
-            operation,
+            sort=self._normalize_sort(options.get("sort")),
+            skip=_normalize_skip(options.get("skip", 0)),
+            limit=_normalize_limit(options.get("limit")),
+            hint=self._normalize_hint(options.get("hint")),
+            comment=options.get("comment"), max_time_ms=options.get("max_time_ms"),
+            batch_size=options.get("batch_size"), let=options.get("let"),
             session=options.get("session"),
         )
 
@@ -1172,6 +1177,7 @@ class AsyncCollection:
             extra_kwargs=kwargs,
             profile=self._pymongo_profile,
         )
+        options = encode_operation_bson(options, codec_options=self._codec_options)
         operation = compile_aggregate_operation(
             DocumentCodec.to_internal(options["pipeline"]),
             collection=self._collection_name,

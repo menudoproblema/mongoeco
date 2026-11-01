@@ -1,0 +1,5 @@
+import json,os,subprocess,sys
+from pathlib import Path
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());site=json.loads((root/'wheel.json').read_text())['site_packages'];env=dict(os.environ,MYPYPATH=site,PYTHONPATH=site,MONGOECO_TEST_INSTALLED_ARTIFACT='1')
+with Path('/tmp/mongoeco-bson-input-typing.txt').open('w') as f:r=subprocess.run([sys.executable,'scripts/check_public_typing.py'],env=env,stdout=f,stderr=subprocess.STDOUT)
+raise SystemExit(r.returncode)

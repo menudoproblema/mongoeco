@@ -1433,6 +1433,16 @@ class AsyncAggregationCursor:
                     **options,
                 )
         if isinstance(cursor, AsyncCursor):
+            # This fallback obtained a public cursor, but its source is still
+            # an already-prepared internal operation. Retain that artifact and
+            # frame instead of encoding lexical system bindings as client let.
+            if operation.context is None and self._operation_context is not None:
+                operation = operation.bind(self._operation_context)
+            cursor._operation_cache = operation
+            cursor._plan = operation.plan
+            cursor._operation_context = operation.context
+            cursor._let = operation.let
+            cursor._execution_variables = self._execution_variables()
             # The enclosing aggregate response owns codecs and diagnostics,
             # including cursors returned by either legacy builder fallback.
             cursor._apply_codec_options = False

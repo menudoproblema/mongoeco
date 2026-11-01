@@ -4,6 +4,7 @@ import time
 from collections import deque
 from collections.abc import AsyncIterable, Mapping
 from dataclasses import replace
+from copy import deepcopy
 from typing import TYPE_CHECKING, cast
 
 from mongoeco.api._async._response import ResponseBatchReader
@@ -15,6 +16,7 @@ from mongoeco.api.argument_validation import (
     validate_max_time_ms as _validate_max_time_ms,
 )
 from mongoeco.api.operations import FindOperation
+from mongoeco.api.bson_input import encode_operation_bson
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
@@ -317,8 +319,8 @@ class AsyncCursor:
         self,
         collection,
         filter_spec: Filter,
-        plan: QueryNode,
-        projection: Projection | None,
+        plan: QueryNode | None,
+        projection: Projection | Mapping[str, object] | None,
         *,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
@@ -348,7 +350,7 @@ class AsyncCursor:
         self._batch_size = batch_size
         self._let = let
         self._execution_variables = execution_variables
-        if operation_context is None:
+        if operation_context is None and plan is not None:
             context_factory = getattr(collection, "_new_operation_context", None)
             if callable(context_factory):
                 operation_context = context_factory(
@@ -819,6 +821,10 @@ class AsyncCursor:
         self._started = False
         self._exhausted = False
         self._semantics_cache = None
+        if self._plan is None:
+            self._operation_cache = None
+            self._operation_context = None
+            self._execution_variables = None
         if (
             isinstance(self._let, ExpressionExecutionContext)
             and self._let.command_let is not None
@@ -838,6 +844,8 @@ class AsyncCursor:
         return self
 
     def _fresh_operation_context(self):
+        if self._plan is None:
+            return None
         create_context = getattr(self._collection, "_new_operation_context", None)
         if not callable(create_context):
             return None
@@ -879,18 +887,20 @@ class AsyncCursor:
         )
         return type(self)(
             self._collection,
-            self._filter_spec,
+            deepcopy(self._filter_spec) if self._plan is None else self._filter_spec,
             self._plan,
-            self._projection,
-            collation=self._collation,
-            sort=self._sort,
+            deepcopy(self._projection) if self._plan is None else self._projection,
+            collation=(
+                deepcopy(self._collation) if self._plan is None else self._collation
+            ),
+            sort=deepcopy(self._sort) if self._plan is None else self._sort,
             skip=self._skip,
             limit=self._limit,
-            hint=self._hint,
-            comment=self._comment,
+            hint=deepcopy(self._hint) if self._plan is None else self._hint,
+            comment=deepcopy(self._comment) if self._plan is None else self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
-            let=self._let,
+            let=deepcopy(self._let) if self._plan is None else self._let,
             execution_variables=execution_variables,
             operation_context=operation_context,
             session=self._session,
@@ -901,26 +911,54 @@ class AsyncCursor:
         if self._operation_cache is None:
             from mongoeco.api.operations import compile_find_operation
 
-            self._operation_cache = compile_find_operation(
-                self._filter_spec,
-                projection=self._projection,
-                collation=self._collation,
-                sort=self._sort,
-                skip=self._skip,
-                limit=self._limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                batch_size=self._batch_size,
-                variables=self._let,
+            options = {
+                "filter_spec": self._filter_spec, "projection": self._projection,
+                "collation": self._collation, "sort": self._sort,
+                "skip": self._skip, "limit": self._limit, "hint": self._hint,
+                "comment": self._comment, "max_time_ms": self._max_time_ms,
+                "batch_size": self._batch_size, "let": self._let,
+            }
+            if self._plan is None:
+                options = encode_operation_bson(
+                    options, codec_options=self._collection._codec_options
+                )
+            context = self._operation_context
+            if context is None:
+                context_factory = getattr(
+                    self._collection, "_new_operation_context", None
+                )
+                arguments = {
+                    "session": self._session,
+                    "collation": options["collation"],
+                    "bindings": options["let"],
+                }
+                context = (
+                    context_factory(**arguments) if callable(context_factory)
+                    else OperationContext.create(
+                        dialect=self._current_dialect(), **arguments
+                    )
+                )
+            operation = compile_find_operation(
+                options["filter_spec"],
+                projection=options["projection"], collation=options["collation"],
+                sort=options["sort"], skip=options["skip"], limit=options["limit"],
+                hint=options["hint"], comment=options["comment"],
+                max_time_ms=options["max_time_ms"], batch_size=options["batch_size"],
+                variables=(
+                    context.expressions if self._plan is None else options["let"]
+                ),
                 dialect=self._current_dialect(),
                 planning_mode=_resolve_planning_mode(self._collection),
                 plan=self._plan,
             )
-            if self._operation_context is not None:
-                self._operation_cache = self._operation_cache.bind(
-                    self._operation_context,
-                )
+            operation = operation.bind(context)
+            # Publish the cached artifact only after the complete request and
+            # frame have succeeded. A failed context must not leave a usable
+            # but unbound operation behind.
+            self._operation_context = context
+            if self._execution_variables is None:
+                self._execution_variables = context.expressions
+            self._operation_cache = operation
         return self._operation_cache
 
     @property
@@ -935,6 +973,17 @@ class AsyncCursor:
         return self._collection
 
     async def explain(self) -> dict[str, object]:
+        if self._plan is not None:
+            return await self._explain_operation()
+        # Like the SDK, explain owns a separate request. Do not freeze the
+        # original cursor's live filter/let or capture its execution frame.
+        explained = self.clone()
+        try:
+            return await explained._explain_operation()
+        finally:
+            await explained.close()
+
+    async def _explain_operation(self) -> dict[str, object]:
         operation = self._as_operation()
         if operation.planning_issues:
             explanation = QueryPlanExplanation(

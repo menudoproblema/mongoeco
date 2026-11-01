@@ -37,6 +37,7 @@ def compile_regex(pattern: str, options: str) -> re.Pattern[str]:
         "m": re.MULTILINE,
         "s": re.DOTALL,
         "x": re.VERBOSE,
+        "u": re.UNICODE,
     }
     seen: set[str] = set()
     for option in options:

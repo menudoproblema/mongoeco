@@ -1,0 +1,17 @@
+{
+  "src/mongoeco/api/bson_input.py": "54c9806c351af1b05deb6f712b24129d729e2ee5645d2fbf4874258c9b988e10",
+  "tests/differential/semantic_bson_request_cases.py": "23fa7ba7ddf311c5a257fa449c5c98078e5ed92f60fb16abe40390cdf16052bb",
+  "tests/fixtures/semantic_bson_request_7_0.json": "635aa61a660466b4c6d20e09fa90b0281d951172860b0d7d885c5b8972d8a3da",
+  "tests/fixtures/semantic_bson_request_8_0.json": "f066200939837180ee32bbb4501368eaf2f75d27c9488cd17a06d4a963461a4e",
+  "tests/fixtures/semantic_bson_request_9_0.json": "f162726411dba4f5d889d5c7e5e5ee13ec944c5570a4f75c33325582a7076614",
+  "tests/unit/api/test_bson_input.py": "c205ccb640adb0a8c24184045ad89d1163e982a496cf545c46bcd80d2ac27b9e",
+  "tests/unit/core/test_search_bson_parameters.py": "86abfa116ed80db31c29d4302c513c52ce1119094de36d2b19d8ccc64e1a13b1",
+  "src/mongoeco/api/_async/_collection_reads.py": "5c31f1171ff100293826b40499d4b08298ef16c8bca100300988d2c378e799a5",
+  "src/mongoeco/api/_async/aggregation_cursor.py": "5b10d02bf9569d0d57a18ae5058039d4439e5739e54d791830ef86214cb506cb",
+  "src/mongoeco/api/_async/collection.py": "ca68fca0f8ab99a95316981ba19c51f05c8e44782fa122b80a6c112353b4a237",
+  "src/mongoeco/api/_async/cursor.py": "260f9b9ca81da161bb2c197bab6f15fd52164a615a04c026c1d924c0bb672dfa",
+  "src/mongoeco/api/argument_validation.py": "04d4acc73255a1fdd8f231bac43dc8267b33ef21a796e82d3d9bc2fb78723ba7",
+  "src/mongoeco/core/_filtering_support.py": "d9426c8f2b82c4b35ab0bd483a8569b9e286f2f748536c1fe52e4c35604afabe",
+  "src/mongoeco/core/search.py": "cae9e97a682610048fb0bc14c959180a4057fa96944d0a841439cbd910dcd1f7",
+  "tests/differential/semantic_corpora.py": "18219e419c92d9acd226cfe2bfc239cdaac5f970fe98a539753df38c09d592ec"
+}

@@ -1,0 +1,3218 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_request_find_one_id": {
+      "none": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "5f6964"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "0"
+                }
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "76"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "int": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "5f6964"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "76"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "2"
+                }
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "long": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "5f6964"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "76"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "2"
+                }
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "double": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "5f6964"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "76"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "2"
+                }
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "decimal": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "5f6964"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "76"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "2"
+                }
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "bool": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "string": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "array": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "dbref": {
+        "ok": true,
+        "result": {
+          "type": "NoneType",
+          "value": null
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "raw-decimal": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "object": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "overflow": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "OverflowError",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "mapping": {
+        "ok": true,
+        "result": {
+          "type": "document",
+          "fields": [
+            [
+              {
+                "type": "str",
+                "utf8": "5f6964"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            [
+              {
+                "type": "str",
+                "utf8": "76"
+              },
+              {
+                "type": "int",
+                "value": {
+                  "$numberInt": "2"
+                }
+              }
+            ]
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "semantic_request_reference_lifetime": {
+      "projection": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "let": {
+        "ok": false,
+        "phase": "consume",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "comment": {
+        "ok": false,
+        "phase": "consume",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "clone": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "rewind": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "explain_reference": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "semantic_request_scalar_edges": {
+      "regex/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "regex/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "compiled-regex/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "compiled-regex/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "byte-regex/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "byte-regex/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "invalid-utf8-regex/find": {
+        "ok": false,
+        "phase": "consume",
+        "exception": "InvalidStringData",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "invalid-utf8-regex/aggregate": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidStringData",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "nul-regex/find": {
+        "ok": false,
+        "phase": "consume",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "nul-regex/aggregate": {
+        "ok": false,
+        "phase": "invoke",
+        "exception": "InvalidDocument",
+        "code": null,
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "short-legacy-uuid/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "short-legacy-uuid/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "short-standard-uuid/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "short-standard-uuid/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "short-md5/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "short-md5/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "int64/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "int64/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "snan/find": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "snan/aggregate": {
+        "ok": true,
+        "result": {
+          "type": "list",
+          "items": []
+        },
+        "state": {
+          "type": "list",
+          "items": [
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "0"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "document",
+              "fields": [
+                [
+                  {
+                    "type": "str",
+                    "utf8": "5f6964"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    "type": "str",
+                    "utf8": "76"
+                  },
+                  {
+                    "type": "int",
+                    "value": {
+                      "$numberInt": "2"
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_bson_request_cases.py",
+    "sha256": "23fa7ba7ddf311c5a257fa449c5c98078e5ed92f60fb16abe40390cdf16052bb"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_request_reference_lifetime",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "semantic_request_reference_lifetime"
+    },
+    {
+      "name": "semantic_request_scalar_edges",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "semantic_request_scalar_edges"
+    },
+    {
+      "name": "semantic_request_find_one_id",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          },
+          "v": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "v": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "semantic_request_find_one_id"
+    }
+  ]
+}

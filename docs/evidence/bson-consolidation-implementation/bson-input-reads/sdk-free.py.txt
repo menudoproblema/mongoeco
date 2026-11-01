@@ -1,0 +1,55 @@
+import importlib.util,json,sys,tempfile,re
+from pathlib import Path
+from decimal import Decimal
+from datetime import datetime,date,timezone
+from uuid import UUID
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());info=json.loads((root/'wheel.json').read_text());site=Path(info['site_packages']);sys.path[:0]=[str(site),'/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-raw-wheel-vu7alvd0/sdk-free-deps'];assert importlib.util.find_spec('bson') is None
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import CodecOptions,Decimal128,Binary,DBRef,Regex,UuidRepresentation
+from mongoeco.api.bson_input import encode_bson_request
+from mongoeco.core.bson_values import binary_parts
+reference=json.loads(Path('/tmp/mongoeco-bson-input-sdk-free-expected.json').read_text());uid=UUID('00112233-4455-6677-8899-aabbccddeeff')
+values={'raw-decimal':lambda:Decimal('1.25'),'object':object,'set':lambda:{1,2},'frozenset':lambda:frozenset({1}),'nested-object':lambda:{'x':[object()]},'nested-decimal':lambda:[1,{'x':Decimal('1.25')}],'nul-key':lambda:{'bad\0key':1},'integer-key':lambda:{1:'bad'},'overflow-int':lambda:1<<70,'bytearray':lambda:bytearray(b'ab'),'date':lambda:date(2026,11,1),'surrogate':lambda:'\ud800','dbref-object':lambda:DBRef('c',object()),'uuid':lambda:uid,'decimal128':lambda:Decimal128('1.25'),'binary0':lambda:Binary(b'ab',0),'binary5':lambda:Binary(b'ab',5),'bytes':lambda:b'ab','datetime':lambda:datetime(1970,1,1,0,0,1,1000,tzinfo=timezone.utc),'tuple':lambda:(1,'a'),'document':lambda:{'x':[True,None,'a',1.5]}}
+checks=0
+for target in reference:
+ for factory in (MemoryEngine,SQLiteEngine):
+  with MongoClient(factory(),mongodb_dialect=target) as client:
+   c=client.test.rows.with_options(codec_options=CodecOptions(uuid_representation='unspecified'));c.insert_one({'_id':0,'v':1})
+   for label,make in values.items():
+    for route in ('find','find_one','count','distinct','aggregate'):
+     expected=reference[target][f'{label}/{route}'];value=make();phase='invoke'
+     try:
+      if route=='find':
+       cursor=c.find({'v':value});phase='consume';got=list(cursor)
+      elif route=='find_one':got=c.find_one({'v':value})
+      elif route=='count':got=c.count_documents({'v':value})
+      elif route=='distinct':got=c.distinct('v',{'v':value})
+      else:
+       cursor=c.aggregate([{'$match':{'v':value}}]);phase='consume';got=list(cursor)
+     except Exception as error:
+      assert not expected['ok'] and type(error).__name__==expected['exception'] and phase==expected['phase'],(target,label,route,type(error).__name__,phase,expected)
+     else:
+      assert expected['ok'],(target,label,route,got,expected)
+      native=expected['result']
+      expected_value=[] if native.get('type')=='list' else native.get('value')
+      if native.get('type')=='list':assert native['items']==[]
+      assert got==expected_value,(target,label,route,got,native)
+     checks+=1
+   c.find({'v':Decimal('1')}).close();checks+=1
+   edges={'regex':lambda:Regex('a'),'compiled-regex':lambda:re.compile('a'),'byte-regex':lambda:re.compile(b'a'),'invalid-utf8-regex':lambda:re.compile(b'\xff'),'nul-regex':lambda:Regex('a\0b'),'short-legacy-uuid':lambda:Binary(b'ab',3),'short-standard-uuid':lambda:Binary(b'ab',4),'short-md5':lambda:Binary(b'ab',5),'snan':lambda:Decimal128('-sNaN')}
+   for label,make in edges.items():
+    for route in ('find','aggregate'):
+     expected=reference[target]['edges'][f'{label}/{route}'];phase='invoke'
+     try:
+      value=make();cursor=c.find({'v':value}) if route=='find' else c.aggregate([{'$match':{'v':value}}]);phase='consume';got=list(cursor)
+     except Exception as error:
+      assert not expected['ok'] and type(error).__name__==expected['exception'] and phase==expected['phase'],(target,label,route,type(error).__name__,phase,expected)
+     else:
+      assert expected['ok'] and got==[],(target,label,route,got,expected)
+     checks+=1
+
+# Encoding representation comes from SDK BSON bytes, not emulator roundtrip.
+for mode,expected in json.loads(Path('/tmp/mongoeco-bson-input-sdk-free-uuid.json').read_text()).items():
+ actual=encode_bson_request({'v':uid},codec_options=CodecOptions(uuid_representation=mode))['v'];subtype,payload=binary_parts(actual);assert subtype==expected['subtype'] and payload.hex()==expected['hex'];checks+=1
+print(json.dumps({'python':sys.version,'sdk_available':False,'checks':checks,'site':str(site),'note':'explicit UNSPECIFIED subset; global default remains STANDARD until write admission cut'}))

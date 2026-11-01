@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import time
 
+from collections.abc import Mapping
+
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._response import ResponseBatchReader
 from mongoeco.api.operations import compile_find_operation
+from mongoeco.api.bson_input import encode_operation_bson
 from mongoeco.api.public_api import (
     COLLECTION_COUNT_DOCUMENTS_SPEC,
     COLLECTION_DISTINCT_SPEC,
@@ -57,6 +60,10 @@ async def find_one(
         extra_kwargs={"filter": filter, **(extra_kwargs or {})},
         profile=collection._pymongo_profile,
     )
+    query = options.get("filter_spec")
+    if query is not None and not isinstance(query, Mapping):
+        options["filter_spec"] = {"_id": query}
+    options = encode_operation_bson(options, codec_options=collection._codec_options)
     operation = compile_find_operation(
         collection._normalize_filter(options.get("filter_spec")),
         projection=collection._normalize_projection(options.get("projection")),
@@ -192,6 +199,7 @@ async def count_documents(
         extra_kwargs={"filter": filter, **(extra_kwargs or {})},
         profile=collection._pymongo_profile,
     )
+    options = encode_operation_bson(options, codec_options=collection._codec_options)
     operation = compile_find_operation(
         collection._normalize_filter(options["filter_spec"]),
         projection={"_id": 1},
@@ -289,6 +297,7 @@ async def distinct(
     )
     if not isinstance(options["key"], str):
         raise TypeError("key must be a string")
+    options = encode_operation_bson(options, codec_options=collection._codec_options)
     normalized_collation = normalize_collation(options.get("collation"))
     distinct_values: list[object] = []
     with track_active_operation(
@@ -300,14 +309,14 @@ async def distinct(
         comment=options.get("comment"),
         max_time_ms=options.get("max_time_ms"),
     ):
-        cursor = collection.find(
-            options.get("filter_spec"),
-            collation=options.get("collation"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
+        operation = compile_find_operation(
+            options.get("filter_spec"), collation=options.get("collation"),
+            hint=options.get("hint"), comment=options.get("comment"),
             max_time_ms=options.get("max_time_ms"),
-            session=options.get("session"),
+            dialect=collection._mongodb_dialect,
+            planning_mode=collection._planning_mode,
         )
+        cursor = collection._build_cursor(operation, session=options.get("session"))
         cursor._expression_error_operation = "distinct"
         # Compare stored values before response decoding can erase field order.
         cursor._apply_codec_options = False

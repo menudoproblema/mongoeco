@@ -1,0 +1,17 @@
+import json
+from pathlib import Path
+from bson import BSON
+from bson.codec_options import CodecOptions
+from bson.binary import UuidRepresentation
+from tests.differential._real_parity_base import _decode_capture
+from uuid import UUID
+result={}
+for target in ('7.0','8.0','9.0'):
+ r=_decode_capture(Path(f'tests/fixtures/semantic_bson_admission_{target.replace(".","_")}.json').read_text())['cases']['semantic_admission_reads']
+ result[target]={k:{'ok':v['ok'],'exception':v.get('exception'),'phase':v.get('phase'),'result':v.get('result')} for k,v in r.items()}
+ result[target]['edges']=_decode_capture(Path(f'tests/fixtures/semantic_bson_request_{target.replace(".","_")}.json').read_text())['cases']['semantic_request_scalar_edges']
+Path('/tmp/mongoeco-bson-input-sdk-free-expected.json').write_text(json.dumps(result))
+uid=UUID('00112233-4455-6677-8899-aabbccddeeff');modes={'standard':UuidRepresentation.STANDARD,'pythonLegacy':UuidRepresentation.PYTHON_LEGACY,'javaLegacy':UuidRepresentation.JAVA_LEGACY,'csharpLegacy':UuidRepresentation.CSHARP_LEGACY};rows={}
+for name,mode in modes.items():
+ raw=BSON.encode({'v':uid},codec_options=CodecOptions(uuid_representation=mode));rows[name]={'subtype':raw[11],'hex':raw[12:-1].hex()}
+Path('/tmp/mongoeco-bson-input-sdk-free-uuid.json').write_text(json.dumps(rows))

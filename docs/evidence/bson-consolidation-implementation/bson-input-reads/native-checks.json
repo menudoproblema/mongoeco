@@ -1,0 +1,26 @@
+[
+  {
+    "target": "7.0",
+    "file": "tests/fixtures/semantic_bson_request_7_0.json",
+    "sha256": "635aa61a660466b4c6d20e09fa90b0281d951172860b0d7d885c5b8972d8a3da",
+    "cases": 3,
+    "records": 39,
+    "native_check_identical": true
+  },
+  {
+    "target": "8.0",
+    "file": "tests/fixtures/semantic_bson_request_8_0.json",
+    "sha256": "f066200939837180ee32bbb4501368eaf2f75d27c9488cd17a06d4a963461a4e",
+    "cases": 3,
+    "records": 39,
+    "native_check_identical": true
+  },
+  {
+    "target": "9.0",
+    "file": "tests/fixtures/semantic_bson_request_9_0.json",
+    "sha256": "f162726411dba4f5d889d5c7e5e5ee13ec944c5570a4f75c33325582a7076614",
+    "cases": 3,
+    "records": 39,
+    "native_check_identical": true
+  }
+]
