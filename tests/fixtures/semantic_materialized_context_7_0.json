@@ -1,0 +1,2735 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "semantic_materialized_grammar_contexts": {
+      "False/all/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/all/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/match/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/window/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "False/project/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": []
+          }
+        ]
+      },
+      "True/all/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              },
+              {
+                "id": {
+                  "$numberInt": "4"
+                },
+                "v": {
+                  "$numberInt": "11"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              },
+              {
+                "id": {
+                  "$numberInt": "4"
+                },
+                "v": {
+                  "$numberInt": "11"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "v": {
+                  "$numberInt": "7"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "v": {
+                  "$numberInt": "7"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "5"
+                },
+                "v": {
+                  "$numberInt": "13"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "5"
+                },
+                "v": {
+                  "$numberInt": "13"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              },
+              {
+                "id": {
+                  "$numberInt": "4"
+                },
+                "v": {
+                  "$numberInt": "11"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/all/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              },
+              {
+                "id": {
+                  "$numberInt": "4"
+                },
+                "v": {
+                  "$numberInt": "11"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/match/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "v": {
+                  "$numberInt": "7"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "5"
+                },
+                "v": {
+                  "$numberInt": "13"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "5"
+                },
+                "v": {
+                  "$numberInt": "13"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/match/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "1"
+              },
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "1"
+                },
+                "v": {
+                  "$numberInt": "5"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/window/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/window/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/window/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/window/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "v": {
+                  "$numberInt": "7"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/window/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/window/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/window/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "5"
+                },
+                "v": {
+                  "$numberInt": "13"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/window/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/window/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/window/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/project/ordered/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/project/ordered/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/project/reversed/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/project/reversed/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "2"
+                },
+                "v": {
+                  "$numberInt": "7"
+                },
+                "stored": {
+                  "$code": "$v"
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/project/extras/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/project/extras/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "3"
+                },
+                "v": {
+                  "$numberInt": "9"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/project/wrong-ref/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": [
+              {
+                "id": {
+                  "$numberInt": "5"
+                },
+                "v": {
+                  "$numberInt": "13"
+                },
+                "stored": {
+                  "$code": "$$ghost",
+                  "$scope": {
+                    "z": {
+                      "$numberInt": "1"
+                    },
+                    "a": {
+                      "$numberInt": "2"
+                    }
+                  }
+                },
+                "literal": {
+                  "$code": "$$ghost",
+                  "$scope": {}
+                },
+                "echo": {
+                  "$code": "$cmd",
+                  "$scope": {}
+                },
+                "sameClock": true
+              }
+            ]
+          }
+        ]
+      },
+      "True/project/wrong-ref/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/project/sdk/simple": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      },
+      "True/project/sdk/en": {
+        "ok": true,
+        "rows": [
+          {
+            "ids": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ],
+            "rows": []
+          }
+        ]
+      }
+    },
+    "semantic_materialized_source_windows": {
+      "False/all/simple/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/all/simple/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/all/simple/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "False/all/en/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/all/en/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/all/en/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "False/match/simple/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/match/simple/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/match/simple/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "False/match/en/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/match/en/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/match/en/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "False/window/simple/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/window/simple/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/window/simple/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "False/window/en/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/window/en/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/window/en/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "False/project/simple/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/project/simple/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/project/simple/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "False/project/en/skip-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/project/en/limit-before": {
+        "ok": true,
+        "rows": []
+      },
+      "False/project/en/trailing": {
+        "ok": true,
+        "rows": []
+      },
+      "True/all/simple/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "v": {
+              "$numberInt": "11"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/all/simple/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "5"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/all/simple/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/all/en/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "v": {
+              "$numberInt": "11"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/all/en/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "5"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/all/en/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/match/simple/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/match/simple/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "5"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/match/simple/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/match/en/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/match/en/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "v": {
+              "$numberInt": "5"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/match/en/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/window/simple/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/window/simple/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/window/simple/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/window/en/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/window/en/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/window/en/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/project/simple/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/project/simple/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/project/simple/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "v": {
+              "$numberInt": "13"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/project/en/skip-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/project/en/limit-before": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "v": {
+              "$numberInt": "7"
+            },
+            "echo": "bound",
+            "sameClock": true
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      },
+      "True/project/en/trailing": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "v": {
+              "$numberInt": "9"
+            },
+            "echo": "bound",
+            "sameClock": true
+          }
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "tcmalloc",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.2 15 Mar 2022",
+        "compiled": "OpenSSL 3.0.2 15 Mar 2022"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2204",
+        "distarch": "aarch64",
+        "cc": "/opt/mongodbtoolchain/v4/bin/gcc: gcc (GCC) 11.3.0",
+        "ccflags": "-Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -gdwarf-5 -fno-omit-frame-pointer -fno-strict-aliasing -O2 -march=armv8.2-a -mtune=generic -Wno-unused-local-typedefs -Wno-unused-function -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-unused-but-set-variable -Wno-missing-braces -fstack-protector-strong -gdwarf64 -Wa,--nocompress-debug-sections -Wimplicit-fallthrough=5",
+        "cxx": "/opt/mongodbtoolchain/v4/bin/g++: g++ (GCC) 11.3.0",
+        "cxxflags": "-Woverloaded-virtual -Wpessimizing-move -Wno-maybe-uninitialized -fsized-deallocation -Wno-deprecated -std=c++20",
+        "linkflags": "-Wl,--fatal-warnings -B/opt/mongodbtoolchain/v4/bin -gdwarf-5 -pthread -Wl,-z,now -fuse-ld=lld -fstack-protector-strong -gdwarf64 -Wl,--build-id -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -Wl,--compress-debug-sections=none -Wl,-z,origin -Wl,--enable-new-dtags",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG _XOPEN_SOURCE 700 _GNU_SOURCE _FORTIFY_SOURCE 2 ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "isWritablePrimary": true,
+      "topologyVersion": {
+        "processId": {
+          "$oid": "6ae7286070c5a67004460d82"
+        },
+        "counter": {
+          "$numberLong": "0"
+        }
+      },
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "maxMessageSizeBytes": {
+        "$numberInt": "48000000"
+      },
+      "maxWriteBatchSize": {
+        "$numberInt": "100000"
+      },
+      "localTime": {
+        "$date": {
+          "$numberLong": "1793534048741"
+        }
+      },
+      "logicalSessionTimeoutMinutes": {
+        "$numberInt": "30"
+      },
+      "connectionId": {
+        "$numberInt": "8"
+      },
+      "minWireVersion": {
+        "$numberInt": "0"
+      },
+      "maxWireVersion": {
+        "$numberInt": "21"
+      },
+      "readOnly": false,
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    }
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_materialized_context_cases.py",
+    "sha256": "eeec7ebafa6c5e89ba75c2e7cb4ff6700b18604fc19a5299c49e27fbeeb9c82d",
+    "topology": "standalone"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_materialized_source_windows",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_materialized_source_windows"
+    },
+    {
+      "name": "semantic_materialized_grammar_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "initial"
+        }
+      ],
+      "selector": "semantic_materialized_grammar_contexts"
+    }
+  ]
+}

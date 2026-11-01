@@ -151,6 +151,10 @@ from tests.differential.semantic_find_projection_cases import (
     SEMANTIC_FIND_PROJECTION_CASES,
 )
 from tests.differential.semantic_group_cases import SEMANTIC_GROUP_CASES
+from tests.differential.semantic_materialized_context_cases import (
+    SEED as MATERIALIZED_CONTEXT_SEED,
+    SEMANTIC_MATERIALIZED_CONTEXT_CASES,
+)
 from tests.differential.semantic_merge_key_cases import (
     SEED as MERGE_KEY_SEED,
     SEMANTIC_MERGE_KEY_CASES,
@@ -314,6 +318,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "materialized_context": SemanticCorpus(
+        "materialized-context",
+        "semantic_materialized_context_cases",
+        MATERIALIZED_CONTEXT_SEED,
+        SEMANTIC_MATERIALIZED_CONTEXT_CASES,
+        requires_standalone=True,
+    ),
     "write_factory_event": SemanticCorpus(
         "write-factory-event",
         "semantic_write_factory_event_cases",
