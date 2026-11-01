@@ -4,8 +4,8 @@ from types import MappingProxyType
 from mongoeco.api._command_bson import (
     command_boolean,
     command_nonnegative,
+    command_number_long,
     command_type_error,
-    legacy_command_int64,
     legacy_command_truth_value,
     require_command_type,
     validate_command_array_filters,
@@ -217,14 +217,10 @@ def normalize_command_batch_size(
 ) -> int | None:
     if batch_size is None:
         return None
-    integer = legacy_command_int64(batch_size)
-    if integer is None:
-        field = field or (
-            "find.batchSize" if dialect == "9.0" else "FindCommandRequest.batchSize"
-        )
-        raise command_type_error(
-            batch_size, field, ("long", "int", "decimal", "double")
-        )
+    field = field or (
+        "find.batchSize" if dialect == "9.0" else "FindCommandRequest.batchSize"
+    )
+    integer = command_number_long(batch_size, field)
     return command_nonnegative(integer, "batchSize", dialect=dialect)
 
 

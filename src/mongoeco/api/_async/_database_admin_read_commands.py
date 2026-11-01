@@ -396,6 +396,8 @@ class DatabaseAdminReadCommandService:
             result["command"] = "find"
             result["batch_size"] = operation.batch_size
         elif explained_command_name == "aggregate":
+            if self._admin._mongodb_dialect.key == "9.0":
+                explain_spec.setdefault("cursor", {})
             collection_name, operation = self._admin._command_compiler.compile_aggregate_operation(
                 explain_spec
             )

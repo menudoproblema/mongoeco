@@ -233,36 +233,6 @@ def _make_flag_validator(command_name: str) -> _WireValidator:
     return _validator
 
 
-def _validate_wire_find_like_command(
-    command_name: str,
-    command_document: dict[str, Any],
-    *,
-    filter_field: str,
-    require_batch_size: bool = False,
-) -> None:
-    try:
-        if (
-            command_name == "find"
-            and filter_field in command_document
-            and command_document[filter_field] is None
-        ):
-            message = "filter_spec must be a dict"
-            raise TypeError(message)
-        normalize_filter_document(command_document.get(filter_field))
-    except TypeError as exc:
-        if command_name == "find":
-            message = f"wire find {exc}"
-            raise server_error(message, code=14, scope=ErrorScope.COMMAND) from exc
-        _raise_wire_shape_error(command_name, str(exc))
-    try:
-        normalize_command_hint(command_document.get("hint"))
-    except (TypeError, OperationFailure) as exc:
-        _raise_wire_shape_error(command_name, str(exc))
-    try:
-        normalize_command_max_time_ms(command_document.get("maxTimeMS"))
-    except (TypeError, ValueError, OperationFailure) as exc:
-        _raise_wire_shape_error(command_name, str(exc))
-
 
 def _validate_connection_status(
     _body: dict[str, Any], command_document: dict[str, Any]
@@ -312,7 +282,22 @@ def _validate_find(_body: dict[str, Any], command_document: dict[str, Any]) -> N
     _require_non_empty_string(
         "find", command_document.get("find"), "requires a non-empty collection name"
     )
-    _validate_wire_find_like_command("find", command_document, filter_field="filter")
+    try:
+        if "filter" in command_document and command_document["filter"] is None:
+            message = "filter_spec must be a dict"
+            raise TypeError(message)
+        normalize_filter_document(command_document.get("filter"))
+    except TypeError as exc:
+        message = f"wire find {exc}"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND) from exc
+    try:
+        normalize_command_hint(command_document.get("hint"))
+    except (TypeError, OperationFailure) as exc:
+        _raise_wire_shape_error("find", str(exc))
+    try:
+        normalize_command_max_time_ms(command_document.get("maxTimeMS"))
+    except (TypeError, ValueError, OperationFailure) as exc:
+        _raise_wire_shape_error("find", str(exc))
 
 
 def _validate_list_databases(

@@ -1461,6 +1461,1123 @@
           "$numberDouble": "1.0"
         }
       },
+      "absent/find-skip-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.skip' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.skip' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-skip-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.limit' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.limit' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-limit-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.skip' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.skip' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-skip-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: 1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-negative-fraction": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: -0.5",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: -1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-nan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer, but found NaN in: limit: nan.0",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: inf.0",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: -inf.0",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-overflow": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 9.223372036854776e+18",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-decimal": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-decimal-nan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: NaN",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-decimal-snan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: NaN",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-decimal-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: Infinity",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: -Infinity",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-decimal-overflow": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 1E+100",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value for count cannot be min long",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-limit-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/aggregate-cursor-required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "The 'cursor' option is required, except for aggregate with the explain argument",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/explain-aggregate-no-cursor": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "The 'cursor' option is required, except for aggregate with the explain argument",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
       "empty/0": {
         "ok": false,
         "family": "OperationFailure",
@@ -3076,6 +4193,1279 @@
       },
       "empty/cursor-batch-decimal-overflow": {
         "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.skip' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.skip' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-skip-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.limit' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.limit' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-limit-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.skip' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.skip' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-skip-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: 1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-negative-fraction": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: -0.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: -1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-nan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer, but found NaN in: limit: nan.0",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: inf.0",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: -inf.0",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-overflow": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 9.223372036854776e+18",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-decimal": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-decimal-nan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: NaN",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-decimal-snan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: NaN",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-decimal-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: Infinity",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: -Infinity",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-decimal-overflow": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 1E+100",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value for count cannot be min long",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-limit-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/aggregate-cursor-required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "The 'cursor' option is required, except for aggregate with the explain argument",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/explain-aggregate-no-cursor": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "The 'cursor' option is required, except for aggregate with the explain argument",
+        "phase": "invoke",
         "state": {
           "exists": true,
           "rows": [],
@@ -5593,6 +7983,1981 @@
         "recovery": {
           "$numberDouble": "1.0"
         }
+      },
+      "populated/find-skip-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.skip' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.skip' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-skip-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.limit' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'FindCommandRequest.limit' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'limit' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-limit-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.skip' is the wrong type 'string', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.skip' is the wrong type 'bool', expected types '[decimal, double, int, long]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-negative-fraction": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-decimal-nan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-decimal-snan": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-decimal-infinity": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-decimal-overflow": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "51024"
+        },
+        "code_name": "Location51024",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-9223372036854775808'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-skip-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-string": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: 1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-negative-fraction": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: -0.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-negative-double": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer: limit: -1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-nan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Expected an integer, but found NaN in: limit: nan.0",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: inf.0",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: -inf.0",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-overflow": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 9.223372036854776e+18",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-decimal": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 1.5",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-decimal-nan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: NaN",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-decimal-snan": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: NaN",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-decimal-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: Infinity",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-decimal-negative-infinity": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: -Infinity",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-decimal-overflow": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Cannot represent as a 64-bit integer: limit: 1E+100",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value is not a valid number",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-min-long": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "limit value for count cannot be min long",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-integral-double": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-limit-integral-decimal": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/aggregate-cursor-required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "The 'cursor' option is required, except for aggregate with the explain argument",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/explain-aggregate-no-cursor": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "The 'cursor' option is required, except for aggregate with the explain argument",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
       }
     }
   },
@@ -5658,7 +10023,7 @@
       "isWritablePrimary": true,
       "topologyVersion": {
         "processId": {
-          "$oid": "6ae7577faecc1f0224d27396"
+          "$oid": "6ae761048746f912089a12eb"
         },
         "counter": {
           "$numberLong": "0"
@@ -5675,14 +10040,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793546428771"
+          "$numberLong": "1793549124730"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "12"
+        "$numberInt": "8"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -5698,7 +10063,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_command_shape_cases.py",
-    "sha256": "bc85155f540f2c36d48767ee1da081ec78f59bd059672a622753e4eaeec2096b",
+    "sha256": "12c7662f71f1908af55e2b8fda9c9aac8a5379657fe00910222dda6287da9777",
     "topology": "standalone"
   },
   "case_manifests": [

@@ -3,7 +3,10 @@
 from mongoeco.core.bson_scalars import (
     INT64_MAX,
     INT64_MIN,
+    _is_nan_numeric_value,
     bson_numeric_alias,
+    compare_bson_numeric,
+    truncate_bson_int64,
     wrap_bson_numeric,
 )
 from mongoeco.core.bson_values import matches_bson_type
@@ -139,6 +142,38 @@ def legacy_command_int64(value):
     except OverflowError:
         integer = INT64_MAX if numeric.value > 0 else INT64_MIN
     return max(INT64_MIN, min(INT64_MAX, integer))
+
+
+def command_number_long(value, field):
+    integer = legacy_command_int64(value)
+    if integer is None:
+        raise command_type_error(value, field, ("long", "int", "decimal", "double"))
+    return integer
+
+
+def command_count_limit(value, *, dialect):
+    numeric = wrap_bson_numeric(value)
+    if numeric is None:
+        message = "limit value is not a valid number"
+        raise server_error(message, code=2, scope=ErrorScope.COMMAND)
+    integer = truncate_bson_int64(value)
+    if integer is None or compare_bson_numeric(value, integer) != 0:
+        is_decimal = bson_numeric_alias(value) == "decimal"
+        is_nan = _is_nan_numeric_value(numeric.value)
+        display = "NaN" if is_decimal and is_nan else str(numeric.value)
+        if not is_decimal and dialect != "9.0" and display in {"nan", "inf", "-inf"}:
+            display += ".0"
+        if not is_decimal and is_nan:
+            message = f"Expected an integer, but found NaN in: limit: {display}"
+        elif is_decimal or integer is None:
+            message = f"Cannot represent as a 64-bit integer: limit: {display}"
+        else:
+            message = f"Expected an integer: limit: {display}"
+        raise server_error(message, code=9, scope=ErrorScope.COMMAND)
+    if integer == INT64_MIN:
+        message = "limit value for count cannot be min long"
+        raise server_error(message, code=2, scope=ErrorScope.COMMAND)
+    return abs(integer)
 
 
 def command_boolean(value, field, *, numeric=False):

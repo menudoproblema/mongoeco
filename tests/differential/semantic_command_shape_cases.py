@@ -156,6 +156,28 @@ CONTROLS += [
 ]
 
 
+_BOUND_TYPES = (
+    *_BATCH_TYPES,
+    ("null", None),
+    ("min-long", -(2**63)),
+    ("integral-double", 1.0),
+    ("integral-decimal", Decimal128("1.0")),
+)
+CONTROLS += [
+    (f"{command}-{field}-{label}", {command: "events", field: value})
+    for command in ("find", "count")
+    for field in ("skip", "limit")
+    for label, value in _BOUND_TYPES
+]
+CONTROLS += [
+    ("aggregate-cursor-required", {"aggregate": "events", "pipeline": []}),
+    (
+        "explain-aggregate-no-cursor",
+        {"explain": {"aggregate": "events", "pipeline": []}},
+    ),
+]
+
+
 def command_shape_contract(collection):
     database = collection.database
     events = database.get_collection("events")
@@ -189,7 +211,13 @@ def command_shape_contract(collection):
                 # Retain every expected type; only repair the bracket/quote order.
                 if "dropIndexes.index" in message and message.endswith("']"):
                     message = message[:-2] + "]'"
-                if ".batchSize'" in message and "expected types '[" in message:
+                if (
+                    any(
+                        f".{field}'" in message
+                        for field in ("batchSize", "skip", "limit")
+                    )
+                    and "expected types '[" in message
+                ):
                     prefix, aliases = message.rsplit("expected types '[", 1)
                     # IDL type-set order changes with native hash-table seeds.
                     # Retain all aliases, including their multiplicities.

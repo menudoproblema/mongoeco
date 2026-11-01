@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from mongoeco.api._command_bson import (
+    command_count_limit,
     command_nonnegative,
-    command_type_error,
+    command_number_long,
     command_type_name,
     require_command_type,
 )
@@ -83,10 +84,6 @@ class DatabaseAdminCommandCompiler:
     def normalize_projection(projection: object | None) -> dict[str, object] | None:
         return normalize_command_projection(projection)
 
-    @staticmethod
-    def normalize_batch_size(batch_size: object | None) -> int | None:
-        return normalize_command_batch_size(batch_size)
-
     def compile_find_operation(
         self,
         spec: dict[str, object],
@@ -126,28 +123,29 @@ class DatabaseAdminCommandCompiler:
             dialect=dialect,
             present=sort_field in spec,
         )
+        request = (
+            "FindCommandRequest"
+            if collection_field == "find" and dialect != "9.0"
+            else collection_field
+        )
         skip = spec.get(skip_field, 0)
         if skip is None:
             skip = 0
-        if not isinstance(skip, int) or isinstance(skip, bool):
-            raise command_type_error(skip, f"{collection_field}.{skip_field}", "long")
+        skip = command_number_long(skip, f"{request}.{skip_field}")
         command_nonnegative(skip, skip_field, dialect=dialect)
         limit = spec.get(limit_field, default_limit)
-        if limit is not None:
-            if not isinstance(limit, int) or isinstance(limit, bool):
-                raise command_type_error(
-                    limit, f"{collection_field}.{limit_field}", "long"
-                )
-            if collection_field == "count":
-                limit = abs(limit)
-            else:
-                command_nonnegative(limit, limit_field, dialect=dialect)
+        if collection_field == "count" and limit_field in spec:
+            limit = command_count_limit(limit, dialect=dialect)
+        elif limit is not None:
+            limit = command_number_long(limit, f"{request}.{limit_field}")
+            command_nonnegative(limit, limit_field, dialect=dialect)
         batch_size = (
             None
             if batch_size_field is None
             else normalize_command_batch_size(
                 spec.get(batch_size_field),
                 dialect=dialect,
+                field=f"{request}.{batch_size_field}",
             )
         )
 
