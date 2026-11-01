@@ -62,7 +62,7 @@ class DatabaseNamespaceAdminServiceTests(unittest.TestCase):
         self.assertFalse(documents[0]["empty"])
 
         with self.assertRaisesRegex(
-            OperationFailure, "Namespace db1.missing not found"
+            OperationFailure, "Collection .db1.missing. does not exist to validate"
         ) as caught:
             asyncio.run(
                 primary._admin._namespace_admin.build_collection_validation_snapshot(

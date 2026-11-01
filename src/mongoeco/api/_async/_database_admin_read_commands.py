@@ -373,7 +373,10 @@ class DatabaseAdminReadCommandService:
         if verbosity is not None:
             require_command_type(verbosity, "explain.verbosity", "string")
 
-        explained_command_name = next(iter(explain_spec))
+        explained_command_name = next(iter(explain_spec), None)
+        if explained_command_name is None:
+            message = "Explain failed due to unknown command: "
+            raise server_error(message, code=59, scope=ErrorScope.COMMAND)
         if "maxTimeMS" in spec:
             normalize_command_max_time_ms(spec["maxTimeMS"])
         explain_spec = dict(explain_spec)

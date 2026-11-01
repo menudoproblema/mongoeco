@@ -1430,7 +1430,11 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 collection = client.alpha.get_collection("events")
 
                 empty_collections = await client.alpha.command({"listCollections": 1})
-                empty_indexes = await client.alpha.command({"listIndexes": "events"})
+                with self.assertRaises(OperationFailure) as missing_indexes:
+                    await client.alpha.command({"listIndexes": "events"})
+                self.assertEqual(missing_indexes.exception.code, 26)
+                empty_indexes = {"code": missing_indexes.exception.code}
+                self.assertEqual(await client.alpha.list_collection_names(), [])
 
                 await collection.insert_one({"_id": "1", "kind": "view"})
                 await collection.create_index([("kind", 1)], name="kind_idx")

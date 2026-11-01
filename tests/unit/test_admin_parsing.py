@@ -176,7 +176,7 @@ class AdminParsingTests(unittest.TestCase):
             normalize_namespace("users", "ns")
         with self.assertRaises(TypeError):
             normalize_namespace("db.", "ns")
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             normalize_insert_documents([])
         with self.assertRaises(TypeError):
             normalize_update_specs([1])
@@ -237,19 +237,19 @@ class AdminParsingTests(unittest.TestCase):
         self.assertTrue(options.return_new)
         self.assertTrue(options.upsert)
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             normalize_command_sort_document([])
         with self.assertRaises(TypeError):
             normalize_command_hint(True)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             normalize_command_projection([])
         self.assertEqual(normalize_command_batch_size(0), 0)
         with self.assertRaises(OperationFailure) as error:
             normalize_command_ordered("yes")
         self.assertEqual(error.exception.code, 14)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             normalize_command_bool("yes", "flag")
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             normalize_command_scale(0)
         with self.assertRaises(TypeError):
             normalize_command_max_time_ms("slow")

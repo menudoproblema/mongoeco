@@ -453,8 +453,10 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
         self.assertIsInstance(delegated, service.DelegatedAdminCommand)
         self.assertFalse(delegated.route.passes_spec)
 
-        with self.assertRaisesRegex(TypeError, "showPrivileges must be a bool"):
-            service.parse_raw_command({"connectionStatus": 1, "showPrivileges": "yes"})
+        privileges = service.parse_raw_command(
+            {"connectionStatus": 1, "showPrivileges": "yes"}
+        )
+        self.assertTrue(privileges.show_privileges)
         with self.assertRaisesRegex(TypeError, "profile level must be an integer"):
             service.parse_raw_command({"profile": "bad"})
         with self.assertRaisesRegex(TypeError, "dbHash command value must be 1"):

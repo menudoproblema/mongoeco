@@ -317,12 +317,12 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
     def test_compile_command_helpers_validate_find_and_aggregate_shapes(self):
         service = AsyncDatabase(MemoryEngine(), "db")._admin
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             service._compile_command_find_operation(
                 {"find": "users", "skip": -1},
                 collection_field="find",
             )
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             service._compile_command_find_operation(
                 {"find": "users", "limit": -1},
                 collection_field="find",
@@ -331,7 +331,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
             service._compile_command_aggregate_operation(
                 {"aggregate": "users", "pipeline": {}},
             )
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             service._compile_command_aggregate_operation(
                 {"aggregate": "users", "pipeline": [], "cursor": []},
             )
@@ -848,12 +848,11 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 await service._read_commands.command_db_hash({"dbHash": 1, "collections": ["", "users"]})
             with self.assertRaisesRegex(TypeError, "comment must be a string"):
                 await service._read_commands.command_db_hash({"dbHash": 1, "comment": 1})
-            indexes = await service._read_commands.command_list_indexes(
-                {"listIndexes": "events", "comment": 1}
-            )
-            self.assertEqual(
-                [entry["name"] for entry in indexes.first_batch], ["_id_"]
-            )
+            with self.assertRaises(OperationFailure) as missing:
+                await service._read_commands.command_list_indexes(
+                    {"listIndexes": "events", "comment": 1}
+                )
+            self.assertEqual(missing.exception.code, 26)
 
         asyncio.run(_run())
 
@@ -922,10 +921,12 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         async def _run():
             with patch.object(database, "get_collection", return_value=fake_collection):
                 with self.assertRaisesRegex(
-                    TypeError, "explain must be a non-empty document"
+                    OperationFailure, "explain.explain.*wrong type"
                 ):
                     await service._command_explain({"explain": []})
-                with self.assertRaisesRegex(TypeError, "verbosity must be a string"):
+                with self.assertRaisesRegex(
+                    OperationFailure, "explain.verbosity.*wrong type"
+                ):
                     await service._command_explain(
                         {"explain": {"find": "users"}, "verbosity": 1}
                     )
@@ -1148,7 +1149,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                     self.assertIn("non-_id indexes", drop_all.message)
                     self.assertEqual(fake_collection.drop_indexes_calls, [])
                     with self.assertRaisesRegex(
-                        TypeError, "index must be '\\*', a name, or a key specification"
+                        OperationFailure, "dropIndexes.index.*wrong type"
                     ):
                         await service._command_drop_indexes(
                             {"dropIndexes": "users", "index": 1.5}

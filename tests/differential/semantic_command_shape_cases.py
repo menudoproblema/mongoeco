@@ -111,6 +111,7 @@ CONTROLS = [
     ),
     ("let-null", {"aggregate": "events", "pipeline": [], "cursor": {}, "let": None}),
     ("explain-null", {"explain": None}),
+    ("explain-empty", {"explain": {}}),
     ("verbosity-null", {"explain": {"find": "events"}, "verbosity": None}),
     ("insert-null", {"insert": "events", "documents": None}),
     ("update-null", {"update": "events", "updates": None}),

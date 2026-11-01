@@ -13,6 +13,11 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
+from tests.integration.api.admin_command_cases import (
+    RAW_COMMAND_SHAPES,
+    _COMMAND_SHAPE_REFERENCE,
+)
+
 
 @unittest.skipIf(PyMongoClient is None, "pymongo is required for wire proxy tests")
 class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
@@ -746,49 +751,59 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     directConnection=True,
                 )
                 try:
-                    with self.assertRaisesRegex(Exception, "wire distinct requires a non-empty key string"):
-                        client.alpha.command({"distinct": "events", "key": ""})
-                    with self.assertRaisesRegex(Exception, "Namespace alpha.events not found") as absent:
-                        client.alpha.command({"validate": "events", "comment": 1})
-                    self.assertEqual(absent.exception.code, 26)
-                    with self.assertRaisesRegex(Exception, "wire explain verbosity must be a string"):
-                        client.alpha.command({"explain": {"find": "events"}, "verbosity": 1})
-                    with self.assertRaisesRegex(Exception, "wire count skip must be a non-negative integer"):
-                        client.alpha.command({"count": "events", "skip": -1})
-                    with self.assertRaisesRegex(Exception, "wire count filter_spec must be a dict"):
-                        client.alpha.command({"count": "events", "query": 1})
-                    with self.assertRaisesRegex(Exception, "wire find projection must be a dict"):
-                        client.alpha.command({"find": "events", "projection": 1})
-                    with self.assertRaisesRegex(Exception, "wire aggregate allowDiskUse must be a bool"):
-                        client.alpha.command({"aggregate": "events", "pipeline": [], "allowDiskUse": 1})
+                    for index, spec in enumerate(RAW_COMMAND_SHAPES):
+                        with self.subTest(command=index):
+                            expected = _COMMAND_SHAPE_REFERENCE[f"absent/{index}"]
+                            if expected["ok"]:
+                                self.assertEqual(client.alpha.command(spec)["ok"], 1.0)
+                            else:
+                                with self.assertRaises(
+                                    PyMongoOperationFailure
+                                ) as caught:
+                                    client.alpha.command(spec)
+                                self.assertEqual(
+                                    caught.exception.code, expected["code"]
+                                )
+                                self.assertEqual(
+                                    caught.exception.details["codeName"],
+                                    expected["code_name"],
+                                )
+                                self.assertEqual(
+                                    caught.exception.details["errmsg"].replace(
+                                        "alpha.events", "<db>.events"
+                                    ),
+                                    expected["message"],
+                                )
+                            self.assertEqual(client.alpha.command("ping")["ok"], 1.0)
                     listed = client.alpha.command({"listCollections": 1, "comment": 1})
                     self.assertEqual(listed["ok"], 1.0)
-                    with self.assertRaisesRegex(Exception, "wire createIndexes each index specification must be a dict"):
-                        client.alpha.command({"createIndexes": "events", "indexes": [1]})
-                    with self.assertRaisesRegex(Exception, "wire dropIndexes index must be '\\*', a name, or a key specification"):
-                        client.alpha.command({"dropIndexes": "events", "index": 1.5})
-                    with self.assertRaisesRegex(Exception, "let must be a document"):
+                    with self.assertRaisesRegex(
+                        Exception,
+                        "wire createIndexes each index specification must be a dict",
+                    ):
                         client.alpha.command(
-                            {
-                                "findAndModify": "events",
-                                "query": {},
-                                "update": {"$set": {"done": True}},
-                                "let": 1,
-                            }
+                            {"createIndexes": "events", "indexes": [1]}
                         )
-                    with self.assertRaisesRegex(Exception, "wire connectionStatus showPrivileges must be a bool"):
-                        client.alpha.command({"connectionStatus": 1, "showPrivileges": 1})
-                    with self.assertRaisesRegex(Exception, "wire dbStats scale must be a positive integer"):
-                        client.alpha.command({"dbStats": 1, "scale": 0})
-                    with self.assertRaisesRegex(Exception, "wire dbHash collections must be a list of non-empty strings"):
-                        client.alpha.command({"dbHash": 1, "collections": ["events", ""]})
-                    with self.assertRaisesRegex(Exception, "wire dbHash comment must be a string"):
+                    with self.assertRaisesRegex(
+                        Exception,
+                        "wire dbHash collections must be a list of non-empty strings",
+                    ):
+                        client.alpha.command(
+                            {"dbHash": 1, "collections": ["events", ""]}
+                        )
+                    with self.assertRaisesRegex(
+                        Exception, "wire dbHash comment must be a string"
+                    ):
                         client.alpha.command({"dbHash": 1, "comment": 1})
-                    with self.assertRaisesRegex(Exception, "wire collStats scale must be a positive integer"):
+                    with self.assertRaisesRegex(Exception, "value must be >= 1"):
                         client.alpha.command({"collStats": "events", "scale": 0})
-                    with self.assertRaisesRegex(Exception, "wire profile level must be an integer"):
+                    with self.assertRaisesRegex(
+                        Exception, "wire profile level must be an integer"
+                    ):
                         client.alpha.command({"profile": "bad"})
-                    with self.assertRaisesRegex(Exception, "wire profile slowms must be an integer"):
+                    with self.assertRaisesRegex(
+                        Exception, "wire profile slowms must be an integer"
+                    ):
                         client.alpha.command({"profile": 2, "slowms": "bad"})
                 finally:
                     client.close()

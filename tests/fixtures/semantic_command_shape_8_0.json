@@ -973,6 +973,24 @@
           "$numberDouble": "1.0"
         }
       },
+      "absent/explain-empty": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "59"
+        },
+        "code_name": "CommandNotFound",
+        "message": "Explain failed due to unknown command: ",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
       "absent/verbosity-null": {
         "ok": true,
         "state": {
@@ -2104,6 +2122,26 @@
         },
         "code_name": "IDLFailedToParse",
         "message": "BSON field 'explain.explain' is missing but a required field",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/explain-empty": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "59"
+        },
+        "code_name": "CommandNotFound",
+        "message": "Explain failed due to unknown command: ",
         "phase": "invoke",
         "state": {
           "exists": true,
@@ -3826,6 +3864,35 @@
           "$numberDouble": "1.0"
         }
       },
+      "populated/explain-empty": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "59"
+        },
+        "code_name": "CommandNotFound",
+        "message": "Explain failed due to unknown command: ",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
       "populated/verbosity-null": {
         "ok": true,
         "state": {
@@ -4015,7 +4082,7 @@
       "isWritablePrimary": true,
       "topologyVersion": {
         "processId": {
-          "$oid": "6ae7441c1bc883d8da284243"
+          "$oid": "6ae74d1d554c732028bd7dde"
         },
         "counter": {
           "$numberLong": "0"
@@ -4032,14 +4099,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793542192507"
+          "$numberLong": "1793543500638"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "69"
+        "$numberInt": "5"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -4055,7 +4122,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_command_shape_cases.py",
-    "sha256": "9fcfc9523b4889d3511430dcbc9bc9de347f8ddd28dabe13557c6220a0ca0f57",
+    "sha256": "4d3dad26e7bddbb72725bf92faef3ea41c3d60518868c397448ef69bab92099e",
     "topology": "standalone"
   },
   "case_manifests": [

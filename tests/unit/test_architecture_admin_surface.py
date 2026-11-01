@@ -105,6 +105,7 @@ from mongoeco.types import (
     WriteCommandResult,
 )
 from mongoeco.core.operators import UpdateEngine
+from mongoeco.errors import OperationFailure
 
 
 
@@ -120,7 +121,9 @@ class ArchitectureAdminSurfaceTests(unittest.TestCase):
             {"findAndModify": "users", "query": {"name": "Ada"}, "update": {"$set": {"rank": 1}}}
         )
         find = service.parse_raw_command({"find": "users", "filter": {}})
-        aggregate = service.parse_raw_command({"aggregate": "users", "pipeline": []})
+        aggregate = service.parse_raw_command(
+            {"aggregate": "users", "pipeline": [], "cursor": {}}
+        )
         count = service.parse_raw_command({"count": "users"})
         distinct = service.parse_raw_command({"distinct": "users", "key": "name"})
         list_indexes = service.parse_raw_command({"listIndexes": "users"})
@@ -190,7 +193,7 @@ class ArchitectureAdminSurfaceTests(unittest.TestCase):
     def test_admin_parsing_rejects_invalid_validation_flags(self):
         self.assertTrue(normalize_validate_command_options(scandata="yes").scandata)
         self.assertFalse(normalize_validate_command_options(scandata=None).scandata)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             normalize_list_collections_options({"nameOnly": "yes"})
 
     def test_database_command_service_executes_typed_static_results(self):
@@ -204,7 +207,7 @@ class ArchitectureAdminSurfaceTests(unittest.TestCase):
         self.assertEqual(result.to_document()["gitVersion"], "mongoeco")
 
     def test_database_command_service_executes_typed_delegated_results_before_serialization(self):
-        database = AsyncDatabase(MemoryEngine(), "db")
+        database = AsyncDatabase(MemoryEngine(), "admin")
         service = database._admin._commands
         command = service.parse_raw_command({"listDatabases": 1})
 
