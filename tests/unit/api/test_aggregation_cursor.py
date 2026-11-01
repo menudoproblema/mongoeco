@@ -819,20 +819,23 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             collection,
             [
                 {"$search": {"text": {"query": "keep", "path": "kind"}}},
-                {"$limit": 0},
+                {"$limit": 1},
             ],
         )
 
-        with (
-            patch.object(cursor, "_search_result_limit_hint", return_value=None),
-            patch.object(cursor, "_search_prefix_output_limit", return_value=0),
+        # The physical empty window is valid even though authored limit:0 is not.
+        with patch.object(
+            cursor, "_search_optimization_plan",
+            return_value=_SearchOptimizationPlan(
+                strategy=_SearchOptimizationStrategy.EMPTY, result_limit_hint=0,
+            ),
         ):
             self.assertEqual(
                 await cursor._materialize_leading_search_pipeline(
-                    [{"$limit": 0}],
+                    [{"$limit": 1}],
                     dialect=None,
                 ),
-                ([], [{"$limit": 0}]),
+                ([], [{"$limit": 1}]),
             )
         self.assertEqual(observed_limit_hints, [0])
 
