@@ -3077,3 +3077,23 @@ logs f06 conservan los fallos intermedios, incluida la corrección del observado
 BSON y el error de permisos de una prueba wire no autorizada, sin atribuirlos
 al servidor. No queda una migración pendiente ni se infiere procedencia de
 collation histórica. F07 es el siguiente bloque; F11 sigue pendiente.
+
+Punto estable por petición del usuario (tras F06, 7/12 bloques cerrados): F07
+solo tiene diagnóstico; no se ha modificado su runtime ni sus expectativas.
+Su replay directo focal 8.0 reproduce 36 fallos en los nueve testigos F07,
+conservados en f07-initial.txt.gz. No constituyen una regresión de F06 ni un
+cierre de F07. Quedan F07–F11; la parte II permanece excluida y no se han
+adelantado pruebas globales.
+
+Las sondas temporales adicionales de 8.0 orientan la continuación, sin aceptarse
+por asociación para otros dialectos: campos raíz con dólar se admiten en insert
+y pipeline, y en upsert de inserción; cambiar uno mediante modificador o usarlo
+en replacement coincidente da 52, mientras un set idéntico puede ser no-op.
+Los campos documentales anidados con dólar se admiten fuera de _id; insert con
+_id documental que contiene dólar, incluso más profundo, da 52. Debe conservarse
+la precedencia del filtro/ID inmutable antes de extrapolar a otros contextos.
+Timestamp(0,0) se sustituye en campos raíz de insert y replacement, incluido
+replacement upsert; no en _id, objetos/arrays embebidos, modificadores o pipeline.
+Estas sondas requieren incorporarse al corpus y contrastarse en 7/8/9 al retomar
+F07. Los servidores temporales propios se detienen en esta pausa; los receipts
+y capturas aceptados de F00–F06 quedan conservados.
