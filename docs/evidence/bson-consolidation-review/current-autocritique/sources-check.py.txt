@@ -1,0 +1,23 @@
+import concurrent.futures
+import hashlib
+import json
+import urllib.request
+from pathlib import Path
+
+ROOT = Path("docs/evidence/bson-consolidation-review")
+expected = json.loads((ROOT / "review15/sources-check.json").read_text())
+def check(item):
+    with urllib.request.urlopen(item["url"], timeout=30) as response:
+        raw = response.read()
+    actual = hashlib.sha256(raw).hexdigest()
+    return {"file": item["file"], "url": item["url"],
+            "expected_sha256": item["expected_sha256"],
+            "actual_sha256": actual, "bytes": len(raw),
+            "matches": actual == item["expected_sha256"]}
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+    results = list(pool.map(check, expected))
+Path("/tmp/mongoeco-autocritique-current/sources-check.json").write_text(json.dumps(results, indent=2) + "\n")
+assert len(results) == 16 and all(item["matches"] for item in results)
+original = json.loads((ROOT / "sources.json").read_text())
+assert all(any(r["url"] == item["url"] and r["actual_sha256"] == item["sha256"] for r in results) for item in original)
+print({"downloaded": len(results), "matching": len(results), "original_manifest_entries": len(original)})

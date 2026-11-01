@@ -4,6 +4,8 @@
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
+La [relectura actual de la autocrítica](evidence/bson-consolidation-review/current-autocritique/README.md)
+distingue estos cierres del candidato de batching aún sin aceptar.
 Las revisiones numeradas anteriores conservan historia, no otro backlog activo.
 
 Fecha: 31 de octubre de 2026. Base de runtime inspeccionada:
@@ -1325,7 +1327,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 | --- | --- | --- |
 | Control previo cerrado — B07, admisión | `2723fb28` acepta las [cinco entradas Search](evidence/bson-consolidation-implementation/bson-input-search/README.md), opciones propias y creación preparada compartida. Completa las 17 disposiciones del censo administrativo histórico tras comandos, catálogo, índices, lectores y namespace, con sus aceptaciones en el registro. Lecturas, inserciones, mutaciones y bulk conservan sus cortes propios. No implica positivos Atlas ni una API universal ya censada. | Conservar originales, codificar una vez, errores cliente/precedencia y efectos. El wire ya decodificado no vuelve a codificarse; unidad 5 conserva positivos y batching. |
 | Control previo cerrado — B07, UUID | `d5bdadb8` acepta [default UNSPECIFIED, dueños y lectura independiente](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md), sobre la admisión ya entregada. `b29e9bf1` corrige ausencia en distinct, compartida por API/comando. | Mantener STANDARD/legacy explícitos, bytes/subtipos y lectura/reapertura de archivos previos. No cambiar otra vez el default ni reextraer el codec; no implica cierre D06 ni positivos completos. |
-| 1 / P1 — B07, positivos y respuestas | `8e261c7a` acepta [proyecciones, contexto y metadatos](evidence/bson-consolidation-implementation/find-projections/README.md): desaparecen los 24 fallos previos de admission_options. Conservar evaluador y preparación compartidos. Siguen batching/getMore, sobres/DTO, resultado bulk y combinaciones restantes de respuestas/callbacks. | Unidad 5: tipos, orden, efectos y pase único. El gate instalado tiene 10.473 correctos; la cohorte conserva dos pendientes previos de batching. No implica cierre de toda la unidad ni D05. |
+| 1 / P1 — B07, positivos y respuestas | `8e261c7a` acepta [proyecciones, contexto y metadatos](evidence/bson-consolidation-implementation/find-projections/README.md): desaparecen los 24 fallos previos de admission_options. Conservar evaluador y preparación compartidos. Siguen batching/getMore, sobres/DTO, resultado bulk y combinaciones restantes de respuestas/callbacks. | Unidad 5: tipos, orden, efectos y pase único. La aceptación de proyecciones conserva 10.473 correctos y dos fallos previos de batching. El árbol actual contiene un candidato para estos últimos, todavía sin aceptación registrada; esos resultados históricos no describen automáticamente el checkout. No implica cierre de toda la unidad ni D05. |
 | 2 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
 | 3 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
 | 4 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
@@ -1369,6 +1371,38 @@ No son una nueva ejecución de MongoDB ni aceptación de la wheel candidata.
   no aceptan los cambios preexistentes de runtime ni sustituyen baseline fallida,
   referencias 7/8/9, matrices, typing/SPI, persistencia o recursos. No regenerar
   referencias históricas para ajustar expectativas a la implementación.
+
+**Precisiones de esta relectura, incorporadas al orden anterior.** El adjunto
+es idéntico al ya contrastado; la [evidencia actual](evidence/bson-consolidation-review/current-autocritique/receipt.json)
+registra 78 regresiones, seis pares motor/dialecto, 18 trazas y los 16 hashes
+oficiales coincidentes. Son controles del checkout, no aceptación del candidato
+preexistente ni nuevas capturas MongoDB. Mantener estas tres obligaciones dentro
+de los bloques existentes:
+
+- **D06, artefacto preparado y ruta fuente.** Revisar las rutas que aceptan un
+  pipeline/prefijo explícito y reconstruyen después el find desde el pipeline
+  completo del cursor. En particular, `_materialize_pipeline(pipeline)` pasa el
+  sufijo a `_load_pushdown_source_documents`, pero este crea la fuente mediante
+  `_pushdown_find_operation()` sobre `_effective_pipeline()`. Esta relación está
+  comprobada por lectura; su efecto incorrecto sigue sin demostrar. Caracterizar
+  prefijo/sufijo con filtros, sort/skip/limit, proyección, contexto y subpipeline,
+  activando la ruta materializada real. Solo si diverge, pasar el pushdown ya
+  resuelto a su consumidor; no otro compilador, caché o servicio de contexto.
+- **B07 unidad 5, finalización y efectos observables.** La igualdad de documentos
+  no acepta batching: observar initial/getMore, cursor abierto/cerrado, EOF,
+  callbacks y error diferido. Contrastar fuente ordenada por índice frente a
+  sort/group bloqueantes y fuente más corta que el límite, por versión. No
+  identificar prelectura agotada con filas ya entregadas ni cambiar el límite
+  público local por analogía con PyMongo sin caracterizar el adaptador afectado.
+  El cierre debe liberar resultados spill incluso antes de su primera lectura,
+  conservando el error primario y el dueño de cada recurso. Reutilizar lector,
+  ejecutores y spool existentes. El candidato actual requiere su receipt propio.
+- **D05 y cada captura, evidencia conservada.** Reservar un directorio nuevo por
+  ejecución y verificar su ownership; un rerun no sobrescribe el manifest de una
+  captura anterior. Separar controles del checkout, aceptación instalada y
+  cierre integrado. Si falta un ledger histórico, registrarlo como limitación;
+  una nueva ejecución o un inventario global no reconstruyen sus IDs perdidos.
+  Esta garantía utiliza el fixture/capturador existente, sin otro runner.
 
 Los criterios detallados de las seis unidades B07 se mantienen en su apartado;
 esta tabla solo ordena sus dependencias con D06 y D05. No es necesario cerrar
@@ -1814,9 +1848,10 @@ otra decisión/migración, fuera de este plan.
 - Prohibir `__eq__` globalmente bajo test o usar repr para identidad semántica.
 - Migrar schema por su tamaño, traducir validators a SQL o
   añadir flags a hojas MQL para simular schema sin un piloto independiente.
-- Cerrar B07 por normalizar Binary/DBRef. Tipos arbitrarios y Decimal crudo en
-  la frontera general mantienen su pendiente; las garantías de cada corte se
-  nombran explícitamente.
+- Cerrar B07 por normalizar Binary/DBRef. La admisión general ya tiene cortes
+  aceptados en el registro; sus controles de tipos arbitrarios y Decimal crudo
+  no aceptan por asociación positivos, sobres o batching aún pendientes. Nombrar
+  las garantías de cada corte sin volver a presentar sus fixes como ausentes.
 - Presentar una propuesta como mejora medida o reescribir la aceptación C00–C06.
 
 El piloto D07 solo se continúa si conserva errores/diagnósticos/arrays/subset,

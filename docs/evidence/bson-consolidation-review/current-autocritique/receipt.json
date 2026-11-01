@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-01",
+  "base_commit": "c1a7c4a5ed591c787e17e322adcf18acbe07c116",
+  "attachment_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "preexisting_worktree_sha256": {
+    "scripts/with_mongodb_replica_set.py": "c9b1792ba041935a70ff69344d28aa2b5240e49fd706a6afc0356ba1e4dda158",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "f0a2b01d5755da29c6dc65379ec5786fa63c77f1d995f6d0bbc8904f64d09b1c",
+    "src/mongoeco/api/_async/collection.py": "e116c49f4054cf130afc86338fa65f136fbda16d9384099e5dfd935900065532",
+    "src/mongoeco/api/_async/cursor.py": "2471a3d44f26b92b0d9e9f8c57a9b1ac0728e7673d023e3fb0e242bbb2e3a2be",
+    "src/mongoeco/compat/_catalog_constants.py": "ec1a8d5b094fda2bafa85449a5f5ef342c49c894cfb900a7d2f02b47dcf8bb2a",
+    "src/mongoeco/compat/_catalog_dialects.py": "b288e2362c0b9d651fce4020968f6ffaddc5c932dfe6bc078165e55846bfe866",
+    "src/mongoeco/core/aggregation/spill.py": "490e17078ae962c6ae142b6d0325e6cc9094d1ae3755530cc44daa1a0df19cee",
+    "src/mongoeco/engines/virtual_indexes.py": "c3a565e31f81175f315d0fed3ccd9e81def1383b90746d37b966900bb8b73af5",
+    "src/mongoeco/wire/cursors.py": "b09e3766fe3fbd49fa6453c75e4b0074bad8bcfd173f9b0d685f960812511926",
+    "tests/differential/semantic_command_batch_cases.py": "3bc64da2d1bf744872bb051a1a176043990c62b213f309625a9dc4ea68c0e025",
+    "tests/differential/semantic_corpora.py": "24df5a3568f282b3cecd100bb3584a78cccf45f96c2d5f5bf127f589b4d13e88",
+    "tests/differential/semantic_query_batch_callback_cases.py": "116ae674698879c800d0f9bb27a152ce2602b76e47a82c785c870cfbe69ea445",
+    "tests/fixtures/semantic_command_batch_7_0.json": "6b7e2abba76b044f4a7affce6e1f11c6f96910ea93c17b32c893fd0a00f5ce59",
+    "tests/fixtures/semantic_command_batch_8_0.json": "27e2840aea7f01ad4b259ac030ae0279edb5309d8e715fc024d7345e9a5b0ff3",
+    "tests/fixtures/semantic_command_batch_9_0.json": "5b3b98c5caddcf85bb07fd82429283c8755ddfa22ca8bf98751d741a1b825014",
+    "tests/fixtures/semantic_query_batch_callbacks_7_0.json": "356eb5aef5e4b1a4232b19e6d99d63cc962640caa0d1d578c1bde81e82c6d711",
+    "tests/fixtures/semantic_query_batch_callbacks_8_0.json": "ee41a4467b97c3d0f9ef13703f241bdf9b4492f5e62f6b0efffb452f593ec973",
+    "tests/fixtures/semantic_query_batch_callbacks_9_0.json": "bd39be37c13120a3bccd68ba27d8b673bcf6f36041ca22d7323e548aad55749e",
+    "tests/integration/api/test_command_batch_spill.py": "b642531d50c42be52ebb57598f4761e6cf49c79ce8ed06fba43bd98ed7102e43",
+    "tests/unit/core/test_aggregation_work_control.py": "853b84d96695f94f3d95cef114a1fe2de08fd0ce5e4e3dac4d64a29354294fbe",
+    "tests/unit/test_database_command_option_conservation.py": "da2775405142a361174735c46d38f8a39d2d7727e7187347e125fc15d716115f",
+    "tests/unit/test_mongodb_replica_set_fixture.py": "98283a92f3572584076aab5bc8807f6ac5c6f53af9bc7ac4c5cf7a1d255f2198"
+  },
+  "inspected_sources_sha256": {
+    "src/mongoeco/core/bson_values.py": "18af6b992e721002eeb478a2987fa4e8737afbf719758df4182dcbc27ee41c3a",
+    "src/mongoeco/core/bson_ordering.py": "117c48675cdda956b4a041689c6d99a3a65b95d19748578944126644a35112e1",
+    "src/mongoeco/compat/base.py": "3ac58fbbebfdb573b5e6a8b9af9495e3d58adceee01dc9bc81a2e68454bf30ff",
+    "src/mongoeco/engines/sqlite_query.py": "4622130836f2d7d7ff10941982e788aaf4bb5c945ee06890acf37d1a9b4e8b72",
+    "src/mongoeco/engines/sqlite.py": "5f0db320b51dd1fb53f5550e35f714d85d9de81c6c17d37408beb530421e3272",
+    "src/mongoeco/core/query_operators.py": "ed601a9d154dc103c2dad199240f851d57fe57ea4b80899085c2616e06561633",
+    "src/mongoeco/_change_streams/cursor.py": "cb21a3da70a93fa266b7c6f4b48f25ed79982e98979b90df6593b0cdb96a94f8",
+    "src/mongoeco/_change_streams/pipeline.py": "9ea1343b0059172c417554db9232ab29d33ef3fb60d11506ca93be12ac9bd6e3",
+    "src/mongoeco/api/_async/aggregation_cursor.py": "f0a2b01d5755da29c6dc65379ec5786fa63c77f1d995f6d0bbc8904f64d09b1c"
+  },
+  "checks": {
+    "focal_passed": 78,
+    "engine_dialect_pairs": 6,
+    "matcher_trace_rows": 18,
+    "official_sources_downloaded_matching": 16,
+    "original_manifest_entries": 14,
+    "preexisting_worktree_unchanged": true
+  },
+  "limits": [
+    "No new native MongoDB capture",
+    "No installed-wheel or integrated acceptance",
+    "No runtime, test or golden edits during this review",
+    "Preexisting batching candidate remains unaccepted",
+    "Pipeline-prefix source mismatch is inspection-only; no incorrect result reproduced"
+  ],
+  "artifacts_sha256": {
+    "README.md": "6840d9f3da3def8ef42f91906a1c223eacbbfac0923ac9937e07d1c626b3df79",
+    "focal.txt": "85586b8d528d588a88ca816b4b8e56b8205938099f3266a8313005ec92fa4df2",
+    "representation-probe.py.txt": "af85d61e5efcd65caec238197ce90405ceaf52a3cf1fc310b4b3656041877150",
+    "representations.json": "28842140e384419e66313e937a0d127619345add87a79023e7a4fac62fbc2bca",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e",
+    "sources-check.py.txt": "e27fc7de12d9c3058b5b138d97510bb4403242d3a2bad0b2f4ba95ec1dca12e1",
+    "sources-check.txt": "7ca61214ab4fb91e5adedda74bc00685a4a7c0e7cf9b1027344b6b44c1d2e3f1"
+  },
+  "owner_documents_sha256": {
+    "docs/bson-semantics-consolidation-plan.md": "8cc58fc304d1d0b3050de0b62c8fc6e2d0b787651be05b3d56dfdb10dbc4f23e",
+    "docs/bson-consolidation-implementation.md": "064b0f89687c486f20566a1968bde692bf2c6b5e7c098b813a63eb3a7a5a88d9"
+  },
+  "document_checks": {
+    "relative_links_missing": [],
+    "receipt_hashes_verified": true,
+    "git_diff_check": "passed",
+    "scope": "three affected Markdown documents; no dedicated Markdown validator found"
+  }
+}
