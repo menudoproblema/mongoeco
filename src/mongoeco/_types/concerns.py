@@ -161,7 +161,7 @@ class CodecOptions:
     document_class: type[dict] = dict
     tz_aware: bool = False
     tzinfo: datetime.tzinfo | None = None
-    uuid_representation: UuidRepresentation = UuidRepresentation.STANDARD
+    uuid_representation: UuidRepresentation = UuidRepresentation.UNSPECIFIED
     type_registry: tuple[tuple[type[object], Callable[[object], object]], ...] = ()
 
     def __init__(
@@ -170,7 +170,7 @@ class CodecOptions:
         *,
         tz_aware: bool = False,
         tzinfo: datetime.tzinfo | None = None,
-        uuid_representation: UuidRepresentation | str = UuidRepresentation.STANDARD,
+        uuid_representation: UuidRepresentation | str = UuidRepresentation.UNSPECIFIED,
         type_registry: Mapping[type[object], Callable[[object], object]] | None = None,
     ):
         if not isinstance(document_class, type):

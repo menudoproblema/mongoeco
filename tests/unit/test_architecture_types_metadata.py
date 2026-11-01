@@ -20,6 +20,10 @@ from mongoeco.api._async.database_commands import (
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.client import AsyncMongoClient
 from mongoeco.api._async._materialized_cursor import AsyncMaterializedCursor
+from mongoeco.api.public_api import (
+    DATABASE_LIST_COLLECTION_NAMES_SPEC,
+    DATABASE_LIST_COLLECTIONS_SPEC,
+)
 from mongoeco.api.admin_parsing import (
     normalize_list_collections_options,
     normalize_validate_command_options,
@@ -453,10 +457,22 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             OptionSupportStatus.UNSUPPORTED,
         )
 
-    def test_operation_option_support_matches_tracked_async_collection_signatures(self):
+    def test_operation_option_support_matches_tracked_async_operation_signatures(self):
+        database_specs = {
+            "list_collection_names": DATABASE_LIST_COLLECTION_NAMES_SPEC,
+            "list_collections": DATABASE_LIST_COLLECTIONS_SPEC,
+        }
         for operation, options in OPERATION_OPTION_SUPPORT.items():
             with self.subTest(operation=operation):
-                params = set(inspect.signature(getattr(AsyncCollection, operation)).parameters)
+                owner = (
+                    AsyncDatabase
+                    if operation in {"list_collection_names", "list_collections"}
+                    else AsyncCollection
+                )
+                params = set(inspect.signature(getattr(owner, operation)).parameters)
+                if operation in database_specs:
+                    self.assertIn("kwargs", params)
+                    params.update(database_specs[operation].allowed_options)
                 managed = (
                     params & MANAGED_OPERATION_OPTION_NAMES
                 ) - OPERATION_OPTION_SIGNATURE_EXCLUSIONS.get(operation, frozenset())
@@ -747,7 +763,7 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(normalize_codec_options(None).document_class, dict)
         self.assertEqual(
             normalize_codec_options(None).uuid_representation,
-            UuidRepresentation.STANDARD,
+            UuidRepresentation.UNSPECIFIED,
         )
         self.assertIsNone(normalize_transaction_options(None).max_commit_time_ms)
 

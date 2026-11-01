@@ -90,6 +90,10 @@ from tests.differential.semantic_bson_size_cases import (
     SEED as BSON_SIZE_SEED,
     SEMANTIC_BSON_SIZE_CASES,
 )
+from tests.differential.semantic_bson_uuid_policy_cases import (
+    SEED as BSON_UUID_POLICY_SEED,
+    SEMANTIC_BSON_UUID_POLICY_CASES,
+)
 from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
@@ -575,6 +579,10 @@ SEMANTIC_CORPORA = {
         "bson-command-flags", "semantic_bson_command_flag_cases",
         BSON_COMMAND_FLAG_SEED,
         SEMANTIC_BSON_COMMAND_FLAG_CASES,
+    ),
+    "bson_uuid_policy": SemanticCorpus(
+        "bson-uuid-policy", "semantic_bson_uuid_policy_cases", BSON_UUID_POLICY_SEED,
+        SEMANTIC_BSON_UUID_POLICY_CASES,
     ),
     "bson_search_input": SemanticCorpus(
         "bson-search-input", "semantic_bson_search_input_cases", BSON_SEARCH_INPUT_SEED,

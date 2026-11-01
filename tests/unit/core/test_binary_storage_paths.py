@@ -16,7 +16,7 @@ from mongoeco.core.identity import (
 )
 from mongoeco.engines import MemoryEngine, SQLiteEngine
 from mongoeco.errors import DuplicateKeyError, WriteError
-from mongoeco.types import Binary
+from mongoeco.types import Binary, CodecOptions, UuidRepresentation
 
 
 PAYLOAD = bytes(range(16))
@@ -29,7 +29,11 @@ def test_binary_sort_fallback_precedes_skip_limit_and_tracks_changed_tags(
     dialect, field, indexed
 ):
     engine = SQLiteEngine()
-    with MongoClient(engine, mongodb_dialect=dialect) as client:
+    # This fixture deliberately includes a native UUID under standard encoding.
+    with MongoClient(
+        engine, mongodb_dialect=dialect,
+        codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+    ) as client:
         subject = client.binary_sort.records
         subject.insert_one({"_id": 1, "v": 1, "nested": {"v": 1}})
         if indexed:
