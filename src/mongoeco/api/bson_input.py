@@ -238,6 +238,7 @@ def encode_operation_bson(options, *, codec_options):
     """Encode BSON arguments together; preserve non-BSON API/session arguments."""
     from mongoeco.api.argument_validation import (  # noqa: PLC0415
         normalize_sort_spec,
+        projection_document,
         validate_batch_size,
         validate_max_time_ms,
     )
@@ -260,6 +261,8 @@ def encode_operation_bson(options, *, codec_options):
         for name, value in options.items()
         if name in _BSON_ARGUMENTS and value is not None
     }
+    if "projection" in request:
+        request["projection"] = projection_document(request["projection"])
     for field in ("sort", "hint"):
         value = options.get(field)
         if value is not None:

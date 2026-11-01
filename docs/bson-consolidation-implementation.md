@@ -2389,3 +2389,19 @@ minimal313 cierra el gate con 13 pruebas correctas, sin modificar su lógica.
 Un unittest global con ese problema se interrumpe limpiamente (130) y no se
 acepta. La .venv principal queda instalada con el candidato para el gate final.
 La matriz del kit permanece activa; sus tres primeras celdas 3.13 pasan.
+
+
+### O5 — Regresión de admisión de proyección corregida
+
+Las referencias nativas existentes api_options reproducen una regresión de B07:
+find_one con proyección set devolvía InvalidDocument en lugar del documento;
+con generador devolvía InvalidDocument en lugar de TypeError. El encoder común
+encode_operation_bson reutiliza ahora projection_document antes de BSON, igual
+que las otras entradas. No se añade parser ni se modifica el oráculo.
+
+La nueva wheel y sus 287 módulos están fijados en d05-projection-wheel.json y
+d05-projection-runtime.json. Pasan 93 pruebas instaladas/3.744 subtests, que unen
+el diferencial api_options a las garantías de preparación; no se debilita el
+rechazo de generadores ni se aplica el normalizador después del encoder. Este
+cambio invalida solo la evidencia alcanzada por esa frontera y exige el gate
+global final posterior; O5–O8 continúan abiertas.
