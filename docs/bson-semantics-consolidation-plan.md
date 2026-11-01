@@ -1196,6 +1196,17 @@ Siguen otros contextos/representaciones y consumo/estado público D06a/b, ademá
 de D06c y los owners restantes; no se declara equivalencia de todos los efectos
 de un mapping ni cierre completo de D06/D05.
 
+El corte `72edfa3` añade posición/estado y propiedad de cursores sync con
+[aceptación propia](evidence/bson-consolidation-implementation/cursor-consumption/README.md):
+cinco acciones nativas 7/8/9, 8.032 checks sobre wheel instalado sin avisos y
+30 comparaciones/1.278 trazas realmente sin SDK. Se retiran cachés y finalizadores
+prestados; el cierre llega al delegado real y el runner dispone de forma común
+los awaitables rechazados. Conservar controles de reanudación y de abandono del
+propietario, sin reintroducir el estado suspended. La interfaz del fake y la
+limpieza del propio test también necesitan oráculos independientes. Los demás
+contextos/representaciones D06a/b y los otros bloques mantienen sus owners;
+D05 conserva el coste observado de find(limit=1), sin declararlo irrelevante.
+
 **Contraste nuevo de revisión 16.** Pasan 85 regresiones focales. Las seis
 combinaciones locales motor/dialecto conservan selección bytes/Binary 0 frente
 a 5, contenido/subtipo de distinct y 18 trazas separadas de documento/operando.
@@ -1358,7 +1369,9 @@ bloques ni obligan a rehacer los cortes aceptados:
    topología y versión del SDK con las capturas; validar las opciones del
    capturador/replay existentes, sin otro runner.
 
-   Completar además consumo parcial y estado público: next/try_next donde
+   El corte `72edfa3` acepta las combinaciones de consumo/estado y propiedad
+   registradas en su receipt. Para ampliarlas, conservar el mismo criterio:
+   next/try_next donde
    exista/to_list intercalados, límite exacto, tanda transformada vacía o
    expandida, alive/cursor_id y cierre. Contrastar las superficies sync/async
    soportadas; no deducir su estado del contador interno ni forzar el mismo

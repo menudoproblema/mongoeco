@@ -710,7 +710,7 @@ de fábricas documentales, topología comparable y consumo/estado público. Sus
 curso ni equivalen a nuevas capturas físicas. El orden restante conserva un
 solo owner en el plan.
 
-- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo y `d4caba5` añade construcción/asignación de documentos de respuesta con sus errores. Esto no cierra todos los efectos de métodos de mappings, las combinaciones de consumo/estado público ni toda la representación portable. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
+- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo, `d4caba5` construcción/asignación de documentos de respuesta y `72edfa3` posición, alive, propiedad y cierre del cursor sync. Esto no cierra los demás contextos/representaciones ni todos los efectos de métodos de mappings. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1465,3 +1465,49 @@ D05 ni afirmar aislamiento de tareas externas. No se acredita CI remoto,
 cobertura global ni las matrices completas Python/SDK/pytest. El registro de
 trabajo restante conserva otros contextos/representaciones y consumo/estado
 D06a/b, D06c, H53, sNaN, decisión D07, D05 y B07. El default UUID sigue STANDARD.
+
+## D06a/b — Posición, propiedad y cierre de cursores sync
+
+`72edfa3` entrega el corte sobre `d50ab62`, con
+[evidencia acotada](evidence/bson-consolidation-implementation/cursor-consumption/README.md).
+No cierra D06a/b completos, D06c ni D05. Se retiran la caché que reproducía
+resultados consumidos, el atajo eager de iteración con límite uno y el camino
+muerto equivalente de aggregate. Alive combina el estado async con las filas
+pendientes sync; no se crea otro estado o caché para coordinar los dos.
+
+Los iteradores son vistas prestadas: desaparecen sus finalizadores y el estado
+suspended que solo cubría decoders que vaciaban tandas. El propietario cursor
+conserva cierre explícito y finalización diferida, también al abandonarlo. Las
+pruebas deterministas drenan cleanup antes de reanudar y comprueban ambas caras.
+Aggregate delega en close del cursor async real, incluso antes de iterar; conserva
+fallback legacy y reintento tras fallo. Se corrige el fake aclose-only que ocultaba
+la ruta rota y se comprueba el delegado concreto de Memory/SQLite.
+
+El primer replay completo pasó con 114 warnings de corutinas sin esperar y no se
+aceptó. El runner disponía el awaitable rechazado por reentrada, pero no por
+closing/closed. Una única disposición en ese componente existente cubre ambos
+rechazos sin cambiar el error original. El test comprueba el estado antes de su
+propio cleanup; el guard anterior se conformaba con que se lanzara el error.
+
+Cinco acciones congeladas se capturan/comprueban con MongoDB
+7.0.43/8.0.32/9.0.2 standalone, FCV correspondiente e imágenes fijadas. Cubren
+lectura completa/acotada, iteración intercalada y temporal, rewind/clone, alive,
+respuestas vacías y decoders que expanden/vacían/retornan None. La base aislada
+falla 24 checks nativos, cuatro de ownership y dos subtests de admisión.
+El wheel final pasa 8.032 checks completos sin warnings, con RuntimeWarning y
+avisos de GC/hilos elevados a error. Los cuatro workers verifican los 284 archivos
+y la procedencia de sus 262 módulos cargados. Pasan 421 pruebas instaladas de
+contratos/runner/SPI con 49 subtests y 20 de integración con 19 subtests.
+
+Python 3.13.15 realmente sin SDK compara 30 acciones/1.278 trazas tipadas contra
+los oráculos nativos y conserva los 258 controles anteriores, incluidos async.
+Typing, manifiesto público y lint no cambian sus garantías. La auditoría confirma
+ausencia de 12 contenedores y 24 volúmenes propios. ABBA dos veces verifica BSON
+idéntico en 40 pares; Memory find(limit=1) default/STANDARD muestra ratios CPU
+1,16/1,17. Es diagnóstico: D05 conserva el coste y su revisión, sin afirmar
+rendimiento equivalente ni aceptar el presupuesto global. No se acredita CI
+remoto, cobertura global ni las matrices completas.
+
+→ Sigue: demás contextos/representaciones D06a/b, consumidores D06c, H53,
+sNaN, decisión opcional D07, D05 y admisión B07. No se amplían métodos públicos
+no admitidos ni se cambia la conveniencia local length=0; UUID sigue STANDARD.
