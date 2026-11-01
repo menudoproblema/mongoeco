@@ -1,0 +1,12 @@
+import gzip,json,subprocess,sys
+from pathlib import Path
+roots={key:Path(Path('/tmp/mongoeco-'+name+'-location.txt').read_text().strip()) for key,name in [('baseline','search-input-baseline'),('candidate','dispatch-wheel')]}
+results={}
+for key,root in roots.items():
+ site=json.loads((root/'wheel.json').read_text())['site_packages']
+ body='import sys,json;sys.path.insert(0,sys.argv[1]);from mongoeco.compat import public_api_manifest;print(json.dumps(public_api_manifest(),sort_keys=True))'
+ result=subprocess.run([sys.executable,'-I','-c',body,site],check=True,capture_output=True,text=True)
+ results[key]=json.loads(result.stdout)
+ with gzip.open('/tmp/mongoeco-search-input-api-'+key+'.json.gz','wt') as file:json.dump(results[key],file,sort_keys=True)
+assert results['baseline']==results['candidate']
+print('public manifests identical')

@@ -1,0 +1,9 @@
+namespace 0
+admin-read 0
+index-admin 0
+catalog 0
+commands 0
+bulk 0
+mutations 0
+inserts 0
+reads 0

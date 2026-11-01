@@ -1,0 +1,15 @@
+import hashlib,json,shutil,subprocess,sys,tempfile
+from pathlib import Path
+repo=Path.cwd();root=Path(tempfile.mkdtemp(prefix="mongoeco-dispatch-wheel-"));stage=root/"source";stage.mkdir()
+for name in ("pyproject.toml","MANIFEST.in","README.md","LICENSE"):
+ if (repo/name).exists():shutil.copy2(repo/name,stage/name)
+shutil.copytree(repo/"src",stage/"src",ignore=shutil.ignore_patterns("__pycache__","*.egg-info"))
+manifest={str(p.relative_to(repo)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((repo/"src/mongoeco").rglob("*.py"))}
+(root/"runtime.json").write_text(json.dumps(manifest,indent=2)+"\n")
+subprocess.run([sys.executable,"-m","build","--wheel","--no-isolation",str(stage)],check=True)
+wheel=next((stage/"dist").glob("*.whl"));site=root/"site-packages"
+subprocess.run([sys.executable,"-m","pip","install","--no-deps","--target",str(site),str(wheel)],check=True)
+installed=list((site/"mongoeco").rglob("*.py"));assert len(installed)==len(manifest),(len(installed),len(manifest))
+for p,digest in manifest.items():assert hashlib.sha256((site/Path(p).relative_to("src")).read_bytes()).hexdigest()==digest,p
+info={"wheel":str(wheel),"sha256":hashlib.sha256(wheel.read_bytes()).hexdigest(),"site_packages":str(site),"modules":len(manifest)}
+(root/"wheel.json").write_text(json.dumps(info,indent=2)+"\n");Path("/tmp/mongoeco-dispatch-wheel-location.txt").write_text(str(root));print(json.dumps(info),flush=True)

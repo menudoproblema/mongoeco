@@ -1,0 +1,69 @@
+import gzip,hashlib,json,re,shutil,subprocess
+from pathlib import Path
+repo=Path.cwd();root=repo/'docs/evidence/bson-consolidation-implementation/bson-input-search'
+root.mkdir(exist_ok=True)
+sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
+wheel=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+info=json.loads((wheel/'wheel.json').read_text());runtime=json.loads((wheel/'runtime.json').read_text())
+assert info['modules']==287 and sha(info['wheel'])==info['sha256']
+for p,digest in runtime.items():
+ assert sha(p)==digest and sha(Path(info['site_packages'])/Path(p).relative_to('src'))==digest,p
+replay=Path('/tmp/mongoeco-search-input-replay-final.txt').read_text()
+unit=Path('/tmp/mongoeco-search-input-unit-final.txt').read_text()
+baseline=Path('/tmp/mongoeco-search-input-baseline-final.txt').read_text()
+assert '10131 passed' in replay and '72 failed' in replay and 'KeyboardInterrupt' not in replay
+assert '2274 passed' in unit and '2 failed' in unit and '4686 subtests passed' in unit
+assert '60 failed, 63 passed' in baseline
+failnodes=lambda s:set(re.findall(r'^FAILED (\S+)',s,re.M))
+assert failnodes(replay)==failnodes(Path('/tmp/mongoeco-namespace-replay.txt').read_text())
+assert failnodes(unit)==failnodes(Path('/tmp/mongoeco-namespace-unit-final.txt').read_text())
+protected=json.loads(Path('/tmp/mongoeco-search-input-protected.json').read_text())
+assert len(protected)==299
+for p,digest in protected.items():assert sha(p)==digest,p
+native={}
+for target in ('7.0','8.0','9.0'):
+ fixture=Path(f'tests/fixtures/semantic_bson_search_input_{target.replace(".","_")}.json')
+ check=Path('/tmp/mongoeco-search-input-native-frozen')/target/'bson_search_input-check.json'
+ assert fixture.read_bytes()==check.read_bytes(),target
+ document=json.loads(fixture.read_text())
+ assert len(document['cases'])==5 and sum(map(len,document['cases'].values()))==303
+ native[target]={'fixture':str(fixture),'sha256':sha(fixture),'actions':5,'observations':303,'version':document['runtime']['build_info']['version'],'git_version':document['runtime']['build_info']['gitVersion']}
+for label in ('native','native-final','native-frozen'):
+ for target in ('7.0','8.0','9.0'):
+  source=Path('/tmp/mongoeco-search-input-'+label)
+  shutil.copyfile(source/(target+'.log'),root/f'{label}-{target}.txt')
+  shutil.copyfile(source/target/'fixture.json',root/f'{label}-{target}-fixture.json')
+  if label=='native-frozen':shutil.copyfile(source/target/'bson_search_input-check.json',root/f'{label}-{target}-check.json')
+for label in ['replay-final','unit-final','baseline-final']:
+ source=Path('/tmp/mongoeco-search-input-'+label+'.txt')
+ with gzip.open(root/(label+'.txt.gz'),'wb') as f:f.write(source.read_bytes())
+for label in ['replay','unit','order-before']:
+ source=Path('/tmp/mongoeco-search-input-'+label+'.txt')
+ with gzip.open(root/('feedback-'+label+'.txt.gz'),'wb') as f:f.write(source.read_bytes())
+for label in ['build-final','lint','api','api-compare','boundary-final','sdk-free-final','cost','previous-sdk-free']:
+ shutil.copyfile('/tmp/mongoeco-search-input-'+label+'.txt',root/(label+'.txt'))
+for label in ['resources','cost','protected']:
+ shutil.copyfile('/tmp/mongoeco-search-input-'+label+'.json',root/(label+'.json'))
+shutil.copyfile('/tmp/mongoeco-search-sdk-source.json',root/'sdk-source.json')
+shutil.copyfile('/tmp/mongoeco-bson-input-typing.txt',root/'typing-installed.txt')
+for label in ['namespace','admin-read','index-admin','catalog','commands','bulk','mutations','inserts','reads']:
+ shutil.copyfile('/tmp/mongoeco-search-input-previous-'+label+'-sdk-free.txt',root/('previous-'+label+'-sdk-free.txt'))
+for variant in ('baseline','candidate'):
+ shutil.copyfile('/tmp/mongoeco-search-input-api-'+variant+'.json.gz',root/f'api-{variant}.json.gz')
+assert gzip.open(root/'api-baseline.json.gz','rb').read()==gzip.open(root/'api-candidate.json.gz','rb').read()
+for p in wheel.glob('wheel-imports-*.json'):shutil.copyfile(p,root/p.name)
+shutil.copyfile(wheel/'runtime.json',root/'runtime-sources.json')
+shutil.copyfile(wheel/'wheel.json',root/'wheel.json')
+base=Path(Path('/tmp/mongoeco-search-input-baseline-location.txt').read_text().strip())
+for p in base.glob('wheel-imports-*.json'):shutil.copyfile(p,root/('baseline-'+p.name))
+shutil.copyfile(base/'runtime.json',root/'baseline-runtime-sources.json')
+for label in ['native','native-final','native-frozen','baseline','replay','unit','sdk-free-prepare','sdk-free','previous-sdk-free','api-compare','resources','cost','archive']:
+ shutil.copyfile('/tmp/mongoeco-search-input-'+label+'.py',root/(label+'.py.txt'))
+shutil.copyfile('/tmp/mongoeco-dispatch-build.py',root/'build.py.txt')
+shutil.copyfile('/tmp/mongoeco_dispatch_artifact_guard.py',root/'installed-guard.py.txt')
+shutil.copyfile('/tmp/mongoeco-bson-input-typing.py',root/'typing.py.txt')
+changed=subprocess.check_output(['git','diff','--name-only','HEAD','--','src','tests'],text=True).splitlines()+subprocess.check_output(['git','ls-files','--others','--exclude-standard','--','src','tests'],text=True).splitlines()
+(root/'changed-sources.json').write_text(json.dumps({p:sha(p) for p in sorted(changed)},indent=2)+'\n')
+receipt={'base_commit':subprocess.check_output(['git','rev-parse','aceaa5e8'],text=True).strip(),'code_commit':None,'scope':'B07 Search client request boundaries; not Atlas positives, global UUID, complete replies/batching or D05','admitted_entrypoints':['create_search_index','create_search_indexes','list_search_indexes','update_search_index','drop_search_index'],'remaining_administrative_census_entries':0,'native':native,'wheel':info,'checks':{'new_replay':123,'broad_passed':10131,'broad_known_failures':72,'unit_passed':2274,'unit_subtests_passed':4686,'unit_known_batching_failures':2,'baseline_failed':60,'baseline_passed':63,'boundary':24,'sdk_free_observations':1716,'previous_sdk_free_families':9,'api_tests_passed':18,'api_subtests_passed':13,'public_manifests_identical':True,'protected_files':299,'absent_native_resources':27},'known_failure_nodes':{'replay':sorted(failnodes(replay)),'unit':sorted(failnodes(unit))},'limits':['No positive Atlas or distributed watch claim','Native standalone rejection domain, SDK source for request construction and codec owners; local positive lifecycle and rollback separately tested','No global UUID/default change','Diagnostic cost samples are not D05 budget acceptance','Feedback gates deliberately interrupted after discovering frame ordering; final gates rebuilt and completed against the frozen candidate']}
+(root/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print('archived and verified',len(list(root.iterdir())),'files')

@@ -1,0 +1,7 @@
+import subprocess
+from pathlib import Path
+for label,script in [('namespace','mongoeco-namespace-sdk-free.py'),('admin-read','mongoeco-admin-read-sdk-free.py'),('index-admin','mongoeco-index-admin-sdk-free.py'),('catalog','mongoeco-bson-catalog-sdk-free.py'),('commands','mongoeco-bson-command-sdk-free.py'),('bulk','mongoeco-bson-bulk-sdk-free.py'),('mutations','mongoeco-bson-mutation-sdk-free.py'),('inserts','mongoeco-bson-insert-sdk-free.py'),('reads','mongoeco-bson-input-sdk-free.py')]:
+ with Path('/tmp/mongoeco-search-input-previous-'+label+'-sdk-free.txt').open('w') as log:
+  result=subprocess.run(['/opt/homebrew/bin/python3.13','-I','/tmp/'+script],stdout=log,stderr=subprocess.STDOUT)
+ print(label,result.returncode,flush=True)
+ if result.returncode:raise SystemExit(result.returncode)

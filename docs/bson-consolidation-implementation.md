@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y mantiene cinco entradas Search del censo antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. Sigue el default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -2008,3 +2008,33 @@ batching. El retorno Collection local y los parámetros namespace existentes se
 conservan; no se acepta todo reply drop ni paridad distribuida de eventos por
 las capturas standalone. Otros contextos D06, H53, decisión D07 y cierre D05
 mantienen sus obligaciones, incluidos costes y matrices integrados.
+
+## B07 — solicitudes públicas Search
+
+Código `2723fb28` sobre `aceaa5e8`, con [evidencia ligada a fuentes](evidence/bson-consolidation-implementation/bson-input-search/README.md).
+Las cinco entradas usan la admisión BSON común y opciones propias UNSPECIFIED.
+Creación individual/múltiple comparte ejecución; se retiran dos normalizadores
+que copiaban antes de codificar, se reconoce el modelo SDK y se conserva la
+definición directa local. Orden de constructor y maxTimeMS/comment conservan
+la precedencia del driver. Un solo índice evita la lectura del catálogo;
+varios conservan rollback, plazo y nombres preexistentes.
+
+- Native standalone 7.0.43/8.0.32/9.0.2: cinco acciones/303 observaciones por
+  versión y --check idéntico. Rechazo BSON/sesión y construcción del request;
+  no son resultados positivos Atlas ni soporte nuevo del proxy.
+- Base: 60 fallos/63 correctos. Candidato instalado: 123 checks nuevos pasan;
+  replay 10.131 correctos/72 fallos, mismos nodos de bson_admission.
+- Cohorte: 2.274 correctos/4.686 subtests y los dos fallos previos de batching.
+  Incluye 24 controles de frontera, persistencia, callbacks, modelos y rollback.
+- SDK-free real 3.13.15: 1.716 observaciones; nueve familias previas pasan.
+  Sobres públicos mapping reemplazan al constructor SDK; se omite Code.
+- Wheel de 287 módulos con hashes/import guards, manifiestos públicos iguales,
+  API 18 tests/13 subtests, typing instalado y lint correctos. Los 299 testigos
+  históricos siguen intactos y los 27 recursos Docker propios están ausentes.
+- Se conservan los gates de feedback interrumpidos y el fallo del testigo de
+  orden previo. Solo el candidato final reconstruido acredita la aceptación.
+  Costes ABBA×2 diagnósticos, sin cierre del presupuesto D05.
+
+El censo administrativo histórico queda dispuesto: cero entradas pendientes
+allí. No cierra B07 ni redefine su alcance. Sigue UUID coordinado; positivos/
+respuestas/batching, contextos D06, H53, decisión D07 y D05 conservan obligaciones.

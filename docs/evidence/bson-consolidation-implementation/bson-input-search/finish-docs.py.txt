@@ -1,0 +1,134 @@
+from pathlib import Path
+import hashlib,json,subprocess
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-search')
+code=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();short=code[:8]
+assert subprocess.check_output(['git','log','-1','--format=%s'],text=True).strip()=='fix(api): admit Search BSON frames before catalog execution'
+receipt=json.loads((root/'receipt.json').read_text());receipt['code_commit']=code
+(root/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+(root/'README.md').write_text(f'''# B07 — Admisión BSON de solicitudes Search
+
+Base `aceaa5e8`; código `{short}`. Se aceptan las cinco entradas públicas del
+censo: create_search_index/create_search_indexes/list_search_indexes/
+update_search_index/drop_search_index, sync/async y sus controles wire.
+No acredita positivos Atlas, nuevo soporte de comandos Search en el proxy,
+UUID global, respuestas completas/batching ni el cierre integrado D05.
+
+## Causa y refactorización
+
+Las fachadas llamaban al motor sin codificar solicitudes. Los normalizadores
+copiaban antes de rechazar BSON y no reconocían el modelo SDK; validación local
+podía ocultar el error cliente original. Los cinco métodos usan las opciones
+propias UNSPECIFIED del driver, sin codecs de la colección. Crear uno y varios
+comparte el frame admitido y ejecución local existente; no se crea otro codec,
+planificador o almacén. El listado admite antes de devolver su cursor local.
+
+El módulo privado _collection_search_indexes concentra esta frontera y separa
+la administración Search de índices ordinarios. Reutiliza encode_bson_request,
+guarda de sesión, modelos locales, cursor y métodos del motor. Se retiran los
+dos normalizadores de AsyncCollection que copiaban antes de codificar. Se
+conservan la definición directa local y los modelos locales; se añaden el modelo
+SDK y su sobre mapping sin perder los originales. El constructor del modelo
+ordena name/definition/type como el SDK. maxTimeMS precede a comment en el
+frame: dos valores inválidos distintos deben producir el mismo primer error.
+El fallo de los cuatro testigos previos queda en feedback-order-before.
+
+La creación de un único índice evita la lectura de catálogo que solo requiere
+el rollback de varios. La creación múltiple conserva el snapshot, deadline,
+rollback de nuevos nombres y protección de índices preexistentes. Los tests
+privados retirados pasan a validación pública; los controles positivos de los
+cuatro modelos y el rollback se ejercitan por las APIs reales.
+
+## Verificación
+
+- Cinco acciones, 303 observaciones por MongoDB 7.0.43/8.0.32/9.0.2, PyMongo
+  4.19.0. Capture y --check finales son idénticos. El dominio nativo es rechazo
+  cliente: encabezados, operandos, maxTimeMS, cinco opciones UUID, sesión cerrada,
+  competidores y construcción mapping. No se normaliza un rechazo de capacidad
+  standalone como éxito ni se deduce semántica positiva Atlas.
+- Base archivada: 60 checks fallan y 63 pasan con corpus/harness finales.
+  Candidato instalado: 123 checks nuevos pasan; replay amplio 10.131 correctos
+  y exactamente los mismos 72 nodos previos de bson_admission.
+- 24 controles nuevos: rechazo antes de cualquier llamada al motor, objeto con
+  deepcopy engañoso, catálogo/datos intactos y reapertura SQLite, codificación
+  una vez, codecs/fábricas ignorados, modelos y rollback. La cohorte instalada
+  completa da 2.274 correctos/4.686 subtests y los dos fallos previos de batching.
+- SDK-free real Python 3.13.15: 1.716 observaciones, usando sobres públicos mapping
+  en lugar del constructor SDK, salvo Code que no tiene constructor portable.
+  Las nueve familias BSON previas vuelven a pasar con la wheel final.
+- Wheel y 287 módulos verificados por hash, importación instalada en master y
+  cuatro workers; manifiestos públicos idénticos. API: 18 tests/13 subtests.
+  Typing instalado: dos positivos y 20/25 negativos; lint ratchet pasa.
+- 299 fixtures/observadores históricos intactos. Nueve contenedores y 18 volúmenes
+  propios confirmados ausentes con Docker operativo.
+- Costes ABBA×2 sobre los cinco métodos y ambos motores son diagnóstico bajo
+  gates concurrentes, no aceptación del presupuesto D05. Se conservan muestras.
+- Los gates iniciales se interrumpieron de forma deliberada al detectar el orden
+  incorrecto de opciones. Se conserva ese feedback; solo los gates finales del
+  candidato reconstruido acreditan el corte.
+
+El receipt y los manifests fijan fuentes/resultados. El censo histórico de 17
+entradas queda dispuesto, con cero pendientes de admisión en ese censo; no es
+un censo universal de toda la API. Sigue el default UUID coordinado y se
+conservan las obligaciones de positivos/respuestas, D06, H53, D07 y D05.
+''')
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text()
+s=s.replace('último corte aceptado `b938556d`',f'último corte aceptado `{short}`',1)
+s=s.replace('El siguiente corte B07 son\nlas cinco entradas Search, después de los cortes administrativos y namespace\naceptados en el registro.',f'La entrega posterior `{short}` acepta las cinco entradas Search después de\nlos cortes administrativos y namespace; el siguiente corte es UUID coordinado.')
+start=s.index('El orden de las seis filas de trabajo siguientes se conserva:')
+end=s.index('\n\n| Afirmación del informe',start)
+s=s[:start]+'''El orden activo es UUID coordinado; positivos/respuestas; contextos D06;
+disposición H53/D07; integración D05. La admisión entregada queda como control
+previo, sin repetir su implementación. La historia y sus receipts conservan
+sus límites; el registro de implementación posee la evidencia de aceptación.'''+s[end:]
+start=s.index('| 1 / P1 — B07, escrituras y comandos |')
+end=s.index('\n| 3 / P1 — B07, positivos y respuestas',start)
+s=s[:start]+f'''| Control previo cerrado — B07, admisión | `{short}` acepta las [cinco entradas Search](evidence/bson-consolidation-implementation/bson-input-search/README.md), opciones propias y creación preparada compartida. Completa las 17 disposiciones del censo administrativo histórico tras comandos, catálogo, índices, lectores y namespace, con sus aceptaciones en el registro. Lecturas, inserciones, mutaciones y bulk conservan sus cortes propios. No implica positivos Atlas ni una API universal ya censada. | Conservar originales, codificar una vez, errores cliente/precedencia y efectos. El wire ya decodificado no vuelve a codificarse; unidad 5 conserva positivos y batching. |
+| 1 / P1 — B07, UUID | Censo administrativo dispuesto; coordinar las opciones del dueño de la solicitud y el default, conservando todos los cortes de admisión. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte coordinado. |'''+s[end:]
+s=s.replace('| 3 / P1 — B07, positivos y respuestas','| 2 / P1 — B07, positivos y respuestas').replace('| 4 / P1 — Resto D06a/b/c','| 3 / P1 — Resto D06a/b/c').replace('| 5 / P2 — H53 y D07','| 4 / P2 — H53 y D07').replace('| 6 — D05 integrado','| 5 — D05 integrado')
+old='''**Siguiente corte.** Disponer cinco entradas Search del censo con sus opciones
+propias y ejecutores preparados, distinguiendo admisión cliente y soporte Atlas.'''
+s=s.replace(old,f'''**Entrega Search `{short}` y siguiente corte.** Las cinco entradas del censo
+tienen [aceptación de admisión](evidence/bson-consolidation-implementation/bson-input-search/README.md),
+opciones propias y ejecución compartida; no acreditan positivos Atlas. Sigue
+UUID coordinado.''')
+s=s.replace('listados/validate y `b938556d` entrega drop/rename. Se conservan cinco entradas\nSearch antes del default, y 4 coordina las opciones\nde sus dueños antes del nuevo default.',f'listados/validate y `b938556d` entrega drop/rename. `{short}` dispone las cinco\nentradas Search del censo. La unidad 4 coordina las opciones de sus dueños\ny el nuevo default.')
+p.write_text(s)
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text()
+# Only the active remaining-work bullet is projected; historical slices stay untouched.
+start=s.index('## Trabajo restante');end=s.index('\n## ',start+3)
+block=s[start:end]
+block=block.replace('`b938556d` añade drop/rename y mantiene cinco entradas Search del censo antes del default UUID coordinado.', f'`b938556d` añade drop/rename y `{short}` acepta las cinco entradas Search del censo. Sigue el default UUID coordinado.')
+# Some older prose uses another wording: retain acceptance via an explicit projection.
+if short not in block:
+ block+='\nEl corte Search `'+short+'` dispone las cinco entradas administrativas pendientes;\nsigue UUID coordinado y se conservan positivos/batching y los demás bloques.\n'
+s=s[:start]+block+s[end:]
+s+='''\n## B07 — solicitudes públicas Search\n\n'''+f'''Código `{short}` sobre `aceaa5e8`, con [evidencia ligada a fuentes](evidence/bson-consolidation-implementation/bson-input-search/README.md).
+Las cinco entradas usan la admisión BSON común y opciones propias UNSPECIFIED.
+Creación individual/múltiple comparte ejecución; se retiran dos normalizadores
+que copiaban antes de codificar, se reconoce el modelo SDK y se conserva la
+definición directa local. Orden de constructor y maxTimeMS/comment conservan
+la precedencia del driver. Un solo índice evita la lectura del catálogo;
+varios conservan rollback, plazo y nombres preexistentes.
+
+- Native standalone 7.0.43/8.0.32/9.0.2: cinco acciones/303 observaciones por
+  versión y --check idéntico. Rechazo BSON/sesión y construcción del request;
+  no son resultados positivos Atlas ni soporte nuevo del proxy.
+- Base: 60 fallos/63 correctos. Candidato instalado: 123 checks nuevos pasan;
+  replay 10.131 correctos/72 fallos, mismos nodos de bson_admission.
+- Cohorte: 2.274 correctos/4.686 subtests y los dos fallos previos de batching.
+  Incluye 24 controles de frontera, persistencia, callbacks, modelos y rollback.
+- SDK-free real 3.13.15: 1.716 observaciones; nueve familias previas pasan.
+  Sobres públicos mapping reemplazan al constructor SDK; se omite Code.
+- Wheel de 287 módulos con hashes/import guards, manifiestos públicos iguales,
+  API 18 tests/13 subtests, typing instalado y lint correctos. Los 299 testigos
+  históricos siguen intactos y los 27 recursos Docker propios están ausentes.
+- Se conservan los gates de feedback interrumpidos y el fallo del testigo de
+  orden previo. Solo el candidato final reconstruido acredita la aceptación.
+  Costes ABBA×2 diagnósticos, sin cierre del presupuesto D05.
+
+El censo administrativo histórico queda dispuesto: cero entradas pendientes
+allí. No cierra B07 ni redefine su alcance. Sigue UUID coordinado; positivos/
+respuestas/batching, contextos D06, H53, decisión D07 y D05 conservan obligaciones.
+'''
+p.write_text(s)
+print('documents projected for',short)

@@ -1,0 +1,1 @@
+{'memory/create': 0.8366804169144785, 'memory/create-many': 1.4070996327243572, 'memory/list': 1.2714151547006907, 'memory/update': 1.2531231437800947, 'memory/drop': 1.2826026676437494, 'sqlite/create': 1.897035449832914, 'sqlite/create-many': 1.0347760092904819, 'sqlite/list': 1.1583411368998335, 'sqlite/update': 0.9968522008858345, 'sqlite/drop': 1.0318307698544678}

@@ -1,0 +1,32 @@
+import gzip,hashlib,json,re,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-search')
+sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
+r=json.loads((root/'receipt.json').read_text());code=r['code_commit']
+subprocess.run(['git','merge-base','--is-ancestor',code,'HEAD'],check=True)
+assert not subprocess.check_output(['git','status','--porcelain','--','src','tests'],text=True)
+for name in ('changed-sources.json','runtime-sources.json','protected.json'):
+ for p,digest in json.loads((root/name).read_text()).items():assert sha(p)==digest,(name,p)
+for p,digest in json.loads((root/'changed-sources.json').read_text()).items():
+ assert hashlib.sha256(subprocess.check_output(['git','show',code+':'+p])).hexdigest()==digest,p
+wheel=json.loads((root/'wheel.json').read_text())
+assert sha(wheel['wheel'])==wheel['sha256']
+for p,digest in json.loads((root/'runtime-sources.json').read_text()).items():
+ assert sha(Path(wheel['site_packages'])/Path(p).relative_to('src'))==digest,p
+for target,reference in r['native'].items():
+ assert sha(reference['fixture'])==reference['sha256']
+ assert Path(reference['fixture']).read_bytes()==gzip.open(root/f'native-frozen-{target}-check.json.gz','rb').read()
+for label,expected in [('replay-final',1),('unit-final',1)]:
+ proof=json.loads((root/f'wheel-imports-search-input-{label}-master.json').read_text())
+ assert proof['exit_code']==expected
+for worker in range(4):
+ assert (root/f'wheel-imports-search-input-replay-final-gw{worker}.json').exists()
+resources=json.loads((root/'resources.json').read_text());assert len(resources)==27 and all(row['absent'] for row in resources)
+for p in [Path('docs/bson-semantics-consolidation-plan.md'),Path('docs/bson-consolidation-implementation.md'),root/'README.md']:
+ text=p.read_text();assert code[:8] in text
+ for link in re.findall(r'\]\(([^)]+)\)',text):
+  if '://' in link or link.startswith('#'):continue
+  assert (p.parent/link.split('#')[0]).exists(),(str(p),link)
+for p,digest in json.loads((root/'artifacts.json').read_text()).items():assert sha(root/p)==digest,p
+subprocess.run(['git','diff','--check'],check=True)
+print('verified code ancestor, frozen 287-module wheel, 299 protected witnesses, native captures, receipts, docs and artifact hashes')

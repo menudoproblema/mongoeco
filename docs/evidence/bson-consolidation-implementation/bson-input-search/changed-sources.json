@@ -1,0 +1,14 @@
+{
+  "src/mongoeco/api/_async/_collection_indexing.py": "1c17b4c7d672c4ec704ed955d4116629ff0e76918033f49e5ec8adbf2339fd20",
+  "src/mongoeco/api/_async/_collection_search_indexes.py": "dbe72c24eb352f3cf8b44d606b5b56b136a59af70743e8ae0d3f5d93c394a369",
+  "src/mongoeco/api/_async/collection.py": "9c0da25df89a1bc7fb1728cbaa0275b4d27c18cbee46ff906873199c2c698257",
+  "tests/differential/semantic_bson_search_input_cases.py": "74f1dd0fe56801352a47a3823aa014d6c2c7b5276c5d952faab70bf94c194da4",
+  "tests/differential/semantic_corpora.py": "25beb26a929751d32196d99ecccd91e6727fcec0c3f02100397330f9e663bf3f",
+  "tests/fixtures/semantic_bson_search_input_7_0.json": "24c586cbf2d1081e9a3f185b6c853d3d6d36d04963efacf96803387eb6a7e082",
+  "tests/fixtures/semantic_bson_search_input_8_0.json": "19ec2557b28422b68a04dd6d2547e93ea2812c285e87c2890260cbf7796a6a5b",
+  "tests/fixtures/semantic_bson_search_input_9_0.json": "54e68858d0e0e8608958309a35f54f34719b0be04c5645aad8b981a0c92e55ce",
+  "tests/integration/api/test_bson_search_input_boundary.py": "f397c4e6706cb52fae43a47abe73bd65237369c24637b16e6e1ae23ed897d49b",
+  "tests/integration/api/test_semantic_group_regressions.py": "ff31f905c62b8cda155a2240fc837f7b12a3288980dc2bb6951ed31723794f7b",
+  "tests/unit/api/test_collection_management_helpers.py": "550ef6e0d4bc94c6dfbb81e283d43ff0d57a81b56aa371547fcf356567eadd5e",
+  "tests/unit/api/test_collection_validation_helpers.py": "170f30fee9793c61a045af20bfe2aaf7f23ba41a8b4e23a11b3414027cc4eca4"
+}

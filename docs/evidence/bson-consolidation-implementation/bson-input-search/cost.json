@@ -1,0 +1,657 @@
+{
+  "method": "diagnostic ABBA x 2; 100 fresh collections + 10 warmups; concurrent replay/unit gates; not D05 budget acceptance",
+  "ratios": {
+    "memory/create": 0.8366804169144785,
+    "memory/create-many": 1.4070996327243572,
+    "memory/list": 1.2714151547006907,
+    "memory/update": 1.2531231437800947,
+    "memory/drop": 1.2826026676437494,
+    "sqlite/create": 1.897035449832914,
+    "sqlite/create-many": 1.0347760092904819,
+    "sqlite/list": 1.1583411368998335,
+    "sqlite/update": 0.9968522008858345,
+    "sqlite/drop": 1.0318307698544678
+  },
+  "observations": [
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 7183041,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 9784748,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 10346371,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 27406286,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 7354788,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 11487079,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 10475500,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 8366251,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 11413707,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 15533251,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 16168830,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 11605760,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 11547754,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 17148296,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 14464494,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "create-many",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 10429501,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 5718085,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 9147709,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 8968043,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 6987079,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 7393007,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 7673877,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 8112665,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 6566836,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 7694084,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 8308000,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 8730913,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 7275043,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 5978710,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 9617166,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 9381289,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "update",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 7810205,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 6902661,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 9063956,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 7831997,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 6398662,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 6473834,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 8589795,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 8595075,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 6796457,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 61168209,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 68161964,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 69062002,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 66790996,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 65816295,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 64196708,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 287071414,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 63727378,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 157568710,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 164319914,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 165508079,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 159367116,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 157395912,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 162549503,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 161582170,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "create-many",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 157650121,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 16577416,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 19362250,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 17685336,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 15902748,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 15832251,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 18265291,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 18046124,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 15018670,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 74030747,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 76176132,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 73593911,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 75717955,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 77461829,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 73796003,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 74980790,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "update",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 72279038,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 31416748,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 31718792,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 31840416,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 30891790,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 29986700,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 31652748,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 31105874,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 30125835,
+      "operations": 100
+    }
+  ]
+}
