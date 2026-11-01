@@ -217,7 +217,8 @@ class CleanupFailureTests(unittest.IsolatedAsyncioTestCase):
 
             async def fail_close(source=source):
                 source.close_calls += 1
-                raise ValueError("cleanup failed")
+                message = "cleanup failed"
+                raise ValueError(message)
 
             source.close = fail_close
             sources.append(source)
@@ -244,9 +245,10 @@ class CleanupFailureTests(unittest.IsolatedAsyncioTestCase):
                     cursor_id = opened["cursor"]["id"]
                 source.error = OperationFailure("primary evaluation error")
 
-                async def fail_close():
+                async def fail_close(source=source):
                     source.close_calls += 1
-                    raise ValueError("secondary cleanup error")
+                    message = "secondary cleanup error"
+                    raise ValueError(message)
 
                 source.close = fail_close
                 with self.assertRaisesRegex(

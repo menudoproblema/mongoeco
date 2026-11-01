@@ -366,7 +366,8 @@ def test_aggregate_close_retries_only_resources_that_failed(failed_resources):
         def close(self):
             self.attempts += 1
             if failed_resources[0] and self.attempts == 1:
-                raise ValueError("spill cleanup")
+                message = "spill cleanup"
+                raise ValueError(message)
 
     class Source:
         attempts = 0
@@ -374,7 +375,8 @@ def test_aggregate_close_retries_only_resources_that_failed(failed_resources):
         async def aclose(self):
             self.attempts += 1
             if failed_resources[1] and self.attempts == 1:
-                raise RuntimeError("source cleanup")
+                message = "source cleanup"
+                raise RuntimeError(message)
 
     async def exercise():
         async with AsyncMongoClient(MemoryEngine()) as client:
@@ -411,6 +413,8 @@ def test_aggregate_close_retries_only_resources_that_failed(failed_resources):
 
 
 def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry():
+    expected_attempts = 2
+
     class Source:
         pulls = 0
         closes = 0
@@ -427,7 +431,8 @@ def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry():
         async def aclose(self):
             self.closes += 1
             if self.closes == 1:
-                raise ValueError("exhausted source cleanup")
+                message = "exhausted source cleanup"
+                raise ValueError(message)
 
     async def exercise():
         async with AsyncMongoClient(MemoryEngine()) as client:
@@ -439,7 +444,7 @@ def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry():
             with pytest.raises(ValueError, match="exhausted source cleanup"):
                 await iterator.__anext__()
             await cursor.close()
-            assert source.pulls == 2
-            assert source.closes == 2
+            assert source.pulls == expected_attempts
+            assert source.closes == expected_attempts
 
     asyncio.run(exercise())

@@ -1141,7 +1141,7 @@ def test_followup_database_aggregate_requires_supported_source_without_effects(
             client.followup.command(
                 {"aggregate": 1, "pipeline": pipeline, "cursor": {}}
             )
-        assert error.value.code == 115
+        assert error.value.code == 115  # noqa: PLR2004 - declared capability boundary
         assert client.followup.list_collection_names() == []
 
 
@@ -1158,7 +1158,7 @@ def test_followup_find_limit_rejects_invalid_client_types_without_namespace(
 
 @pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
 @pytest.mark.parametrize(
-    "options, expected",
+    ["options", "expected"],
     [
         ({"unique": 1}, OperationFailure),
         ({"name": 1}, OperationFailure),

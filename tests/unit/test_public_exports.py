@@ -4,6 +4,7 @@ import subprocess
 import sys
 import textwrap
 import unittest
+from importlib import import_module
 from concurrent.futures import ThreadPoolExecutor
 
 import mongoeco.cxp as cxp_module
@@ -177,12 +178,11 @@ class PublicExportsTests(unittest.TestCase):
 
 class RetainedAggregationExportsTests(unittest.TestCase):
     def test_legacy_stage_exports_share_handler_identity_and_reject_unknown_names(self):
-        from importlib import import_module
-
         runtime = import_module("mongoeco.core.aggregation.runtime")
         transforms = import_module("mongoeco.core.aggregation.transform_stages")
         self.assertIs(runtime._apply_sample, transforms._apply_sample)
         self.assertIs(runtime._apply_sample, transforms._apply_sample)
+        missing_name = "missing_F11_export"
         for package in (
             "mongoeco",
             "mongoeco.api",
@@ -198,6 +198,6 @@ class RetainedAggregationExportsTests(unittest.TestCase):
             with self.subTest(package=package):
                 module = import_module(package)
                 with self.assertRaises(AttributeError):
-                    getattr(module, "missing_F11_export")
+                    getattr(module, missing_name)
                 exports = getattr(module, "__all__", ())
                 self.assertTrue(set(exports).issubset(dir(module)))
