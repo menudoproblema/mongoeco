@@ -1,0 +1,23 @@
+import json,subprocess
+from pathlib import Path
+base=Path(Path('/tmp/mongoeco-bson-catalog-baseline-location.txt').read_text().strip())
+wheel=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+for tag,root in [('base',base),('candidate',wheel)]:
+ site=json.loads((root/'wheel.json').read_text())['site_packages']
+ output=subprocess.check_output(['.venv/bin/python','-I','/tmp/mongoeco-dispatch-manifest.py',site])
+ Path(f'/tmp/mongoeco-bson-catalog-api-{tag}.json').write_bytes(output)
+left=json.loads(Path('/tmp/mongoeco-bson-catalog-api-base.json').read_text());right=json.loads(Path('/tmp/mongoeco-bson-catalog-api-candidate.json').read_text())
+changes=[]
+def walk(a,b,path):
+ if a==b:return
+ if isinstance(a,dict) and isinstance(b,dict):
+  assert a.keys()==b.keys(),(path,a.keys()^b.keys())
+  for key in a:walk(a[key],b[key],path+'.'+key)
+  return
+ assert path.endswith(('.create_index.parameters','.create_indexes.parameters')),path
+ assert b[:-1]==a and b[-1]['name']=='kwargs' and b[-1]['kind']=='var_keyword',(path,a,b)
+ changes.append({'path':path,'added_parameter':b[-1]})
+walk(left,right,'')
+assert len(changes)==4,changes
+Path('/tmp/mongoeco-bson-catalog-api-delta.json').write_text(json.dumps({'changes':changes,'no_other_changes':True},indent=2)+'\n')
+print('Only four planned **kwargs additions for native index aliases; all other API declarations unchanged.')

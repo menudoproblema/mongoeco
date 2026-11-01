@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones y mutaciones públicas tienen aceptación propia. `5a89dcc` añade [preparación y frames bulk clásicos](#b07--preparación-y-frames-bulk-clásicos), respuestas tipadas y bulk_api_result. `3bfe5fb` añade [admisión y respuesta de comandos públicos](#b07--admisión-y-respuesta-de-comandos-públicos). El gate amplio conserva 72 fallos previos obligatorios; dos tests antiguos de batching siguen rojos y reproducidos en la base. Siguen wrappers de catálogo/índices/validators, UUID coordinado y positivos de proyección/sobres y otros efectos de respuesta. STANDARD global permanece; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. El censo de entradas administrativas/índices requiere disposición antes del default UUID coordinado; continúan positivos y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1890,3 +1890,36 @@ integrado y los demás incrementos, sin aceptación por asociación.
 los ejecutores existentes; después UUID coordinado. Positivos/batching y los
 demás contextos D06, H53, decisión D07 y D05 mantienen sus owners. STANDARD
 global sigue como default; command usa su propio default UNSPECIFIED del SDK.
+
+
+## B07 — frames cliente de creación de catálogo
+
+✅ Cerrado el corte acotado en `7524e39`;
+[evidencia](evidence/bson-consolidation-implementation/bson-input-catalog/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-catalog/receipt.json).
+create_collection/create_index/create_indexes admiten el frame completo antes
+de la normalización servidor, las copias de valores o los cambios de catálogo. Se reutilizan encoder,
+catálogo de aliases, normalizador servidor y materializador; raw/wire conserva
+su ejecución preparada sin codificación cliente repetida.
+
+El contraste corrige precheck, coerción size, null opcionales, código por
+dialecto, idempotencia de opciones y codecs propios de índices/listCollections.
+La fábrica de create se ejecuta una vez después de confirmar; sus errores no
+revierten la creación. Los controles del comando no se guardan como opciones.
+El adaptador de modelos no copia objetos arbitrarios antes de admitir BSON.
+
+Nueve acciones/233 observaciones por MongoDB 7/8/9: base 156 fallos/63 correctos,
+candidato 219 checks nuevos correctos. El replay instalado obtiene
+9660 correctos y 72 fallos del conjunto previo,
+sin nodos nuevos. Cohorte: 2149 correctas/4690 subtests,
+con los mismos dos fallos antiguos de batching; 18 pruebas de frontera pasan.
+Perfil realmente sin SDK: 1.362 observaciones nuevas y las regresiones de
+comandos/bulk/mutación/inserción/lectura. API limitada a cuatro firmas de
+aliases, typing y lint pasan; 284 históricos
+intactos y 63 recursos propios ausentes. Coste create 1.95/1.99
+(Memory/SQLite) frente a la base: D05 conserva su revisión y presupuesto.
+
+→ Sigue: disponer el censo de entradas administrativas e índices antes de
+coordinar UUID global; no se declara B07 cerrado por estos tres wrappers.
+Positivos/batching, demás contextos D06, H53, decisión D07 y D05 conservan sus
+owners. El censo no obliga a implementar Atlas ni funciones fuera del subset.

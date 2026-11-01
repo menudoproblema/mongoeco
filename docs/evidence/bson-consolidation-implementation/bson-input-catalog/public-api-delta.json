@@ -1,0 +1,57 @@
+{
+  "changes": [
+    {
+      "path": ".modules.mongoeco.api.symbols.AsyncCollection.members.create_index.parameters",
+      "added_parameter": {
+        "annotation": {
+          "nullable": false,
+          "rendered": "'object'"
+        },
+        "default": null,
+        "kind": "var_keyword",
+        "name": "kwargs",
+        "required": true
+      }
+    },
+    {
+      "path": ".modules.mongoeco.api.symbols.AsyncCollection.members.create_indexes.parameters",
+      "added_parameter": {
+        "annotation": {
+          "nullable": false,
+          "rendered": "'object'"
+        },
+        "default": null,
+        "kind": "var_keyword",
+        "name": "kwargs",
+        "required": true
+      }
+    },
+    {
+      "path": ".modules.mongoeco.api.symbols.Collection.members.create_index.parameters",
+      "added_parameter": {
+        "annotation": {
+          "nullable": false,
+          "rendered": "object"
+        },
+        "default": null,
+        "kind": "var_keyword",
+        "name": "kwargs",
+        "required": true
+      }
+    },
+    {
+      "path": ".modules.mongoeco.api.symbols.Collection.members.create_indexes.parameters",
+      "added_parameter": {
+        "annotation": {
+          "nullable": false,
+          "rendered": "object"
+        },
+        "default": null,
+        "kind": "var_keyword",
+        "name": "kwargs",
+        "required": true
+      }
+    }
+  ],
+  "no_other_changes": true
+}

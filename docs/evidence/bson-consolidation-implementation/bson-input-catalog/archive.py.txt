@@ -1,0 +1,96 @@
+import ast,gzip,hashlib,io,json,re,shutil,subprocess,tarfile
+from pathlib import Path
+ROOT=Path('docs/evidence/bson-consolidation-implementation/bson-input-catalog');ROOT.mkdir(exist_ok=True)
+wheel=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+info=json.loads((wheel/'wheel.json').read_text());runtime=json.loads((wheel/'runtime.json').read_text())
+assert len(runtime)==285
+for p,h in runtime.items():
+ assert hashlib.sha256(Path(p).read_bytes()).hexdigest()==h,p
+ assert hashlib.sha256((Path(info['site_packages'])/Path(p).relative_to('src')).read_bytes()).hexdigest()==h,p
+wide=Path('/tmp/mongoeco-bson-catalog-wheel-all.log').read_text();unit=Path('/tmp/mongoeco-bson-catalog-wheel-unit.log').read_text()
+a=re.search(r'(\d+) failed, (\d+) passed',wide);assert a
+wide_counts={'failed':int(a[1]),'passed':int(a[2])}
+failures={x for x in wide.splitlines() if x.startswith('FAILED ')}
+reference=Path('docs/evidence/bson-consolidation-implementation/bson-input-commands/replay.txt.gz')
+old_failures={x for x in gzip.decompress(reference.read_bytes()).decode().splitlines() if x.startswith('FAILED ')}
+assert len(failures)==wide_counts['failed'] and failures<=old_failures,failures-old_failures
+assert not any('[bson_catalog-' in x for x in failures)
+assert '156 failed, 63 passed' in Path('/tmp/mongoeco-bson-catalog-baseline-final.log').read_text()
+u=re.search(r'2 failed, (\d+) passed, (\d+) subtests passed',unit);assert u
+unit_counts={'failed':2,'passed':int(u[1]),'subtests':int(u[2])}
+unit_failures={x for x in unit.splitlines() if x.startswith('FAILED ')}
+assert unit_failures=={
+'FAILED tests/unit/test_database_command_option_conservation.py::test_batch_size_limits_wire_first_batch[find]',
+'FAILED tests/unit/test_database_command_option_conservation.py::test_find_batch_size_prefetches_locally_without_truncating_api_result'}
+assert '18 passed' in Path('/tmp/mongoeco-bson-catalog-boundary-final.log').read_text()
+assert '219 passed' in Path('/tmp/mongoeco-bson-catalog-focused.log').read_text()
+assert '18 passed, 13 subtests passed' in Path('/tmp/mongoeco-bson-catalog-api-check.log').read_text()
+proofs=list(wheel.glob('wheel-imports-bson-catalog-*.json'));assert len(proofs)==9,len(proofs)
+for p in proofs:
+ d=json.loads(p.read_text());assert d['modules'] and d['exit_code'] in (0,1)
+ assert Path(d['site']).resolve()==Path(info['site_packages']).resolve()
+ shutil.copy2(p,ROOT/p.name)
+base_root=Path(Path('/tmp/mongoeco-bson-catalog-baseline-location.txt').read_text().strip());shutil.copy2(base_root/'runtime.json',ROOT/'baseline-runtime-sources.json')
+for p in base_root.glob('wheel-imports-*.json'):shutil.copy2(p,ROOT/'baseline-imports.json')
+logs={'wheel-all':'replay','wheel-unit':'unit','baseline-final':'baseline','build-final':'build','boundary-final':'boundary','unit-feedback':'unit-initial-feedback','wheel-all-interrupted':'replay-interrupted-feedback','wheel-unit-interrupted':'unit-interrupted-feedback','wheel-unit-sdk-free-feedback':'unit-before-metadata-fix','wheel-all-sdk-free-feedback':'replay-before-metadata-fix','api-check':'api-check','focused':'focused','wheel-all-bridge-feedback':'replay-bridge-feedback','baseline-bridge-feedback':'baseline-bridge-feedback','wheel-all-before-name-fix':'replay-before-name-fix','wheel-unit-before-name-fix':'unit-before-name-fix','boundary-name-feedback':'name-admission'}
+for source,dest in logs.items():(ROOT/(dest+'.txt.gz')).write_bytes(gzip.compress(Path('/tmp/mongoeco-bson-catalog-'+source+'.log').read_bytes(),mtime=0))
+portable={}
+for suffix,count in [('sdk-free',1362),('sdk-free-commands',1362),('sdk-free-bulk',2880),('sdk-free-mutations',3918),('sdk-free-inserts',942),('sdk-free-reads',748)]:
+ d=json.loads(Path('/tmp/mongoeco-bson-catalog-'+suffix+'.log').read_text());assert d['sdk_available'] is False and d['checks']==count and d['site']==info['site_packages']
+ (ROOT/(suffix+'.json')).write_text(json.dumps(d,indent=2)+'\n');portable[suffix]=count
+for source,dest in [('lint-final.log','lint.txt'),('resources.json','resources.json'),('cost.json','cost.json'),('api-candidate.json','public-api.json'),('api-delta.json','public-api-delta.json'),('frontier-census.json','frontier-census.json')]:shutil.copy2('/tmp/mongoeco-bson-catalog-'+source,ROOT/dest)
+shutil.copy2('/tmp/mongoeco-bson-input-typing.txt',ROOT/'typing.txt')
+assert 'negative-errors=20' in (ROOT/'typing.txt').read_text() and 'negative-errors=25' in (ROOT/'typing.txt').read_text()
+assert 'passed' in (ROOT/'lint.txt').read_text()
+changes=json.loads((ROOT/'public-api-delta.json').read_text());assert changes['no_other_changes'] and len(changes['changes'])==4
+resources=json.loads((ROOT/'resources.json').read_text());assert len(resources)==63 and all(x['absent'] for x in resources)
+for item in json.loads((ROOT/'frontier-census.json').read_text()):assert hashlib.sha256(Path(item['source']).read_bytes()).hexdigest()==item['source_sha256']
+programs={
+'/tmp/mongoeco-dispatch-build.py':'build.py.txt',
+'/tmp/mongoeco-bson-catalog-wheel-all.py':'replay.py.txt',
+'/tmp/mongoeco-bson-catalog-wheel-unit.py':'unit.py.txt',
+'/tmp/mongoeco_dispatch_artifact_guard.py':'artifact-guard.py.txt',
+'/tmp/mongoeco-bson-catalog-baseline.py':'baseline.py.txt',
+'/tmp/mongoeco-bson-catalog-focused.py':'focused.py.txt',
+'/tmp/mongoeco-bson-catalog-sdk-free.py':'sdk-free.py.txt',
+'/tmp/mongoeco-bson-catalog-sdk-free-prepare.py':'sdk-free-prepare.py.txt',
+'/tmp/mongoeco-bson-catalog-resources.py':'resources.py.txt',
+'/tmp/mongoeco-bson-catalog-cost.py':'cost.py.txt',
+'/tmp/mongoeco-bson-catalog-cost-worker.py':'cost-worker.py.txt',
+'/tmp/mongoeco-bson-catalog-api-delta-check.py':'api-delta-check.py.txt',
+'/tmp/mongoeco-bson-catalog-frontier-census.py':'frontier-census.py.txt',
+'/tmp/mongoeco-bson-catalog-archive.py':'archive.py.txt',
+'/tmp/mongoeco-bson-catalog-finish-docs.py':'finish-docs.py.txt',
+'/tmp/mongoeco-bson-catalog-finalize.py':'finalize.py.txt',
+'/tmp/mongoeco-bson-command-sdk-free.py':'portable-commands.py.txt',
+'/tmp/mongoeco-bson-input-sdk-free.py':'portable-values-and-reads.py.txt',
+'/tmp/mongoeco-bson-bulk-sdk-free.py':'portable-bulk.py.txt',
+'/tmp/mongoeco-bson-mutation-sdk-free.py':'portable-mutations.py.txt',
+'/tmp/mongoeco-bson-insert-sdk-free.py':'portable-inserts.py.txt',
+}
+for source,dest in programs.items():shutil.copy2(source,ROOT/dest)
+native={}
+for round_id in range(1,8):
+ program=Path('/tmp/mongoeco-bson-catalog-native'+('' if round_id==1 else f'-v{round_id}')+'.py')
+ tree=ast.parse(program.read_text());assignment=next(n for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='root' for t in n.targets))
+ folder=Path(ast.literal_eval(assignment.value.args[0]));shutil.copy2(program,ROOT/f'native-{round_id}-controller.py.txt')
+ for target in ('7.0','8.0','9.0'):
+  fixture=json.loads((folder/target/'fixture.json').read_text());assert fixture['status']=='succeeded'
+  (ROOT/f'native-{round_id}-{target}.json').write_text(json.dumps(fixture,indent=2)+'\n')
+  (ROOT/f'native-{round_id}-{target}.txt.gz').write_bytes(gzip.compress((folder/(target+'.log')).read_bytes(),mtime=0))
+  if round_id==7:
+   golden=Path('tests/fixtures/semantic_bson_catalog_'+target.replace('.','_')+'.json');check=folder/target/'bson_catalog-check.json';assert golden.read_bytes()==check.read_bytes()
+   (ROOT/f'native-check-{target}.json.gz').write_bytes(gzip.compress(check.read_bytes(),mtime=0))
+   native[target]={'server':fixture['runtime']['build_info']['version'],'fixture':str(golden),'sha256':hashlib.sha256(golden.read_bytes()).hexdigest(),'observations':233}
+blob=subprocess.check_output(['git','archive','c1255eb','tests/fixtures','tests/support_write_parity.py','tests/support_bson_observation.py']);protected={}
+with tarfile.open(fileobj=io.BytesIO(blob)) as archive:
+ for entry in archive.getmembers():
+  if entry.isfile():
+   h=hashlib.sha256(archive.extractfile(entry).read()).hexdigest();assert hashlib.sha256(Path(entry.name).read_bytes()).hexdigest()==h,entry.name
+   protected[entry.name]=h
+(ROOT/'protected.json').write_text(json.dumps(protected,indent=2)+'\n');(ROOT/'runtime-sources.json').write_text(json.dumps(runtime,indent=2)+'\n')
+files=subprocess.check_output(['git','diff','c1255eb','--name-only','--','src','tests'],text=True).splitlines()+subprocess.check_output(['git','ls-files','--others','--exclude-standard','--','tests'],text=True).splitlines()
+(ROOT/'changed-sources.json').write_text(json.dumps({p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in sorted(set(files))},indent=2)+'\n')
+r={'base_commit':'c1255eb','scope':'B07 public create_collection/create_index/create_indexes client frames and shared parsed catalog execution; default metadata reply ownership','wheel':info,'checks':{'native':native,'baseline':{'failed':156,'passed':63},'new_corpus_candidate':{'passed':219},'wide':wide_counts,'no_new_wide_failure_nodes':True,'resolved_old_wide_nodes':sorted(old_failures-failures),'unit':{**unit_counts,'preexisting_failure_nodes':sorted(unit_failures)},'boundary_final':{'passed':18},'portable':portable,'typing':{'positive':2,'negative_errors':[20,25]},'public_api':'four **kwargs signature additions for supported native index aliases, no other declarations changed','protected_files':len(protected),'resources_absent':63},'mechanism_source':{'url':'https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/catalog/collection_options.cpp','use':'matchesStorageOptions explains per-field ordered BSON comparison and collation equivalence; native references per version remain the oracle'},'limits':['B07/D06/D05 and full goal stay open; census entrypoints need explicit admission disposition before coordinated global UUID default','Two old unit batching failures and remaining old bson_admission nodes stay visible and required','Portable uses own model constructors, omits SDK-only Code; Decimal128 BID observed as decimal text, native Int64 as portable int; sequences use the existing native capture helper','Global STANDARD remains; index request and listing reply owners use their SDK UNSPECIFIED semantics','Cost is diagnostic, including namespace precheck and reply effects, not integrated budget acceptance; no new capped enforcement or Atlas capability claimed'],'artifacts_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in ROOT.iterdir() if p.is_file() and p.name not in ('receipt.json','README.md')}}
+(ROOT/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+print(json.dumps({'wheel':info['sha256'],'wide':wide_counts,'unit':unit_counts,'protected':len(protected),'new_checks':219,'portable':portable}))

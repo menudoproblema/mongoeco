@@ -1,0 +1,262 @@
+[
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "list_indexes",
+    "line": 1824,
+    "parameters": [
+      "self",
+      "comment",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "index_information",
+    "line": 1836,
+    "parameters": [
+      "self",
+      "comment",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "drop_index",
+    "line": 1848,
+    "parameters": [
+      "self",
+      "index_or_name",
+      "comment",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "drop_indexes",
+    "line": 1862,
+    "parameters": [
+      "self",
+      "comment",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "create_search_index",
+    "line": 1874,
+    "parameters": [
+      "self",
+      "model",
+      "comment",
+      "max_time_ms",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "create_search_indexes",
+    "line": 1890,
+    "parameters": [
+      "self",
+      "indexes",
+      "comment",
+      "max_time_ms",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "list_search_indexes",
+    "line": 1906,
+    "parameters": [
+      "self",
+      "name",
+      "comment",
+      "session"
+    ],
+    "kwargs": true,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "update_search_index",
+    "line": 1927,
+    "parameters": [
+      "self",
+      "name",
+      "definition",
+      "comment",
+      "max_time_ms",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "drop_search_index",
+    "line": 1945,
+    "parameters": [
+      "self",
+      "name",
+      "comment",
+      "max_time_ms",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "drop",
+    "line": 1961,
+    "parameters": [
+      "self",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/collection.py",
+    "source_sha256": "afc965c2ce2a8251dbd9748fb9d3a7f6ccf424574068a4c87f3699dc3dd8829f",
+    "class": "AsyncCollection",
+    "method": "rename",
+    "line": 1976,
+    "parameters": [
+      "self",
+      "new_name",
+      "session"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/client.py",
+    "source_sha256": "34ce1bf4173a42f804ae1e5aa65b30c114a75c1ce840fe38bf2e5d25237d5c62",
+    "class": "AsyncDatabase",
+    "method": "list_collection_names",
+    "line": 282,
+    "parameters": [
+      "self",
+      "filter_spec",
+      "filter",
+      "session"
+    ],
+    "kwargs": true,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/client.py",
+    "source_sha256": "34ce1bf4173a42f804ae1e5aa65b30c114a75c1ce840fe38bf2e5d25237d5c62",
+    "class": "AsyncDatabase",
+    "method": "list_collections",
+    "line": 297,
+    "parameters": [
+      "self",
+      "filter_spec",
+      "filter",
+      "session"
+    ],
+    "kwargs": true,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/client.py",
+    "source_sha256": "34ce1bf4173a42f804ae1e5aa65b30c114a75c1ce840fe38bf2e5d25237d5c62",
+    "class": "AsyncDatabase",
+    "method": "validate_collection",
+    "line": 348,
+    "parameters": [
+      "self",
+      "name_or_collection",
+      "scandata",
+      "full",
+      "background",
+      "session",
+      "comment"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/database_admin.py",
+    "source_sha256": "50cc35baf4caf140af24ab93f5e6354e2b3d0650d8cf026d72ec735925e07be2",
+    "class": "AsyncDatabaseAdminService",
+    "method": "list_collection_names",
+    "line": 205,
+    "parameters": [
+      "self",
+      "filter_spec",
+      "filter",
+      "session"
+    ],
+    "kwargs": true,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/database_admin.py",
+    "source_sha256": "50cc35baf4caf140af24ab93f5e6354e2b3d0650d8cf026d72ec735925e07be2",
+    "class": "AsyncDatabaseAdminService",
+    "method": "list_collections",
+    "line": 256,
+    "parameters": [
+      "self",
+      "filter_spec",
+      "filter",
+      "session"
+    ],
+    "kwargs": true,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  },
+  {
+    "source": "src/mongoeco/api/_async/database_admin.py",
+    "source_sha256": "50cc35baf4caf140af24ab93f5e6354e2b3d0650d8cf026d72ec735925e07be2",
+    "class": "AsyncDatabaseAdminService",
+    "method": "validate_collection",
+    "line": 642,
+    "parameters": [
+      "self",
+      "name_or_collection",
+      "scandata",
+      "full",
+      "background",
+      "session",
+      "comment"
+    ],
+    "kwargs": false,
+    "disposition": "census for next B07 frontier audit, not a proven divergence or acceptance"
+  }
+]

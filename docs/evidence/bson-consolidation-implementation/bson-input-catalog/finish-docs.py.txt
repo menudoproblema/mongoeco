@@ -1,0 +1,147 @@
+import hashlib,json,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-catalog');r=json.loads((root/'receipt.json').read_text());commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();short=commit[:7];r['implementation_commit']=commit
+wide=r['checks']['wide'];unit=r['checks']['unit'];ratios=json.loads((root/'cost.json').read_text())['ratios']
+(root/'README.md').write_text(f'''# B07: frames cliente de creación de colecciones e índices
+
+Implementación `{short}`, base `c1255eb`. Cierre acotado de create_collection,
+create_index y create_indexes; B07/D06/D05 y el objetivo completo siguen abiertos.
+
+## Causa, cambio y revisión
+
+Los wrappers validaban o copiaban antes de admitir BSON. Un modelo SDK del
+segundo índice podía contener un Decimal crudo y dejar ejecutarse el primero.
+Ahora los modelos se adaptan como vistas, sin deepcopy previo. El nombre solo se genera ante None para conservar
+un Decimal(0) que evalúa falso hasta llegar al encoder. Tres controles usan el BSON encoder
+real del SDK para ese caso. Se recopila el
+lote completo y el encoder existente admite una sola solicitud. Solo después
+se usa el normalizador servidor de modelos, compartido con createIndexes.
+Se retira el normalizador de lista redundante y el adaptador individual delega
+en ese owner común. El constructor del modelo propio conserva su contrato.
+
+create_index conserva su ejecución existente; create_indexes separa preparación
+pública y ejecución preparada. Los comandos raw invocan esa ejecución sin otra
+codificación cliente. La capa wire conserva el diagnóstico servidor del lote
+vacío, código 2, en lugar de envolverlo en un error sin código. Los aliases
+partialFilterExpression, expireAfterSeconds, wildcardProjection,
+defaultLanguage, languageOverride y maxTimeMS se declaran con el catálogo de
+argumentos existente. Cuatro firmas añaden `**kwargs` para esos aliases;
+ninguna otra declaración del manifiesto cambia ni se añade un flag de bypass.
+
+Las opciones pertenecen a cada solicitud: los índices usan UNSPECIFIED aunque
+la colección tenga STANDARD/legacy; create hereda las opciones de la colección
+que devuelve, incluidas las explícitas, también en sync. El precheck de
+existencia precede a BSON, size se convierte a float donde lo hace el SDK y la
+validación servidor ocurre después de la admisión. El preparador interpreta
+los null opcionales como ausencia. El código de size no positivo conserva el
+dialecto del llamador: 51024 en 7.0, 2 en 8.0/9.0.
+
+Con check_exists=False, el create servidor es idempotente si coinciden sus
+opciones. Se reutilizan igualdad BSON y normalización de collation para esa
+política concreta: orden de opciones raíz irrelevante, orden dentro de
+validator significativo y ausencia de validationLevel distinta de strict
+explícito. Los controles del comando no se persisten como opciones. La lectura
+[del servidor r8.0.0](https://raw.githubusercontent.com/mongodb/mongo/r8.0.0/src/mongo/db/catalog/collection_options.cpp)
+explica matchesStorageOptions; las capturas por versión son el oráculo.
+
+El create decodifica su respuesta con el materializador común aun cuando
+retorne una colección. Si la fábrica falla, la creación ya confirmada permanece.
+Los recuentos internos de índices usan el SPI y no ejecutan codecs del usuario.
+listCollections materializa con sus opciones propias UNSPECIFIED: el perfil
+sin SDK detectó UUID como UUID en vez de Binary 4, y se corrige esa respuesta
+sin modificar el encoder portable ni las claves persistidas.
+
+## Evidencia
+
+- [Receipt](receipt.json), [runtime](runtime-sources.json), [cambio](changed-sources.json)
+  y guards: wheel de 285 módulos, SHA `{r['wheel']['sha256']}`.
+- Nueve acciones / 233 observaciones por MongoDB 7.0.43/8.0.32/9.0.2 standalone,
+  SDK 4.19.0; capturas y checks finales coinciden byte a byte con el hash final
+  del corpus. Las siete rondas conservan manifiestos, controles y feedback.
+  El puente async añade únicamente la delegación real create_indexes; se
+  repiten baseline y candidato con el mismo puente. Los 72 falsos fallos
+  anteriores del harness no se atribuyen al producto ni se normalizan.
+- [Base](baseline.txt.gz): 156 fallos/63 correctos. Candidato: 219 checks nuevos
+  correctos, directa/wire sync/async × Memory/SQLite × 7/8/9.
+  [Replay](replay.txt.gz): {wide['passed']} correctos y {wide['failed']} fallos
+  restantes, subconjunto exacto del conjunto previo y sin nodos nuevos.
+- [Cohorte ampliada](unit.txt.gz): {unit['passed']} correctas,
+  {unit['subtests']} subtests y dos fallos de batching ya reproducidos en la
+  base anterior. [Frontera](boundary.txt.gz): 18 correctas. Comprobar ausencia
+  de llamadas de creación antes de admitir el lote, estado/índices intactos,
+  barrera de eventos, reapertura SQLite, ausencia de deepcopy previo,
+  admisión única, preservación de opciones devueltas y efectos tras fallo de
+  fábrica. Los gates interrumpidos por contraejemplos se conservan como
+  feedback; no acreditan aceptación.
+- [Sin SDK](sdk-free.json): 1.362 observaciones de catálogo en Python 3.13.15,
+  usando modelos propios; Code exclusivo del SDK queda fuera. Decimal128 usa
+  su texto público e Int64 la clase int portable. Las secuencias no tipadas
+  usan exactamente el helper del capturador existente; las etiquetas de tipo
+  observadas se conservan. Regresiones: 1.362 comandos, 2.880 bulk,
+  3.918 mutaciones, 942 inserciones y 748 lecturas, sobre el mismo wheel.
+- [API](api-check.txt.gz): 18 pruebas/13 subtests; [delta](public-api-delta.json)
+  limitado a las cuatro firmas previstas. [Typing](typing.txt): dos positivos
+  y 20/25 negativos. [Lint](lint.txt) correcto. [Protección](protected.json):
+  {r['checks']['protected_files']} fixtures/observadores históricos intactos.
+- [Recursos](resources.json): 21 contenedores y 42 volúmenes propios verificados
+  ausentes con Docker operativo. Las rutas se leen de los controladores reales.
+- [Coste](cost.json), ABBA×2/100 solicitudes, CPU con replay concurrente:
+  {', '.join(f'{k}: {v:.2f}' for k,v in ratios.items())}.
+  Incluye precheck y respuesta de create; no se acepta presupuesto D05.
+
+## Pendientes
+
+El [censo](frontier-census.json) identifica 17 entrypoints, con delegaciones,
+que requieren disposición explícita antes de cerrar B07: listados, información
+y retirada de índices, namespace/validación y métodos de índices Search.
+Es un censo, no 17 defectos demostrados ni una ampliación a Atlas. Reutilizar
+las fronteras existentes cuando ya estén cubiertos; para los restantes,
+caracterizar admisión/fase/owner y contrastar la parte nativa aplicable.
+Después coordinar UUID global y completar positivos, batching y otros contextos
+D06/B08. Siguen H53, decisión D07 y D05 (matrices, cobertura, persistencia,
+costes y gates integrados). STANDARD global permanece. No se acredita nueva
+implementación de capped, transacciones, cifrado ni Atlas con este corte.
+''')
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text();start=s.index('- B07: lecturas, inserciones y mutaciones públicas');end=s.index('\n',start)
+s=s[:start]+f'''- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `{short}` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva {wide['failed']} fallos previos obligatorios y dos tests antiguos de batching siguen rojos. El censo de entradas administrativas/índices requiere disposición antes del default UUID coordinado; continúan positivos y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.''' +s[end:]
+s+=f'''
+
+## B07 — frames cliente de creación de catálogo
+
+✅ Cerrado el corte acotado en `{short}`;
+[evidencia](evidence/bson-consolidation-implementation/bson-input-catalog/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-catalog/receipt.json).
+create_collection/create_index/create_indexes admiten el frame completo antes
+de la normalización servidor, las copias de valores o los cambios de catálogo. Se reutilizan encoder,
+catálogo de aliases, normalizador servidor y materializador; raw/wire conserva
+su ejecución preparada sin codificación cliente repetida.
+
+El contraste corrige precheck, coerción size, null opcionales, código por
+dialecto, idempotencia de opciones y codecs propios de índices/listCollections.
+La fábrica de create se ejecuta una vez después de confirmar; sus errores no
+revierten la creación. Los controles del comando no se guardan como opciones.
+El adaptador de modelos no copia objetos arbitrarios antes de admitir BSON.
+
+Nueve acciones/233 observaciones por MongoDB 7/8/9: base 156 fallos/63 correctos,
+candidato 219 checks nuevos correctos. El replay instalado obtiene
+{wide['passed']} correctos y {wide['failed']} fallos del conjunto previo,
+sin nodos nuevos. Cohorte: {unit['passed']} correctas/{unit['subtests']} subtests,
+con los mismos dos fallos antiguos de batching; 18 pruebas de frontera pasan.
+Perfil realmente sin SDK: 1.362 observaciones nuevas y las regresiones de
+comandos/bulk/mutación/inserción/lectura. API limitada a cuatro firmas de
+aliases, typing y lint pasan; {r['checks']['protected_files']} históricos
+intactos y 63 recursos propios ausentes. Coste create {ratios['MemoryEngine/create']:.2f}/{ratios['SQLiteEngine/create']:.2f}
+(Memory/SQLite) frente a la base: D05 conserva su revisión y presupuesto.
+
+→ Sigue: disponer el censo de entradas administrativas e índices antes de
+coordinar UUID global; no se declara B07 cerrado por estos tres wrappers.
+Positivos/batching, demás contextos D06, H53, decisión D07 y D05 conservan sus
+owners. El censo no obliga a implementar Atlas ni funciones fuera del subset.
+''';p.write_text(s)
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text();s=s.replace('comandos `3bfe5fb` y recontraste del informe', f'comandos `3bfe5fb`, catálogo `{short}` y recontraste del informe',1)
+old='Completar wrappers de catálogo/índices/validators y sus entradas internas preparadas. `3bfe5fb` acepta admisión/respuesta de Database.command; no acepta por asociación esos wrappers.'
+new=f'''`{short}` acepta los frames de create_collection/create_index/create_indexes y su ejecución preparada; `3bfe5fb` conserva comandos. Antes del default, disponer el [censo de 17 entrypoints](evidence/bson-consolidation-implementation/bson-input-catalog/frontier-census.json): listados/información/retirada de índices, namespace/validación y métodos Search, incluyendo delegaciones. Cada entrada necesita reuse acreditado o admisión/fase/owner verificados; no son 17 bugs ni obligación de implementar Atlas.'''
+assert old in s;s=s.replace(old,new,1)
+s=s.replace('e integra comandos en `3bfe5fb`, pero conserva wrappers de catálogo/índices/validators pendientes, y 4 coordina las opciones',f'e integra comandos en `3bfe5fb` y creación de catálogo en `{short}`; conserva la disposición del censo de fronteras administrativas/índices antes del default, y 4 coordina las opciones',1)
+p.write_text(s)
+r['artifacts_sha256']={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in root.iterdir() if p.is_file() and p.name!='receipt.json'};(root/'receipt.json').write_text(json.dumps(r,indent=2)+'\n');print(short,wide)

@@ -1,0 +1,105 @@
+{
+  "order": "ABBA x2",
+  "requests_per_sample": 100,
+  "warmup": 10,
+  "metric": "process_time_ns",
+  "samples": [
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/create": 4993000,
+        "MemoryEngine/index": 8718000,
+        "MemoryEngine/indexes": 14334000,
+        "SQLiteEngine/create": 14214000,
+        "SQLiteEngine/index": 40921000,
+        "SQLiteEngine/indexes": 95843000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/create": 9943000,
+        "MemoryEngine/index": 12455000,
+        "MemoryEngine/indexes": 16796000,
+        "SQLiteEngine/create": 29527000,
+        "SQLiteEngine/index": 44651000,
+        "SQLiteEngine/indexes": 99014000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/create": 11098000,
+        "MemoryEngine/index": 12825000,
+        "MemoryEngine/indexes": 17379000,
+        "SQLiteEngine/create": 31562000,
+        "SQLiteEngine/index": 47281000,
+        "SQLiteEngine/indexes": 104265000
+      }
+    },
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/create": 4819000,
+        "MemoryEngine/index": 9285000,
+        "MemoryEngine/indexes": 13860000,
+        "SQLiteEngine/create": 13864000,
+        "SQLiteEngine/index": 39152000,
+        "SQLiteEngine/indexes": 88345000
+      }
+    },
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/create": 5001000,
+        "MemoryEngine/index": 8506000,
+        "MemoryEngine/indexes": 13718000,
+        "SQLiteEngine/create": 14758000,
+        "SQLiteEngine/index": 40491000,
+        "SQLiteEngine/indexes": 91021000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/create": 9168000,
+        "MemoryEngine/index": 11857000,
+        "MemoryEngine/indexes": 16658000,
+        "SQLiteEngine/create": 26327000,
+        "SQLiteEngine/index": 42185000,
+        "SQLiteEngine/indexes": 91770000
+      }
+    },
+    {
+      "runtime": "candidate",
+      "values": {
+        "MemoryEngine/create": 9209000,
+        "MemoryEngine/index": 11757000,
+        "MemoryEngine/indexes": 15903000,
+        "SQLiteEngine/create": 26133000,
+        "SQLiteEngine/index": 41045000,
+        "SQLiteEngine/indexes": 93762000
+      }
+    },
+    {
+      "runtime": "base",
+      "values": {
+        "MemoryEngine/create": 4777000,
+        "MemoryEngine/index": 8761000,
+        "MemoryEngine/indexes": 13612000,
+        "SQLiteEngine/create": 13118000,
+        "SQLiteEngine/index": 38362000,
+        "SQLiteEngine/indexes": 87975000
+      }
+    }
+  ],
+  "ratios": {
+    "MemoryEngine/create": 1.9518956379942927,
+    "MemoryEngine/index": 1.3909262543623777,
+    "MemoryEngine/indexes": 1.213068387845384,
+    "SQLiteEngine/create": 1.9892442481658237,
+    "SQLiteEngine/index": 1.0903155330663084,
+    "SQLiteEngine/indexes": 1.0747633330731576
+  },
+  "scope": "diagnostic catalog CPU with unique namespaces and active broad replay; not integrated D05 budget acceptance"
+}

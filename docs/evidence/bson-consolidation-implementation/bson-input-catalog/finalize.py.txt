@@ -1,0 +1,12 @@
+import hashlib,json,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-catalog');r=json.loads((root/'receipt.json').read_text())
+subprocess.run(['git','merge-base','--is-ancestor',r['implementation_commit'],'HEAD'],check=True)
+assert not subprocess.check_output(['git','status','--porcelain','--','src','tests'],text=True)
+for name in ('runtime-sources.json','changed-sources.json','protected.json'):
+ for file,h in json.loads((root/name).read_text()).items():assert hashlib.sha256(Path(file).read_bytes()).hexdigest()==h,file
+for file,h in r['artifacts_sha256'].items():assert hashlib.sha256((root/file).read_bytes()).hexdigest()==h,file
+for file in ('docs/bson-consolidation-implementation.md','docs/bson-semantics-consolidation-plan.md'):assert r['implementation_commit'][:7] in Path(file).read_text()
+assert r['checks']['no_new_wide_failure_nodes'] and r['checks']['new_corpus_candidate']['passed']==219
+assert r['checks']['unit']['failed']==2
+print('Verified code ancestor, final source hashes, historical protection, receipt artifacts and active owner links.')

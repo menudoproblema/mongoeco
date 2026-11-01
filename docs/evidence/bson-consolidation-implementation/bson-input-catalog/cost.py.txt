@@ -1,0 +1,39 @@
+import json,statistics,subprocess,sys
+from pathlib import Path
+base=Path(Path('/tmp/mongoeco-bson-catalog-baseline-location.txt').read_text().strip())
+current=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+code='''import json,sys,time
+sys.path.insert(0,sys.argv[1])
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from pymongo import IndexModel
+out={}
+for factory in (MemoryEngine,SQLiteEngine):
+ for route in ('create','index','indexes'):
+  with MongoClient(factory()) as c:
+   db=c.test
+   def request(i):
+    name='rows_'+str(i)
+    if route=='create':return db.create_collection(name).name
+    if route=='index':return db[name].create_index('v')
+    return db[name].create_indexes([IndexModel('v'),IndexModel('other')])
+   for i in range(10):request(i)
+   start=time.process_time_ns()
+   for i in range(10,110):result=request(i)
+   elapsed=time.process_time_ns()-start
+   assert result==('rows_109' if route=='create' else 'v_1' if route=='index' else ['v_1','other_1'])
+   assert len(db.list_collection_names())==110
+   out[factory.__name__+'/'+route]=elapsed
+print(json.dumps(out))
+'''
+worker=Path('/tmp/mongoeco-bson-catalog-cost-worker.py');worker.write_text(code)
+samples=[]
+for tag in ['base','candidate','candidate','base']*2:
+ root=base if tag=='base' else current
+ info=json.loads((root/'wheel.json').read_text())
+ row=json.loads(subprocess.check_output([sys.executable,'-I',str(worker),info['site_packages']]))
+ samples.append({'runtime':tag,'values':row})
+ratios={key:statistics.median(r['values'][key] for r in samples if r['runtime']=='candidate')/statistics.median(r['values'][key] for r in samples if r['runtime']=='base') for key in samples[0]['values']}
+result={'order':'ABBA x2','requests_per_sample':100,'warmup':10,'metric':'process_time_ns','samples':samples,'ratios':ratios,'scope':'diagnostic catalog CPU with unique namespaces and active broad replay; not integrated D05 budget acceptance'}
+Path('/tmp/mongoeco-bson-catalog-cost.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(ratios))
