@@ -1,5 +1,10 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
+**Propuesta posterior al cierre (1 de noviembre de 2026):**
+[plan en dos partes: correcciones acotadas y ampliaciones](#incremento-propuesto-20261101).
+Base 2fa637f6. Esta propuesta no reabre O1–O8 ni B1–B4 de los dos P2,
+no cambia sus receipts y no acredita implementación ni aprobación de capacidades nuevas.
+
 **Entrada vigente (1 de noviembre; alcance O1–O8 y D05 cerrado):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
@@ -1885,3 +1890,517 @@ centrales, todas r8.0.0:
 - [Parser de expresiones MQL](https://github.com/mongodb/mongo/blob/r8.0.0/src/mongo/db/matcher/expression_parser.cpp): distinción literal/operadores, primer campo y excepción DBRef dependiente del contexto. Hash adicional en la evidencia de revisión 3.
 - [collection_write_path](https://github.com/mongodb/mongo/blob/r8.0.0/src/mongo/db/catalog/collection_write_path.cpp) y [collection_impl](https://github.com/mongodb/mongo/blob/r8.0.0/src/mongo/db/catalog/collection_impl.cpp): candidato antes del antiguo y warning convertido a permiso; collation/contexto del validator.
 - [variables](https://github.com/mongodb/mongo/blob/r8.0.0/src/mongo/db/pipeline/variables.cpp), [pipeline](https://github.com/mongodb/mongo/blob/r8.0.0/src/mongo/db/pipeline/pipeline.cpp) y [Date_t](https://github.com/mongodb/mongo/blob/r8.0.0/src/mongo/util/time_support.h): constantes, preparación y milisegundos.
+
+
+<a id="incremento-propuesto-20261101"></a>
+
+## 9. Propuesta de incremento posterior: correcciones y ampliaciones
+
+Estado: propuesta de planificación, sin implementación ni aceptación nueva.
+Base congelada: 2fa637f6254a09acd6c81aeee5a36384fdbdbfa7.
+Owner de este plan: este apartado. Los apartados anteriores conservan su
+alcance histórico; el estado aceptado lo posee
+[bson-consolidation-implementation.md](bson-consolidation-implementation.md).
+Las dos partes siguientes tienen cierre independiente. La parte II no bloquea
+el cierre de la parte I por el mero hecho de permanecer sin ejecutar.
+
+Entrada: informe de regeneración aportado el 1 de noviembre; ocho baterías
+y 22 sondas adicionales. El contraste anterior reejecutó 96 casos locales,
+192 observaciones Memory/SQLite con dialecto 9.0; 67 casos cuentan con registro
+nativo aportado de la discrepancia. No hubo una nueva ejecución física en ese
+contraste. Son caracterización, no aceptación ni cobertura completa de MongoDB.
+Al ejecutar F00 se incorporarán los estímulos necesarios al inventario existente,
+con hash/procedencia del informe y de sus sondas, sin depender del scratchpad.
+
+### 9.1. Decisiones de alcance y simplificación
+
+Se propone ejecutar la parte I: defectos concretos del contrato existente,
+normalización de capacidades y cierre sobre candidato instalado. La parte II
+es una cartera de decisiones independientes: implementar capacidades ausentes,
+cambiar representación persistida, backend o garantías transversales.
+
+Un cambio es acotado si conserva SPI v2 y formato SQLite, emplea los owners y
+runners existentes, tiene un conjunto finito de testigos y consumidores, y no
+requiere una capacidad nueva. Su aceptación no significa paridad universal.
+Si al reproducirlo aparece una dependencia mayor, se registra el caso y el
+contrato incumplido, se propone su corte en la parte II y se explicita el límite.
+No se puede borrar un criterio aprobado de la parte I mediante ese traslado:
+haría falta una disposición explícita antes de aceptar un alcance reducido.
+
+No se propone un Value universal, otro OperationContext, un resolver único con
+flags para todas las rutas, otro runner ni una reescritura general del evaluador.
+Se reutilizan las primitivas BSON, el contexto de operación, las tablas de
+gramática, document_with_id_first y el registro de corpus actuales.
+Cada corrección elimina la duplicación responsable del fallo; no migra todos
+los consumidores por similitud ni agrega una caché global.
+
+Disposiciones previas a la lista de defectos:
+
+- limit(0) y la indexación numérica de rutas de expresión son defectos
+  anteriores al último P2. Su mayor exposición no prueba una regresión nueva.
+- Las dos diferencias aportadas de orden de grupos no son defectos de runtime.
+  Se comparan grupos sin exigir orden exterior, conservando multiplicidad,
+  tipos y orden de campos. Lo mismo se aplica a empates cuyo orden no se garantiza.
+- No se exige imitar el casing Unicode de toLower/toUpper fuera de ASCII.
+  Trim y conversión numérica a texto tienen contratos propios y sí entran.
+- La ausencia de un literal de error 52 no prueba qué operaciones fallan.
+  Los errores se capturan por contexto, versión, fase y efectos.
+- Views, capped y otras capacidades pendientes no se convierten en aceptadas
+  por almacenar sus opciones. Su implementación pertenece a la parte II;
+  la parte I debe dejar explícita su disposición, sin silencios ni falsos
+  diagnósticos nativos. No se rebaja una capacidad públicamente garantizada
+  a unsupported para ocultar un fallo: F00 debe identificar ese conflicto.
+- Los mensajes solo diferentes se priorizan después de resultados, integridad,
+  familias/códigos y fases, salvo garantías de diagnóstico completo ya exigidas.
+
+### 9.2. Parte I — Entrega acotada del contrato existente
+
+Prioridades: P1, resultados erróneos, selección o aceptación de escrituras y
+fallos públicos no tipados; P2, otros contratos funcionales y diagnósticos.
+Todos los bloques empiezan pendientes. F00 fija los casos antes de editar.
+F11 es el cierre integrado; un bloque focal verde no acepta toda la entrega.
+
+| Bloque | Prioridad | Entregable | Dependencias |
+| --- | --- | --- | --- |
+| F00 | P1 | Inventario cerrado, oráculos y mapa de impacto | Base 2fa637f6 |
+| F01 | P1 | Límites de cursor sin confundir cero con agotamiento | F00 |
+| F02 | P1 | Salidas de ventanas y objetos BSON válidos | F00 |
+| F03 | P1 | Rutas por contexto y consumidores de arrays | F00 |
+| F04 | P1 | Gramática de predicados Regex y size BSON | F00 |
+| F05 | P1 | Collation efectiva y validación del subset | F00 |
+| F06 | P1 | Integridad y reglas de catálogo de índices | F00; F05 para herencia/collation |
+| F07 | P1/P2 | Candidatos de escritura, campos e identidad física | F00; integrar F03/F04/F06 al seleccionar/validar |
+| F08 | P1/P2 | Claves de sort y acumuladores/buckets afectados | F00; F03 para rutas, F05 para collation |
+| F09 | P2 | Argumentos BSON, calendario y texto de las familias retenidas | F00 |
+| F10 | P2 | Fachadas, metadata y capacidades explícitas | F00; F06 para índices |
+| F11 | P1 | Regresión, coste, packaging y entrega integrada | F01–F10 dispuestos y aceptados |
+
+Las dependencias de integración no obligan a serializar las reproducciones
+independientes. Orden recomendado: F00; F01/F02/F04 y F05; F03/F06; F07/F08;
+F09/F10; F11. Pueden adelantarse arreglos pequeños de F09/F10 ya caracterizados.
+No se añade una dependencia de F01 hacia F02 ni una cadena entre todas las
+familias numéricas: compartir un archivo no demuestra dependencia semántica.
+
+#### F00 — Inventario y aceptación antes del arreglo
+
+- Fijar estímulo mínimo, seed y orden BSON, superficie, consumidor, versiones,
+  efectos observables, diagnóstico, prioridad y bloque para cada recomendación.
+  Clasificar: defecto reproducido, comprobación obligatoria o hipótesis/capacidad.
+- Cubrir las familias explícitas de F01–F10; no importar como obligaciones
+  todas las discrepancias de las 1.688 sondas ni lanzar otra auditoría general.
+- Capturar los contraejemplos con el inventario/capturador/replay existentes.
+  MongoDB 7.0.43, 8.0.32 y 9.0.2 fijados por imagen/buildInfo/FCV conforme a CI;
+  las versiones que difieran conservan expectativas distintas.
+- Caracterizar namespace ausente/vacío/poblado cuando afecte a validación,
+  lectura inicial, optimización o efectos. Registrar apertura y consumo.
+- Congelar base y workloads funcionales/coste antes de editar; observar el
+  artefacto instalado y mantener el observador independiente de helpers productivos.
+- Cierre: cada recomendación tiene un testigo reproducido o una disposición
+  explícita razonada; cada prueba obligatoria tiene oráculo y ruta productiva.
+  Ninguna hipótesis se convierte en defecto o en garantía aceptada por inspección.
+
+#### F01 — Contrato de límites y consumo del cursor
+
+- Distinguir límite público cero sin límite, ausencia de límite, ventana
+  interna vacía, cantidad cero de to_list y agotamiento. Normalizar en la
+  frontera adecuada; no convertir globalmente todos los ceros a None.
+- Tratar límite negativo según el perfil PyMongo/contrato raw correspondiente,
+  incluido su efecto de singleBatch, sin sustituirlo por abs indiscriminado.
+- Diferenciales: límite omitido, 0, 1, -1 y varios lotes; limit(1).limit(0);
+  keyword y setter; skip, sort, primera página, first, iteración, to_list,
+  agotamiento y cierre. Conservar to_list(0) vacío sin consumir.
+- Cubrir directa sync/async y driver/wire, ambos motores; observar IDs, orden
+  garantizado, offsets y estado de cursor, getMore y errores en su fase.
+- Cierre: todos los accesos al mismo cursor conservan la secuencia esperada,
+  no pierden filas ni materializan fuera de la demanda; cero interno sigue
+  significando vacío donde ya tenía ese contrato. Presupuestos y codecs intactos.
+
+#### F02 — Ventanas, ausencia y construcción de objetos
+
+- Corregir el productor de valores de shift/linearFill y los bordes retenidos
+  de locf que comparten su ruta: faltante, null, default y filas fuera de rango.
+  Respetar la semántica de cada operador al asignar una salida.
+- Rechazar claves con NUL de arrayToObject con su diagnóstico contextual,
+  incluida evaluación constante frente a dependiente de una fila.
+- Reutilizar materialización y errores existentes. No volver permisivo
+  bson_size ni capturar todo TypeError/ValueError como un error de expresión.
+- Diferenciales: faltante/null al inicio, centro y final; defaults; entrada
+  vacía y sort inválido retenido; objetos anidados/arrays; lotes separados
+  por cantidad y bytes, codecs que transforman sin lanzar y codecs que fallan.
+- Cierre: ningún sentinel interno alcanza una respuesta BSON; resultados,
+  familias/códigos y fases coinciden con el servidor para los casos exigidos,
+  conservando capacidad, efectos del decoder, continuidad y limpieza.
+  No se amplía aquí la familia completa de interpolación.
+
+#### F03 — Rutas de expresiones y traversal por consumidor
+
+- Corregir rutas numéricas en expresiones, ROOT/CURRENT/variables y proyección
+  calculada de find, incluida la rama de RuntimeDocumentState. Conservar
+  claves documentales llamadas "0" y posiciones MQL en su contexto.
+- Sustituir heurísticas de distinct por extracción con contrato explícito:
+  arrays terminales sobre ramas punteadas, ausencia/null, vacíos y anidados.
+  Deduplicar con la igualdad/colación ya establecida, sin aplanado recursivo.
+- Cubrir elemMatch objeto sobre elementos array, unset de agregación a través
+  de arrays, includeArrayIndex punteado de unwind y lookup con array local vacío.
+  Compartir piezas de traversal/proyección apropiadas, no borrado clásico para
+  simular exclusión de agregación ni extracción MQL para toda expresión.
+- Diferenciales: a.0, a.0.b, {"0": valor}, arrays de documentos/arrays, ramas
+  ausentes/null/vacías, hermanos que no se modifican; lookup con extranjero
+  null/ausente/array vacío. Repetir con fuente materializada y subpipeline.
+- Cierre: cada contexto produce los valores/IDs/BSON nativos y conserva las
+  ramas no alcanzadas. Las rutas MQL numéricas ya correctas y la selección
+  SQL/residual/Search no pierden coincidencias por el cambio compartido.
+
+#### F04 — Predicados y operandos BSON de consulta
+
+- Separar eq explícito con Regex almacenado de regex implícito; admitir not
+  con Regex según su gramática. Reutilizar los nodos de consulta existentes.
+- Size acepta/rechaza representaciones numéricas BSON conforme al servidor,
+  sin depender de isinstance(int) ni confundir bool, long, double o Decimal128.
+- Diferenciales: Regex literal, eq, in, not y regex; strings y Regex almacenados,
+  flags, arrays, valor nulo/ausente. Size con long, integral/fraccionario,
+  negativos, límites, NaN/infinito y bool, en vacío y con datos.
+- Observar find/match, count/distinct y selección update/delete; compilado,
+  canónico y SQL/fallback, incluidas representaciones tras codec/persistencia.
+- Cierre: misma selección y misma aceptación/error/fase; no se convierte eq
+  en ejecución de patrón ni se altera la gramática de expresiones de agregación.
+  PCRE completo queda en X01, no es requisito para corregir estos nodos.
+
+#### F05 — Collation efectiva del subconjunto existente
+
+- Resolver explícita de operación, default de colección y simple, preservando
+  la diferencia entre ausencia, null/forma inválida y override simple según
+  los contratos Python/raw. Integrar en OperationContext, sin otro contexto.
+- Propagar a find/sort/distinct/group/lookup, selección de update/delete,
+  validators e índices heredados. No olvidar comandos raw, subpipelines,
+  fuentes materializadas, índices parciales y residual Search alcanzados.
+- Validar locale requerido y opciones desconocidas; para caseFirst y otras
+  opciones fuera del subset, dar una disposición local explícita y coherente
+  con el backend disponible. No prometer tailoring adicional.
+- Diferenciales: simple/en, strengths 1/2/3 y opciones ya soportadas;
+  default/override/ausencia, igualdad/rangos/orden/grupo, cachés frías/calientes
+  y namespaces recreados/renombrados, lectura tras reapertura e índices nuevos
+  y existentes. No se presupone que collMod permita cambiar la collation.
+- Cierre: una misma operación usa una única collation efectiva en todos sus
+  consumidores; estado y errores coinciden dentro del subset. Una petición
+  fuera del subset no pasa silenciosamente como si se hubiera aplicado.
+
+#### F06 — Integridad y semántica de índices
+
+- Corregir la representación de claves unique Memory para ausente/null
+  no sparse, manteniendo vacíos, sparse, partial, compuestos y multikey.
+  Unificar construcción, mantenimiento y consulta del índice; no añadir una
+  excepción de insert_one ni cambiar la igualdad BSON global.
+- Aplicar herencia de F05 y caracterizar conflictos por patrón/opciones/nombre:
+  emitir 85 solo donde lo exige la referencia por versión.
+- Rechazar segundo text y arrays en hashed en construcción y escritura según
+  el contrato retenido. No implementar recuperación por text/hashed nueva.
+- Diferenciales: crear antes/después de datos; insert/update/unset/replacement/
+  upsert/bulk; colisión/no colisión y mismo documento; perfiles sparse/partial;
+  mismo patrón con opciones/colación distintas. Capturar contadores, índices,
+  documentos y estado parcial de bulk ordered/unordered tras error.
+- SQLite con archivo anterior y reapertura; Memory con índice materializado y
+  fallback cuando sea pertinente. La coincidencia entre motores no es oráculo.
+- Cierre: no se aceptan estados inválidos del conjunto; no se rechazan claves
+  válidas por una simplificación de null. Se conserva formato persistido,
+  selección, diagnóstico de duplicado y publicación de escrituras confirmadas.
+  No reetiquetar índices históricos como si se conociera que su collation
+  original fue omitida: la ambigüedad de procedencia exige disposición o X05.
+
+#### F07 — Finalización de escrituras e identidad física
+
+- Completar document_with_id_first en replace_one/bulk replacement sin upsert,
+  upserts por operadores y findOneAndUpdate/findAndModify. Aplicarlo a la raíz
+  tras resolver el ID y antes del almacenamiento en la fase adecuada.
+- Validar nombres con $ y documentos de _id por contexto: insert, replacement,
+  modificador, upsert con/sin match y pipeline. No prohibir valores documentales
+  anidados válidos ni los operadores posicionales soportados.
+- Bit conserva/promueve ancho int32/int64 según operandos; pull por ruta que
+  atraviesa una estructura inválida produce su error, no traversal implícito.
+- Caracterizar y corregir Timestamp(0,0) raíz donde el servidor lo sustituye;
+  conservar timestamps explícitos, anidados y en arrays. Reutilizar reloj/contexto
+  de escritura existente; no implementar un reloj de replicación distribuido.
+- Diferenciales: clásicos/pipeline/replacement/upsert, bulk ordered/unordered,
+  métodos y comandos, ambos motores; guardar y reabrir. Observar BSON con orden/
+  anchos, matched/modified/upserted, errores, estado parcial y eventos/preimágenes.
+  Para timestamps, relaciones de no-cero/rango/consistencia, no igualdad de reloj
+  entre procesos; los valores intencionalmente fijos mantienen sus bytes.
+- Cierre: candidato almacenado, respuesta, counters y eventos describen la
+  misma escritura; no-op/identidad siguen correctos y no se reordenan documentos
+  embebidos. Validators strict/moderate/off y error/warn/bypass conservan O3.
+
+#### F08 — Ordenación y acumuladores afectados
+
+- Corregir clave de array vacío y rutas numéricas/anidadas en sort documental;
+  detectar arrays paralelos según la referencia, también antes de una ventana.
+- Separar extracción de claves documentales para sort/top/bottom de sortArray,
+  que no tiene el mismo traversal. Mantener comparación BSON/collation común.
+- Evaluar n de topN/bottomN en su contexto de inicialización de grupo, no
+  inferir el contrato de una variación por fila. Retener testigos de clave de
+  grupo escalar/documental y n constante/dinámico.
+- BucketAuto no divide valores iguales entre buckets incompatibles; stdDev
+  acepta Decimal128 en los contextos retenidos con su tipo y reglas propios.
+  Reutilizar estado numérico donde corresponda sin convertir todo a float
+  prematuramente ni extrapolar las reglas de sum/avg.
+- Diferenciales: asc/desc, empates con/sin desempate contractual, arrays vacíos/
+  anidados, missing/null, collation, límites y grupos/tamaños extremos retenidos.
+  Top-level, facet/lookup, ventanas/spill cuando la ruta afectada los consume.
+- Cierre: claves y resultados nativos sin exigir órdenes no garantizados;
+  selección antes de limit/top-k; mismos resultados en fast path/fallback y
+  con/sin spill. La optimización de enteros de P2 mantiene su guard contextual.
+
+#### F09 — Argumentos, calendario y formato: tres unidades de corrección
+
+- F09a: extender tablas de aridad existentes para los variádicos retenidos;
+  incorporar primitivas BSON a limit/sample.size/slice/range/round.place/
+  dateAdd.amount/dateTrunc.binSize/maxN.n. Cada argumento conserva aceptación,
+  truncamiento o entero exacto según su referencia, rango y fase propios.
+- F09b: corregir anclas/bins de dateTrunc, duración frente a calendario/DST de
+  dateAdd/dateSubtract, acarreo de dateFromParts y formatos j/U/w/Z/%% de
+  dateToString. No deshacer los helpers enteros de milisegundos ya aceptados.
+- F09c: formato double de toString y conjunto explícito de trim por defecto;
+  preservar chars explícitos, null, tipos y errores. No imitar casing Unicode
+  indefinido ni sustituir el backend regex.
+- Diferenciales de a: cero/uno/varios argumentos, tipos SDK/local/internos,
+  long/double/decimal, bool, NaN/infinito, rangos y vacío/poblado. Preparación,
+  evaluación constante/dinámica y ramas no alcanzadas con su fase nativa.
+- Diferenciales de b: pre/post epoch, bins que cruzan día/mes/año, dos cambios DST
+  y ambos signos, UTC/naive/aware, offsets y zonas IANA retenidas, acarreos
+  positivos/negativos. Fechas representables en el dominio público vigente;
+  fuera de rango, error o valor conforme al contrato ya declarado.
+- Diferenciales de c: ceros con signo, NaN/infinito, notación científica,
+  fronteras de exponente y caracteres de trim incluidos/excluidos, NUL y chars
+  vacío/multicodepoint. No normalizar texto diferente en el observador.
+- Cierre por unidad: selección/valor/tipo/error/fase nativos del inventario,
+  aislados del decimal context y defaults Python. Se requieren los tres
+  cierres para aceptar F09; ampliar a todo BSON Date o todo formato pasa a X04.
+
+#### F10 — Fachadas, metadatos y límites de capacidad
+
+- Database.client devuelve el cliente propietario, conservando identidad sync/
+  async y clones; command(nombre, valor) y rename(dropTarget) respetan su
+  contrato PyMongo, aliases y guardas Python sin alterar parsers raw P2.
+- Index_information de namespace ausente devuelve la vista nativa sin crearlo;
+  proyectar metadata pública, incluido _id_, sin debilitar el índice intrínseco.
+  Conservar la diferencia raw listIndexes/error frente a método de listado.
+- Distinguir stage reconocido no implementado (out/graphLookup) de desconocido,
+  usando catálogo y diagnóstico locales existentes. No falsificar paridad de
+  error con MongoDB, donde el stage válido puede ejecutarse.
+- Para natural, viewOn, capped, return_key/show_record_id y demás capacidades
+  ausentes: documentar soporte/rechazo explícito coherente, sin ejecutar una
+  interpretación silenciosamente incorrecta ni declararlas implementadas.
+  El soporte efectivo de esas capacidades pertenece a X03/X04.
+- Diferenciales de API/metadata: SDK soportados, llamadas posicionales/keyword,
+  identidad del cliente, rename con destino existente/ausente, dropTarget y
+  errores sin efectos; namespaces ausentes/vacíos/poblados e índices explícitos.
+  Para capacidades ausentes, testigo nativo de capacidad y test local de la
+  limitación declarada: no se exige que ambos devuelvan el mismo resultado.
+- Cierre: fachadas del inventario coinciden con su oráculo; los límites locales
+  quedan visibles en runtime, catálogo/docs/tests. No hay ghost namespace ni
+  cambios de datos al rechazar una capacidad; extensiones registradas conservadas.
+
+#### F11 — Gate final de la parte I
+
+- Integrar el mapa requisito → caso → consumidor → evidencia → artefacto,
+  conservando las aceptaciones de bloque y los rojos intermedios.
+- Un wheel inmutable ligado por hashes/rutas a las ejecuciones; unittest y
+  pytest completos en Python 3.13/3.14/3.15, cobertura instalada real >=99,00%,
+  propiedades deep; matriz Python × pytest 8.4.2/9.1.1 × SDK 4.9.2/4.19.0
+  y perfil realmente sin bson/pymongo, conforme a los runners actuales.
+- Tipado/API pública/manifiestos/SPI v2, snapshots, lint contra ancestro de
+  release, smokes wheel/sdist/pytest-kit, dos builds reproducibles y checks
+  de distribución; archivos SQLite anteriores, reapertura, índices y escritura.
+  Reutilizar perfiles SDK independientes cuando sus entradas sigan idénticas.
+- Diferenciales nuevos 7/8/9 del alcance y regresiones afectadas O1–O3/P2 sobre
+  las superficies soportadas. Replica set solo para efectos/watch que lo exijan;
+  usar fixture propia existente y limpiar bases, procesos y contenedores.
+- Conservar presupuestos deterministas. Comparar coste contra 2fa637f6 con
+  datasets y resultados contractualmente equivalentes en los controles de
+  paths modificados (índices, collation, sort, consumo, matching, ventanas y
+  acumuladores según impacto). Si el bug cambiaba el resultado de la base,
+  esa salida errónea no es oráculo ni control de rendimiento equivalente:
+  validar la salida nueva contra MongoDB y medir el coste correcto por separado.
+  No exigir otra mejora sobre el P2 ya aceptado ni sumar ratios con bases distintas.
+  Para los dos workloads P2 retenidos, A/A y tres ABBA con workers existentes:
+  conservar identidad BSON de resultados y, para cada uno de los 44 casos,
+  razón agrupada candidato/base <= 1 + ruido A/A. Ruido: máxima desviación
+  relativa de los cuatro valores A/A respecto a su mediana; razón agrupada:
+  mediana de los seis B dividida por mediana de los seis A de las tres ABBA.
+  Las repeticiones internas y agregación por worker se conservan. No se exige
+  razón <1 ni mejora mayor que ruido. Un caso fuera del criterio deja el gate
+  pendiente: investigar/repetir causalmente o alargar muestras, conservando
+  intentos rojos; no escoger solo tandas favorables ni elevar el margen.
+  Una decisión distinta de presupuesto sería cambio de contrato explícito.
+- Cierre: todos los criterios exigidos de F00–F10 comprobados, gates aplicables
+  terminales verdes, revisión final, docs de comportamiento/migración alineadas,
+  commits semánticos por corrección/familia y árbol limpio. No basta el
+  redondeo de coverage, un skip físico, un smoke o una prueba focal.
+  Este gate no implica tag, publicación, despliegue ni aceptar la parte II.
+
+### 9.3. Parte II — Capacidades o cambios de contrato con decisión propia
+
+No es una segunda tanda implícitamente autorizada. Cada bloque requiere una
+decisión de alcance antes de implementar: alternativa mínima, contrato público,
+coste, dependencia y criterio de aceptación. Puede aprobarse, reducirse o
+descartarse por separado, sin condicionar el cierre acotado.
+Prioridad aquí es de evaluación, no autorización de ejecución.
+
+| Bloque | Prioridad | Qué requiere algo más | Dependencias |
+| --- | --- | --- | --- |
+| X01 | P2 | Backend y contrato PCRE compatibles | Límites de F04/F09; decisión de dependencia |
+| X02 | P2 | Collation adicional y tailoring | F05; backend/índices persistidos |
+| X03 | P2/P3 | Views, capped y orden/identidad física de registros | F05/F06/F10; contrato de almacenamiento |
+| X04 | P2/P3 | Stages, operadores y dominios adicionales | F02/F03/F08/F09/F10 según capacidad |
+| X05 | P3 | Migración persistida o refactorización transversal | Perfil medido de un bloque que lo necesite |
+| X06 | P2/P3 | Ampliación sistemática de garantías O1–O8 y corpus P2 | Decisión de cobertura finita y owners |
+
+#### X01 — Regex/PCRE más allá de la gramática ya corregida
+
+- Decidir subset PCRE2, dependencia obligatoria/opcional y comportamiento sin
+  backend. No basta cambiar re por otra librería con sintaxis parecida.
+- Censar matching, not/in/all, expresiones regexFind/regexMatch, schema pattern,
+  índices/optimizaciones y consumidores que anuncien esa semántica.
+- Diferenciales por versión PCRE de referencia: Unicode/opciones, capturas e
+  índices, grupos, escapes, lookarounds, patrones inválidos y casos costosos;
+  preservar perfil SDK-free y soporte de plataformas. Search-v1 mantiene su
+  contrato propio: no se amplía a Atlas por asociación.
+- Cierre: subset/degradación explícitos en todas las rutas, mismo valor/error
+  de los casos aprobados y presupuesto de recursos comprobado; no quedan dos
+  motores dando respuestas incompatibles al mismo contrato sin una distinción.
+
+#### X02 — Collation ampliada
+
+- Decidir caseFirst, strengths/locales adicionales y tailoring ICU, backend
+  requerido y fallback/rechazo explícito cuando no exista.
+- Diferenciales de igualdad, orden, grupos, índices/unique/partial y operaciones
+  cruzadas tras reapertura; datos Unicode y empates, sin prometer reglas de
+  casing no garantizadas por los operadores de MongoDB.
+- Si exige regenerar claves persistidas, depende de X05; si solo usa el
+  subset básico actual, no necesita este bloque y se resuelve en F05.
+- Cierre: una matriz pública concreta de backend/opción/dialecto, resultados
+  y fallos aprobados, coste y compatibilidad del almacenamiento demostrados.
+
+#### X03 — Capacidades de colección y almacenamiento
+
+- X03a, views: decidir catálogo, viewOn/pipeline, resolución de namespaces,
+  herencia de collation, comandos permitidos, ciclos/errores y persistencia.
+- X03b, capped: decidir unidades de tamaño, límites/max y expulsión,
+  restricciones de updates/delete, atomicidad, recuperación y eventos.
+- X03c, natural/recordId/return_key/show_record_id: fijar identidad/orden físico
+  local y relación con hint/índices, cursores, borrados, updates y reapertura.
+  No emular natural ordenando por _id ni inventar un recordId público inestable.
+- Cada subbloque puede aceptarse independientemente. Diferenciales nativos
+  por operación/topología necesaria, estado antes/después y reapertura;
+  atomicidad/concurrencia solo con pruebas de intercalación si se prometen.
+- Cierre: las opciones producen los efectos contratados, no solo metadata;
+  las capacidades no elegidas mantienen rechazo explícito de F10.
+  Un cambio de archivo o SPI requiere X05 o su decisión equivalente.
+
+#### X04 — Ampliaciones de agregación y dominio temporal
+
+- X04a, out: decidir reemplazo de colección, índices/opciones, validadores,
+  atomicidad/fallo, permisos y efectos de watch, no implementarlo como merge.
+- X04b, graphLookup: fijar recorrido, ciclos, profundidad, filtros, arrays,
+  collation, memoria y restricciones del subset/topología.
+- X04c, capacidades escalares: granularity de bucketAuto, formatos/dominios
+  de fecha no anunciados, fechas fuera del dominio público representable y
+  otras familias ausentes. No exigir soporte completo de calendarios para
+  aceptar las correcciones específicas de F09.
+- Diferenciales nuevos por capacidad; native replica set cuando existan efectos
+  o límites transaccionales requeridos. Usar control de datos, índices y eventos
+  en out; grafos cíclicos y presupuestos en graphLookup; tipos/rangos en fechas.
+- Cierre: solo se anuncia la capacidad tras sus pruebas funcionales, efectos,
+  fallos y límites; no queda una implementación parcial presentada como paridad.
+
+#### X05 — Migración o consolidación estructural
+
+- Solo se abre con evidencia de que una corrección no cabe sin cambiar claves/
+  archivos, autoridad semántica o SPI, o con una mejora de mantenimiento medida.
+  Mantener el formato/SPI actual es una alternativa explícita.
+- Preparar lectura/escritura de versiones, detección de formato, migración/
+  recuperación, colisiones/unique, índices y snapshots. Cambiar representación
+  no puede aceptarse comparando dos consumidores que comparten el mismo helper.
+- El piloto de schema D07 descartado en O4 no revive por este plan. Si se
+  reconsidera, exige propuesta separada y demostrar menos puntos de coherencia
+  sin otro intérprete permanente ni pérdida de diagnóstico/subset.
+- No adoptar Value/KeyString, sidecar universal o SPI v3 como prerrequisito
+  implícito de los arreglos. Requieren una decisión arquitectónica propia.
+- Cierre: alternativa elegida motivada, migración/compatibilidad y costes
+  comprobados, autoridad reemplazada retirada y consumers actualizados.
+  Si el piloto no mejora o añade duplicación, se descarta con evidencia.
+
+#### X06 — Ampliación de garantías a familias no cubiertas
+
+- Es la opción para extender exhaustivamente O1/O2 a todas las fuentes,
+  expresiones, productores BSON, respuestas, codecs y consumidores; la gramática
+  raw P2 a otros comandos/opciones; o la garantía de coste a otros workloads.
+- Fijar primero una lista finita de familias y superficies. No usar "paridad
+  completa con MongoDB" como criterio de cierre ni convertir todo el informe
+  de sondas en una obligación indivisible.
+- Un canal nuevo de warnings O3 exige definir API, privacidad, nivel, ciclo de
+  vida, sincronía y costes. No se deduce de comprobar strict/moderate/warn.
+- Diferenciales: cobertura matricial de esa lista, versiones/topologías y
+  contextos definidos, observación independiente y propiedades complementarias.
+- Cierre: mapa de requisitos sin entradas exigidas sin prueba; cada incremento
+  ejecuta su propio gate tipo F11. No amplía por retroactividad los receipts
+  históricos ni exige mejoras porcentuales universales.
+
+### 9.4. Alcance ampliado de O1–O8 y de los dos P2
+
+Recomendación: incluir en la parte I las garantías transversales afectadas y
+los gates de entrega; reservar en la parte II las capacidades o la ampliación
+general de cobertura. No reabrir los estados ni cambiar los receipts de O1–O8
+o B1–B4. Las nuevas aceptaciones usarán los IDs F/X y su candidato propio.
+
+| Antecedente | Parte I: ampliación necesaria | Parte II: trabajo adicional |
+| --- | --- | --- |
+| O1, fuente materializada | Extender testigos a rutas, collation, sort y selección nuevos; mismo resultado/contexto antes y después de materializar. F03/F05/F08/F11. | Inventariar todas las fuentes/backends o rediseñar sus contratos: X05/X06. |
+| O2, BSON/gramática/codecs/contexto | Incluir salidas window/objetos, Regex/size, nuevos argumentos y candidatos de escritura en la matriz de consumidores; batching/decoders previos como regresión. F01–F04/F07/F09/F11. | Garantía general sobre todos los productores/respuestas/tipos o nuevo dominio de representación: X04–X06. |
+| O3, validadores/permiso/warn | Repetir los casos afectados por collation, índices y candidato de escritura; conservar niveles/acciones/bypass y ausencia de canal nuevo de logs. F05–F07/F11. | Ampliación de cobertura o canal de warnings: X06; validators de capacidades nuevas: X04; rediseño de schema: X05, con decisión. |
+| O4, piloto D07 | Conservar descarte; ninguna obligación de migrar CompiledJsonSchema. | Solo piloto independiente con criterio de beneficio/rechazo: X05. |
+| O5, suite/cobertura/deep | Gate obligatorio del nuevo candidato, sin reabrir aceptación anterior ni rebajar 99,00%. F11. | Cada incremento X vuelve a cerrar su candidato con el gate aplicable. |
+| O6, Python/SDK/pytest/SDK-free | Matriz y perfiles vigentes sobre candidato exacto; reusar solo evidencia independiente con entradas idénticas. F11. | Nuevos runtimes, dependencias o perfiles tienen aceptación propia: X01/X02/X05/X06. |
+| O7, packaging/API/SPI/archivos/coste | Builds reproducibles, compatibilidad SQLite, manifests/typing/SPI y coste de rutas afectadas. F11. | Nuevo formato/SPI/backend o garantía de rendimiento general: X01–X03/X05/X06. |
+| O8, trazabilidad/revisión/limpieza | Receipt del incremento, revisión por bloque, recursos liberados, commits semánticos y árbol limpio. F11. | Mismo mecanismo por incremento X; no exige publicación ni otra plataforma de validación. |
+| P2 gramática raw, B1/B2 | Conservar 32 formas y sus controles nativos aceptados. Añadir solo campos/operadores/diagnósticos tocados por F01/F04–F07/F09/F10. No delegar validación Python al parser raw indiscriminadamente. | Otros comandos/opciones, catálogo general de gramática o capacidades nuevas: X03/X04/X06. |
+| P2 coste, B3 | Conservar los dos workloads y 44 controles como regresión causal; verificar contexto, claves, residual y exact fallback. Nuevos datos/coste solo para paths cambiados. F03/F05/F08/F11. | Nuevas optimizaciones, workloads, SLA o backend: X01/X02/X05/X06. No son requisito para cerrar los arreglos. |
+| P2 cierre, B4 | Reutilizar el mecanismo de artefacto/evidencia dentro de F11, sin crear otro gate paralelo. | Aplicar el mismo cierre a cada incremento X aprobado. |
+
+O1–O3 no significan probar de nuevo cada combinación histórica manualmente.
+Se reutilizan capturas aceptadas cuyos estímulos/observador siguen válidos;
+se ejecutan sus regresiones sobre el código nuevo cuando el camino cambia.
+O5–O8 tampoco permiten usar un global antiguo como global del candidato nuevo.
+
+La aceptación raw de las 32 formas y sus controles se conserva como baseline;
+el agregado nuevo se identifica por casos y versiones. Para unsupported local
+se separa el límite del resultado nativo, no se introduce una falsa divergencia
+"aceptada" dentro del corpus que exige paridad.
+
+### 9.5. Evidencia, ejecución y control de alcance
+
+- Mantener el capturador/replay y los owners de corpus en tests/differential,
+  semantic_corpora.py y las fixtures versionadas; ampliar cuerpos de casos y
+  registro solo donde haga falta. Los workflows ya derivan el inventario:
+  no añadir un segundo runner ni otra tabla independiente de expectativas.
+- Estados de F/X en el owner vigente de implementación cuando comience el
+  trabajo; propuesta/requisito aquí, ejecuciones/aceptación allí y resultados
+  derivados en la estructura de evidencia existente. No copiar historia ni
+  editar goldens anteriores para adaptar una corrección.
+- Por bloque: caracterizar → reproducir rojo → corregir causa/consumidores →
+  diferencial verde → regresión causal → revisión y commit semántico.
+  Mensajes/códigos, orden y tipos se normalizan solo donde el contrato lo permita.
+- El gate final se hace sobre candidato congelado. Repetir por cambios,
+  fallos o requisitos del gate, no por un calendario de auditorías. Agrupar
+  verificaciones compatibles; separar mediciones de coste de otros gates CPU.
+- Si hay un nuevo hallazgo, entra solo por regresión del candidato o garantía
+  obligatoria de la lista F aprobada. El resto se registra como seguimiento.
+  Un hallazgo X no amplía de forma implícita el cierre de la parte I.
+- Antes de aceptar, lista única de obligaciones pendientes con contrato,
+  evidencia faltante y criterio observable; progreso por cerradas/total,
+  bloqueos y próximo gate, sin porcentajes estimados.
+- Documentar migraciones de comportamiento y decidir la versión en el cierre
+  de release correspondiente. Este plan no cambia versión ni publica nada.
+
+Resultado esperado: una entrega acotada F00–F11 demostrada y mantenible,
+más una cartera X01–X06 con decisiones explícitas, no una obligación de
+implementar todo el catálogo antes de poder entregar una corrección.
