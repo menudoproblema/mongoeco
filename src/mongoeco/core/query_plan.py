@@ -16,6 +16,7 @@ from mongoeco.core.bson_scalars import (
     INT32_MAX,
     _is_infinite_numeric_value,
     _is_nan_numeric_value,
+    compare_bson_numeric,
     truncate_bson_int64,
     unwrap_bson_numeric,
     wrap_bson_numeric,
@@ -531,27 +532,14 @@ def _compile_field_condition(
             message = f"Unsupported query operator: {operator}"
             raise server_error(message, code=2)
         if operator == "$eq":
-            if isinstance(value, Regex):
-                clauses.append(
-                    _prepare_regex_condition(field, value.pattern, value.flags)
+            clauses.append(
+                EqualsCondition(
+                    field,
+                    value,
+                    null_matches_undefined=value is None
+                    and dialect.policy.null_query_matches_undefined(),
                 )
-            elif isinstance(value, re.Pattern):
-                clauses.append(
-                    _prepare_regex_condition(
-                        field,
-                        value.pattern,
-                        _regex_options_from_pattern(value),
-                    )
-                )
-            else:
-                clauses.append(
-                    EqualsCondition(
-                        field,
-                        value,
-                        null_matches_undefined=value is None
-                        and dialect.policy.null_query_matches_undefined(),
-                    )
-                )
+            )
         elif operator == "$ne":
             clauses.append(NotEqualsCondition(field, value))
         elif operator == "$gt":
@@ -590,18 +578,24 @@ def _compile_field_condition(
             )
         elif operator == "$all":
             if not isinstance(value, (list, tuple)):
-                raise ValueError("$all necesita una lista")
+                raise server_error("$all needs an array", code=2)
+            elem_matches = [
+                isinstance(item, dict) and "$elemMatch" in item for item in value
+            ]
+            if any(elem_matches) and not all(elem_matches):
+                raise server_error("$all/$elemMatch has to be consistent", code=2)
             _validate_regex_values(value)
             clauses.append(AllCondition(field, tuple(value)))
         elif operator == "$size":
+            integer = truncate_bson_int64(value)
             if (
-                not isinstance(value, int)
-                or isinstance(value, bool)
-                or value < 0
-                or value > INT32_MAX
+                integer is None
+                or integer < 0
+                or integer > INT32_MAX
+                or compare_bson_numeric(value, integer) != 0
             ):
-                raise ValueError("$size necesita un entero no negativo")
-            clauses.append(SizeCondition(field, value))
+                raise server_error("$size needs a non-negative integer", code=2)
+            clauses.append(SizeCondition(field, integer))
         elif operator == "$mod":
             if not isinstance(value, (list, tuple)):
                 message = "malformed mod, needs to be an array"
@@ -726,7 +720,7 @@ def _compile_field_condition(
                 )
             )
         elif operator == "$not":
-            if (
+            if not isinstance(value, (Regex, re.Pattern)) and (
                 not isinstance(value, dict)
                 or not value
                 or not is_query_expression_document(value)
@@ -745,7 +739,8 @@ def _compile_field_condition(
             )
         elif operator == "$elemMatch":
             if not isinstance(value, dict):
-                raise ValueError("$elemMatch necesita una expresion de filtro")
+                message = "$elemMatch necesita una expresion de filtro"
+                raise ValueError(message)
             wrap_value = is_elem_match_value_document(value)
             compiled_plan = (
                 _compile_field_condition(

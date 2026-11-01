@@ -924,12 +924,12 @@ class QueryEngineTests(unittest.TestCase):
                 {'name': 'MongoDB2'}, {'name': re.compile('MongoDB')}
             )
         )
-        self.assertTrue(
+        self.assertFalse(
             QueryEngine.match(
                 {'name': 'MongoDB2'}, {'name': {'$eq': re.compile('MongoDB')}}
             )
         )
-        self.assertFalse(
+        self.assertTrue(
             QueryEngine.match(
                 {'name': re.compile('MongoDB')},
                 {'name': {'$eq': re.compile('MongoDB')}},
@@ -1153,7 +1153,7 @@ class QueryEngineTests(unittest.TestCase):
         )
 
     def test_query_engine_supports_eq_with_regex_literals(self):
-        self.assertTrue(
+        self.assertFalse(
             QueryEngine.match(
                 {'name': 'Ada'}, {'name': {'$eq': re.compile('^Ad')}}
             )

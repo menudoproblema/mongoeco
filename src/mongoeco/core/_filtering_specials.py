@@ -17,7 +17,7 @@ from mongoeco.core.bson_scalars import (
     truncate_bson_int64,
     unwrap_bson_numeric,
 )
-from mongoeco.core.bson_values import document_mapping, matches_bson_type
+from mongoeco.core.bson_values import document_mapping, matches_bson_type, regex_parts
 from mongoeco.core.query_operators import is_elem_match_value_document
 from mongoeco.core.query_plan import _normalize_type_specifier
 
@@ -232,7 +232,8 @@ class FilteringSpecialOperatorsMixin:
     ) -> bool:
         regex = _compile_regex(pattern, options)
         return any(
-            cls._regex_item_matches_candidate(value, regex)
+            regex_parts(value) == (pattern, options)
+            or cls._regex_item_matches_candidate(value, regex)
             for value in cls._extract_values(doc, field)
         )
 
@@ -286,6 +287,14 @@ class FilteringSpecialOperatorsMixin:
             return cls._values_equal(
                 candidate, condition, dialect=dialect, collation=collation
             )
+        # Object-form elemMatch sees an array element as its BSON document
+        # (numeric field names), without implicit traversal into its children.
+        if (
+            not wrap_value
+            and not is_elem_match_value_document(condition)
+            and isinstance(candidate, list)
+        ):
+            candidate = {str(key): value for key, value in enumerate(candidate)}
         if compiled_plan is not None and compiled_dialect_key == dialect.key:
             if wrap_value:
                 return cls.match_plan(

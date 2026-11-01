@@ -417,7 +417,38 @@
         ]
       }
     },
+    "semantic_followup_f04_all_elem": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "5"
+          }
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "distinct": [
+          {
+            "$numberInt": "5"
+          }
+        ],
+        "matched": {
+          "$numberInt": "1"
+        },
+        "deleted": {
+          "$numberInt": "1"
+        }
+      }
+    },
     "semantic_followup_f04_all_mixed": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_all_mixed_reverse": {
       "ok": false,
       "family": "OperationFailure",
       "code": {
@@ -454,6 +485,30 @@
         }
       }
     },
+    "semantic_followup_f04_elem_array_numeric": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "4"
+          }
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "distinct": [
+          {
+            "$numberInt": "4"
+          }
+        ],
+        "matched": {
+          "$numberInt": "1"
+        },
+        "deleted": {
+          "$numberInt": "1"
+        }
+      }
+    },
     "semantic_followup_f04_eq_regex": {
       "ok": true,
       "value": {
@@ -476,6 +531,466 @@
         "deleted": {
           "$numberInt": "1"
         }
+      }
+    },
+    "semantic_followup_f04_eq_regex_flags": {
+      "ok": true,
+      "value": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "distinct": [],
+        "matched": {
+          "$numberInt": "0"
+        },
+        "deleted": {
+          "$numberInt": "0"
+        }
+      }
+    },
+    "semantic_followup_f04_implicit_regex": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "distinct": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "matched": {
+          "$numberInt": "2"
+        },
+        "deleted": {
+          "$numberInt": "2"
+        }
+      }
+    },
+    "semantic_followup_f04_in_regex": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "distinct": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "matched": {
+          "$numberInt": "2"
+        },
+        "deleted": {
+          "$numberInt": "2"
+        }
+      }
+    },
+    "semantic_followup_f04_match_all_elem": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_all_mixed": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_all_mixed_reverse": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_elem_array": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_elem_array_numeric": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_eq_regex": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_eq_regex_flags": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_implicit_regex": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_in_regex": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_not_regex": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f04_match_regex_operator": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_size_bool": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_decimal": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f04_match_size_decimal_fraction": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_decimal_nan": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_double": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f04_match_size_fraction": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_inf": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_limit": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
+      }
+    },
+    "semantic_followup_f04_match_size_long": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": [
+              {
+                "$numberInt": "1"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "semantic_followup_f04_match_size_nan": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_negative": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_overflow": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "codeName": "BadValue",
+        "phase": "open"
+      }
+    },
+    "semantic_followup_f04_match_size_zero": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": []
       }
     },
     "semantic_followup_f04_not_regex": {
@@ -532,6 +1047,218 @@
         }
       }
     },
+    "semantic_followup_f04_regex_operator": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "distinct": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "matched": {
+          "$numberInt": "2"
+        },
+        "deleted": {
+          "$numberInt": "2"
+        }
+      }
+    },
+    "semantic_followup_f04_regex_values": {
+      "eq": {
+        "ok": true,
+        "value": {
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "count": {
+            "$numberInt": "2"
+          },
+          "distinct": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "matched": {
+            "$numberInt": "2"
+          },
+          "deleted": {
+            "$numberInt": "2"
+          }
+        }
+      },
+      "implicit": {
+        "ok": true,
+        "value": {
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "count": {
+            "$numberInt": "3"
+          },
+          "distinct": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "matched": {
+            "$numberInt": "3"
+          },
+          "deleted": {
+            "$numberInt": "3"
+          }
+        }
+      },
+      "in": {
+        "ok": true,
+        "value": {
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "count": {
+            "$numberInt": "3"
+          },
+          "distinct": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "matched": {
+            "$numberInt": "3"
+          },
+          "deleted": {
+            "$numberInt": "3"
+          }
+        }
+      },
+      "not": {
+        "ok": true,
+        "value": {
+          "ids": [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "count": {
+            "$numberInt": "4"
+          },
+          "distinct": [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "5"
+            },
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ],
+          "matched": {
+            "$numberInt": "4"
+          },
+          "deleted": {
+            "$numberInt": "4"
+          }
+        }
+      },
+      "regex": {
+        "ok": true,
+        "value": {
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "count": {
+            "$numberInt": "3"
+          },
+          "distinct": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            }
+          ],
+          "matched": {
+            "$numberInt": "3"
+          },
+          "deleted": {
+            "$numberInt": "3"
+          }
+        }
+      }
+    },
     "semantic_followup_f04_size_bool": {
       "ok": false,
       "family": "OperationFailure",
@@ -579,6 +1306,20 @@
         "deleted": {
           "$numberInt": "4"
         }
+      }
+    },
+    "semantic_followup_f04_size_decimal_fraction": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_size_decimal_nan": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
       }
     },
     "semantic_followup_f04_size_double": {
@@ -630,6 +1371,29 @@
         "$numberInt": "2"
       }
     },
+    "semantic_followup_f04_size_inf": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_size_limit": {
+      "ok": true,
+      "value": {
+        "ids": [],
+        "count": {
+          "$numberInt": "0"
+        },
+        "distinct": [],
+        "matched": {
+          "$numberInt": "0"
+        },
+        "deleted": {
+          "$numberInt": "0"
+        }
+      }
+    },
     "semantic_followup_f04_size_long": {
       "ok": true,
       "value": {
@@ -672,11 +1436,49 @@
         }
       }
     },
+    "semantic_followup_f04_size_nan": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
     "semantic_followup_f04_size_negative": {
       "ok": false,
       "family": "OperationFailure",
       "code": {
         "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_size_overflow": {
+      "ok": false,
+      "family": "OperationFailure",
+      "code": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f04_size_zero": {
+      "ok": true,
+      "value": {
+        "ids": [
+          {
+            "$numberInt": "7"
+          }
+        ],
+        "count": {
+          "$numberInt": "1"
+        },
+        "distinct": [
+          {
+            "$numberInt": "7"
+          }
+        ],
+        "matched": {
+          "$numberInt": "1"
+        },
+        "deleted": {
+          "$numberInt": "1"
+        }
       }
     },
     "semantic_followup_f05_default": {
@@ -2614,14 +3416,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793560053305"
+          "$numberLong": "1793560405446"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "66"
+        "$numberInt": "79"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -2637,10 +3439,29 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "b1d4af518779674a59fcb6068fb6acd1edd22a0879ae0d78b9ee01f59e37cde7",
+    "sha256": "751caaee36473fae1cfc45eb1e3a1934448873212679bd9dfe6328528977890b",
     "topology": "standalone"
   },
   "case_manifests": [
+    {
+      "name": "semantic_followup_f04_regex_values",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_regex_values"
+    },
     {
       "name": "semantic_followup_f03_numeric_path",
       "min_version": [
@@ -3554,6 +4375,139 @@
       "selector": "semantic_followup_f04_all_mixed"
     },
     {
+      "name": "semantic_followup_f04_all_mixed_reverse",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_all_mixed_reverse"
+    },
+    {
+      "name": "semantic_followup_f04_all_elem",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_all_elem"
+    },
+    {
+      "name": "semantic_followup_f04_implicit_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_implicit_regex"
+    },
+    {
+      "name": "semantic_followup_f04_in_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_in_regex"
+    },
+    {
+      "name": "semantic_followup_f04_regex_operator",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_regex_operator"
+    },
+    {
+      "name": "semantic_followup_f04_eq_regex_flags",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_eq_regex_flags"
+    },
+    {
+      "name": "semantic_followup_f04_elem_array_numeric",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_elem_array_numeric"
+    },
+    {
       "name": "semantic_followup_f04_size_long",
       "min_version": [
         {
@@ -3666,6 +4620,595 @@
         }
       ],
       "selector": "semantic_followup_f04_size_negative"
+    },
+    {
+      "name": "semantic_followup_f04_size_zero",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_zero"
+    },
+    {
+      "name": "semantic_followup_f04_size_limit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_limit"
+    },
+    {
+      "name": "semantic_followup_f04_size_overflow",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_overflow"
+    },
+    {
+      "name": "semantic_followup_f04_size_nan",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_nan"
+    },
+    {
+      "name": "semantic_followup_f04_size_inf",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_inf"
+    },
+    {
+      "name": "semantic_followup_f04_size_decimal_fraction",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_decimal_fraction"
+    },
+    {
+      "name": "semantic_followup_f04_size_decimal_nan",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_size_decimal_nan"
+    },
+    {
+      "name": "semantic_followup_f04_match_eq_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_eq_regex"
+    },
+    {
+      "name": "semantic_followup_f04_match_not_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_not_regex"
+    },
+    {
+      "name": "semantic_followup_f04_match_elem_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_elem_array"
+    },
+    {
+      "name": "semantic_followup_f04_match_all_mixed",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_all_mixed"
+    },
+    {
+      "name": "semantic_followup_f04_match_all_mixed_reverse",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_all_mixed_reverse"
+    },
+    {
+      "name": "semantic_followup_f04_match_all_elem",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_all_elem"
+    },
+    {
+      "name": "semantic_followup_f04_match_implicit_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_implicit_regex"
+    },
+    {
+      "name": "semantic_followup_f04_match_in_regex",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_in_regex"
+    },
+    {
+      "name": "semantic_followup_f04_match_regex_operator",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_regex_operator"
+    },
+    {
+      "name": "semantic_followup_f04_match_eq_regex_flags",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_eq_regex_flags"
+    },
+    {
+      "name": "semantic_followup_f04_match_elem_array_numeric",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_elem_array_numeric"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_long",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_long"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_double",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_double"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_fraction",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_fraction"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_decimal",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_decimal"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_bool",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_bool"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_negative",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_negative"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_zero",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_zero"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_limit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_limit"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_overflow",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_overflow"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_nan",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_nan"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_inf",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_inf"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_decimal_fraction",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_decimal_fraction"
+    },
+    {
+      "name": "semantic_followup_f04_match_size_decimal_nan",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f04_match_size_decimal_nan"
     },
     {
       "name": "semantic_followup_f02_shift_missing",

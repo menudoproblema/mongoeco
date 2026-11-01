@@ -2931,7 +2931,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F01 | Cerrado | 24 diferenciales 7/8/9; 225 regresiones de respuesta y 103 controles locales/21 subtests. |
 | F02 | Cerrado | 192 diferenciales + 3 metadatos; 19 regresiones focales/3 subtests y lint. |
 | F03 | Pendiente | Rutas y consumidores de arrays con semántica contextual. |
-| F04 | Pendiente | Regex/size/all y selección de consumidores. |
+| F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
 | F05 | Pendiente | Collation efectiva y subset validado. |
 | F06 | Pendiente | Integridad/validación de catálogo e índices. |
 | F07 | Pendiente | Escrituras, identidad, campos, contadores y efectos. |
@@ -2975,3 +2975,17 @@ partición con 6050106. Se añaden cinco controles de bordes/default, NUL dinám
 y sort inválido/duplicado: todas las 135 observaciones F00 anteriores quedan
 idénticas en 7/8/9. Pasan 192 diferenciales, tres metadatos y 19 controles
 focales/3 subtests. Lint verde, logs f02; F11 sigue pendiente.
+
+F04: el plan canónico distingue eq Regex literal de ejecución implícita; not
+admite Regex, y regex/in conservan también la igualdad del patrón y flags
+almacenados. Size usa truncado BSON más comparación exacta para aceptar solo
+enteros representables en su dominio; bool, fracciones, NaN/infinito y límites
+inválidos se rechazan con OperationFailure 2. All valida la mezcla de elemMatch
+antes de consultar datos. ElemMatch objeto ve elementos array como documentos
+BSON con claves numéricas, sin traversal implícito (solapamiento explícito F03).
+Se añaden 39 testigos, incluidas validación en vacío, flags, Regex en arrays y
+consumidores find/count/distinct/update/delete. Las 140 observaciones previas
+permanecen idénticas en los tres servidores. Pasan 1.179 diferenciales/metadatos,
+44 controles locales y el ratchet focal. El primer replay sin permiso de sockets
+se descarta como evidencia de producto; el replay autorizado pasa las cuatro
+superficies en Memory/SQLite y 7/8/9. Logs f04; PCRE completo sigue en X01.

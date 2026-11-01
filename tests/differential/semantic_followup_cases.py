@@ -51,10 +51,12 @@ def pipeline(collection, *, stages, rows):
     return result
 
 
-def query(collection, *, spec):
+def query(collection, *, spec, rows=None):
     reset(
         collection,
-        [
+        rows
+        if rows is not None
+        else [
             {"_id": 1, "a": Regex("x")},
             {"_id": 2, "a": "x"},
             {"_id": 3, "a": [1]},
@@ -81,6 +83,28 @@ def query(collection, *, spec):
         }
 
     return outcome(run)
+
+
+def regex_values(collection):
+    rows = [
+        {"_id": 1, "a": Regex("x", "i")},
+        {"_id": 2, "a": Regex("x")},
+        {"_id": 3, "a": "X"},
+        {"_id": 4, "a": [Regex("x", "i"), "X"]},
+        {"_id": 5, "a": [Regex("other")]},
+        {"_id": 6, "a": None},
+        {"_id": 7},
+    ]
+    return {
+        name: query(collection, spec=spec, rows=rows)
+        for name, spec in {
+            "eq": {"a": {"$eq": Regex("x", "i")}},
+            "implicit": {"a": Regex("x", "i")},
+            "in": {"a": {"$in": [Regex("x", "i")]}},
+            "not": {"a": {"$not": Regex("x", "i")}},
+            "regex": {"a": {"$regex": "x", "$options": "i"}},
+        }.items()
+    }
 
 
 def distinct_arrays(collection):
@@ -313,6 +337,13 @@ QUERIES = {
     "not_regex": {"a": {"$not": Regex("x")}},
     "elem_array": {"a": {"$elemMatch": {"b": {"$exists": False}}}},
     "all_mixed": {"a": {"$all": [{"$elemMatch": {"b": 1}}, 1]}},
+    "all_mixed_reverse": {"a": {"$all": [1, {"$elemMatch": {"b": 1}}]}},
+    "all_elem": {"a": {"$all": [{"$elemMatch": {"b": 1}}]}},
+    "implicit_regex": {"a": Regex("x")},
+    "in_regex": {"a": {"$in": [Regex("x")]}},
+    "regex_operator": {"a": {"$regex": "x"}},
+    "eq_regex_flags": {"a": {"$eq": Regex("x", "i")}},
+    "elem_array_numeric": {"a": {"$elemMatch": {"0": 1}}},
 }
 for label, size in [
     ("long", Int64(1)),
@@ -321,6 +352,13 @@ for label, size in [
     ("decimal", Decimal128("1")),
     ("bool", True),
     ("negative", -1),
+    ("zero", 0),
+    ("limit", 2**31 - 1),
+    ("overflow", Int64(2**31)),
+    ("nan", float("nan")),
+    ("inf", float("inf")),
+    ("decimal_fraction", Decimal128("1.5")),
+    ("decimal_nan", Decimal128("NaN")),
 ]:
     QUERIES["size_" + label] = {"a": {"$size": size}}
 
@@ -404,12 +442,20 @@ INDEX_RULES = [
     ("id_sparse", "_id", {"sparse": True}),
 ]
 SEMANTIC_FOLLOWUP_CASES = (
+    ("semantic_followup_f04_regex_values", regex_values),
     *(
         (f"semantic_followup_{name}", partial(expression, value=expr, rows=rows))
         for name, (expr, rows) in EXPRESSIONS.items()
     ),
     *(
         (f"semantic_followup_f04_{name}", partial(query, spec=spec))
+        for name, spec in QUERIES.items()
+    ),
+    *(
+        (
+            f"semantic_followup_f04_match_{name}",
+            partial(pipeline, stages=[{"$match": spec}], rows=[{"_id": 1, "a": [1]}]),
+        )
         for name, spec in QUERIES.items()
     ),
     *(

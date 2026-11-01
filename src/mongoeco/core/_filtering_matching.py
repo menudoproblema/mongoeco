@@ -13,6 +13,7 @@ from mongoeco.core._filtering_support import (
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_ordering import Code, bson_type_rank
 from mongoeco.core.bson_scalars import _is_nan_numeric_value, wrap_bson_numeric
+from mongoeco.core.bson_values import regex_parts
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.types import Regex, UndefinedType
 
@@ -52,11 +53,13 @@ class FilteringMatchingMixin:
         collation: CollationSpec | None = None,
     ) -> bool:
         if isinstance(item, Regex):
-            return cls._regex_item_matches_candidate(
-                candidate, compile_bson_regex(item)
-            )
+            return regex_parts(candidate) == regex_parts(
+                item
+            ) or cls._regex_item_matches_candidate(candidate, compile_bson_regex(item))
         if isinstance(item, re.Pattern):
-            return cls._regex_item_matches_candidate(candidate, item)
+            return regex_parts(candidate) == regex_parts(
+                item
+            ) or cls._regex_item_matches_candidate(candidate, item)
         return cls._query_equality_matches(
             candidate,
             item,
@@ -79,9 +82,11 @@ class FilteringMatchingMixin:
         for item in values:
             if isinstance(item, Regex):
                 regex_values.append(compile_bson_regex(item))
+                residual_values.append(item)
                 continue
             if isinstance(item, re.Pattern):
                 regex_values.append(item)
+                residual_values.append(item)
                 continue
             if item is None and null_matches_undefined:
                 residual_values.append(item)

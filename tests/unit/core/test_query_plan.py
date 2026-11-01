@@ -370,11 +370,11 @@ class QueryPlanTests(unittest.TestCase):
         )
 
     def test_compile_filter_rejects_invalid_all_size_and_regex_payloads(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'tags': {'$all': 'python'}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'tags': {'$size': -1}})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OperationFailure):
             compile_filter({'tags': {'$size': 1 << 40}})
         with self.assertRaises(OperationFailure):
             compile_filter({'count': {'$mod': 3}})
@@ -450,7 +450,7 @@ class QueryPlanTests(unittest.TestCase):
     ):
         self.assertEqual(
             compile_filter({'name': {'$eq': Regex('^ad', 'i')}}),
-            RegexCondition('name', '^ad', 'i'),
+            EqualsCondition('name', Regex('^ad', 'i')),
         )
         self.assertEqual(
             compile_filter(
@@ -460,7 +460,7 @@ class QueryPlanTests(unittest.TestCase):
                     }
                 }
             ),
-            RegexCondition('name', '^ad', 'im'),
+            EqualsCondition('name', re.compile('^ad', re.IGNORECASE | re.MULTILINE)),
         )
 
         with self.assertRaises(OperationFailure) as error:
