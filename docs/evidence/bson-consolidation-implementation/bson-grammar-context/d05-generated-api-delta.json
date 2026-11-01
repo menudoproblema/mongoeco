@@ -1,0 +1,112 @@
+[
+  {
+    "path": "modules.mongoeco.symbols.AsyncMongoClient.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.symbols.BulkWriteResult.members",
+    "classification": "signature-change",
+    "added": [
+      "bulk_api_result"
+    ],
+    "removed": [],
+    "modified": []
+  },
+  {
+    "path": "modules.mongoeco.symbols.CodecOptions.parameters.uuid_representation.default",
+    "classification": "default-change"
+  },
+  {
+    "path": "modules.mongoeco.symbols.CodecOptions.fields.uuid_representation.default",
+    "classification": "default-change"
+  },
+  {
+    "path": "modules.mongoeco.symbols.MongoClient.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.api.symbols.AsyncCollection.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "create_index",
+      "create_indexes",
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.api.symbols.AsyncDatabase.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.api.symbols.AsyncMongoClient.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.api.symbols.Collection.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "create_index",
+      "create_indexes",
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.api.symbols.Database.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.api.symbols.MongoClient.members",
+    "classification": "signature-change",
+    "added": [],
+    "removed": [],
+    "modified": [
+      "watch"
+    ]
+  },
+  {
+    "path": "modules.mongoeco.engines.symbols.MutationOutcome.parameters",
+    "classification": "signature-change"
+  },
+  {
+    "path": "modules.mongoeco.engines.symbols.MutationOutcome.fields",
+    "classification": "signature-change"
+  },
+  {
+    "path": "modules.mongoeco.engines.symbols.MutationOutcome.members",
+    "classification": "signature-change",
+    "added": [
+      "change"
+    ],
+    "removed": [],
+    "modified": []
+  }
+]

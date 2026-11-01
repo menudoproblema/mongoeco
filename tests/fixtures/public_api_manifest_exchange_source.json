@@ -1139,8 +1139,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "'str'"
+                    "nullable": true,
+                    "rendered": "'str | None'"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -1544,6 +1544,9 @@
           "members": {
             "acknowledged": {
               "kind": "attribute"
+            },
+            "bulk_api_result": {
+              "kind": "property"
             },
             "deleted_count": {
               "kind": "attribute"
@@ -2376,7 +2379,7 @@
                   "nullable": false,
                   "rendered": "'UuidRepresentation | str'"
                 },
-                "default": "mongoeco._types.concerns.UuidRepresentation.STANDARD",
+                "default": "mongoeco._types.concerns.UuidRepresentation.UNSPECIFIED",
                 "kind": "keyword_only",
                 "name": "uuid_representation",
                 "required": false
@@ -2433,7 +2436,7 @@
                 "nullable": false,
                 "rendered": "'UuidRepresentation'"
               },
-              "default": "mongoeco._types.concerns.UuidRepresentation.STANDARD",
+              "default": "mongoeco._types.concerns.UuidRepresentation.UNSPECIFIED",
               "name": "uuid_representation",
               "required": false
             },
@@ -4562,8 +4565,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "'str'"
+                    "nullable": true,
+                    "rendered": "'str | None'"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -8127,6 +8130,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "'object'"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -8188,6 +8201,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "'object'"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -10732,8 +10755,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "'str'"
+                    "nullable": true,
+                    "rendered": "'str | None'"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -11575,8 +11598,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "'str'"
+                    "nullable": true,
+                    "rendered": "'str | None'"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -12756,8 +12779,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "'str'"
+                    "nullable": true,
+                    "rendered": "'str | None'"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -14520,6 +14543,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "object"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -14581,6 +14614,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "object"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -17115,8 +17158,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "str"
+                    "nullable": true,
+                    "rendered": "str | None"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -17858,8 +17901,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "'str'"
+                    "nullable": true,
+                    "rendered": "'str | None'"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -18866,8 +18909,8 @@
                 },
                 {
                   "annotation": {
-                    "nullable": false,
-                    "rendered": "'str'"
+                    "nullable": true,
+                    "rendered": "'str | None'"
                   },
                   "default": "'default'",
                   "kind": "keyword_only",
@@ -30936,6 +30979,16 @@
                 "kind": "positional_or_keyword",
                 "name": "commit_sequence",
                 "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": true,
+                  "rendered": "'Document | None'"
+                },
+                "default": "None",
+                "kind": "positional_or_keyword",
+                "name": "change",
+                "required": false
               }
             ],
             "return": {
@@ -30982,6 +31035,15 @@
               "default": "None",
               "name": "commit_sequence",
               "required": false
+            },
+            {
+              "annotation": {
+                "nullable": true,
+                "rendered": "'Document | None'"
+              },
+              "default": "None",
+              "name": "change",
+              "required": false
             }
           ],
           "kind": "class",
@@ -30990,6 +31052,9 @@
               "kind": "attribute"
             },
             "before_document": {
+              "kind": "attribute"
+            },
+            "change": {
               "kind": "attribute"
             },
             "commit_sequence": {

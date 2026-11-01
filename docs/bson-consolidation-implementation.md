@@ -2326,3 +2326,23 @@ Mapa finito de garantías D06, reutilizando aceptaciones sin reabrirlas:
 Este mapa cierra la aceptación acotada D06. La integración y las garantías de
 coste/entorno sobre el candidato final siguen en O5–O8; no se sustituyen por
 los replays ni por los checkpoints históricos.
+
+
+### O7 — Conciliación del manifiesto público generado
+
+El gate detecta 14 diferencias respecto del snapshot generado anterior, no de
+un oráculo MongoDB. Se concilian solamente cambios ya implementados y aceptados:
+full_document nullable de watch (D04); bulk_api_result; UUID UNSPECIFIED; kwargs
+de creación de índices (admisión B07); y el campo opcional change del resultado
+atómico compartido de `f8344e75`. Este último amplía el DTO existente de forma
+compatible con sus constructores anteriores; no cambia métodos ni versión SPI.
+El canario externo SPI v2 sigue verde. Las menciones históricas a «sin cambio
+SPI» se refieren al protocolo del proveedor, no a identidad textual del DTO.
+
+El snapshot se regenera con el runner existente y después pasa --check. Se
+retienen el [original](evidence/bson-consolidation-implementation/bson-grammar-context/d05-public-api-before.json.gz)
+y el [delta acotado](evidence/bson-consolidation-implementation/bson-grammar-context/d05-generated-api-delta.json).
+Esta excepción explícita afecta solo a metadatos generados; no se cambian
+capturas nativas ni observadores para acomodar un fallo. Los 427 protegidos
+permanecían intactos en las aceptaciones O1/O2, anteriores a esta conciliación.
+O7 continúa abierta hasta completar el conjunto de gates exigido.
