@@ -1,0 +1,7 @@
+{
+  "tests/differential/semantic_corpora.py": "2f974e1b7c47621ff4b80f163c2dc4ae9ff46e8740c204249ba1a52297ad3332",
+  "tests/differential/semantic_bson_consumer_cases.py": "e1fd23d3e6a8dc0cd0b5a318dbf909acba4081d745764426077f59c0844e5a51",
+  "tests/fixtures/semantic_bson_consumer_7_0.json": "e92bec79bf77925633337210cdeb50f23c9b243579d6f0a4b0a204967c19b2a8",
+  "tests/fixtures/semantic_bson_consumer_8_0.json": "ee35cb5f0705ffeb96a20c8bfac72d0f9b86c99c743bdcb02d6d5d95e6116ebd",
+  "tests/fixtures/semantic_bson_consumer_9_0.json": "677b36315e1a4f7611ffbe49a7bb8474f042e8262ba967564390a00ccd350b00"
+}

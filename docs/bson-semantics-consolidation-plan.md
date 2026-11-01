@@ -1112,9 +1112,14 @@ sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
 ### Contraste actual y orden mínimo de ejecución
 
-Relectura vigente sobre HEAD `5348004`, con trabajo de fixture/corpus preexistente
-identificado en el [receipt de revisión 16](evidence/bson-consolidation-review/review16/receipt.json).
-Esta revisión no lo modifica ni acepta. La caracterización anterior sobre
+Relectura vigente sobre HEAD `3c4032b`, con el mismo adjunto (SHA-256
+`a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`).
+La [revisión 17](evidence/bson-consolidation-review/review17/README.md) identifica
+las comprobaciones actuales y el corpus de consumidores preexistente, que no
+modifica ni acepta. La [revisión 16](evidence/bson-consolidation-review/review16/receipt.json)
+conserva su caracterización sobre `5348004`, anterior a los cierres acotados de
+fábricas documentales y consumo/propiedad de cursores sync.
+La caracterización anterior sobre
 `eb85ea3` y sus 12 archivos sin commitear permanece identificada en el
 [receipt de revisión 15](evidence/bson-consolidation-review/review15/receipt.json).
 El [receipt de revisión 14](evidence/bson-consolidation-review/review14/receipt.json)
@@ -1251,6 +1256,32 @@ cambio, pero conservan testigos y aceptación separados. H53/conversión pueden
 avanzar de forma independiente de D06c. No hace falta esperar un fixture RS ya
 aceptado ni repetir D01/D02/D03/D04 para empezar estos pendientes.
 
+**D06c: corte mínimo concretado en revisión 17.** Las sondas locales nuevas
+no aceptan el corpus preexistente ni sustituyen su contraste nativo. Identifican
+estos mecanismos dentro del bloque existente, sin abrir otro programa:
+
+| Unidad / prioridad | Corrección o refactorización mínima | Garantía antes de aceptar |
+| --- | --- | --- |
+| Grupo / P1 | `aggregation_equality_key` recorre dict, pero no la vista documental de DBRef. El DBRef decodificado cae en la guarda de hashabilidad y falla; el SDK evita el recorrido con collation. Reutilizar `document_mapping` antes de la recursión, conservando orden/extras y política de missing/null del grupo. Retirar `_aggregation_key` y sus exports privados solo tras censar consumidores y conservar la guarda efectiva; no sustituirla por un validador BSON permisivo ni ampliar admisión B07 por accidente. | MongoDB 7/8/9: partición de miembros y representante físico observado por separado; DBRef SDK/local/documento, orden inverso, extras, `$db:null`, arrays/anidados y collation. Propiedad de equivalencia en ambos sentidos para la clave exclusiva en su dominio; un test del helper común no acredita este consumidor. |
+| Conjuntos / P1 | `_hashable_set_lookup_key` usa igualdad Python sobre bytes/Binary y admite Code por herencia de str. Delegar los átomos elegibles a las vistas/claves existentes; excluir Code del atajo String o darle una política acreditada, conservando residual. No ampliar dialectos, tipos elegibles ni habilitar el atajo bajo collation para simplificarlo. | bytes/Binary 0 equivalentes, 0/5 distintos, Code/String, scope ausente/vacío/numérico/reordenado y collation; setUnion/intersection/difference/equals/subset y addToSet por sus rutas reales. Comparar pertenencia/contenido, no solo tamaños; controles 8/9 y dialecto propio deben demostrar el fallback. |
+| Spill y lookup / P1 de garantía | Reutilizar claves y candidato/residual actuales; no crear un servicio universal. En spill, igualdad de claves Python no basta: `_group_digest` serializa la clave. En lookup, mantener admisión conservadora, presupuesto y fallback de valores no representados. | Equivalentes producen la misma entrada serializada de partición; grupos iguales con/sin spill forzado y en subpipeline. Lookup hash activado/desactivado conserva miembros y orden, con contadores/spy que prueben la ruta. Presupuesto agotado, valores no elegibles como DBRef, collation y dialecto propio prueban fallback; Code tiene controles propios sin presuponer su exclusión. Un umbral mínimo que desactive hash no cuenta como test de hash. |
+| Search / P1 de garantía, sin ampliación funcional | Conservar su dominio y contrato propios. No sustituir filter_value_key por la clave general si admite más valores o cambia equivalencia/orden. Ampliar propiedades de conservación existentes para las representaciones alcanzadas. | Verdad del filtro ⊆ candidatos ⊆ universo elegible, antes de residual y ventana, también materializado/persistido/reabierto. Valores no representados fuerzan fallback; exact implica igualdad. MongoDB puede acreditar el filtro MQL usado como oráculo, no la semántica Atlas Search/vector completa: esa parte mantiene su contrato local. |
+
+D00 acompaña estas unidades y D05 integra sus gates. Grupo y conjuntos pueden
+corregirse juntos por compartir primitivas, sin imponer dependencia entre sus
+arreglos. Spill depende del contrato de clave del grupo; lookup y Search pueden
+revisarse en paralelo lógico sin ampliar elegibilidad. Una prueba nativa del
+grupo no acepta addToSet, un set correcto no acepta el índice de lookup y un
+roundtrip de producción no acredita la serialización física. Mantener controles
+negativos con subtipo/orden/scope distintos para detectar fusiones indebidas.
+
+Este corte comparte **vistas y átomos**, no políticas: identidad de modificación,
+igualdad de consulta, grupo y Search siguen teniendo owners diferentes. Las
+claves persistidas, storage keys y tie-breakers permanecen fuera de esta
+refactorización; cualquier cambio requeriría contrato de migración y pruebas
+propias. Las entradas no BSON hashables admitidas hoy por la guarda no se
+convierten en un nuevo contrato de soporte; su rechazo pertenece a B07.
+
 **Garantías del paso 2, conservadas tras su corte aceptado.**
 
 1. Congelar las funciones del corpus y capturar/`--check` contra 7/8/9. Añadir
@@ -1380,8 +1411,9 @@ bloques ni obligan a rehacer los cortes aceptados:
 Aceptar conjuntamente estos mecanismos cuando simplifique la entrega, pero
 mantener las garantías por superficie. Los 36 fallos wire y los fallos portables
 de revisión 15 están corregidos en el corte aceptado; conservar sus regresiones,
-sin presentarlos como pendientes actuales. Los efectos de fábricas y estado
-público tienen aceptación propia todavía pendiente. No crear otro runner: incorporar los
+sin presentarlos como pendientes actuales. Los efectos probados de fábricas y
+estado público tienen la aceptación acotada de `d4caba5` y `72edfa3`; otras
+combinaciones conservan aceptación pendiente. No crear otro runner: incorporar los
 testigos al registro/capturador/replay y a las propiedades existentes. Antes de
 aceptar, congelar el corpus final, comprobar las nuevas referencias contra el
 servidor correspondiente y acreditar baseline/candidato con esa misma fuente.

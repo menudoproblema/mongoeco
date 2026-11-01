@@ -1,0 +1,47 @@
+{
+  "scope": "Plan refinement only; local regressions and mechanism probes, not native acceptance",
+  "head": "3c4032b9476f08b3a3f18e521f2503e98fc737bb",
+  "input_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "same_input_as_review16": true,
+  "runtime_sources": "runtime-sources.json",
+  "preexisting_workset": "preexisting-workset.json",
+  "checks": {
+    "focal": {
+      "passed": 97,
+      "seconds": 1.3,
+      "exit_code": 0
+    },
+    "binary_representation": {
+      "engine_dialect_pairs": 6,
+      "matcher_trace_rows": 18,
+      "assertions": "eq/in IDs and exact distinct subtype/payload; passed"
+    },
+    "consumer_probe": "DBRef group rejection/collation split; bytes-Binary0 set false negative and Code TypeError in dialect7; controls8/9 and subtype0/5"
+  },
+  "sources": {
+    "official_parser_r8": "consulted via web this review; no hash identity claim from web rendering",
+    "historical_16_hashes": "review15/sources-check.json internally consistent; not downloaded again"
+  },
+  "document_checks": {
+    "relative_links_missing": [],
+    "runtime_changed": [],
+    "preexisting_workset_changed": [],
+    "protected_changed": [],
+    "validator": "relative file links, hashes and git diff --check; no project-specific Markdown gate found"
+  },
+  "limits": [
+    "No new native server/capture, installed wheel, full matrix, global coverage or benchmark in this review.",
+    "Preexisting corpus and uncommitted captures preserved but not accepted.",
+    "Local helper failures do not close public differential acceptance."
+  ],
+  "artifacts_sha256": {
+    "README.md": "c05a718b3f6fdb40549260cd214a30d6441bb114758b8b7ddfc6b78063e177ea",
+    "consumer-probe.json": "75aeb1572a37d2fabd4230541d1066fbe016a6dadd186a30132c023ee4b9f635",
+    "consumer-probe.py.txt": "d30f0e06dd7572ed4afc0a397f9776a6198f89e9655082606ee5adc7e31ccd86",
+    "focal.txt": "5583da61dc86ea147d8ddfc228415b8460ade57b0728ea46ed81e954874b9bbb",
+    "preexisting-workset.json": "4a41e28ab73f7cb66746d60dc2c16361615a7bfd3e9d22154898e174ee7699fd",
+    "representation-probe.py.txt": "18e952f48d116f2de7e42eb147092565dc46f228132f2287a1d651292719ac69",
+    "representations.json": "d04096bd837aa90e9aefbba5d806c3ae1a795fb92996c0043f9dee7809d8bc09",
+    "runtime-sources.json": "6b289205269cae72f75b5692e65ad21773088fa157fb9bd9d7fdadfa2cfa6cb1"
+  }
+}

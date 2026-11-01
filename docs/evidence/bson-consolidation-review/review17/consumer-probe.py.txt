@@ -1,0 +1,29 @@
+import json,sys
+from pathlib import Path
+sys.path.insert(0,str(Path.cwd()/'src'))
+from bson import DBRef as SDKDBRef, Binary as SDKBinary, Code
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MONGODB_DIALECT_90
+from mongoeco.core.aggregation.runtime import aggregation_equality_key
+from mongoeco.core.aggregation.array_string_expressions import _build_set_lookup,_set_contains
+from mongoeco.core.bson_ordering import bson_equality_key
+from mongoeco.core.collation import CollationSpec
+from mongoeco.core.codec import DocumentCodec
+
+def observe(action):
+ try:return {'ok':True,'result':action()}
+ except Exception as e:return {'ok':False,'class':type(e).__name__,'message':str(e),'code':getattr(e,'code',None)}
+ref=SDKDBRef('items','abc')
+doc=dict(ref.as_doc())
+local=DocumentCodec.decode(DocumentCodec.encode(ref))
+collation=CollationSpec(locale='en',strength=2)
+rows={}
+for name,value in [('sdk',ref),('decoded',local),('document',doc)]:
+ rows['group_'+name]=observe(lambda:repr(aggregation_equality_key(value,collation)))
+ rows['common_'+name]=observe(lambda:repr(bson_equality_key(value)))
+for name,dialect in [('7',MONGODB_DIALECT_70),('8',MONGODB_DIALECT_80),('9',MONGODB_DIALECT_90)]:
+ for operand,value,tag in [(b'x',SDKBinary(b'x',0),'bytes_binary0'),(SDKBinary(b'x',0),SDKBinary(b'x',5),'binary0_binary5'),(Code('x'),Code('x'),'code')]:
+  def run():
+   look,residual=_build_set_lookup([value],dialect=dialect)
+   return {'semantic_equal':dialect.values_equal(operand,value),'set_contains':_set_contains(operand,lookup=look,residual=residual,dialect=dialect),'residual_count':len(residual)}
+  rows['sets_'+name+'_'+tag]=observe(run)
+print(json.dumps({'scope':'local mechanism probes; no new native acceptance','observations':rows},indent=2))

@@ -1,0 +1,101 @@
+{
+  "scope": "local mechanism probes; no new native acceptance",
+  "observations": {
+    "group_sdk": {
+      "ok": true,
+      "result": "('dict', (('$ref', ('str', 'items')), ('$id', ('str', 'abc'))))"
+    },
+    "common_sdk": {
+      "ok": true,
+      "result": "('dict', (('$ref', ('str', 'items')), ('$id', ('str', 'abc'))))"
+    },
+    "group_decoded": {
+      "ok": false,
+      "class": "OperationFailure",
+      "message": "$group _id must resolve to BSON-compatible values",
+      "code": null
+    },
+    "common_decoded": {
+      "ok": true,
+      "result": "('dict', (('$ref', ('str', 'items')), ('$id', ('str', 'abc'))))"
+    },
+    "group_document": {
+      "ok": true,
+      "result": "('dict', (('$ref', ('str', ((7474, 7829, 7338, 7594, 7793), (32, 32, 32, 32, 32)))), ('$id', ('str', ((7239, 7264, 7290), (32, 32, 32))))))"
+    },
+    "common_document": {
+      "ok": true,
+      "result": "('dict', (('$ref', ('str', 'items')), ('$id', ('str', 'abc'))))"
+    },
+    "sets_7_bytes_binary0": {
+      "ok": true,
+      "result": {
+        "semantic_equal": true,
+        "set_contains": false,
+        "residual_count": 0
+      }
+    },
+    "sets_7_binary0_binary5": {
+      "ok": true,
+      "result": {
+        "semantic_equal": false,
+        "set_contains": false,
+        "residual_count": 0
+      }
+    },
+    "sets_7_code": {
+      "ok": false,
+      "class": "TypeError",
+      "message": "cannot use 'tuple' as a set element (unhashable type: 'Code')",
+      "code": null
+    },
+    "sets_8_bytes_binary0": {
+      "ok": true,
+      "result": {
+        "semantic_equal": true,
+        "set_contains": true,
+        "residual_count": 1
+      }
+    },
+    "sets_8_binary0_binary5": {
+      "ok": true,
+      "result": {
+        "semantic_equal": false,
+        "set_contains": false,
+        "residual_count": 1
+      }
+    },
+    "sets_8_code": {
+      "ok": true,
+      "result": {
+        "semantic_equal": true,
+        "set_contains": true,
+        "residual_count": 1
+      }
+    },
+    "sets_9_bytes_binary0": {
+      "ok": true,
+      "result": {
+        "semantic_equal": true,
+        "set_contains": true,
+        "residual_count": 1
+      }
+    },
+    "sets_9_binary0_binary5": {
+      "ok": true,
+      "result": {
+        "semantic_equal": false,
+        "set_contains": false,
+        "residual_count": 1
+      }
+    },
+    "sets_9_code": {
+      "ok": true,
+      "result": {
+        "semantic_equal": true,
+        "set_contains": true,
+        "residual_count": 1
+      }
+    }
+  }
+}

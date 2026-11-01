@@ -717,6 +717,14 @@ solo owner en el plan.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
 - B07: admisión BSON general (tipos arbitrarios y Decimal crudo), fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
 
+La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
+`3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
+orden activo con los cierres acotados de fábricas/cursores y concreta D06c por
+consumidor: grupo/DBRef/collation, atajo de conjuntos, serialización de spill y
+conservación de candidatos. Sus 97 regresiones y sondas locales son diagnóstico,
+no aceptación de D06c ni del corpus preexistente. El plan conserva un solo orden
+vigente y los owners restantes; no se reabren D01/D02/D03/D04.
+
 Los cortes focales no acreditan el cierre integrado del programa ni D05.
 
 ## Revisión 10: plan restante tras repetir la autocrítica
