@@ -1,0 +1,23 @@
+[
+  {
+    "target": "7.0",
+    "reference": "tests/fixtures/semantic_search_bson_7_0.json",
+    "reference_sha256": "14ee35142344c65f06456ad1132e76e5a38a960bcaba233ef8d0b99a004aa545",
+    "check_sha256": "14ee35142344c65f06456ad1132e76e5a38a960bcaba233ef8d0b99a004aa545",
+    "equal": true
+  },
+  {
+    "target": "8.0",
+    "reference": "tests/fixtures/semantic_search_bson_8_0.json",
+    "reference_sha256": "133e2caceba0ad8b6620135492b5315155fc0ff81a8db2b9e687efb76f5f9670",
+    "check_sha256": "133e2caceba0ad8b6620135492b5315155fc0ff81a8db2b9e687efb76f5f9670",
+    "equal": true
+  },
+  {
+    "target": "9.0",
+    "reference": "tests/fixtures/semantic_search_bson_9_0.json",
+    "reference_sha256": "f70475acc2800431a74ed9c8f51305c3fa42854feec5b91df8bfcc8bd951fb33",
+    "check_sha256": "f70475acc2800431a74ed9c8f51305c3fa42854feec5b91df8bfcc8bd951fb33",
+    "equal": true
+  }
+]

@@ -1,0 +1,65 @@
+import ast,hashlib,json,sys,tempfile
+from pathlib import Path
+import mongoeco
+from mongoeco import MongoClient,SearchIndexModel
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import Binary,DBRef,Decimal128
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());site=root/'site-packages'
+assert Path(mongoeco.__file__).resolve().is_relative_to(site.resolve())
+for p,h in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==h
+try:import bson
+except ImportError:pass
+else:raise AssertionError('SDK must be absent')
+excluded={'03','04','05','14','33'}
+code_filters={'code','code_empty_scope','code_numeric_scope','code_string_in','partial_and','partial_or'}
+source=ast.parse(Path('tests/differential/semantic_search_bson_cases.py').read_text())
+body=[]
+for node in source.body:
+ if isinstance(node,ast.ImportFrom) and node.module=='bson':continue
+ if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='_FIELDS' for t in node.targets):
+  for i in (3,4,5,14):node.value.elts[i]=ast.Dict(keys=[],values=[])
+ if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='FILTERS' for t in node.targets):
+  pairs=[(k,v) for k,v in zip(node.value.keys,node.value.values,strict=True) if k.value not in code_filters]
+  node.value.keys=[k for k,v in pairs];node.value.values=[v for k,v in pairs]
+ if isinstance(node,ast.FunctionDef) and node.name=='advance':
+  branch=node.body[0].body
+  node.body[0].body=[n for n in branch if not(isinstance(n,ast.Expr) and isinstance(n.value,ast.Call) and isinstance(n.value.func,ast.Attribute) and n.value.func.attr=='insert_one')]
+ body.append(node)
+ns={'Binary':Binary,'DBRef':DBRef,'Decimal128':Decimal128,'SearchIndexModel':SearchIndexModel}
+exec(compile(ast.fix_missing_locations(ast.Module(body=body,type_ignores=[])),'native-supported-bson-subset','exec'),ns)
+ns['SEED']=[d for d in ns['SEED'] if d['_id'] not in excluded]
+assert len(ns['SEED'])==29
+helper=ast.parse(Path('tests/integration/api/test_search_bson_persistence.py').read_text())
+for node in helper.body:
+ if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id in {'TEXT_DEFINITION','_TOP_K'} for t in node.targets):
+  exec(compile(ast.Module(body=[node],type_ignores=[]),'public-search-settings','exec'),ns)
+ if isinstance(node,ast.FunctionDef) and node.name in {'indexes','pipeline','ids','select_search'}:
+  exec(compile(ast.Module(body=[node],type_ignores=[]),'public-search-functions','exec'),ns)
+ns['VECTOR_DEFINITION']={'fields':[{'type':'vector','path':'embedding','numDimensions':2,'similarity':'cosine'}]}
+def plain(value):
+ if isinstance(value,list):return [plain(v) for v in value]
+ if isinstance(value,dict):
+  if len(value)==1 and ('$numberInt' in value or '$numberLong' in value):return int(next(iter(value.values())))
+  return {k:plain(v) for k,v in value.items()}
+ return value
+checks=0;backends=set()
+for dialect in ('7.0','8.0','9.0'):
+ expected=plain(json.loads(Path(f"tests/fixtures/semantic_search_bson_{dialect.replace('.','_')}.json").read_text()))['cases']
+ with tempfile.TemporaryDirectory(prefix='mongoeco-search-bson-sdk-free-') as temp:
+  path=str(Path(temp)/'data.sqlite')
+  with MongoClient(SQLiteEngine(path),mongodb_dialect=dialect) as client:
+   ns['reset'](client.portable.rows);ns['indexes'](client.portable.rows)
+  for phase in ns['PHASES']:
+   with MongoClient(SQLiteEngine(path),mongodb_dialect=dialect) as client:ns['advance'](client.portable.rows,phase)
+   with MongoClient(SQLiteEngine(path),mongodb_dialect=dialect) as client:
+    for route in ('vector','vector-downstream','text','compound'):
+     domain='vector' if route.startswith('vector') else 'document';universe={}
+     for name,query in ns['FILTERS'].items():
+      observed=ns['select_search'](client.portable.rows,query,route=route,universe=universe,domain=domain,phase=phase,name=name)
+      truth=[key for key in expected['semantic_search_bson_'+domain][phase][name] if key not in excluded]
+      assert observed==truth,(dialect,phase,route,name,observed,truth)
+      checks+=1
+     explanation=client.portable.command({'explain':{'aggregate':'rows','pipeline':ns['pipeline']({},route),'cursor':{}},'verbosity':'executionStats'})
+     backends.add(explanation['engine_plan']['details']['backend'])
+assert backends=={'usearch','fts5','fts5-prefilter'},backends
+print(json.dumps({'sdk_absent':True,'python':sys.version,'native_supported_query_comparisons':checks,'bson_seed_ids_excluded':sorted(excluded),'code_filters_excluded':sorted(code_filters),'routes':4,'mutated_and_reopened_phases':4,'native_targets':['7.0','8.0','9.0'],'backends':sorted(backends),'import':mongoeco.__file__}))

@@ -145,6 +145,10 @@ from tests.differential.semantic_schema_cases import (
     SEED as SCHEMA_SEED,
     SEMANTIC_SCHEMA_CASES,
 )
+from tests.differential.semantic_search_bson_cases import (
+    INITIAL_SEED as SEARCH_BSON_SEED,
+    SEMANTIC_SEARCH_BSON_CASES,
+)
 from tests.differential.semantic_search_eligibility_cases import (
     SEED as SEARCH_ELIGIBILITY_SEED,
     SEMANTIC_SEARCH_ELIGIBILITY_CASES,
@@ -408,6 +412,10 @@ SEMANTIC_CORPORA = {
         MOD_SEED,
         SEMANTIC_MOD_CASES,
         observation_encoding="canonical-json",
+    ),
+    "search_bson": SemanticCorpus(
+        "search-bson", "semantic_search_bson_cases", SEARCH_BSON_SEED,
+        SEMANTIC_SEARCH_BSON_CASES,
     ),
     "search_eligibility": SemanticCorpus(
         "search-eligibility",

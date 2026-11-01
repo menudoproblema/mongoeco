@@ -1,0 +1,252 @@
+{
+  "scope": "D06c Search BSON persistence, context and batch ranking; entire plan remains in progress",
+  "base": "47336ce",
+  "runtime_sources": "runtime-sources.json",
+  "test_sources": "test-sources.json",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-0t9m3edi/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "635dc9a3f7e6171d48ad946338b87dbc753da791b890e67b597f2e886a196e97",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-0t9m3edi/site-packages",
+    "modules": 284
+  },
+  "environment": {
+    "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "packages": {
+      "pymongo": "4.19.0",
+      "numpy": "2.5.1",
+      "usearch": "2.25.3",
+      "pytest": "9.1.1"
+    }
+  },
+  "native": {
+    "oracle": "MQL eligibility only, not Atlas Search scores",
+    "topology": "standalone",
+    "references": [
+      {
+        "dialect": "7.0",
+        "version": "7.0.43",
+        "fcv": {
+          "version": "7.0"
+        },
+        "file": "tests/fixtures/semantic_search_bson_7_0.json",
+        "sha256": "14ee35142344c65f06456ad1132e76e5a38a960bcaba233ef8d0b99a004aa545",
+        "cases": [
+          "semantic_search_bson_document",
+          "semantic_search_bson_vector"
+        ]
+      },
+      {
+        "dialect": "8.0",
+        "version": "8.0.32",
+        "fcv": {
+          "version": "8.0"
+        },
+        "file": "tests/fixtures/semantic_search_bson_8_0.json",
+        "sha256": "133e2caceba0ad8b6620135492b5315155fc0ff81a8db2b9e687efb76f5f9670",
+        "cases": [
+          "semantic_search_bson_document",
+          "semantic_search_bson_vector"
+        ]
+      },
+      {
+        "dialect": "9.0",
+        "version": "9.0.2",
+        "fcv": {
+          "version": "9.0"
+        },
+        "file": "tests/fixtures/semantic_search_bson_9_0.json",
+        "sha256": "f70475acc2800431a74ed9c8f51305c3fa42854feec5b91df8bfcc8bd951fb33",
+        "cases": [
+          "semantic_search_bson_document",
+          "semantic_search_bson_vector"
+        ]
+      }
+    ],
+    "capture_rounds": 3,
+    "final_capture_check": "native-checks.json"
+  },
+  "baseline": {
+    "public_and_native_cases": {
+      "failed": 32,
+      "passed": 141
+    },
+    "explain_and_oracle_controls": {
+      "failed": 4,
+      "passed": 13
+    },
+    "custom_context_controls": {
+      "failed": 48,
+      "passed": 12
+    },
+    "source": "Git archive47336ce; site-only imports and284 source hashes verified"
+  },
+  "final_checks": {
+    "installed_replay": {
+      "passed": 8454,
+      "seconds": 211.57,
+      "warnings": 0,
+      "resource_warnings_as_errors": true,
+      "workers_loaded_modules": {
+        "wheel-imports-gw3.json": 262,
+        "wheel-imports-gw2.json": 262,
+        "wheel-imports-gw1.json": 262,
+        "wheel-imports-gw0.json": 262
+      }
+    },
+    "installed_unit_search_properties_contracts": {
+      "passed": 1144,
+      "subtests": 181,
+      "seconds": 70.32,
+      "warnings": 0,
+      "loaded_modules": 263,
+      "proof_label": "search-unit-final-master"
+    },
+    "typing": {
+      "positive": 2,
+      "negative_expected_errors": [
+        20,
+        25
+      ]
+    },
+    "public_api_manifest": "unchanged",
+    "lint_ratchet": "passed for15 changed Python files; new files checked independently",
+    "sdk_free": {
+      "python": "3.13.15",
+      "native_supported_queries": 960,
+      "Code_ids_and_filters_excluded": true,
+      "routes": 4,
+      "phases": 4,
+      "sqlite_reopened": true,
+      "observed_backends": [
+        "usearch",
+        "fts5",
+        "fts5-prefilter"
+      ],
+      "custom_equality_probe": "both engines match both IDs"
+    },
+    "native_resource_audit": {
+      "containers_absent": 9,
+      "volumes_absent": 18
+    },
+    "cost": {
+      "order": "ABBAABBA",
+      "samples_per_runtime_case": 12,
+      "cases": 4,
+      "bson_equal": true,
+      "limit2_ratios_before_winner_materialization": [
+        1.656725888324873,
+        1.7477725579134944
+      ],
+      "limit2_final_ratios": [
+        1.1099250110277898,
+        1.4695533931075513
+      ],
+      "limit64_final_ratios": [
+        0.9934071242842326,
+        0.9899523701519619
+      ],
+      "remaining": "D05 review of residual Binary cost; not a global performance acceptance"
+    }
+  },
+  "changes": [
+    "Rank entire received ANN batch before selecting; decorate only winners, one shared hit order.",
+    "Forward explicit aggregate explain verbosity, preserve omitted local default.",
+    "Guard MQL postings by known singleton dialect and binary collation context, retain residual otherwise; remove redundant Memory candidate computation.",
+    "Configure existing reference oracle before sync opening; verify real executor mode and restore hook on failure."
+  ],
+  "protected_sources": "protected-sources.json",
+  "historical_json_fixtures_unchanged": 251,
+  "review_feedback": [
+    "Initial seed EJSON metadata canonicalized DBRef; use neutral initial fixture and action-owned BSON seed, retaining source hash and strict validator.",
+    "One test omitted fts5-prefilter from its backend expectation; now checks the concrete route.",
+    "First wide gate:five failures exposed stale lazy-sync assumptions, ineffective reference selection and dropped explain verbosity.",
+    "Two 8394-check and one8454-check earlier green replay are feedback for prior source versions, not final acceptance.",
+    "Before winner-only metadata, CPU cost1.66\u20131.75 prompted the shared ranking/winner-materialization refactor.",
+    "Repeated the definitive unit gate only to retain its own non-overwritten import manifest; assertion logic and runtime unchanged."
+  ],
+  "D05_historical_node_disposition": {
+    "resolved_with_verified_oracle": "tests/property/test_search_runtime_equivalence_properties.py::test_generated_search_errors_match_reference_engines_and_surfaces",
+    "other_97_list_nodes": "not accepted by association; global gate remains pending"
+  },
+  "limits": [
+    "No full D06/D05 or entire goal closure, no global coverage or full Python/SDK/pytest matrix or remote CI.",
+    "Custom Python dialect tests use their local explicit contract, not MongoDB plugin execution.",
+    "ANN guarantee covers returned candidates within the budget, not exhaustive recall.",
+    "General BSON admission B07, UUID default coordination, H53, sNaN and optional D07 remain by owner."
+  ],
+  "document_links_missing": [],
+  "artifacts_sha256": {
+    "7.0-fixture.json": "2f8e59c790c6bd946ec7807414604464ce53f19934643a41562c93b33575e08b",
+    "8.0-fixture.json": "111ef5eb8b5fdcbe6d0dfa0fe830ec2d4f7ed577c5e32d743c578fa66ef64a1d",
+    "9.0-fixture.json": "57e202a95641c9d2443c83f29a05e1e59326407b8d7c9e4c09eec8bbe2a3d1e3",
+    "README.md": "33c2f00181cf6810fa339fdb70aa539386d6870808af31d24e9d1c4c1990b597",
+    "artifact-guard-replay.py.txt": "eca190893e437352238b22167243bb6c82a72efa322b954a2209e9a03169f4dc",
+    "artifact-guard-unit.py.txt": "d3f1ddd3376418a72b6ec4aea27b7df0f1be19b17a7114f4339eaf0efae9307f",
+    "baseline-explain.py.txt": "419c4aa0e25ee54ac6a3c45bccd92d1efe3b5678302d8e55f728b57fd2b5fe48",
+    "baseline-explain.txt.gz": "92d649bc0a3fb01871f34ab71dddf13e4f4a3e4ee6fbe7faa347a4b08f45fbbb",
+    "baseline-overrides-imports.json": "0b3f0771696e36d31c655b9ee1be78a23a636b10b56930a8b2399a45c9415ced",
+    "baseline-overrides.py.txt": "f55fdea44c277deac7960a780ece9eb83795940667d898cb8a360c61b90728c6",
+    "baseline-overrides.txt.gz": "f52168fc7f5f163abbd5c56391cef8aa87a537e8b5d61241e3fa9ea8f9e89888",
+    "baseline-public-imports.json": "0b3f0771696e36d31c655b9ee1be78a23a636b10b56930a8b2399a45c9415ced",
+    "baseline-runtime-sources.json": "82440f51bf174e71e01731cafa434964a42ac1fea78d43ea104d1bc475027458",
+    "baseline.py.txt": "ab6a87e2d28ae12cb50fa2308e5e33c4653347fa6952db9b330af98393918c49",
+    "baseline.txt.gz": "af51b89b1e0dcd055f349ab1cf7a4115a586e191232d79374e6869ad10a0c4c5",
+    "before-winners-guard-unit-imports.json": "52eb9b401a1089b5aff6acaa9198e47c25ce7142fc46134cd527d0a6ed9e1bbe",
+    "before-winners-runtime-sources.json": "b5f31e79d174510bca5fff5a1e53a332363bd9a4adcbc0ca57eeb17288eca3da",
+    "controls.txt.gz": "63e35e9de422a38d397d9aaa6d598bf1d0a2021c361ca85f4ed08d97e56167bb",
+    "cost-before-winners.json": "818497325c1c01e44d20a5d8fbc4f4de944e3865ff290bd84b7c7c53fe916328",
+    "cost-worker.py.txt": "2efda83a1d8540bd4bfd8ecf5890663da2c53876b03aa31a6b2f7125e04d9d02",
+    "cost.json": "afe644a5f4f774bf7af71a8f9cedcece33c4a6cce93169c150f63aa44e733d26",
+    "cost.py.txt": "5fa4f0a1fd97c3008272f05da2d8641d427c1f33329364fc1f601344c6ea9466",
+    "custom-context-before.json": "f0e5c856685264ac26fb41d83f52e465095155bbb97db7540e454032ed33e290",
+    "custom-probe.py.txt": "46c7425ed03e7a69776a28a8790d4871ddc1011282b9df8894eaa0738dd00134",
+    "custom-sdk-free.txt.gz": "2faadf54aff6aebc84b928810787e5b8b7d4741ecbe2bcb037e609d2f2cc2bc2",
+    "guard-unit.txt.gz": "ea84bc33232b30c744b6bb3b9fd75357fe2121e7f1cafae700507910c5bf9a26",
+    "installed-unit-imports.json": "52eb9b401a1089b5aff6acaa9198e47c25ce7142fc46134cd527d0a6ed9e1bbe",
+    "lint-final.txt.gz": "944469d8a7c26917a3ea147057faea7480f15796a21a3e62df5eb35f3b28eca0",
+    "native-checks.json": "274a86d7e9e7bddcc4e63b57be84912faab87957a5578844999bd6cc9e0a83fe",
+    "native-replay.txt.gz": "c2fe7f0193002ab8877cd5a3812891433ff16b6c28ff3c6ff5430f0672182a95",
+    "native-v3.py.txt": "de01c29405fe6cb7fac92b0913dbda912c0c0d7fa3522994ddd9cecc2cfac1cb",
+    "oracle-fixed.txt.gz": "5f251f5a326e3b7ef4e148f0d3eced2c9145370607fb35c2de37470d09dcf46c",
+    "oracle-review.txt.gz": "d8fd831015b34692d1b446c2648ba90edd05ea77fb1e0e7f766f161729e3817d",
+    "oracle-wiring-final.txt.gz": "769360cee2e8f08633b68f495bc0d79dcf5f62fac4ae3c6da0f86af3b3d75c1e",
+    "overrides.txt.gz": "ed2696497de6e6c66137b84be516cae3c8bb6899b9e7f64c6a6a39823ed5a8b3",
+    "protected-sources.json": "e030c24af52b06c17b26a7e3f7b82486c599f3472201f90cee8656c095faed82",
+    "public-after.txt.gz": "cf5bc190cc53699587e42bf7fd6a63846b1d9441a28da09d03d8abba60a75784",
+    "public-api-manifest.json": "18f336380aa25bc6fecff86f5e353671059f3576b3913964f20dabfeae19ad7a",
+    "public-initial.txt.gz": "0322026bd7b8b268b9d04bc7e34afa6316aee3814444bfb13a2c9f1d379cda62",
+    "ranking-explain-runtime-sources.json": "ddb54dce1ee10871261c8cc628a9444c4f0195ea3e911021f51089dd405f13b0",
+    "ranking-explain-unit-imports.json": "d411b0b7274d9fbd5e0b8a20749a8671368cab2d451dd19f4a2771782c66c88e",
+    "ranking-only-runtime-sources.json": "7981fc72803b43ba4ee02642497b6d743cc33b78316490cf3f25b2334871c081",
+    "reopen-compound.txt.gz": "d236dbdf7a8a07504046d0e3ae10d44da8cf361a1f0192743984f11a45ca5cc0",
+    "resource-audit.json": "5c9f0cde9b4cfd6e3508870e8c117b8bb66c00a60c4f7b5be264fc7e653933b9",
+    "resources.py.txt": "7ac28f761eb0a135966acd016f968288ba020be1dce24cf7d308822aa65d93e7",
+    "runtime-sources.json": "e858619738aa3bfaed6ab79d25265b6da1796c37380c530315cc6663b17ef749",
+    "sdk-free-definitive.txt.gz": "000aa9e7f484481282d21665710389f2d9778e097f8f204ed312965b3558d3b7",
+    "sdk-free-guard.txt.gz": "6a7a4e117d21b010d6184079b72b0fbe6b6402f5ca0c89e8c6d24a7631e262a2",
+    "sdk-free.py.txt": "4e1581cefefd04b5f68f01f7943fbfcff765f1c3ce2269e01b9d3725f2c4b92e",
+    "test-sources.json": "d555872216abefaf7bf912425599a7eee14b5b758b1eb9419a8774b86fa95949",
+    "typing-definitive.txt.gz": "19a875cfd8eacab32a8feb20de1debc04727ed358ed9f4ff9b66df1f2930c528",
+    "typing-guard.txt.gz": "032453decc0052d2dbf0c4e4d18d7d666bb7e80cf6b8de4a0669656529bd57db",
+    "unit-initial.txt.gz": "cfb67d062c786493b5a5434cbf0fdf9cb52b8fa4fd4cd486daa2541be10fee24",
+    "wheel-all-definitive.txt.gz": "2f103d15616bddfc6dbe2fb990716ea27ac2e3c7d1fc70ef4c5baf1d490cd234",
+    "wheel-all-final.txt.gz": "dc74050b81c6f42d7aa8c6ccc794335aa91f7e2a20fe62df2bcc857bb2c0441f",
+    "wheel-all-guard.txt.gz": "f78c2dab7a1aebe76a685bc9eaec329eeeed3e931bb62b0fa431da1ae2878b65",
+    "wheel-all.py.txt": "6b3128fda82c8d6cd1b01661254ad23deef406adf59242d9f4b2a5cb4a88bbba",
+    "wheel-all.txt.gz": "d6561423af6d80b7a8e12bb870b191f8b5768fad34d94f2c07c8b2521b48c34a",
+    "wheel-imports-gw0.json": "5e536f65aff3b21ec2101f66b0f5694b52263485517dddfa9c57c7435d3592cd",
+    "wheel-imports-gw1.json": "5e536f65aff3b21ec2101f66b0f5694b52263485517dddfa9c57c7435d3592cd",
+    "wheel-imports-gw2.json": "5e536f65aff3b21ec2101f66b0f5694b52263485517dddfa9c57c7435d3592cd",
+    "wheel-imports-gw3.json": "5e536f65aff3b21ec2101f66b0f5694b52263485517dddfa9c57c7435d3592cd",
+    "wheel-unit-definitive.txt.gz": "0d7cb656aff1809f0b39b1f5236c832acecb029b78a7bcf77ccdbe6add9ef7bd",
+    "wheel-unit-final.txt.gz": "af810ed381f80f0507049af26bfe6f327b1ada0d547a0102ac64e7088298bfe5",
+    "wheel-unit-guard.txt.gz": "c46b06b4ed1489d7fa05739754ffe30c39db20d4f972c4050ff6d4bce7ee9e44",
+    "wheel-unit-proof.txt.gz": "1f8b3a5c4dc1cc81b9e59b0120874efa93687395a8961f2d251d6b14b184fa65",
+    "wheel-unit.py.txt": "08e4ea862d0947b70af383e2b92d485d356b5ad41cb474dc4de828050a5f2e54",
+    "wheel-unit.txt.gz": "0d9f016efa84dcba98f3197ac3555879bad23a039b2937f097edde4893ccb34e",
+    "wheel.json": "6715ac5e4b57b5f9a7957fe22b87ffcb7649f0241a64ae5f2e5417432402dc6b",
+    "winner-unit.txt.gz": "27782b579a096beb4036ff812d7c8d0b6b2d89a811794010d5e64545bbdb6031",
+    "winners.txt.gz": "9cc22ec729de03961bb824fe239d203304d93d0a2f5835fce25406d121d7b39d"
+  }
+}

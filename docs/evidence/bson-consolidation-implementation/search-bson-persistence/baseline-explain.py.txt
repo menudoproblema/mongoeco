@@ -1,0 +1,11 @@
+import json,os,sys,hashlib
+from pathlib import Path
+repo=Path.cwd();root=Path(Path('/tmp/mongoeco-search-bson-baseline-location.txt').read_text().strip());site=(root/'site-packages').resolve()
+manifest=json.loads((root/'runtime.json').read_text())
+for p,h in manifest.items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==h
+sys.path[:0]=[str(site),'/tmp',str(repo)]
+os.environ['MONGOECO_TEST_INSTALLED_ARTIFACT']='1';os.environ['MONGOECO_DISPATCH_ARTIFACT_ROOT']=str(root)
+import mongoeco,pytest
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+print('baseline 47336ce',mongoeco.__file__,len(manifest),flush=True)
+raise SystemExit(pytest.main(['-q','-o','pythonpath=','tests/unit/test_search_reference_oracle.py','--tb=short','-p','mongoeco_dispatch_artifact_guard']))

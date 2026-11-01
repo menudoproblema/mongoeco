@@ -28,9 +28,9 @@ from mongoeco.core.search import (
     search_query_explain_details,
     vector_field_paths,
 )
+from mongoeco.core.search_filter_prefilter import supports_mql_candidate_prefilter
 from mongoeco.core.search_models import SearchExplainVerbosity
 from mongoeco.engines._memory_vector_runtime import (
-    candidate_positions_for_vector_filter,
     candidate_rows_for_vector_filter,
     vector_scores_for_rows,
 )
@@ -44,6 +44,7 @@ from mongoeco.types import (
     QueryPlanExplanation,
     SearchIndexDefinition,
 )
+
 
 if TYPE_CHECKING:
     from mongoeco.core.operation_context import OperationContext
@@ -594,12 +595,10 @@ async def execute_search_documents(
     if query.path not in vector_index.vector_specs:
         return []
     path_positions = vector_index.vector_row_positions.get(query.path, ())
-    context_has_collation = (
-        operation_context is not None and operation_context.collation is not None
-    )
+    prefilter_supported = supports_mql_candidate_prefilter(operation_context)
     query_filter_rows, _query_filter_description = (
         (None, None)
-        if context_has_collation
+        if not prefilter_supported
         else candidate_rows_for_vector_filter(
             vector_index,
             query_path=query.path,
@@ -608,7 +607,7 @@ async def execute_search_documents(
     )
     downstream_filter_rows, _downstream_filter_description = (
         (None, None)
-        if context_has_collation
+        if not prefilter_supported
         else candidate_rows_for_vector_filter(
             vector_index,
             query_path=query.path,
@@ -731,18 +730,7 @@ async def explain_search_documents(
         ready=ready,
         enforce_ready=False,
     )
-    vector_filter_positions, vector_filter_description = (
-        candidate_positions_for_vector_filter(
-            vector_index,
-            filter_spec=query.filter_spec,
-            candidate_positions=vector_index.vector_row_positions.get(
-                query.path,
-                (),
-            ),
-        )
-        if isinstance(query, SearchVectorQuery) and vector_index is not None
-        else (None, None)
-    )
+    vector_filter_description: dict[str, object] | None = None
     resolved_similarity = (
         str(
             vector_index.vector_specs.get(query.path, {}).get(
@@ -775,7 +763,7 @@ async def explain_search_documents(
     if isinstance(query, SearchVectorQuery) and vector_index is not None:
         vector_mode = "exact"
         path_positions = vector_index.vector_row_positions.get(query.path, ())
-        if operation_context is not None and operation_context.collation is not None:
+        if not supports_mql_candidate_prefilter(operation_context):
             query_filter_rows, vector_filter_description = None, None
             downstream_filter_rows, downstream_filter_description = None, None
         else:

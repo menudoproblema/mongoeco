@@ -5,8 +5,9 @@ import datetime
 from collections.abc import Callable, Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80, MONGODB_DIALECT_90
 from mongoeco.core.bson_ordering import Code
 from mongoeco.core.bson_scalars import (
     normalize_utc_bson_datetime,
@@ -17,6 +18,20 @@ from mongoeco.core.query_operators import (
     is_non_empty_document_clause_list,
     is_query_operator_key,
 )
+
+
+if TYPE_CHECKING:
+    from mongoeco.core.operation_context import OperationContext
+
+
+def supports_mql_candidate_prefilter(context: OperationContext | None) -> bool:
+    """Only prune with the exact equality/range policies represented by postings."""
+    if context is None:
+        return True  # Legacy entry points use the built-in MongoDB 7 policy.
+    return context.collation is None and any(
+        context.dialect is dialect
+        for dialect in (MONGODB_DIALECT_70, MONGODB_DIALECT_80, MONGODB_DIALECT_90)
+    )
 
 
 CandidateT = TypeVar("CandidateT")

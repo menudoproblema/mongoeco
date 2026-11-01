@@ -138,6 +138,12 @@ dominio observable de la operacion completa:
   cardinalidad y no existe un collector que necesite el conjunto completo;
 - `$merge` desactiva shortcuts de hits para no escribir un conjunto parcial.
 
+Una tanda de candidatos ANN ya recibida se evalúa por completo antes de aplicar
+el límite sobre su ranking local. El orden aproximado de ANN no sustituye al
+score y desempate públicos, ni autoriza cortar la tanda al encontrar `limit`
+coincidencias. Esto no promete recuperar vecinos que ANN no haya devuelto: el
+universo de esa fase sigue acotado al presupuesto de candidatos solicitado.
+
 Estas decisiones se construyen una vez en el cursor y se reutilizan al
 ejecutar, explicar y materializar prefijos. El plan inmutable declara efectos
 de cardinalidad, orden, metadata y writeback, reglas aplicadas, rechazos y

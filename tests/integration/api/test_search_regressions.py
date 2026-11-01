@@ -510,13 +510,23 @@ class SyncSearchRegressionTests(unittest.TestCase):
                 collection = client.sync_pending.docs
                 collection.insert_one({"_id": 1, "title": "Ada"})
                 collection.create_search_index(SEARCH_INDEX)
-                cursor = collection.aggregate([_search_stage()])
+                command = {
+                    "aggregate": collection.name,
+                    "pipeline": [_search_stage()],
+                    "cursor": {},
+                }
+                explanation = collection.database.command(
+                    {"explain": command, "verbosity": "queryPlanner"}
+                )
                 self.assertEqual(
-                    cursor.explain("queryPlanner")["engine_plan"]["details"]["status"],
-                    "PENDING",
+                    explanation["engine_plan"]["details"]["status"], "PENDING"
                 )
                 with self.assertRaises(OperationFailure):
-                    cursor.explain("executionStats")
+                    collection.aggregate([_search_stage()])
+                with self.assertRaises(OperationFailure):
+                    collection.database.command(
+                        {"explain": command, "verbosity": "executionStats"}
+                    )
 
     def test_search_boundaries_remain_equivalent_and_collision_free(self):
         for factory in ENGINE_FACTORIES:

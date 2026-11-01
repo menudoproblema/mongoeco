@@ -6,8 +6,12 @@ import numpy as np
 import pytest
 
 from mongoeco import AsyncMongoClient, SearchIndexModel
-from mongoeco.engines import _memory_search_runtime as runtime
+from mongoeco.engines import (
+    _memory_search_runtime as runtime,
+    _sqlite_search_runtime as sqlite_runtime,
+)
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
 
 
 _TOP_K = 2
@@ -48,9 +52,15 @@ def pipeline(vector, *, filter_spec=None, limit=2):
 @pytest.mark.parametrize(
     "filter_spec", [None, {"group": 1}, {"name": {"$regex": "^yes"}}]
 )
-def test_only_selected_vector_hits_are_materialized(monkeypatch, filter_spec):
+@pytest.mark.parametrize(
+    ["engine_factory", "search_runtime"],
+    [(MemoryEngine, runtime), (SQLiteEngine, sqlite_runtime)],
+)
+def test_only_selected_vector_hits_are_materialized(
+    monkeypatch, filter_spec, engine_factory, search_runtime
+):
     async def exercise():
-        async with AsyncMongoClient(MemoryEngine()) as client:
+        async with AsyncMongoClient(engine_factory()) as client:
             coll = client.db.records
             await coll.insert_many(
                 [
@@ -66,14 +76,14 @@ def test_only_selected_vector_hits_are_materialized(monkeypatch, filter_spec):
             )
             await coll.create_search_index(index_model())
             materialized = []
-            original = runtime.attach_vector_search_score
+            original = search_runtime.attach_vector_search_score
 
             def observe(document, score):
                 materialized.append(document["_id"])
                 return original(document, score)
 
             with monkeypatch.context() as patch:
-                patch.setattr(runtime, "attach_vector_search_score", observe)
+                patch.setattr(search_runtime, "attach_vector_search_score", observe)
                 result = await coll.aggregate(
                     pipeline([0.0, 1.0], filter_spec=filter_spec)
                 ).to_list()

@@ -1,0 +1,1 @@
+{"scope": "local override/candidate diagnostic, not native MongoDB parity", "results": {"MemoryEngine": {"find": [1, 2], "vector": [2]}, "SQLiteEngine": {"find": [1, 2], "vector": [2]}}}

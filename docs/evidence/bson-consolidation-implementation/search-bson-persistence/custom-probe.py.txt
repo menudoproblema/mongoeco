@@ -1,0 +1,21 @@
+import json
+from mongoeco import MongoClient,SearchIndexModel
+from mongoeco.compat.base import MongoDialect90
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+class CaseFoldDialect(MongoDialect90):
+ def values_equal(self,left,right):
+  if type(left) is str and type(right) is str:return left.casefold()==right.casefold()
+  return super().values_equal(left,right)
+results={}
+for engine in (MemoryEngine,SQLiteEngine):
+ with MongoClient(engine(),mongodb_dialect=CaseFoldDialect()) as client:
+  c=client.custom.rows
+  c.insert_many([{'_id':1,'v':'KEEP','embedding':[1.0,0.0]},{'_id':2,'v':'keep','embedding':[1.0,0.0]}])
+  c.create_search_index(SearchIndexModel({'fields':[{'type':'vector','path':'embedding','numDimensions':2}]},name='vectors',type='vectorSearch'))
+  query={'v':'keep'}
+  canonical=[d['_id'] for d in c.find(query,sort=[('_id',1)])]
+  cursor=c.aggregate([{'$vectorSearch':{'index':'vectors','path':'embedding','queryVector':[1.0,0.0],'numCandidates':100,'limit':100,'filter':query}}])
+  try:vector=[d['_id'] for d in cursor]
+  finally:cursor.close()
+  results[engine.__name__]={'find':canonical,'vector':vector}
+print(json.dumps({'scope':'local override/candidate diagnostic, not native MongoDB parity','results':results}))

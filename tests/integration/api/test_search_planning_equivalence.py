@@ -7,6 +7,8 @@ from mongoeco import AsyncMongoClient, MongoClient, SearchIndexModel
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 
+from tests.support_search_reference import aggregate_for_search_oracle
+
 
 ENGINE_FACTORIES = (MemoryEngine, SQLiteEngine)
 ORACLE_SEED = 4600
@@ -143,8 +145,9 @@ class AsyncSearchPlanningEquivalenceTests(unittest.IsolatedAsyncioTestCase):
 
                     for pipeline in _pipelines():
                         optimized = await collection.aggregate(pipeline).to_list()
-                        reference_cursor = collection.aggregate(pipeline)
-                        reference_cursor._force_full_search_execution = True
+                        reference_cursor = aggregate_for_search_oracle(
+                            collection, pipeline
+                        )
                         reference = await reference_cursor.to_list()
                         self.assertEqual(
                             optimized,
@@ -154,8 +157,9 @@ class AsyncSearchPlanningEquivalenceTests(unittest.IsolatedAsyncioTestCase):
 
                     meta_pipeline = _search_meta_pipeline()
                     optimized_meta = await collection.aggregate(meta_pipeline).to_list()
-                    reference_meta_cursor = collection.aggregate(meta_pipeline)
-                    reference_meta_cursor._force_full_search_execution = True
+                    reference_meta_cursor = aggregate_for_search_oracle(
+                        collection, meta_pipeline
+                    )
                     reference_meta = await reference_meta_cursor.to_list()
                     self.assertEqual(
                         optimized_meta,
@@ -170,10 +174,10 @@ class AsyncSearchPlanningEquivalenceTests(unittest.IsolatedAsyncioTestCase):
                     await collection.aggregate(
                         _writeback_pipeline("optimized_archive"),
                     ).to_list()
-                    reference_writeback = collection.aggregate(
+                    reference_writeback = aggregate_for_search_oracle(
+                        collection,
                         _writeback_pipeline("reference_archive"),
                     )
-                    reference_writeback._force_full_search_execution = True
                     await reference_writeback.to_list()
                     optimized_written = (
                         await optimized_target.find().sort("_id").to_list()
@@ -217,9 +221,10 @@ class AsyncSearchPlanningEquivalenceTests(unittest.IsolatedAsyncioTestCase):
                     ]
                     errors = []
                     for reference_mode in (False, True):
-                        cursor = collection.aggregate(missing_pipeline)
-                        cursor._force_full_search_execution = reference_mode
                         with self.assertRaises(Exception) as raised:
+                            cursor = aggregate_for_search_oracle(
+                                collection, missing_pipeline, reference=reference_mode
+                            )
                             await cursor.to_list()
                         errors.append((type(raised.exception), str(raised.exception)))
                     self.assertEqual(
@@ -233,8 +238,9 @@ class AsyncSearchPlanningEquivalenceTests(unittest.IsolatedAsyncioTestCase):
                     optimized_explain = await collection.aggregate(
                         _pipelines()[0],
                     ).explain("executionStats")
-                    reference_explain_cursor = collection.aggregate(_pipelines()[0])
-                    reference_explain_cursor._force_full_search_execution = True
+                    reference_explain_cursor = aggregate_for_search_oracle(
+                        collection, _pipelines()[0]
+                    )
                     reference_explain = await reference_explain_cursor.explain(
                         "executionStats",
                     )
@@ -283,7 +289,7 @@ class AsyncSearchPlanningEquivalenceTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SyncSearchPlanningEquivalenceTests(unittest.TestCase):
-    def test_optimized_and_reference_modes_are_equivalent(  # noqa: PLR0915
+    def test_optimized_and_reference_modes_are_equivalent(
         self,
     ) -> None:
         for factory in ENGINE_FACTORIES:
@@ -297,9 +303,7 @@ class SyncSearchPlanningEquivalenceTests(unittest.TestCase):
 
                 for pipeline in _pipelines():
                     optimized = collection.aggregate(pipeline).to_list()
-                    reference_cursor = collection.aggregate(pipeline)
-                    async_cursor = reference_cursor._async_aggregation_cursor
-                    async_cursor._force_full_search_execution = True
+                    reference_cursor = aggregate_for_search_oracle(collection, pipeline)
                     reference = reference_cursor.to_list()
                     self.assertEqual(
                         optimized,
@@ -309,11 +313,9 @@ class SyncSearchPlanningEquivalenceTests(unittest.TestCase):
 
                 meta_pipeline = _search_meta_pipeline()
                 optimized_meta = collection.aggregate(meta_pipeline).to_list()
-                reference_meta_cursor = collection.aggregate(meta_pipeline)
-                reference_meta_async_cursor = (
-                    reference_meta_cursor._async_aggregation_cursor
+                reference_meta_cursor = aggregate_for_search_oracle(
+                    collection, meta_pipeline
                 )
-                reference_meta_async_cursor._force_full_search_execution = True
                 self.assertEqual(
                     optimized_meta,
                     reference_meta_cursor.to_list(),
@@ -327,13 +329,10 @@ class SyncSearchPlanningEquivalenceTests(unittest.TestCase):
                 collection.aggregate(
                     _writeback_pipeline("optimized_archive"),
                 ).to_list()
-                reference_writeback = collection.aggregate(
+                reference_writeback = aggregate_for_search_oracle(
+                    collection,
                     _writeback_pipeline("reference_archive"),
                 )
-                reference_writeback_async_cursor = (
-                    reference_writeback._async_aggregation_cursor
-                )
-                reference_writeback_async_cursor._force_full_search_execution = True
                 reference_writeback.to_list()
                 optimized_written = optimized_target.find().sort("_id").to_list()
                 reference_written = reference_target.find().sort("_id").to_list()
@@ -373,11 +372,10 @@ class SyncSearchPlanningEquivalenceTests(unittest.TestCase):
                 ]
                 errors = []
                 for reference_mode in (False, True):
-                    cursor = collection.aggregate(missing_pipeline)
-                    cursor._async_aggregation_cursor._force_full_search_execution = (
-                        reference_mode
-                    )
                     with self.assertRaises(Exception) as raised:
+                        cursor = aggregate_for_search_oracle(
+                            collection, missing_pipeline, reference=reference_mode
+                        )
                         cursor.to_list()
                     errors.append((type(raised.exception), str(raised.exception)))
                 self.assertEqual(
@@ -389,11 +387,9 @@ class SyncSearchPlanningEquivalenceTests(unittest.TestCase):
                 optimized_explain = collection.aggregate(_pipelines()[0]).explain(
                     "executionStats",
                 )
-                reference_explain_cursor = collection.aggregate(_pipelines()[0])
-                reference_explain_async_cursor = (
-                    reference_explain_cursor._async_aggregation_cursor
+                reference_explain_cursor = aggregate_for_search_oracle(
+                    collection, _pipelines()[0]
                 )
-                reference_explain_async_cursor._force_full_search_execution = True
                 reference_explain = reference_explain_cursor.explain("executionStats")
                 self.assertEqual(
                     _metric_by_name(optimized_explain, "queryMatchedCount"),

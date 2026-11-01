@@ -381,12 +381,14 @@ class DatabaseAdminReadCommandService:
             collection_name, operation = self._admin._command_compiler.compile_aggregate_operation(
                 explain_spec
             )
-            explanation = await self._admin._database.get_collection(
+            cursor = self._admin._database.get_collection(
                 collection_name
-            )._build_aggregation_cursor(
-                operation,
-                session=session,
-            ).explain()
+            )._build_aggregation_cursor(operation, session=session)
+            explanation = (
+                await cursor.explain()
+                if verbosity is None
+                else await cursor.explain(verbosity)
+            )
             result = dict(explanation)
             result["command"] = "aggregate"
         elif explained_command_name == "update":

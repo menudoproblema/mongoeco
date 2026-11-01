@@ -1,0 +1,13 @@
+{
+  "tests/differential/semantic_corpora.py": "b2610fa05485c2b25c0181890eb101cc131bdb85488acfa07435768c0d6ed658",
+  "tests/differential/semantic_search_bson_cases.py": "2120d896377af26f823e2ff9169da3e9c8ffc559ef7ed6833216ada794514ea1",
+  "tests/integration/api/test_memory_vector_topk_contract.py": "5fc38ed53fd1672eb10147ad756bde88777748139fe7e38bdd07f9a8732ee25b",
+  "tests/integration/api/test_search_bson_persistence.py": "ada4af4a7ca4cb34278ef62c85107b31d72b358b13dfb934e137bb41ad63a380",
+  "tests/integration/api/test_search_override_prefilters.py": "ebf741b7b638d24b1c8e263428167c4fa1fb416be11cc68d12ddf75c7e648215",
+  "tests/integration/api/test_search_planning_equivalence.py": "abe8c2ead761905d081bed154773b6b91c99e8b944a4f53762ac2cee80e830ea",
+  "tests/integration/api/test_search_regressions.py": "36971d1b43523c51a9f44dcede09c3731f08096ac597d93b77b810752d066980",
+  "tests/property/test_search_runtime_equivalence_properties.py": "c973625da417e51ba96b6346efc37b1aef116675fbc0537d8bc8563cbb7fd514",
+  "tests/support_search_reference.py": "78491e3ecd8926f29989aaf1dd8ad7e7d5673c21f879e1291d616a1ad308f892",
+  "tests/unit/core/test_search_candidate_context.py": "76a2480db1be6a98d99a2f9c42a08b8a924fca2c34bff13d4dc8b4d31f12d86f",
+  "tests/unit/test_search_reference_oracle.py": "e7c7042414bb8aef7b0f3bc45aac4c7f03f05054ce7380698a869af4885c0cd7"
+}

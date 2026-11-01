@@ -1,0 +1,416 @@
+{
+  "order": "ABBAABBA",
+  "scope": "diagnostic process CPU, identical BSON; not a D05 global budget",
+  "samples": [
+    {
+      "runtime": "A",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.011613,
+            0.011,
+            0.01093
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.035454,
+            0.035201,
+            0.034765
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.011686,
+            0.011694,
+            0.011537
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.044421,
+            0.044301,
+            0.045641
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.012858,
+            0.01263,
+            0.012532
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.034234,
+            0.035805,
+            0.035416
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.017306,
+            0.017241,
+            0.017311
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.043371,
+            0.043642,
+            0.043652
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.012884,
+            0.012777,
+            0.012468
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.035534,
+            0.035131,
+            0.034772
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.017647,
+            0.017615,
+            0.017254
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.043144,
+            0.0436,
+            0.043873
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    },
+    {
+      "runtime": "A",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.011705,
+            0.011607,
+            0.011067
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.035309,
+            0.034805,
+            0.03525
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.011728,
+            0.011805,
+            0.011613
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.043807,
+            0.043421,
+            0.043496
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    },
+    {
+      "runtime": "A",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.012029,
+            0.011339,
+            0.011331
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.03492,
+            0.034832,
+            0.035071
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.011812,
+            0.011884,
+            0.012054
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.04396,
+            0.043497,
+            0.043891
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.013116,
+            0.012391,
+            0.012325
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.034433,
+            0.034775,
+            0.034105
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.017079,
+            0.017422,
+            0.01725
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.043693,
+            0.043912,
+            0.043332
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    },
+    {
+      "runtime": "B",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.013109,
+            0.012461,
+            0.012438
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.034927,
+            0.034988,
+            0.035015
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.017629,
+            0.017277,
+            0.017179
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.043798,
+            0.043355,
+            0.043929
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    },
+    {
+      "runtime": "A",
+      "results": {
+        "all/limit2": {
+          "cpu_seconds": [
+            0.011625,
+            0.011129,
+            0.010933
+          ],
+          "bson_sha256": "6d5339497a08e4d0126de01af8e5c9ed6239460dd421697f4e2b3766a1cf66bc",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "all/limit64": {
+          "cpu_seconds": [
+            0.035481,
+            0.035296,
+            0.035178
+          ],
+          "bson_sha256": "77360e948975b2b709d9496c3fec1b20b36f57c2497923daf0903dafdf4ccfe2",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit2": {
+          "cpu_seconds": [
+            0.011938,
+            0.011696,
+            0.011819
+          ],
+          "bson_sha256": "5ed09c61b4c416e2c27e70a23400badfc870c7dfe00674176574a1037b5e1d68",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        },
+        "binary/limit64": {
+          "cpu_seconds": [
+            0.044373,
+            0.044486,
+            0.04422
+          ],
+          "bson_sha256": "3fc3d7a0fb74e0b3b943bdac48d232a147e302c3d766ad9d419742f937063a86",
+          "operations_per_sample": 10,
+          "documents": 64,
+          "candidate_budget": 128
+        }
+      }
+    }
+  ],
+  "summary": {
+    "all/limit2": {
+      "candidate_over_baseline_cpu": 1.1099250110277898,
+      "samples_per_runtime": 12
+    },
+    "all/limit64": {
+      "candidate_over_baseline_cpu": 0.9934071242842326,
+      "samples_per_runtime": 12
+    },
+    "binary/limit2": {
+      "candidate_over_baseline_cpu": 1.4695533931075513,
+      "samples_per_runtime": 12
+    },
+    "binary/limit64": {
+      "candidate_over_baseline_cpu": 0.9899523701519619,
+      "samples_per_runtime": 12
+    }
+  }
+}

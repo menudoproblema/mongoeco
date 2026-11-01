@@ -1,0 +1,33 @@
+import hashlib,json,sys,time
+from pathlib import Path
+root=Path(sys.argv[1]);site=Path(json.loads((root/'wheel.json').read_text())['site_packages']).resolve()
+for p,h in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==h
+sys.path.insert(0,str(site))
+import mongoeco
+from bson import BSON,Binary
+from mongoeco import MongoClient,SearchIndexModel
+from mongoeco.engines import SQLiteEngine
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+results={}
+with MongoClient(SQLiteEngine()) as client:
+ c=client.cost.rows
+ c.insert_many([{'_id':f'{i:03}','embedding':[1.0,i/64],'v':Binary(b'x',5 if i%2==0 else 0)} for i in range(64)])
+ c.create_search_index(SearchIndexModel({'fields':[{'type':'vector','path':'embedding','numDimensions':2,'similarity':'cosine'}]},name='vectors',type='vectorSearch'))
+ for label,query_filter in [('all',None),('binary',{'v':Binary(b'x',5)})]:
+  for limit in (2,64):
+   spec={'index':'vectors','path':'embedding','queryVector':[1.0,0.0],'numCandidates':128,'limit':limit}
+   if query_filter is not None:spec['filter']=query_filter
+   pipeline=[{'$vectorSearch':spec},{'$project':{'_id':1}}]
+   def run():
+    cursor=c.aggregate(pipeline)
+    try:return list(cursor)
+    finally:cursor.close()
+   expected=[{'_id':f'{i:03}'} for i in range(0,64,1 if query_filter is None else 2)][:limit]
+   assert run()==expected
+   samples=[]
+   for _ in range(3):
+    start=time.process_time_ns()
+    for _ in range(10):assert run()==expected
+    samples.append((time.process_time_ns()-start)/1e9)
+   results[f'{label}/limit{limit}']={'cpu_seconds':samples,'bson_sha256':hashlib.sha256(BSON.encode({'rows':expected})).hexdigest(),'operations_per_sample':10,'documents':64,'candidate_budget':128}
+print(json.dumps(results))

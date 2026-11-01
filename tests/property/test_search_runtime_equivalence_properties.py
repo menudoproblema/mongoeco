@@ -11,6 +11,7 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 
 from tests.property._config import PROPERTY_SEED
+from tests.support_search_reference import aggregate_for_search_oracle
 
 
 ENGINE_FACTORIES = (MemoryEngine, SQLiteEngine)
@@ -218,8 +219,7 @@ def _run_sync(
         collection = _setup_sync(client)
         reference_target = client.generated.generated_target
         reference_stream = reference_target.watch(max_await_time_ms=5)
-        cursor = collection.aggregate(reference_pipeline)
-        cursor._async_aggregation_cursor._force_full_search_execution = True
+        cursor = aggregate_for_search_oracle(collection, reference_pipeline)
         reference = cursor.to_list()
         reference_written = reference_target.find().sort("_id").to_list()
         reference_events = _drain_sync_events(reference_stream)
@@ -270,8 +270,7 @@ async def _run_async(
         collection = await _setup_async(client)
         reference_target = client.generated.generated_target
         reference_stream = reference_target.watch(max_await_time_ms=5)
-        cursor = collection.aggregate(reference_pipeline)
-        cursor._force_full_search_execution = True
+        cursor = aggregate_for_search_oracle(collection, reference_pipeline)
         reference = await cursor.to_list()
         reference_written = await reference_target.find().sort("_id").to_list()
         reference_events = await _drain_async_events(reference_stream)
@@ -338,9 +337,10 @@ def _sync_error_signature(
 ) -> tuple[type[Exception], str]:
     with MongoClient(factory()) as client:
         collection = _setup_sync(client)
-        cursor = collection.aggregate(pipeline)
-        cursor._async_aggregation_cursor._force_full_search_execution = reference
         try:
+            cursor = aggregate_for_search_oracle(
+                collection, pipeline, reference=reference
+            )
             cursor.to_list()
         except Exception as error:
             return type(error), str(error)
@@ -355,9 +355,10 @@ async def _async_error_signature(
 ) -> tuple[type[Exception], str]:
     async with AsyncMongoClient(factory()) as client:
         collection = await _setup_async(client)
-        cursor = collection.aggregate(pipeline)
-        cursor._force_full_search_execution = reference
         try:
+            cursor = aggregate_for_search_oracle(
+                collection, pipeline, reference=reference
+            )
             await cursor.to_list()
         except Exception as error:
             return type(error), str(error)

@@ -48,6 +48,7 @@ from mongoeco.core.search import (
 from mongoeco.core.search_filter_prefilter import (
     evaluate_candidate_filter,
     flatten_candidate_filter_clauses,
+    supports_mql_candidate_prefilter,
 )
 from mongoeco.core.search_models import (
     SearchCollectorPlan,
@@ -1580,12 +1581,7 @@ def exact_vector_hits_sync(
         if query.min_score is not None and score < query.min_score:
             continue
         vector_hits.append((score, document))
-    vector_hits.sort(
-        key=lambda item: (
-            -float(item[0]),
-            _vector_result_tie_break_key(item[1]),
-        ),
-    )
+    vector_hits.sort(key=_vector_hit_sort_key)
     return vector_hits
 
 
@@ -1598,6 +1594,12 @@ def _vector_result_tie_break_key(
     return repr(bson_engine_key(source.get("_id")))
 
 
+def _vector_hit_sort_key(
+    hit: tuple[float, Document | RuntimeDocumentState],
+) -> tuple[float, str]:
+    return -float(hit[0]), _vector_result_tie_break_key(hit[1])
+
+
 def _sort_vector_scored_documents(
     documents: list[Document | RuntimeDocumentState],
 ) -> None:
@@ -1606,10 +1608,7 @@ def _sort_vector_scored_documents(
         return float(value) if found else float("-inf")
 
     documents.sort(
-        key=lambda document: (
-            -score(document),
-            _vector_result_tie_break_key(document),
-        ),
+        key=lambda document: _vector_hit_sort_key((score(document), document))
     )
 
 
@@ -1649,7 +1648,7 @@ def _sqlite_vector_candidate_documents(
         backend_state.valid_vectors,
         max(requested, query.limit * 4),
     )
-    matched_documents: list[Document] = []
+    matched_hits: list[tuple[float, Document]] = []
     documents_filtered = 0
     documents_filtered_by_min_score = 0
     candidates_evaluated = 0
@@ -1714,41 +1713,36 @@ def _sqlite_vector_candidate_documents(
             if query.min_score is not None and score < query.min_score:
                 documents_filtered_by_min_score += 1
                 continue
-            matched_documents.append(
-                attach_vector_search_score(document, score),
-            )
-            if len(matched_documents) >= query.limit:
-                _sort_vector_scored_documents(matched_documents)
-                return (
-                    matched_documents[: query.limit],
-                    current_request,
-                    candidates_evaluated,
-                    documents_filtered,
-                    documents_filtered_by_min_score,
-                    None,
-                )
+            matched_hits.append((float(score), document))
+        # ANN order is not the final local score/tie order. Rank the entire
+        # received batch before truncating, including its remaining equal scores.
+        if len(matched_hits) >= query.limit:
+            break
         if (
             query_filter_spec is None and downstream_filter_spec is None
         ) or current_request >= max_requested:
             break
         current_request = _next_vector_candidate_request(
             current_request,
-            matched_count=len(matched_documents),
+            matched_count=len(matched_hits),
             limit=query.limit,
             max_requested=max_requested,
         )
 
     if (query_filter_spec is not None or downstream_filter_spec is not None) and len(
-        matched_documents,
+        matched_hits,
     ) < query.limit:
         exact_fallback_reason = (
             "candidate-prefilter-underflow"
             if prefilter_exact
             else "post-filter-underflow"
         )
-    _sort_vector_scored_documents(matched_documents)
+    matched_hits.sort(key=_vector_hit_sort_key)
     return (
-        matched_documents[: query.limit],
+        [
+            attach_vector_search_score(document, score)
+            for score, document in matched_hits[: query.limit]
+        ],
         current_request,
         candidates_evaluated,
         documents_filtered,
@@ -1801,13 +1795,10 @@ def execute_sqlite_search_query(
                 resolved_physical_name,
                 query.path,
             )
-            context_has_collation = (
-                operation_context is not None
-                and operation_context.collation is not None
-            )
+            prefilter_supported = supports_mql_candidate_prefilter(operation_context)
             vector_filter_storage_keys, vector_filter_description = (
                 (None, None)
-                if context_has_collation
+                if not prefilter_supported
                 else vector_filter_candidate_storage_keys(
                     backend_state,
                     filter_spec=query.filter_spec,
@@ -1815,7 +1806,7 @@ def execute_sqlite_search_query(
             )
             downstream_filter_storage_keys, downstream_filter_description = (
                 (None, None)
-                if context_has_collation
+                if not prefilter_supported
                 else vector_filter_candidate_storage_keys(
                     backend_state,
                     filter_spec=downstream_filter_spec,
@@ -1955,7 +1946,7 @@ def execute_sqlite_search_query(
     )
     downstream_filter_storage_keys, downstream_filter_description = (
         (None, None)
-        if operation_context is not None and operation_context.collation is not None
+        if not supports_mql_candidate_prefilter(operation_context)
         else _sqlite_candidate_storage_keys_for_downstream_filter(
             engine,
             conn,
@@ -2581,10 +2572,7 @@ def explain_search_documents_sync(
                 fts5_available=fts5_available,
                 backend_materialized=backend_materialized,
             )
-            if (
-                operation_context is not None
-                and operation_context.collation is not None
-            ):
+            if not supports_mql_candidate_prefilter(operation_context):
                 downstream_filter_storage_keys, downstream_filter_description = (
                     None,
                     None,
@@ -2703,10 +2691,7 @@ def explain_search_documents_sync(
                     resolved_physical_name,
                     query.path,
                 )
-                if (
-                    operation_context is not None
-                    and operation_context.collation is not None
-                ):
+                if not supports_mql_candidate_prefilter(operation_context):
                     vector_filter_storage_keys, vector_filter_description = None, None
                     downstream_filter_storage_keys, downstream_filter_description = (
                         None,
