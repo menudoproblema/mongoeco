@@ -105,6 +105,9 @@ def _merge_labels(
 
 
 SERVER_CODE_NAMES = {
+    13: "Unauthorized",
+    16: "InvalidLength",
+    115: "CommandNotSupported",
     26: "NamespaceNotFound",
     73: "InvalidNamespace",
     48: "NamespaceExists",

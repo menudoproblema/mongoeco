@@ -3994,14 +3994,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793541706122"
+          "$numberLong": "1793542195939"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "53"
+        "$numberInt": "69"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -4017,7 +4017,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_command_shape_cases.py",
-    "sha256": "aa3d839867fc7fc2dcbee5d850db8e16384a865906ca86ec78b878d802ad39d8",
+    "sha256": "9fcfc9523b4889d3511430dcbc9bc9de347f8ddd28dabe13557c6220a0ca0f57",
     "topology": "standalone"
   },
   "case_manifests": [

@@ -1,26 +1,32 @@
-import datetime
-import unittest
-from unittest.mock import patch
-import uuid
-import struct
 import ast
+import datetime
+import struct
+import unittest
+import uuid
+
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
-from mongoeco.errors import ExecutionTimeout, MongoEcoError, OperationFailure, PyMongoError
-from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
+from mongoeco.errors import (
+    ExecutionTimeout,
+    MongoEcoError,
+    OperationFailure,
+    PyMongoError,
+)
 from mongoeco.types import Binary, ObjectId
-from mongoeco.wire.auth import WireAuthenticationService, WireAuthUser
-from mongoeco.wire.connections import WireConnectionContext, WireConnectionRegistry
 from mongoeco.wire._executor_support import patch_connection_status_auth_info
+from mongoeco.wire._executor_validation import validate_wire_command_document
+from mongoeco.wire.auth import WireAuthenticationService, WireAuthUser
 from mongoeco.wire.capabilities import resolve_wire_command_capability
-from mongoeco.wire.handshake import WireHandshakeService
+from mongoeco.wire.connections import WireConnectionContext, WireConnectionRegistry
 from mongoeco.wire.executor import WireCommandExecutor
+from mongoeco.wire.handshake import WireHandshakeService
+from mongoeco.wire.protocol import OP_MSG, OP_QUERY, parse_message_header
 from mongoeco.wire.proxy import AsyncMongoEcoProxyServer
 from mongoeco.wire.scram import build_scram_client_final
-from mongoeco.wire.surface import WireSurface
 from mongoeco.wire.sessions import WireSessionStore
-from mongoeco.wire._executor_validation import validate_wire_command_document
+from mongoeco.wire.surface import WireSurface
 
 
 class WireProxyUnitTests(unittest.TestCase):
@@ -71,22 +77,40 @@ class WireProxyUnitTests(unittest.TestCase):
 
     def test_wire_command_validation_covers_more_shape_errors(self):
         def _validate(name: str, body: dict, command_document: dict):
-            return validate_wire_command_document(body, command_document, capability=SimpleNamespace(name=name))
+            return validate_wire_command_document(
+                body, command_document, capability=SimpleNamespace(name=name)
+            )
 
-        with self.assertRaisesRegex(OperationFailure, "wire profile level must be an integer"):
+        with self.assertRaisesRegex(
+            OperationFailure, "wire profile level must be an integer"
+        ):
             _validate("profile", {}, {"profile": True})
-        with self.assertRaisesRegex(OperationFailure, "wire profile slowms must be an integer"):
+        with self.assertRaisesRegex(
+            OperationFailure, "wire profile slowms must be an integer"
+        ):
             _validate("profile", {}, {"profile": 1, "slowms": "10"})
-        with self.assertRaisesRegex(OperationFailure, "wire aggregate allowDiskUse must be a bool"):
-            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "allowDiskUse": "yes"})
-        with self.assertRaisesRegex(OperationFailure, "wire aggregate let must be a document"):
-            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "let": []})
-        with self.assertRaisesRegex(OperationFailure, "wire aggregate cursor must be a document"):
-            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "cursor": []})
-        with self.assertRaisesRegex(OperationFailure, "wire distinct requires a non-empty key string"):
-            _validate("distinct", {}, {"distinct": "events", "key": ""})
+        self.assertIsNone(
+            _validate(
+                "aggregate",
+                {},
+                {"aggregate": "events", "pipeline": [], "allowDiskUse": "yes"},
+            )
+        )
+        self.assertIsNone(
+            _validate(
+                "aggregate", {}, {"aggregate": "events", "pipeline": [], "let": []}
+            )
+        )
+        self.assertIsNone(
+            _validate(
+                "aggregate", {}, {"aggregate": "events", "pipeline": [], "cursor": []}
+            )
+        )
+        self.assertIsNone(_validate("distinct", {}, {"distinct": "events", "key": ""}))
         # Legacy validation flag grammar belongs to the shared command parser.
-        self.assertIsNone(_validate("validate", {}, {"validate": "events", "scandata": 1}))
+        self.assertIsNone(
+            _validate("validate", {}, {"validate": "events", "scandata": 1})
+        )
         self.assertIsNone(
             _validate("validate", {}, {"validate": "events", "background": "yes"})
         )
@@ -94,64 +118,129 @@ class WireProxyUnitTests(unittest.TestCase):
             _validate("listIndexes", {}, {"listIndexes": "events", "comment": 1})
         )
         with self.assertRaisesRegex(OperationFailure, "wire createIndexes"):
-            _validate("createIndexes", {}, {"createIndexes": "events", "indexes": "bad"})
+            _validate(
+                "createIndexes", {}, {"createIndexes": "events", "indexes": "bad"}
+            )
         self.assertIsNone(
             _validate(
                 "dropIndexes", {}, {"dropIndexes": "events", "index": "*", "comment": 1}
             )
         )
-        with self.assertRaisesRegex(OperationFailure, "let must be a document"):
-            _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "let": []})
+        self.assertIsNone(
+            _validate(
+                "findAndModify", {}, {"findAndModify": "events", "query": {}, "let": []}
+            )
+        )
         self.assertIsNone(
             _validate("listCollections", {}, {"listCollections": 1, "comment": 1})
         )
-        with self.assertRaisesRegex(OperationFailure, "wire listDatabases filter must be a document"):
+        with self.assertRaisesRegex(
+            OperationFailure, "wire listDatabases filter must be a document"
+        ):
             _validate("listDatabases", {}, {"listDatabases": 1, "filter": []})
-        with self.assertRaisesRegex(OperationFailure, "wire endSessions requires a list"):
+        with self.assertRaisesRegex(
+            OperationFailure, "wire endSessions requires a list"
+        ):
             _validate("endSessions", {}, {"endSessions": "bad"})
 
     def test_wire_command_validation_covers_more_find_auth_and_payload_paths(self):
         def _validate(name: str, body: dict, command_document: dict):
-            return validate_wire_command_document(body, command_document, capability=SimpleNamespace(name=name))
+            return validate_wire_command_document(
+                body, command_document, capability=SimpleNamespace(name=name)
+            )
 
         with self.assertRaisesRegex(OperationFailure, "requires db"):
-            _validate("authenticate", {"db": ""}, {"authenticate": 1, "mechanism": "SCRAM-SHA-256", "user": "ada"})
-        with self.assertRaisesRegex(OperationFailure, "wire find requires a non-empty collection name"):
+            _validate(
+                "authenticate",
+                {"db": ""},
+                {"authenticate": 1, "mechanism": "SCRAM-SHA-256", "user": "ada"},
+            )
+        with self.assertRaisesRegex(
+            OperationFailure, "wire find requires a non-empty collection name"
+        ):
             _validate("find", {}, {"find": "", "filter": {}})
         with self.assertRaisesRegex(OperationFailure, "sort must be a list"):
             _validate("find", {}, {"find": "events", "hint": 1.5})
         with self.assertRaisesRegex(OperationFailure, "max_time_ms must be >= 0"):
             _validate("find", {}, {"find": "events", "maxTimeMS": -1})
-        with self.assertRaisesRegex(OperationFailure, "authorizedCollections must be a bool"):
-            _validate("listCollections", {}, {"listCollections": 1, "authorizedCollections": "yes"})
+        self.assertIsNone(
+            _validate(
+                "listCollections",
+                {},
+                {"listCollections": 1, "authorizedCollections": "yes"},
+            )
+        )
         with self.assertRaisesRegex(OperationFailure, "comment must be a string"):
             _validate("listDatabases", {}, {"listDatabases": 1, "comment": 1})
-        with self.assertRaisesRegex(OperationFailure, "aggregate cursor must be a document"):
-            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "cursor": []})
+        self.assertIsNone(
+            _validate(
+                "aggregate", {}, {"aggregate": "events", "pipeline": [], "cursor": []}
+            )
+        )
         with self.assertRaisesRegex(OperationFailure, "sort must be a list"):
-            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "hint": 1.5})
-        with self.assertRaisesRegex(OperationFailure, "findAndModify",):
-            _validate("findAndModify", {}, {"findAndModify": "events", "query": [], "update": {"$set": {"x": 1}}})
-        with self.assertRaisesRegex(OperationFailure, "findAndModify",):
-            _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "sort": [], "update": {"$set": {"x": 1}}})
-        with self.assertRaisesRegex(OperationFailure, "findAndModify",):
-            _validate("findAndModify", {}, {"findAndModify": "events", "query": {}, "fields": [], "update": {"$set": {"x": 1}}})
-        with self.assertRaisesRegex(OperationFailure, "wire insert requires a non-empty documents list"):
+            _validate(
+                "aggregate", {}, {"aggregate": "events", "pipeline": [], "hint": 1.5}
+            )
+        with self.assertRaisesRegex(
+            OperationFailure,
+            "findAndModify",
+        ):
+            _validate(
+                "findAndModify",
+                {},
+                {"findAndModify": "events", "query": [], "update": {"$set": {"x": 1}}},
+            )
+        self.assertIsNone(
+            _validate(
+                "findAndModify",
+                {},
+                {
+                    "findAndModify": "events",
+                    "query": {},
+                    "sort": [],
+                    "update": {"$set": {"x": 1}},
+                },
+            )
+        )
+        self.assertIsNone(
+            _validate(
+                "findAndModify",
+                {},
+                {
+                    "findAndModify": "events",
+                    "query": {},
+                    "fields": [],
+                    "update": {"$set": {"x": 1}},
+                },
+            )
+        )
+        self.assertIsNone(
             _validate("insert", {}, {"insert": "events", "documents": []})
-        with self.assertRaisesRegex(OperationFailure, "wire killOp requires a non-empty string op"):
+        )
+        with self.assertRaisesRegex(
+            OperationFailure, "wire killOp requires a non-empty string op"
+        ):
             _validate("killOp", {}, {"killOp": 1, "op": ""})
-        with self.assertRaisesRegex(OperationFailure, "wire dbStats scale must be a positive integer"):
-            _validate("dbStats", {}, {"dbStats": 1, "scale": 0})
+        self.assertIsNone(_validate("dbStats", {}, {"dbStats": 1, "scale": 0}))
         # The shared listCollections parser supplies the native code 14.
         self.assertIsNone(
             _validate("listCollections", {}, {"listCollections": 1, "filter": []})
         )
-        with self.assertRaisesRegex(OperationFailure, "wire listDatabases nameOnly must be a bool"):
+        self.assertIsNone(
             _validate("listDatabases", {}, {"listDatabases": 1, "nameOnly": "yes"})
-        with self.assertRaisesRegex(OperationFailure, "wire listIndexes requires a non-empty collection name"):
+        )
+        with self.assertRaisesRegex(
+            OperationFailure, "wire listIndexes requires a non-empty collection name"
+        ):
             _validate("listIndexes", {}, {"listIndexes": ""})
-        with self.assertRaisesRegex(OperationFailure, "wire aggregate max_time_ms must be >= 0"):
-            _validate("aggregate", {}, {"aggregate": "events", "pipeline": [], "maxTimeMS": -1})
+        with self.assertRaisesRegex(
+            OperationFailure, "wire aggregate max_time_ms must be >= 0"
+        ):
+            _validate(
+                "aggregate",
+                {},
+                {"aggregate": "events", "pipeline": [], "maxTimeMS": -1},
+            )
         with self.assertRaisesRegex(OperationFailure, "sort must be a list"):
             _validate(
                 "findAndModify",
@@ -167,11 +256,21 @@ class WireProxyUnitTests(unittest.TestCase):
 
     def test_wire_command_validation_allows_simple_flag_and_collection_commands(self):
         def _validate(name: str, body: dict, command_document: dict):
-            return validate_wire_command_document(body, command_document, capability=SimpleNamespace(name=name))
+            return validate_wire_command_document(
+                body, command_document, capability=SimpleNamespace(name=name)
+            )
 
         _validate("currentOp", {}, {"currentOp": 1})
-        _validate("listCollections", {}, {"listCollections": 1, "nameOnly": True, "filter": {"name": "events"}})
-        _validate("listDatabases", {}, {"listDatabases": 1, "nameOnly": False, "filter": {"name": "alpha"}})
+        _validate(
+            "listCollections",
+            {},
+            {"listCollections": 1, "nameOnly": True, "filter": {"name": "events"}},
+        )
+        _validate(
+            "listDatabases",
+            {},
+            {"listDatabases": 1, "nameOnly": False, "filter": {"name": "alpha"}},
+        )
         _validate(
             "aggregate",
             {},
@@ -180,7 +279,12 @@ class WireProxyUnitTests(unittest.TestCase):
         _validate(
             "findAndModify",
             {},
-            {"findAndModify": "events", "query": {}, "hint": {"_id": 1}, "maxTimeMS": 5},
+            {
+                "findAndModify": "events",
+                "query": {},
+                "hint": {"_id": 1},
+                "maxTimeMS": 5,
+            },
         )
 
     def test_error_document_includes_catalog_metadata_and_labels(self):
@@ -1408,13 +1512,13 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire explain requires a command document"):
+        with self.assertRaisesRegex(OperationFailure, "explain.explain.*wrong type"):
             await proxy._executor.execute_command(
                 {"explain": 1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire explain verbosity must be a string"):
+        with self.assertRaisesRegex(OperationFailure, "explain.verbosity.*wrong type"):
             await proxy._executor.execute_command(
                 {"explain": {"find": "events"}, "verbosity": 1, "$db": "alpha"},
                 connection=connection,
@@ -1426,73 +1530,73 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire aggregate cursor must be a document"):
+        with self.assertRaisesRegex(OperationFailure, "cursor field must be missing or an object"):
             await proxy._executor.execute_command(
                 {"aggregate": "events", "pipeline": [], "cursor": 1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire aggregate allowDiskUse must be a bool"):
+        with self.assertRaisesRegex(OperationFailure, "Field 'allowDiskUse' should be a boolean"):
             await proxy._executor.execute_command(
                 {"aggregate": "events", "pipeline": [], "allowDiskUse": 1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire aggregate let must be a document"):
+        with self.assertRaisesRegex(OperationFailure, "aggregate.let.*wrong type"):
             await proxy._executor.execute_command(
                 {"aggregate": "events", "pipeline": [], "let": 1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire insert requires a non-empty documents list"):
+        with self.assertRaisesRegex(OperationFailure, "Write batch sizes must be between"):
             await proxy._executor.execute_command(
                 {"insert": "events", "documents": [], "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire update requires a non-empty updates list"):
+        with self.assertRaisesRegex(OperationFailure, "Write batch sizes must be between"):
             await proxy._executor.execute_command(
                 {"update": "events", "updates": {}, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire delete requires a non-empty deletes list"):
+        with self.assertRaisesRegex(OperationFailure, "Write batch sizes must be between"):
             await proxy._executor.execute_command(
                 {"delete": "events", "deletes": [], "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire count skip must be a non-negative integer"):
+        with self.assertRaisesRegex(OperationFailure, "BSON field 'skip' value must be >= 0"):
             await proxy._executor.execute_command(
                 {"count": "events", "skip": -1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire count filter_spec must be a dict"):
+        with self.assertRaisesRegex(OperationFailure, "count.query.*wrong type"):
             await proxy._executor.execute_command(
                 {"count": "events", "query": 1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire distinct requires a non-empty key string"):
+        with self.assertRaisesRegex(OperationFailure, "FieldPath cannot be constructed with empty string"):
             await proxy._executor.execute_command(
                 {"distinct": "events", "key": "", "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire find projection must be a dict"):
+        with self.assertRaisesRegex(OperationFailure, "Expected field projection.*to be of type object"):
             await proxy._executor.execute_command(
                 {"find": "events", "projection": 1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire find sort must be a document"):
+        with self.assertRaisesRegex(OperationFailure, "Expected field sort.*to be of type object"):
             await proxy._executor.execute_command(
                 {"find": "events", "sort": 1, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire find batch_size must be >= 0"):
+        with self.assertRaisesRegex(OperationFailure, "BSON field 'batchSize' value must be >= 0"):
             await proxy._executor.execute_command(
                 {"find": "events", "batchSize": -1, "$db": "alpha"},
                 connection=connection,
@@ -1505,13 +1609,13 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(missing.exception.code, 26)
 
-        with self.assertRaisesRegex(OperationFailure, "wire connectionStatus showPrivileges must be a bool"):
-            await proxy._executor.execute_command(
+        reply = await proxy._executor.execute_command(
                 {"connectionStatus": 1, "showPrivileges": 1, "$db": "admin"},
                 connection=connection,
             )
+        self.assertEqual(reply["ok"], 1.0)
 
-        with self.assertRaisesRegex(OperationFailure, "wire dbStats scale must be a positive integer"):
+        with self.assertRaisesRegex(OperationFailure, "Scale factor must be greater than zero"):
             await proxy._executor.execute_command(
                 {"dbStats": 1, "scale": 0, "$db": "alpha"},
                 connection=connection,
@@ -1529,7 +1633,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire collStats scale must be a positive integer"):
+        with self.assertRaisesRegex(OperationFailure, "BSON field 'scale' value must be >= 1"):
             await proxy._executor.execute_command(
                 {"collStats": "events", "scale": 0, "$db": "alpha"},
                 connection=connection,
@@ -1553,11 +1657,12 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(listed_collections["ok"], 1.0)
 
-        listed = await proxy._executor.execute_command(
-            {"listIndexes": "events", "comment": 1, "$db": "alpha"},
-            connection=connection,
-        )
-        self.assertEqual(listed["ok"], 1.0)
+        with self.assertRaises(OperationFailure) as missing_index_namespace:
+            await proxy._executor.execute_command(
+                {"listIndexes": "events", "comment": 1, "$db": "alpha"},
+                connection=connection,
+            )
+        self.assertEqual(missing_index_namespace.exception.code, 26)
 
         with self.assertRaisesRegex(OperationFailure, "wire createIndexes each index specification must be a dict"):
             await proxy._executor.execute_command(
@@ -1565,13 +1670,13 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire dropIndexes index must be '\\*', a name, or a key specification"):
+        with self.assertRaisesRegex(OperationFailure, "dropIndexes.index.*wrong type"):
             await proxy._executor.execute_command(
                 {"dropIndexes": "events", "index": 1.5, "$db": "alpha"},
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "let must be a document"):
+        with self.assertRaisesRegex(OperationFailure, "findAndModify.let.*wrong type"):
             await proxy._executor.execute_command(
                 {"findAndModify": "events", "query": {}, "update": {"$set": {"a": 1}}, "let": 1, "$db": "alpha"},
                 connection=connection,
@@ -2216,23 +2321,89 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         connection = proxy._connections.create(("127.0.0.1", 27017))
 
         cases = [
-            ({"authenticate": 0, "mechanism": "SCRAM-SHA-256", "user": "ada", "db": "admin", "$db": "admin"}, "wire authenticate requires the command value 1"),
-            ({"authenticate": 1, "mechanism": "SCRAM-SHA-256", "$db": "admin"}, "authenticate requires user"),
+            (
+                {
+                    "authenticate": 0,
+                    "mechanism": "SCRAM-SHA-256",
+                    "user": "ada",
+                    "db": "admin",
+                    "$db": "admin",
+                },
+                "wire authenticate requires the command value 1",
+            ),
+            (
+                {"authenticate": 1, "mechanism": "SCRAM-SHA-256", "$db": "admin"},
+                "authenticate requires user",
+            ),
             ({"saslStart": 1, "$db": "admin"}, "saslStart requires mechanism"),
-            ({"saslContinue": 1, "conversationId": "1", "$db": "admin"}, "saslContinue requires conversationId"),
+            (
+                {"saslContinue": 1, "conversationId": "1", "$db": "admin"},
+                "saslContinue requires conversationId",
+            ),
             ({"logout": 0, "$db": "admin"}, "wire logout requires the command value 1"),
-            ({"currentOp": 0, "$db": "admin"}, "wire currentOp requires the command value 1"),
-            ({"collStats": "events", "scale": 0, "$db": "alpha"}, "wire collStats scale must be a positive integer"),
-            ({"dbHash": 1, "collections": [""], "$db": "alpha"}, "wire dbHash collections must be a list of non-empty strings"),
-            ({"dbHash": 1, "comment": 1, "$db": "alpha"}, "wire dbHash comment must be a string"),
-            ({"listCollections": 1, "nameOnly": "yes", "$db": "alpha"}, "wire listCollections nameOnly must be a bool"),
-            ({"listDatabases": 1, "filter": [], "$db": "admin"}, "wire listDatabases filter must be a document"),
-            ({"profile": 1, "slowms": "10", "$db": "alpha"}, "wire profile slowms must be an integer"),
-            ({"aggregate": "events", "pipeline": [], "allowDiskUse": "yes", "$db": "alpha"}, "wire aggregate allowDiskUse must be a bool"),
-            ({"aggregate": "events", "pipeline": [], "let": [], "$db": "alpha"}, "wire aggregate let must be a document"),
-            ({"aggregate": "events", "pipeline": [], "cursor": {"batchSize": -1}, "$db": "alpha"}, r"wire aggregate batch_size must be >= 0"),
-            ({"createIndexes": "events", "indexes": [{"key": {"title": 1}, "name": "x"}], "maxTimeMS": -1, "$db": "alpha"}, r"wire createIndexes max_time_ms must be >= 0"),
-            ({"findAndModify": "events", "query": {}, "let": [], "$db": "alpha"}, "let must be a document"),
+            (
+                {"currentOp": 0, "$db": "admin"},
+                "wire currentOp requires the command value 1",
+            ),
+            (
+                {"collStats": "events", "scale": 0, "$db": "alpha"},
+                "BSON field 'scale' value must be >= 1",
+            ),
+            (
+                {"dbHash": 1, "collections": [""], "$db": "alpha"},
+                "wire dbHash collections must be a list of non-empty strings",
+            ),
+            (
+                {"dbHash": 1, "comment": 1, "$db": "alpha"},
+                "wire dbHash comment must be a string",
+            ),
+            (
+                {"listCollections": 1, "nameOnly": "yes", "$db": "alpha"},
+                "listCollections.nameOnly.*wrong type",
+            ),
+            (
+                {"listDatabases": 1, "filter": [], "$db": "admin"},
+                "wire listDatabases filter must be a document",
+            ),
+            (
+                {"profile": 1, "slowms": "10", "$db": "alpha"},
+                "wire profile slowms must be an integer",
+            ),
+            (
+                {
+                    "aggregate": "events",
+                    "pipeline": [],
+                    "allowDiskUse": "yes",
+                    "$db": "alpha",
+                },
+                "Field 'allowDiskUse' should be a boolean",
+            ),
+            (
+                {"aggregate": "events", "pipeline": [], "let": [], "$db": "alpha"},
+                "aggregate.let.*wrong type",
+            ),
+            (
+                {
+                    "aggregate": "events",
+                    "pipeline": [],
+                    "cursor": {"batchSize": -1},
+                    "$db": "alpha",
+                },
+                r"BSON field 'batchSize' value must be >= 0",
+            ),
+            (
+                {
+                    "createIndexes": "events",
+                    "indexes": [{"key": {"title": 1}, "name": "x"}],
+                    "maxTimeMS": -1,
+                    "$db": "alpha",
+                },
+                r"wire createIndexes max_time_ms must be >= 0",
+            ),
+            (
+                {"findAndModify": "events", "query": {}, "let": [], "$db": "alpha"},
+                "findAndModify.let.*wrong type",
+            ),
         ]
 
         for body, message in cases:

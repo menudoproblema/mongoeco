@@ -2750,7 +2750,7 @@ capturador/replay y runners; no se crea otro framework ni otro validador.
 | Bloque | Aceptación observable | Estado |
 | --- | --- | --- |
 | B1 | 32 formas dispuestas con fixture aislado, y dos workloads reproducibles de base congelada. | Cerrado |
-| B2 | Cero divergencias confirmadas pendientes del conjunto; código/familia/fase/diagnóstico/efectos y recuperación nativos 7/8/9, controles de API Python y todas las superficies soportadas. | Pendiente |
+| B2 | Cero divergencias confirmadas pendientes del conjunto; código/familia/fase/diagnóstico/efectos y recuperación nativos 7/8/9, controles de API Python y todas las superficies soportadas. | Cerrado |
 | B3 | Causa medida y redundancia eliminada, resultados idénticos; tres tandas ABBA mejoran ambos workloads más que ruido A/A y no regresan controles fuera del ruido. | Pendiente |
 | B4 | Gates aplicables verdes, revisión, evidencia, commits semánticos y árbol limpio. | Pendiente |
 
@@ -2766,3 +2766,20 @@ de `3fe96e42`. Ambos workloads de base conservan sus resultados BSON.
 El perfil distingue ordenación completa en demanda unitaria y recompilación
 por documento en residual Binary. Evidencia inicial con prefijo p2-b1 en el
 directorio existente; B2–B4 siguen abiertos.
+
+B2: el parser raw conserva coerciones, ausencia/null, límites, precedencias y
+diagnósticos por comando/dialecto. Se comparten renderizado de errores BSON,
+límites y lotes vacíos en _command_bson; no se cambia la validación de métodos
+Python. Wire delega las reglas P2 y conserva sus guards de transporte y los
+checks no afectados. Las fachadas de list_indexes siguen devolviendo vacío
+para namespace ausente; el comando raw rechaza con 26 como el servidor.
+Se dispone también listDatabases fuera de admin y validate background según
+dialecto sin ampliar capacidades. Se reutiliza el corpus nativo en los tests
+de consumidores en vez de otra tabla de TypeError supuestos.
+
+Sobre wheel instalado pasan 27 replays/metadatos —4.896 observaciones— y
+1.196 controles de consumidores, con 1.374 subtests. Los --check nativos 7/8/9
+pasan contra salida separada; las observaciones coinciden con B1, cuya copia
+se conserva, y solo se concilia la identidad del observador tras lint. El
+ratchet contra la base P2 pasa en 13 archivos. Logs rojos intermedios y evidencia
+final con prefijos p2-command y p2-b2. B3 y B4 siguen abiertos; O1–O8 no cambian.

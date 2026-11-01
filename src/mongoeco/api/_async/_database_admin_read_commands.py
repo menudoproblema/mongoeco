@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from mongoeco.api._async import _collection_indexing
 from mongoeco.api._async._collection_reads import collect_distinct_values
+from mongoeco.api._command_bson import require_command_type
 from mongoeco.api.admin_parsing import (
     normalize_command_max_time_ms,
     normalize_find_and_modify_options,
@@ -18,6 +19,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.json_compat import json_dumps_compact
+from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     CommandCursorResult,
@@ -93,6 +95,9 @@ class DatabaseAdminReadCommandService:
         *,
         session: ClientSession | None = None,
     ) -> object:
+        if self._admin._db_name != "admin":
+            message = "listDatabases may only be run against the admin database."
+            raise server_error(message, code=13, scope=ErrorScope.COMMAND)
         options = normalize_list_databases_options(spec)
         databases = [
             snapshot.to_document()
@@ -363,11 +368,10 @@ class DatabaseAdminReadCommandService:
         session: ClientSession | None = None,
     ) -> object:
         explain_spec = spec.get("explain")
-        if not isinstance(explain_spec, dict) or not explain_spec:
-            raise TypeError("explain must be a non-empty document")
+        require_command_type(explain_spec, "explain.explain", "object", required=True)
         verbosity = spec.get("verbosity")
-        if verbosity is not None and not isinstance(verbosity, str):
-            raise TypeError("verbosity must be a string")
+        if verbosity is not None:
+            require_command_type(verbosity, "explain.verbosity", "string")
 
         explained_command_name = next(iter(explain_spec))
         if "maxTimeMS" in spec:
@@ -532,6 +536,12 @@ class DatabaseAdminReadCommandService:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> CommandCursorResult:
+        names = await self._admin._engine.list_collections(
+            self._admin._db_name, context=session
+        )
+        if collection_name not in names:
+            message = f"ns does not exist: {self._admin._db_name}.{collection_name}"
+            raise server_error(message, code=26, scope=ErrorScope.COMMAND)
         collection = self._admin._database.get_collection(collection_name)
         raw_first_batch = await _collection_indexing.load_index_documents(
             collection, session=session,

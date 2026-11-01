@@ -20,6 +20,7 @@ from mongoeco.api._async._database_command_contract import (
     list_commands_document_payload,
     wire_command_surface_count,
 )
+from mongoeco.api._command_bson import legacy_command_truth_value
 from mongoeco.api.admin_parsing import (
     FindAndModifyCommandOptions,
     normalize_command_document,
@@ -41,7 +42,7 @@ from mongoeco.core.error_documents import (
 )
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import get_json_backend_name
-from mongoeco.core.server_errors import command_not_found
+from mongoeco.core.server_errors import ErrorScope, command_not_found, server_error
 from mongoeco.driver.topology import sdam_capabilities_info
 
 # Public annotation introspection resolves these names at runtime.
@@ -1140,8 +1141,7 @@ class AsyncDatabaseCommandService:
             )
         if command_name == "connectionStatus":
             show_privileges = spec.get("showPrivileges", False)
-            if not isinstance(show_privileges, bool):
-                raise TypeError("showPrivileges must be a bool")
+            show_privileges = legacy_command_truth_value(show_privileges)
             return self.ConnectionStatusCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
@@ -1153,7 +1153,10 @@ class AsyncDatabaseCommandService:
                 spec.get("collStats"),
                 "collStats",
             )
-            scale = normalize_command_scale(spec.get("scale"))
+            scale = normalize_command_scale(
+                spec.get("scale"), command=command_name,
+                dialect=self._admin._mongodb_dialect.key,
+            )
             return self.CollectionStatsCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
@@ -1162,7 +1165,10 @@ class AsyncDatabaseCommandService:
                 scale=scale,
             )
         if command_name == "dbStats":
-            scale = normalize_command_scale(spec.get("scale"))
+            scale = normalize_command_scale(
+                spec.get("scale"), command=command_name,
+                dialect=self._admin._mongodb_dialect.key,
+            )
             return self.DatabaseStatsCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,
@@ -1268,6 +1274,12 @@ class AsyncDatabaseCommandService:
                 background=spec.get("background"),
                 comment=spec.get("comment"),
             )
+            if options.background and self._admin._mongodb_dialect.key != "7.0":
+                message = (
+                    "Running the validate command with { background: true } "
+                    "is not supported in standalone mode"
+                )
+                raise server_error(message, code=115, scope=ErrorScope.COMMAND)
             return self.ValidateCollectionCommand(
                 db_name=self._admin._db_name,
                 command_name=command_name,

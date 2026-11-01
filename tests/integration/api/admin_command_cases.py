@@ -1,6 +1,7 @@
 import inspect
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from mongoeco.errors import (
@@ -8,6 +9,15 @@ from mongoeco.errors import (
     OperationFailure,
 )
 
+from tests.differential._real_parity_base import _decode_capture
+from tests.differential.semantic_command_shape_cases import (
+    COMMANDS as RAW_COMMAND_SHAPES,
+)
+
+
+_COMMAND_SHAPE_REFERENCE = _decode_capture(
+    (Path(__file__).parents[2] / "fixtures/semantic_command_shape_7_0.json").read_text()
+)["cases"]["semantic_command_shape_contract"]
 
 OpenClient = Callable[..., Any]
 
@@ -409,7 +419,7 @@ async def assert_database_command_supports_ping_list_collections_and_drop_databa
                 )
                 case.assertEqual(
                     await _maybe_await(
-                        client.alpha.command("listDatabases", filter={"name": "alpha"}),
+                        client.admin.command("listDatabases", filter={"name": "alpha"}),
                     ),
                     {
                         "databases": [
@@ -421,7 +431,7 @@ async def assert_database_command_supports_ping_list_collections_and_drop_databa
                 )
                 case.assertEqual(
                     await _maybe_await(
-                        client.alpha.command("listDatabases", nameOnly=True),
+                        client.admin.command("listDatabases", nameOnly=True),
                     ),
                     {
                         "databases": [{"name": "alpha"}, {"name": "beta"}],
@@ -1473,156 +1483,35 @@ async def assert_database_command_rejects_unsupported_commands(
 async def assert_database_command_rejects_invalid_command_shapes(
     case, open_client: OpenClient,
 ) -> None:
+    # The same native expectations drive both facade adapters. Full state and
+    # all four surfaces are checked by the independent semantic replay.
     async with open_client("memory") as client:
-        with case.assertRaises(OperationFailure) as empty_indexes:
-            await _maybe_await(
-                client.alpha.command({"createIndexes": "events", "indexes": ()}),
-            )  # type: ignore[arg-type]
-        case.assertEqual(empty_indexes.exception.code, 2)
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"distinct": "events", "key": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"dropIndexes": "events", "index": 1.5}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command("listDatabases", nameOnly=1),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command("listCollections", nameOnly=1),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command("listCollections", authorizedCollections=1),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"count": "events", "skip": -1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"count": "events", "limit": -1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"dbStats": 1, "scale": 0}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"collStats": "events", "scale": -1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"insert": "events", "documents": {}}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"update": "events", "updates": {}}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"delete": "events", "deletes": {}}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(ValueError):
-            await _maybe_await(
-                client.alpha.command({"find": "events", "batchSize": -1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command(
-                    {"aggregate": "events", "pipeline": [], "cursor": 1},
-                ),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command(
-                    {"aggregate": "events", "pipeline": [], "allowDiskUse": 1},
-                ),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"aggregate": "events", "pipeline": [], "let": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(client.alpha.command({"explain": 1}))  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"explain": {"find": "events"}, "verbosity": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"connectionStatus": 1, "showPrivileges": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"find": "events", "projection": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"find": "events", "sort": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"count": "events", "query": 1}),
-            )  # type: ignore[arg-type]
+        for index, spec in enumerate(RAW_COMMAND_SHAPES):
+            with case.subTest(command=index):
+                expected = _COMMAND_SHAPE_REFERENCE[f"absent/{index}"]
+                if expected["ok"]:
+                    reply = await _maybe_await(client.alpha.command(spec))
+                    case.assertEqual(reply["ok"], 1.0)
+                else:
+                    with case.assertRaises(OperationFailure) as caught:
+                        await _maybe_await(client.alpha.command(spec))
+                    error = caught.exception
+                    case.assertEqual(error.code, expected["code"])
+                    case.assertEqual(error.details["codeName"], expected["code_name"])
+                    case.assertEqual(
+                        error.details["errmsg"].replace("alpha.events", "<db>.events"),
+                        expected["message"],
+                    )
+                recovery = await _maybe_await(client.alpha.command({"ping": 1}))
+                case.assertEqual(recovery["ok"], 1.0)
         with case.assertRaises(OperationFailure) as error:
-            await _maybe_await(
-                client.admin.command({"renameCollection": "events", "to": "alpha.logs"}),
-            )
-        case.assertEqual(error.exception.code, 73)  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(client.alpha.command({"distinct": "events", "key": ""}))
-        listed = await _maybe_await(client.alpha.command("listCollections", comment=1))
-        case.assertEqual(listed["ok"], 1.0)
-        listed_indexes = await _maybe_await(
-            client.alpha.command({"listIndexes": "events", "comment": 1})
-        )
-        case.assertEqual(listed_indexes["ok"], 1.0)
-        with case.assertRaises(OperationFailure) as absent_namespace:
-            await _maybe_await(
-                client.alpha.command({"validate": "events", "comment": 1})
-            )
-        case.assertEqual(absent_namespace.exception.code, 26)
-        with case.assertRaises(OperationFailure) as background_absent:
-            await _maybe_await(
-                client.alpha.command({"validate": "events", "background": "yes"})
-            )
-        case.assertEqual(background_absent.exception.code, 26)
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"count": "events", "limit": -1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(OperationFailure) as error:
-            await _maybe_await(
-                client.alpha.command(
-                    {
-                        "findAndModify": "events",
-                        "query": {},
-                        "update": {"$set": {"done": True}},
-                        "let": 1,
-                    },
-                ),  # type: ignore[arg-type]
-            )
-        case.assertEqual(error.exception.code, 14)
-        with case.assertRaises(OperationFailure):
-            await _maybe_await(client.alpha.command({"findAndModify": "events"}))
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"explain": {"distinct": "events", "key": ""}}),
-            )
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"explain": {"update": "events", "updates": []}}),
-            )
+            await _maybe_await(client.admin.command({"renameCollection": "events", "to": "alpha.logs"}))
+        case.assertEqual(error.exception.code, 73)
         with case.assertRaises(OperationFailure):
             await _maybe_await(
                 client.alpha.command(
-                    {"renameCollection": "alpha.events", "to": "beta.logs"},
-                ),
+                    {"renameCollection": "alpha.events", "to": "beta.logs"}
+                )
             )
 
 

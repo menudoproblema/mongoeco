@@ -12,6 +12,7 @@ from mongoeco.api._async._write_failures import record_write_failure
 from mongoeco.api._change_delivery import change_delivery_scope
 from mongoeco.api._command_bson import (
     command_boolean,
+    command_type_error,
     rename_collection_options,
     validate_command_let,
     validate_write_fields,
@@ -19,7 +20,7 @@ from mongoeco.api._command_bson import (
 from mongoeco.api.admin_parsing import normalize_drop_collection_name
 from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.core._public_materialization import materialize_public_value
-from mongoeco.core.server_errors import server_error
+from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.results import FindAndModifyOutcome
 from mongoeco.errors import OperationFailure, WriteError
@@ -357,7 +358,8 @@ class DatabaseAdminWriteCommandService:
             )
 
         if options.update_spec is None:
-            raise OperationFailure("findAndModify requires either remove or update")
+            message = "Either an update or remove=true must be specified"
+            raise server_error(message, code=9, scope=ErrorScope.COMMAND)
 
         if self.is_operator_update(options.update_spec):
             return await self.execute_find_and_modify_operator_update(
@@ -572,7 +574,18 @@ class DatabaseAdminWriteCommandService:
         target = spec.get("index")
         collection = self._admin._database.get_collection(collection_name)
         if not isinstance(target, (str, list, tuple, dict)):
-            raise TypeError("index must be '*', a name, or a key specification")
+            expected = (
+                ("string",)
+                if self._admin._mongodb_dialect.key == "8.0"
+                else ("string", "object")
+            )
+            raise command_type_error(target, "dropIndexes.index", expected)
+        names = await self._admin._engine.list_collections(
+            self._admin._db_name, context=session
+        )
+        if collection_name not in names:
+            message = f"ns not found {self._admin._db_name}.{collection_name}"
+            raise server_error(message, code=26, scope=ErrorScope.COMMAND)
         return await _collection_indexing.execute_drop_index(
             collection, target, comment=spec.get("comment"), session=session,
         )

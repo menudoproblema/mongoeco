@@ -153,9 +153,8 @@ def command_shape_contract(collection):
                 message = details.get("errmsg", str(error))
                 # Native IDL printers differ in closing punctuation for this list.
                 # Retain every expected type; only repair the bracket/quote order.
-                if "dropIndexes.index" in message:
-                    if message.endswith("']"):
-                        message = message[:-2] + "]'"
+                if "dropIndexes.index" in message and message.endswith("']"):
+                    message = message[:-2] + "]'"
                 result = {
                     "ok": False,
                     "family": type(error).__name__,

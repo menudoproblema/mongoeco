@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from mongoeco.api._command_bson import (
+    command_nonnegative,
+    command_type_error,
+    command_type_name,
+    require_command_type,
+)
 from mongoeco.api.admin_parsing import (
     normalize_command_batch_size,
     normalize_command_document,
@@ -103,28 +109,55 @@ class DatabaseAdminCommandCompiler:
             spec.get(collection_field),
             collection_field,
         )
+        dialect = self._admin._mongodb_dialect.key
+        filter_spec = normalize_filter_document(
+            spec.get(filter_field),
+            field=f"{collection_field}.{filter_field}"
+            if collection_field in {"count", "distinct"}
+            else None,
+        )
+        projection = normalize_command_projection(
+            spec.get(projection_field, default_projection),
+            dialect=dialect,
+            present=projection_field in spec,
+        )
+        sort = normalize_command_sort_document(
+            spec.get(sort_field),
+            dialect=dialect,
+            present=sort_field in spec,
+        )
         skip = spec.get(skip_field, 0)
-        if not isinstance(skip, int) or isinstance(skip, bool) or skip < 0:
-            raise TypeError("skip must be a non-negative integer")
+        if skip is None:
+            skip = 0
+        if not isinstance(skip, int) or isinstance(skip, bool):
+            raise command_type_error(skip, f"{collection_field}.{skip_field}", "long")
+        command_nonnegative(skip, skip_field, dialect=dialect)
         limit = spec.get(limit_field, default_limit)
-        if limit is not None and (
-            not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
-        ):
-            raise TypeError("limit must be a non-negative integer")
+        if limit is not None:
+            if not isinstance(limit, int) or isinstance(limit, bool):
+                raise command_type_error(
+                    limit, f"{collection_field}.{limit_field}", "long"
+                )
+            if collection_field == "count":
+                limit = abs(limit)
+            else:
+                command_nonnegative(limit, limit_field, dialect=dialect)
         batch_size = (
             None
             if batch_size_field is None
-            else self.normalize_batch_size(spec.get(batch_size_field))
+            else normalize_command_batch_size(
+                spec.get(batch_size_field),
+                dialect=dialect,
+            )
         )
+
         return (
             collection_name,
             compile_find_operation(
-                self.normalize_filter(spec.get(filter_field)),
-                projection=normalize_command_projection(
-                    spec.get(projection_field, default_projection)
-                ),
+                filter_spec,
+                projection=projection,
                 collation=spec.get("collation"),
-                sort=normalize_command_sort_document(spec.get(sort_field)),
+                sort=sort,
                 skip=skip,
                 limit=limit,
                 hint=normalize_command_hint(spec.get(hint_field)),
@@ -159,7 +192,25 @@ class DatabaseAdminCommandCompiler:
             raise TypeError("pipeline must be a list")
         cursor_spec = spec.get(cursor_field, {})
         if not isinstance(cursor_spec, dict):
-            raise TypeError("cursor must be a document")
+            message = "cursor field must be missing or an object"
+            raise server_error(message, code=14, scope=ErrorScope.COMMAND)
+        if allow_disk_use_field in spec and not isinstance(
+            spec[allow_disk_use_field], bool
+        ):
+            actual = command_type_name(spec[allow_disk_use_field])
+            message = (
+                f"Field '{allow_disk_use_field}' should be a boolean value, "
+                f"but found: {actual}"
+            )
+            raise server_error(message, code=14, scope=ErrorScope.COMMAND)
+        if spec.get(let_field) is not None:
+            require_command_type(spec[let_field], f"aggregate.{let_field}", "object")
+        if cursor_field not in spec:
+            message = (
+                "The 'cursor' option is required, except for aggregate "
+                "with the explain argument"
+            )
+            raise server_error(message, code=9, scope=ErrorScope.COMMAND)
         return (
             collection_name,
             compile_aggregate_operation(
@@ -169,7 +220,10 @@ class DatabaseAdminCommandCompiler:
                 hint=self.normalize_hint(spec.get(hint_field)),
                 comment=spec.get(comment_field),
                 max_time_ms=self.normalize_max_time_ms(spec.get(max_time_ms_field)),
-                batch_size=self.normalize_batch_size(cursor_spec.get(batch_size_field)),
+                batch_size=normalize_command_batch_size(
+                    cursor_spec.get(batch_size_field),
+                    dialect=self._admin._mongodb_dialect.key,
+                ),
                 allow_disk_use=spec.get(allow_disk_use_field),
                 let=spec.get(let_field),
                 dialect=self._admin._mongodb_dialect,
@@ -254,8 +308,15 @@ class DatabaseAdminCommandCompiler:
             "distinct",
         )
         key = spec.get("key")
-        if not isinstance(key, str) or not key:
-            raise TypeError("key must be a non-empty string")
+        field = (
+            "distinctCommandRequest"
+            if self._admin._mongodb_dialect.key == "8.0"
+            else "distinct"
+        )
+        require_command_type(key, f"{field}.key", "string", required=True)
+        if not key and self._admin._mongodb_dialect.key != "9.0":
+            message = "FieldPath cannot be constructed with empty string"
+            raise server_error(message, code=40352, scope=ErrorScope.COMMAND)
         try:
             _, operation = self.compile_find_operation(
                 spec,

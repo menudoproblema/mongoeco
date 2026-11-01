@@ -1,6 +1,6 @@
 """Server BSON grammar shared by raw write command adapters."""
 
-from mongoeco.core.bson_scalars import wrap_bson_numeric
+from mongoeco.core.bson_scalars import bson_numeric_alias, wrap_bson_numeric
 from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.server_errors import ErrorScope, server_error
@@ -146,3 +146,78 @@ def validate_command_array_filters(spec, *, dialect):
     if "arrayFilters" in spec and spec["arrayFilters"] is None and dialect == "7.0":
         message = "arrayFilters must be an array"
         raise server_error(message, code=10065, scope=ErrorScope.COMMAND)
+
+
+def command_type_name(value):
+    """Name a received BSON type with the existing predicates, only for diagnostics."""
+    actual = bson_numeric_alias(value)
+    if actual is None:
+        actual = next(
+            (
+                alias
+                for alias in (
+                    "null",
+                    "bool",
+                    "string",
+                    "object",
+                    "array",
+                    "binData",
+                    "date",
+                    "objectId",
+                    "regex",
+                    "timestamp",
+                    "javascript",
+                    "javascriptWithScope",
+                    "minKey",
+                    "maxKey",
+                    "undefined",
+                )
+                if matches_bson_type(value, alias)
+            ),
+            type(value).__name__,
+        )
+    return actual
+
+
+def command_type_error(value, field, expected):
+    actual = command_type_name(value)
+    expectation = (
+        f"types '[{', '.join(expected)}]'"
+        if isinstance(expected, tuple)
+        else f"type '{expected}'"
+    )
+    return server_error(
+        f"BSON field '{field}' is the wrong type '{actual}', expected {expectation}",
+        code=14,
+        scope=ErrorScope.COMMAND,
+    )
+
+
+def require_command_type(value, field, expected, *, required=False):
+    if required and value is None:
+        message = f"BSON field '{field}' is missing but a required field"
+        raise server_error(message, code=40414, scope=ErrorScope.COMMAND)
+    if not matches_bson_type(value, expected):
+        raise command_type_error(value, field, expected)
+    return value
+
+
+def command_nonnegative(value, field, *, dialect, minimum=0):
+    if value < minimum:
+        message = (
+            f"BSON field '{field}' value must be >= {minimum}, actual value '{value}'"
+        )
+        raise server_error(
+            message, code=51024 if dialect == "7.0" else 2, scope=ErrorScope.COMMAND
+        )
+    return value
+
+
+def validate_write_batch(value):
+    # Empty BSON objects are accepted by the sequence reader as zero entries.
+    if value is None:
+        message = "'NoneType' object is not iterable"
+        raise TypeError(message)
+    if value in ({}, []):
+        message = "Write batch sizes must be between 1 and 100000. Got 0 operations."
+        raise server_error(message, code=16, scope=ErrorScope.COMMAND)

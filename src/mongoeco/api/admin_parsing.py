@@ -3,9 +3,12 @@ from types import MappingProxyType
 
 from mongoeco.api._command_bson import (
     command_boolean,
+    command_nonnegative,
+    command_type_error,
     legacy_command_truth_value,
+    require_command_type,
     validate_command_array_filters,
-    validate_command_let,
+    validate_write_batch,
     validate_write_fields,
 )
 from mongoeco.api.argument_validation import (
@@ -166,12 +169,14 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
 
 
 def normalize_command_sort_document(
-    sort: object | None,
+    sort: object | None, *, dialect="7.0", present=False,
 ) -> list[tuple[str, int]] | None:
-    if sort is None:
+    if sort is None and not present:
         return None
     if not isinstance(sort, dict):
-        raise TypeError("sort must be a document")
+        space = " " if dialect == "9.0" else ""
+        message = f"Expected field sort{space}to be of type object"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND)
     normalized = _normalize_sort_spec(sort)
     if normalized is None:
         return None
@@ -195,17 +200,25 @@ def normalize_command_max_time_ms(max_time_ms: object | None) -> int | None:
     return max_time_ms
 
 
-def normalize_command_projection(projection: object | None) -> dict[str, object] | None:
-    if projection is None:
+def normalize_command_projection(
+    projection: object | None, *, dialect="7.0", present=False
+) -> dict[str, object] | None:
+    if projection is None and not present:
         return None
     if not is_projection(projection):
-        raise TypeError("projection must be a dict")
+        space = " " if dialect == "9.0" else ""
+        message = f"Expected field projection{space}to be of type object"
+        raise server_error(message, code=14, scope=ErrorScope.COMMAND)
     return projection
 
 
-def normalize_command_batch_size(batch_size: object | None) -> int | None:
+def normalize_command_batch_size(
+    batch_size: object | None, *, dialect="7.0"
+) -> int | None:
     if batch_size is None:
         return None
+    if isinstance(batch_size, int) and not isinstance(batch_size, bool):
+        command_nonnegative(batch_size, "batchSize", dialect=dialect)
     _validate_batch_size(batch_size)
     return batch_size
 
@@ -222,15 +235,24 @@ def normalize_command_bool(
     if value is None:
         return default
     if not isinstance(value, bool):
-        raise TypeError(f"{field_name} must be a bool")
+        raise command_type_error(value, field_name, "bool")
     return value
 
 
-def normalize_command_scale(scale: object | None) -> int:
+def normalize_command_scale(
+    scale: object | None, *, command="dbStats", dialect="7.0"
+) -> int:
     if scale is None:
         return 1
-    if not isinstance(scale, int) or isinstance(scale, bool) or scale <= 0:
-        raise TypeError("scale must be a positive integer")
+    if not isinstance(scale, int) or isinstance(scale, bool):
+        raise command_type_error(scale, f"{command}.scale", "number")
+    if command == "collStats":
+        return command_nonnegative(scale, "scale", dialect=dialect, minimum=1)
+    if scale <= 0 or (dialect == "9.0" and scale > 2**50):
+        message = "Scale factor must be greater than zero"
+        if dialect == "9.0":
+            message += " and less than or equal to 2^50"
+        raise server_error(message, code=2, scope=ErrorScope.COMMAND)
     return scale
 
 
@@ -243,10 +265,12 @@ def normalize_list_collections_options(
         message = "listCollections filter must be a document"
         raise server_error(message, code=14, scope=ErrorScope.COMMAND)
     return ListCollectionsCommandOptions(
-        name_only=normalize_command_bool(spec.get("nameOnly"), "nameOnly"),
+        name_only=normalize_command_bool(
+            spec.get("nameOnly"), "listCollections.nameOnly"
+        ),
         authorized_collections=normalize_command_bool(
             spec.get("authorizedCollections"),
-            "authorizedCollections",
+            "listCollections.authorizedCollections",
         ),
         filter_spec=normalize_filter_document(spec.get("filter")),
         comment=comment,
@@ -260,7 +284,7 @@ def normalize_list_databases_options(
     if comment is not None and not isinstance(comment, str):
         raise TypeError("comment must be a string")
     return ListDatabasesCommandOptions(
-        name_only=normalize_command_bool(spec.get("nameOnly"), "nameOnly"),
+        name_only=legacy_command_truth_value(spec.get("nameOnly")),
         filter_spec=normalize_filter_document(spec.get("filter")),
         comment=comment,
     )
@@ -332,7 +356,8 @@ def normalize_find_and_modify_options(
                 scope=ErrorScope.COMMAND,
             )
     let = spec.get("let")
-    validate_command_let(let)
+    if let is not None:
+        require_command_type(let, "findAndModify.let", "object")
     collation = spec.get("collation")
     if collation is not None and not isinstance(collation, dict):
         message = "collation must be a document"
@@ -379,6 +404,7 @@ def normalize_namespace(value: object, field_name: str) -> tuple[str, str]:
 
 
 def normalize_insert_documents(spec: object) -> list[Document]:
+    validate_write_batch(spec)
     if not isinstance(spec, list) or not spec:
         raise TypeError("documents must be a non-empty list of documents")
     if all(isinstance(item, dict) for item in spec):
@@ -397,6 +423,7 @@ def normalize_insert_documents(spec: object) -> list[Document]:
 
 
 def normalize_update_specs(spec: object) -> list[dict[str, object]]:
+    validate_write_batch(spec)
     if not isinstance(spec, list) or not spec:
         raise TypeError("updates must be a non-empty list of update documents")
     if not all(isinstance(item, dict) for item in spec):
@@ -405,6 +432,7 @@ def normalize_update_specs(spec: object) -> list[dict[str, object]]:
 
 
 def normalize_delete_specs(spec: object) -> list[dict[str, object]]:
+    validate_write_batch(spec)
     if not isinstance(spec, list) or not spec:
         raise TypeError("deletes must be a non-empty list of delete documents")
     if not all(isinstance(item, dict) for item in spec):
@@ -412,9 +440,11 @@ def normalize_delete_specs(spec: object) -> list[dict[str, object]]:
     return spec
 
 
-def normalize_filter_document(filter_spec: object | None) -> Filter:
+def normalize_filter_document(filter_spec: object | None, *, field=None) -> Filter:
     if filter_spec is None:
         return {}
     if not is_filter(filter_spec):
+        if field is not None:
+            raise command_type_error(filter_spec, field, "object")
         raise TypeError("filter_spec must be a dict")
     return filter_spec

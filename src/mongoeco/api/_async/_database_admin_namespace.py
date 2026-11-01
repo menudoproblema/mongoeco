@@ -154,7 +154,10 @@ class DatabaseNamespaceAdminService:
         collection_name = normalize_validate_collection_name(name_or_collection)
         collection_names = await self._admin._engine.list_collections(self._admin._db_name, context=session)
         if collection_name not in collection_names:
-            message = f"Namespace {self._admin._db_name}.{collection_name} not found"
+            message = (
+                f"Collection '{self._admin._db_name}.{collection_name}' "
+                "does not exist to validate."
+            )
             raise server_error(message, code=26)
 
         collection = self._admin._database.get_collection(collection_name)
