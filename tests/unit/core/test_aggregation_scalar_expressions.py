@@ -25,3 +25,23 @@ class AggregationScalarExpressionTests(unittest.TestCase):
         with patch("mongoeco.core.aggregation.scalar_expressions.uuid.UUID", BrokenUUID):
             with self.assertRaisesRegex(OperationFailure, "cannot convert the value"):
                 evaluate_expression({"value": Binary(b"0123456789abcdef")}, {"$toUUID": "$value"})
+
+
+class DatePartsBoundaryTests(unittest.TestCase):
+    def test_null_date_parts_short_circuit_and_out_of_domain_dates_fail(self):
+        for parts in (
+            {"year": 2020, "timezone": None},
+            {"year": 2020, "hour": None},
+            {"year": None},
+        ):
+            with self.subTest(parts=parts):
+                self.assertIsNone(
+                    evaluate_expression(
+                        {"parts": parts},
+                        {"$dateFromParts": {key: "$parts." + key for key in parts}},
+                    )
+                )
+        with self.assertRaisesRegex(OperationFailure, "invalid date"):
+            evaluate_expression(
+                {"day": 10**12}, {"$dateFromParts": {"year": 2020, "day": "$day"}}
+            )

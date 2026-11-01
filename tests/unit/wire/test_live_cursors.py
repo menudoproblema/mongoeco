@@ -206,3 +206,97 @@ class LiveCursorTests(unittest.IsolatedAsyncioTestCase):
             await task
         self.assertEqual([source.close_calls for source in sources], [1, 1])
         self.assertEqual(len(self.store), 0)
+
+
+class CleanupFailureTests(unittest.IsolatedAsyncioTestCase):
+    async def test_clear_attempts_every_live_source_and_reports_all_failures(self):
+        store = WireCursorStore()
+        sources = []
+        for index in range(2):
+            source = Source([{"v": index}])
+
+            async def fail_close(source=source):
+                source.close_calls += 1
+                raise ValueError("cleanup failed")
+
+            source.close = fail_close
+            sources.append(source)
+            await store.open_stream(
+                source, "db.rows", command_document={"cursor": {"batchSize": 0}}
+            )
+        with self.assertRaises(ExceptionGroup) as failure:
+            await store.aclear()
+        self.assertEqual(len(failure.exception.exceptions), 2)
+        self.assertEqual([item.close_calls for item in sources], [1, 1])
+        self.assertEqual(len(store), 0)
+        await store.aclear()
+
+    async def test_response_failure_keeps_primary_error_when_cleanup_fails(self):
+        for phase in ("open", "get_more"):
+            with self.subTest(phase=phase):
+                store = WireCursorStore()
+                source = Source([{"v": 1}])
+                cursor_id = None
+                if phase == "get_more":
+                    opened = await store.open_stream(
+                        source, "db.rows", command_document={"cursor": {"batchSize": 0}}
+                    )
+                    cursor_id = opened["cursor"]["id"]
+                source.error = OperationFailure("primary evaluation error")
+
+                async def fail_close():
+                    source.close_calls += 1
+                    raise ValueError("secondary cleanup error")
+
+                source.close = fail_close
+                with self.assertRaisesRegex(
+                    OperationFailure, "primary evaluation error"
+                ) as failure:
+                    if phase == "open":
+                        await store.open_stream(
+                            source,
+                            "db.rows",
+                            command_document={"cursor": {"batchSize": 1}},
+                        )
+                    else:
+                        await store.get_more_async(
+                            {"getMore": cursor_id, "collection": "rows"}, db_name="db"
+                        )
+                self.assertTrue(
+                    any(
+                        "secondary cleanup error" in note
+                        for note in failure.exception.__notes__
+                    )
+                )
+                self.assertEqual(source.close_calls, 1)
+                self.assertEqual(len(store), 0)
+
+
+class LegacyCursorOwnershipTests(unittest.IsolatedAsyncioTestCase):
+    async def test_sync_clear_refuses_live_source_without_discarding_ownership(self):
+        store = WireCursorStore()
+        source = Source([{"v": 1}])
+        await store.open_stream(
+            source, "db.rows", command_document={"cursor": {"batchSize": 0}}
+        )
+        with self.assertRaisesRegex(RuntimeError, "require async cleanup"):
+            store.clear()
+        self.assertEqual(len(store), 1)
+        self.assertEqual(source.close_calls, 0)
+        await store.aclear()
+        self.assertEqual(source.close_calls, 1)
+        store.clear()
+        self.assertEqual(len(store), 0)
+
+    async def test_async_get_more_can_consume_a_retained_materialized_response(self):
+        store = WireCursorStore()
+        opened = store.materialize_command_result(
+            {"cursor": {"batchSize": 1}},
+            {"cursor": {"ns": "db.rows", "firstBatch": [{"v": 1}, {"v": 2}]}},
+        )
+        reply = await store.get_more_async(
+            {"getMore": opened["cursor"]["id"], "collection": "rows"}, db_name="db"
+        )
+        self.assertEqual(reply["cursor"]["nextBatch"], [{"v": 2}])
+        self.assertEqual(reply["cursor"]["id"], 0)
+        self.assertEqual(len(store), 0)

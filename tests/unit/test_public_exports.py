@@ -173,3 +173,31 @@ class PublicExportsTests(unittest.TestCase):
         self.assertEqual(load_mongodb_catalog().document_type, "cxp.catalog")
         self.assertFalse(hasattr(cxp_module, "MONGODB_UPDATE_ONE"))
         self.assertFalse(hasattr(cxp_module, "MONGODB_SEARCH"))
+
+
+class RetainedAggregationExportsTests(unittest.TestCase):
+    def test_legacy_stage_exports_share_handler_identity_and_reject_unknown_names(self):
+        from importlib import import_module
+
+        runtime = import_module("mongoeco.core.aggregation.runtime")
+        transforms = import_module("mongoeco.core.aggregation.transform_stages")
+        self.assertIs(runtime._apply_sample, transforms._apply_sample)
+        self.assertIs(runtime._apply_sample, transforms._apply_sample)
+        for package in (
+            "mongoeco",
+            "mongoeco.api",
+            "mongoeco.api._async",
+            "mongoeco.api._sync",
+            "mongoeco._types",
+            "mongoeco.core.aggregation",
+            "mongoeco.compat",
+            "mongoeco.driver",
+            "mongoeco.wire",
+            "mongoeco.core.aggregation.runtime",
+        ):
+            with self.subTest(package=package):
+                module = import_module(package)
+                with self.assertRaises(AttributeError):
+                    getattr(module, "missing_F11_export")
+                exports = getattr(module, "__all__", ())
+                self.assertTrue(set(exports).issubset(dir(module)))

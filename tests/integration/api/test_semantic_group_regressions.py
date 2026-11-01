@@ -1129,3 +1129,48 @@ def test_followup_f07_dbref_identity_preserves_reference_payload(
                     collection.insert_one({"_id": identifier})
                 assert error.value.code == 52  # noqa: PLR2004 - native invalid dollar field
                 assert collection.count_documents({}) == 0
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("pipeline", [[], [{"$match": {}}]])
+def test_followup_database_aggregate_requires_supported_source_without_effects(
+    engine_factory, pipeline
+):
+    with MongoClient(engine_factory()) as client:
+        with pytest.raises(OperationFailure) as error:
+            client.followup.command(
+                {"aggregate": 1, "pipeline": pipeline, "cursor": {}}
+            )
+        assert error.value.code == 115
+        assert client.followup.list_collection_names() == []
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("limit", [1.0, "1", []])
+def test_followup_find_limit_rejects_invalid_client_types_without_namespace(
+    engine_factory, limit
+):
+    with MongoClient(engine_factory()) as client:
+        with pytest.raises(TypeError, match="limit must be an instance of int"):
+            client.followup.rows.find({}, limit=limit)
+        assert client.followup.list_collection_names() == []
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    "options, expected",
+    [
+        ({"unique": 1}, OperationFailure),
+        ({"name": 1}, OperationFailure),
+        ({"name": ""}, OperationFailure),
+    ],
+)
+def test_followup_builtin_index_rejects_invalid_options_without_catalog_effects(
+    engine_factory, options, expected
+):
+    with MongoClient(engine_factory()) as client:
+        collection = client.followup.rows
+        with pytest.raises(expected):
+            collection.create_index("_id", **options)
+        assert collection.index_information() == {}
+        assert client.followup.list_collection_names() == []

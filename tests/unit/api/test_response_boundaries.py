@@ -352,3 +352,94 @@ def test_repeated_cancellation_completes_aggregation_cleanup():
             assert closed == [True]
 
     asyncio.run(exercise())
+
+
+@pytest.mark.parametrize(
+    "failed_resources", [(True, False), (False, True), (True, True)]
+)
+def test_aggregate_close_retries_only_resources_that_failed(failed_resources):
+    """Cleanup keeps ownership even when more than one resource rejects close."""
+
+    class Output:
+        attempts = 0
+
+        def close(self):
+            self.attempts += 1
+            if failed_resources[0] and self.attempts == 1:
+                raise ValueError("spill cleanup")
+
+    class Source:
+        attempts = 0
+
+        async def aclose(self):
+            self.attempts += 1
+            if failed_resources[1] and self.attempts == 1:
+                raise RuntimeError("source cleanup")
+
+    async def exercise():
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            cursor = client.responses.rows.aggregate([])
+            output, source = Output(), Source()
+            cursor._owned_spill_outputs = [output]
+            cursor._active_async_iterator = source
+            expected = (
+                BaseExceptionGroup
+                if all(failed_resources)
+                else (ValueError if failed_resources[0] else RuntimeError)
+            )
+            with pytest.raises(expected) as error:
+                await cursor.close()
+            if all(failed_resources):
+                assert [type(item) for item in error.value.exceptions] == [
+                    ValueError,
+                    RuntimeError,
+                ]
+            assert cursor._owned_spill_outputs == (
+                [output] if failed_resources[0] else []
+            )
+            assert cursor._active_async_iterator is (
+                source if failed_resources[1] else None
+            )
+            await cursor.close()
+            await cursor.close()
+            assert output.attempts == 1 + failed_resources[0]
+            assert source.attempts == 1 + failed_resources[1]
+            assert cursor._owned_spill_outputs == []
+            assert cursor._active_async_iterator is None
+
+    asyncio.run(exercise())
+
+
+def test_find_exhaustion_surfaces_cleanup_failure_and_retains_retry():
+    class Source:
+        pulls = 0
+        closes = 0
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            self.pulls += 1
+            if self.pulls == 1:
+                return {"_id": 1}
+            raise StopAsyncIteration
+
+        async def aclose(self):
+            self.closes += 1
+            if self.closes == 1:
+                raise ValueError("exhausted source cleanup")
+
+    async def exercise():
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            source = Source()
+            cursor = client.responses.rows.find({}, batch_size=1)
+            cursor._open_read_source = lambda **_options: source
+            iterator = cursor.__aiter__()
+            assert await iterator.__anext__() == {"_id": 1}
+            with pytest.raises(ValueError, match="exhausted source cleanup"):
+                await iterator.__anext__()
+            await cursor.close()
+            assert source.pulls == 2
+            assert source.closes == 2
+
+    asyncio.run(exercise())
