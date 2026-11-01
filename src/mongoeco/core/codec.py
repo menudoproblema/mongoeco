@@ -40,7 +40,6 @@ except Exception:  # pragma: no cover - optional dependency
     BsonSON = None
     BsonTimestamp = None
 
-from mongoeco.core.bson_values import decoded_document_reference
 from mongoeco.core.bson_scalars import (
     BsonDecimal128,
     BsonDouble,
@@ -50,7 +49,7 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
     validate_bson_value,
 )
-from mongoeco.core.bson_values import regex_parts
+from mongoeco.core.bson_values import decoded_document_reference, regex_parts
 from mongoeco.types import (
     SON,
     UNDEFINED,

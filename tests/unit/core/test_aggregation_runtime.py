@@ -3,9 +3,9 @@ import unittest
 
 from mongoeco.core.aggregation.runtime import (
     _MISSING,
-    aggregation_equality_key,
     _bson_cstring_size,
     _evaluate_expression_with_missing,
+    aggregation_equality_key,
     evaluate_expression,
 )
 from mongoeco.core.aggregation.stages import apply_pipeline

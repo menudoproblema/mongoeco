@@ -2628,3 +2628,17 @@ Esto no acredita paridad general de toda forma inválida de comando: las garant�
 exigidas son las de los cortes afectados y su subset declarado. No se introduce
 un catch genérico de TypeError ni otro validador para ocultar estas diferencias.
 O5–O8 conservan suite final, cobertura, matrices, distribución/costes y entrega.
+
+
+### O7 — Gate de lint contra la release
+
+El ratchet real de CI contra la última etiqueta de release detectó cuatro
+bloques de imports desordenados. Se conserva el resultado rojo y el posterior
+verde para 402 archivos Python modificados, sin cambiar reglas ni presupuestos.
+La corrección solo ordena/coalescea imports; no cambia funciones, constantes ni
+contratos. El wheel posterior verifica 87 pruebas y 291 subtests de codecs,
+imports con/sin SDK y runtime de agregación. Las suites globales ya activas
+conservan su wheel congelado y su manifiesto anterior: la aceptación final
+registrará ambos hashes y esta verificación causal, sin atribuir al primero
+los bytes del segundo. O5–O8 siguen abiertas. Evidencia: prefijos d05-lint y
+d05-final-ratchet en el directorio existente.
