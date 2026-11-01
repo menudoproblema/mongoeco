@@ -1,0 +1,232 @@
+{
+  "fixtures": [
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "expanded",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "expanded",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "expanded",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    }
+  ],
+  "per_id_absence": [
+    {
+      "kind": "container",
+      "name": "35b1d87c3673ab78906d758f1c21042986dfa6f10cf3d47bb5ab1aa50bfa3aaa",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "77fc0254632dcc33b20a337f36799113fa234d666a62687190317cee2b5fe5c6",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "cf3ef137ef281569ecf5a240ebc5b618ca0fd85e52b8fcbb7e33414686e806a5",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "977a885857af6594d8c050de6eca75237b802b02943a17fc70d29997dd22e0fe",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ffe9ab51d59eb97f8fb6e3b4d3796e441768fdeb0a9b7d4e705f9a1a43d46278",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "5e38d7ece12ac9ab03d061bcb4095e22fd68150d80a929c48d3f7e1c4b1cfccb",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "83d8721a6a75a317aef7acf9fe2352c162ffabbe818fd1350f9836b83f2c6ec6",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "25ab692ef90bb1c3983b93eb88482bb56866edee24d64bf2f30548e8cf544d97",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "361bf8f28a2385af5cc7e7db098747349147029d7098ae9f3c881b8bd9883374",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-9xs7csic/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "767baf93ddaa461d2772d216284874d7ca5f217d64ae87ef6116f2dc5f308f9d",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "002e676c7423d9295e9fe738c2a85220b0986b0dc8929f56e71253be2c301bbc",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "caf69d77763ad805aca55ac61dae08e7a38a22b311793a8f4c179c8d7108e9ed",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "7d0d2e91ff239c764cc75a3f58543f413b7aef24f28371547a6f338269f51d54",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "e391056a24f341c5920cdfe5d4a91f10b8ed36b37cc316d0caa1aa421503e496",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "58bb7a6e12b08e7bd775697be2c742d235e066763b0e8808b294770faafa7319",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "4809b5bd2ba27c1ffd48918daa12e4604f2146f39c73cec4ea9d248770a8546e",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "9aa0c00cf2543082101a7d06570c981f0f6eaf37a2775852bf6294a0bb8e2c01",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ff48997fad7d8f86ea72a13e46e45bb95cd073802d2bb53d9bc931014a2bfbb1",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-iwcdiiu0/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "a59d48d951f5622d6064803b099da4af8a9e63e1df1891c1ae5f52322de2e566",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "170ee34c9a5f25e16072c1296ca351c36d638fbaf08bca5c56e4ba2cb7565ab6",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "8062aaff8dee811514d37a4dfaf4dea710ec66831f466952ba64f5675946f9ba",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "02e3ffd9af15fb3b3e6b514ec61ba791800a7525d915cc9cf1b79a5a2fc5bf5f",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "c814b9a9397bbbc5640e83cec7a70cb650a259e9322b994345f58dd9be51a5bf",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "cad6c86efded511baf2b81a81a02e5c22c2bed0705f9e545cfb832b89cbcf921",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "91ed5d3531daa79e88cb604713c36921610f7a989ae736aa3f07445733143e2b",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "255d6d0919f734618485b2efd312b25c375be06712fe81fb2c0892b9420921ff",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "53af6d4d9d7283c8204a15f419e1122781ff481cc8c10125ce066e2aaf08919c",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-response-transform-native-6n6qdm1b/9.0/fixture.json"
+    }
+  ],
+  "retention": "Three distinct capture rounds retain their manifests and exclusive claims; no overwrites."
+}

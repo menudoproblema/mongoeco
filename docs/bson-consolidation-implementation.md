@@ -2243,7 +2243,7 @@ no se cambiaron observadores ni referencias históricas para aceptar resultados.
 
 Esta es la única lista ejecutable de pendientes, fijada por el encargo de cierre.
 Los apartados anteriores conservan historia, no generan obligaciones adicionales.
-Estado vigente de esta lista: **3/8 cerradas**. No hay defectos reproducidos
+Estado vigente de esta lista: **4/8 cerradas**. No hay defectos reproducidos
 pendientes en el candidato al fijarla. Un gate rojo se registra en la obligación
 que incumple; no abre una auditoría general. Las hipótesis sin regresión ni
 incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
@@ -2251,7 +2251,7 @@ incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
 | ID / clase | Contrato exigido | Evidencia que falta / criterio observable de cierre | Estado |
 | --- | --- | --- | --- |
 | O1 / comprobación obligatoria | Fuente materializada conserva selección, representación y contexto D06. | Aceptación archivada del candidato y commits semánticos; 78 pruebas, nativos 7/8/9, SDK-free y ausencia de recursos acreditados arriba. | Cerrada |
-| O2 / comprobación obligatoria | D06a/b/c conserva gramática, BSON previo al decoder, contexto y equivalencia de claves por consumidor; B07 conserva efectos de fábricas también cuando transforman sin lanzar. | Componer mapa requisito→aceptaciones existentes y completar únicamente el diferencial de transformaciones de documento/metadata aún no acreditado. Cierra con resultados nativos coincidentes por superficie soportada y sin huecos normativos en ese mapa. | Abierta |
+| O2 / comprobación obligatoria | D06a/b/c conserva gramática, BSON previo al decoder, contexto y equivalencia de claves por consumidor; B07 conserva efectos de fábricas también cuando transforman sin lanzar. | Componer mapa requisito→aceptaciones existentes y completar únicamente el diferencial de transformaciones de documento/metadata aún no acreditado. Cierra con resultados nativos coincidentes por superficie soportada y sin huecos normativos en ese mapa. | Cerrada; aceptación y mapa debajo |
 | O3 / comprobación obligatoria | H53 dispone C03/B08 distinguiendo evaluación, permiso y warning, strict/moderate/off, error/warn/bypass y documento anterior/candidato. | Contrastar caracterización retenida y contrato público; documentar disposición explícita y límites. No exige crear un canal nuevo de logging. | Cerrada; disposición debajo |
 | O4 / decisión exigida | D07 requiere continuar/descartar el piloto opcional con criterio explícito. | Disposición documentada: descartar el piloto en esta entrega conforme al encargo de no hacer refactorizaciones opcionales; conservar implementación y garantías aceptadas. | Cerrada; descarte documentado debajo |
 | O5 / comprobación obligatoria | D05 exige suite global, cobertura ≥99% y propiedades profundas sobre candidato instalado. | Resultado terminal de los gates; cualquier fallo obligatorio conserva bloqueo de cierre hasta su resolución y verificación causal. | En ejecución |
@@ -2293,3 +2293,36 @@ cierre sin refactorizaciones opcionales. Se conservan CompiledJsonSchema y las
 primitivas compartidas ya aceptadas; no se crea un segundo intérprete ni una
 migración sin mejora medida. Esta decisión cierra D07, no elimina ninguno de los
 gates D05 ni modifica el subset o los diagnósticos de schema.
+
+
+### Aceptación O2 — D06 y transformación de sobres
+
+`8cede116` extrae la comprobación ya existente de Database.command al owner
+error_documents y la reutiliza después de materializar findAndModify y cursores.
+Se comprueba el sobre transformado antes de seleccionar value/batch, sin volver
+a ejecutar codecs ni deshacer una escritura confirmada. Un setter que cambia
+ok a cero demuestra el defecto: native falla con KeyError de errmsg ausente y
+la directa anterior devolvía value. Se conserva ese error cliente, los efectos
+previos y el estado ya escrito, en lugar de fabricar un error del servidor.
+
+[Receipt O2](evidence/bson-consolidation-implementation/bson-grammar-context/response-transform-acceptance.json):
+MongoDB 7.0.43/8.0.32/9.0.2, 312 observaciones por versión; ambas APIs y motores,
+wire sync/async, con/sin registry. El corpus transforma v, ok, n, value,
+lastErrorObject y writeErrors en escrituras, comandos, find y aggregate. Pasan
+267 regresiones causales instaladas; sin SDK real pasan 1.872 observaciones,
+sin omisiones de este corpus. Lint correcto en siete archivos; 427 protegidos
+intactos; nueve manifests con claims distintos y 27 recursos ausentes.
+
+Mapa finito de garantías D06, reutilizando aceptaciones sin reabrirlas:
+
+| Garantía | Evidencia aceptada / consumidor |
+| --- | --- |
+| D06a: DBRef literal/operador, orden/extras/tipos negativos; Code/String por contexto | Gramática y contexto del registro, completados por sufijos, raw y dispatch; fixtures semantic_dbref_grammar y semantic_bson_grammar_context preservados, incluido contexto let, field arguments, facet/lookup/union y vacío/poblado. O1 añade prefijos reales y reloj compartido. |
+| D06b: BSON antes del decoder, orden, undefined anidado, scope y entradas wire de filtro/escritura | Cortes aceptados binary-and-raw-boundaries, raw-response y codec-dispatch, seguidos de document-factories, proyecciones, batching y write-factory-failures. No se usa el checkpoint histórico rojo como aceptación ni se reconstruye orden ya perdido en archivos antiguos. |
+| D06c: equivalencia de claves, representantes, group/lookup/sets/spill | Receipt bson-consumers y pruebas test_bson_consumer_plans: activación real hash/spill, fallback, collation, negativos Binary/Code y representante BSON. Se retiró _aggregation_key; storage keys no se migran. |
+| D06c: poda, ranking y persistencia Search | Receipt search-bson-persistence: candidatos completos antes de residual/ventana, ambos motores, reapertura e índices. No acredita recall ANN ni positivos Atlas. |
+| B07: materialización y efectos no excepcionales | Receipt O2 anterior, junto con los cortes de fábricas que fallan y DTOs ya aceptados. |
+
+Este mapa cierra la aceptación acotada D06. La integración y las garantías de
+coste/entorno sobre el candidato final siguen en O5–O8; no se sustituyen por
+los replays ni por los checkpoints históricos.

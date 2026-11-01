@@ -1,0 +1,72 @@
+{
+  "runtime_commit": "8cede116",
+  "wheel_sha256": "29a485d74d635d3b33f20a69d009abcfabbdb07f9ba62ebc4258f778c3ca0ca7",
+  "native_observations_per_version": 312,
+  "native_versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "before": {
+    "failed": 12,
+    "passed": 15,
+    "scope": "initial write response transformations"
+  },
+  "after": {
+    "passed": 267,
+    "scope": "response transformations including cursors and causal factory/response/batch regressions"
+  },
+  "sdk_free": {
+    "observations": 1872,
+    "omissions": 0,
+    "python": "3.13.13"
+  },
+  "protected_files": 427,
+  "resources_absent": 27,
+  "limits": [
+    "D05 integrated gates remain mandatory; no remote CI claimed",
+    "SDK-free observation bodies unchanged; this corpus contains no unavailable SDK specimens"
+  ],
+  "artifacts": {
+    "response-transform-focal.txt.gz": "e58a362360b76f75f759e2bd9a01bb184c81096de69a07d013f44e1a956b74d8",
+    "response-transform-fixed.txt.gz": "9ef87f297ddcc7c363929a108b83a48ec9bbec12761dfa3408f1ff66f5cd521f",
+    "response-transform-sdk-free.txt.gz": "20445104e41b1a2e5d3d97915f9ffee44af8b422e1a70b42b32fc65ff142bb61",
+    "response-transform-resources.json": "2e32dd0464dd2abde322e683cc5a727978d574df1232ecd19cdfcc95cc943526",
+    "response-transform-lint.txt.gz": "dccf90e967f102bf8cbb4617e0c13c7b264e8b5d55f31eab2dca59ecc1154bef",
+    "response-transform-build.txt.gz": "179d5f2a6de5dad3ee8f48a61d5338d8e56a32e5284f44b605f81b740b566800",
+    "response-transform-initial-7.0-fixture.json.gz": "0f8afa0c95853665182bf48902580d1ca6b4fa1db8df445b1dd6914af0619a14",
+    "response-transform-initial-7.0-fixture-owner.gz": "23a875dc3760e465c312e462570f8782756178678116896fb1a14f85676ca090",
+    "response-transform-initial-7.0-check.json.gz": "3a9cca544fae81c610d0ce03edbb67dbfce11a6019e41da9d5848f787bec8683",
+    "response-transform-initial-8.0-fixture.json.gz": "7a478b5da3b9d600f7e5325d60cd66ad661590f821f42cc5559d9ebfc9ba82c1",
+    "response-transform-initial-8.0-fixture-owner.gz": "e8890442adc29bd129795c2a1392e7ceb762909bf7c925e01d220f1e86c8a92f",
+    "response-transform-initial-8.0-check.json.gz": "3632bdf0b145690f5de502557eace771b3c35a7ef87cfa6c4a15a791a5de9239",
+    "response-transform-initial-9.0-fixture.json.gz": "5188667bc090c7fbdfc0d0c47ca9fccf3aa3a0d3a04e3a734066e408ec5b6a77",
+    "response-transform-initial-9.0-fixture-owner.gz": "0e110efc7c4e066d65db4fe295f81379e8e7547a49c7b2aabe1088ac8cb0cf01",
+    "response-transform-initial-9.0-check.json.gz": "0b97e43585d5115a70a7094af69c4ec170aef482c66a8d9e7578af077d22379b",
+    "response-transform-expanded-7.0-fixture.json.gz": "6ecc343f3e880c31c2eb109ee6e6a71f9f224e7f138207e595e1b4eb243f564e",
+    "response-transform-expanded-7.0-fixture-owner.gz": "601acd4ce9b43fdb763454480cc969a1b5c143778e60f6e2b0d3f0abf3fd7790",
+    "response-transform-expanded-7.0-check.json.gz": "18d0ad332ccc21469969f0a1f84f055338ecba540791f03adeea3c3cc310b43f",
+    "response-transform-expanded-8.0-fixture.json.gz": "c837cfb722bbfa988cac385ac5090373c992b9a6943f9b5cc883b198053bfcdf",
+    "response-transform-expanded-8.0-fixture-owner.gz": "0f8140e2ec5433728306ac2ffc0b431e20a7fa98618ae44b1d598145f1317bb0",
+    "response-transform-expanded-8.0-check.json.gz": "5c0d9c9323753ef82ca77dc61e60846c615e9d60108f2386b4edff3348a1ea28",
+    "response-transform-expanded-9.0-fixture.json.gz": "5b282e459c68e5496c11f6e53147d3306826febddada041a2597f588b8bc2471",
+    "response-transform-expanded-9.0-fixture-owner.gz": "0ff7b87f4e91233eaa033d050aa949ab0b852181c4e71538cfda0a9a9c4ccf7c",
+    "response-transform-expanded-9.0-check.json.gz": "437703def951c64ce181c35dce764636260876978fd83a9d0076d3785d94666d",
+    "response-transform-frozen-7.0-fixture.json.gz": "7604a4233ed3ba4235507ece0d316d2bcab541f14d558c99aa32da63da85d467",
+    "response-transform-frozen-7.0-fixture-owner.gz": "a838fe76f9c331c920c76946aab57cf204d09647c78f404b88aa33c326c872dd",
+    "response-transform-frozen-7.0-check.json.gz": "a7aa059bbe79f85459f6fb8b8ea83c78088509146ad5e2155e96320cd02a4188",
+    "response-transform-frozen-8.0-fixture.json.gz": "697422c31f5b49bc1f85fce67722c6771f1bbdd5ea8aecb8833cd7f8812be9a9",
+    "response-transform-frozen-8.0-fixture-owner.gz": "6589003066b5e7f43359c5917d4ea2f414ed9f4923cdba8957cd149d13d9d05b",
+    "response-transform-frozen-8.0-check.json.gz": "90b6f11e513a12f2e087e22dd51e99f674618353a28795dc795e53d5e8225bfd",
+    "response-transform-frozen-9.0-fixture.json.gz": "1d460378c15cdc92a155335b8761edf63770a0eae8f98dbbed59ce23ed9d9a1a",
+    "response-transform-frozen-9.0-fixture-owner.gz": "b5b45643f4f2889d3a1cfde9c56c50b98fe0146f4ea0ebc157e8996f1c117c89",
+    "response-transform-frozen-9.0-check.json.gz": "6cf964567c5371797667f3abb1b17099d744cec6482bcd694ec9e5b05e62d232",
+    "response-transform-runtime.json": "f760195221ef7ba64d0f1c5938f8b6445e4c955c783ddbae7fbea6fe1cf0e441",
+    "response-transform-wheel.json": "ec5e4a10b7726b0f9a284fd1f56d9fdc62d75c96274d641e9c0fe664300d880e",
+    "response-transform-wheel-imports-response-transform-fixed-gw2.json": "ba0ba91aee6b5d34f70e89347f603c6cf842f2113535a9c3be8078a91772da98",
+    "response-transform-wheel-imports-response-transform-fixed-gw3.json": "ba0ba91aee6b5d34f70e89347f603c6cf842f2113535a9c3be8078a91772da98",
+    "response-transform-wheel-imports-response-transform-fixed-gw0.json": "ba0ba91aee6b5d34f70e89347f603c6cf842f2113535a9c3be8078a91772da98",
+    "response-transform-wheel-imports-response-transform-fixed-master.json": "28c0a79aba02633d03c74ce630dabdf977245e25b2216b6bb5ce9298a6398836",
+    "response-transform-wheel-imports-response-transform-fixed-gw1.json": "ba0ba91aee6b5d34f70e89347f603c6cf842f2113535a9c3be8078a91772da98"
+  }
+}
