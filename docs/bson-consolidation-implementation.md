@@ -2936,7 +2936,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F06 | Cerrado | Catálogo/unique/hashed, cuatro superficies, eventos RS 7/8/9, archivos previos e inventarios CXP. |
 | F07 | Implementado y comprobado focalmente | Escrituras/identidad/campos, 7/8/9, contadores/eventos y validadores; aceptación integrada en F11. |
 | F08 | Implementado y comprobado focalmente | Claves contextuales/natural, inicializadores y acumulación, materialización/spill real; aceptación integrada en F11. |
-| F09 | Pendiente | Gramática/recursos, fechas y texto; tres subunidades. |
+| F09 | Implementado y comprobado focalmente | Tres unidades y perfiles nativos; aceptación integrada y conservación CXP en F11. |
 | F10 | Pendiente | Fachadas, metadata y capacidades explícitas. |
 | F11 | Pendiente | Gates globales finales, coste, distribución y entrega. |
 
@@ -3169,3 +3169,9 @@ expectativas que partían ties o reevaluaban n, respaldadas por los nativos.
 La simplificación final del validador conserva 24 controles naturales verdes;
 diff revisado y ratchet focal verde. Compatibilidad/reapertura, coste y demás
 gates integrados quedan en F11. F09 es el siguiente bloque.
+
+F09 implementado y comprobado focalmente en sus tres unidades: argumentos/gramática/recursos, calendario y representación textual. Se reutiliza un primitivo exacto BSON→int64, manteniendo límites, nulabilidad, precedencia y perfiles por consumidor. Range calcula cardinalidad y rechaza el presupuesto antes de materializar; un control intercepta la asignación y comprueba continuidad del cliente. La aridad se valida también sin filas. Las variables conservan sus reglas de expresión, separadas de command let.
+
+El calendario usa milisegundos enteros para duraciones y límites subdiarios, ancla nativa de 2000 para bins, calendario civil para días/meses y acarreo de dateFromParts; se contrastan DST, offsets, IANA y ambos signos. Las opciones constantes y las ramas nulas mantienen su fase y precedencia. El formateador BSON común conserva cohortes Decimal y texto exacto; casing conserva su propia conversión nativa de doubles y trim su conjunto explícito. Database aggregate(1) conserva contexto/reloj/bindings sin crear namespace; sólo se habilita el origen documents ya declarado. La validación wire delega el namespace al compilador contextual existente.
+
+Se añaden nueve testigos: 247 standalone y 15 RS por dialecto; las 238/15 observaciones previas permanecen idénticas y los seis hashes del corpus coinciden. Del contraste focal pasan 1.838 controles; las 48 discrepancias de perfiles/arity restantes quedan corregidas y pasan los 72 controles afectados. Pasan 104 tests locales/6 subtests y los controles de recurso/contexto incluidos en el focal. Se conservan resultados rojos y capturas nativas 7/8/9. Diff revisado y ratchet verde. No se declara aceptación de entrega: F11 debe refrescar la conservación CXP del parser admin modificado y ejecutar los gates integrados, compatibilidad y coste. F10 es el siguiente bloque.

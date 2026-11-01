@@ -319,11 +319,6 @@ def _validate_list_databases(
 def _validate_aggregate(
     _body: dict[str, Any], command_document: dict[str, Any]
 ) -> None:
-    _require_non_empty_string(
-        "aggregate",
-        command_document.get("aggregate"),
-        "requires a non-empty collection name",
-    )
     pipeline = command_document.get("pipeline")
     if not isinstance(pipeline, list):
         raise OperationFailure("wire aggregate requires a pipeline list")

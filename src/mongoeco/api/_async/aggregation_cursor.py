@@ -538,7 +538,11 @@ class AsyncAggregationCursor:
         self._pipeline = prepare_pipeline(
             self._pipeline,
             dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
-            collection=getattr(self._collection, "_collection_name", None),
+            collection=getattr(
+                self._pipeline,
+                "collection",
+                getattr(self._collection, "_collection_name", None),
+            ),
             variables=frozenset(self._execution_context.bindings),
         )
         leading_search = self._leading_search_stage()

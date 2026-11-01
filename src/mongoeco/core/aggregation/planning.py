@@ -11,7 +11,14 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation.extensions import (
     get_registered_aggregation_stage_registration,
 )
-from mongoeco.core.bson_scalars import bson_numeric_alias
+from mongoeco.core.bson_scalars import (
+    INT64_MAX,
+    INT64_MIN,
+    _is_nan_numeric_value,
+    bson_numeric_alias,
+    exact_bson_int64,
+    wrap_bson_numeric,
+)
 from mongoeco.core.paths import validate_projection_paths
 from mongoeco.core.projections import expand_projection_spec
 from mongoeco.core.server_errors import server_error
@@ -178,6 +185,12 @@ def _require_group_spec(spec: object) -> dict[str, Any]:
     message = "$group requires a document specification with _id"
     if not isinstance(spec, dict):
         raise server_error(message, code=15947)
+    for name in spec:
+        if isinstance(name, str) and "." in name:
+            message = "The field name cannot contain '.'"
+            raise server_error(
+                message, code=40234 if name.startswith("_id.") else 40235
+            )
     if "_id" not in spec:
         raise server_error(message, code=15955)
     return spec
@@ -216,9 +229,18 @@ def _require_sort(spec: object) -> SortSpec:
 
 
 def _require_non_negative_int(name: str, value: object) -> int:
-    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+    integer = exact_bson_int64(value)
+    if name == "$limit":
+        if integer is None or integer < 0:
+            message = "$limit requires an integer argument"
+            raise server_error(message, code=5107201)
+        if integer <= 0:
+            message = "the limit must be positive"
+            raise server_error(message, code=15958)
+        return integer
+    if integer is None or integer < 0:
         raise OperationFailure(f"{name} requires a non-negative integer")
-    return value
+    return integer
 
 
 def _is_simple_projection(spec: object) -> bool:
@@ -261,12 +283,30 @@ def _require_unset_spec(spec: object) -> list[str]:
     return fields
 
 
-def _require_sample_spec(spec: object) -> int:
+def _require_sample_spec(spec: object, *, dialect=MONGODB_DIALECT_70) -> int:
     if not isinstance(spec, dict):
         raise OperationFailure("$sample requires a document specification")
     if set(spec) != {"size"}:
         raise OperationFailure("$sample requires only a size field")
-    return _require_non_negative_int("$sample size", spec["size"])
+    numeric = wrap_bson_numeric(spec["size"])
+    if numeric is None:
+        message = "$sample size must be numeric"
+        raise server_error(message, code=28746)
+    value = numeric.value
+    if _is_nan_numeric_value(value):
+        size = 0
+    else:
+        size = (
+            INT64_MAX
+            if value > INT64_MAX
+            else INT64_MIN
+            if value < INT64_MIN
+            else int(value)
+        )
+    if size < 0 or (size == 0 and dialect.key == "9.0"):
+        message = "$sample size must be positive"
+        raise server_error(message, code=28747)
+    return size
 
 
 def _require_documents_stage(spec: object) -> list[Document]:

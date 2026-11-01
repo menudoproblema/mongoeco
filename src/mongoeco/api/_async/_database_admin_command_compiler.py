@@ -10,6 +10,7 @@ from mongoeco.api._command_bson import (
     require_command_type,
 )
 from mongoeco.api.admin_parsing import (
+    normalize_aggregate_namespace,
     normalize_command_batch_size,
     normalize_command_collation,
     normalize_command_document,
@@ -185,13 +186,22 @@ class DatabaseAdminCommandCompiler:
         allow_disk_use_field: str = "allowDiskUse",
         let_field: str = "let",
     ) -> tuple[str, AggregateOperation]:
-        collection_name = self.require_collection_name(
-            spec.get(collection_field),
-            collection_field,
+        namespace = normalize_aggregate_namespace(
+            spec.get(collection_field), dialect=self._admin._mongodb_dialect.key
         )
+        collection_name = namespace if namespace is not None else "$cmd.aggregate"
         pipeline = spec.get(pipeline_field)
         if not isinstance(pipeline, list):
             raise TypeError("pipeline must be a list")
+        if namespace is None and (
+            not pipeline
+            or not isinstance(pipeline[0], dict)
+            or "$documents" not in pipeline[0]
+        ):
+            message = (
+                "Database-level aggregation currently requires a $documents source"
+            )
+            raise OperationFailure(message)
         cursor_spec = spec.get(cursor_field, {})
         if not isinstance(cursor_spec, dict):
             message = "cursor field must be missing or an object"
@@ -217,7 +227,7 @@ class DatabaseAdminCommandCompiler:
             collection_name,
             compile_aggregate_operation(
                 pipeline,
-                collection=collection_name,
+                collection=namespace,
                 collation=normalize_command_collation(
                     spec, field="aggregate.collation"
                 ),

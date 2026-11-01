@@ -25,6 +25,10 @@ from mongoeco.core.aggregation.control_object_expressions import (
     parse_field_expression,
     prepare_field_expression,
 )
+from mongoeco.core.aggregation.date_expressions import (
+    DATE_EXPRESSION_OPERATORS,
+    validate_date_options,
+)
 from mongoeco.core.aggregation.evaluation_environment import environment_for_document
 from mongoeco.core.aggregation.extensions import (
     _aggregation_registry_version,
@@ -47,6 +51,7 @@ from mongoeco.core.aggregation.planning import (
     _require_group_spec,
     _require_projection_for_dialect,
     _require_replace_root_spec,
+    _require_sample_spec,
     _require_stage,
     _validate_densify_partition_paths,
     _validate_densify_range,
@@ -69,9 +74,12 @@ from mongoeco.core.bson_values import (
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.error_documents import command_error_document, error_message
-from mongoeco.core.expression_context import ExpressionExecutionContext
-from mongoeco.core.search import split_classic_text_filter
+from mongoeco.core.expression_context import (
+    ExpressionExecutionContext,
+    validate_user_variable_names,
+)
 from mongoeco.core.runtime_metadata import requires_text_score
+from mongoeco.core.search import split_classic_text_filter
 from mongoeco.core.server_errors import operation_error, server_error
 from mongoeco.errors import OperationFailure
 
@@ -217,6 +225,9 @@ def _prepare_facet(spec, *, dialect, address, context):
         message = "$facet requires a document specification"
         raise OperationFailure(message)
     for branch, nested in spec.items():
+        if isinstance(branch, str) and "." in branch:
+            message = "FieldPath field names may not contain '.'"
+            raise server_error(message, code=16412)
         if not isinstance(branch, str):
             message = "$facet field names must be strings"
             raise OperationFailure(message)
@@ -418,6 +429,7 @@ def _validate_expression_variables(expression, dialect, variables):  # noqa: PLR
             and isinstance(spec, dict)
             and isinstance(spec.get("vars"), dict)
         ):
+            validate_user_variable_names(spec["vars"])
             requires_document = _validate_expression_values(
                 spec["vars"].values(), dialect, variables
             )
@@ -533,6 +545,14 @@ def _validate_stage_structure(operator, spec, dialect):
     if operator == "$match" and not isinstance(spec, dict):
         message = "$match requires an expression object"
         raise server_error(message, code=15959)
+    if operator == "$sort" and isinstance(spec, dict) and not spec:
+        message = "$sort stage must have at least one sort key"
+        raise server_error(message, code=15976)
+    if operator == "$count" and spec == "_id":
+        message = "a group's _id may only be specified once"
+        raise server_error(message, code=9039800 if dialect.key == "9.0" else 15948)
+    if operator == "$sample":
+        _require_sample_spec(spec, dialect=dialect)
     if operator == "$setWindowFields":
         validate_window_fill_sort(spec)
     if operator == "$project":
@@ -611,6 +631,9 @@ def _parse_stage_containers(pipeline, dialect, context, relocating):
         builtin = get_registered_aggregation_stage_registration(operator) is None
         if builtin:
             _validate_stage_structure(operator, raw_spec, dialect)
+            if operator == "$documents" and context.collection is not None:
+                message = "$documents can only run with a database-level namespace"
+                raise server_error(message, code=73)
             _validate_placement(operator, address, context.scopes)
             if operator == "$merge":
                 validate_merge_mode_pair(raw_spec)
@@ -804,6 +827,9 @@ def _validate_documents_namespace(
 # Preparation is structural; constant evaluation is restricted to pure scalar
 # expressions and is enabled only in native phases that optimize constants.
 _EXPRESSION_ARITIES = {
+    "$add": (0, None),
+    "$multiply": (0, None),
+    "$concat": (0, None),
     "$slice": (2, 3),
     **dict.fromkeys(
         (
@@ -833,12 +859,17 @@ _EXPRESSION_ARITIES = {
     "$round": (1, 2),
     "$trunc": (1, 2),
     "$range": (2, 3),
+    "$toString": (1, 1),
+    "$toUpper": (1, 1),
+    "$toLower": (1, 1),
+    "$strcasecmp": (2, 2),
     **SCALAR_EXPRESSION_ARGUMENTS,
     **CONTROL_EXPRESSION_ARGUMENTS,
     **ARRAY_ACCESS_EXPRESSION_ARGUMENTS,
 }
-_PURE_CONSTANT_OPERATORS = frozenset(_EXPRESSION_ARITIES) - {"$range"} | {
+_PURE_CONSTANT_OPERATORS = frozenset(_EXPRESSION_ARITIES) | {
     "$regexMatch",
+    *DATE_EXPRESSION_OPERATORS,
     "$arrayToObject",
     "$literal",
     "$const",
@@ -989,6 +1020,15 @@ def _prepare_expression_structure(
         )
         prepare_field_expression(operator, expression[operator], dialect=dialect)
         return
+    if fold_constants and operator in DATE_EXPRESSION_OPERATORS:
+        validate_date_options(
+            operator,
+            expression[operator],
+            is_constant=_pure_constant,
+            evaluate_constant=lambda value: evaluate_expression(
+                {}, value, dialect=dialect
+            ),
+        )
     for value in expression.values():
         _prepare_expression_structure(
             value, dialect, fold_constants=fold_constants, document_code=document_code

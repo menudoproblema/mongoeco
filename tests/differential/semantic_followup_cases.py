@@ -2067,3 +2067,358 @@ def ordered_materialization(collection):
 SEMANTIC_FOLLOWUP_CASES += (
     ("semantic_followup_f08_materialization", ordered_materialization),
 )
+
+
+def numeric_argument_contexts(collection):
+    values = [
+        ("int", 2),
+        ("long", Int64(2)),
+        ("double", 2.0),
+        ("fraction", 2.5),
+        ("decimal", Decimal128("2")),
+        ("decimal_fraction", Decimal128("2.5")),
+        ("bool", True),
+        ("null", None),
+        ("nan", float("nan")),
+        ("inf", float("inf")),
+        ("long_max", Int64(2**63 - 1)),
+        ("missing", "$absent"),
+    ]
+    values += [
+        ("zero", 0),
+        ("negative", -1),
+        ("decimal_nan", Decimal128("NaN")),
+        ("decimal_inf", Decimal128("Infinity")),
+        ("negative_inf", float("-inf")),
+        ("long_min", Int64(-(2**63))),
+    ]
+    result = {}
+    for label, value in values:
+        expressions = {
+            "range": {"$range": [0, value]},
+            "slice": {"$slice": [[1, 2, 3], value]},
+            "round": {"$round": [12.345, value]},
+            "dateAdd": {"$dateAdd": {"startDate": DT, "unit": "day", "amount": value}},
+            "dateTrunc": {"$dateTrunc": {"date": DT, "unit": "day", "binSize": value}},
+            "maxN": {"$maxN": {"input": [1, 2, 3], "n": value}},
+        }
+        for operator, expr in expressions.items():
+            result[f"{operator}/{label}"] = expression(collection, value=expr)
+            dynamic = deepcopy(expr)
+            operand = dynamic[next(iter(dynamic))]
+            if isinstance(operand, list):
+                operand[-1] = "$v"
+            elif "amount" in operand:
+                operand["amount"] = "$v"
+            elif "binSize" in operand:
+                operand["binSize"] = "$v"
+            else:
+                operand["n"] = "$v"
+            if label != "missing":
+                result[f"{operator}/{label}/field"] = expression(
+                    collection, value=dynamic, rows=[{"_id": 1, "v": value}]
+                )
+
+        for operator in ["$limit", "$sample"]:
+            stage = {operator: {"size": value} if operator == "$sample" else value}
+            result[f"{operator}/{label}"] = pipeline(
+                collection, stages=[stage, {"$count": "n"}], rows=[{"_id": 1}]
+            )
+    return result
+
+
+def expression_variable_contexts(collection):
+    result = {}
+    for name in ["a", "A", "CURRENT", "NOW", "ROOT", "a.b", "a-1", "_a", "á"]:
+        result["let/" + name] = expression(
+            collection, value={"$let": {"vars": {name: 3}, "in": "$$" + name}}
+        )
+        result["map/" + name] = expression(
+            collection, value={"$map": {"input": [1], "as": name, "in": "$$" + name}}
+        )
+    return result
+
+
+def text_format_contexts(collection):
+    result = {}
+    for label, value in [
+        ("zero", 0.0),
+        ("negative_zero", -0.0),
+        ("large", 1e20),
+        ("boundary", 1e15),
+        ("scientific", 1e16),
+        ("small", 1e-6),
+        ("precise", 1.2345678901234567),
+        ("nan", float("nan")),
+        ("inf", float("inf")),
+        ("decimal", Decimal128("1.50")),
+        ("decimal_exponent", Decimal128("1E+7")),
+        ("long", Int64(7)),
+        ("decimal_negative_zero", Decimal128("-0.00")),
+        ("decimal_zero_exponent", Decimal128("0E+5")),
+        ("decimal_nan", Decimal128("NaN")),
+        ("decimal_inf", Decimal128("Infinity")),
+    ]:
+        for operator in ["$toString", "$toUpper", "$toLower"]:
+            result[f"{operator}/{label}"] = expression(
+                collection, value={operator: {"$literal": value}}
+            )
+    for point in [
+        0,
+        9,
+        13,
+        32,
+        0x85,
+        0xA0,
+        0x1680,
+        *range(0x2000, 0x200B),
+        0x2028,
+        0x2029,
+        0x202F,
+        0x205F,
+        0x3000,
+        0xFEFF,
+    ]:
+        result[f"trim/{point}"] = expression(
+            collection, value={"$trim": {"input": chr(point) + "x" + chr(point)}}
+        )
+    for chars in ["", "ab", "\x00"]:
+        result[f"trim/explicit/{chars!r}"] = expression(
+            collection, value={"$trim": {"input": "ab\x00xab\x00", "chars": chars}}
+        )
+    return result
+
+
+def calendar_boundaries(collection):
+    result = {}
+    for season, start in [
+        ("spring", D(2021, 3, 27, 12)),
+        ("fall", D(2021, 10, 30, 12)),
+    ]:
+        for unit in ["day", "hour"]:
+            for sign in [1, -1]:
+                result[f"add/{season}/{unit}/{sign}"] = expression(
+                    collection,
+                    value={
+                        "$dateAdd": {
+                            "startDate": start,
+                            "unit": unit,
+                            "amount": sign * (24 if unit == "hour" else 1),
+                            "timezone": "Europe/Madrid",
+                        }
+                    },
+                )
+        end = start + datetime.timedelta(days=2)
+        for unit in ["day", "hour"]:
+            result[f"diff/{season}/{unit}"] = expression(
+                collection,
+                value={
+                    "$dateDiff": {
+                        "startDate": start,
+                        "endDate": end,
+                        "unit": unit,
+                        "timezone": "Europe/Madrid",
+                    }
+                },
+            )
+    for unit, size in [
+        ("year", 5),
+        ("month", 5),
+        ("quarter", 3),
+        ("week", 3),
+        ("day", 7),
+        ("hour", 5),
+    ]:
+        for value in [D(1999, 12, 31, 23, 59), DT]:
+            result[f"trunc/{unit}/{value.year}"] = expression(
+                collection,
+                value={"$dateTrunc": {"date": value, "unit": unit, "binSize": size}},
+            )
+    for fmt in ["%%Y", "%Y%%m", "%q", "%", "%j/%U/%w/%Z/%%"]:
+        for dynamic in [False, True]:
+            result[f"format/{fmt}/{dynamic}"] = expression(
+                collection,
+                value={
+                    "$dateToString": {
+                        "date": DT,
+                        "format": "$f" if dynamic else fmt,
+                        "timezone": "+05:30",
+                    }
+                },
+                rows=[{"_id": 1, "f": fmt}],
+            )
+    for zone in ["Europe/Madrid", "+05:30"]:
+        for unit in ["day", "hour", "week"]:
+            for date in [
+                D(1969, 12, 31, 23, 30),
+                D(2021, 3, 28, 1, 30),
+                D(2021, 10, 31, 1, 30),
+            ]:
+                result[f"trunc-zone/{zone}/{unit}/{date.isoformat()}"] = expression(
+                    collection,
+                    value={
+                        "$dateTrunc": {
+                            "date": date,
+                            "unit": unit,
+                            "binSize": 2,
+                            "timezone": zone,
+                        }
+                    },
+                )
+    return result
+
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f09_numeric_argument_contexts", numeric_argument_contexts),
+    ("semantic_followup_f09_variable_contexts", expression_variable_contexts),
+    ("semantic_followup_f09_text_contexts", text_format_contexts),
+    ("semantic_followup_f09_calendar_boundaries", calendar_boundaries),
+)
+
+
+def nullable_operand_contexts(collection):
+    result = {}
+    for operator in ["$add", "$multiply", "$subtract", "$divide", "$mod"]:
+        for label, args in [
+            ("null_left", [None, 1]),
+            ("null_right", [1, None]),
+            ("missing_left", ["$absent", 1]),
+            ("missing_right", [1, "$absent"]),
+            ("bad_null", ["x", None]),
+            ("null_bad", [None, "x"]),
+            ("nulls", [None, None]),
+            ("missing", ["$absent", "$absent"]),
+        ]:
+            result[f"{operator}/{label}"] = expression(
+                collection, value={operator: args}
+            )
+        bad = {operator: ["x", 1]}
+        result[f"{operator}/unreached"] = expression(
+            collection, value={"$cond": [False, bad, 7]}
+        )
+        result[f"{operator}/reached"] = expression(
+            collection, value={"$cond": [True, bad, 7]}
+        )
+    for operator, base, names in [
+        (
+            "$dateAdd",
+            {"startDate": DT, "unit": "day", "amount": 1},
+            ["startDate", "unit", "amount", "timezone"],
+        ),
+        (
+            "$dateTrunc",
+            {"date": DT, "unit": "day", "binSize": 2},
+            ["date", "unit", "binSize", "timezone"],
+        ),
+        (
+            "$dateDiff",
+            {"startDate": DT, "endDate": DT, "unit": "day"},
+            ["startDate", "endDate", "unit", "timezone"],
+        ),
+    ]:
+        for name in names:
+            result[f"{operator}/{name}"] = expression(
+                collection, value={operator: base | {name: None}}
+            )
+    for label, operator, options in [
+        (
+            "week-null",
+            "$dateDiff",
+            {"startDate": DT, "endDate": DT, "unit": "week", "startOfWeek": None},
+        ),
+        ("week-null", "$dateTrunc", {"date": DT, "unit": "week", "startOfWeek": None}),
+        (
+            "week-ignored",
+            "$dateTrunc",
+            {"date": DT, "unit": "day", "startOfWeek": None},
+        ),
+        ("format-null", "$dateToString", {"date": DT, "format": None}),
+        ("format-invalid-null-date", "$dateToString", {"date": None, "format": "%q"}),
+        ("timezone-null", "$dateToString", {"date": DT, "timezone": None}),
+        ("month-null", "$dateFromParts", {"year": 2021, "month": None}),
+        ("year-null", "$dateFromParts", {"year": None, "month": "bad"}),
+        ("hour-before-null", "$dateFromParts", {"year": None, "hour": "bad"}),
+    ]:
+        result[f"{operator}/{label}"] = expression(
+            collection, value={operator: options}
+        )
+    for operator, base, datekey in [
+        ("$dateAdd", {"startDate": DT, "unit": "day", "amount": 1}, "startDate"),
+        ("$dateTrunc", {"date": DT, "unit": "day"}, "date"),
+        ("$dateDiff", {"startDate": DT, "endDate": DT, "unit": "day"}, "startDate"),
+    ]:
+        for date in [None, "$absent"]:
+            for option, value in [
+                ("unit", "bad"),
+                ("timezone", "bad"),
+                ("timezone", False),
+            ]:
+                result[f"{operator}/options/{date!r}/{option}/{value!r}"] = expression(
+                    collection, value={operator: base | {datekey: date, option: value}}
+                )
+    return result
+
+
+def documents_namespace_contexts(collection):
+    result = {}
+    for label, namespace in [
+        ("int", 1),
+        ("long", Int64(1)),
+        ("double", 1.0),
+        ("decimal", Decimal128("1")),
+        ("bool", True),
+        ("other", 2),
+        ("collection", collection.name),
+    ]:
+        stages = [
+            {"$documents": [{"v": {"$add": [2, 3]}, "now": "$$NOW"}]},
+            {"$project": {"v": 1, "isDate": {"$eq": [{"$type": "$now"}, "date"]}}},
+        ]
+        result[label] = outcome(
+            lambda namespace=namespace, stages=stages: collection.database.command(
+                {"aggregate": namespace, "pipeline": stages, "cursor": {}}
+            )["cursor"]["firstBatch"]
+        )
+    result["only_original_namespace"] = sorted(
+        collection.database.list_collection_names()
+    ) == [collection.name]
+    return result
+
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f09_nullable_contexts", nullable_operand_contexts),
+    ("semantic_followup_f09_documents_namespace", documents_namespace_contexts),
+    (
+        "semantic_followup_f09_range_boundary",
+        partial(expression, value={"$range": [0, 6553598]}),
+    ),
+    (
+        "semantic_followup_f09_range_dynamic_budget",
+        partial(
+            expression, value={"$range": [0, "$n"]}, rows=[{"_id": 1, "n": 6553598}]
+        ),
+    ),
+)
+
+
+def expression_arity_contexts(collection):
+    result = {}
+    samples = {
+        "$add": [1, 2, 3, 4],
+        "$multiply": [1, 2, 3, 4],
+        "$concat": ["a", "b", "c", "d"],
+        "$range": [0, 3, 1, 2],
+        "$slice": [[1, 2, 3], 1, 1, 1],
+        "$round": [12.34, 1, 1, 1],
+    }
+    for operator, arguments in samples.items():
+        for count in range(5):
+            result[f"{operator}/{count}"] = expression(
+                collection, value={operator: arguments[:count]}
+            )
+    return result
+
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f09_arity_contexts", expression_arity_contexts),
+)

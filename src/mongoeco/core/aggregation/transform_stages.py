@@ -175,8 +175,10 @@ def _apply_unset(
     return result
 
 
-def _apply_sample(documents: list[Document], spec: object) -> list[Document]:
-    size = _require_sample_spec(spec)
+def _apply_sample(
+    documents: list[Document], spec: object, *, dialect=MONGODB_DIALECT_70
+) -> list[Document]:
+    size = _require_sample_spec(spec, dialect=dialect)
     if size == 0:
         return []
     sample_size = min(size, len(documents))

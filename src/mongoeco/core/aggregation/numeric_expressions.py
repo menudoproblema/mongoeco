@@ -20,6 +20,8 @@ from mongoeco.core.bson_scalars import (
     BsonDouble,
     BsonInt32,
     BsonInt64,
+    _is_infinite_numeric_value,
+    _is_nan_numeric_value,
     _numeric_to_decimal,
     _wrap_float_result,
     bson_add,
@@ -32,6 +34,7 @@ from mongoeco.core.bson_scalars import (
     bson_numeric_alias,
     bson_rewrap_numeric,
     bson_subtract,
+    exact_bson_int64,
     is_bson_numeric,
     unwrap_bson_numeric,
     wrap_bson_numeric,
@@ -44,6 +47,11 @@ from mongoeco.types import Document, UndefinedType
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
 type ExpressionArgValidator = Callable[[str, object, int, int | None], list[Any]]
+
+
+_RANGE_MEMORY_LIMIT_BYTES = 100 * 1024 * 1024
+_RANGE_VALUE_BYTES = 16
+_RANGE_ARRAY_OVERHEAD_BYTES = 40
 
 
 NUMERIC_EXPRESSION_OPERATORS = frozenset(
@@ -107,10 +115,15 @@ def evaluate_numeric_expression(
         return total.sum() if operator == "$sum" else total.average(len(values))
 
     if operator in {"$add", "$multiply"}:
-        args = require_expression_args(operator, spec, 2, None)
-        raw_values = [evaluate_expression(document, item, variables) for item in args]
-        if any(value is None for value in raw_values):
-            return None
+        args = require_expression_args(operator, spec, 0, None)
+        raw_values = []
+        for item in args:
+            value = evaluate_expression(document, item, variables)
+            if value is None:
+                return None
+            if not (operator == "$add" and isinstance(value, datetime.datetime)):
+                _require_numeric(operator, value)
+            raw_values.append(value)
         if operator == "$add":
             date_values = [
                 value for value in raw_values if isinstance(value, datetime.datetime)
@@ -127,7 +140,7 @@ def evaluate_numeric_expression(
                     )
                 return result
         values = [_require_numeric(operator, value) for value in raw_values]
-        result = values[0]
+        result = values[0] if values else (0 if operator == "$add" else 1)
         for value in values[1:]:
             result = (
                 bson_add(result, value, promote_overflow=True)
@@ -336,7 +349,7 @@ def evaluate_numeric_expression(
         )
         if place_raw is None:
             return None
-        place = _normalize_numeric_place(operator, place_raw)
+        place = _normalize_numeric_place(operator, place_raw, dialect=dialect)
         if isinstance(value, decimal.Decimal):
             with decimal.localcontext(_DECIMAL128_ARITHMETIC_CONTEXT) as context:
                 if not value.is_finite():
@@ -389,17 +402,32 @@ def evaluate_numeric_expression(
             evaluate_expression(document, step_expression[0], variables)
             if step_expression else 1
         )
-        start, end, step = map(unwrap_bson_numeric, (start, end, step))
+        normalized = []
         for position, value in enumerate((start, end, step)):
-            if not isinstance(value, int) or isinstance(value, bool):
-                message = "$range requires integer arguments"
-                raise server_error(
-                    message,
-                    code=(34443, 34445, 34447)[position],
+            integer = exact_bson_int64(value)
+            if integer is None or not INT32_MIN <= integer <= INT32_MAX:
+                code = (
+                    (34444, 34446, 34448)[position]
+                    if is_bson_numeric(value)
+                    else (34443, 34445, 34447)[position]
                 )
+                message = (
+                    "$range requires numeric arguments representable as 32-bit integers"
+                )
+                raise server_error(message, code=code)
+            normalized.append(integer)
+        start, end, step = normalized
         if step == 0:
             message = "$range step cannot be zero"
             raise server_error(message, code=34449)
+        span = end - start
+        cardinality = (
+            0 if span * step <= 0 else (abs(span) + abs(step) - 1) // abs(step)
+        )
+        estimated_bytes = cardinality * _RANGE_VALUE_BYTES + _RANGE_ARRAY_OVERHEAD_BYTES
+        if estimated_bytes > _RANGE_MEMORY_LIMIT_BYTES:
+            message = "$range would use too much memory and cannot spill to disk"
+            raise server_error(message, code=146)
         return list(range(start, end, step))
 
     raise OperationFailure(f"Unsupported numeric expression operator: {operator}")
@@ -654,15 +682,32 @@ def _mongo_mod(left: float, right: float) -> int | float:
     return left - right * quotient
 
 
-def _normalize_numeric_place(operator: str, place: Any) -> int:
-    place = unwrap_bson_numeric(place)
-    if not isinstance(place, int) or isinstance(place, bool):
-        message = f"{operator} place must be an integer"
+def _normalize_numeric_place(
+    operator: str, place: Any, *, dialect: MongoDialect
+) -> int:
+    numeric = wrap_bson_numeric(place)
+    if numeric is None:
+        message = f"{operator} place must be numeric"
         raise server_error(message, code=16004)
-    if place < -20 or place > 100:
-        message = f"{operator} place must be between -20 and 100"
+    if _is_nan_numeric_value(numeric.value) or _is_infinite_numeric_value(
+        numeric.value
+    ):
+        message = f"{operator} cannot convert a non-finite value to an integer"
+        raise server_error(
+            message,
+            code=51082
+            if bson_numeric_alias(place) == "decimal"
+            and dialect.server_version != "9.0"
+            else 31109,
+        )
+    integer = exact_bson_int64(place)
+    if integer is None or not INT32_MIN <= integer <= INT32_MAX:
+        message = f"{operator} place must be a 32-bit integer"
+        raise server_error(message, code=51082)
+    if not -20 <= integer < 100:
+        message = f"{operator} place must be in [-20, 100)"
         raise server_error(message, code=51083)
-    return place
+    return integer
 
 
 def _quantize_numeric(value, place, rounding):
@@ -689,14 +734,10 @@ def _trunc_numeric(value: float, place: int) -> int | float:
 
 
 def _require_integral_numeric(operator: str, value: Any) -> int:
-    if isinstance(value, bool):
+    integer = exact_bson_int64(value)
+    if integer is None:
         raise OperationFailure(f"{operator} requires integral numeric arguments")
-    unwrapped = unwrap_bson_numeric(value)
-    if isinstance(unwrapped, int):
-        return unwrapped
-    if isinstance(unwrapped, float) and unwrapped.is_integer():
-        return int(unwrapped)
-    raise OperationFailure(f"{operator} requires integral numeric arguments")
+    return integer
 
 
 def _add_milliseconds(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import datetime
 import decimal
 import json
@@ -35,7 +36,12 @@ from mongoeco.core.bson_scalars import (
     validate_bson_value,
     wrap_bson_numeric,
 )
-from mongoeco.core.bson_values import code_parts, document_mapping, is_bson_string
+from mongoeco.core.bson_values import (
+    binary_parts,
+    code_parts,
+    document_mapping,
+    is_bson_string,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.server_errors import server_error
@@ -216,6 +222,9 @@ def evaluate_scalar_expression(
         value = evaluate_expression(document, args[0], variables)
         if value is None:
             return None
+        if dialect.key == "7.0" and binary_parts(value) is not None:
+            message = "Unsupported conversion from binData to string"
+            raise server_error(message, code=241)
         if dialect.behavior_flag("uses_extended_conversions", default=False):
             return _extended_string(value, stringify_value=stringify_value)
         return stringify_value(unwrap_bson_numeric(value))
@@ -435,6 +444,41 @@ def _conversion_base(value: object) -> int | None:
         code=3501301,
         details={"codeName": "Location3501301"},
     )
+
+
+def stringify_bson_value(value: Any) -> str:  # noqa: PLR0911 - distinct BSON formatting domains
+    numeric = wrap_bson_numeric(value)
+    if numeric is not None:
+        value = numeric.value
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, Decimal128):
+        return str(value)
+    if isinstance(value, decimal.Decimal):
+        return "NaN" if value.is_nan() else str(value)
+    if isinstance(value, float):
+        if math.isnan(value):
+            return "NaN"
+        if math.isinf(value):
+            return "Infinity" if value > 0 else "-Infinity"
+        text = repr(value)
+        return text.removesuffix(".0")
+    if isinstance(value, datetime.datetime):
+        normalized = (
+            value.astimezone(datetime.UTC) if value.tzinfo is not None else value
+        )
+        return normalized.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    binary = binary_parts(value)
+    if binary is not None:
+        subtype, payload = binary
+        if subtype == 4:  # noqa: PLR2004 - BSON standard UUID subtype
+            return str(uuid.UUID(bytes=payload))
+        return base64.b64encode(payload).decode("ascii")
+    if isinstance(value, Regex):
+        return f"/{value.pattern}/{value.flags}"
+    if isinstance(value, Timestamp):
+        return f"Timestamp({value.time}, {value.inc})"
+    return str(value)
 
 
 def _extended_string(value: Any, *, stringify_value: Stringifier) -> str:

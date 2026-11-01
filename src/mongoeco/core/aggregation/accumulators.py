@@ -15,10 +15,13 @@ from mongoeco.core.aggregation.numeric_accumulation import NumericSum
 from mongoeco.core.aggregation.numeric_expressions import (
     _compute_percentiles,
     _parse_percentile_spec,
-    _require_integral_numeric,
 )
 from mongoeco.core.bson_ordering import Code
 from mongoeco.core.bson_scalars import (
+    _is_infinite_numeric_value,
+    _is_nan_numeric_value,
+    bson_numeric_alias,
+    exact_bson_int64,
     is_bson_numeric,
     truncate_bson_int64,
     wrap_bson_numeric,
@@ -200,10 +203,30 @@ def _stddev_accumulator_operand(value: Any) -> float | None:
     return numeric_value
 
 
-def _normalize_pick_n_size(operator: str, value: Any) -> int:
-    size = _require_integral_numeric(operator, value)
+def _normalize_pick_n_size(
+    operator: str, value: Any, *, dialect=MONGODB_DIALECT_70
+) -> int:
+    numeric = wrap_bson_numeric(value)
+    if numeric is None:
+        message = f"{operator} n must be numeric"
+        raise server_error(message, code=5787902)
+    if _is_nan_numeric_value(numeric.value) or _is_infinite_numeric_value(
+        numeric.value
+    ):
+        message = f"{operator} n must be a finite integer"
+        code = (
+            5787903
+            if bson_numeric_alias(value) == "decimal" and dialect.key != "9.0"
+            else 31109
+        )
+        raise server_error(message, code=code)
+    size = exact_bson_int64(value)
+    if size is None:
+        message = f"{operator} n must be an integer"
+        raise server_error(message, code=5787903)
     if size < 1:
-        raise OperationFailure(f"{operator} n must be a positive integer")
+        message = f"{operator} n must be a positive integer"
+        raise server_error(message, code=5787908)
     return size
 
 
@@ -227,6 +250,7 @@ def _evaluate_pick_n_input(
     size = _normalize_pick_n_size(
         operator,
         evaluate_expression(document, expression["n"], variables),
+        dialect=dialect,
     )
     return value, size
 
@@ -255,22 +279,11 @@ def _ordered_accumulator_size(operator, value, *, dialect):
         message = f"{operator} n must be a positive numeric value"
         raise server_error(message, code=7548607)
     try:
-        return _normalize_pick_n_size(operator, value)
+        return _normalize_pick_n_size(operator, value, dialect=dialect)
     except OperationFailure as error:
         if dialect.key != "7.0":
             raise server_error(str(error), code=7548607) from error
-        numeric = wrap_bson_numeric(value)
-        code = (
-            5787902
-            if numeric is None
-            else (
-                5787908
-                if truncate_bson_int64(value) is not None
-                and truncate_bson_int64(value) <= 0
-                else 5787903
-            )
-        )
-        raise server_error(str(error), code=code) from error
+        raise
 
 
 def _evaluate_ordered_accumulator_input(

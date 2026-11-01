@@ -10,6 +10,29 @@ from typing import Any
 
 from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.server_errors import server_error
+
+
+def validate_user_variable_names(names):
+    """Expression bindings allow CURRENT; command constants have separate policy."""
+    for name in names:
+        valid = (
+            isinstance(name, str)
+            and bool(name)
+            and (
+                name == "CURRENT"
+                or (
+                    ("a" <= name[0] <= "z" or not name[0].isascii())
+                    and all(
+                        not char.isascii() or char.isalnum() or char == "_"
+                        for char in name[1:]
+                    )
+                )
+            )
+        )
+        if not valid:
+            message = f"Invalid user variable name: {name}"
+            raise server_error(message, code=9)
 
 
 _CURRENT_EXECUTION_NOW: ContextVar[datetime | None] = ContextVar(

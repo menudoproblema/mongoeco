@@ -13,6 +13,7 @@ from mongoeco.core.aggregation.evaluation_environment import (
 from mongoeco.core.aggregation.expression_values import expression_values_equal
 from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
 from mongoeco.core.bson_values import is_bson_string
+from mongoeco.core.expression_context import validate_user_variable_names
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
@@ -292,6 +293,7 @@ def evaluate_control_object_expression(
             or not isinstance(spec["vars"], dict)
         ):
             raise OperationFailure("$let requires vars and in")
+        validate_user_variable_names(spec["vars"])
         scoped = scoped_environment(variables)
         for name, value_expression in spec["vars"].items():
             scoped[name] = evaluate_expression(document, value_expression, variables)

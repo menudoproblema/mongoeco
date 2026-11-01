@@ -112,7 +112,14 @@ def _stage_documents(
 ) -> list[Document]:
     if context.stage_index != 0:
         raise OperationFailure("$documents is only valid as the first pipeline stage")
-    return _require_documents_stage(spec)
+    return _require_documents_stage(
+        evaluate_expression(
+            {},
+            _require_documents_stage(spec),
+            context.variables,
+            dialect=context.dialect,
+        )
+    )
 
 
 def _stage_match(
@@ -153,7 +160,7 @@ def _stage_unset(
 def _stage_sample(
     documents: list[Document], spec: object, _context: AggregationStageContext
 ) -> list[Document]:
-    return _apply_sample(documents, spec)
+    return _apply_sample(documents, spec, dialect=_context.dialect)
 
 
 def _stage_sort(

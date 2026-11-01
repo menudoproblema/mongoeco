@@ -19,6 +19,7 @@ from mongoeco.api.argument_validation import (
     validate_sort_spec as _validate_sort_spec,
 )
 from mongoeco.core.bson_raw import decode_bson_document
+from mongoeco.core.bson_scalars import compare_bson_numeric
 from mongoeco.core.bson_values import matches_bson_type
 from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.validation import is_filter, is_projection
@@ -127,6 +128,19 @@ def require_collection_name(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not value:
         raise TypeError(f"{field_name} must be a non-empty string")
     return value
+
+
+def normalize_aggregate_namespace(value, *, dialect="7.0"):
+    if matches_bson_type(value, "number"):
+        if compare_bson_numeric(value, 1) != 0:
+            message = "Database-level aggregate must specify 1"
+            raise server_error(message, code=9 if dialect == "7.0" else 2)
+        return None
+    if isinstance(value, bool) and dialect == "9.0":
+        message = "Invalid aggregate namespace"
+        raise server_error(message, code=73)
+    require_command_type(value, "aggregate", "string")
+    return require_collection_name(value, "aggregate")
 
 
 def resolve_collection_reference(value: object, field_name: str) -> str:

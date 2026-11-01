@@ -663,17 +663,37 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateFromParts": {"month": 3}})
         with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "timezone": 1}})
+            evaluate_expression(
+                document, {"$dateFromParts": {"year": 2026, "timezone": 1}}
+            )
         with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "hour": "x"}})
-        with self.assertRaisesRegex(OperationFailure, "hour must be in range \\[0, 23\\]"):
-            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "hour": 24}})
-        with self.assertRaisesRegex(OperationFailure, "minute must be in range \\[0, 59\\]"):
-            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "minute": -1}})
-        with self.assertRaisesRegex(OperationFailure, "second must be in range \\[0, 59\\]"):
-            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "second": 60}})
-        with self.assertRaisesRegex(OperationFailure, "millisecond must be in range \\[0, 999\\]"):
-            evaluate_expression(document, {"$dateFromParts": {"year": 2026, "millisecond": 1000}})
+            evaluate_expression(
+                document, {"$dateFromParts": {"year": 2026, "hour": "x"}}
+            )
+        self.assertEqual(
+            evaluate_expression(
+                document, {"$dateFromParts": {"year": 2026, "hour": 24}}
+            ),
+            datetime.datetime(2026, 1, 2, tzinfo=None),  # noqa: DTZ001 - default BSON decode uses naive UTC
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document, {"$dateFromParts": {"year": 2026, "minute": -1}}
+            ),
+            datetime.datetime(2025, 12, 31, 23, 59, tzinfo=None),  # noqa: DTZ001 - default BSON decode uses naive UTC
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document, {"$dateFromParts": {"year": 2026, "second": 60}}
+            ),
+            datetime.datetime(2026, 1, 1, 0, 1, tzinfo=None),  # noqa: DTZ001 - default BSON decode uses naive UTC
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document, {"$dateFromParts": {"year": 2026, "millisecond": 1000}}
+            ),
+            datetime.datetime(2026, 1, 1, 0, 0, 1, tzinfo=None),  # noqa: DTZ001 - default BSON decode uses naive UTC
+        )
 
     def test_evaluate_expression_supports_switch_and_bitwise_variants(self):
         document = {"value": 5}
@@ -681,7 +701,12 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertEqual(
             evaluate_expression(
                 document,
-                {"$switch": {"branches": [{"case": {"$gt": ["$value", 10]}, "then": "big"}], "default": "small"}},
+                {
+                    "$switch": {
+                        "branches": [{"case": {"$gt": ["$value", 10]}, "then": "big"}],
+                        "default": "small",
+                    }
+                },
             ),
             "small",
         )
@@ -1504,10 +1529,8 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$concat": ["$text", "$number"]})
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$toLower": "$number"})
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$toUpper": "$number"})
+        self.assertEqual(evaluate_expression(document, {"$toLower": "$number"}), "7")
+        self.assertEqual(evaluate_expression(document, {"$toUpper": "$number"}), "7")
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$split": ["$text", "$number"]})
         with self.assertRaises(OperationFailure):

@@ -1,5 +1,3 @@
-import base64
-import datetime
 import decimal
 import math
 import re
@@ -49,6 +47,7 @@ from mongoeco.core.aggregation.planning import Pipeline
 from mongoeco.core.aggregation.scalar_expressions import (
     SCALAR_EXPRESSION_OPERATORS,
     evaluate_scalar_expression,
+    stringify_bson_value,
 )
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.bson_ordering import Code, bson_equality_key
@@ -91,12 +90,8 @@ from mongoeco.core.server_errors import server_error
 from mongoeco.core.work_control import DeadlineCheckpoint
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
-    Binary,
     DBRef,
-    Decimal128,
     Document,
-    Regex,
-    Timestamp,
 )
 
 
@@ -427,7 +422,9 @@ def _require_expression_args(
         )
         raise server_error(
             message,
-            code=28667 if operator == "$slice" else 16020,
+            code=28667
+            if operator in {"$slice", "$range", "$round", "$trunc"}
+            else 16020,
             reason="expression_arity",
         )
     return args
@@ -633,30 +630,7 @@ def _mongo_mod(left: float, right: float) -> int | float:
     return left - right * quotient
 
 
-def _stringify_aggregation_value(value: Any) -> str:
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, Decimal128):
-        return str(value)
-    if isinstance(value, decimal.Decimal):
-        return format(value, "f")
-    if isinstance(value, float):
-        if math.isnan(value):
-            return "NaN"
-        if math.isinf(value):
-            return "Infinity" if value > 0 else "-Infinity"
-    if isinstance(value, datetime.datetime):
-        normalized = (
-            value.astimezone(datetime.UTC) if value.tzinfo is not None else value
-        )
-        return normalized.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-    if isinstance(value, (bytes, bytearray, Binary)):
-        return base64.b64encode(bytes(value)).decode("ascii")
-    if isinstance(value, Regex):
-        return f"/{value.pattern}/{value.flags}"
-    if isinstance(value, Timestamp):
-        return f"Timestamp({value.time}, {value.inc})"
-    return str(value)
+_stringify_aggregation_value = stringify_bson_value
 
 
 def _normalize_numeric_place(operator: str, place: Any) -> int:

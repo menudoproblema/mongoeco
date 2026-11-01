@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import decimal
 import math
 import re
@@ -15,17 +16,22 @@ from mongoeco.compat._catalog_operators import ARRAY_ACCESS_EXPRESSION_ARGUMENTS
 from mongoeco.core.aggregation.evaluation_environment import (
     scoped_environment,
 )
-from mongoeco.core.aggregation.scalar_expressions import _aggregation_type_name
+from mongoeco.core.aggregation.scalar_expressions import (
+    _aggregation_type_name,
+    stringify_bson_value,
+)
 from mongoeco.core.bson_ordering import bson_equality_key
 from mongoeco.core.bson_scalars import (
     INT32_MAX,
     INT32_MIN,
+    exact_bson_int64,
     unwrap_bson_numeric,
     wrap_bson_numeric,
 )
 from mongoeco.core.bson_values import is_bson_string
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
+from mongoeco.core.expression_context import validate_user_variable_names
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.server_errors import server_error
 from mongoeco.core.sorting import sort_array_items
@@ -94,9 +100,8 @@ def array_variable_names(
 ) -> dict[str, str]:
     """Validate the array frame once, including expressions over no rows."""
     if not dialect.behavior_flag("supports_array_index_variables", default=False):
-        if isinstance(spec, dict) and "as" in spec and not isinstance(spec["as"], str):
-            message = f"{operator} as must name a user variable"
-            raise server_error(message, code=9)
+        if isinstance(spec, dict) and "as" in spec:
+            validate_user_variable_names((spec["as"],))
         return {}
     required = {
         "$map": {"input", "in"},
@@ -127,17 +132,7 @@ def array_variable_names(
     for parameter, name in names.items():
         if parameter not in spec:
             continue
-        if (
-            not isinstance(name, str)
-            or re.fullmatch(
-                r"(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*", name
-            )
-            is None
-        ):
-            message = f"{operator} {parameter} must name a valid user variable"
-            raise OperationFailure(
-                message, code=9, details={"codeName": "FailedToParse"}
-            )
+        validate_user_variable_names((name,))
     if len(set(names.values())) != len(names):
         code = {"$map": 9375801, "$filter": 9375802, "$reduce": 9298401}[operator]
         message = f"{operator} cannot define variables with the same name"
@@ -308,7 +303,7 @@ def evaluate_array_string_expression(
         return values[index] if 0 <= index < len(values) else missing_sentinel
 
     if operator == "$concat":
-        args = require_expression_args(operator, spec, 1, None)
+        args = require_expression_args(operator, spec, 0, None)
         parts: list[str] = []
         for item in args:
             value = evaluate_expression(document, item, variables)
@@ -363,12 +358,8 @@ def evaluate_array_string_expression(
         args = require_expression_args(operator, spec, 2, 2)
         left = evaluate_expression(document, args[0], variables)
         right = evaluate_expression(document, args[1], variables)
-        if left is None:
-            left = ""
-        if right is None:
-            right = ""
-        if not isinstance(left, str) or not isinstance(right, str):
-            raise OperationFailure("$strcasecmp requires string arguments")
+        left = _case_string_operand(operator, left)
+        right = _case_string_operand(operator, right)
         return _compare_strings_case_insensitive(left, right)
 
     if operator in {"$substr", "$substrBytes", "$substrCP"}:
@@ -410,10 +401,7 @@ def evaluate_array_string_expression(
             operator, [spec] if not isinstance(spec, list) else spec, 1, 1
         )
         value = evaluate_expression(document, args[0], variables)
-        if value is None:
-            return ""
-        if not isinstance(value, str):
-            raise OperationFailure(f"{operator} requires a string argument")
+        value = _case_string_operand(operator, value)
         return value.lower() if operator == "$toLower" else value.upper()
 
     if operator == "$split":
@@ -894,37 +882,33 @@ def _append_unique_values(
         target.append(deepcopy(value))
 
 
-def _slice_array(
-    value: list[Any],
-    spec: list[object],
-    document: Document,
-    variables: dict[str, Any] | None,
-    *,
-    evaluate_expression: ExpressionEvaluator,
-) -> list[Any]:
-    if len(spec) == 2:
-        count = evaluate_expression(document, spec[1], variables)
-        count = unwrap_bson_numeric(count)
-        if not isinstance(count, int) or isinstance(count, bool):
-            raise OperationFailure("$slice count must be an integer")
-        if count == 0:
-            return []
-        if count > 0:
-            return deepcopy(value[:count])
-        return deepcopy(value[count:])
-
-    position = evaluate_expression(document, spec[1], variables)
-    count = evaluate_expression(document, spec[2], variables)
-    position = unwrap_bson_numeric(position)
-    if not isinstance(position, int) or isinstance(position, bool):
-        raise OperationFailure("$slice position must be an integer")
-    count = unwrap_bson_numeric(count)
-    if not isinstance(count, int) or isinstance(count, bool):
-        raise OperationFailure("$slice count must be an integer")
-    if count < 0:
-        raise OperationFailure("$slice count must be a non-negative integer")
-    start = position if position >= 0 else len(value) + position
-    start = min(max(start, 0), len(value))
+def _slice_array(value, spec, document, variables, *, evaluate_expression):
+    arguments = [evaluate_expression(document, item, variables) for item in spec[1:]]
+    if any(item is None for item in arguments):
+        return None
+    integers = []
+    for position, item in enumerate(arguments):
+        number = wrap_bson_numeric(item)
+        integer = exact_bson_int64(item)
+        if number is None or integer is None or not INT32_MIN <= integer <= INT32_MAX:
+            code = (
+                (28725 if number is None else 28726)
+                if position == 0
+                else (28727 if number is None else 28728)
+            )
+            message = "$slice arguments must be numeric 32-bit integers"
+            raise server_error(message, code=code)
+        integers.append(integer)
+    if len(integers) == 1:
+        count = integers[0]
+        return deepcopy(value[:count] if count >= 0 else value[count:])
+    position, count = integers
+    if count <= 0:
+        message = "$slice third argument must be positive"
+        raise server_error(message, code=28729)
+    start = min(
+        max(position if position >= 0 else len(value) + position, 0), len(value)
+    )
     return deepcopy(value[start : start + count])
 
 
@@ -991,19 +975,25 @@ def _normalize_index_bounds(
     return start_index, min(end_index, upper_bound)
 
 
+def _case_string_operand(operator, value):
+    if value is None:
+        return ""
+    if is_bson_string(value):
+        return value
+    numeric = wrap_bson_numeric(value)
+    if numeric is not None and isinstance(numeric.value, float):
+        return format(numeric.value, ".6g")
+    if numeric is not None or isinstance(value, datetime.datetime):
+        return stringify_bson_value(value)
+    message = f"Cannot coerce value to string for {operator}"
+    raise server_error(message, code=16007)
+
+
 def _trim_string(value: str, chars: str | None, *, mode: str) -> str:
     if chars is None:
-        start = 0
-        end = len(value)
-        if mode in {"left", "both"}:
-            while start < end and (value[start].isspace() or value[start] == "\x00"):
-                start += 1
-        if mode in {"right", "both"}:
-            while end > start and (
-                value[end - 1].isspace() or value[end - 1] == "\x00"
-            ):
-                end -= 1
-        return value[start:end]
+        chars = "\x00\x09\x0a\x0b\x0c\x0d\x20\u00a0\u1680" + "".join(
+            chr(code) for code in range(0x2000, 0x200B)
+        )
     if mode == "left":
         return value.lstrip(chars)
     if mode == "right":

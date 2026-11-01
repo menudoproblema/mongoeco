@@ -9161,6 +9161,1438 @@
         ]
       }
     },
+    "semantic_followup_f09_arity_contexts": {
+      "$add/0": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "0"
+              }
+            }
+          ]
+        }
+      },
+      "$add/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$add/2": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        }
+      },
+      "$add/3": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "6"
+              }
+            }
+          ]
+        }
+      },
+      "$add/4": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "10"
+              }
+            }
+          ]
+        }
+      },
+      "$multiply/0": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$multiply/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$multiply/2": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "2"
+              }
+            }
+          ]
+        }
+      },
+      "$multiply/3": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "6"
+              }
+            }
+          ]
+        }
+      },
+      "$multiply/4": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "24"
+              }
+            }
+          ]
+        }
+      },
+      "$concat/0": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": ""
+            }
+          ]
+        }
+      },
+      "$concat/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "a"
+            }
+          ]
+        }
+      },
+      "$concat/2": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "ab"
+            }
+          ]
+        }
+      },
+      "$concat/3": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "abc"
+            }
+          ]
+        }
+      },
+      "$concat/4": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "abcd"
+            }
+          ]
+        }
+      },
+      "$range/0": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$range/1": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$range/2": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$range/3": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$range/4": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$slice/0": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$slice/1": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$slice/2": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$slice/3": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$slice/4": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$round/0": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$round/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.0"
+              }
+            }
+          ]
+        }
+      },
+      "$round/2": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.3"
+              }
+            }
+          ]
+        }
+      },
+      "$round/3": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      },
+      "$round/4": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28667"
+          },
+          "codeName": "Location28667",
+          "phase": "open"
+        }
+      }
+    },
+    "semantic_followup_f09_calendar_boundaries": {
+      "add/spring/day/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616929200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "add/spring/day/-1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616760000000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "add/spring/hour/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616932800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "add/spring/hour/-1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616760000000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "diff/spring/day": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberLong": "2"
+              }
+            }
+          ]
+        }
+      },
+      "diff/spring/hour": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberLong": "48"
+              }
+            }
+          ]
+        }
+      },
+      "add/fall/day/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635685200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "add/fall/day/-1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635508800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "add/fall/hour/1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635681600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "add/fall/hour/-1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635508800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "diff/fall/day": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberLong": "2"
+              }
+            }
+          ]
+        }
+      },
+      "diff/fall/hour": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberLong": "48"
+              }
+            }
+          ]
+        }
+      },
+      "trunc/year/1999": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "788918400000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/year/2021": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1577836800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/month/1999": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "933465600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/month/2021": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1604188800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/quarter/1999": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "922924800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/quarter/2021": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609459200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/week/1999": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "944956800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/week/2021": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609027200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/day/1999": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "946080000000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/day/2021": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/hour/1999": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "946666800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc/hour/2021": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609642800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "format/%%Y/False": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "%Y"
+            }
+          ]
+        }
+      },
+      "format/%%Y/True": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "%Y"
+            }
+          ]
+        }
+      },
+      "format/%Y%%m/False": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "2021%m"
+            }
+          ]
+        }
+      },
+      "format/%Y%%m/True": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "2021%m"
+            }
+          ]
+        }
+      },
+      "format/%q/False": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18536"
+          },
+          "codeName": "Location18536",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18536"
+          },
+          "codeName": "Location18536",
+          "phase": "open"
+        }
+      },
+      "format/%q/True": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18536"
+          },
+          "codeName": "Location18536",
+          "phase": "open"
+        }
+      },
+      "format/%/False": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18535"
+          },
+          "codeName": "Location18535",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18535"
+          },
+          "codeName": "Location18535",
+          "phase": "open"
+        }
+      },
+      "format/%/True": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18535"
+          },
+          "codeName": "Location18535",
+          "phase": "open"
+        }
+      },
+      "format/%j/%U/%w/%Z/%%/False": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "003/01/1/330/%"
+            }
+          ]
+        }
+      },
+      "format/%j/%U/%w/%Z/%%/True": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "003/01/1/330/%"
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/day/1969-12-31T23:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "-90000000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/day/2021-03-28T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616799600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/day/2021-10-31T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635631200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/hour/1969-12-31T23:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "-3600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/hour/2021-03-28T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616893200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/hour/2021-10-31T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635642000000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/week/1969-12-31T23:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "-349200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/week/2021-03-28T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616886000000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/Europe/Madrid/week/2021-10-31T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635026400000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/day/1969-12-31T23:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "-106200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/day/2021-03-28T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616783400000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/day/2021-10-31T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635618600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/hour/1969-12-31T23:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "-5400000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/hour/2021-03-28T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616891400000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/hour/2021-10-31T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635640200000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/week/1969-12-31T23:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "-365400000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/week/2021-03-28T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1616869800000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trunc-zone/+05:30/week/2021-10-31T01:30:00": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1635013800000"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
     "semantic_followup_f09_concat_empty": {
       "empty": {
         "ok": true,
@@ -9457,6 +10889,74 @@
         "phase": "open"
       }
     },
+    "semantic_followup_f09_documents_namespace": {
+      "int": {
+        "ok": true,
+        "value": [
+          {
+            "v": {
+              "$numberInt": "5"
+            },
+            "isDate": true
+          }
+        ]
+      },
+      "long": {
+        "ok": true,
+        "value": [
+          {
+            "v": {
+              "$numberInt": "5"
+            },
+            "isDate": true
+          }
+        ]
+      },
+      "double": {
+        "ok": true,
+        "value": [
+          {
+            "v": {
+              "$numberInt": "5"
+            },
+            "isDate": true
+          }
+        ]
+      },
+      "decimal": {
+        "ok": true,
+        "value": [
+          {
+            "v": {
+              "$numberInt": "5"
+            },
+            "isDate": true
+          }
+        ]
+      },
+      "bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "other": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "collection": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "73"
+        }
+      },
+      "only_original_namespace": true
+    },
     "semantic_followup_f09_facet_name": {
       "empty": {
         "ok": false,
@@ -9735,6 +11235,1396 @@
         ]
       }
     },
+    "semantic_followup_f09_nullable_contexts": {
+      "$add/null_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$add/null_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$add/missing_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$add/missing_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$add/bad_null": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$add/null_bad": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$add/nulls": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$add/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$add/unreached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$add/reached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$multiply/null_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$multiply/null_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$multiply/missing_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$multiply/missing_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$multiply/bad_null": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$multiply/null_bad": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$multiply/nulls": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$multiply/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$multiply/unreached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$multiply/reached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$subtract/null_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/null_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/missing_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/missing_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/bad_null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/null_bad": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/nulls": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$subtract/unreached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$subtract/reached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$divide/null_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/null_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/missing_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/missing_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/bad_null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/null_bad": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/nulls": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$divide/unreached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$divide/reached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "14"
+          },
+          "codeName": "TypeMismatch",
+          "phase": "open"
+        }
+      },
+      "$mod/null_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/null_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/missing_left": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/missing_right": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/bad_null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/null_bad": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/nulls": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$mod/unreached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16611"
+          },
+          "codeName": "Location16611",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16611"
+          },
+          "codeName": "Location16611",
+          "phase": "open"
+        }
+      },
+      "$mod/reached": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16611"
+          },
+          "codeName": "Location16611",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16611"
+          },
+          "codeName": "Location16611",
+          "phase": "open"
+        }
+      },
+      "$dateAdd/startDate": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateAdd/unit": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateAdd/amount": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateAdd/timezone": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/date": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/unit": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/binSize": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/timezone": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/startDate": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/endDate": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/unit": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/timezone": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/week-null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/week-null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/week-ignored": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609632000000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "$dateToString/format-null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateToString/format-invalid-null-date": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18536"
+          },
+          "codeName": "Location18536",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "18536"
+          },
+          "codeName": "Location18536",
+          "phase": "open"
+        }
+      },
+      "$dateToString/timezone-null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateFromParts/month-null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateFromParts/year-null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateFromParts/hour-before-null": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40515"
+          },
+          "codeName": "Location40515",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40515"
+          },
+          "codeName": "Location40515",
+          "phase": "open"
+        }
+      },
+      "$dateAdd/options/None/unit/'bad'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateAdd/options/None/timezone/'bad'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateAdd/options/None/timezone/False": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateAdd/options/'$absent'/unit/'bad'": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "$dateAdd/options/'$absent'/timezone/'bad'": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40485"
+          },
+          "codeName": "Location40485",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40485"
+          },
+          "codeName": "Location40485",
+          "phase": "open"
+        }
+      },
+      "$dateAdd/options/'$absent'/timezone/False": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40517"
+          },
+          "codeName": "Location40517",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40517"
+          },
+          "codeName": "Location40517",
+          "phase": "open"
+        }
+      },
+      "$dateTrunc/options/None/unit/'bad'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/options/None/timezone/'bad'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/options/None/timezone/False": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateTrunc/options/'$absent'/unit/'bad'": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "$dateTrunc/options/'$absent'/timezone/'bad'": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40485"
+          },
+          "codeName": "Location40485",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40485"
+          },
+          "codeName": "Location40485",
+          "phase": "open"
+        }
+      },
+      "$dateTrunc/options/'$absent'/timezone/False": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40517"
+          },
+          "codeName": "Location40517",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40517"
+          },
+          "codeName": "Location40517",
+          "phase": "open"
+        }
+      },
+      "$dateDiff/options/None/unit/'bad'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/options/None/timezone/'bad'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/options/None/timezone/False": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "$dateDiff/options/'$absent'/unit/'bad'": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "$dateDiff/options/'$absent'/timezone/'bad'": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40485"
+          },
+          "codeName": "Location40485",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40485"
+          },
+          "codeName": "Location40485",
+          "phase": "open"
+        }
+      },
+      "$dateDiff/options/'$absent'/timezone/False": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40517"
+          },
+          "codeName": "Location40517",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "40517"
+          },
+          "codeName": "Location40517",
+          "phase": "open"
+        }
+      }
+    },
     "semantic_followup_f09_numeric_$limit": {
       "empty": {
         "ok": true,
@@ -9765,6 +12655,4299 @@
             }
           }
         ]
+      }
+    },
+    "semantic_followup_f09_numeric_argument_contexts": {
+      "range/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "range/int/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/int/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "round/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "round/int/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/int/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/int/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "maxN/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "maxN/int/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$limit/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$sample/int": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "range/long/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/long/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "round/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "round/long/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/long/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/long/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "maxN/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "maxN/long/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$limit/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$sample/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "range/double/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/double/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "round/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "round/double/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/double/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/double/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "maxN/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "maxN/double/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$limit/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$sample/double": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "round/fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "dateAdd/fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/fraction": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "maxN/fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "$limit/fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/fraction": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "range/decimal/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "0"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/decimal/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "round/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "round/decimal/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.35"
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/decimal/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609819506000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/decimal/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609545600000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "maxN/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "maxN/decimal/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$limit/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$sample/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/decimal_fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/decimal_fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/decimal_fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/decimal_fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/decimal_fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "round/decimal_fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "dateAdd/decimal_fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/decimal_fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/decimal_fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/decimal_fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/decimal_fraction": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "maxN/decimal_fraction/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "$limit/decimal_fraction": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/decimal_fraction": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/bool": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34445"
+          },
+          "codeName": "Location34445",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34445"
+          },
+          "codeName": "Location34445",
+          "phase": "open"
+        }
+      },
+      "range/bool/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34445"
+          },
+          "codeName": "Location34445",
+          "phase": "open"
+        }
+      },
+      "slice/bool": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28725"
+          },
+          "codeName": "Location28725",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28725"
+          },
+          "codeName": "Location28725",
+          "phase": "open"
+        }
+      },
+      "slice/bool/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28725"
+          },
+          "codeName": "Location28725",
+          "phase": "open"
+        }
+      },
+      "round/bool": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16004"
+          },
+          "codeName": "Location16004",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16004"
+          },
+          "codeName": "Location16004",
+          "phase": "open"
+        }
+      },
+      "round/bool/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "16004"
+          },
+          "codeName": "Location16004",
+          "phase": "open"
+        }
+      },
+      "dateAdd/bool": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/bool/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/bool": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/bool/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/bool": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787902"
+          },
+          "codeName": "Location5787902",
+          "phase": "open"
+        }
+      },
+      "maxN/bool/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787902"
+          },
+          "codeName": "Location5787902",
+          "phase": "open"
+        }
+      },
+      "$limit/bool": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/bool": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28746"
+          },
+          "codeName": "Location28746",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28746"
+          },
+          "codeName": "Location28746",
+          "phase": "open"
+        }
+      },
+      "range/null": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34445"
+          },
+          "codeName": "Location34445",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34445"
+          },
+          "codeName": "Location34445",
+          "phase": "open"
+        }
+      },
+      "range/null/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34445"
+          },
+          "codeName": "Location34445",
+          "phase": "open"
+        }
+      },
+      "slice/null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "slice/null/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "round/null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "round/null/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "dateAdd/null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "dateAdd/null/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "dateTrunc/null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "dateTrunc/null/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "maxN/null": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787902"
+          },
+          "codeName": "Location5787902",
+          "phase": "open"
+        }
+      },
+      "maxN/null/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787902"
+          },
+          "codeName": "Location5787902",
+          "phase": "open"
+        }
+      },
+      "$limit/null": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/null": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28746"
+          },
+          "codeName": "Location28746",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28746"
+          },
+          "codeName": "Location28746",
+          "phase": "open"
+        }
+      },
+      "range/nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "round/nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "dateAdd/nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "maxN/nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "$limit/nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": []
+        }
+      },
+      "range/inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "round/inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "dateAdd/inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "maxN/inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "$limit/inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/long_max": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/long_max/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/long_max": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/long_max/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/long_max": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "round/long_max/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "dateAdd/long_max": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5976500"
+          },
+          "codeName": "Location5976500",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5976500"
+          },
+          "codeName": "Location5976500",
+          "phase": "open"
+        }
+      },
+      "dateAdd/long_max/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5976500"
+          },
+          "codeName": "Location5976500",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/long_max": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439006"
+          },
+          "codeName": "Location5439006",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439006"
+          },
+          "codeName": "Location5439006",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/long_max/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439006"
+          },
+          "codeName": "Location5439006",
+          "phase": "open"
+        }
+      },
+      "maxN/long_max": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "maxN/long_max/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                },
+                {
+                  "$numberInt": "2"
+                },
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "$limit/long_max": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "$sample/long_max": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34445"
+          },
+          "codeName": "Location34445",
+          "phase": "open"
+        }
+      },
+      "slice/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "round/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "dateAdd/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "dateTrunc/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": null
+            }
+          ]
+        }
+      },
+      "maxN/missing": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787902"
+          },
+          "codeName": "Location5787902",
+          "phase": "open"
+        }
+      },
+      "$limit/missing": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/missing": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28746"
+          },
+          "codeName": "Location28746",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28746"
+          },
+          "codeName": "Location28746",
+          "phase": "open"
+        }
+      },
+      "range/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": []
+            }
+          ]
+        }
+      },
+      "range/zero/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": []
+            }
+          ]
+        }
+      },
+      "slice/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": []
+            }
+          ]
+        }
+      },
+      "slice/zero/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": []
+            }
+          ]
+        }
+      },
+      "round/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.0"
+              }
+            }
+          ]
+        }
+      },
+      "round/zero/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "12.0"
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609646706000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/zero/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609646706000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/zero": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/zero/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        }
+      },
+      "maxN/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "maxN/zero/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "$limit/zero": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "15958"
+          },
+          "codeName": "Location15958",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "15958"
+          },
+          "codeName": "Location15958",
+          "phase": "open"
+        }
+      },
+      "$sample/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": []
+        }
+      },
+      "range/negative": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": []
+            }
+          ]
+        }
+      },
+      "range/negative/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": []
+            }
+          ]
+        }
+      },
+      "slice/negative": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "slice/negative/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "3"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "round/negative": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "10.0"
+              }
+            }
+          ]
+        }
+      },
+      "round/negative/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberDouble": "10.0"
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/negative": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609560306000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateAdd/negative/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$date": {
+                  "$numberLong": "1609560306000"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dateTrunc/negative": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/negative/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        }
+      },
+      "maxN/negative": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "maxN/negative/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "$limit/negative": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/negative": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28747"
+          },
+          "codeName": "Location28747",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28747"
+          },
+          "codeName": "Location28747",
+          "phase": "open"
+        }
+      },
+      "range/decimal_nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/decimal_nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/decimal_nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/decimal_nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/decimal_nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "round/decimal_nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "dateAdd/decimal_nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/decimal_nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/decimal_nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/decimal_nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/decimal_nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "maxN/decimal_nan/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "$limit/decimal_nan": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/decimal_nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": []
+        }
+      },
+      "range/decimal_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/decimal_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/decimal_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/decimal_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/decimal_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "round/decimal_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "dateAdd/decimal_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/decimal_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/decimal_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/decimal_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/decimal_inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "maxN/decimal_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787903"
+          },
+          "codeName": "Location5787903",
+          "phase": "open"
+        }
+      },
+      "$limit/decimal_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/decimal_inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            }
+          ]
+        }
+      },
+      "range/negative_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/negative_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/negative_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/negative_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/negative_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "round/negative_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "dateAdd/negative_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateAdd/negative_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5166405"
+          },
+          "codeName": "Location5166405",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/negative_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/negative_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439017"
+          },
+          "codeName": "Location5439017",
+          "phase": "open"
+        }
+      },
+      "maxN/negative_inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "maxN/negative_inf/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "31109"
+          },
+          "codeName": "Location31109",
+          "phase": "open"
+        }
+      },
+      "$limit/negative_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/negative_inf": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28747"
+          },
+          "codeName": "Location28747",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28747"
+          },
+          "codeName": "Location28747",
+          "phase": "open"
+        }
+      },
+      "range/long_min": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "range/long_min/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "34446"
+          },
+          "codeName": "Location34446",
+          "phase": "open"
+        }
+      },
+      "slice/long_min": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "slice/long_min/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28726"
+          },
+          "codeName": "Location28726",
+          "phase": "open"
+        }
+      },
+      "round/long_min": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "round/long_min/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "51082"
+          },
+          "codeName": "Location51082",
+          "phase": "open"
+        }
+      },
+      "dateAdd/long_min": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5976500"
+          },
+          "codeName": "Location5976500",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5976500"
+          },
+          "codeName": "Location5976500",
+          "phase": "open"
+        }
+      },
+      "dateAdd/long_min/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5976500"
+          },
+          "codeName": "Location5976500",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/long_min": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        }
+      },
+      "dateTrunc/long_min/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5439018"
+          },
+          "codeName": "Location5439018",
+          "phase": "open"
+        }
+      },
+      "maxN/long_min": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "maxN/long_min/field": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5787908"
+          },
+          "codeName": "Location5787908",
+          "phase": "open"
+        }
+      },
+      "$limit/long_min": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "5107201"
+          },
+          "codeName": "Location5107201",
+          "phase": "open"
+        }
+      },
+      "$sample/long_min": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28747"
+          },
+          "codeName": "Location28747",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "28747"
+          },
+          "codeName": "Location28747",
+          "phase": "open"
+        }
+      }
+    },
+    "semantic_followup_f09_range_boundary": {
+      "empty": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "146"
+        },
+        "codeName": "ExceededMemoryLimit",
+        "phase": "open"
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "146"
+        },
+        "codeName": "ExceededMemoryLimit",
+        "phase": "open"
       }
     },
     "semantic_followup_f09_range_budget": {
@@ -9809,6 +16992,21 @@
             ]
           }
         ]
+      }
+    },
+    "semantic_followup_f09_range_dynamic_budget": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": false,
+        "exception": "OperationFailure",
+        "code": {
+          "$numberInt": "146"
+        },
+        "codeName": "ExceededMemoryLimit",
+        "phase": "open"
       }
     },
     "semantic_followup_f09_range_fraction": {
@@ -10061,6 +17259,1058 @@
         ]
       }
     },
+    "semantic_followup_f09_text_contexts": {
+      "$toString/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "0"
+            }
+          ]
+        }
+      },
+      "$toUpper/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "0"
+            }
+          ]
+        }
+      },
+      "$toLower/zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "0"
+            }
+          ]
+        }
+      },
+      "$toString/negative_zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "-0"
+            }
+          ]
+        }
+      },
+      "$toUpper/negative_zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "-0"
+            }
+          ]
+        }
+      },
+      "$toLower/negative_zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "-0"
+            }
+          ]
+        }
+      },
+      "$toString/large": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e+20"
+            }
+          ]
+        }
+      },
+      "$toUpper/large": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1E+20"
+            }
+          ]
+        }
+      },
+      "$toLower/large": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e+20"
+            }
+          ]
+        }
+      },
+      "$toString/boundary": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1000000000000000"
+            }
+          ]
+        }
+      },
+      "$toUpper/boundary": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1E+15"
+            }
+          ]
+        }
+      },
+      "$toLower/boundary": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e+15"
+            }
+          ]
+        }
+      },
+      "$toString/scientific": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e+16"
+            }
+          ]
+        }
+      },
+      "$toUpper/scientific": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1E+16"
+            }
+          ]
+        }
+      },
+      "$toLower/scientific": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e+16"
+            }
+          ]
+        }
+      },
+      "$toString/small": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e-06"
+            }
+          ]
+        }
+      },
+      "$toUpper/small": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1E-06"
+            }
+          ]
+        }
+      },
+      "$toLower/small": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e-06"
+            }
+          ]
+        }
+      },
+      "$toString/precise": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1.2345678901234567"
+            }
+          ]
+        }
+      },
+      "$toUpper/precise": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1.23457"
+            }
+          ]
+        }
+      },
+      "$toLower/precise": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1.23457"
+            }
+          ]
+        }
+      },
+      "$toString/nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "NaN"
+            }
+          ]
+        }
+      },
+      "$toUpper/nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "NAN"
+            }
+          ]
+        }
+      },
+      "$toLower/nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "nan"
+            }
+          ]
+        }
+      },
+      "$toString/inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "Infinity"
+            }
+          ]
+        }
+      },
+      "$toUpper/inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "INF"
+            }
+          ]
+        }
+      },
+      "$toLower/inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "inf"
+            }
+          ]
+        }
+      },
+      "$toString/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1.50"
+            }
+          ]
+        }
+      },
+      "$toUpper/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1.50"
+            }
+          ]
+        }
+      },
+      "$toLower/decimal": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1.50"
+            }
+          ]
+        }
+      },
+      "$toString/decimal_exponent": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1E+7"
+            }
+          ]
+        }
+      },
+      "$toUpper/decimal_exponent": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1E+7"
+            }
+          ]
+        }
+      },
+      "$toLower/decimal_exponent": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "1e+7"
+            }
+          ]
+        }
+      },
+      "$toString/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "7"
+            }
+          ]
+        }
+      },
+      "$toUpper/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "7"
+            }
+          ]
+        }
+      },
+      "$toLower/long": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "7"
+            }
+          ]
+        }
+      },
+      "$toString/decimal_negative_zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "-0.00"
+            }
+          ]
+        }
+      },
+      "$toUpper/decimal_negative_zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "-0.00"
+            }
+          ]
+        }
+      },
+      "$toLower/decimal_negative_zero": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "-0.00"
+            }
+          ]
+        }
+      },
+      "$toString/decimal_zero_exponent": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "0E+5"
+            }
+          ]
+        }
+      },
+      "$toUpper/decimal_zero_exponent": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "0E+5"
+            }
+          ]
+        }
+      },
+      "$toLower/decimal_zero_exponent": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "0e+5"
+            }
+          ]
+        }
+      },
+      "$toString/decimal_nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "NaN"
+            }
+          ]
+        }
+      },
+      "$toUpper/decimal_nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "NAN"
+            }
+          ]
+        }
+      },
+      "$toLower/decimal_nan": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "nan"
+            }
+          ]
+        }
+      },
+      "$toString/decimal_inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "Infinity"
+            }
+          ]
+        }
+      },
+      "$toUpper/decimal_inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "INFINITY"
+            }
+          ]
+        }
+      },
+      "$toLower/decimal_inf": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "infinity"
+            }
+          ]
+        }
+      },
+      "trim/0": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/9": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/13": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/32": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/133": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\u0085x\u0085"
+            }
+          ]
+        }
+      },
+      "trim/160": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/5760": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8192": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8193": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8194": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8195": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8196": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8197": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8198": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8199": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8200": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8201": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8202": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "x"
+            }
+          ]
+        }
+      },
+      "trim/8232": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\u2028x\u2028"
+            }
+          ]
+        }
+      },
+      "trim/8233": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\u2029x\u2029"
+            }
+          ]
+        }
+      },
+      "trim/8239": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\u202fx\u202f"
+            }
+          ]
+        }
+      },
+      "trim/8287": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\u205fx\u205f"
+            }
+          ]
+        }
+      },
+      "trim/12288": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\u3000x\u3000"
+            }
+          ]
+        }
+      },
+      "trim/65279": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\ufeffx\ufeff"
+            }
+          ]
+        }
+      },
+      "trim/explicit/''": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "ab\u0000xab\u0000"
+            }
+          ]
+        }
+      },
+      "trim/explicit/'ab'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "\u0000xab\u0000"
+            }
+          ]
+        }
+      },
+      "trim/explicit/'\\x00'": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": "ab\u0000xab"
+            }
+          ]
+        }
+      }
+    },
     "semantic_followup_f09_tostring_decimal": {
       "empty": {
         "ok": true,
@@ -10255,6 +18505,350 @@
         "phase": "open"
       }
     },
+    "semantic_followup_f09_variable_contexts": {
+      "let/a": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        }
+      },
+      "map/a": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "let/A": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "map/A": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "let/CURRENT": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        }
+      },
+      "map/CURRENT": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "let/NOW": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "map/NOW": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "let/ROOT": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "map/ROOT": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "let/a.b": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "map/a.b": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "let/a-1": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "map/a-1": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "let/_a": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "map/_a": {
+        "empty": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        },
+        "rows": {
+          "ok": false,
+          "exception": "OperationFailure",
+          "code": {
+            "$numberInt": "9"
+          },
+          "codeName": "FailedToParse",
+          "phase": "open"
+        }
+      },
+      "let/\u00e1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": {
+                "$numberInt": "3"
+              }
+            }
+          ]
+        }
+      },
+      "map/\u00e1": {
+        "empty": {
+          "ok": true,
+          "rows": []
+        },
+        "rows": {
+          "ok": true,
+          "rows": [
+            {
+              "r": [
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
     "semantic_followup_f09_year_oid": {
       "empty": {
         "ok": true,
@@ -10400,14 +18994,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793565472051"
+          "$numberLong": "1793567143091"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "36"
+        "$numberInt": "84"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -10423,7 +19017,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "31de743bf9bb44a831b8142ae8ea799cb684d192675fa15144eb0037c694847b",
+    "sha256": "071e01f2575d3d7a4a3bd46f535c05d03244a6d5849ed76870dbe236bdacdc55",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -14948,6 +23542,177 @@
         }
       ],
       "selector": "semantic_followup_f08_materialization"
+    },
+    {
+      "name": "semantic_followup_f09_numeric_argument_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_numeric_argument_contexts"
+    },
+    {
+      "name": "semantic_followup_f09_variable_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_variable_contexts"
+    },
+    {
+      "name": "semantic_followup_f09_text_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_text_contexts"
+    },
+    {
+      "name": "semantic_followup_f09_calendar_boundaries",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_calendar_boundaries"
+    },
+    {
+      "name": "semantic_followup_f09_nullable_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_nullable_contexts"
+    },
+    {
+      "name": "semantic_followup_f09_documents_namespace",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_documents_namespace"
+    },
+    {
+      "name": "semantic_followup_f09_range_boundary",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_range_boundary"
+    },
+    {
+      "name": "semantic_followup_f09_range_dynamic_budget",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_range_dynamic_budget"
+    },
+    {
+      "name": "semantic_followup_f09_arity_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f09_arity_contexts"
     }
   ]
 }

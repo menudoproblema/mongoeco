@@ -165,6 +165,16 @@ def unwrap_bson_numeric(value: object) -> object:
     return value
 
 
+def exact_bson_int64(value: object) -> int | None:
+    """An exact signed BSON integer across numeric representations; never bool."""
+    integer = truncate_bson_int64(value)
+    return (
+        integer
+        if integer is not None and compare_bson_numeric(value, integer) == 0
+        else None
+    )
+
+
 def bson_numeric_alias(value: object) -> str | None:
     if _PublicDecimal128 is not None and isinstance(value, _PublicDecimal128):
         return "decimal"

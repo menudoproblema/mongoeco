@@ -32,6 +32,7 @@ from mongoeco.core.aggregation.stages import apply_pipeline
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
+from mongoeco.errors import OperationFailure
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
 from tests.differential._real_parity_base import _decode_capture, _normalize
@@ -976,3 +977,45 @@ def test_followup_f08_groups_survive_actual_spill(engine_factory, dialect):
     assert _normalize(actual) == _normalize(
         _capture(dialect, "followup")["cases"][name]
     )
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    "arguments", [[0, 6553598], [0, 2147483647], [2147483647, -2147483648, -1]]
+)
+def test_followup_f09_range_rejects_before_allocating_and_client_survives(
+    engine_factory, arguments
+):
+    with MongoClient(engine_factory()) as client:
+        collection = client.followup.rows
+        collection.insert_one({"_id": 1})
+        with patch(
+            "mongoeco.core.aggregation.numeric_expressions.range",
+            create=True,
+            side_effect=AssertionError("range allocation reached"),
+        ):
+            with pytest.raises(OperationFailure) as error:
+                list(collection.aggregate([{"$project": {"r": {"$range": arguments}}}]))
+            assert error.value.code == 146  # noqa: PLR2004 - native ExceededMemoryLimit code
+            assert error.value.details["codeName"] == "ExceededMemoryLimit"
+        assert collection.find_one() == {"_id": 1}
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+def test_followup_f09_database_documents_preserve_clock_bindings_and_namespace(
+    engine_factory,
+):
+    fixed = datetime.datetime(2021, 3, 27, 12, 0, 0, 1000, tzinfo=datetime.UTC)
+    with MongoClient(engine_factory(), now_factory=lambda: fixed) as client:
+        result = client.followup.command(
+            {
+                "aggregate": 1,
+                "pipeline": [{"$documents": [{"now": "$$NOW", "value": "$$v"}]}],
+                "let": {"v": {"$add": [2, 3]}},
+                "cursor": {},
+            }
+        )
+        assert result["cursor"]["firstBatch"] == [
+            {"now": fixed.replace(tzinfo=None), "value": 5}
+        ]
+        assert client.followup.list_collection_names() == []

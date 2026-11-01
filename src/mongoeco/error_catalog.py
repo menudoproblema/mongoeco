@@ -105,6 +105,7 @@ def _merge_labels(
 
 
 SERVER_CODE_NAMES = {
+    146: "ExceededMemoryLimit",
     13: "Unauthorized",
     16: "InvalidLength",
     115: "CommandNotSupported",

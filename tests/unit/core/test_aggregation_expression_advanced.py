@@ -790,14 +790,14 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
                 {"created_at": value},
                 {"$dateTrunc": {"date": "$created_at", "unit": "day", "binSize": 2}},
             ),
-            datetime.datetime(2026, 3, 24, 0, 0, 0),
+            datetime.datetime(2026, 3, 23, 0, 0, 0),
         )
         self.assertEqual(
             evaluate_expression(
                 {"created_at": datetime.datetime(2026, 1, 15, 12, 0, 0)},
                 {"$dateTrunc": {"date": "$created_at", "unit": "day", "binSize": 30}},
             ),
-            datetime.datetime(2026, 1, 7, 0, 0, 0),
+            datetime.datetime(2026, 1, 14, 0, 0, 0),
         )
         self.assertEqual(
             evaluate_expression(
@@ -811,21 +811,21 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
                 {"created_at": datetime.datetime(2026, 3, 24, 7, 0, 0)},
                 {"$dateTrunc": {"date": "$created_at", "unit": "hour", "binSize": 5}},
             ),
-            datetime.datetime(2026, 3, 24, 6, 0, 0),
+            datetime.datetime(2026, 3, 24, 4, 0, 0),
         )
         self.assertEqual(
             evaluate_expression(
                 {"created_at": datetime.datetime(2026, 3, 24, 1, 45, 0)},
                 {"$dateTrunc": {"date": "$created_at", "unit": "minute", "binSize": 7}},
             ),
-            datetime.datetime(2026, 3, 24, 1, 41, 0),
+            datetime.datetime(2026, 3, 24, 1, 44, 0),
         )
         self.assertEqual(
             evaluate_expression(
                 {"created_at": datetime.datetime(2026, 3, 24, 1, 0, 5)},
                 {"$dateTrunc": {"date": "$created_at", "unit": "second", "binSize": 7}},
             ),
-            datetime.datetime(2026, 3, 24, 1, 0, 3),
+            datetime.datetime(2026, 3, 24, 1, 0, 1),
         )
         self.assertIsNone(
             evaluate_expression({"created_at": None}, {"$dateTrunc": {"date": "$created_at", "unit": "hour"}})
@@ -1141,8 +1141,7 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
 
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$eq": 1})
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$add": [1]})
+        self.assertEqual(evaluate_expression(document, {"$add": [1]}), 1)
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$subtract": [1, 2, 3]})
         with self.assertRaises(OperationFailure):
@@ -1249,9 +1248,10 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$sortArray": {"input": "$tags", "sortBy": {"rank": True}}})
         with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$sortArray": {"input": "$tags", "sortBy": {1: 1}}})
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$strcasecmp": [1, "a"]})
+            evaluate_expression(
+                document, {"$sortArray": {"input": "$tags", "sortBy": {1: 1}}}
+            )
+        self.assertEqual(evaluate_expression(document, {"$strcasecmp": [1, "a"]}), -1)
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$substr": [1, 0, 1]})
         with self.assertRaises(OperationFailure):
@@ -1268,19 +1268,49 @@ class AggregationExpressionAdvancedTests(unittest.TestCase):
             evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "hour", "binSize": True}})
         with self.assertRaises(OperationFailure):
             evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "hour", "binSize": 0}})
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {
+                    "$dateTrunc": {
+                        "date": datetime.datetime(2026, 3, 24, 10, 0, tzinfo=None),  # noqa: DTZ001 - default BSON decode uses naive UTC
+                        "unit": "hour",
+                        "timezone": "Europe/Madrid",
+                    }
+                },
+            ),
+            datetime.datetime(2026, 3, 24, 10, 0, tzinfo=None),  # noqa: DTZ001 - default BSON decode uses naive UTC
+        )
         with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "hour", "timezone": "Europe/Madrid"}})
+            evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "week", "startOfWeek": 1}})  # noqa: DTZ001 - default BSON decode uses naive UTC
         with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "week", "startOfWeek": 1}})
+            evaluate_expression(
+                document,
+                {
+                    "$dateTrunc": {
+                        "date": datetime.datetime(2026, 3, 24, 10, 0),  # noqa: DTZ001 - default BSON decode uses naive UTC
+                        "unit": "week",
+                        "startOfWeek": "noday",
+                    }
+                },
+            )
         with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "week", "startOfWeek": "noday"}})
-        with self.assertRaises(OperationFailure):
-            evaluate_expression(document, {"$dateTrunc": {"date": datetime.datetime(2026, 3, 24, 10, 0), "unit": "nanosecond"}})
+            evaluate_expression(
+                document,
+                {
+                    "$dateTrunc": {
+                        "date": datetime.datetime(2026, 3, 24, 10, 0),  # noqa: DTZ001 - default BSON decode uses naive UTC
+                        "unit": "nanosecond",
+                    }
+                },
+            )
 
     def test_apply_pipeline_project_treats_bool_flags_as_inclusion_and_exclusion(self):
         documents = [{"_id": "1", "name": "Ada", "role": "admin"}]
 
-        included = apply_pipeline(documents, [{"$project": {"name": True, "_id": False}}])
+        included = apply_pipeline(
+            documents, [{"$project": {"name": True, "_id": False}}]
+        )
         excluded = apply_pipeline(documents, [{"$project": {"role": False}}])
 
         self.assertEqual(included, [{"name": "Ada"}])

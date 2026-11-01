@@ -353,9 +353,16 @@ class DatabaseAdminReadCommandService:
         *,
         session: ClientSession | None = None,
     ) -> CommandCursorResult:
-        first_batch = await self._admin._database.get_collection(
-            collection_name
-        )._build_aggregation_cursor(
+        collection = self._admin._database.get_collection(collection_name)
+        if (
+            collection_name == "$cmd.aggregate"
+            and getattr(operation.pipeline, "collection", collection_name) is None
+        ):
+            context = collection._new_operation_context(
+                session=session, collation=operation.collation, bindings=operation.let
+            )
+            operation = operation.bind(context.derive(collation=operation.collation))
+        first_batch = await collection._build_aggregation_cursor(
             operation,
             session=session,
             apply_codec_options=False,
