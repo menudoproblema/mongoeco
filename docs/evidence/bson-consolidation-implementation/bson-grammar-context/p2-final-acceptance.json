@@ -1,0 +1,601 @@
+{
+  "status": "accepted",
+  "scope": "Only bounded P2 raw command grammar and two measured read workloads; O1\u2013O8/D05 remain closed, P3 excluded",
+  "baseline": "3fe96e42d8c813731827f330a3b94a5f47ae4dbe",
+  "runtime_commit": "7b4f42509b07d79a0c631ac3203d1c0f3cc29455",
+  "blocks": {
+    "B1": "closed",
+    "B2": "closed",
+    "B3": "closed",
+    "B4": "closed"
+  },
+  "runtime_modules": 287,
+  "runtime_manifest": "p2-final-runtime.json.gz",
+  "input_manifest": "p2-final-inputs.json.gz",
+  "input_files": 1216,
+  "package_sha256": {
+    "mongoeco-4.11.0-py3-none-any.whl": "4de2e33e9300b1aac800ee9f7e525237a7deb576c7a6a65c9204c898318764a7",
+    "mongoeco-4.11.0.tar.gz": "9a6cdb2e214252fa6ac21a5e22fafe0f89373096c624fb884078246cd54dd8b8"
+  },
+  "native": {
+    "versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "observations_per_server": 531,
+    "retained_shapes": 32,
+    "controls": 145,
+    "surfaces": "direct sync/async and wire sync/async, Memory/SQLite",
+    "replay_tests": 78,
+    "eligible_search_oracle": "ordinary native MQL eligibility; not Atlas ANN"
+  },
+  "pytest": {
+    "3.13": {
+      "passed": 57805,
+      "skipped": 499,
+      "subtests": 14915,
+      "accepted_log": "p2-b4-pytest-close-313-repeat.txt.gz"
+    },
+    "3.14": {
+      "passed": 57816,
+      "skipped": 488,
+      "subtests": 14915,
+      "accepted_log": "p2-b4-pytest-close-314.txt.gz"
+    },
+    "3.15": {
+      "passed": 57805,
+      "skipped": 499,
+      "subtests": 14915,
+      "accepted_log": "p2-b4-pytest-close-315.txt.gz"
+    }
+  },
+  "unittest": {
+    "python": [
+      "3.13",
+      "3.14",
+      "3.15"
+    ],
+    "tests_each": 3670,
+    "skipped_each": 3
+  },
+  "coverage": {
+    "covered_lines": 47643,
+    "num_statements": 48123,
+    "percent_covered": 99.00255595037716,
+    "percent_covered_display": "99.00",
+    "missing_lines": 480,
+    "excluded_lines": 1027,
+    "percent_statements_covered": 99.00255595037716,
+    "percent_statements_covered_display": "99.00"
+  },
+  "kit_matrix": [
+    {
+      "python": "3.13",
+      "pytest": "8.4.2",
+      "pymongo": "4.9.2",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.15",
+      "pytest": "8.4.2",
+      "pymongo": "4.9.2",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.14",
+      "pytest": "8.4.2",
+      "pymongo": "4.9.2",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.13",
+      "pytest": "8.4.2",
+      "pymongo": "4.19.0",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.15",
+      "pytest": "8.4.2",
+      "pymongo": "4.19.0",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.14",
+      "pytest": "8.4.2",
+      "pymongo": "4.19.0",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.13",
+      "pytest": "9.1.1",
+      "pymongo": "4.9.2",
+      "kit_exit": 0,
+      "p2_semantics_exit": 0
+    },
+    {
+      "python": "3.15",
+      "pytest": "9.1.1",
+      "pymongo": "4.9.2",
+      "kit_exit": 0,
+      "p2_semantics_exit": 0
+    },
+    {
+      "python": "3.14",
+      "pytest": "9.1.1",
+      "pymongo": "4.9.2",
+      "kit_exit": 0,
+      "p2_semantics_exit": 0
+    },
+    {
+      "python": "3.13",
+      "pytest": "9.1.1",
+      "pymongo": "4.19.0",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.15",
+      "pytest": "9.1.1",
+      "pymongo": "4.19.0",
+      "kit_exit": 0
+    },
+    {
+      "python": "3.14",
+      "pytest": "9.1.1",
+      "pymongo": "4.19.0",
+      "kit_exit": 0
+    }
+  ],
+  "static_gates": [
+    {
+      "python": "313",
+      "gate": "public-typing",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "gate": "mypy-strict",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "gate": "mypy-boundary",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "gate": "spi",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "gate": "manifest",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "gate": "public-typing",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "gate": "mypy-strict",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "gate": "mypy-boundary",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "gate": "spi",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "gate": "manifest",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "gate": "public-typing",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "gate": "mypy-strict",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "gate": "mypy-boundary",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "gate": "spi",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "gate": "manifest",
+      "exit_code": 0
+    }
+  ],
+  "artifact_smokes": [
+    {
+      "python": "313",
+      "kind": "wheel",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "kind": "sdist",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "kind": "pytest",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "kind": "wheel",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "kind": "sdist",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "kind": "pytest",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "kind": "wheel",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "kind": "sdist",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "kind": "pytest",
+      "exit_code": 0
+    }
+  ],
+  "deep_properties": {
+    "passed": 66,
+    "max_examples": 300
+  },
+  "sdk_free": {
+    "passed": 13,
+    "pymongo_and_bson_absent": true
+  },
+  "compatibility_snapshots_identical": [
+    "3.13",
+    "3.14",
+    "3.15"
+  ],
+  "source_independent_reuse": {
+    "receipt": "docs/evidence/predicate-authorities/review-20261031/validation.json",
+    "inputs_sha256": {
+      "scripts/run_pymongo_profile_matrix.py": "4b568416c086fc8b024613f4bd014230be8e90ba96e785371e959bba3cc93122",
+      "scripts/smoke_pypi_contract.py": "e10fd90608397e3178bb3f41592df41033b57b47ec8b7db7aeab429f7b64ea9f",
+      "tests/fixtures/pymongo_profile_matrix.json": "ae83143edfd7498d7408bd372ff9c8b98cd0478bf57fbab22346802a26ef8520"
+    }
+  },
+  "published_contract_log": "p2-b4-released-contract.txt.gz",
+  "performance": {
+    "summary": "p2-b3-accepted-cost-summary.json.gz",
+    "samples": "p2-b3-accepted-cost-samples.json.gz",
+    "controls_passed": 44,
+    "targets": {
+      "consumption/MemoryEngine-default-find-limit-one": {
+        "AA_relative_noise": 0.08647407071916136,
+        "ratios_by_round": [
+          0.8118426423032243,
+          0.8500336678744349,
+          0.8181554524361949
+        ],
+        "pooled_ratio": 0.8228723234004417,
+        "control_pass": true,
+        "target_pass": true
+      },
+      "binary/binary/limit2": {
+        "AA_relative_noise": 0.036869535991765234,
+        "ratios_by_round": [
+          0.9023940042982515,
+          0.9033574680906326,
+          0.9197051834873179
+        ],
+        "pooled_ratio": 0.9159141260803102,
+        "control_pass": true,
+        "target_pass": true
+      }
+    },
+    "short_sample_attempt": "preserved; rejected because Binary improvement did not exceed A/A noise; increased sample duration only"
+  },
+  "review": {
+    "release_ancestor_lint": "passed, 409 changed Python files",
+    "import_only_followup": "19 passed, 42 subtests; no runtime change",
+    "historical_inputs_unchanged": 343,
+    "prior_owner_prefix_unchanged": true,
+    "no_optional_audit_or_refactor": true
+  },
+  "cleanup": {
+    "native_databases": {
+      "60921": {
+        "pending_databases": []
+      },
+      "60922": {
+        "pending_databases": []
+      },
+      "49027": {
+        "pending_databases": []
+      }
+    },
+    "owned_native_processes": "stopped; existing cleanup logs retained"
+  },
+  "limits": [
+    "Standalone native grammar/MQL witnesses, not Atlas ANN certification.",
+    "Pre-existing explicit direct find(limit=0) and unadvertised inline aggregate.explain remain followups, not P2 obligations."
+  ],
+  "nonaccepted_runs_retained": [
+    "First current 3.13 full run hit the original 50 ms deadline; focal and full unchanged-timeout repeat pass.",
+    "Pre-final coverage below 99.00 was rejected; final 99.00255595037716 meets the unchanged floor."
+  ],
+  "benchmark_smokes": [
+    {
+      "engine": "memory",
+      "exit_code": 0
+    },
+    {
+      "engine": "sqlite",
+      "exit_code": 0
+    }
+  ],
+  "packages_rebuilt_twice_byte_identical": true,
+  "sdist_public_documents_match_worktree": true,
+  "evidence_sha256": {
+    "p2-admin-consumers.txt.gz": "46774d1cebdf5336f577e2603b9b6d3614855241aeb1e676d574d928938bea98",
+    "p2-b1-binary-baseline.json.gz": "45dbc3cac92a5c32d945b32b01cee372a57ffe62582bdd44a6cab7b1bd3e0460",
+    "p2-b1-classification.json.gz": "c0a0663a7a02b79e158ec7ba89b717ee5ef89b92a45d0fde973f5c6f157702db",
+    "p2-b1-command-baseline-frozen.txt.gz": "7bd354c3ff7a01c79a8c5cb573ee694246a14bdd03c26f7a769b34ae21bf8705",
+    "p2-b1-command-before.txt.gz": "3bf5e204068d88864630da32f77a9c4422ecb634ee2dcf0c80b5cc63b4344cd9",
+    "p2-b1-consumption-baseline.json.gz": "39f504ed292b7ea2121fb6079d9c9595d150666778128b4e0a9cbf11abaee0fb",
+    "p2-b1-fixture-7_0.json.gz": "bdf43936c075f13a6ba87e9fb4cc01ee6c36b3392a7adbda006d14cd11bb0fcb",
+    "p2-b1-fixture-8_0.json.gz": "8a89caf6cd4b544245579b04fcbd345153b156a5a054e713df24d9079b61a0c5",
+    "p2-b1-fixture-9_0.json.gz": "39df0f0e373b23ea7d1d1601c272de834589addae89d87042c691275fffadcf9",
+    "p2-b1-impact.json.gz": "69f3902dd79ffb2bbfa75201e0d53f9c52b1c3a854f444292521f3da46ff0a24",
+    "p2-b1-native-7.0.txt.gz": "9a356a3af22296aaa4d9e18951db41cb9b980abb5debcc640eafebc08406147e",
+    "p2-b1-native-8.0.txt.gz": "a392f4411522ad45a04240cafd16f7f30f0f3cd7307cfc111cfecc793c349cf2",
+    "p2-b1-native-9.0.txt.gz": "0e7f8fdc0bd8c6c455c798522c38370b76340a0531aeea2199d7936c2da4e7b2",
+    "p2-b1-profile.txt.gz": "e9def58b89d53802a92b566128b0cc35c5423f89b4bef8cfb7d193674b1b2e69",
+    "p2-b2-build.txt.gz": "ed30fd41f18ad061d456530ad2833c77ad2b0d98d62c96f65f5140e0421ddbc4",
+    "p2-b2-commands.txt.gz": "63e1b4abc2b87a5c3ae78ea36eb6ccd06cc7e7ec88cbda7efd0b11ad805ef6d4",
+    "p2-b2-consumers.txt.gz": "8357b65ca489a67398118a01871431af865608f2d47af10515ba0b7e88e68fea",
+    "p2-b2-native-check-7.0.txt.gz": "59462645ef764ee4cb10a4bbbea1d4772a4fd38e5009c3d33bb637911422479c",
+    "p2-b2-native-check-8.0.txt.gz": "59462645ef764ee4cb10a4bbbea1d4772a4fd38e5009c3d33bb637911422479c",
+    "p2-b2-native-check-9.0.txt.gz": "59462645ef764ee4cb10a4bbbea1d4772a4fd38e5009c3d33bb637911422479c",
+    "p2-b2-native-final-7.0.txt.gz": "02d63f88a279e0b77a809f0592985396528aa98e4911e2f2d546ac7bae57be3f",
+    "p2-b2-native-final-8.0.txt.gz": "54028353016be64c872013f517784ddc1191569cde92ebd5070bae205840a957",
+    "p2-b2-native-final-9.0.txt.gz": "a1d29c42fc3f34273de12298c67102f41d7df7bfc8e3f848bb1f97863e17f464",
+    "p2-b2-runtime.json": "7e4db4e22c630280f8cb66cb87a36219dff5878244ed93f6bead0b5bc98aa36a",
+    "p2-b2-wheel-imports-p2-b2-commands-gw0.json": "52c93bf9dae82ebd4759c2c85cc262ac9f2359c1e9794579746b5b3f41e88e06",
+    "p2-b2-wheel-imports-p2-b2-commands-gw1.json": "52c93bf9dae82ebd4759c2c85cc262ac9f2359c1e9794579746b5b3f41e88e06",
+    "p2-b2-wheel-imports-p2-b2-commands-master.json": "1c7eff6c52b23e5d24666414ab2afacafbafceb0d87392435456122b0473783a",
+    "p2-b2-wheel-imports-p2-b2-consumers-gw0.json": "376cdd6699039bc8ff471bfbf75213551b3538bbf039118c7f4930a1be0c70b2",
+    "p2-b2-wheel-imports-p2-b2-consumers-gw1.json": "376cdd6699039bc8ff471bfbf75213551b3538bbf039118c7f4930a1be0c70b2",
+    "p2-b2-wheel-imports-p2-b2-consumers-master.json": "1c7eff6c52b23e5d24666414ab2afacafbafceb0d87392435456122b0473783a",
+    "p2-b2-wheel-location.txt.gz": "cd6e894a87f5f99ff39abfe776276365cd13f380e5723d9d16b7d20eceea3758",
+    "p2-b2-wheel.json": "4408f58f884482be40a5c1c027e941fa42e42b24b49be883793bb724cb53cfd3",
+    "p2-b3-accepted-consumption-worker.py.gz": "4e41265aedc51d7a662f659656afba5995230648c63556eb5611f2db270c3e22",
+    "p2-b3-accepted-context.json.gz": "16ecb4a1d5b81322c4cca0d60c802db633c5c8e9a9f297d51476aff6d8c41a0a",
+    "p2-b3-accepted-cost-protocol.txt.gz": "58f28f87a0c553d5405da6ee237feece41644da9c7ec912b81fca131a9c62cbd",
+    "p2-b3-accepted-cost-samples.json.gz": "11c731c6aa12f5b6b6fcea20e19f2ad47857acff6b375b7c4e969e60a59a5e3c",
+    "p2-b3-accepted-cost-summary.json.gz": "f0d325f3a0b95e9ea9b49e53f765a058b6c751482d7e9c08039126c7f100e4c6",
+    "p2-b3-accepted-vector-worker.py.gz": "6288a110391b2a969ac8a3702e2d75846300c651092210598f2a8f88c6a2cfc0",
+    "p2-b3-build.txt.gz": "b2e047d50e62f87d21e2134e9e59b87deca61a91c583575e97362df56b4b3c5a",
+    "p2-b3-final-build.txt.gz": "5aa4a39fada7f70bc2fee7df404357cb8f0b80b4a4e82899fe8bbb7fc41c489a",
+    "p2-b3-first.txt.gz": "dbdfd3e0f2a66d019f11e7a4691761fce552fdb0c147dbc764c303949f132f28",
+    "p2-b3-focused-installed.txt.gz": "c70761a68294fabaa2e9a48267eb0ced3d74fd020a9885ac95dffbf1ed9d356b",
+    "p2-b3-focused.txt.gz": "3a4321cdd3a0fb80d87a82d865e2d9dc9643e6defa313a849f6b4996d1f3a404",
+    "p2-b3-intermediate-cost-protocol-final.txt.gz": "68fcf6c98488f79a45d9f3081de913e72e9e46f3e9a7af2a96ac031083a14190",
+    "p2-b3-intermediate-cost-samples-prototype.json.gz": "10de741628273cd77b3ee79afacb58e7dcf291cf89cf357b0c2b1855d426b230",
+    "p2-b3-intermediate-cost-samples.json.gz": "77906b5ec28b19ab7cc3ef0a3a887d9644364b408d272d24941579d279c0bad3",
+    "p2-b3-intermediate-cost-summary-prototype.json.gz": "9251a9ff5fdb878ae11b77f03dc6d8ad8e8cf7b2696eb7a175c522b34666a535",
+    "p2-b3-intermediate-cost-summary.json.gz": "5b1e4f4f4961ba4992014a015d5d31669dfb4b42cc15f435f49fef58011190af",
+    "p2-b3-intermediate-docker-cleanup.txt.gz": "3e49f789d5c0f72c621769f28c894a8ba582cd39e770480578cc453eade75855",
+    "p2-b3-intermediate-followup-limit-zero.json.gz": "0c77a73216f9f5a6a05dfa41556bd4ee5a4968aa3959e8b00b336460899d70e9",
+    "p2-b3-intermediate-native-cleanup.json.gz": "871c82f83cd9875d31df6fcf2b0397c9f523a280343e86d53331309809b71cb0",
+    "p2-b3-lint-complete.txt.gz": "eac0c7929b8d043f705506bede0d4ef3323cf38aebc6f5413cf4c56679ca2a50",
+    "p2-b3-lint-final.txt.gz": "e31833769ed83b28343ce6f1f22cb8e4984ae651c0f1b400a86c14de2c6172b2",
+    "p2-b3-lint.txt.gz": "b1a75c6ec7ba9fcce056a6ef07facff71bc358246b1ff526888e873f1149617e",
+    "p2-b3-mechanisms-bound.txt.gz": "84eb8a2190a209c8df1410c9a8477be6b039e2c79c045d416baf57fd82e8f4ea",
+    "p2-b3-mechanisms-final.txt.gz": "7508da47490f661a96b0093f7007a88e61f38cb68b480e5227e94d9d31b1cb57",
+    "p2-b3-mechanisms.txt.gz": "98e3eb0c558ac864249c65b2d4b4b1b1c4bae16db7b59253d9438d3b58979938",
+    "p2-b3-native-7.0-final.txt.gz": "40d1a248da9d262e8a085fc085ef167d7bba06b123e6ffdb906402616707700c",
+    "p2-b3-native-7.0-omitted-limit.txt.gz": "40d1a248da9d262e8a085fc085ef167d7bba06b123e6ffdb906402616707700c",
+    "p2-b3-native-7.0.txt.gz": "40d1a248da9d262e8a085fc085ef167d7bba06b123e6ffdb906402616707700c",
+    "p2-b3-native-8.0-final.txt.gz": "b90e25be8e13fefd95c647e48208642a5aa4739ef94fa6de5643a6d2a9e12d31",
+    "p2-b3-native-8.0-omitted-limit.txt.gz": "b90e25be8e13fefd95c647e48208642a5aa4739ef94fa6de5643a6d2a9e12d31",
+    "p2-b3-native-8.0.txt.gz": "b90e25be8e13fefd95c647e48208642a5aa4739ef94fa6de5643a6d2a9e12d31",
+    "p2-b3-native-9.0-final.txt.gz": "187a93cc927b03d422909b2e3ee2d53c805f41b59a14906628105794b4759427",
+    "p2-b3-native-9.0-omitted-limit.txt.gz": "187a93cc927b03d422909b2e3ee2d53c805f41b59a14906628105794b4759427",
+    "p2-b3-native-9.0.txt.gz": "187a93cc927b03d422909b2e3ee2d53c805f41b59a14906628105794b4759427",
+    "p2-b3-replay-final.txt.gz": "a5135c5514c8b01d4938de932849fcf19752e2c7a5480adefa181ece15fa4900",
+    "p2-b3-replay-first.txt.gz": "74a55ab1909c48afa865d2214148d863e1db8e29dbe5af4fd8386f4acf3f346d",
+    "p2-b3-replay.txt.gz": "ef43d2bcd627635bbef82792efddbede14365aa7193571fe340f0bc030560f3b",
+    "p2-b3-residual.txt.gz": "4b1572988ec3cae97b524f58607ab26056e2a2695e02586b58a7e5727d5599a6",
+    "p2-b3-short-sample-protocol-close.txt.gz": "68b91e24f94c924eb635350bdf4fdea0392e8b68717880fe44b67a9010ce182d",
+    "p2-b3-short-sample-samples.json.gz": "fd832a6e638efb821bfc899886b735b1e0fed4b52889f7758bed3bdee8c40ad1",
+    "p2-b3-short-sample-summary.json.gz": "e0e3aa8efc6396028f5e6f4391ba8fe926d8e5d75e520136dfe0b48a935c7258",
+    "p2-b3-short-vector-worker.py.gz": "830ac44a1817dcff37a89f704bb7cbe2e8f89240d2de6452934c231698cd6582",
+    "p2-b4-batch-all-unit.txt.gz": "64aeac2d6c2968da11f35f3736edb171fe54277419ae94cebcc7bbe81c9e2c6f",
+    "p2-b4-batch-batch-boundaries-native.txt.gz": "b3551d5a45a62424c98e381bbc2d7cb8ea7c79e5660f7c47a8bc04f0219458b5",
+    "p2-b4-batch-batch-decimal-native.txt.gz": "d8573a002de3f6fdc4463f69c6e3e5f883c782b66fbdd59c0fcf5da6d1a1c4b6",
+    "p2-b4-batch-batch-first-window.txt.gz": "2ae7b63b694bf076713dbba2cbd8e9cde0ae252d7a115ef99d6195c1d20ebacf",
+    "p2-b4-batch-batch-lint-final.txt.gz": "1196af463d6dbf71cccb31c92603eda310af4b43d49368c636a6e1f56d07b5c2",
+    "p2-b4-batch-batch-lint.txt.gz": "1196af463d6dbf71cccb31c92603eda310af4b43d49368c636a6e1f56d07b5c2",
+    "p2-b4-batch-batch-native-replay.txt.gz": "8e5e83be50f415b552195d4490210abf4aae16ac66034b90bf65831d066070b9",
+    "p2-b4-batch-batch-native.txt.gz": "fdf5bea63bbd8d5a40446c6e35c06d49a4d1f0d87b4fa27b3e656b185e9a7b22",
+    "p2-b4-batch-batch-native7-start.txt.gz": "eea6b79c2408f3edeeeb6b7163a79fd058ed4a39cd9a58aea00e2f3267f7ed96",
+    "p2-b4-batch-batch-native8-start.txt.gz": "9ec5a1d2186d4da0355ec2ff4680815c3e304fa763b5dcaeb992b7788bdf06bf",
+    "p2-b4-batch-batch-recapture-7.0.txt.gz": "9a356a3af22296aaa4d9e18951db41cb9b980abb5debcc640eafebc08406147e",
+    "p2-b4-batch-batch-recapture-8.0.txt.gz": "a392f4411522ad45a04240cafd16f7f30f0f3cd7307cfc111cfecc793c349cf2",
+    "p2-b4-batch-batch-recapture-9.0.txt.gz": "0e7f8fdc0bd8c6c455c798522c38370b76340a0531aeea2199d7936c2da4e7b2",
+    "p2-b4-batch-conservation-fixed.txt.gz": "5a01a6a7b655f63e5aa4ce3abfdca16357d0336cb4742bc01bdb109af4e1fd01",
+    "p2-b4-batch-conservation-fixed2.txt.gz": "5514b1d3841e6defa95bd8254a2365abadacdf22d4ed7195f98e9d06dfaae726",
+    "p2-b4-batch-pytest-313.txt.gz": "8891a52026260c7f7f7ec66c25c46e3427a1fd9128e270f30dc7a5472f2d22d2",
+    "p2-b4-batch-pytest-314.txt.gz": "5d53900c7eb6591e42289395302701f8cd434cbaf783f7369734300c5e112e2d",
+    "p2-b4-batch-pytest-315.txt.gz": "67dcd55e902b070b7b96511c03ce5f99a200602b6f8ee8c007d0d63f7664cd34",
+    "p2-b4-batch-root-unit.txt.gz": "d3e5711c4725fc504b682b1a638a419b83566df59eaae21db696a4a491b971dc",
+    "p2-b4-benchmark-close-memory.json.gz": "3e195f129bd6a662ab316791502e3a1364e0b566390332ec30f275f161b1a895",
+    "p2-b4-benchmark-close-results.json.gz": "8b6da69c6f044da577417babed26827cb8d739fb7650a17848b5ed5699c27756",
+    "p2-b4-benchmark-close-sqlite.json.gz": "19bf67892305421bb4dbf5516645d73f9b86970bdc9bd1e49bbd246789c0c9ea",
+    "p2-b4-close-313-timeout-focal.txt.gz": "f65e588d6b016b9988bb2678f2d1d914bdb377cebd81b8c6e5492a11460a6670",
+    "p2-b4-close-baseline.txt.gz": "01834a3d2e48cd0fbfec3bf9bc18593501872a31e1f6010ec1d05bda79f57ea8",
+    "p2-b4-close-candidate.txt.gz": "c08f0179fb6f01e0cedeedbd39e505a01eca9878464aaa59731e5f1a658991b9",
+    "p2-b4-close-controls.json.gz": "aef93e2935c1077b9cfb6461a7d50d8836572a05b53e6da3f75b49252f531baa",
+    "p2-b4-close-coverage.json.gz": "e34ec3315e95a1ad0fb07ded3318d40dedf278780b7d6501dc136a1faf1cdcb6",
+    "p2-b4-close.coverage.gz": "32d8ab19388bb7359e52b6bb6b2b6820f4b8d3b83be746ceefdf8b9bf8d19706",
+    "p2-b4-command-command-recapture-7.0.txt.gz": "9a356a3af22296aaa4d9e18951db41cb9b980abb5debcc640eafebc08406147e",
+    "p2-b4-command-command-recapture-8.0.txt.gz": "a392f4411522ad45a04240cafd16f7f30f0f3cd7307cfc111cfecc793c349cf2",
+    "p2-b4-command-command-recapture-9.0.txt.gz": "0e7f8fdc0bd8c6c455c798522c38370b76340a0531aeea2199d7936c2da4e7b2",
+    "p2-b4-command-explain-empty-native.txt.gz": "6bc836e9d77d8958f0613bbb7e29028e393a559f5640a347c47007b0452ee266",
+    "p2-b4-command-lint-corrections-final.txt.gz": "01f6d6a01299d2b2d4b77c9e14d76ce57e20860f845050db44e04783b283742c",
+    "p2-b4-command-lint-corrections.txt.gz": "e7fc43eedf2713f8d4c6044ae015d35c5e474804c0bff626fcc6841dda021df1",
+    "p2-b4-command-lint-corrections2.txt.gz": "01f6d6a01299d2b2d4b77c9e14d76ce57e20860f845050db44e04783b283742c",
+    "p2-b4-command-reconciled-unit.txt.gz": "cc75df37cc3e304bab01d6aa918f504705d7686fb9f761f85be9637e7657ad25",
+    "p2-b4-command-reconciled-unit2.txt.gz": "635ce0e40acfdd6fd3703d8a8b64896ec10f7b0ea5479fcfeada694e04932bc1",
+    "p2-b4-command-reconciled-unit3.txt.gz": "1be0896c9bf29aabc9149455568d0256ea13740c9e8eec66c3825e5af6402c6d",
+    "p2-b4-command-reconciled-unit4.txt.gz": "bb428f78de546d37c6f5383d59563630ef9914f516f8c85c4ce8e415a081e547",
+    "p2-b4-command-reconciled-unit5.txt.gz": "280a8ac23803926269c40378a7e759bce4d9003a15b9a3c40cfbad6a9b70e042",
+    "p2-b4-command-unittest-313.txt.gz": "812bf6cfdb62a1410951543b359040eb40a973ca2d12a9686d3c99bdf4c4c296",
+    "p2-b4-command-unittest-314.txt.gz": "10fbcd44e91c7a7630fae86bbeb97b68a4f918a21a00db75aacd6ec8a03a796e",
+    "p2-b4-command-unittest-315.txt.gz": "54b9cc8ae8d10e9b9908f690e1193b7ac4b6f52e4f4302a04015aa106bb6c686",
+    "p2-b4-context-all-unit.txt.gz": "02ef610c50913e5b3055669e3d20eba4fbf761150109ed054c68886a41952197",
+    "p2-b4-context-build.txt.gz": "02617cfcfa763820155e0d066fd2a058a6db397d0fd08fce7dbf8084a1e72358",
+    "p2-b4-context-context-all-unit.txt.gz": "02ef610c50913e5b3055669e3d20eba4fbf761150109ed054c68886a41952197",
+    "p2-b4-context-context-lint-final.txt.gz": "1196af463d6dbf71cccb31c92603eda310af4b43d49368c636a6e1f56d07b5c2",
+    "p2-b4-context-context-native-replay.txt.gz": "10511b357f5fe507684cd1c49b567bde4deb55d2e50ddb0cc343c77a1ea9311d",
+    "p2-b4-context-context-recapture-7.0.txt.gz": "9a356a3af22296aaa4d9e18951db41cb9b980abb5debcc640eafebc08406147e",
+    "p2-b4-context-context-recapture-8.0.txt.gz": "a392f4411522ad45a04240cafd16f7f30f0f3cd7307cfc111cfecc793c349cf2",
+    "p2-b4-context-context-recapture-9.0.txt.gz": "0e7f8fdc0bd8c6c455c798522c38370b76340a0531aeea2199d7936c2da4e7b2",
+    "p2-b4-context-count-decimal-native.txt.gz": "0bf46e2ab6154a2b4252f2ef18f103d95103663087db184f6b5c59a1ed98cfa9",
+    "p2-b4-context-distributions.txt.gz": "d2e04aa718e9ae18691446d01cbf36859b2b5a401bea63cd2d06f95ed22d12c2",
+    "p2-b4-context-docker-cleanup.txt.gz": "3e49f789d5c0f72c621769f28c894a8ba582cd39e770480578cc453eade75855",
+    "p2-b4-context-grammar-native.txt.gz": "65e21561afc8f59026180a59418fe0888f785a83b8f7b18994f6523e649d7d3c",
+    "p2-b4-context-lint-final.txt.gz": "1196af463d6dbf71cccb31c92603eda310af4b43d49368c636a6e1f56d07b5c2",
+    "p2-b4-context-native-cleanup.json.gz": "3560c177899104cbf8635fd4eed4f6595605a62d3b3050658c08fb7c53c969a6",
+    "p2-b4-context-native-replay.txt.gz": "10511b357f5fe507684cd1c49b567bde4deb55d2e50ddb0cc343c77a1ea9311d",
+    "p2-b4-context-numeric-context-focal-allowed.txt.gz": "e00f758eb269fa3a112ceaf508a5a084698a968a422b0c83fd025fe21f7ce18d",
+    "p2-b4-context-numeric-context-focal.txt.gz": "305b38182101f49eff44099d7752f5672962759c2d4ff41b4382f0cfe5ad8de2",
+    "p2-b4-context-pytest-final-313.txt.gz": "f40c21052de4a0936357c2401c838d217b4e01ac37e556d1fa2df732b0e99a5b",
+    "p2-b4-context-pytest-final-314.txt.gz": "6ff3d60b017701a0a9ff0019b6d022d2a16c844d49bd89035be948893cb96ea6",
+    "p2-b4-context-pytest-final-315.txt.gz": "c4ca928d1da72276a318465f6aace0c9233806a4ffc3da92e37b70713aa364d7",
+    "p2-b4-context-recapture-7.0.txt.gz": "9a356a3af22296aaa4d9e18951db41cb9b980abb5debcc640eafebc08406147e",
+    "p2-b4-context-recapture-8.0.txt.gz": "a392f4411522ad45a04240cafd16f7f30f0f3cd7307cfc111cfecc793c349cf2",
+    "p2-b4-context-recapture-9.0.txt.gz": "0e7f8fdc0bd8c6c455c798522c38370b76340a0531aeea2199d7936c2da4e7b2",
+    "p2-b4-deep-close.txt.gz": "f981dc9d3545210569394f6f1fa71197ad3d55c8679abe63dedf3b8bb6be454d",
+    "p2-b4-final-identity.json.gz": "be46e89edeadcf37591a7ec6cefcfe7f39898ba0f70d9070dc262e9c5ce735e5",
+    "p2-b4-global-close-results.json.gz": "07b7b21d3aafb489f4a1531bf034bf8ea0e1985c446b97f476321f0c0fcf8759",
+    "p2-b4-import-close.txt.gz": "320a055bf8776167cd06cc9dd7b9a5d80855aa89aba48e19bd4155dbcb505132",
+    "p2-b4-import-consumer-close.txt.gz": "f2c0bf7c631535168e4cfa1991a5c897a4051fc5c85143ceaf13375843de1978",
+    "p2-b4-kit-close-3.13-8.4.2-4.19.0.txt.gz": "a146172f166a99b87d4088231cee344de2b726b7395a132084413fe6891a8559",
+    "p2-b4-kit-close-3.13-8.4.2-4.9.2.txt.gz": "fda7edb1fa5538cf723f25dc6ed033338a667ec07e4ac416e0322ce0dc1a84be",
+    "p2-b4-kit-close-3.13-9.1.1-4.19.0.txt.gz": "100488a6682714b0e610ae925304a965f4f1b2feba12f50c2fbe86af533bdfed",
+    "p2-b4-kit-close-3.13-9.1.1-4.9.2.txt.gz": "07d170c9d83fc514956d409828d6129d1da09f70114c083c8b918a62db498687",
+    "p2-b4-kit-close-3.14-8.4.2-4.19.0.txt.gz": "b759abafd775782cb8d4ab381fdd2127ca57e341befb2948212bce31eaed0f1c",
+    "p2-b4-kit-close-3.14-8.4.2-4.9.2.txt.gz": "bbb8dc51d1c041e2830949acd3627a56a065a7d4b0308e5b5661f05b4febcee4",
+    "p2-b4-kit-close-3.14-9.1.1-4.19.0.txt.gz": "f1bf052fbf671ae275faa8c721cdeb37e20d25b52b956bb3a73cec660240c8e1",
+    "p2-b4-kit-close-3.14-9.1.1-4.9.2.txt.gz": "2a8ae137dcd1c42aaf2409252e0428a3225519a05823f6044bd79dee1824cce3",
+    "p2-b4-kit-close-3.15-8.4.2-4.19.0.txt.gz": "4d0cce90a5043f433937f2e59c4563067cd910355d7153aaaa3b577eb187d541",
+    "p2-b4-kit-close-3.15-8.4.2-4.9.2.txt.gz": "223a4db3d50e1cb2addb7af66902f3461192eec556a20bb7b59248a70ebff734",
+    "p2-b4-kit-close-3.15-9.1.1-4.19.0.txt.gz": "b18c13d6e582ecf0c1a540c3667ddbdae2921678c2b0d03628d23ad606a0ffb5",
+    "p2-b4-kit-close-3.15-9.1.1-4.9.2.txt.gz": "4858812d9fde1f6f9af77bec21d9deff840a6b577946cf2b9d9c6c79cc3d1faf",
+    "p2-b4-kit-close-results.json.gz": "d57f1f454fad072220fa2907e12a36eaba4f28d4c1bf0bda1fbbe23b508051f9",
+    "p2-b4-manifest-close-313.txt.gz": "ec3b3565f8f3776cc57f1d98697aaccc2d9b84d5619adaebe168f93454c77dce",
+    "p2-b4-manifest-close-314.txt.gz": "ec3b3565f8f3776cc57f1d98697aaccc2d9b84d5619adaebe168f93454c77dce",
+    "p2-b4-manifest-close-315.txt.gz": "ec3b3565f8f3776cc57f1d98697aaccc2d9b84d5619adaebe168f93454c77dce",
+    "p2-b4-minimal-close.txt.gz": "4bc87ae2e28e302dbf528f470ded867ed6ce7e877c66056d4b7512e491f216cb",
+    "p2-b4-mypy-boundary-close-313.txt.gz": "76eacbbf7755358f4be970d3cd86b2d0ffa287f96db2193f42233534159c057d",
+    "p2-b4-mypy-boundary-close-314.txt.gz": "76eacbbf7755358f4be970d3cd86b2d0ffa287f96db2193f42233534159c057d",
+    "p2-b4-mypy-boundary-close-315.txt.gz": "76eacbbf7755358f4be970d3cd86b2d0ffa287f96db2193f42233534159c057d",
+    "p2-b4-mypy-strict-close-313.txt.gz": "48b5b7deaa75619f778f8eddfed7d89a19b519d6178d241435c1712d263fb3f7",
+    "p2-b4-mypy-strict-close-314.txt.gz": "48b5b7deaa75619f778f8eddfed7d89a19b519d6178d241435c1712d263fb3f7",
+    "p2-b4-mypy-strict-close-315.txt.gz": "48b5b7deaa75619f778f8eddfed7d89a19b519d6178d241435c1712d263fb3f7",
+    "p2-b4-protected.txt.gz": "e9962168873d2499165e43ff4a54f05317e9851919031802448f06ca4ddd1a0e",
+    "p2-b4-public-typing-close-313.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "p2-b4-public-typing-close-314.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "p2-b4-public-typing-close-315.txt.gz": "85f30435720f69cd76d96c9c038a91e1636e736860647eb0c29edc0e0b864d90",
+    "p2-b4-pytest-close-313-repeat-result.json.gz": "70013b9d0e1dcb7ac0df7c98095a7d475ac53bbc7d368e75ff66ba0fe30e65ff",
+    "p2-b4-pytest-close-313-repeat.txt.gz": "b6db6a2ae152a28e207e8585ddbc8fe5ee567b63e8a061a62eaff995837fd989",
+    "p2-b4-pytest-close-313.txt.gz": "06af6d7ae081d16dea87ff121c90691a6c6de7e53acacc626e7780df0e33ef52",
+    "p2-b4-pytest-close-314.txt.gz": "f797b9e301e24f9c0681c66fde44a4a63795c7c08f47481247b2f41da6be22a7",
+    "p2-b4-pytest-close-315.txt.gz": "016b759534e8666e52a9ebc6df631419dc3966bfc74306480f700255cf2b5e0d",
+    "p2-b4-release-lint-close-repeat.txt.gz": "c9990e73c55d147ee7357fe8806e4a3e0d6b493882bb8ce29b1aea9727f86a46",
+    "p2-b4-release-lint-close.txt.gz": "f9c6e6b0d27b3ac83abe70c294b7bd357db336991b5e416eeffc43d065f9ec4d",
+    "p2-b4-released-contract.txt.gz": "ac67cbb475dd77a25424c28ea4d6c3a84865bd7c874b58673485f27ef1f05176",
+    "p2-b4-sdk-close-3.13-9.1.1-4.9.2.txt.gz": "36cef00983d7a1a5c0d2ebcb2a3132cbca6cb4ffab4c9d5c0a7af47ad0bee23c",
+    "p2-b4-sdk-close-3.14-9.1.1-4.9.2.txt.gz": "dcb15e5b3c72be9c3b5bed18b2325dd713ff47cffc084545cb64ca7fad807e3a",
+    "p2-b4-sdk-close-3.15-9.1.1-4.9.2.txt.gz": "f8984950fc26afaea26f79ba21fc3a797e1588833ba51f830eff54003e1cc1b2",
+    "p2-b4-smoke-close-pytest-313.txt.gz": "7e407de9b3bf73219456f3b1666c385cac6442358df1b3c182ee92f0e5538966",
+    "p2-b4-smoke-close-pytest-314.txt.gz": "4b3c6e3247683e9e8252ac61206ce09fdf1a61ade5f7b4dbd5ef00d2b25bd798",
+    "p2-b4-smoke-close-pytest-315.txt.gz": "e79cc5bde9c80cd3226d97b903b3c6f267e9af6f6712cec0097a6bd5ab1acf74",
+    "p2-b4-smoke-close-results.json.gz": "40593560cc0ad96ffb9fdb50524dd38801a4e9cf605bc747a48f9454131b3937",
+    "p2-b4-smoke-close-sdist-313.txt.gz": "91d53c6da39244a68c17bc536aeac141b4956d115f01e17b8979dab0be3ec097",
+    "p2-b4-smoke-close-sdist-314.txt.gz": "a2932ab440821224ffbf790a6d35f25203f5792107e7cd9ec7facd118a81fd28",
+    "p2-b4-smoke-close-sdist-315.txt.gz": "faaeb49ea9a5a298120e0eafac39e97f2f0c72e057849c562c55a1854951576c",
+    "p2-b4-smoke-close-wheel-313.txt.gz": "da5c28fddcbfc54d858ed0142081472bbf4975b9af888b404c1376658a1831b8",
+    "p2-b4-smoke-close-wheel-314.txt.gz": "14dbb9ea551efc500f9fcf63a252006f53b3d4990372d277fdfa47bf3495bc69",
+    "p2-b4-smoke-close-wheel-315.txt.gz": "b5a914accaf604e4c11225d585a8626c9f4e59066fce42bec1a0c14be0b4bb27",
+    "p2-b4-spi-close-313.txt.gz": "a256763b2c1afab4ee6ea0ea3e3d9fb0ae48f877753ec7e3d965d691632c2c79",
+    "p2-b4-spi-close-314.txt.gz": "a256763b2c1afab4ee6ea0ea3e3d9fb0ae48f877753ec7e3d965d691632c2c79",
+    "p2-b4-spi-close-315.txt.gz": "a256763b2c1afab4ee6ea0ea3e3d9fb0ae48f877753ec7e3d965d691632c2c79",
+    "p2-b4-static-close-results.json.gz": "a44d55622d8faa1fa48e3bdabca3f4e0f93b0b208f8f94fe6fdb8239ae7c5f55",
+    "p2-b4-unittest-close-313.txt.gz": "6193bae5658082db51f062fbea98fd6e49fe0421de0b24cfcc66ebbdb8424bb6",
+    "p2-b4-unittest-close-314.txt.gz": "1f15e20c41f886cd2f250a0700cce9d9041a8d97dd5966b49f0dc9677a52c8d9",
+    "p2-b4-unittest-close-315.txt.gz": "c3a457da740470e15185cd02f792c16371a6825f91e6cc0068f11b91b37114a8",
+    "p2-command-baseline-frozen.txt.gz": "7bd354c3ff7a01c79a8c5cb573ee694246a14bdd03c26f7a769b34ae21bf8705",
+    "p2-command-before.txt.gz": "3bf5e204068d88864630da32f77a9c4422ecb634ee2dcf0c80b5cc63b4344cd9",
+    "p2-command-consumers-final.txt.gz": "c4c3e689b45dd74be80f8f62a2bfb7cff7d10e81d515be0722771f12c2bcbc23",
+    "p2-command-consumers-second.txt.gz": "5b58bfca3621fbe929ba2797bcef1fbfb97c023fce1800f471ddec004fc0966a",
+    "p2-command-first-fix.txt.gz": "8d6104967822b26eb4c60582eb7cfa1a64e808c067f8aabe7e23ab0f060d8789",
+    "p2-command-parity.txt.gz": "ea23d251a5c139edb12f0538695c537a247ef4649014e0cfad704aee873db95d",
+    "p2-command-second-fix.txt.gz": "887ef22643e0e0a930a2cc8ce9aaf97d3071c13e7abbf6fa5a4b33c7b15ca198",
+    "p2-command-unit-final.txt.gz": "e4d6cdf5a8a1e641abf96d69395e98203fd1efb8f09b8fdca07ae616be88911d",
+    "p2-command-unit-fourth.txt.gz": "c5d710f9969773fd336798f1e6a7602c04300da6a40475f8e2764b108235f936",
+    "p2-command-unit-second.txt.gz": "d256a8fe6b942e174a0b103b5266ab95dce9723ff0d823edda9097d7777fe6b0",
+    "p2-command-unit-third.txt.gz": "e1857cd5acc893c9a71ae72f423d19d06b014b3e4d1ad7ba9cbb1f14a39b9306",
+    "p2-command-unit.txt.gz": "ceb88f681153228088ebb537bee7596478d4fe74fdb021d8012848f0689d3d23",
+    "p2-final-artifact-guard.py.gz": "ac8576cffd128667109f07bc30a6619b65b0a3eba2b697a0f0db5feecfb0fefe",
+    "p2-final-distributions.json.gz": "934dec89cee7d795adcb4a08df1cac9dc5ed45263a98d33b9811104a384b52eb",
+    "p2-final-inputs.json.gz": "b6cf993d85af39080af212e9201b3f39663800a8c0a07a058e1b9f92588fac97",
+    "p2-final-runtime.json.gz": "bad1cae50d0c09de9cfe471e9ae35fa9992dcc54359951749a36d938546c3618",
+    "p2-final-wheel-imports.json.gz": "3a8b67c6dcde39e9dc8731dbfef5fa2b681e7daea1de6bf4a45ba906caf4abc2",
+    "p2-final-wheel.json.gz": "d22b2130cd7e33dce4b36f1c1999b2285e50087b4b6a41b19c39010dbe428ecf",
+    "p2-lint-second.txt.gz": "0f00f24000d0ef0420997eb504756cce668f9f505d48738ac54ee3da028b7921",
+    "p2-lint-third.txt.gz": "83ce4c622f9762a27f7c2c30476c1e30fdad23e8f99d318c61aed3f45ca96269",
+    "p2-lint.txt.gz": "317ac1b3f5c3958b9ecf3ae6f833ae75b3cbddb1d82218961d1d5421da2d68e2"
+  },
+  "final_review": {
+    "runtime_and_gate_inputs_unchanged_since_accepted_runs": true,
+    "reviewed_production_blocks": [
+      "raw command parsers and direct/wire consumers",
+      "integer sort guard and canonical fallback",
+      "operation-local vector residual and exact fallback"
+    ],
+    "git_diff_check": "passed",
+    "prior_owner_prefix_unchanged": true,
+    "semantic_runtime_commit": "7b4f4250",
+    "required_obligations_unverified": []
+  }
+}

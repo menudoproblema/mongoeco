@@ -2751,8 +2751,8 @@ capturador/replay y runners; no se crea otro framework ni otro validador.
 | --- | --- | --- |
 | B1 | 32 formas dispuestas con fixture aislado, y dos workloads reproducibles de base congelada. | Cerrado |
 | B2 | Cero divergencias confirmadas pendientes del conjunto; código/familia/fase/diagnóstico/efectos y recuperación nativos 7/8/9, controles de API Python y todas las superficies soportadas. | Cerrado |
-| B3 | Causa medida y redundancia eliminada, resultados idénticos; tres tandas ABBA mejoran ambos workloads más que ruido A/A y no regresan controles fuera del ruido. | Pendiente |
-| B4 | Gates aplicables verdes, revisión, evidencia, commits semánticos y árbol limpio. | Pendiente |
+| B3 | Causa medida y redundancia eliminada, resultados idénticos; tres tandas ABBA mejoran ambos workloads más que ruido A/A y no regresan controles fuera del ruido. | Cerrado |
+| B4 | Gates aplicables verdes, revisión, evidencia, commits semánticos y árbol limpio. | Cerrado |
 
 B1: se mantienen las 32 formas y se añaden 36 controles de reglas afectadas.
 Cada una se ejecuta aisladamente con namespace ausente, vacío y poblado: 204
@@ -2783,3 +2783,133 @@ pasan contra salida separada; las observaciones coinciden con B1, cuya copia
 se conserva, y solo se concilia la identidad del observador tras lint. El
 ratchet contra la base P2 pasa en 13 archivos. Logs rojos intermedios y evidencia
 final con prefijos p2-command y p2-b2. B3 y B4 siguen abiertos; O1–O8 no cambian.
+
+B3, candidato en verificación: la ordenación detecta una sola vez claves Python
+int homogéneas del dialecto estándar 7.0 y conserva el comparador canónico
+para mezclas, dialectos personalizados, collation y deadlines. No se adelanta
+la ventana ni se omite el residual. SQLite prepara cada residual de forma
+perezosa al primer documento y comparte ese plan entre ANN, ampliaciones y
+reserva exacta; conserva bindings, collation y contexto de la operación sin
+caché global. La sonda ordinaria nativa acredita elegibilidad MQL, no Atlas.
+Los controles incluyen candidatos elegibles tardíos y límites 2/64. Pasan
+176 pruebas/4 subtests y 51 replays/metadatos sobre wheel instalado. La
+aceptación de coste y los gates B4 todavía están pendientes.
+
+Seguimiento ajeno al corte: el control adicional con find(limit=0) explícito
+descubrió que la API directa devuelve vacío donde PyMongo lee sin límite.
+Se reproduce también en el wheel base 3fe96e42; no es regresión del candidato.
+Se registra sin corregirlo ni ampliar P2/P3. El control de lectura completa
+usa ausencia de límite; mantiene BSON, orden, primera página y agotamiento.
+
+Conciliación del gate B4: los consumidores antiguos de parsers raw se alinean
+con la evidencia nativa existente; el test wire reutiliza la misma tabla de
+expectativas de las fachadas en lugar de mantener otros diagnósticos locales.
+La revisión detecta una regresión introducida en explain vacío: el objeto
+vacío escapaba como StopIteration. MongoDB 7/8/9 devuelve 59 CommandNotFound
+con el diagnóstico completo «Explain failed due to unknown command: ». Se
+añade ese único control al corpus existente: 207 observaciones por servidor.
+Las 204 observaciones originales permanecen idénticas. El guard conserva
+la validación previa de verbosity y evita capturas generales de excepciones.
+Los gates globales sobre el nuevo wheel siguen pendientes; se conservan
+los fallos intermedios y no se reabren O1–O8.
+
+El primer global de pytest descubre metadatos de fuentes obsoletos y
+consumidores con precondiciones antiguas (cursor obligatorio, base admin y
+coerciones de flags/límites). Se concilian únicamente los owners existentes
+y se conservan sus estados. La edición automática de requests produjo una
+entrada espuria en un diccionario de tests; el feedback focal la detecta y
+se retira antes de congelar el candidato. Los logs rojos se mantienen.
+
+Se corrige además una regresión de la delegación wire: batchSize no numérico
+escapaba como TypeError. El parser común devuelve el diagnóstico nativo 14;
+una sola conversión contextual BSON safeNumberLong se comparte con el cursor
+wire: trunca, satura int64 y convierte NaN a cero. No se cambia la validación
+de métodos Python ni el alias local estricto de batchSize superior de aggregate.
+Las sondas 7/8/9 cubren doubles, Decimal128, NaN, infinitos y rango; añaden
+30 controles/90 observaciones por servidor. Las 207 anteriores siguen idénticas; el corpus
+queda en 297 observaciones por servidor, 32 formas retenidas y 67 controles.
+Pasan 78 replays/metadatos, 4.536 unitarios/1.619 subtests y seis controles
+explícitos de primera ventana (int/double/Decimal128). Los globales afectados
+se repiten con pytest-xdist existente y el mismo suelo 99.00; no se sustituye
+el gate global por feedback focal. B3/B4 continúan abiertos.
+
+El conjunto de tipos numéricos esperado de batchSize se imprime en orden
+inestable por los servidores. El witness ordena únicamente esa lista IDL,
+conservando alias y multiplicidad; campo, tipo recibido, texto restante,
+familia, código, codeName, fase y efectos se comparan sin omisiones.
+Los campos FindCommandRequest.batchSize/find.batchSize por dialecto y
+cursor.batchSize de aggregate siguen siendo distintos.
+
+El global del candidato d89 pasa funcionalmente en los tres Python, pero
+3.14 queda en 98,9876% (487 líneas sin cubrir), por debajo de 99,00. No se
+acepta ni se rebaja el suelo. El hueco identifica controles ausentes de los
+guards modificados y un helper wire genérico con un solo consumidor. Se
+pliegan sus guards conservados en find y se retira el adaptador de batchSize
+sin consumidores; no se añade otro runner ni un test que invoque código muerto.
+
+Los controles nativos distinguen la conversión legacy de find.skip/find.limit
+y count.skip del entero exacto exigido por count.limit. Se comparte la
+primitiva de número BSON; count conserva sus errores propios, valor absoluto
+y rechazo de min long. Se verifica también la distinción de explain aggregate:
+7/8 exige cursor incluso en el comando explain exterior; 9 lo implica. La
+ruta ya existente de explain recibe cursor en su copia únicamente para 9.
+
+Se añaden 76 controles numéricos de esos guards y dos de precondición de
+cursor/explain. El corpus queda congelado en 531 observaciones por servidor
+(32 formas retenidas y 145 controles); las 297 anteriores no cambian. Pasan
+78 replays/metadatos y 4.540 unitarios/1.619 subtests del nuevo wheel. Los
+globales/cobertura de este corte siguen pendientes y no se acreditan con el
+feedback focal. Las sondas de aggregate.explain inline, opción no anunciada,
+quedan como seguimiento fuera de este corte; no se incorpora una nueva ruta.
+
+
+Aceptación final P2: B1–B4 cerrados (4/4), sin obligaciones exigidas pendientes.
+O1–O8/D05 permanecen cerradas; su texto anterior se conserva byte a byte.
+El recibo derivado [p2-final-acceptance.json](evidence/bson-consolidation-implementation/bson-grammar-context/p2-final-acceptance.json)
+selecciona el candidato y las evidencias aceptadas; las ejecuciones rojas e
+intermedias se conservan y no se usan como aceptación.
+
+B3: el primer intento del corte final no se acepta: aunque mejora ambos
+objetivos en las tres tandas y pasan los 44 controles, la mejora Binary no
+supera el ruido A/A. Se alarga únicamente la muestra del worker existente
+(3 × 1.000 operaciones Binary; consumo sigue en 50), sin cambiar datos,
+umbrales ni implementación. El protocolo largo A/A + tres ABBA, con los demás
+gates propios terminados, conserva resultados BSON en los 16 turnos y pasa
+44/44 controles. Razones candidato/base de lectura unitaria: 0,81184 / 0,85003 /
+0,81816; agrupada 0,82287 frente a ruido A/A 0,08647. Binary: 0,90239 / 0,90336 /
+0,91971; agrupada 0,91591 frente a ruido 0,03687. Ambas mejoras superan su ruido.
+Workers, contexto, muestras y cálculo quedan con prefijo p2-b3-accepted;
+la preparación se comparte también con la reserva exacta, verificada de forma
+explícita en los tests públicos de candidatos tardíos y límites 2/64.
+
+B4: el mismo wheel 4de2e33e9300b1aac800ee9f7e525237a7deb576c7a6a65c9204c898318764a7
+pasa pytest completo en 3.13/3.14/3.15: 57.805 / 57.816 / 57.805 pruebas,
+con 14.915 subtests cada uno. El primer global 3.13 agota el maxTimeMS original
+de 50 ms; pasa aislado y se repite después el global completo, sin otra
+suite global en paralelo y sin elevar el umbral: 57.805 pruebas,
+499 omisiones y 14.915 subtests verdes. El feedback focal no lo sustituye.
+La cobertura final 3.14 es 47.643/48.123 líneas (99,00256%); suelo intacto 99,00.
+
+También pasan unittest (3.670 por Python, tres omisiones), la matriz de doce
+combinaciones Python/pytest/PyMongo y los replays P2 con el SDK mínimo, quince
+gates de tipado/SPI/manifiesto, snapshots idénticos en tres Python, 66 propiedades
+deep y trece pruebas sin bson ni pymongo. Nueve smokes wheel/sdist/plugin y
+los dos benchmarks públicos pasan. Dos builds producen wheel y sdist idénticos;
+sus 287 fuentes y los cinco documentos públicos coinciden con lo verificado.
+Las importaciones de los gates quedan ligadas al wheel por hash y ruta.
+Los contratos PyMongo independientes del producto se reutilizan comprobando
+sus entradas; el smoke del artefacto publicado se conserva separado de este
+candidato, sin publicación nueva.
+
+El ratchet real contra el ancestro de release detecta un import desordenado
+en el consumidor wire de P2. Se ordena, pasan sus 19 pruebas/42 subtests y
+el ratchet queda verde en 409 archivos. La revisión final mantiene 343 entradas
+históricas de fixtures/snapshots/recursos intactas, no incorpora runners ni
+capas permanentes y conserva la limpieza de las bases y procesos nativos propios.
+Los commits separan witnesses, correcciones de gramática y regresiones,
+formato del consumidor, mejora de coste y aceptación documental.
+
+Límites del cierre: los oráculos nativos son standalone 7.0.43/8.0.32/9.0.2.
+La elegibilidad MQL de Search no acredita Atlas ANN. Los seguimientos ya
+registrados de find(limit=0) directo y aggregate.explain inline no anunciado
+permanecen fuera del corte; no se incorporan ampliaciones P3.
