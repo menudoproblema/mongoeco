@@ -1,0 +1,21 @@
+import hashlib,json,re,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-mutations')
+r=json.loads((root/'receipt.json').read_text())
+subprocess.run(['git','merge-base','--is-ancestor',r['implementation_commit'],'HEAD'],check=True)
+assert not subprocess.check_output(['git','diff',r['implementation_commit'],'--','src','tests'],text=True)
+for name in ('runtime-sources.json','changed-sources.json','protected.json'):
+ for p,h in json.loads((root/name).read_text()).items():assert hashlib.sha256(Path(p).read_bytes()).hexdigest()==h,p
+for p,h in r['artifacts_sha256'].items():assert hashlib.sha256((root/p).read_bytes()).hexdigest()==h,p
+missing=[]
+for p in [Path('docs/bson-semantics-consolidation-plan.md'),Path('docs/bson-consolidation-implementation.md'),root/'README.md']:
+ for target in re.findall(r'\]\(([^)]+)\)',p.read_text()):
+  if '://' not in target and not target.startswith('#'):
+   if not (p.parent/target.split('#',1)[0]).exists():missing.append([str(p),target])
+assert not missing,missing
+subprocess.run(['git','diff','--check'],check=True)
+assert not subprocess.check_output(['git','status','--porcelain','--','src','tests'],text=True)
+r['document_checks']={'relative_links_missing':missing,'diff_check':'passed','runtime_tests_match_implementation_commit':True,'project_markdown_validator':'none found'}
+r['artifacts_sha256']={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in root.iterdir() if p.is_file() and p.name!='receipt.json'}
+(root/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+print('Verified source identities, protected evidence, implementation ancestry and document links')

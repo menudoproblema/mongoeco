@@ -1,0 +1,80 @@
+import gzip,hashlib,io,json,re,shutil,subprocess,tarfile
+from pathlib import Path
+ROOT=Path('docs/evidence/bson-consolidation-implementation/bson-input-mutations')
+ROOT.mkdir(exist_ok=True)
+wheel=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip())
+info=json.loads((wheel/'wheel.json').read_text());runtime=json.loads((wheel/'runtime.json').read_text())
+assert len(runtime)==285
+for p,h in runtime.items():
+ assert hashlib.sha256(Path(p).read_bytes()).hexdigest()==h,p
+ assert hashlib.sha256((Path(info['site_packages'])/Path(p).relative_to('src')).read_bytes()).hexdigest()==h,p
+wide=Path('/tmp/mongoeco-bson-mutation-wheel-all.log').read_text()
+unit=Path('/tmp/mongoeco-bson-mutation-wheel-unit-final.log').read_text()
+base=Path('/tmp/mongoeco-bson-mutation-baseline-final.log').read_text()
+a=re.search(r'(\d+) failed, (\d+) passed',wide);assert a
+wide_counts={'failed':int(a[1]),'passed':int(a[2])}
+failures=[x for x in wide.splitlines() if x.startswith('FAILED ')]
+assert len(failures)==wide_counts['failed']==96 and all('[bson_admission-' in x for x in failures)
+assert '72 failed, 99 passed' in base
+b=re.search(r'(\d+) passed, (\d+) subtests passed',unit);assert b
+assert 'failed' not in unit.lower()
+unit_counts={'passed':int(b[1]),'subtests':int(b[2])}
+assert unit_counts['passed']>=1452 and unit_counts['subtests']==4569
+proofs=sorted(wheel.glob('wheel-imports-bson-mutation-*.json'));assert len(proofs)==6,len(proofs)
+for proof in proofs:
+ d=json.loads(proof.read_text());assert d['modules'] and d['exit_code'] in (0,1)
+ assert d['exit_code']==(0 if 'unit' in proof.name else 1) or ('gw' in proof.name and d['exit_code']==0)
+ assert Path(d['site']).resolve()==Path(info['site_packages']).resolve()
+ shutil.copy2(proof,ROOT/proof.name)
+for source,name in [('wheel-all.log','replay.txt.gz'),('wheel-unit-final.log','unit.txt.gz'),('baseline-final.log','baseline.txt.gz'),('build.log','build.txt.gz')]:
+ (ROOT/name).write_bytes(gzip.compress(Path('/tmp/mongoeco-bson-mutation-'+source).read_bytes(),mtime=0))
+portable={}
+for suffix,expected in [('sdk-free',3918),('sdk-free-inserts',942),('sdk-free-reads',748)]:
+ d=json.loads(Path('/tmp/mongoeco-bson-mutation-'+suffix+'.log').read_text())
+ assert d['sdk_available'] is False and d['checks']==expected and d['site']==info['site_packages']
+ (ROOT/(suffix+'.json')).write_text(json.dumps(d,indent=2)+'\n');portable[suffix]=expected
+programs={'/tmp/mongoeco-dispatch-build.py':'build.py.txt','/tmp/mongoeco-bson-mutation-wheel-all.py':'replay.py.txt','/tmp/mongoeco-bson-mutation-wheel-unit-final.py':'unit.py.txt','/tmp/mongoeco_dispatch_artifact_guard.py':'artifact-guard.py.txt','/tmp/mongoeco-bson-mutation-baseline.py':'baseline.py.txt','/tmp/mongoeco-bson-mutation-native-v7.py':'native-controller.py.txt','/tmp/mongoeco-bson-mutation-sdk-free.py':'sdk-free.py.txt','/tmp/mongoeco-bson-mutation-sdk-free-prepare.py':'sdk-free-prepare.py.txt','/tmp/mongoeco-bson-mutation-resources.py':'resources.py.txt','/tmp/mongoeco-bson-mutation-cost.py':'cost.py.txt','/tmp/mongoeco-bson-input-sdk-free.py':'portable-values-and-reads.py.txt','/tmp/mongoeco-bson-mutation-archive.py':'archive.py.txt'}
+for source,name in programs.items():shutil.copy2(source,ROOT/name)
+for source,name in [('/tmp/mongoeco-bson-input-typing.txt','typing.txt'),('/tmp/mongoeco-bson-mutation-lint.log','lint.txt'),('/tmp/mongoeco-bson-mutation-resources.json','resources.json'),('/tmp/mongoeco-bson-mutation-cost.json','cost.json')]:shutil.copy2(source,ROOT/name)
+assert 'negative-errors=20' in (ROOT/'typing.txt').read_text() and 'negative-errors=25' in (ROOT/'typing.txt').read_text()
+assert 'passed' in (ROOT/'lint.txt').read_text()
+resources=json.loads((ROOT/'resources.json').read_text());assert len(resources)==63 and all(x['absent'] for x in resources)
+base_root=Path(Path('/tmp/mongoeco-bson-mutation-baseline-location.txt').read_text().strip())
+shutil.copy2(base_root/'runtime.json',ROOT/'baseline-runtime-sources.json')
+proof=list(base_root.glob('wheel-imports-*.json'));assert len(proof)==1
+assert json.loads(proof[0].read_text())['exit_code']==1
+shutil.copy2(proof[0],ROOT/'baseline-imports.json')
+left=json.loads(Path('/tmp/mongoeco-bson-mutation-api-base.json').read_text());right=json.loads(Path('/tmp/mongoeco-bson-mutation-api-candidate.json').read_text());assert left==right
+(ROOT/'public-api.json').write_text(json.dumps(right,indent=2,sort_keys=True)+'\n')
+native=[];modern=[]
+for iteration in range(1,8):
+ folder=Path('/tmp/mongoeco-bson-mutation-native'+('' if iteration==1 else f'-v{iteration}'))
+ for target in ('7.0','8.0','9.0'):
+  fixture=json.loads((folder/target/'fixture.json').read_text());assert fixture['status']=='succeeded'
+  (ROOT/f'native-{iteration}-{target}.json').write_text(json.dumps(fixture,indent=2)+'\n')
+  (ROOT/f'native-{iteration}-{target}.txt.gz').write_bytes(gzip.compress((folder/(target+'.log')).read_bytes(),mtime=0))
+  if iteration==5:
+   original=json.loads((folder/target/'bson_mutation-check.json').read_text())
+   witness=json.loads(original['cases']['semantic_mutation_closed_sessions'])['bad-sort/update'];assert witness['exception']=='InvalidOperation'
+   modern.append({'target':target,'corpus':original['corpus'],'sdk':fixture['runtime']['pymongo'],'witness':witness})
+  if iteration==7:
+   reference=Path(f'tests/fixtures/semantic_bson_mutation_{target.replace(".","_")}.json');check=folder/target/'bson_mutation-check.json'
+   assert reference.read_bytes()==check.read_bytes()
+   capture=json.loads(reference.read_text());assert hashlib.sha256(Path(capture['corpus']['path']).read_bytes()).hexdigest()==capture['corpus']['sha256']
+   assert len(capture['cases'])==7 and sum(len(json.loads(v)) for v in capture['cases'].values())==701
+   (ROOT/f'native-check-{target}.json.gz').write_bytes(gzip.compress(check.read_bytes(),mtime=0))
+   native.append({'target':target,'reference':str(reference),'sha256':hashlib.sha256(reference.read_bytes()).hexdigest(),'actions':7,'observations':701,'check_byte_identical':True,'corpus':capture['corpus']})
+(ROOT/'native-modern-sort-witness.json').write_text(json.dumps(modern,indent=2)+'\n')
+blob=subprocess.check_output(['git','archive','79d5a62','tests/fixtures','tests/support_write_parity.py','tests/support_bson_observation.py']);protected={}
+with tarfile.open(fileobj=io.BytesIO(blob)) as archive:
+ for entry in archive.getmembers():
+  if entry.isfile():
+   h=hashlib.sha256(archive.extractfile(entry).read()).hexdigest();assert hashlib.sha256(Path(entry.name).read_bytes()).hexdigest()==h,entry.name
+   protected[entry.name]=h
+(ROOT/'protected.json').write_text(json.dumps(protected,indent=2)+'\n')
+(ROOT/'runtime-sources.json').write_text(json.dumps(runtime,indent=2)+'\n')
+files=subprocess.check_output(['git','diff','--name-only','--','src','tests'],text=True).splitlines()+subprocess.check_output(['git','ls-files','--others','--exclude-standard','--','tests'],text=True).splitlines()
+(ROOT/'changed-sources.json').write_text(json.dumps({p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in sorted(set(files))},indent=2)+'\n')
+r={'base_commit':'79d5a62','scope':'B07 public update/delete/findAndModify admission, builtin update replies and internal prepared bulk execution; remaining B07 stays open','wheel':info,'checks':{'native':native,'baseline':{'failed':72,'passed':99},'new_corpus_candidate':{'passed':171},'wide':wide_counts,'unit':unit_counts,'portable':portable,'typing':{'positive':2,'negative_errors':[20,25]},'public_api':'unchanged','protected_files':len(protected),'resources_absent':63},'limits':['No complete B07/D06/D05 acceptance; 96 old bson_admission failures remain visible','Bulk family admission and commands/indices/validators still pending; no UUID default change','Portable mutation checks omit SDK-only Code constructor and the full typed validation error contract','Native SDK4.19 sort+session precedence has an explicit local4.19 control; default4.9 rejects the sort keyword','Cost diagnostic only, not budget acceptance'],'artifacts_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.is_file() and p.name not in ('receipt.json','README.md')}}
+(ROOT/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+print(json.dumps({'wheel':info['sha256'],'wide':wide_counts,'unit':unit_counts,'protected':len(protected),'new_checks':171}))

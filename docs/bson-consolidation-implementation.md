@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas y lifecycle find tienen aceptación propia. `b713e52` añade [inserciones, IDs y errores públicos](#b07--inserciones-ids-y-errores-públicos), sin cerrar la admisión general. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen otras escrituras, codificación por familia bulk, comandos/índices/validators, UUID coordinado y positivos de proyección/sobres/resultados. STANDARD permanece hasta completar las entradas restantes; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
+- B07: lecturas e inserciones tienen aceptación propia. `c83c95c` añade [mutaciones públicas y respuestas builtin](#b07--mutaciones-públicas-y-respuestas-builtin), con 171 checks nuevos correctos. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen codificación por familia bulk, comandos/índices/validators, UUID coordinado y positivos de proyección/sobres/resultados. STANDARD permanece hasta completar las entradas restantes; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1802,3 +1802,30 @@ async delega drop_collection real, sin simular resultados.
 de los grupos, conservando prefijos confirmados. Comandos/índices/validators,
 UUID por defecto y positivos D06/B08 mantienen su aceptación pendiente. B07,
 resto D06, H53, decisión D07 y D05 siguen abiertos.
+
+
+## B07 — Mutaciones públicas y respuestas builtin
+
+`c83c95c` entrega el [corte de mutaciones](evidence/bson-consolidation-implementation/bson-input-mutations/README.md)
+y su [receipt](evidence/bson-consolidation-implementation/bson-input-mutations/receipt.json).
+Update/delete/findAndModify admiten BSON una vez antes de normalizar/compilar;
+los validadores de forma conservan la entrada y el orden propio de sesión,
+capacidad y codificación. IDs upsert y errores públicos conservan opciones
+builtin UUID/fecha sin ejecutar fábricas/decoders del usuario. Bulk usa el
+executor preparado existente para evitar otra admisión por elemento, pero su
+codificación completa por familia sigue pendiente.
+
+- Siete acciones / 701 observaciones nativas por versión 7/8/9, fuente congelada
+  y checks idénticos. Baseline: 72 fallos/99 correctos; candidato: 171 correctos.
+- Gate amplio instalado: 9027 correctos y 96 fallos, todos B07
+  preexistentes y visibles. No se acepta el cierre integrado por ese resultado.
+- 1491 pruebas y 4569 subtests correctos; 3.918
+  observaciones de mutación, 942 de inserción y 748 de lectura realmente sin SDK.
+  El subset portable excluye Code y contrato completo de errores tipados;
+  el perfil SDK conserva ambos. Typing/API/lint correctos.
+- 275 fixtures/observadores históricos intactos; 63 recursos temporales
+  propios comprobados ausentes. Coste diagnóstico: MemoryEngine update_one: 1.16; MemoryEngine update_many: 1.07; MemoryEngine find_one_and_update: 1.16; SQLiteEngine update_one: 1.06; SQLiteEngine update_many: 1.06; SQLiteEngine find_one_and_update: 1.09; D05 queda abierto.
+
+→ Sigue: admisión bulk por familia, después comandos/índices/validators y
+UUID coordinado. Positivos D06/B08, resto D06, H53, decisión D07 y D05 siguen
+por sus owners; STANDARD sigue siendo el default.

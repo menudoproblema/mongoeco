@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre, revisión 20 sobre `79d5a62` y candidato sin aceptar):**
+**Entrada vigente (1 de noviembre, revisión 20 y mutaciones aceptadas en `c83c95c`):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1118,8 +1118,8 @@ sus controles y límites de ejecución local. El siguiente corte es D06a/b.
 
 ### Contraste actual y orden mínimo de ejecución
 
-Relectura vigente sobre HEAD `79d5a62` y el candidato de mutaciones sin
-commitear, identificado en la [revisión 20](evidence/bson-consolidation-review/review20/README.md).
+La revisión 20 se realizó sobre HEAD `79d5a62` y el entonces candidato de
+mutaciones sin commitear, identificado en la [revisión 20](evidence/bson-consolidation-review/review20/README.md).
 El adjunto mantiene SHA-256 `a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca`:
 no introduce hallazgos nuevos respecto de las revisiones anteriores. Sus cuatro
 huecos ya están incorporados y tienen aceptación o pendientes por consumidor.
@@ -1130,7 +1130,8 @@ La revisión 19 conserva sus 16 descargas y hashes r8.0.0; esta revisión verifi
 la integridad de ese receipt y relee el parser oficial, sin atribuirse otra
 verificación completa por descarga ni nuevas ejecuciones MongoDB.
 
-Conversión, lectura e inserciones B07 tienen aceptación propia; no repetir su
+Conversión, lectura, inserciones y el corte de mutaciones `c83c95c` tienen
+aceptación propia; no repetir su
 extracción. El registro de implementación posee el estado aceptado de cada
 corte. Este apartado mantiene el único orden actual; las caracterizaciones y
 receipts anteriores conservan sus límites históricos.
@@ -1249,7 +1250,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 
 | Orden / prioridad | Trabajo y dependencia | Aceptación / owner |
 | --- | --- | --- |
-| 1 / P1 — B07, escrituras y comandos | Revisar y aceptar primero el candidato update/delete/findAndModify; después completar admisión bulk por familia y comandos. Inserciones ya aceptadas. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
+| 1 / P1 — B07, escrituras y comandos | Completar admisión bulk por familia y comandos. Lectura, inserciones y mutaciones públicas ya tienen aceptación propia. Conservar originales hasta codificar, sin endurecer `DocumentCodec.to_internal` ni preparar todo el bulk como un solo envío. | Unidades 2/3 de B07: errores cliente, fase, precedencia, efectos parciales, IDs, índices y eventos. Comandos wire ya decodificados usan la entrada interna preparada. |
 | 2 / P1 — B07, UUID | Después de integrar entradas de escritura, aplicar opciones del dueño de la solicitud y coordinar el default. | Unidad 4: default/UNSPECIFIED, STANDARD y legacy; directa/wire, persistencia y perfil realmente sin SDK. Mantener STANDARD hasta completar el corte. |
 | 3 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
 | 4 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
@@ -1354,39 +1355,33 @@ frente a 60 fallos de la base, con 169 observaciones nativas por versión. El ga
 amplio mantiene 96 fallos B07 y 8.856 correctos. No se reextraen estos mecanismos
 ni se acepta por ello todo bulk, todas las escrituras o el default UUID.
 
-**Candidato actual, no aceptado.** Update/delete/findAndModify tienen código y
-controles sin commitear; no son una extracción pendiente ni una entrega cerrada.
-Las 49 pruebas focales nuevas pasan sobre checkout. La siguiente acción es
-revisar y acreditar ese corte con su fuente final congelada; después completar
-los lotes bulk de la unidad 3 y comandos/índices/validators de la unidad 2,
-reutilizando encode_bson_request, sus constructores de solicitud y la
-preparación común de documentos/IDs. Cada familia bulk debe preservar la entrada hasta su
-codificación: el ejecutor interno no es otro chequeo cliente. La unidad 4
-completa el default UUID; unidad 5 conserva proyecciones y sobres/resultados. No reintroducir admisión por cada helper de
-campo ni volver a codificar una operación interna preparada. D05 incorpora el
-coste diagnóstico Memory find_one 1,12 y find(limit=1) 1,06 del corte de lectura; no se
-acepta su presupuesto global por el buen resultado de otras rutas.
+**Entrega de mutaciones `c83c95c`.** El
+[registro](bson-consolidation-implementation.md#b07--mutaciones-públicas-y-respuestas-builtin)
+y la [evidencia](evidence/bson-consolidation-implementation/bson-input-mutations/README.md)
+aceptan el corte de update/delete/findAndModify, incluyendo pipelines, sesiones,
+precedencias y respuestas builtin. Pasan 171 checks nuevos frente a 72 fallos
+previos; el gate amplio mantiene 96 fallos B07 y 9027 correctos.
+No se reextrae esa frontera ni se infiere cierre general de B07.
 
-**Simplificación y garantías del siguiente corte.**
+**Siguiente corte.** Completar admisión por familia bulk y luego comandos,
+índices/validators, conservando los originales hasta codificar. El uso actual
+del dispatcher interno evita doble admisión pero todavía no codifica el grupo
+completo antes de escribir. Reutilizar `_classic_bulk_batches`, preparación de
+IDs y encoder común; no admitir anticipadamente todo bulk ni copiar objetos
+arbitrarios antes del rechazo BSON. Conservar errores cliente de segundo
+miembro, prefijos de grupos previos, ordered/unordered, IDs, contadores, índices,
+estado y eventos con barrera. Los errores servidor conservan su efecto propio.
 
-- Compartir la codificación BSON y las vistas; mantener el orden de validación
-  en el dueño de cada operación. El candidato distingue sesiones, validación
-  cliente y findAndModify: no sustituir esas diferencias por una secuencia
-  universal ni una colección creciente de flags. Antes de extraer otra clase,
-  contrastar errores simultáneos y fijar los casos por perfil SDK/capacidad.
-- Las entradas de comando ya decodificadas usan el ejecutor interno. Que bulk
-  use ese ejecutor evita la doble codificación, pero no acredita admisión:
-  falta codificar cada familia real antes de escribir su primer elemento.
-  Un test unitario de delegación no sustituye estado, índices y barrera de
-  eventos tras un error del segundo elemento y tras un grupo previo válido.
-- Congelar el corpus suplementario y referencias antes de la aceptación final.
-  Comparar baseline y candidato con la misma fuente del caso y observador,
-  separando sync/async/wire, motor, dialecto y perfil SDK. Conservar tipos de
-  IDs, errores y orden de sobres; no ajustar referencias para encubrir fallos.
-- Vincular gates al hash final de runtime y distribución instalada. Los 186/49
-  controles de esta revisión diagnostican el árbol, sin sustituir replay nativo,
-  perfil portable real, typing/SPI, recursos ni gates integrados. El corte de
-  mutaciones puede aceptarse sin declarar resueltos bulk, comandos o UUID.
+La validación cliente mantiene las fases propias de cada operación y perfil SDK;
+no sustituirlas por una secuencia universal ni flags públicos de omisión. El
+corpus suplementario se congela antes de acreditar baseline y candidato con la
+misma fuente/observador y wheel final. Los controles de copia, representación,
+tipos de respuesta y codecs permanecen; el coste diagnóstico de mutaciones
+(aproximadamente 1,06–1,16) se conserva en D05 junto con el de lecturas.
+
+Unidad 4 completa UUID antes del cambio de default; unidad 5 conserva positivos
+de proyección/sobres/resultados. STANDARD permanece. D06, H53, decisión D07 y
+cierre integrado D05 siguen abiertos, sin otro comparador o codec interno.
 
 **Causa compartida.** La API mezcla normalización interna con codificación de
 solicitudes: puede perder el tipo original o compilar antes del momento en que

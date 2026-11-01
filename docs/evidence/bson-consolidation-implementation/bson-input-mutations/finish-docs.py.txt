@@ -1,0 +1,159 @@
+import hashlib,json,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-mutations')
+commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();short=commit[:7]
+assert subprocess.check_output(['git','log','-1','--format=%s'],text=True).startswith('fix(api): admit mutation BSON packets')
+r=json.loads((root/'receipt.json').read_text());r['implementation_commit']=commit
+(root/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+wide=r['checks']['wide'];unit=r['checks']['unit'];protected=r['checks']['protected_files']
+ratios=json.loads((root/'cost.json').read_text())['ratios']
+cost='; '.join(f"{x['engine']} {x['method']}: {x['cpu_ratio']:.2f}" for x in ratios)
+(root/'README.md').write_text(f'''# B07: admisión de mutaciones y respuestas builtin
+
+Implementación `{short}`, base de runtime `79d5a62`. Aceptación acotada de
+update_one/update_many/replace_one/delete_one/delete_many y los tres
+findAndModify públicos. B07/D06/D05 y el objetivo completo siguen abiertos.
+
+## Cambio y revisión
+
+Las ocho rutas admiten el frame BSON cliente una vez antes de normalizar,
+compilar o escribir. Pipelines de update usan la misma frontera. El encoder
+común conserva valores originales y opciones UUID. Los validadores de forma
+no transforman valores: solo el primer campo decide la forma update/replacement,
+como en el SDK. Filtro None en escritura ya no significa una consulta vacía.
+Los IDs de upsert y errores usan el materializador existente con opciones builtin
+UUID/fecha y dict, sin fábricas o decoders del usuario.
+
+El orden de validaciones y sesión conserva diferencias nativas entre escrituras
+simples, múltiples y findAndModify. Dos errores simultáneos distinguen forma,
+capacidad, sesión, codificación y semántica servidor. Las cabeceras de comandos
+clásicos se codifican antes de q/u; findAndModify conserva su propio orden.
+No se usa la validación de lecturas para imponer reglas anticipadas de sort o
+maxTime a los writes. No se endurece DocumentCodec.to_internal ni se añade un
+flag público para omitir la frontera.
+
+Bulk reutiliza los ejecutores internos preparados: conserva contexto/let y no
+recodifica cada elemento como una llamada cliente independiente. Este cambio
+no acepta la admisión de la familia bulk completa: sigue pendiente preservar
+originales y codificar el grupo antes de su primera escritura. Los dos tests de
+delegación pasan a comprobar el dispatcher interno real, conservando metadata
+y contadores. El adaptador async añade find_one_and_delete por delegación real.
+
+## Evidencia y límites
+
+- [Receipt](receipt.json), [fuentes runtime](runtime-sources.json) y
+  [fuentes cambiadas](changed-sources.json): wheel de 285 módulos y guardas de
+  imports en master/workers, sin mezcla con src. Fuente del corpus congelada.
+- Siete acciones / 701 observaciones por MongoDB 7.0.43/8.0.32/9.0.2 standalone;
+  imágenes fijadas, buildInfo/FCV y SDK 4.19 en los manifests native-7. Cada
+  check final es idéntico al golden correspondiente. Los checks se archivan
+  comprimidos; el hash del BSON/JSON original queda en el receipt.
+- [Baseline](baseline.txt.gz): 72 fallos y 99 checks correctos. Los 171 checks
+  nuevos pasan en el [replay instalado](replay.txt.gz), con directa/wire,
+  sync/async, Memory/SQLite y 7/8/9. El gate amplio tiene {wide['passed']}
+  correctos y {wide['failed']} fallos, todos bson_admission preexistentes,
+  visibles y obligatorios. No se declara un gate integrado verde.
+- [Contratos/unitarias/propiedades](unit.txt.gz): {unit['passed']} pruebas y
+  {unit['subtests']} subtests correctos, sin los warnings tratados como error.
+  Los 49 controles nuevos incluyen una codificación por solicitud, objetos con
+  deepcopy prohibido, estado e índice único, eventos mediante barrera posterior,
+  reapertura SQLite y respuestas upsert sin callbacks/fábricas del usuario.
+- El corpus de errores tipados reutiliza public_error/BSONObservation protegidos:
+  conserva familia compatible, fase/código y contenido/orden BSON de errInfo.
+  Usa el transporte canonical-json existente para no convertir el modelo de
+  observación EJSON en DBRef/fecha antes de compararlo; no cambia el observador.
+- [Sesión y sort modernos](native-modern-sort-witness.json): testigo nativo
+  SDK4.19 de ronda 5 y control local con perfil 4.19. El perfil predeterminado
+  4.9 rechaza ese keyword por capacidad antes de sesión; no se exige una
+  capacidad moderna al perfil antiguo ni se normalizan sus excepciones.
+- Python 3.13.15 realmente sin SDK: [3.918 observaciones](sdk-free.json) de seis
+  acciones de mutación, excluyendo constructor Code exclusivo del SDK y contrato
+  completo de errores de validación tipados. UUID tiene cinco modos explícitos;
+  Decimal128 portable se observa por texto decimal público. También pasan
+  [942 observaciones de inserción](sdk-free-inserts.json) y
+  [748 controles de lectura](sdk-free-reads.json). El perfil SDK conserva BID
+  y errores tipados completos; no se atribuye esa cobertura al portable.
+- [Typing](typing.txt): dos positivos y 20/25 negativos; [API](public-api.json)
+  idéntica al baseline; [lint](lint.txt) correcto. [Históricos](protected.json):
+  {protected} fixtures/observadores sin cambios. [Recursos](resources.json):
+  21 contenedores y 42 volúmenes propios comprobados ausentes con Docker operativo.
+- [Coste diagnóstico](cost.json), ABBA×2/200 solicitudes y replay concurrente:
+  {cost}. D05 conserva estos incrementos; no es aceptación de presupuesto.
+
+## Pendiente
+
+Admisión por familia bulk antes de sus writes, comandos/índices/validators,
+UUID coordinado y cambio de default (STANDARD permanece), proyecciones calculadas,
+sobres raw/update y resultado público bulk D06/B08. El resto de contextos D06,
+H53, decisión opcional D07, matrices/cobertura/coste e integración D05 conservan
+sus owners. Las rondas intermedias son feedback; no se alteran referencias u
+observadores históricos para aceptar el candidato.
+''')
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text()
+needle='- B07: lecturas y lifecycle find tienen aceptación propia.'
+a=s.index(needle);b=s.index('\n\n',a)
+s=s[:a]+f'''- B07: lecturas e inserciones tienen aceptación propia. `{short}` añade [mutaciones públicas y respuestas builtin](#b07--mutaciones-públicas-y-respuestas-builtin), con 171 checks nuevos correctos. El gate amplio mantiene 96 fallos B07 obligatorios. Siguen codificación por familia bulk, comandos/índices/validators, UUID coordinado y positivos de proyección/sobres/resultados. STANDARD permanece hasta completar las entradas restantes; el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia y garantías.''' +s[b:]
+s+=f'''\n\n## B07 — Mutaciones públicas y respuestas builtin
+
+`{short}` entrega el [corte de mutaciones](evidence/bson-consolidation-implementation/bson-input-mutations/README.md)
+y su [receipt](evidence/bson-consolidation-implementation/bson-input-mutations/receipt.json).
+Update/delete/findAndModify admiten BSON una vez antes de normalizar/compilar;
+los validadores de forma conservan la entrada y el orden propio de sesión,
+capacidad y codificación. IDs upsert y errores públicos conservan opciones
+builtin UUID/fecha sin ejecutar fábricas/decoders del usuario. Bulk usa el
+executor preparado existente para evitar otra admisión por elemento, pero su
+codificación completa por familia sigue pendiente.
+
+- Siete acciones / 701 observaciones nativas por versión 7/8/9, fuente congelada
+  y checks idénticos. Baseline: 72 fallos/99 correctos; candidato: 171 correctos.
+- Gate amplio instalado: {wide['passed']} correctos y 96 fallos, todos B07
+  preexistentes y visibles. No se acepta el cierre integrado por ese resultado.
+- {unit['passed']} pruebas y {unit['subtests']} subtests correctos; 3.918
+  observaciones de mutación, 942 de inserción y 748 de lectura realmente sin SDK.
+  El subset portable excluye Code y contrato completo de errores tipados;
+  el perfil SDK conserva ambos. Typing/API/lint correctos.
+- {protected} fixtures/observadores históricos intactos; 63 recursos temporales
+  propios comprobados ausentes. Coste diagnóstico: {cost}; D05 queda abierto.
+
+→ Sigue: admisión bulk por familia, después comandos/índices/validators y
+UUID coordinado. Positivos D06/B08, resto D06, H53, decisión D07 y D05 siguen
+por sus owners; STANDARD sigue siendo el default.
+'''
+p.write_text(s)
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text()
+s=s.replace('**Entrada vigente (1 de noviembre, revisión 20 sobre `79d5a62` y candidato sin aceptar):**',f'**Entrada vigente (1 de noviembre, revisión 20 y mutaciones aceptadas en `{short}`):**',1)
+s=s.replace('Relectura vigente sobre HEAD `79d5a62` y el candidato de mutaciones sin\ncommitear, identificado en la [revisión 20]', 'La revisión 20 se realizó sobre HEAD `79d5a62` y el entonces candidato de\nmutaciones sin commitear, identificado en la [revisión 20]',1)
+s=s.replace('Conversión, lectura e inserciones B07 tienen aceptación propia; no repetir su',f'Conversión, lectura, inserciones y el corte de mutaciones `{short}` tienen\naceptación propia; no repetir su',1)
+s=s.replace('Revisar y aceptar primero el candidato update/delete/findAndModify; después completar admisión bulk por familia y comandos. Inserciones ya aceptadas.', 'Completar admisión bulk por familia y comandos. Lectura, inserciones y mutaciones públicas ya tienen aceptación propia.',1)
+a=s.index('**Candidato actual, no aceptado.**');b=s.index('**Causa compartida.**',a)
+s=s[:a]+f'''**Entrega de mutaciones `{short}`.** El
+[registro](bson-consolidation-implementation.md#b07--mutaciones-públicas-y-respuestas-builtin)
+y la [evidencia](evidence/bson-consolidation-implementation/bson-input-mutations/README.md)
+aceptan el corte de update/delete/findAndModify, incluyendo pipelines, sesiones,
+precedencias y respuestas builtin. Pasan 171 checks nuevos frente a 72 fallos
+previos; el gate amplio mantiene 96 fallos B07 y {wide['passed']} correctos.
+No se reextrae esa frontera ni se infiere cierre general de B07.
+
+**Siguiente corte.** Completar admisión por familia bulk y luego comandos,
+índices/validators, conservando los originales hasta codificar. El uso actual
+del dispatcher interno evita doble admisión pero todavía no codifica el grupo
+completo antes de escribir. Reutilizar `_classic_bulk_batches`, preparación de
+IDs y encoder común; no admitir anticipadamente todo bulk ni copiar objetos
+arbitrarios antes del rechazo BSON. Conservar errores cliente de segundo
+miembro, prefijos de grupos previos, ordered/unordered, IDs, contadores, índices,
+estado y eventos con barrera. Los errores servidor conservan su efecto propio.
+
+La validación cliente mantiene las fases propias de cada operación y perfil SDK;
+no sustituirlas por una secuencia universal ni flags públicos de omisión. El
+corpus suplementario se congela antes de acreditar baseline y candidato con la
+misma fuente/observador y wheel final. Los controles de copia, representación,
+tipos de respuesta y codecs permanecen; el coste diagnóstico de mutaciones
+(aproximadamente 1,06–1,16) se conserva en D05 junto con el de lecturas.
+
+Unidad 4 completa UUID antes del cambio de default; unidad 5 conserva positivos
+de proyección/sobres/resultados. STANDARD permanece. D06, H53, decisión D07 y
+cierre integrado D05 siguen abiertos, sin otro comparador o codec interno.
+
+''' +s[b:]
+p.write_text(s)
+print('Owners and evidence updated for',short)

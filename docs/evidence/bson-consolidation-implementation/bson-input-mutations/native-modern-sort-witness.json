@@ -1,0 +1,215 @@
+[
+  {
+    "target": "7.0",
+    "corpus": {
+      "path": "tests/differential/semantic_bson_mutation_cases.py",
+      "sha256": "55d003c6de23e9eb9566d353940490008366ae12c769121a71b3711664c55303",
+      "observationEncoding": "canonical-json"
+    },
+    "sdk": "4.19.0",
+    "witness": {
+      "ok": false,
+      "phase": "invoke",
+      "exception": "InvalidOperation",
+      "code": null,
+      "state": {
+        "type": "list",
+        "items": [
+          {
+            "type": "document",
+            "fields": [
+              [
+                {
+                  "type": "str",
+                  "utf8": "5f6964"
+                },
+                {
+                  "type": "int",
+                  "value": 0
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "utf8": "76"
+                },
+                {
+                  "type": "int",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "utf8": "6974656d73"
+                },
+                {
+                  "type": "list",
+                  "items": [
+                    {
+                      "type": "document",
+                      "fields": [
+                        [
+                          {
+                            "type": "str",
+                            "utf8": "78"
+                          },
+                          {
+                            "type": "int",
+                            "value": 1
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "target": "8.0",
+    "corpus": {
+      "path": "tests/differential/semantic_bson_mutation_cases.py",
+      "sha256": "55d003c6de23e9eb9566d353940490008366ae12c769121a71b3711664c55303",
+      "observationEncoding": "canonical-json"
+    },
+    "sdk": "4.19.0",
+    "witness": {
+      "ok": false,
+      "phase": "invoke",
+      "exception": "InvalidOperation",
+      "code": null,
+      "state": {
+        "type": "list",
+        "items": [
+          {
+            "type": "document",
+            "fields": [
+              [
+                {
+                  "type": "str",
+                  "utf8": "5f6964"
+                },
+                {
+                  "type": "int",
+                  "value": 0
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "utf8": "76"
+                },
+                {
+                  "type": "int",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "utf8": "6974656d73"
+                },
+                {
+                  "type": "list",
+                  "items": [
+                    {
+                      "type": "document",
+                      "fields": [
+                        [
+                          {
+                            "type": "str",
+                            "utf8": "78"
+                          },
+                          {
+                            "type": "int",
+                            "value": 1
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "target": "9.0",
+    "corpus": {
+      "path": "tests/differential/semantic_bson_mutation_cases.py",
+      "sha256": "55d003c6de23e9eb9566d353940490008366ae12c769121a71b3711664c55303",
+      "observationEncoding": "canonical-json"
+    },
+    "sdk": "4.19.0",
+    "witness": {
+      "ok": false,
+      "phase": "invoke",
+      "exception": "InvalidOperation",
+      "code": null,
+      "state": {
+        "type": "list",
+        "items": [
+          {
+            "type": "document",
+            "fields": [
+              [
+                {
+                  "type": "str",
+                  "utf8": "5f6964"
+                },
+                {
+                  "type": "int",
+                  "value": 0
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "utf8": "76"
+                },
+                {
+                  "type": "int",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "utf8": "6974656d73"
+                },
+                {
+                  "type": "list",
+                  "items": [
+                    {
+                      "type": "document",
+                      "fields": [
+                        [
+                          {
+                            "type": "str",
+                            "utf8": "78"
+                          },
+                          {
+                            "type": "int",
+                            "value": 1
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

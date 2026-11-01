@@ -1,0 +1,183 @@
+{
+  "base_commit": "79d5a62",
+  "scope": "B07 public update/delete/findAndModify admission, builtin update replies and internal prepared bulk execution; remaining B07 stays open",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-m8g89zz6/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "80fbc3b972d363b60a1c3d17642d545a686728bcb54f79a2fe107683c20f8f9f",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-m8g89zz6/site-packages",
+    "modules": 285
+  },
+  "checks": {
+    "native": [
+      {
+        "target": "7.0",
+        "reference": "tests/fixtures/semantic_bson_mutation_7_0.json",
+        "sha256": "988496efed5940bf88fdb652a62d8d31e9da30615781a4532bd4fe445a5b09dc",
+        "actions": 7,
+        "observations": 701,
+        "check_byte_identical": true,
+        "corpus": {
+          "path": "tests/differential/semantic_bson_mutation_cases.py",
+          "sha256": "e35ae255a2dccbf3c8c1ec9decd69ab857f97064c5a7560479025fc51bdd492a",
+          "observationEncoding": "canonical-json"
+        }
+      },
+      {
+        "target": "8.0",
+        "reference": "tests/fixtures/semantic_bson_mutation_8_0.json",
+        "sha256": "672852d87053478c0affa20565db0b61646694248b9b33fac87acc10be713017",
+        "actions": 7,
+        "observations": 701,
+        "check_byte_identical": true,
+        "corpus": {
+          "path": "tests/differential/semantic_bson_mutation_cases.py",
+          "sha256": "e35ae255a2dccbf3c8c1ec9decd69ab857f97064c5a7560479025fc51bdd492a",
+          "observationEncoding": "canonical-json"
+        }
+      },
+      {
+        "target": "9.0",
+        "reference": "tests/fixtures/semantic_bson_mutation_9_0.json",
+        "sha256": "baf62ef2e1a5640bef1268eb33f04988a89798a156b943dde3630b2ba8cdb0de",
+        "actions": 7,
+        "observations": 701,
+        "check_byte_identical": true,
+        "corpus": {
+          "path": "tests/differential/semantic_bson_mutation_cases.py",
+          "sha256": "e35ae255a2dccbf3c8c1ec9decd69ab857f97064c5a7560479025fc51bdd492a",
+          "observationEncoding": "canonical-json"
+        }
+      }
+    ],
+    "baseline": {
+      "failed": 72,
+      "passed": 99
+    },
+    "new_corpus_candidate": {
+      "passed": 171
+    },
+    "wide": {
+      "failed": 96,
+      "passed": 9027
+    },
+    "unit": {
+      "passed": 1491,
+      "subtests": 4569
+    },
+    "portable": {
+      "sdk-free": 3918,
+      "sdk-free-inserts": 942,
+      "sdk-free-reads": 748
+    },
+    "typing": {
+      "positive": 2,
+      "negative_errors": [
+        20,
+        25
+      ]
+    },
+    "public_api": "unchanged",
+    "protected_files": 275,
+    "resources_absent": 63
+  },
+  "limits": [
+    "No complete B07/D06/D05 acceptance; 96 old bson_admission failures remain visible",
+    "Bulk family admission and commands/indices/validators still pending; no UUID default change",
+    "Portable mutation checks omit SDK-only Code constructor and the full typed validation error contract",
+    "Native SDK4.19 sort+session precedence has an explicit local4.19 control; default4.9 rejects the sort keyword",
+    "Cost diagnostic only, not budget acceptance"
+  ],
+  "artifacts_sha256": {
+    "unit.txt.gz": "95d1494c60182459f4dc0d0b7b9f8eca27fdc9ad9512e421cb92eacc49a43490",
+    "native-1-7.0.json": "f70bfa9e9546321bc099dfe00ced76ae9dc4325a702e19ec4eda11d46135e669",
+    "wheel-imports-bson-mutation-replay-final-master.json": "34db270cdbe05e6d9dd0aa0a7a72c07bd7875cd9b48d75ee5bde601ec18cf813",
+    "native-2-8.0.json": "4308f995216fc4065891e200b6b008aa86b39fa69a247ec5480e896c7015bc37",
+    "native-3-8.0.json": "0ba4cae00af9f66c98c2593f3db6f8780bca4a145fd601f49c45ea3d0213fe64",
+    "wheel-imports-bson-mutation-replay-final-gw1.json": "51511eaa63651f6e85c4b20348b32305adadb6e5a88c189fecd30b6ae56fd133",
+    "native-6-9.0.txt.gz": "b89f523b39a4b42b7fc127f83e15e540b319eecbc01141a5136a3abb1fc8b23c",
+    "native-6-8.0.txt.gz": "0cd52d320aa55d11b78a952fb898120f6ecfb5ea0d7aea74ffbc2ab0195d0a10",
+    "native-3-9.0.txt.gz": "8528b299f671b2d6366f00e03d2bdc6a94700f2bcae41c9491b4292f44db2d33",
+    "native-3-8.0.txt.gz": "163dff8f706e13a5d951663244590b3bc835197eea3d8b4fa6ec1d005a12a7db",
+    "wheel-imports-bson-mutation-replay-final-gw0.json": "edffeb96ad7dd8d6c15ac76ef1c5d5894e9454b70a6692a05464df8bc528c53f",
+    "artifact-guard.py.txt": "d3f1ddd3376418a72b6ec4aea27b7df0f1be19b17a7114f4339eaf0efae9307f",
+    "baseline-imports.json": "439e55a4061a30762b3f2f9d358517648583dbb7896dd27d5882d4737bf31ed2",
+    "native-5-7.0.txt.gz": "94b20ad7ab29431b13016948bcf116645f782c6b3f7dfd747967cd22ee130f9b",
+    "runtime-sources.json": "5ba0a8f1911e3baec714545c860a2f79da64237da01012d8d879d88eba68009b",
+    "native-check-7.0.json.gz": "342d51663049cf0f541f26269ff3cde7653b4b2569e3b5ef45763f1ec461c34d",
+    "build.py.txt": "55a5db04fba04438231168079e62c6e25be012c9d3f3f485eaf684973c8718ad",
+    "replay.py.txt": "aa3d43f16ea615f68068dc20ba5225fde7a6a2a46a9c9d18adb5303e93c09244",
+    "native-1-9.0.json": "bd3328a6aef0142b34b4e50ae28cb088218f7072d881dc0622a50690cb4a5c1c",
+    "cost.py.txt": "9da3455f24f06242fc563b063fbef0672c5e8fba9c0b62364a9f0ac59f828ff2",
+    "unit.py.txt": "758dc3342662466d7dd123d817368f12431d1099314e9c9814ee6971c660abf6",
+    "native-2-7.0.txt.gz": "42d61f5a9b99bb1e99b3cf79b34cb2f0bb3bae780fced6939828b0c45804d82d",
+    "sdk-free-reads.json": "76e46dfd266ea3fbbc167c820770ea96dbf78c95e32cef65244b3f92147a15c7",
+    "cost.json": "d761046ad03ae3e44237879a386587e004ebf86d3f8fb61e4b886be154d9bff2",
+    "native-4-8.0.txt.gz": "376aa950846bd1637ec000372055d50de738d6cc6ce7291d077ada0b491cc627",
+    "native-4-9.0.txt.gz": "1697590c6487f3c0b86b71ebe8f8efd088dc91718c47e75fd1a81ef1ae2f5884",
+    "native-7-9.0.json": "c42456ecbed4972b5ba83b978c559931d646f373206078f192bff05f38c2f27a",
+    "native-6-9.0.json": "041c83bc5ebbecfa643b70b0b7513728947f1a98c5bcb69136a3a1039c256cff",
+    "sdk-free.py.txt": "9242b9c1953b6f8505043da97c8d135bdebdad938129602074f342baf897cc8c",
+    "native-1-8.0.txt.gz": "e189e6e6dccd3eb630bd4cd703d93c008a1646cfb70faf85e20c76e6cc929ef3",
+    "native-1-9.0.txt.gz": "b06ea44ac917b440c74e64cbcb9605a7e2312ee22c8c86c7782f61cceb7df70e",
+    "finalize.py.txt": "fac132bf44222c5aa29e108f75b4a8fa3a1b3a6fade90a70890e03aab0efee4b",
+    "native-6-7.0.json": "3c01b94cfb76ab9f9491d63e078fc4e4031e7876c9ae6abc41488ff41ed88900",
+    "native-7-7.0.json": "d7b3813282da73f0a0c1efb89f03106ef9ef280690961bb7ee2849712926ca60",
+    "public-api.json": "18f336380aa25bc6fecff86f5e353671059f3576b3913964f20dabfeae19ad7a",
+    "native-5-8.0.json": "06a76dc441de0a113bf3fe626eb0b08941565f9b7981ec8a863d780eb67dceaa",
+    "native-4-8.0.json": "11365189e2a9d1dcd6385f1149830f35cbf8182994d02f49572abbd157a288d2",
+    "typing.txt": "966627c75016896aa50b07034ca99b2ee74838d60272b742c102f0dd3af9e00b",
+    "portable-values-and-reads.py.txt": "4c2e1e966f57a2040c328dcf92306faa9bcedba704504ed5dff67296e95723ae",
+    "resources.json": "6bb32677cf1b2ff95e1595819078ec450831ce6c71f689216015f91271b3cab0",
+    "native-7-7.0.txt.gz": "2640ead8ccf8e292ec55ac3d13ddacc80bf8071c71575947a4903abd0f655ef9",
+    "replay.txt.gz": "995f90faf7bc5ca8ab7291289bc1249ff2ba332c3a1df5f1f91c2414b6812143",
+    "build.txt.gz": "40f2624f76b6bbb098be317ee4e7c177a6a48af856b69075d019aa8c4e3d1f5c",
+    "sdk-free-prepare.py.txt": "4492c944d472923cd80f4e688c4b8d6f2a4f4d5c0ce78fdecc045ae32d582a69",
+    "README.md": "597d79a1c8083250c200237647679f8494c45ae4c315e1a952e928c083c2d850",
+    "native-3-9.0.json": "3b800a880f333c05fe88e6d1ccd06572c8d5c57bb3ca5c5c244ea3f929a2f65c",
+    "native-2-9.0.json": "6e7baeafcac4d8e876d79d68973f0e682aec280110cb10a6ff37e313e38ae567",
+    "native-2-8.0.txt.gz": "7fd2edca951c31dcf3960df1b28f492bb8f28b7a5be3caabe8de0bdfcf951fff",
+    "native-2-9.0.txt.gz": "21405a9a7e3ccac885810db4b60ffbe1730fb537a876c1d54121e256df74265b",
+    "native-4-7.0.txt.gz": "0cfde29cb5f016fd34a860aafe625891584ed01deda7c45f2a4b1677d954f06d",
+    "baseline.py.txt": "4a47f3bf229d6d9df3b1e28a7128c7ba194fdc967d7e3d252d5ed9d328052bb7",
+    "native-1-8.0.json": "9ee4083438d66be359cf300ec22ed8f1ccd971d514d58fa201ee16bdec93d6c4",
+    "native-modern-sort-witness.json": "d0d0b3e7f0e992004ce37f21b8c68444462a99367bccffeb685baf31a14d9fc8",
+    "resources.py.txt": "8981ee59d05ebf9e5b38079cf648fbf21b85970058fa9837ca697802f649375f",
+    "native-1-7.0.txt.gz": "cfa028442f5d666855b962de22ea79f4e80adb337400ba20920b23689beb055a",
+    "wheel-imports-bson-mutation-unit-final-master.json": "687013dde758f176c09fbe74a1cc75d6ce8cd19396d1661b2308a44151e7c080",
+    "finish-docs.py.txt": "01360374e3929d58954507d499d96cde8820037778953c08cbb28fc23bf85a89",
+    "native-check-8.0.json.gz": "21e1d5a0e9f6e21523366787258c88b89cc31a7bd4d9ac91aea062131eb482c8",
+    "lint.txt": "fc41cd1c32c6609f5145b0bfef62bd557c91bad1fd060c84a6aaaf8bddbf9fe5",
+    "sdk-free.json": "e49251b7b569a65df9dc02353d308bb924831e3ae37d65e0774731554e8f6a5d",
+    "changed-sources.json": "1899b40d60dcd0de50b439b0d04a751c40424cc4af00b89ad8de2b5603b038fe",
+    "native-7-8.0.txt.gz": "c070afd3298dd64fb094942de96aaffcf4e04d0457e03a2fdbc3a09b0977176e",
+    "native-7-9.0.txt.gz": "6cc667f486e5873511b17922e70b8eece82cf3ea3db21b0d1ca17299145e9358",
+    "native-2-7.0.json": "5805dde1f98cfa85a1a0a0ae46d9fb0fbdb075bbb94870ae171e8b936e4f5715",
+    "native-3-7.0.json": "2e3d977da94ac24fa07e1ba9d043ef60afcf90b7eeb422dd2ffac0c7b5f86e61",
+    "native-6-8.0.json": "9879297267134d7c4b7d04d8310aa975c0133a1ab2be4ab24300b6ccc45917ab",
+    "native-7-8.0.json": "82a556c3aeb931bf672c6d23ecfafd646f4705739a49c97372a656c41992fe92",
+    "archive.py.txt": "02a0bcc66807a3c8fe04eef624ed9c3ad0521e28fe67699171693e620b46f4a2",
+    "native-5-7.0.json": "c80722df7befef101fb000c3245cf71660b86e80c50c051e258b09d2ba3f7d13",
+    "native-4-7.0.json": "da510eb4639b75fd6459f67f578169919fdd918925ee0217bca37021408b23e6",
+    "native-6-7.0.txt.gz": "5a39ca0f90e55ff7c22eee64253580571e3fb93f916f6bb04ed2a671728ec8c7",
+    "wheel-imports-bson-mutation-replay-final-gw3.json": "edffeb96ad7dd8d6c15ac76ef1c5d5894e9454b70a6692a05464df8bc528c53f",
+    "baseline.txt.gz": "0b709d57cbffac01cd07cd97d565d7a43ccd8b0ab053af06b62ef0fbac1703ca",
+    "native-controller.py.txt": "bce26869c9ea23c626144eada64157c25c5d366a0ab8690182e88851a13c9fdb",
+    "wheel-imports-bson-mutation-replay-final-gw2.json": "51511eaa63651f6e85c4b20348b32305adadb6e5a88c189fecd30b6ae56fd133",
+    "native-4-9.0.json": "12cd315727cb290ed0307e2732e1d59b96c5a74545453a037ad3d38c1cf492aa",
+    "native-5-9.0.json": "976f16bc7a915890052a3903572493153566c25958ca2a8dbf85f016bdcd5225",
+    "native-check-9.0.json.gz": "8995f4398cb1eb12a07a1349c1147147606681b9c2a31fa110fafede7dbe5559",
+    "native-3-7.0.txt.gz": "15efc41fc977ab04b0fd2ed2637a53020100c658d0a6b380308a02324d0f115d",
+    "native-5-9.0.txt.gz": "d0e7638387ecd91358403e137987fced1a7af8497789d7580a2eca4e6a3376bb",
+    "native-5-8.0.txt.gz": "f4a10151568b6fefbfe83c134e643041c2525603d0f3c4855b48193ccac568f7",
+    "baseline-runtime-sources.json": "ddf020f747b777c4e19b9f56a22ffbd9096adec176ef3dd362c419a0e313c9af",
+    "sdk-free-inserts.json": "ee8fe189b9cd29b82912916751ee33a9b317c5f921b3b0c8b5083156dab83540",
+    "protected.json": "1f2b362632b493b6df045cdda8353725a8e0f53f09c065ebed4e381192e76e1f"
+  },
+  "implementation_commit": "c83c95c7316c933af3bce40dd65d9432d6f26bec",
+  "document_checks": {
+    "relative_links_missing": [],
+    "diff_check": "passed",
+    "runtime_tests_match_implementation_commit": true,
+    "project_markdown_validator": "none found"
+  }
+}

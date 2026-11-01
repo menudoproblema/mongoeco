@@ -1,0 +1,317 @@
+{
+  "scope": "diagnostic only: ABBA x2, 200 requests per case, concurrent replay; no D05 budget acceptance",
+  "samples": [
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.02919499999999997
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.065772
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.03583700000000001
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.10726199999999997
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.251425
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.10990699999999998
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.033459000000000017
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.070359
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.04210799999999998
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.12126499999999996
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.263802
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.12083500000000003
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.033198000000000005
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.07134500000000005
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.043057999999999985
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.11540499999999998
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.258914
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.119815
+        }
+      ]
+    },
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.028695000000000026
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.065411
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.03658800000000001
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.10945000000000005
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.23453199999999996
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.105317
+        }
+      ]
+    },
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.028795000000000015
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.065058
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.03653600000000001
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.105267
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.23347700000000005
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.10929500000000003
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.03312799999999999
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.06952900000000001
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.041864999999999986
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.10513199999999995
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.24842399999999998
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.11584099999999997
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.033829000000000053
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.06970100000000001
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.041615999999999986
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.11239700000000002
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.24989400000000006
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.11241599999999996
+        }
+      ]
+    },
+    {
+      "label": "base",
+      "rows": [
+        {
+          "engine": "MemoryEngine",
+          "method": "update_one",
+          "cpu": 0.02882499999999999
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "update_many",
+          "cpu": 0.06611699999999998
+        },
+        {
+          "engine": "MemoryEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.03671300000000005
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_one",
+          "cpu": 0.10637000000000002
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "update_many",
+          "cpu": 0.24491000000000007
+        },
+        {
+          "engine": "SQLiteEngine",
+          "method": "find_one_and_update",
+          "cpu": 0.10663499999999992
+        }
+      ]
+    }
+  ],
+  "ratios": [
+    {
+      "engine": "MemoryEngine",
+      "method": "update_one",
+      "cpu_ratio": 1.156731018959398
+    },
+    {
+      "engine": "MemoryEngine",
+      "method": "update_many",
+      "cpu_ratio": 1.0708040158866896
+    },
+    {
+      "engine": "MemoryEngine",
+      "method": "find_one_and_update",
+      "cpu_ratio": 1.1577014429479513
+    },
+    {
+      "engine": "SQLiteEngine",
+      "method": "update_one",
+      "cpu_ratio": 1.0603479872720605
+    },
+    {
+      "engine": "SQLiteEngine",
+      "method": "update_many",
+      "cpu_ratio": 1.0587860763379042
+    },
+    {
+      "engine": "SQLiteEngine",
+      "method": "find_one_and_update",
+      "cpu_ratio": 1.087562680619918
+    }
+  ]
+}
