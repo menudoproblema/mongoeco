@@ -1305,6 +1305,24 @@ No implementa ni acepta B07: el corpus obligatorio nuevo tiene 96 fallos y 51
 checks correctos en el baseline `2ae4b56`, diferenciados de los 97 nodos
 históricos de D05. No se ocultan con xfail ni normalización del resultado.
 
+**Entrega de lectura `0b01a62`.** El
+[registro](bson-consolidation-implementation.md#b07--codificación-de-lecturas-y-solicitudes-find-diferidas)
+y el [receipt](evidence/bson-consolidation-implementation/bson-input-reads/receipt.json)
+aceptan el corte de codificación común de lecturas y find diferido, sin cerrar
+B07. Las 75 comprobaciones del corpus suplementario pasan frente a 48 fallos
+del baseline. Se conservan 96 fallos del corpus de admisión completo en el gate
+amplio (8.727 correctas), junto con 1.199 pruebas/181 subtests y 748 controles
+SDK-free correctos. La tabla siguiente conserva criterios; no vuelve a pedir
+crear el componente, otra caché o reemplazar el cursor entregados.
+
+La implementación restante empieza por los lotes de escritura (unidad 3) y
+comandos/índices/validators de la unidad 2, reutilizando encode_bson_request y
+encode_operation_bson. La unidad 4 completa el default UUID; unidad 5 conserva
+proyecciones y sobres/resultados. No reintroducir admisión por cada helper de
+campo ni volver a codificar una operación interna preparada. D05 incorpora el
+coste diagnóstico Memory find_one 1,12 y find(limit=1) 1,06 de este corte; no se
+acepta su presupuesto global por el buen resultado de otras rutas.
+
 **Causa compartida.** La API mezcla normalización interna con codificación de
 solicitudes: puede perder el tipo original o compilar antes del momento en que
 el SDK codifica. La frontera pertenece a la solicitud cliente y a su lote,

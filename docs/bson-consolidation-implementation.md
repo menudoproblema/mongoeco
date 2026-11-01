@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: el preflight nativo de admisión fija fase de find, mutación de filtros y codificación por grupos bulk; su corpus obligatorio sigue rojo (96 fallos / 51 checks correctos), sin implementación aceptada. Véase el [corte activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos). Admisión BSON general (tipos arbitrarios y Decimal crudo) permanece fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
+- B07: el corte de [codificación de lecturas](#b07--codificación-de-lecturas-y-solicitudes-find-diferidas) entrega el componente común y el lifecycle find. El preflight conserva su baseline histórico (96 fallos / 51 checks correctos); el gate amplio del corte mantiene 96 fallos B07 obligatorios, sin aceptar escrituras/comandos ni el default UUID. Véase el [corte activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos). Admisión BSON general (tipos arbitrarios y Decimal crudo) permanece fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1720,3 +1720,52 @@ aceptación D05/B07. El corpus nuevo permanece rojo y obligatorio, sin xfail.
 → Sigue: implementar la admisión diferida y común sobre las fronteras existentes,
 integrar los lotes de escritura y completar el corte UUID antes de cambiar su
 default. Conservar los consumidores positivos y el resto del objetivo íntegro.
+
+
+## B07 — Codificación de lecturas y solicitudes find diferidas
+
+`0b01a62` entrega el [corte de lectura](evidence/bson-consolidation-implementation/bson-input-reads/README.md)
+y su [receipt](evidence/bson-consolidation-implementation/bson-input-reads/receipt.json).
+Reutiliza el encoder SDK, el lector BSON raw y la normalización existente;
+el perfil portable no requiere instalar SDK. La admisión cliente no endurece
+DocumentCodec.to_internal ni vuelve a codificar planes internos preparados.
+
+Find conserva sus referencias hasta ejecutar; clone toma un snapshot, rewind
+prepara otra solicitud y explain opera sobre un clon sin congelar la original.
+Los valores inválidos se rechazan en su fase, no al crear/cerrar el cursor.
+El binding usa el contexto final y la caché solo publica el artefacto completo.
+Las rutas internas y el fallback de agregación conservan el plan/contexto ya
+preparados en vez de serializar NOW como declaración pública. Distinct usa ese
+constructor interno y evita una segunda admisión por el frontend find.
+
+Find_one admite IDs escalares como el driver. La representación normalizada
+ha descubierto dos consumidores incompletos: regex u en el matcher común e
+Int64 en parámetros Search. El corte usa las vistas existentes, conserva la
+precisión de enteros y los filtros MQL, y no amplía el dominio vectorial a
+Decimal/bool ni acredita ranking Atlas. Se omiten los opcionales nulos del
+cuerpo codificado sin eliminar los null anidados ni el valor None de la API.
+
+- Tres acciones / 39 observaciones nativas por versión 7.0.43/8.0.32/9.0.2,
+  fuente final congelada y checks idénticos. El baseline ecfac84 falla en 48
+  replays y pasa 27 checks; el candidato pasa los 75 del corpus nuevo.
+- Gate amplio instalado: 8.727 checks correctos y 96 fallos, todos del corpus
+  bson_admission que conserva los pendientes. No es un gate integrado verde;
+  no hay xfail ni filtrado de esos fallos. Los demás replays no retroceden.
+- 1.199 pruebas instaladas de unitarias/SPI/propiedades y 181 subtests pasan.
+  Guards de una codificación por lectura, cero codecs/fábricas de entrada,
+  contexto atómico, una compilación y parámetros Search representados.
+- Python 3.13.15 sin SDK: 748 controles de rechazos, fase, resultados y bytes
+  UUID con UNSPECIFIED explícito. Typing (2 positivos y 20/25 negativos), API
+  manifest y lint ratchet pasan. El wheel de 285 módulos y sus imports quedan
+  identificados; no se mezcla src con la distribución instalada.
+- Cuatro rondas de desarrollo conservadas: 12 contenedores y 24 volúmenes
+  propios verificados ausentes; referencias/observadores históricos intactos.
+- Coste diagnóstico ABBA×2: Memory find(limit=1) 1,06 y find_one 1,12; con codecs
+  1,04/1,12. SQLite entre 0,98–1,04; aggregate alrededor de 1,00–1,02 y cursor
+  no consumido alrededor de 0,23. D05 conserva los incrementos de lectura y
+  presupuestos anteriores, además de matrices/cobertura/cierre integrado.
+
+Este corte no acepta B07 completo. Siguen escrituras por lote, comandos,
+índices/validators, el corte UUID de entrada antes del nuevo default,
+proyecciones calculadas y sobres/resultados positivos D06/B08. STANDARD sigue
+siendo el default. El resto D06, H53, decisión D07 y D05 conserva sus owners.
