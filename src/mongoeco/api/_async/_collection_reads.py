@@ -3,20 +3,21 @@ from __future__ import annotations
 import time
 
 from collections.abc import Mapping
-
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._response import ResponseBatchReader
-from mongoeco.api.operations import compile_find_operation
 from mongoeco.api.bson_input import encode_operation_bson
+from mongoeco.api.operations import compile_find_operation
 from mongoeco.api.public_api import (
     COLLECTION_COUNT_DOCUMENTS_SPEC,
     COLLECTION_DISTINCT_SPEC,
     COLLECTION_FIND_ONE_SPEC,
     normalize_public_operation_arguments,
 )
+from mongoeco.core._filtering_support import query_array_members
 from mongoeco.core._public_materialization import materialize_public_value
+from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors, error_message
@@ -341,11 +342,7 @@ async def collect_distinct_values(cursor, key, *, dialect, collation):
     """Select semantic values before any public response decoding."""
     distinct_values = []
     async for document in cursor:
-        values = QueryEngine.extract_values(document, key)
-        found, value = QueryEngine._get_field_value(document, key)
-        candidates = resolve_distinct_candidates(
-            values, exact_found=found, exact_value=value
-        )
+        candidates = resolve_distinct_candidates(document, key)
         for candidate in candidates:
             if not any(
                 QueryEngine._values_equal(
@@ -358,23 +355,9 @@ async def collect_distinct_values(cursor, key, *, dialect, collation):
 
 
 def resolve_distinct_candidates(
-    values: list[object],
-    *,
-    exact_found: bool,
-    exact_value: object,
+    document: object,
+    key: str,
 ) -> list[object]:
-    if not values:
-        if not exact_found:
-            return []
-        if isinstance(exact_value, list):
-            return []
-        return [exact_value]
-    if not exact_found or not isinstance(exact_value, list):
-        return values
-    if exact_value == [] and values == [[]]:
-        return []
-    if values and values[0] == exact_value:
-        expanded_members = list(exact_value)
-        if values[1:] == expanded_members:
-            return expanded_members
-    return values
+    return [
+        value for value in query_array_members(document, key) if value is not MISSING
+    ]

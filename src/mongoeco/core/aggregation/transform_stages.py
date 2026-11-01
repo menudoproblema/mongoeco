@@ -20,7 +20,11 @@ from mongoeco.core.aggregation.runtime import (
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, set_document_value
-from mongoeco.core.projections import apply_computed_projection_fields, apply_projection
+from mongoeco.core.projections import (
+    _delete_projection_value,
+    apply_computed_projection_fields,
+    apply_projection,
+)
 from mongoeco.core.query_operators import (
     require_non_empty_document_clause_list,
 )
@@ -166,7 +170,7 @@ def _apply_unset(
     for document in iter_with_deadline(documents, deadline):
         trimmed = deepcopy(document)
         for field in fields:
-            delete_document_value(trimmed, field)
+            _delete_projection_value(trimmed, field)
         result.append(trimmed)
     return result
 

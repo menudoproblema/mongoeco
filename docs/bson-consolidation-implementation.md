@@ -2930,7 +2930,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F00 | Cerrado | Inventario/oráculos congelados; f00-inventory.json y capturas 7/8/9. |
 | F01 | Cerrado | 24 diferenciales 7/8/9; 225 regresiones de respuesta y 103 controles locales/21 subtests. |
 | F02 | Cerrado | 192 diferenciales + 3 metadatos; 19 regresiones focales/3 subtests y lint. |
-| F03 | Pendiente | Rutas y consumidores de arrays con semántica contextual. |
+| F03 | Cerrado | 315 diferenciales/metadatos; 36 planes forzados y regresiones de consumidores. |
 | F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
 | F05 | Pendiente | Collation efectiva y subset validado. |
 | F06 | Pendiente | Integridad/validación de catálogo e índices. |
@@ -2989,3 +2989,24 @@ permanecen idénticas en los tres servidores. Pasan 1.179 diferenciales/metadato
 44 controles locales y el ratchet focal. El primer replay sin permiso de sockets
 se descarta como evidencia de producto; el replay autorizado pasa las cuatro
 superficies en Memory/SQLite y 7/8/9. Logs f04; PCRE completo sigue en X01.
+
+F03: las rutas de agregación recorren documentos de arrays sin usar segmentos
+numéricos como posiciones; RuntimeDocumentState aplica el mismo contrato sobre
+su documento público conservando metadata interna. Distinct abandona heurísticas
+de reconstrucción y consume miembros terminales una sola vez. El mismo extractor
+de miembros sirve al lado local de lookup; el lado extranjero conserva igualdad
+array y distingue ausencia de rama no atravesable. Hash y evaluación residual
+usan la misma extracción. Unset reutiliza exclusión de proyecciones; unwind
+reutiliza su asignación documental para includeArrayIndex, reemplazando padres
+escalares/array sin cambiar hermanos válidos. No se altera acceso posicional MQL
+ni borrado de updates clásicos.
+
+Cinco testigos adicionales cubren ROOT/CURRENT/let, find calculado, facet
+materializado, claves "0", arrays anidados, distinct, lookup con/sin subpipeline
+y ramas de unset/unwind. Las 179 observaciones previas son idénticas en 7/8/9.
+Pasan 315 diferenciales/metadatos, 36 controles con presupuesto hash None/1/100,
+55 controles runtime/lookup y 61 del núcleo. La tanda focal de consumidores
+compartidos registra 727 pases/101 subtests y un fallo de una prueba que usaba
+la semántica incorrecta tags.0 para probar conversión; se cambia a arrayElemAt
+y sus 61 controles pasan. No se repite esa tanda completa: el resto sigue siendo
+admisible y F11 exigirá integración fresca. Ratchet focal verde; logs f03.

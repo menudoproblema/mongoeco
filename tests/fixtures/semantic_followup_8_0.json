@@ -257,6 +257,96 @@
         "$numberInt": "4"
       }
     ],
+    "semantic_followup_f03_distinct_paths": {
+      "a": [
+        {},
+        {
+          "b": null
+        },
+        {
+          "b": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "b": []
+        },
+        [
+          {
+            "b": {
+              "$numberInt": "4"
+            }
+          }
+        ],
+        {
+          "b": [
+            {
+              "$numberInt": "1"
+            },
+            [
+              {
+                "$numberInt": "2"
+              }
+            ],
+            []
+          ]
+        }
+      ],
+      "a.b": [
+        null,
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "3"
+        },
+        [],
+        [
+          {
+            "$numberInt": "2"
+          }
+        ]
+      ],
+      "a.0": [
+        {
+          "b": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "b": [
+            {
+              "$numberInt": "1"
+            },
+            [
+              {
+                "$numberInt": "2"
+              }
+            ],
+            []
+          ]
+        }
+      ],
+      "a.0.b": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "4"
+        },
+        [],
+        [
+          {
+            "$numberInt": "2"
+          }
+        ]
+      ],
+      "a.b.0": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
     "semantic_followup_f03_lookup_empty": [
       {
         "_id": {
@@ -298,6 +388,462 @@
         ]
       }
     ],
+    "semantic_followup_f03_lookup_paths": {
+      "a/False": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "matches": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "6"
+            },
+            "matches": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "7"
+            },
+            "matches": [
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "8"
+            },
+            "matches": [
+              {
+                "$numberInt": "8"
+              }
+            ]
+          }
+        ]
+      },
+      "a/True": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "matches": [
+              {
+                "$numberInt": "5"
+              },
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "6"
+            },
+            "matches": [
+              {
+                "$numberInt": "6"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "7"
+            },
+            "matches": [
+              {
+                "$numberInt": "4"
+              },
+              {
+                "$numberInt": "7"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "8"
+            },
+            "matches": [
+              {
+                "$numberInt": "8"
+              }
+            ]
+          }
+        ]
+      },
+      "a.b/False": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "6"
+            },
+            "matches": [
+              {
+                "$numberInt": "6"
+              },
+              {
+                "$numberInt": "8"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "7"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "8"
+            },
+            "matches": [
+              {
+                "$numberInt": "6"
+              },
+              {
+                "$numberInt": "8"
+              }
+            ]
+          }
+        ]
+      },
+      "a.b/True": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "6"
+            },
+            "matches": [
+              {
+                "$numberInt": "6"
+              },
+              {
+                "$numberInt": "8"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "7"
+            },
+            "matches": [
+              {
+                "$numberInt": "2"
+              },
+              {
+                "$numberInt": "3"
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "8"
+            },
+            "matches": [
+              {
+                "$numberInt": "6"
+              },
+              {
+                "$numberInt": "8"
+              }
+            ]
+          }
+        ]
+      }
+    },
     "semantic_followup_f03_numeric_nested": {
       "empty": {
         "ok": true,
@@ -342,6 +888,308 @@
         ]
       }
     },
+    "semantic_followup_f03_path_contexts": {
+      "aggregate": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "r": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "nested": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "b": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ],
+            "root": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "current": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "variable": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "r": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "nested": {
+              "$numberInt": "5"
+            },
+            "root": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "current": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "variable": {
+              "b": {
+                "$numberInt": "5"
+              }
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "r": [],
+            "nested": [],
+            "b": [],
+            "root": [],
+            "current": [],
+            "variable": []
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            }
+          }
+        ]
+      },
+      "find": {
+        "ok": true,
+        "value": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "r": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "nested": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "b": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ],
+            "root": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "current": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "variable": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "r": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "nested": {
+              "$numberInt": "5"
+            },
+            "root": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "current": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "variable": {
+              "b": {
+                "$numberInt": "5"
+              }
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "r": [],
+            "nested": [],
+            "b": [],
+            "root": [],
+            "current": [],
+            "variable": []
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            }
+          }
+        ]
+      },
+      "materialized": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "r": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "nested": [
+              {
+                "$numberInt": "1"
+              }
+            ],
+            "b": [
+              {
+                "$numberInt": "3"
+              },
+              {
+                "$numberInt": "4"
+              }
+            ],
+            "root": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "current": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ],
+            "variable": [
+              {
+                "b": {
+                  "$numberInt": "1"
+                }
+              }
+            ]
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "r": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "nested": {
+              "$numberInt": "5"
+            },
+            "root": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "current": {
+              "b": {
+                "$numberInt": "5"
+              }
+            },
+            "variable": {
+              "b": {
+                "$numberInt": "5"
+              }
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "r": [],
+            "nested": [],
+            "b": [],
+            "root": [],
+            "current": [],
+            "variable": []
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "5"
+            }
+          }
+        ]
+      }
+    },
     "semantic_followup_f03_root_numeric": {
       "empty": {
         "ok": true,
@@ -380,6 +1228,52 @@
         ]
       }
     },
+    "semantic_followup_f03_unset_branches": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": [
+              {
+                "c": {
+                  "$numberInt": "2"
+                }
+              },
+              [
+                {
+                  "c": {
+                    "$numberInt": "4"
+                  }
+                }
+              ],
+              null,
+              {
+                "$numberInt": "5"
+              }
+            ],
+            "x": [
+              {
+                "keep": {
+                  "$numberInt": "2"
+                }
+              },
+              {
+                "other": {
+                  "$numberInt": "3"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
     "semantic_followup_f03_unwind_dotted": {
       "empty": {
         "ok": true,
@@ -412,6 +1306,58 @@
               "n": {
                 "$numberLong": "1"
               }
+            }
+          }
+        ]
+      }
+    },
+    "semantic_followup_f03_unwind_overwrite": {
+      "empty": {
+        "ok": true,
+        "rows": []
+      },
+      "rows": {
+        "ok": true,
+        "rows": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "a": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "n": {
+                "$numberLong": "0"
+              }
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "2"
+            },
+            "x": {
+              "n": null
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "3"
+            },
+            "a": null,
+            "x": {
+              "keep": {
+                "$numberInt": "1"
+              },
+              "n": null
+            }
+          },
+          {
+            "_id": {
+              "$numberInt": "4"
+            },
+            "x": {
+              "n": null
             }
           }
         ]
@@ -3416,14 +4362,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793560405446"
+          "$numberLong": "1793560543397"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "79"
+        "$numberInt": "84"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -3439,7 +4385,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "751caaee36473fae1cfc45eb1e3a1934448873212679bd9dfe6328528977890b",
+    "sha256": "cdfc5a14dbc8eafc480d238c4c1c70d12ff03db0ead115777cd7cf0179ce989d",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -5287,6 +6233,44 @@
       "selector": "semantic_followup_f03_unwind_dotted"
     },
     {
+      "name": "semantic_followup_f03_unwind_overwrite",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_unwind_overwrite"
+    },
+    {
+      "name": "semantic_followup_f03_unset_branches",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_unset_branches"
+    },
+    {
       "name": "semantic_followup_f08_stddev_decimal",
       "min_version": [
         {
@@ -5741,6 +6725,63 @@
         }
       ],
       "selector": "semantic_followup_f03_distinct"
+    },
+    {
+      "name": "semantic_followup_f03_distinct_paths",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_distinct_paths"
+    },
+    {
+      "name": "semantic_followup_f03_path_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_path_contexts"
+    },
+    {
+      "name": "semantic_followup_f03_lookup_paths",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f03_lookup_paths"
     },
     {
       "name": "semantic_followup_f05_default",

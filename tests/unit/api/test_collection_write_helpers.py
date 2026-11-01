@@ -3,6 +3,7 @@ import asyncio
 import mongoeco.api._async._collection_bulk as collection_bulk_module
 import mongoeco.api.operations as operations_module
 
+from mongoeco.api._async._collection_reads import resolve_distinct_candidates
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.engines.memory import MemoryEngine
@@ -1185,60 +1186,17 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
 
         self.assertEqual(result, [[1, 2, 3]])
 
-    def test_resolve_distinct_candidates_covers_array_and_missing_edge_cases(
-        self,
-    ):
-        from mongoeco.api._async._collection_reads import (
-            resolve_distinct_candidates as _resolve_distinct_candidates,
-        )
-
+    def test_resolve_distinct_candidates_expands_only_terminal_arrays(self):
+        for document, expected in [
+            ({}, []), ({"a": []}, []), ({"a": None}, [None]),
+            ({"a": [1, 2]}, [1, 2]), ({"a": [[]]}, [[]]),
+            ({"a": [[[1]], [[1]]]}, [[[1]], [[1]]]),
+        ]:
+            with self.subTest(document=document):
+                self.assertEqual(resolve_distinct_candidates(document, "a"), expected)
         self.assertEqual(
-            _resolve_distinct_candidates(
-                [], exact_found=False, exact_value=None
-            ),
-            [],
-        )
-        self.assertEqual(
-            _resolve_distinct_candidates([], exact_found=True, exact_value=[]),
-            [],
-        )
-        self.assertEqual(
-            _resolve_distinct_candidates(
-                [[1, 2], 1, 2], exact_found=True, exact_value=[1, 2]
-            ),
-            [1, 2],
-        )
-        self.assertEqual(
-            _resolve_distinct_candidates(
-                [[[]], []], exact_found=True, exact_value=[[]]
-            ),
-            [[]],
-        )
-        self.assertEqual(
-            _resolve_distinct_candidates(
-                [[[[1]], [[1]]], [[1]], [[1]]],
-                exact_found=True,
-                exact_value=[[[1]], [[1]]],
-            ),
-            [[[1]], [[1]]],
-        )
-        self.assertEqual(
-            _resolve_distinct_candidates(
-                [1, 2], exact_found=False, exact_value=None
-            ),
-            [1, 2],
-        )
-        self.assertEqual(
-            _resolve_distinct_candidates(
-                [[1, 2], 1, 2], exact_found=True, exact_value=[9, 9]
-            ),
-            [[1, 2], 1, 2],
-        )
-        self.assertEqual(
-            _resolve_distinct_candidates(
-                [[1, 2], 1, 3], exact_found=True, exact_value=[1, 2]
-            ),
-            [[1, 2], 1, 3],
+            resolve_distinct_candidates({"a": [{"b": [1, [2]]}, {"b": 3}, {}]}, "a.b"),
+            [1, [2], 3],
         )
 
     def test_distinct_supports_nested_empty_array_values(self):

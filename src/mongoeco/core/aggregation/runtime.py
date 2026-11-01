@@ -74,11 +74,13 @@ from mongoeco.core.paths import (
     get_document_value,
     set_document_value,
 )
+from mongoeco.core.projections import _set_computed_projection_field
 from mongoeco.core.runtime_metadata import (
+    RUNTIME_METADATA_FIELD,
     RuntimeDocumentState,
+    RuntimeMetadataKey,
     _RuntimeReadDocument,
     ensure_runtime_state,
-    RuntimeMetadataKey,
 )
 from mongoeco.core.search import (
     SEARCH_HIGHLIGHTS_METADATA_FIELD,
@@ -332,6 +334,8 @@ def _apply_unwind(
     deadline: float | None = None,
 ) -> list[Document]:
     path, preserve, include_array_index = _require_unwind_spec(spec)
+    # An index destination creates object fields, replacing scalar/array parents.
+    # An empty projection source selects that policy without array traversal.
     result: list[Document] = []
     checkpoint = DeadlineCheckpoint(deadline)
     for document in documents:
@@ -341,7 +345,9 @@ def _apply_unwind(
             if preserve:
                 preserved = deepcopy(document)
                 if include_array_index is not None:
-                    preserved[include_array_index] = None
+                    _set_computed_projection_field(
+                        preserved, {}, include_array_index, None
+                    )
                 result.append(preserved)
             continue
 
@@ -351,7 +357,9 @@ def _apply_unwind(
                     preserved = deepcopy(document)
                     delete_document_value(preserved, path)
                     if include_array_index is not None:
-                        preserved[include_array_index] = None
+                        _set_computed_projection_field(
+                            preserved, {}, include_array_index, None
+                        )
                     result.append(preserved)
                 continue
             for index, item in enumerate(value):
@@ -359,13 +367,15 @@ def _apply_unwind(
                 unwound = deepcopy(document)
                 set_document_value(unwound, path, item)
                 if include_array_index is not None:
-                    unwound[include_array_index] = BsonInt64(index)
+                    _set_computed_projection_field(
+                        unwound, {}, include_array_index, BsonInt64(index)
+                    )
                 result.append(unwound)
             continue
 
         unwound = deepcopy(document)
         if include_array_index is not None:
-            unwound[include_array_index] = None
+            _set_computed_projection_field(unwound, {}, include_array_index, None)
         result.append(unwound)
     return result
 
@@ -378,7 +388,7 @@ def _lookup_matches(
     collation: CollationSpec | None = None,
 ) -> bool:
     left = local_values or [None]
-    right = foreign_values or [None]
+    right = foreign_values
     return any(
         QueryEngine._query_equality_matches(
             local_value,
@@ -590,22 +600,16 @@ def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
         return _resolve_aggregation_field_path(value.as_document(), path)
 
     if isinstance(value, RuntimeDocumentState):
-        found, resolved = value.resolve(path)
-        return resolved if found else _MISSING
+        if path.startswith(RUNTIME_METADATA_FIELD + "."):
+            found, resolved = value.resolve(path)
+            return resolved if found else _MISSING
+        return _resolve_aggregation_field_path(value.public_document(), path)
 
     if isinstance(value, list):
-        head, _, tail = path.partition(".")
-        if head.startswith("-") and head[1:].isdigit():
-            return _MISSING
-        if head.isdigit():
-            index = int(head)
-            if index >= len(value):
-                return _MISSING
-            next_value = value[index]
-            return _resolve_aggregation_field_path(next_value, tail)
-
         resolved_items: list[Any] = []
         for item in value:
+            if not isinstance(item, (dict, DBRef)):
+                continue
             resolved = _resolve_aggregation_field_path(item, path)
             if resolved is _MISSING:
                 continue

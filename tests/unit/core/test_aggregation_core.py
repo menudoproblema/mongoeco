@@ -87,9 +87,9 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertFalse(_match_spec_contains_expr("invalid"))
         self.assertTrue(_match_spec_contains_expr({"$and": [{"a": 1}, {"$expr": True}]}))
         self.assertTrue(_match_spec_contains_expr({"$nor": [{"a": 1}, {"$expr": True}]}))
-        self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}], "0.name"), "Ada")
-        self.assertIs(_resolve_aggregation_field_path([{"name": "Ada"}], "-1.name"), _MISSING)
-        self.assertIs(_resolve_aggregation_field_path([{"name": "Ada"}], "2.name"), _MISSING)
+        self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}], "0.name"), [])
+        self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}], "-1.name"), [])
+        self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}], "2.name"), [])
         self.assertEqual(_resolve_aggregation_field_path([{"name": "Ada"}, 1], "name"), ["Ada"])
 
     def test_aggregation_scalar_expressions_support_public_bson_classes(self):
@@ -280,7 +280,7 @@ class AggregationCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure) as caught:
             evaluate_expression(document, {"$first": "$score"})
         self.assertEqual(caught.exception.code, 28689)
-        self.assertEqual(evaluate_expression(document, {"$concat": ["$tags.0", "-", "$tags.1"]}), "a-b")
+        self.assertEqual(evaluate_expression(document, {"$concat": [{"$arrayElemAt": ["$tags", 0]}, "-", {"$arrayElemAt": ["$tags", 1]}]}), "a-b")
         self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$toLower": "$text"}), "ada lovelace")
         self.assertEqual(evaluate_expression({"text": "Ada Lovelace"}, {"$toUpper": "$text"}), "ADA LOVELACE")
         self.assertEqual(evaluate_expression({"text": "  Ada  "}, {"$trim": {"input": "$text"}}), "Ada")
@@ -317,7 +317,7 @@ class AggregationCoreTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, {"$setIntersection": ["$tags", "$other_tags"]}), ["b"])
         self.assertTrue(evaluate_expression(document, {"$setEquals": [["a", "b", "b"], ["b", "a"]]}))
         self.assertTrue(evaluate_expression(document, {"$setIsSubset": [["a", "b"], ["b", "c", "a"]]}))
-        self.assertIsNone(evaluate_expression(document, {"$concat": ["$tags.0", "$missing"]}))
+        self.assertIsNone(evaluate_expression(document, {"$concat": [{"$arrayElemAt": ["$tags", 0]}, "$missing"]}))
         self.assertIsNone(evaluate_expression(document, {"$trim": {"input": "$missing"}}))
         self.assertIsNone(evaluate_expression(document, {"$replaceOne": {"input": "$missing", "find": "a", "replacement": "A"}}))
         self.assertEqual(evaluate_expression(document, {"$strcasecmp": ["$missing", "A"]}), -1)

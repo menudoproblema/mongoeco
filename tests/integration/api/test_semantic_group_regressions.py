@@ -16,6 +16,7 @@ import pytest
 from bson import BSON, Decimal128
 
 from mongoeco import AsyncMongoClient, MongoClient
+from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.compat import resolve_mongodb_dialect
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.aggregation.preparation import prepare_pipeline
@@ -34,6 +35,7 @@ from tests.differential._real_parity_base import _decode_capture, _normalize
 from tests.differential.semantic_average_route_cases import GROUP, SEED as AVERAGE_SEED
 from tests.differential.semantic_command_let_cases import VALID as COMMAND_LET_VALID
 from tests.differential.semantic_corpora import SEMANTIC_CORPORA
+from tests.differential.semantic_followup_cases import lookup_paths, path_contexts
 from tests.differential.semantic_object_grammar_cases import numeric_group_identity
 from tests.differential.semantic_sum_cases import STREAM_PIPELINE, STREAM_SEED
 from tests.support_write_parity import BSONObservation
@@ -680,3 +682,27 @@ def test_provenance_execution_preserves_native_group_average(dialect):
     assert _normalize(
         DocumentCodec.to_public([state.document for state in actual])
     ) == _normalize(expected)
+
+
+@pytest.mark.parametrize("dialect", DIALECTS)
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("budget", [None, 1, 100])
+@pytest.mark.parametrize("action", [lookup_paths, path_contexts])
+def test_followup_paths_preserve_forced_plans(engine_factory, dialect, budget, action):
+    async def exercise():
+        async with AsyncMongoClient(
+            engine_factory(), mongodb_dialect=dialect
+        ) as client:
+            return await asyncio.to_thread(
+                action,
+                _AsyncView(client.followup.rows, asyncio.get_running_loop(), client),
+            )
+
+    with patch.object(
+        AsyncAggregationCursor, "_lookup_hash_max_associations", return_value=budget
+    ):
+        actual = asyncio.run(exercise())
+    expected = _capture(dialect, "followup")["cases"][
+        f"semantic_followup_f03_{action.__name__}"
+    ]
+    assert _normalize(actual) == _normalize(expected)

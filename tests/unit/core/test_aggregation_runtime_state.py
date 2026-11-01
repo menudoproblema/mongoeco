@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from mongoeco.core.aggregation.runtime import _resolve_aggregation_field_path
 from mongoeco.core.aggregation.runtime_state import (
     _detach_virtual_fields,
     apply_pipeline_states,
@@ -42,6 +43,19 @@ def _state_with_virtual_value(value: object) -> RuntimeDocumentState:
             source=RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
         )
     )
+
+
+@pytest.mark.parametrize(
+    ["path", "expected"], [("a.0", [7]), ("a.0.b", []), ("a.b", [3])]
+)
+def test_expression_paths_keep_array_semantics_in_runtime_state(path, expected):
+    document = {"a": [{"0": 7, "b": 3}, [1], None]}
+    state = RuntimeDocumentState(document)
+    virtual = RuntimeDocumentState({}).with_virtual_field(
+        "a", document["a"], source=RuntimeMetadataKey.SEARCH_HIGHLIGHTS
+    )
+    for source in [document, state, virtual]:
+        assert _resolve_aggregation_field_path(source, path) == expected
 
 
 def test_selection_order_and_window_preserve_runtime_state() -> None:

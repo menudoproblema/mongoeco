@@ -119,6 +119,104 @@ def distinct_arrays(collection):
     return sorted(collection.distinct("a.b"), key=lambda v: BSON.encode({"v": v}))
 
 
+def path_contexts(collection):
+    reset(
+        collection,
+        [
+            {"_id": 1, "a": [{"0": {"b": 1}, "b": 3}, {"b": 4}, [{"0": 9}], None]},
+            {"_id": 2, "a": {"0": {"b": 5}}},
+            {"_id": 3, "a": []},
+            {"_id": 4},
+            {"_id": 5, "a": None},
+        ],
+    )
+    project = {
+        "_id": 1,
+        "r": "$a.0",
+        "nested": "$a.0.b",
+        "b": "$a.b",
+        "root": "$$ROOT.a.0",
+        "current": "$$CURRENT.a.0",
+        "variable": {"$let": {"vars": {"x": "$$ROOT"}, "in": "$$x.a.0"}},
+    }
+    return {
+        "aggregate": _aggregate(
+            collection, [{"$sort": {"_id": 1}}, {"$project": project}]
+        ),
+        "find": outcome(lambda: list(collection.find({}, project, sort=[("_id", 1)]))),
+        "materialized": _aggregate(
+            collection,
+            [
+                {"$sort": {"_id": 1}},
+                {"$facet": {"rows": [{"$project": project}]}},
+                {"$unwind": "$rows"},
+                {"$replaceWith": "$rows"},
+            ],
+        ),
+    }
+
+
+def distinct_paths(collection):
+    reset(
+        collection,
+        [
+            {"_id": 1, "a": [{"b": [1, [2], []]}, {"b": 3}, {}]},
+            {"_id": 2, "a": {"b": []}},
+            {"_id": 3, "a": {"b": None}},
+            {"_id": 4, "a": [[{"b": 4}]]},
+            {"_id": 5},
+        ],
+    )
+    return {
+        path: sorted(collection.distinct(path), key=lambda v: BSON.encode({"v": v}))
+        for path in ["a", "a.b", "a.0", "a.0.b", "a.b.0"]
+    }
+
+
+def lookup_paths(collection):
+    rows = [
+        {"_id": 1, "a": []},
+        {"_id": 2},
+        {"_id": 3, "a": None},
+        {"_id": 4, "a": [None, 1]},
+        {"_id": 5, "a": [[1]]},
+        {"_id": 6, "a": [{"b": []}, {"b": 1}]},
+        {"_id": 7, "a": [1]},
+        {"_id": 8, "a": {"b": [1]}},
+    ]
+    reset(collection, rows)
+    reset(collection.database["foreign"], rows)
+    return {
+        f"{path}/{subpipeline}": _aggregate(
+            collection,
+            [
+                {
+                    "$lookup": {
+                        "from": "foreign",
+                        "localField": path,
+                        "foreignField": path,
+                        "as": "matches",
+                        **(
+                            {"pipeline": [{"$sort": {"_id": 1}}]} if subpipeline else {}
+                        ),
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 1,
+                        "matches": {
+                            "$sortArray": {"input": "$matches._id", "sortBy": 1}
+                        },
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ],
+        )
+        for path in ["a", "a.b"]
+        for subpipeline in [False, True]
+    }
+
+
 def index_rule(collection, *, keys, options, populated):
     collection.drop()
     if populated:
@@ -393,6 +491,33 @@ PIPELINES = {
         [{"$unwind": {"path": "$a", "includeArrayIndex": "x.n"}}],
         [{"_id": 1, "a": [1, 2]}],
     ),
+    "f03_unwind_overwrite": (
+        [
+            {
+                "$unwind": {
+                    "path": "$a",
+                    "includeArrayIndex": "x.n",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            }
+        ],
+        [
+            {"_id": 1, "a": [1], "x": 4},
+            {"_id": 2, "a": [], "x": []},
+            {"_id": 3, "a": None, "x": {"keep": 1}},
+            {"_id": 4},
+        ],
+    ),
+    "f03_unset_branches": (
+        [{"$unset": ["a.b", "x.0"]}],
+        [
+            {
+                "_id": 1,
+                "a": [{"b": 1, "c": 2}, [{"b": 3, "c": 4}], None, 5],
+                "x": [{"0": 1, "keep": 2}, {"other": 3}],
+            }
+        ],
+    ),
     "f08_stddev_decimal": (
         [{"$group": {"_id": None, "s": {"$stdDevPop": "$v"}}}],
         [{"_id": 1, "v": Decimal128("1")}, {"_id": 2, "v": Decimal128("3")}],
@@ -471,6 +596,9 @@ SEMANTIC_FOLLOWUP_CASES = (
         for populated in (False, True)
     ),
     ("semantic_followup_f03_distinct", distinct_arrays),
+    ("semantic_followup_f03_distinct_paths", distinct_paths),
+    ("semantic_followup_f03_path_contexts", path_contexts),
+    ("semantic_followup_f03_lookup_paths", lookup_paths),
     ("semantic_followup_f05_default", default_collation),
     *(
         (f"semantic_followup_f05_invalid_{i}", partial(invalid_collation, spec=spec))

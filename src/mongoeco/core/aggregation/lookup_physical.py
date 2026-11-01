@@ -11,9 +11,10 @@ from mongoeco.compat import (
     MONGODB_DIALECT_80,
     MongoDialect,
 )
+from mongoeco.core._filtering_support import query_array_members, query_field_values
+from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.bson_ordering import bson_equality_key
 from mongoeco.core.bson_scalars import is_bson_numeric
-from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.types import (
     Binary,
@@ -32,6 +33,24 @@ if TYPE_CHECKING:
 
 
 _SUPPORTED_DIALECTS = (MONGODB_DIALECT_70, MONGODB_DIALECT_80)
+
+
+def lookup_local_values(document: Document, path: str) -> list[Any]:
+    """Lookup expands local terminal arrays; an empty result is null-like."""
+    return [
+        None if value is MISSING else value
+        for value in query_array_members(document, path)
+    ] or [None]
+
+
+def lookup_foreign_values(document: Document, path: str) -> list[Any]:
+    """Keep query array equality and distinguish absent from untraversable."""
+    values = []
+    for value, traverse in query_field_values(document, path):
+        values.append(None if value is MISSING else value)
+        if traverse and isinstance(value, list):
+            values.extend(value)
+    return values
 
 
 def _supports_hash_semantics(dialect: MongoDialect) -> bool:
@@ -123,9 +142,7 @@ def build_bounded_lookup_hash_plan[T](  # noqa: PLR0913
     residual_indices: list[int] = []
     association_count = 0
     for index, item in enumerate(iter_with_deadline(foreign, deadline)):
-        values = QueryEngine.extract_values(document_getter(item), foreign_field) or [
-            None
-        ]
+        values = lookup_foreign_values(document_getter(item), foreign_field)
         keys: set[Hashable] = set()
         residual = False
         for value in iter_with_deadline(values, deadline):

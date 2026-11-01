@@ -7,7 +7,10 @@ from mongoeco.core.aggregation.evaluation_environment import (
 )
 from mongoeco.core.aggregation.lookup_physical import (
     build_bounded_lookup_hash_plan,
+    lookup_foreign_values,
+    lookup_local_values,
 )
+from mongoeco.core.aggregation.resources import scoped_resolver_kwargs
 from mongoeco.core.aggregation.runtime import (
     _CURRENT_COLLECTION_RESOLVER_KEY,
     _lookup_matches,
@@ -16,11 +19,9 @@ from mongoeco.core.aggregation.runtime import (
     _require_union_with_spec,
     evaluate_expression,
 )
-from mongoeco.core.aggregation.resources import scoped_resolver_kwargs
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.paths import set_document_value
 from mongoeco.core.work_control import iter_with_deadline
-from mongoeco.core.collation import CollationSpec
-from mongoeco.core.filtering import QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
@@ -62,7 +63,7 @@ def _apply_lookup(
     for document in iter_with_deadline(documents, deadline):
         candidate_documents = foreign_documents
         if "localField" in lookup and "foreignField" in lookup:
-            local_values = QueryEngine.extract_values(document, lookup["localField"])
+            local_values = lookup_local_values(document, lookup["localField"])
             if hash_plan is not None:
                 candidate_indices = hash_plan.candidate_indices(local_values)
                 if candidate_indices is not None:
@@ -77,7 +78,7 @@ def _apply_lookup(
                 )
                 if _lookup_matches(
                     local_values,
-                    QueryEngine.extract_values(
+                    lookup_foreign_values(
                         foreign_document, lookup["foreignField"]
                     ),
                     dialect=dialect,

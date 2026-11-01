@@ -20,6 +20,8 @@ from mongoeco.core.aggregation.grouping_stages import (
 )
 from mongoeco.core.aggregation.lookup_physical import (
     build_bounded_lookup_hash_plan,
+    lookup_foreign_values,
+    lookup_local_values,
 )
 from mongoeco.core.aggregation.planning import (
     Pipeline,
@@ -58,7 +60,6 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_unset,
 )
 from mongoeco.core.bson_values import is_bson_string
-from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline
 from mongoeco.core.paths import (
     delete_document_value,
@@ -521,7 +522,7 @@ def _apply_lookup_states(  # noqa: PLR0913
     for state in iter_with_deadline(states, deadline):
         candidates = foreign_states
         if "localField" in lookup and "foreignField" in lookup:
-            local_values = QueryEngine.extract_values(
+            local_values = lookup_local_values(
                 state.public_document(),
                 lookup["localField"],
             )
@@ -534,7 +535,7 @@ def _apply_lookup_states(  # noqa: PLR0913
                 for candidate in iter_with_deadline(candidates, deadline)
                 if _lookup_matches(
                     local_values,
-                    QueryEngine.extract_values(
+                    lookup_foreign_values(
                         candidate.public_document(),
                         lookup["foreignField"],
                     ),

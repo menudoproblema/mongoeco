@@ -237,3 +237,11 @@ def query_values(doc: Any, path: str) -> list[Any]:
         if traverse and isinstance(value, list):
             candidates.extend(value)
     return candidates
+
+
+def query_array_members(doc: Any, path: str) -> list[Any]:
+    """Expand each terminal field array once; retain missing for the caller."""
+    members = []
+    for value, _traverse in query_field_values(doc, path):
+        members.extend(value if isinstance(value, list) else [value])
+    return members
