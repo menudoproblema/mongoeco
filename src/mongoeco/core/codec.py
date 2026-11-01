@@ -570,17 +570,11 @@ class DocumentCodec:
                 converted, codec_options=codec_options
             )
         if isinstance(data, dict):
-            converted = {
-                key: DocumentCodec._apply_codec_options_recursive(
+            converted = codec_options.document_class()
+            for key, value in data.items():
+                converted[key] = DocumentCodec._apply_codec_options_recursive(
                     value, codec_options=codec_options
                 )
-                for key, value in data.items()
-            }
-            converted = (
-                converted
-                if codec_options.document_class is dict
-                else codec_options.document_class(converted)
-            )
             if not root_document:
                 converted = decoded_document_reference(converted)
             return (

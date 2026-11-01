@@ -144,9 +144,19 @@ def main() -> None:
     if args.check is not None and args.check.resolve() == output_path.resolve():
         parser.error("--check must remain distinct from the capture output")
     runtime = inspect_server_runtime(
-        uri, target, require_replica_set=any(
+        uri,
+        target,
+        require_replica_set=any(
             corpus.requires_replica_set and corpus.case_set == args.case_set
             for corpus in SEMANTIC_CORPORA.values()
+        ),
+        **(
+            {"require_standalone": True}
+            if any(
+                corpus.requires_standalone and corpus.case_set == args.case_set
+                for corpus in SEMANTIC_CORPORA.values()
+            )
+            else {}
         ),
     )
 
@@ -166,8 +176,11 @@ def main() -> None:
     selected_cases, corpus_module = corpora[args.case_set]
     corpus_path = f"tests/differential/{corpus_module}.py"
     registration = next(
-        (corpus for corpus in SEMANTIC_CORPORA.values()
-         if corpus.case_set == args.case_set),
+        (
+            corpus
+            for corpus in SEMANTIC_CORPORA.values()
+            if corpus.case_set == args.case_set
+        ),
         None,
     )
 
@@ -205,6 +218,11 @@ def main() -> None:
             "sha256": hashlib.sha256(
                 (PROJECT_ROOT / corpus_path).read_bytes()
             ).hexdigest(),
+            **(
+                {"topology": "standalone"}
+                if registration is not None and registration.requires_standalone
+                else {}
+            ),
         },
         "case_manifests": [case.to_manifest() for case in selected_cases],
     }

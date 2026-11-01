@@ -29,9 +29,13 @@ It also records the exact server `buildInfo`. A case filter that resolves to
 zero tests exits with a usage error instead of producing a false green.
 
 `--partition all` is the default. It requires a writable replica-set primary
-when any selected case needs one. `--partition standalone` selects cases that
+when any selected case needs one. A selection requiring both topologies must
+be executed as separate partitions; a single URI cannot satisfy it. Document
+factory corpora require standalone because replica-set metadata changes their
+observable construction effects. `--partition standalone` selects cases that
 do not require a replica set; `--partition replica-set` selects those that do.
-Topology requirements live in `SemanticCorpus`/`RealParityCase`, rather than in
+Topology requirements (`requires_replica_set` and `requires_standalone`) live in
+`SemanticCorpus`/`RealParityCase`, rather than in
 name prefixes: TTL and update-event consumers also require a replica set.
 Listing, suite construction and JSON reporting share the same selection.
 
@@ -68,6 +72,14 @@ and the payload process group, including on failure or cancellation. A mutating
 Docker request finishes before queued cancellation is delivered. An unresolved
 create timeout remains a failed/indeterminate cleanup, never a green result.
 No global Docker prune or lifecycle changes to borrowed services are used.
+
+The same wrapper accepts `--topology standalone` for owned standalone oracles;
+the default remains `replica-set`. Standalone starts without replication/oplog
+options and verifies `hello` is a writable standalone before setting FCV.
+Both modes record topology, build, FCV and server options and share cleanup.
+Use a comparable topology for document-factory effects: replica-set clock
+metadata can invoke additional constructors. Watch still requires a replica set;
+a standalone capture cannot substitute for it.
 
 The replica-set step executes the selected live cases, verifies each reached
 corpus with the existing native capturer and immutable references, then replays

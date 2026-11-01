@@ -1,0 +1,13 @@
+import os,subprocess,sys
+from pathlib import Path
+sys.path.insert(0,str(Path.cwd()))
+from scripts.run_mongodb_real_differential import inspect_server_runtime
+uri=os.environ['MONGOECO_REAL_MONGODB_URI']
+try:inspect_server_runtime(uri,'9.0',require_standalone=True)
+except RuntimeError as error:assert str(error)=='requires a writable standalone'
+else:raise AssertionError('replica set accepted as standalone')
+output=Path('/tmp/mongoeco-factory-negative-reference.json');assert not output.exists()
+r=subprocess.run([sys.executable,'scripts/capture_differential_replay_golden.py','--target','9.0','--case-set','document-factory','--output',str(output)],capture_output=True,text=True)
+assert r.returncode!=0 and 'requires a writable standalone' in r.stderr,(r.returncode,r.stderr)
+assert not output.exists()
+print('real replica set rejected before standalone capture output; default fixture remains healthy')

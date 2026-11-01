@@ -152,6 +152,30 @@ jobs:
             --junit-dir "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/junit" \
               2>&1 | tee "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/run.log"
 
+      - name: Check topology-sensitive standalone captures
+        shell: bash
+        env:
+          CASE_FILTER: ${{ inputs.case_filter }}
+        run: |
+          python scripts/run_mongodb_real_differential.py \
+            "$MONGOECO_REAL_MONGODB_TARGET" "$CASE_FILTER" --partition standalone \
+            --list-corpora > "artifacts/${MONGOECO_REAL_MONGODB_TARGET}/standalone-corpora.json"
+          python - <<'PYTHON'
+          import json, os, subprocess, sys
+          from pathlib import Path
+          target = os.environ["MONGOECO_REAL_MONGODB_TARGET"]
+          root = Path("artifacts") / target
+          for corpus in json.loads((root / "standalone-corpora.json").read_text()):
+              if corpus.get("topology") != "standalone":
+                  continue
+              subprocess.run([
+                  sys.executable, "scripts/capture_differential_replay_golden.py",
+                  "--target", target, "--case-set", corpus["case_set"],
+                  "--output", str(root / (corpus["case_set"] + "-capture.json")),
+                  "--check", f"tests/fixtures/semantic_{corpus['fixture_key']}_{target.replace('.', '_')}.json",
+              ], check=True)
+          PYTHON
+
       - name: Verify positional update error codes and document atomicity
         shell: bash
         run: |

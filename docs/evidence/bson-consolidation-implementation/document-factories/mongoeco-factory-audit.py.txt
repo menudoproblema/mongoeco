@@ -1,0 +1,17 @@
+import json,subprocess
+from pathlib import Path
+reports=[]
+for name in ('mongoeco-factory-probe-rs','mongoeco-factory-probe-standalone','mongoeco-factory-fixture-rs-final','mongoeco-factory-fixture-rs-negative'):
+ reports.append(Path('/tmp')/name/'fixture.json')
+for cohort in ('mongoeco-factory-native-v1','mongoeco-factory-native-v2','mongoeco-factory-native-final'):
+ reports.extend(sorted((Path('/tmp')/cohort).glob('*/fixture.json')))
+result=[]
+for path in reports:
+ row=json.loads(path.read_text());assert row['status']=='succeeded' and row['cleanup']['removed'] and row['cleanup']['volumes_removed'],path
+ resources=[('container',row['container_id'])]+[('volume',v) for v in row['anonymous_volumes']]
+ for kind,identity in resources:
+  r=subprocess.run(['docker',kind,'inspect',identity],capture_output=True,text=True)
+  assert r.returncode!=0 and ('no such' in r.stderr.lower() or 'not found' in r.stderr.lower()),(kind,identity,r.returncode,r.stderr)
+ result.append({'report':str(path),'container':row['container_id'],'volumes':row['anonymous_volumes'],'independently_absent':True})
+Path('/tmp/mongoeco-factory-resource-audit.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps({'containers_absent':len(result),'volumes_absent':sum(len(r['volumes']) for r in result)}))

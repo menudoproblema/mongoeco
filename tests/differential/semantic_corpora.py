@@ -66,6 +66,10 @@ from tests.differential.semantic_decimal_cases import (
     SEMANTIC_DECIMAL_CASES,
     SEMANTIC_DECIMAL_EDGE_CASES,
 )
+from tests.differential.semantic_document_factory_cases import (
+    SEED as DOCUMENT_FACTORY_SEED,
+    SEMANTIC_DOCUMENT_FACTORY_CASES,
+)
 from tests.differential.semantic_document_order_cases import (
     SEED as DOCUMENT_ORDER_SEED,
     SEMANTIC_DOCUMENT_ORDER_CASES,
@@ -214,9 +218,15 @@ class SemanticCorpus:
     observation_encoding: str = "bson"
     surfaces: tuple[str, ...] = ("sync", "async", "wire-sync", "wire-async")
     requires_replica_set: bool = False
+    requires_standalone: bool = False
 
 
 SEMANTIC_CORPORA = {
+    "document_factory": SemanticCorpus(
+        "document-factory", "semantic_document_factory_cases",
+        DOCUMENT_FACTORY_SEED, SEMANTIC_DOCUMENT_FACTORY_CASES,
+        observation_encoding="canonical-json", requires_standalone=True,
+    ),
     "bson_dispatch": SemanticCorpus(
         "bson-dispatch", "semantic_bson_dispatch_cases",
         BSON_DISPATCH_SEED, SEMANTIC_BSON_DISPATCH_CASES,

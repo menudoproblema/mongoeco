@@ -1,0 +1,777 @@
+{
+  "order": [
+    "base",
+    "candidate",
+    "candidate",
+    "base",
+    "base",
+    "candidate",
+    "candidate",
+    "base"
+  ],
+  "samples": [
+    {
+      "label": "base",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1287000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2351000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1236000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2300000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 1743000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 2839000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 1870000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 2940000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 5167000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 6726000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 5224000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 6212000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 6088000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 6938000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 5832000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 7487000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    },
+    {
+      "label": "candidate",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1365000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2348000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1247000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2384000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 1753000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 3048000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 1912000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 2954000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 5845000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 6913000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 5587000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 6664000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 6411000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 7190000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 6784000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 7359000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    },
+    {
+      "label": "candidate",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1383000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2387000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1258000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2365000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 1944000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 2981000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 1841000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 2926000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 4923000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 6562000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 5226000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 6228000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 5826000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 6862000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 5409000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 6820000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    },
+    {
+      "label": "base",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1320000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2462000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1332000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2390000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 1906000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 2979000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 2077000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 3587000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 5432000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 6438000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 5139000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 6191000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 5832000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 6738000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 6330000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 6544000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    },
+    {
+      "label": "base",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1277000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2336000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1226000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2292000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 1705000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 2787000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 1854000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 2912000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 5319000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 6864000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 5538000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 6685000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 5826000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 7119000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 6203000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 7299000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    },
+    {
+      "label": "candidate",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1258000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2321000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1260000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2329000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 1710000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 2764000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 1830000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 2845000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 4778000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 5935000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 4686000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 5781000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 5362000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 6321000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 5525000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 6933000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    },
+    {
+      "label": "candidate",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1284000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2456000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1233000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2401000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 2128000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 3030000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 1993000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 2966000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 5532000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 6232000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 5085000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 6552000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 6022000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 6854000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 5757000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 6773000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    },
+    {
+      "label": "base",
+      "cases": {
+        "MemoryEngine-default-find": {
+          "cpu_ns": 1297000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-default-aggregate": {
+          "cpu_ns": 2353000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-find": {
+          "cpu_ns": 1260000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-standard-aggregate": {
+          "cpu_ns": 2311000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-find": {
+          "cpu_ns": 1723000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-decoder-aggregate": {
+          "cpu_ns": 2871000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-find": {
+          "cpu_ns": 1972000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "MemoryEngine-son-aggregate": {
+          "cpu_ns": 2969000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-find": {
+          "cpu_ns": 5601000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-default-aggregate": {
+          "cpu_ns": 6947000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-find": {
+          "cpu_ns": 5655000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-standard-aggregate": {
+          "cpu_ns": 6611000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-find": {
+          "cpu_ns": 6140000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-decoder-aggregate": {
+          "cpu_ns": 7283000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-find": {
+          "cpu_ns": 6138000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        },
+        "SQLiteEngine-son-aggregate": {
+          "cpu_ns": 7219000,
+          "count": 200,
+          "bson_sha256": "b7b8ccf293f43299ac9570280abad9aec8c8062fa5c83700789aafa2ccdfc7c5"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "MemoryEngine-default-find": {
+      "base_median_ns": 1292000.0,
+      "candidate_median_ns": 1324500.0,
+      "ratio": 1.0251547987616099
+    },
+    "MemoryEngine-default-aggregate": {
+      "base_median_ns": 2352000.0,
+      "candidate_median_ns": 2367500.0,
+      "ratio": 1.0065901360544218
+    },
+    "MemoryEngine-standard-find": {
+      "base_median_ns": 1248000.0,
+      "candidate_median_ns": 1252500.0,
+      "ratio": 1.0036057692307692
+    },
+    "MemoryEngine-standard-aggregate": {
+      "base_median_ns": 2305500.0,
+      "candidate_median_ns": 2374500.0,
+      "ratio": 1.0299284320104098
+    },
+    "MemoryEngine-decoder-find": {
+      "base_median_ns": 1733000.0,
+      "candidate_median_ns": 1848500.0,
+      "ratio": 1.0666474321984998
+    },
+    "MemoryEngine-decoder-aggregate": {
+      "base_median_ns": 2855000.0,
+      "candidate_median_ns": 3005500.0,
+      "ratio": 1.0527145359019265
+    },
+    "MemoryEngine-son-find": {
+      "base_median_ns": 1921000.0,
+      "candidate_median_ns": 1876500.0,
+      "ratio": 0.9768349817803228
+    },
+    "MemoryEngine-son-aggregate": {
+      "base_median_ns": 2954500.0,
+      "candidate_median_ns": 2940000.0,
+      "ratio": 0.9950922321881875
+    },
+    "SQLiteEngine-default-find": {
+      "base_median_ns": 5375500.0,
+      "candidate_median_ns": 5227500.0,
+      "ratio": 0.9724676774253558
+    },
+    "SQLiteEngine-default-aggregate": {
+      "base_median_ns": 6795000.0,
+      "candidate_median_ns": 6397000.0,
+      "ratio": 0.9414275202354673
+    },
+    "SQLiteEngine-standard-find": {
+      "base_median_ns": 5381000.0,
+      "candidate_median_ns": 5155500.0,
+      "ratio": 0.9580932912098123
+    },
+    "SQLiteEngine-standard-aggregate": {
+      "base_median_ns": 6411500.0,
+      "candidate_median_ns": 6390000.0,
+      "ratio": 0.9966466505497933
+    },
+    "SQLiteEngine-decoder-find": {
+      "base_median_ns": 5960000.0,
+      "candidate_median_ns": 5924000.0,
+      "ratio": 0.9939597315436242
+    },
+    "SQLiteEngine-decoder-aggregate": {
+      "base_median_ns": 7028500.0,
+      "candidate_median_ns": 6858000.0,
+      "ratio": 0.9757416233904816
+    },
+    "SQLiteEngine-son-find": {
+      "base_median_ns": 6170500.0,
+      "candidate_median_ns": 5641000.0,
+      "ratio": 0.9141884774329471
+    },
+    "SQLiteEngine-son-aggregate": {
+      "base_median_ns": 7259000.0,
+      "candidate_median_ns": 6876500.0,
+      "ratio": 0.9473067915690867
+    }
+  },
+  "scope": "ABBA twice, own gates idle; external Python 3.15 suite observed; diagnostic CPU trend only, not D05 budget acceptance"
+}

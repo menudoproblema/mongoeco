@@ -1,0 +1,173 @@
+{
+  "scope": "Bounded D06a/b document-construction and assignment slice; not full D06 or D05 closure",
+  "base": "220cedc",
+  "wheel": {
+    "wheel": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-7jr2g5vb/source/dist/mongoeco-4.11.0-py3-none-any.whl",
+    "sha256": "37ea7f2407f60de2131bd62b9b18a667dcebc29193c67a67131aedd80f8f612f",
+    "site_packages": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-7jr2g5vb/site-packages",
+    "modules": 284
+  },
+  "runtime_modules": 284,
+  "runtime_manifest": "runtime-sources.json",
+  "source_workset": "workset.json",
+  "sdk": "4.19.0",
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "native": {
+    "7.0": {
+      "image": "mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72",
+      "reference_sha256": "e4a6053d7fcb658a369550239ee2347415c75d55f972bdc17af7de732d8aa50e",
+      "fixture": "native/7.0/fixture.json.gz"
+    },
+    "8.0": {
+      "image": "mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66",
+      "reference_sha256": "9e7626c34aadf7c08082630a879b5eb117d3bc150d34b06beb80cb62d0e27823",
+      "fixture": "native/8.0/fixture.json.gz"
+    },
+    "9.0": {
+      "image": "mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158",
+      "reference_sha256": "bf68156317234355c37f5722cc112f63006f3328affc49315d755cd25efc427e",
+      "fixture": "native/9.0/fixture.json.gz"
+    }
+  },
+  "checks": {
+    "full_installed_replay": {
+      "passed": 7909,
+      "seconds": 234.91,
+      "worker_loaded_modules": {
+        "wheel-imports-gw0": 262,
+        "wheel-imports-gw1": 262,
+        "wheel-imports-gw2": 262,
+        "wheel-imports-gw3": 262
+      }
+    },
+    "installed_unit_spi": {
+      "passed": 362,
+      "subtests": 43
+    },
+    "fixture_runner_workflow": {
+      "passed": 45
+    },
+    "materialization": {
+      "passed": 47
+    },
+    "local_inventory": {
+      "passed": 16,
+      "subtests": 61,
+      "unconfigured_native_skips": 368,
+      "not_native_execution": true
+    },
+    "baseline_final_corpus": {
+      "failed": 48,
+      "passed": 51,
+      "verified_archived_runtime_modules": 284
+    },
+    "sdk_free_python313": {
+      "factory_scenarios": 72,
+      "previous_dispatch_controls": 186
+    },
+    "typing": {
+      "positives": 2,
+      "public_expected_errors": 20,
+      "boundary_expected_errors": 25
+    },
+    "public_api": "identical to baseline",
+    "lint_ratchet": "passed; no baseline update",
+    "resources": {
+      "containers_absent": 13,
+      "volumes_absent": 26
+    }
+  },
+  "protected": {
+    "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992",
+    "tests/support_bson_observation.py": "43aa7aaa0ec96206324740ee9964478582061d986c679667d5cd60bfc6c8a3fb",
+    "tests/fixtures/compat_catalog_snapshot.json": "74eed081467c4edfbd1d3eeff33256dc356a61dfb2cb5e1b35a73ee2b8874a5a",
+    "tests/fixtures/compat_catalog_snapshot.md": "835b63e52428cac7da94b2ba062a9b0a8ea19fd71f71e14e54505eb4bebe8329",
+    "tests/fixtures/legacy_error_emitters.json": "ebe776dbfa507d4b240675e73b6c34c882ef45d00d82b3ba319935459b8fee14"
+  },
+  "limits": [
+    "Other D06 contexts, public consumption/state and representations remain open, alongside D06c/H53/sNaN/D07 decision/D05/B07.",
+    "No full Python/SDK/pytest matrix, global coverage, persistence or general performance-budget acceptance. No remote CI execution claimed.",
+    "Optional SDK-free constructor/assignment checks do not manufacture an unavailable SDK InvalidBSON class. Native exception class/phase observations use the installed SDK.",
+    "Earlier complete replay runs identify superseded wheels and are feedback, not acceptance of the final source.",
+    "CPU ABBA is diagnostic; own verification gates idle, external Python 3.15 suite observed."
+  ],
+  "review": {
+    "scope": "Self review of code/callers, native factory and topology witnesses, portable setter arguments and final artifact",
+    "corrected_during_review": [
+      "Missing command root and selective cursor construction",
+      "Portable construction occurred after child conversion",
+      "Portable cursor.id triggered int decoder and exposed internal wrapper to selected setter"
+    ],
+    "remaining": "Other D06 contexts/state/representations and remaining program blocks retain their owners."
+  },
+  "document_checks": {
+    "relative_links_missing": [],
+    "native_reference_checks": "four final actions match all three checked native captures; corpus hashes current",
+    "whitespace": "git diff --check passed",
+    "protected": "all five hashes match review16"
+  },
+  "artifacts_sha256": {
+    "README.md": "a379668b2fa362e59aeaaf1271fc10026f4ed683297ce0f768daabf647eb3e4b",
+    "baseline-imports.json.gz": "569f03f770df89e7060f5a416ed437958c9f04dc2651ef6b7f7309862ba20c7d",
+    "cohorts/00-mongoeco-factory-probe-rs.json": "145495cd42eb4d8af82214b60a9c1f06e0780e756ed187e2ff5bfbac6e38e890",
+    "cohorts/01-mongoeco-factory-probe-standalone.json": "9898b53f83bff2374f388da94f6d0ec9e231e89150c648f64d407b39b8a3ec98",
+    "cohorts/02-mongoeco-factory-fixture-rs-final.json": "8eddb5ac5fbe64209a92d4d88d5559b5b71b115b3d4a2c376ed1452457931e65",
+    "cohorts/03-mongoeco-factory-fixture-rs-negative.json": "3252efeed18d169cbce921f8ed9896d9d529afc3095669c94c16ae80ab1c4f9b",
+    "cohorts/04-7.0.json": "f6789767c0bb80bdc939632962bd386de7be3b21fca2609237b0c5e0d6fc8e09",
+    "cohorts/05-8.0.json": "0a12732c25ba742ae5d35a0bea5bb534576e4944416a6fb312af7762a9beb71e",
+    "cohorts/06-9.0.json": "3a0324c95a7d7cbe2760adba9514ff9edc2f3a1a5ca6056c55013ad36af701fe",
+    "cohorts/07-7.0.json": "c302e899f554218362a0f5d03c64e5b8f7bc964ad819422c85e8ac981bdf2209",
+    "cohorts/08-8.0.json": "60535de53a4070b2529081f10a6b3d103a99e0ffc3f5ac9aa036b039869021ac",
+    "cohorts/09-9.0.json": "78efe6a42ec4d1ae111683ce7e8af084bddcbd25f72cdda5c266fc42cbf8d866",
+    "cohorts/10-7.0.json": "271a4603e07361c40bce9574b0a9a525111eaba8fe5089acb974a4a32ffc581d",
+    "cohorts/11-8.0.json": "d7e658308e95c4fb59b3892cafac2f1a569d4f3ca688f24a3384a0f8317e0bb7",
+    "cohorts/12-9.0.json": "8ce25d642d1fee986d1b17ba3fe132e015d7dbcf941cc62f98861fc1cba033bd",
+    "cost.json": "35b9c4b2700fe906216430dc6eb4a998422f47962398a429030048ef62429baa",
+    "feedback/mongoeco-factory-baseline.txt.gz": "9aabeb72b62fa2f83f6f83e2768a6e502567de45912976f850a242075b7b168a",
+    "feedback/mongoeco-factory-fixture-unit.txt.gz": "782cc1ee7d7fa4986c139c79c0033d861808b3e3f7d8ef08c0d88827ee033cf4",
+    "feedback/mongoeco-factory-materialization.txt.gz": "a10ec043d514bec19f106c20f5d380d16322a1761fa569e4f492149fa17cb92e",
+    "feedback/mongoeco-factory-sdk-free-debug.txt.gz": "92d9dcfd1a1d24c5399e768b1f938e9917216ca76a0cebb1911ef93557712b13",
+    "feedback/mongoeco-factory-wheel-all-final.txt.gz": "457dad20c94aba6e81469474c647a451a50de75a21f12c65c7aeddd15c309533",
+    "feedback/mongoeco-factory-wheel-all.txt.gz": "1b91a635ab537afd76856dcbe786865c7a8b8fefbd2509de3f2cc70e3127a54d",
+    "logs/mongoeco-factory-baseline-final.txt.gz": "54f24d8b01221bc37125d150f29f1f0007d2825b42cf7d34476e973e46c2c572",
+    "logs/mongoeco-factory-fixture-final.txt.gz": "6530ecc6ef9e90eb1a3f43a0f922a06e83077aa44903dd8a4a52431edea6b4ba",
+    "logs/mongoeco-factory-fixture-rs-final.txt.gz": "e719fca1f348931df8d340d3d21bb4835254ca0998a7b29e25ad9889e8416932",
+    "logs/mongoeco-factory-fixture-rs-negative.txt.gz": "c0e02aad257c6517ef29ff238eeefff4630c24f804b11a3073911b71f0362210",
+    "logs/mongoeco-factory-inventory.txt.gz": "0084b7b4e00b8a47f2d1fe45ad678c0910b9623a763315767efb1d3bd1880240",
+    "logs/mongoeco-factory-lint-release.txt.gz": "81732d56d3111d0c578ef492ae7c970021c37354943e8c922bb43db68708ff2a",
+    "logs/mongoeco-factory-materialization-final4.txt.gz": "55f76ee3552977afd7d7682c3e911199e928efc524bfe5f428956fe1bc502892",
+    "logs/mongoeco-factory-sdk-free-release-dispatch.txt.gz": "1e6c5146577594914c41f0255af290f3fc7dcaa0a95d862965e02adbfe37a458",
+    "logs/mongoeco-factory-sdk-free-release-factory.txt.gz": "582c0dfbf294524b465363018c3f154bebfa36b91a70dde6040dcf0c4d997d14",
+    "logs/mongoeco-factory-wheel-all-release.txt.gz": "10cf338c292a59bd8310512a8bc62334319e181739f80c8add87cf3f2cd8d52d",
+    "logs/mongoeco-factory-wheel-final2-build.txt.gz": "99cf013e2db43dbdb6b46f1962474f3c8f035f6a43e6c41e2cd3f603ff0e0cd0",
+    "logs/mongoeco-factory-wheel-release-typing.txt.gz": "cb632e138577912f9c1610b39376515c06dfbece2c53eb37b162720d62a0e340",
+    "logs/mongoeco-factory-wheel-unit-release.txt.gz": "d3c638468cc31edccfbabdfceda1c57e8dd458d72feca798af40d6365d1d6dcc",
+    "mongoeco-dispatch-build.py.txt": "55a5db04fba04438231168079e62c6e25be012c9d3f3f485eaf684973c8718ad",
+    "mongoeco-dispatch-wheel-all.py.txt": "eda4aeb833ee529d0850835f1289c76107bcd4cf531f2e78ef75f068d2c340af",
+    "mongoeco-dispatch-wheel-unit.py.txt": "93bf8153a89486c370929480dde42a78a3cbcbdc335b6ed976bba967376cc2d5",
+    "mongoeco-factory-audit.py.txt": "da2d2b2e9c3a133dfa3a876fd7ec61b5b1f237085642dc03a4960a70c640944a",
+    "mongoeco-factory-baseline.py.txt": "698b2c593455da582cd3d6013aac77e0ba65960fbb98cebe1346fbbfd30305ae",
+    "mongoeco-factory-benchmark-control.py.txt": "06ba0b0d6088c6841dfeb91757fb8ff0d19851886eb347fa4c5e645e5153ad7c",
+    "mongoeco-factory-benchmark.py.txt": "7debc63068d27f74e7186ef9f48b21e16779f0aa257d80d5f2b608b3d00692de",
+    "mongoeco-factory-native-final.py.txt": "1665427fec9219e04864be4ad9da571ff4ee5f2a03ae247c5caabc78fafd9b64",
+    "mongoeco-factory-sdk-free.py.txt": "ce95a79b9716f13f53ea850f765fd2396d90419fcbd6b2ffdc39fdb1a425d903",
+    "mongoeco-factory-topology-negative.py.txt": "f21e57785d7fca6559922b1f744ffa8a5b2a824ace8a13effe866d23d9043b6c",
+    "mongoeco_dispatch_artifact_guard.py.txt": "eca190893e437352238b22167243bb6c82a72efa322b954a2209e9a03169f4dc",
+    "native/7.0/document_factory-check.json.gz": "a8c5a6d9d39282ebf104b04cd6df8db226e4daf0ddc884121f36b2c157e5d208",
+    "native/7.0/fixture.json.gz": "5d66db23fba50ab444bba3d0a27c030a67b0f939bafecb6a9ffe42d36792cd34",
+    "native/8.0/document_factory-check.json.gz": "af0c236d6584e685d37dad4a48f38e4ecbdc9d53ab4c2da3d0c6fd3c4b8055b4",
+    "native/8.0/fixture.json.gz": "34241b1ca3ddffd3415194bf60ce51cfc008654ee9e247dabaa99149d6e61286",
+    "native/9.0/document_factory-check.json.gz": "c3d38c7fc91d8d682b8545d02bab6c01f19dfc94345cfe1c9b06dafc6df86086",
+    "native/9.0/fixture.json.gz": "d472a3f83021cef12998e8c19183af582256ea07545360d182545572b3a73cd5",
+    "public-api.json.gz": "dbf3c4a0421c6ea0a0aefcef8bcb6033ec03b448317084ead8b63dba3db02f66",
+    "resource-audit.json": "284c9ce84d59f2367e61d1e47405e9712038796810f2daa0860a91fb81ffedbf",
+    "runtime-sources.json": "fef628d9608dbbbaccf9d1beac034a42e7412bfaa22f6dced1623b5dc9605a62",
+    "wheel-imports-gw0.json.gz": "aa1dfdee4266cb10a28d9bbf894fd92e59f76fe120464566ddee0fd968df7588",
+    "wheel-imports-gw1.json.gz": "f08fa86f79d75d3206e73c16c3278d5c43c3118c69267d73faae1a72fa192d90",
+    "wheel-imports-gw2.json.gz": "9a8b2146fb7c66bbb96decdc081ed255f61a65291a0c10a7f04b059f93083653",
+    "wheel-imports-gw3.json.gz": "ba18f27bfb76868def3e9abbf13e29948b2a045c9d0022642d5c1b50cfeda617",
+    "wheel-unit-imports.json.gz": "cdf36b1a2024c73071a70b5d52d21a61a5a0cbbe5e3f0af8e7ca409de8adb144",
+    "wheel.json": "b0e031fe1d83ba2e7b44f231900fee8d1a050055378d581357ef40b233d7f049",
+    "workset.json": "5a1f3347e9b3a1981059bfc005844d9484d734b3d1c80252f17fda2a6ce8df36"
+  }
+}

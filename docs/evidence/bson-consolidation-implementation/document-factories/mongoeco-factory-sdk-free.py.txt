@@ -1,0 +1,54 @@
+import asyncio,hashlib,json,sys
+from pathlib import Path
+from mongoeco import MongoClient,AsyncMongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from mongoeco.types import CodecOptions
+import mongoeco
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());site=Path(json.loads((root/'wheel.json').read_text())['site_packages']).resolve()
+assert Path(mongoeco.__file__).resolve().is_relative_to(site)
+for name,digest in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(name).relative_to('src')).read_bytes()).hexdigest()==digest,name
+try:import bson
+except ImportError:pass
+else:raise AssertionError('SDK must be absent')
+checked=0
+async def exercise():
+ global checked
+ for engine in (MemoryEngine,SQLiteEngine):
+  for dialect in ('7.0','8.0','9.0'):
+   for registry in (False,True):
+    for kind in ('find','find_one','aggregate'):
+     for asynchronous in (False,True):
+      objects=[];events=[]
+      class Document(dict):
+       def __init__(self,*args,**kwargs):
+        assert not args and not kwargs
+        self.ordinal=len(objects);objects.append(self);events.append(('init',self.ordinal));super().__init__()
+       def __setitem__(self,key,value):
+        if key=='id':assert type(value) is int, (type(value),value)
+        events.append(('set',self.ordinal,key));super().__setitem__(key,value)
+      def number(value):events.append(('decode',value));return value+1
+      options=CodecOptions(document_class=Document,type_registry={int:number} if registry else None)
+      if asynchronous:
+       async with AsyncMongoClient(engine(),mongodb_dialect=dialect) as client:
+        c=client.test.rows;await c.insert_one({'_id':'a','obj':{'v':2}});c=c.with_options(codec_options=options)
+        if kind=='find_one':rows=[await c.find_one({})]
+        else:
+         cursor=await c.aggregate([]) if kind=='aggregate' else c.find({});rows=[row async for row in cursor];await cursor.close()
+      else:
+       with MongoClient(engine(),mongodb_dialect=dialect) as client:
+        c=client.test.rows;c.insert_one({'_id':'a','obj':{'v':2}});c=c.with_options(codec_options=options)
+        if kind=='find_one':rows=[c.find_one({})]
+        else:
+         cursor=c.aggregate([]) if kind=='aggregate' else c.find({});rows=list(cursor);cursor.close()
+      expected=[['cursor','ok'],['firstBatch','id','ns']]
+      if registry:expected.append(['firstBatch','id','ns'])
+      expected.extend([['_id','obj'],['v']])
+      assert [list(row) for row in objects]==expected,(kind,registry,events,[list(row) for row in objects])
+      assert rows==[{'_id':'a','obj':{'v':3 if registry else 2}}]
+      assert isinstance(rows[0],Document) and isinstance(rows[0]['obj'],Document)
+      count=5 if registry else 4
+      assert events[:count-1]==[('init',n) for n in range(count-1)]
+      assert ([('decode',2)]==[e for e in events if e[0]=='decode'] if registry else not any(e[0]=='decode' for e in events)), (kind,registry,events)
+      checked+=1
+asyncio.run(exercise())
+print(json.dumps({'scenarios':checked,'sdk_absent':True,'python':sys.version,'import':mongoeco.__file__}))

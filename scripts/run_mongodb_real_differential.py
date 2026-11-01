@@ -55,11 +55,21 @@ def _failure_document(item: tuple[object, str]) -> dict[str, str]:
 
 
 def inspect_server_runtime(
-    uri: str, target: str, *, require_replica_set: bool = False
+    uri: str,
+    target: str,
+    *,
+    require_replica_set: bool = False,
+    require_standalone: bool = False,
 ) -> dict[str, object]:
     """Require the actual server and FCV, never just a configured target."""
     import pymongo  # noqa: PLC0415 - optional dependency only needed for real integration
 
+    if require_replica_set and require_standalone:
+        message = (
+            "selection needs both topologies; run standalone and replica-set "
+            "partitions separately"
+        )
+        raise RuntimeError(message)
     with pymongo.MongoClient(
         uri, serverSelectionTimeoutMS=3000, socketTimeoutMS=3000
     ) as client:
@@ -78,11 +88,22 @@ def inspect_server_runtime(
         ):
             message = f"requires stable FCV {target}, got {fcv!r}"
             raise RuntimeError(message)
-        hello = client.admin.command("hello") if require_replica_set else None
+        hello = (
+            client.admin.command("hello")
+            if require_replica_set or require_standalone
+            else None
+        )
         if require_replica_set and not (
             hello.get("setName") and hello.get("isWritablePrimary")
         ):
             message = "requires a writable replica-set primary"
+            raise RuntimeError(message)
+        if require_standalone and (
+            hello.get("setName")
+            or hello.get("msg") == "isdbgrid"
+            or not hello.get("isWritablePrimary")
+        ):
+            message = "requires a writable standalone"
             raise RuntimeError(message)
     runtime = {
         "build_info": build_info,
@@ -113,7 +134,13 @@ def main(argv: list[str] | None = None) -> int:
         names = {case.name for case in selected}
         json.dump(
             [
-                {"case_set": corpus.case_set, "fixture_key": key}
+                {
+                    "case_set": corpus.case_set,
+                    "fixture_key": key,
+                    **(
+                        {"topology": "standalone"} if corpus.requires_standalone else {}
+                    ),
+                }
                 for key, corpus in corpora.items()
                 if names.intersection(name for name, _ in corpus.cases)
             ],
@@ -147,6 +174,11 @@ def main(argv: list[str] | None = None) -> int:
             os.environ["MONGOECO_REAL_MONGODB_URI"],
             parsed.target,
             require_replica_set=any(case.requires_replica_set for case in selected),
+            **(
+                {"require_standalone": True}
+                if any(case.requires_standalone for case in selected)
+                else {}
+            ),
         )
     except Exception as error:
         preflight_error = {"error_type": type(error).__name__, "error": str(error)}

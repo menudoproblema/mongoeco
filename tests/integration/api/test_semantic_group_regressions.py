@@ -413,6 +413,12 @@ def test_capture_identifies_native_server_and_current_witnesses(dialect, corpus)
         capture["corpus"].get("observationEncoding", "bson")
         == registration.observation_encoding
     )
+    if registration.requires_standalone:
+        assert capture["corpus"]["topology"] == "standalone"
+        hello = capture["runtime"]["hello"]
+        assert hello["isWritablePrimary"]
+        assert not hello.get("setName")
+        assert hello.get("msg") != "isdbgrid"
     assert len(capture["case_manifests"]) == len(cases)
     for manifest in capture["case_manifests"]:
         # Canonical EJSON decodes a Python int64 as bson.Int64. Compare BSON

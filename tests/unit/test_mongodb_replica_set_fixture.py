@@ -17,7 +17,7 @@ from scripts import with_mongodb_replica_set as replica_fixture
 from scripts.capture_differential_replay_golden import main as capture_main
 from scripts.run_mongodb_real_differential import inspect_server_runtime, main
 from scripts.with_mongodb_replica_set import (
-    ReplicaSetFixture,
+    MongoDBFixture,
     main as fixture_main,
     run_payload,
 )
@@ -27,6 +27,102 @@ from tests.differential.runner import available_case_names, build_suite, select_
 
 
 IMAGE = "mongo:7.0.43-jammy@sha256:" + "a" * 64
+
+
+@pytest.mark.parametrize("topology", ["replica-set", "standalone"])
+def test_owned_fixture_passes_only_the_requested_topology_to_mongod(tmp_path, topology):
+    fixture = MongoDBFixture(IMAGE, "7.0", tmp_path, topology=topology)
+    command = MagicMock(return_value=subprocess.CompletedProcess([], 0, "owned", ""))
+    inspected = {
+        "NetworkSettings": {
+            "Ports": {"27017/tcp": [{"HostIp": "127.0.0.1", "HostPort": "49231"}]}
+        }
+    }
+    with (
+        patch.object(fixture, "_command", command),
+        patch.object(fixture, "_inspect_owned", return_value=inspected),
+        patch.object(fixture, "_initialize"),
+        patch.object(
+            replica_fixture, "inspect_server_runtime", return_value={}
+        ) as inspect_runtime,
+    ):
+        fixture._start()
+    arguments = command.call_args_list[0].args
+    assert ("--replSet" in arguments) == (topology == "replica-set")
+    assert ("--oplogSize" in arguments) == (topology == "replica-set")
+    assert fixture.report["topology"] == topology
+    inspect_runtime.assert_called_once_with(
+        fixture.uri,
+        "7.0",
+        require_replica_set=topology == "replica-set",
+        **({"require_standalone": True} if topology == "standalone" else {}),
+    )
+
+
+@pytest.mark.parametrize(
+    "hello",
+    [
+        {"setName": "unexpected", "isWritablePrimary": True},
+        {"msg": "isdbgrid", "isWritablePrimary": True},
+        {"isWritablePrimary": False},
+    ],
+)
+def test_standalone_initialization_rejects_another_topology_before_setting_fcv(
+    tmp_path, hello
+):
+    fixture = MongoDBFixture(IMAGE, "7.0", tmp_path, topology="standalone")
+    fixture.uri = "mongodb://owned"
+    client = MagicMock()
+    client.admin.command.side_effect = [
+        {"ok": 1},
+        hello,
+    ]
+    with patch("pymongo.MongoClient") as factory:
+        factory.return_value.__enter__.return_value = client
+        with pytest.raises(RuntimeError, match="standalone fixture unexpectedly"):
+            fixture._initialize()
+    assert [call.args[0] for call in client.admin.command.call_args_list] == [
+        "ping",
+        "hello",
+    ]
+
+
+@pytest.mark.parametrize(
+    "hello",
+    [
+        {"setName": "rs", "isWritablePrimary": True},
+        {"msg": "isdbgrid", "isWritablePrimary": True},
+        {"isWritablePrimary": False},
+    ],
+)
+def test_capture_preflight_rejects_other_topologies_for_standalone_oracles(hello):
+    client = MagicMock()
+    client.__enter__.return_value = client
+    client.server_info.return_value = {"versionArray": [7, 0, 43]}
+    client.admin.command.side_effect = lambda value: (
+        hello
+        if value == "hello"
+        else {"featureCompatibilityVersion": {"version": "7.0"}}
+    )
+    with (
+        patch("pymongo.MongoClient", return_value=client),
+        pytest.raises(RuntimeError, match="requires a writable standalone"),
+    ):
+        inspect_server_runtime("mongodb://unused", "7.0", require_standalone=True)
+
+
+def test_incompatible_topology_requirements_fail_before_connecting():
+    with (
+        patch("pymongo.MongoClient") as factory,
+        pytest.raises(RuntimeError, match="partitions separately"),
+    ):
+        inspect_server_runtime(
+            "mongodb://unused",
+            "7.0",
+            require_standalone=True,
+            require_replica_set=True,
+        )
+    factory.assert_not_called()
 
 
 @pytest.mark.parametrize("version", [(7, 0), (8, 0), (9, 0)])
@@ -124,8 +220,15 @@ def test_preflight_requires_a_writable_replica_set_when_requested(hello):
         inspect_server_runtime("mongodb://unused", "7.0", require_replica_set=True)
 
 
-def test_report_uses_the_same_filtered_selection_and_requires_replica_set(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize(
+    ["case_name", "partition", "standalone"],
+    [
+        ("semantic_ttl_publication_deletes", "replica-set", False),
+        ("semantic_document_factory_trace", "standalone", True),
+    ],
+)
+def test_report_uses_the_filtered_selection_and_requires_its_topology(
+    tmp_path, monkeypatch, case_name, partition, standalone
 ):
     monkeypatch.setenv("MONGOECO_REAL_MONGODB_URI", "mongodb://unused")
     report = tmp_path / "report.json"
@@ -144,9 +247,9 @@ def test_report_uses_the_same_filtered_selection_and_requires_replica_set(
                 [
                     "runner",
                     "7.0",
-                    "semantic_ttl_*",
+                    case_name,
                     "--partition",
-                    "replica-set",
+                    partition,
                     "--json-report",
                     str(report),
                 ]
@@ -154,12 +257,13 @@ def test_report_uses_the_same_filtered_selection_and_requires_replica_set(
             == 0
         )
     data = json.loads(report.read_text())
-    assert [row["name"] for row in data["cases"]] == [
-        "semantic_ttl_publication_deletes"
-    ]
-    assert data["partition"] == "replica-set"
+    assert [row["name"] for row in data["cases"]] == [case_name]
+    assert data["partition"] == partition
     preflight.assert_called_once_with(
-        "mongodb://unused", "7.0", require_replica_set=True
+        "mongodb://unused",
+        "7.0",
+        require_replica_set=not standalone,
+        **({"require_standalone": True} if standalone else {}),
     )
 
 
@@ -177,7 +281,7 @@ def test_topology_metadata_does_not_rewrite_historical_reproduction_manifests():
     "stderr", ["Error: No such object: owned", "error: no such container: owned"]
 )
 def test_cleanup_distinguishes_absence_from_docker_failure(tmp_path, stderr):
-    fixture = ReplicaSetFixture(IMAGE, "7.0", tmp_path)
+    fixture = MongoDBFixture(IMAGE, "7.0", tmp_path)
     with patch(
         "scripts.with_mongodb_replica_set._docker",
         return_value=subprocess.CompletedProcess([], 1, "", stderr),
@@ -196,7 +300,7 @@ def test_cleanup_distinguishes_absence_from_docker_failure(tmp_path, stderr):
 
 
 def test_cleanup_refuses_a_container_without_the_owned_identity(tmp_path):
-    fixture = ReplicaSetFixture(IMAGE, "7.0", tmp_path)
+    fixture = MongoDBFixture(IMAGE, "7.0", tmp_path)
     other = [{"Id": "borrowed", "Name": "/" + fixture.name, "Config": {"Labels": {}}}]
     with (
         patch(
@@ -266,8 +370,8 @@ def test_main_records_failures_and_attempts_owned_cleanup(tmp_path, failure):
         fixture.report["cleanup"] = {"removed": True}
 
     with (
-        patch.object(ReplicaSetFixture, "start", start),
-        patch.object(ReplicaSetFixture, "close", close),
+        patch.object(MongoDBFixture, "start", start),
+        patch.object(MongoDBFixture, "close", close),
         patch(
             "scripts.with_mongodb_replica_set.run_payload",
             side_effect=subprocess.TimeoutExpired("owned", 1),
@@ -332,8 +436,8 @@ def test_cleanup_failure_cannot_turn_a_successful_payload_green(tmp_path):
 
     message = "owned resource could not be removed"
     with (
-        patch.object(ReplicaSetFixture, "start", start),
-        patch.object(ReplicaSetFixture, "close", side_effect=RuntimeError(message)),
+        patch.object(MongoDBFixture, "start", start),
+        patch.object(MongoDBFixture, "close", side_effect=RuntimeError(message)),
         patch("scripts.with_mongodb_replica_set.run_payload", return_value=0),
     ):
         assert (
@@ -386,10 +490,15 @@ def test_unbounded_or_nonpositive_timeouts_are_rejected_before_resource_creation
 
 
 @pytest.mark.parametrize(
-    ["case_set", "required"], [("ttl-publication", True), ("type-query", False)]
+    ["case_set", "required", "standalone"],
+    [
+        ("ttl-publication", True, False),
+        ("type-query", False, False),
+        ("document-factory", False, True),
+    ],
 )
 def test_capture_requires_the_declared_topology_before_writing_a_reference(
-    tmp_path, monkeypatch, case_set, required
+    tmp_path, monkeypatch, case_set, required, standalone
 ):
     monkeypatch.setenv("MONGOECO_REAL_MONGODB_URI", "mongodb://unused")
     output = tmp_path / "native.json"
@@ -408,7 +517,10 @@ def test_capture_requires_the_declared_topology_before_writing_a_reference(
     ):
         capture_main()
     preflight.assert_called_once_with(
-        "mongodb://unused", "7.0", require_replica_set=required
+        "mongodb://unused",
+        "7.0",
+        require_replica_set=required,
+        **({"require_standalone": True} if standalone else {}),
     )
     assert not output.exists()
 
@@ -432,7 +544,7 @@ def test_queued_python_signal_is_delivered_only_after_the_critical_request_finis
 
 
 def test_indeterminate_creation_is_not_reported_as_successful_cleanup(tmp_path):
-    fixture = ReplicaSetFixture(IMAGE, "7.0", tmp_path)
+    fixture = MongoDBFixture(IMAGE, "7.0", tmp_path)
     fixture.report["creation_indeterminate"] = True
     with (
         patch.object(fixture, "_inspect_owned", return_value=None),
@@ -493,7 +605,7 @@ def test_cancellation_during_payload_creation_cleans_the_returned_process():
 def test_interrupted_create_keeps_cleanup_indeterminate_until_inspected(
     tmp_path, error
 ):
-    fixture = ReplicaSetFixture(IMAGE, "7.0", tmp_path)
+    fixture = MongoDBFixture(IMAGE, "7.0", tmp_path)
     with (
         patch.object(fixture, "_command", side_effect=error),
         pytest.raises(type(error)),

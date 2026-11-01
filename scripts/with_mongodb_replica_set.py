@@ -1,7 +1,8 @@
-"""Run an existing command against an owned, bounded Docker replica-set fixture.
+"""Run an existing command against an owned, bounded Docker MongoDB fixture.
 
 The image is preloaded (the CI standalone service uses the same pinned image).
 This module owns lifecycle only; differential selection/oracles stay in their runners.
+The default topology remains a replica set; standalone is explicit.
 """
 
 from __future__ import annotations
@@ -66,12 +67,18 @@ def _docker(*args, check=True, timeout=30):
         )
 
 
-class ReplicaSetFixture:
-    def __init__(self, image, target, artifacts, *, startup_timeout=90):
+class MongoDBFixture:
+    def __init__(
+        self, image, target, artifacts, *, startup_timeout=90, topology="replica-set"
+    ):
         if not re.fullmatch(r"[^\s-][^\s]*@sha256:[0-9a-f]{64}", image):
-            message = "replica-set fixture requires a digest-pinned image"
+            message = "MongoDB fixture requires a digest-pinned image"
+            raise ValueError(message)
+        if topology not in {"replica-set", "standalone"}:
+            message = "fixture topology must be replica-set or standalone"
             raise ValueError(message)
         self.image = image
+        self.topology = topology
         self.target = target
         self.artifacts = Path(artifacts)
         self.startup_timeout = startup_timeout
@@ -83,6 +90,7 @@ class ReplicaSetFixture:
         self.report = {
             "image": image,
             "target": target,
+            "topology": topology,
             "name": self.name,
             "owner": self.owner,
             "status": "starting",
@@ -100,7 +108,7 @@ class ReplicaSetFixture:
         if self._startup_deadline is not None:
             timeout = min(timeout, self._startup_deadline - time.monotonic())
             if timeout <= 0:
-                message = "replica-set startup deadline exceeded"
+                message = "MongoDB startup deadline exceeded"
                 raise TimeoutError(message)
         return _docker(*args, check=check, timeout=timeout)
 
@@ -135,6 +143,11 @@ class ReplicaSetFixture:
         # Keep uncertainty even if cancellation supersedes a create timeout
         # while the Docker adapter is returning. Cleanup must confirm ownership.
         self.report["creation_indeterminate"] = True
+        replication = (
+            ("--replSet", "mongoeco", "--oplogSize", "128")
+            if self.topology == "replica-set"
+            else ()
+        )
         created = self._command(
             "create",
             "--pull=never",
@@ -147,11 +160,8 @@ class ReplicaSetFixture:
             "--",
             self.image,
             "mongod",
-            "--replSet",
-            "mongoeco",
+            *replication,
             "--bind_ip_all",
-            "--oplogSize",
-            "128",
             "--setParameter",
             "ttlMonitorSleepSecs=1",
         )
@@ -172,7 +182,10 @@ class ReplicaSetFixture:
         self.report["uri"] = self.uri
         self._initialize()
         self.report["runtime"] = inspect_server_runtime(
-            self.uri, self.target, require_replica_set=True
+            self.uri,
+            self.target,
+            require_replica_set=self.topology == "replica-set",
+            **({"require_standalone": True} if self.topology == "standalone" else {}),
         )
         self.report["status"] = "ready"
         self.record()
@@ -189,19 +202,32 @@ class ReplicaSetFixture:
             serverSelectionTimeoutMS=1000,
         ) as client:
             self._wait(lambda: client.admin.command("ping"), deadline, PyMongoError)
-            client.admin.command(
-                {
-                    "replSetInitiate": {
-                        "_id": "mongoeco",
-                        "members": [{"_id": 0, "host": "127.0.0.1:27017"}],
+            if self.topology == "replica-set":
+                client.admin.command(
+                    {
+                        "replSetInitiate": {
+                            "_id": "mongoeco",
+                            "members": [{"_id": 0, "host": "127.0.0.1:27017"}],
+                        }
                     }
-                }
-            )
-            self._wait(
-                lambda: client.admin.command("hello").get("isWritablePrimary"),
-                deadline,
-                PyMongoError,
-            )
+                )
+                self._wait(
+                    lambda: client.admin.command("hello").get("isWritablePrimary"),
+                    deadline,
+                    PyMongoError,
+                )
+            hello = client.admin.command("hello")
+            if self.topology == "standalone" and (
+                hello.get("setName")
+                or hello.get("msg") == "isdbgrid"
+                or not hello.get("isWritablePrimary")
+            ):
+                message = "standalone fixture unexpectedly reports another topology"
+                raise RuntimeError(message)
+            self.report["hello"] = {
+                "setName": hello.get("setName"),
+                "isWritablePrimary": hello.get("isWritablePrimary"),
+            }
             client.admin.command(
                 {
                     "setFeatureCompatibilityVersion": self.target,
@@ -221,7 +247,7 @@ class ReplicaSetFixture:
             except transient_error:
                 pass
             if time.monotonic() >= deadline:
-                message = "replica-set startup deadline exceeded"
+                message = "MongoDB startup deadline exceeded"
                 raise TimeoutError(message)
             time.sleep(0.1)
 
@@ -329,6 +355,9 @@ def main(argv=None):
     parser.add_argument("--target", choices=("7.0", "8.0", "9.0"), required=True)
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--startup-timeout", type=float, default=90)
+    parser.add_argument(
+        "--topology", choices=("replica-set", "standalone"), default="replica-set"
+    )
     parser.add_argument("--timeout", type=float, default=1200)
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
@@ -338,8 +367,12 @@ def main(argv=None):
         for value in (args.timeout, args.startup_timeout)
     ):
         parser.error("a command and positive startup/payload timeouts are required")
-    fixture = ReplicaSetFixture(
-        args.image, args.target, args.artifacts, startup_timeout=args.startup_timeout
+    fixture = MongoDBFixture(
+        args.image,
+        args.target,
+        args.artifacts,
+        startup_timeout=args.startup_timeout,
+        topology=args.topology,
     )
     handlers = {
         signum: signal.signal(signum, _cancel)
@@ -359,7 +392,7 @@ def main(argv=None):
         fixture.report.update(
             status="failed", error=repr(error), traceback=traceback.format_exc()
         )
-        sys.stderr.write(f"replica-set fixture failed: {error!r}\n")
+        sys.stderr.write(f"MongoDB fixture failed: {error!r}\n")
     finally:
         for signum in handlers:
             signal.signal(signum, signal.SIG_IGN)
@@ -371,7 +404,7 @@ def main(argv=None):
             fixture.report.update(
                 status="failed", cleanup={"removed": False, "error": repr(error)}
             )
-            sys.stderr.write(f"replica-set cleanup failed: {error!r}\n")
+            sys.stderr.write(f"MongoDB cleanup failed: {error!r}\n")
         finally:
             try:
                 fixture.record()

@@ -56,60 +56,89 @@ def _encode_response_fallback(value):
     raise TypeError(message)
 
 
-def materialize_cursor_response(batch, *, codec_options, namespace, cursor_id, initial):
-    """Decode a completed cursor response using the installed SDK's policy.
+def _decode_response_document(document, *, codec_options):
+    """Apply public SDK decoding, or the supported portable codec policy."""
+    if _BSON is None:
+        if codec_options.type_registry:
+            # The selected subtree is a cursor body. Its id is BSON int64,
+            # never an int32 callback, even when the portable public value is
+            # an int. Other fields retain the recursive codec traversal.
+            decoded = codec_options.document_class()
+            for key, value in document.items():
+                public = DocumentCodec.to_pymongo(
+                    DocumentCodec.to_public(value), binary_subtype_zero_as_bytes=True
+                )
+                decoded[key] = (
+                    public
+                    if key == "id"
+                    else DocumentCodec.apply_codec_options(
+                        public, codec_options=codec_options
+                    )
+                )
+            return decoded
+        return DocumentCodec.apply_codec_options(
+            DocumentCodec.to_pymongo(
+                DocumentCodec.to_public(document), binary_subtype_zero_as_bytes=True
+            ),
+            codec_options=codec_options,
+        )
+    encode_options = _BsonCodecOptions(
+        uuid_representation=_BsonUuidRepresentation.STANDARD,
+        type_registry=_TypeRegistry(fallback_encoder=_encode_response_fallback),
+    )
+    encoded = _BSON.encode(
+        DocumentCodec.to_pymongo(DocumentCodec.to_public(document)),
+        codec_options=encode_options,
+    )
+    options = _BsonCodecOptions(
+        document_class=codec_options.document_class,
+        tz_aware=codec_options.tz_aware,
+        tzinfo=codec_options.tzinfo,
+        uuid_representation=getattr(
+            _BsonUuidRepresentation, codec_options.uuid_representation.name
+        ),
+        type_registry=_TypeRegistry(
+            [
+                _ResponseDecoder(kind, transform)
+                for kind, transform in codec_options.type_registry
+            ]
+        ),
+    )
+    return _BSON(encoded).decode(codec_options=options)
 
-    Custom decoding selects the batch from a decoded cursor subdocument: this
-    includes batch/row decoders and discarded id/ns decoder effects, in order.
-    Plain reads keep the fused portable materializer; raw never calls this.
-    Return the transformed batch without consuming it: query and command
-    cursors own their distinct iteration and retrieved-count rules.
+
+def materialize_cursor_response(batch, *, codec_options, namespace, cursor_id, initial):
+    """Decode one completed standalone response, preserving factory effects.
+
+    A registry selects the batch from a decoded cursor subdocument. Selection
+    itself constructs command/cursor containers before decoding that subtree;
+    id/ns callbacks run but their transformed values are discarded. Without a
+    registry, factories see the whole command reply. Plain dict reads retain
+    the fused materializer; raw never calls this function.
     """
-    if _BSON is not None and (
-        codec_options.type_registry
-        or codec_options.document_class is not dict
-    ):
+    if codec_options.type_registry or codec_options.document_class is not dict:
         body = cursor_response_document(
             batch,
-            cursor_id=codec.BsonInt64Public(cursor_id),
+            cursor_id=(codec.BsonInt64Public or int)(cursor_id),
             namespace=namespace,
             initial=initial,
         )
-        encode_options = _BsonCodecOptions(
-            uuid_representation=_BsonUuidRepresentation.STANDARD,
-            type_registry=_TypeRegistry(fallback_encoder=_encode_response_fallback),
-        )
-        encoded = _BSON.encode(
-            DocumentCodec.to_pymongo(DocumentCodec.to_public(body)),
-            codec_options=encode_options,
-        )
-        options = _BsonCodecOptions(
-            document_class=codec_options.document_class,
-            tz_aware=codec_options.tz_aware,
-            tzinfo=codec_options.tzinfo,
-            uuid_representation=getattr(
-                _BsonUuidRepresentation, codec_options.uuid_representation.name
-            ),
-            type_registry=_TypeRegistry(
-                [
-                    _ResponseDecoder(kind, transform)
-                    for kind, transform in codec_options.type_registry
-                ]
-            ),
-        )
-        decoded = _BSON(encoded).decode(codec_options=options)
-        return decoded["firstBatch" if initial else "nextBatch"]
-    if codec_options.type_registry:
-        body = cursor_response_document(
-            DocumentCodec.to_pymongo(
-                DocumentCodec.to_public(batch), binary_subtype_zero_as_bytes=True
-            ),
-            cursor_id=(codec.BsonInt64Public or codec.BsonInt64)(cursor_id),
-            namespace=namespace,
-            initial=initial,
-        )
-        decoded = DocumentCodec.apply_codec_options(body, codec_options=codec_options)
-        return decoded["firstBatch" if initial else "nextBatch"]
+        batch_key = "firstBatch" if initial else "nextBatch"
+        if codec_options.type_registry:
+            # These are selection containers, not recursively decoded BSON.
+            # Constructor/setter failures here propagate without BSON wrapping.
+            reply = codec_options.document_class()
+            selected = codec_options.document_class()
+            decoded = _decode_response_document(body, codec_options=codec_options)
+            for key, value in body.items():
+                selected[key] = decoded[key] if key == batch_key else value
+            reply["cursor"] = selected
+            reply["ok"] = 1.0
+        else:
+            reply = _decode_response_document(
+                {"cursor": body, "ok": 1.0}, codec_options=codec_options
+            )
+        return reply["cursor"][batch_key]
     return [
         materialize_public_document(row, codec_options=codec_options) for row in batch
     ]

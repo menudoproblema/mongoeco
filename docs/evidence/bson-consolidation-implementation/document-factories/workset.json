@@ -1,0 +1,18 @@
+{
+  ".github/workflows/mongodb-differential.yml": "a1cdc1241119fbc4839dc7f24c013d4f98c2f89fc8818129c66cb79f30c08c68",
+  "docs/testing-real-mongodb.md": "74eb83a3b7a03de0cf9f4169728d97bfeeb4497a15511470d295b6efe25c7217",
+  "scripts/capture_differential_replay_golden.py": "adce141b40b0d0182a7edb893179cc50b21b3210cb352ceb1a2598801d2014c3",
+  "scripts/run_mongodb_real_differential.py": "b2b883eaab5d4debcaf37cc205e097cabf93d610565906f8de720ba49e69aaff",
+  "scripts/with_mongodb_replica_set.py": "5761be560940f195422a0a4fcd521bc0dee3f9cae338248f03a1bdbfc853d062",
+  "src/mongoeco/core/_public_materialization.py": "964d5bfb1c6b53a9b331c9e0bf91006bdae250322b4470eb62d18f57265f988b",
+  "src/mongoeco/core/codec.py": "d7e6a41416cb719537927e2dd7218ac5055b121f0d21d2deb863607a58f57224",
+  "tests/differential/cases.py": "b97bf8eb8388d2a88a901baf33d77292993237b8d89420243286c965e8a4578d",
+  "tests/differential/semantic_corpora.py": "3f9b6888cdc3679dbf00842c43af6a8dc206fd3158ae51f818feb4fd27fff8aa",
+  "tests/differential/semantic_document_factory_cases.py": "270dca3b55568add979e52860cdb9e488d43a84bb7344b3c446aadbcf90f1411",
+  "tests/fixtures/semantic_document_factory_7_0.json": "e4a6053d7fcb658a369550239ee2347415c75d55f972bdc17af7de732d8aa50e",
+  "tests/fixtures/semantic_document_factory_8_0.json": "9e7626c34aadf7c08082630a879b5eb117d3bc150d34b06beb80cb62d0e27823",
+  "tests/fixtures/semantic_document_factory_9_0.json": "bf68156317234355c37f5722cc112f63006f3328affc49315d755cd25efc427e",
+  "tests/integration/api/test_semantic_group_regressions.py": "b593181238ee94f2b765a38354bc37a6ca1ef69c5ff01e7a2e4f50e077f14bfd",
+  "tests/unit/core/test_public_materialization.py": "caea042ad148f7d6fe81eb48a7039926ff4cabbb695afb100234a636d804bf92",
+  "tests/unit/test_mongodb_replica_set_fixture.py": "ef7e04d523d7e40bf7e15abcb38a5d7d6f001ae0409c16488e118a3475fdbbcc"
+}

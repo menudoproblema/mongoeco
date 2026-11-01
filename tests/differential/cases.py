@@ -16,6 +16,7 @@ class RealParityCase:
     action: RealParityAction
     min_version: tuple[int, int] = (7, 0)
     requires_replica_set: bool = False
+    requires_standalone: bool = False
 
     def supports(self, target_version: tuple[int, int]) -> bool:
         return target_version >= self.min_version
@@ -1029,6 +1030,7 @@ REAL_PARITY_CASES += tuple(
     RealParityCase(
         name=name, seed_documents=corpus.seed, action=action,
         requires_replica_set=corpus.requires_replica_set,
+        requires_standalone=corpus.requires_standalone,
     )
     for corpus in SEMANTIC_CORPORA.values()
     for name, action in corpus.cases

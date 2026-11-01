@@ -1,0 +1,119 @@
+[
+  {
+    "report": "/tmp/mongoeco-factory-probe-rs/fixture.json",
+    "container": "8578b3f217ad373f4ecda1567033ee2e61f04685b6de2c229d3bfb9e105abbd8",
+    "volumes": [
+      "601d56ed755efb5fbb1f1672f45ffcbc3d80d218ed20011b42eedfdd77871d04",
+      "49b2441f96a1d5cb5da9257b3108860746c0cdd8cc59ad253f9bdeade219291b"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-probe-standalone/fixture.json",
+    "container": "557a7a502c8ca1b0a5fbe2026935af13bf35d9a36fecded98da476329e1d4ca7",
+    "volumes": [
+      "a3bd866ed8436478ff5b4e749052835f9978a4049b600efc61e90f500f1a47b2",
+      "bf8f862c44c8195f181c308a9c238cb1134329ecf8074194e2c6e4612fca21d9"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-fixture-rs-final/fixture.json",
+    "container": "7f5abb90a9b47a70c7f704f483b8023bc7f4ab693c46bc8980b9f11c489326a1",
+    "volumes": [
+      "04af990bb2845348d995da68f4209a748f3bec8dc11518f0e60d393e604778c0",
+      "d7c0d8d391b551b099a405e690cbff219940fb86c0c9e2b6e09f93aad9adf445"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-fixture-rs-negative/fixture.json",
+    "container": "5bc38776614a57a6100830ad98df32d1c26e0994d6e386ec4cfdf791957e5ec0",
+    "volumes": [
+      "708329ce5e669d450bad3eeb6edcb76f9b2723b93c9693f9518b450d38c5c5df",
+      "020dc97959f22a34247edddd5e10dcd0be7a5192614de32473785d48e7c3f654"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-v1/7.0/fixture.json",
+    "container": "23ee8674b95ff49bedbb462369fff31fa208f3784060b11ca6f73cd28d029762",
+    "volumes": [
+      "ddd1b619b78ac330e77529ee04786cd6a38371afb68a39ffbf4d4818966f4223",
+      "691a29373169fa23940a0bffd861267c483527063357eefbb0be16455ba3c9ec"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-v1/8.0/fixture.json",
+    "container": "585cfde211670b5e7075b3dc743070d6924970a4e9abb0b6119ad9c6fe2a491b",
+    "volumes": [
+      "ec48c89454fce2c67eebbdaa7ae5a42f2fbdcb73589c2b895937ba4c334269e2",
+      "a6da0df467a36d76720758193366e1021ddee7edf41f16359a429fceec92bea6"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-v1/9.0/fixture.json",
+    "container": "38c91585bbf8bf439bd66f514b5e8a237abdad3e038dcc3ac5529df09fbe7b35",
+    "volumes": [
+      "55de1ef31454fc38205d71296634423e1c43856fac60107f62a74ee51085e410",
+      "3e2c744f388e26a104d660271ebae69759983ebb8e202ca2e3f43702d6b17164"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-v2/7.0/fixture.json",
+    "container": "6fe2a17721d00e74be28ca21c8d56a947a5314b7d8b0d9f7916a2fa22b48f03c",
+    "volumes": [
+      "29a0a0bae87e973be388b8f933bc0cf079c8cb8de3270461f0cae1813ca0d4ea",
+      "941f49b9982a7eb01e2977b18f8dfeba87ba7ac8b6b67b955117cae653f57faf"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-v2/8.0/fixture.json",
+    "container": "9dc7a1dae730bd4ced1231a25bc21c4054990774126c19e75cf531342925e24b",
+    "volumes": [
+      "e8027f25566134c9dec5ef0bae4eaa869f5091a6928afc557073a4a5ebda27b8",
+      "50947dbd90f4ea3d4c5f840c0ef5d9b63c4ffd71856d1fb4031c0556db4a0ac5"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-v2/9.0/fixture.json",
+    "container": "d88ab74c38b08897d96e289b0edbed5daf3397a3018a9ad19c8e2d36dc0e4cd1",
+    "volumes": [
+      "f7d073b2b6eafdc0379b32f5b58e25e493da82dcda192f49a320961581b9dc57",
+      "7d3d29524b47662a761ecef464141b10a2b37d2095bcac29eaf2f9f32ff34b1d"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-final/7.0/fixture.json",
+    "container": "6602e296c3ea7a45e147d3a93358ca9247e35b5ba8dfbe607281c4f6c47796c4",
+    "volumes": [
+      "5fddacd316211fe33ff24e279918005dc7be37632c6d6bff308f35ef02a9c282",
+      "2fcb11119efba51b93dcc8c2c1f0611f65d1a468d74960de0a491670e023828a"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-final/8.0/fixture.json",
+    "container": "a78b73685c3decf6e7ff4c834d5e6e8d4d63cb0c33c97601cd54f492e43d3109",
+    "volumes": [
+      "00deac60e407b13fa72b5a3df92b8b865f972a2db539f35d106d86a7918e7661",
+      "3d8d9453242e077dd775f0d28dccf2db979465fcdeb63d1d1a82aa08cfc64e3a"
+    ],
+    "independently_absent": true
+  },
+  {
+    "report": "/tmp/mongoeco-factory-native-final/9.0/fixture.json",
+    "container": "41c1ac2dcd0f372baefe1f26f9ef1cb893c5a594b88e1934fe27be612a672a94",
+    "volumes": [
+      "0427e931be00bc3ab22f8d923ddfe28482ada54bf326450a28b1a5db733b7b52",
+      "9dcd73870d8825fb0213f1ae9f20658267975a716d82eda2fd685f14ba39af3f"
+    ],
+    "independently_absent": true
+  }
+]

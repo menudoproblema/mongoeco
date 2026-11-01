@@ -161,13 +161,24 @@ def test_fused_materialization_preserves_types_order_and_options(
     assert document["tuple"][0] == {"values": [1, 2]}
 
 
-def test_custom_document_class_and_decoders_keep_bottom_up_order():
+def test_custom_document_factory_and_setters_follow_independent_sdk_order():
+    from bson import BSON  # noqa: PLC0415 - independent SDK oracle
+    from bson.codec_options import (  # noqa: PLC0415
+        CodecOptions as SDKOptions,
+        TypeDecoder,
+        TypeRegistry,
+    )
+
     events = []
 
     class LoggedDocument(dict):
-        def __init__(self, value):
-            events.append(("document", list(value)))
-            super().__init__(value)
+        def __init__(self):
+            events.append(("document",))
+            super().__init__()
+
+        def __setitem__(self, key, value):
+            events.append(("set", key))
+            super().__setitem__(key, value)
 
     def decode(value):
         events.append(("decode", value))
@@ -175,12 +186,67 @@ def test_custom_document_class_and_decoders_keep_bottom_up_order():
 
     options = CodecOptions(document_class=LoggedDocument, type_registry={int: decode})
     value = {"first": {"value": 1}, "second": [2, {"third": 3}]}
-    expected = reference(value, options)
+
+    class Decode(TypeDecoder):
+        bson_type = int
+
+        def transform_bson(self, value):
+            return decode(value)
+
+    expected = BSON(BSON.encode(value)).decode(
+        codec_options=SDKOptions(
+            document_class=LoggedDocument, type_registry=TypeRegistry([Decode()])
+        )
+    )
     expected_events = events[:]
     events.clear()
     actual = materialize_public_document(value, codec_options=options)
     assert shape(actual) == shape(expected)
     assert events == expected_events
+
+
+@pytest.mark.parametrize("initial", [False, True])
+def test_portable_cursor_metadata_retains_int64_dispatch_without_hiding_data_id(
+    initial,
+):
+    calls = []
+    constructed = []
+
+    class Document(dict):
+        def __init__(self):
+            constructed.append(self)
+            super().__init__()
+
+        def __setitem__(self, key, value):
+            if key == "id":
+                assert isinstance(value, int)
+            super().__setitem__(key, value)
+
+    def number(value):
+        calls.append(value)
+        return value + 1
+
+    options = CodecOptions(document_class=Document, type_registry={int: number})
+    with (
+        patch.object(materializer, "_BSON", None),
+        patch.object(codec, "BsonInt64Public", None),
+    ):
+        rows = materializer.materialize_cursor_response(
+            [{"id": 9, "n": 2}],
+            codec_options=options,
+            namespace="db.rows",
+            cursor_id=0,
+            initial=initial,
+        )
+    assert calls == [9, 2]
+    assert rows == [{"id": 10, "n": 3}]
+    key = "firstBatch" if initial else "nextBatch"
+    assert [list(row) for row in constructed] == [
+        ["cursor", "ok"],
+        [key, "id", "ns"],
+        [key, "id", "ns"],
+        ["id", "n"],
+    ]
 
 
 @pytest.mark.parametrize("registry", [False, True])
