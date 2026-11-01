@@ -28,7 +28,9 @@ def test_ddl_recording_failure_restores_catalog_data_indexes_and_publication(
         else SQLiteEngine(str(tmp_path / "db.sqlite"))
     )
     with MongoClient(engine) as client:
-        source = client.namespaces.create_collection("source", comment="retained")
+        source = client.namespaces.create_collection(
+            "source", validator={"v": {"$gte": 0}}
+        )
         source.insert_one({"_id": 1, "v": 2})
         source.create_index("v")
         stream = client.watch(max_await_time_ms=1)
@@ -51,7 +53,7 @@ def test_ddl_recording_failure_restores_catalog_data_indexes_and_publication(
                     _mutate(client, operation)
             assert client.namespaces.list_collection_names() == ["source"]
             assert source.find_one({"v": 2}, hint="v_1") == {"_id": 1, "v": 2}
-            assert source.options()["comment"] == "retained"
+            assert source.options()["validator"] == {"v": {"$gte": 0}}
             assert stream.try_next() is None
             _mutate(client, operation)
             client.namespaces.barrier.insert_one({"_id": "after"})

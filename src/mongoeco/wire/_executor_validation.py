@@ -457,6 +457,7 @@ _WIRE_COMMAND_VALIDATORS: dict[str, _WireValidator] = {
             "delete",
             "dropIndexes",
             "validate",
+            "drop",
         }
     },
     **{

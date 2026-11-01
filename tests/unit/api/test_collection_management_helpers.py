@@ -4,7 +4,7 @@ from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.compat import MongoDialect80
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import InvalidName, OperationFailure
 from mongoeco.types import IndexModel
 
 from tests.unit.api._collection_test_support import *  # noqa: F403
@@ -1779,5 +1779,5 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         calls = asyncio.run(_exercise())
 
         self.assertEqual(calls[0][0], ("db", "coll", "name_1"))
-        with self.assertRaises(TypeError):
+        with self.assertRaises(InvalidName):
             asyncio.run(self.collection.rename(""))

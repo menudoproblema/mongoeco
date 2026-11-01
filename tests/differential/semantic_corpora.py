@@ -74,6 +74,10 @@ from tests.differential.semantic_bson_mutation_cases import (
     SEED as BSON_MUTATION_SEED,
     SEMANTIC_BSON_MUTATION_CASES,
 )
+from tests.differential.semantic_bson_namespace_cases import (
+    SEED as BSON_NAMESPACE_SEED,
+    SEMANTIC_BSON_NAMESPACE_CASES,
+)
 from tests.differential.semantic_bson_request_cases import (
     SEED as BSON_REQUEST_SEED,
     SEMANTIC_BSON_REQUEST_CASES,
@@ -567,6 +571,10 @@ SEMANTIC_CORPORA = {
         "bson-command-flags", "semantic_bson_command_flag_cases",
         BSON_COMMAND_FLAG_SEED,
         SEMANTIC_BSON_COMMAND_FLAG_CASES,
+    ),
+    "bson_namespace": SemanticCorpus(
+        "bson-namespace", "semantic_bson_namespace_cases", BSON_NAMESPACE_SEED,
+        SEMANTIC_BSON_NAMESPACE_CASES,
     ),
     "bson_admin_read": SemanticCorpus(
         "bson-admin-read", "semantic_bson_admin_read_cases", BSON_ADMIN_READ_SEED,

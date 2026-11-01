@@ -54,6 +54,7 @@ from mongoeco.api.argument_validation import (
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
 )
+from mongoeco.api._async import _collection_namespace
 from mongoeco.api.bson_input import encode_bson_request, encode_operation_bson
 from mongoeco.api.operations import (
     AggregateOperation,
@@ -1959,17 +1960,24 @@ class AsyncCollection:
         )
 
     async def drop(self, *, session: ClientSession | None = None) -> None:
+        name = _collection_namespace.prepare_drop(self, session=session)
+        await self._drop_prepared(name=name, session=session)
+
+    async def _drop_prepared(
+        self, *, name: str | None = None, session: ClientSession | None = None,
+    ) -> None:
+        name = self._collection_name if name is None else name
         self._ensure_session_active(session)
         with self._runtime._engine_change_delivery_scope(session=session):
             await self._engine.drop_collection(
                 self._db_name,
-                self._collection_name,
+                name,
                 context=session,
             )
         if self._runtime._engine_spi.capabilities.change_delivery == "none":
             self._publish_change_event(
                 operation_type="invalidate",
-                document_key={"_id": self.full_name},
+                document_key={"_id": f"{self._db_name}.{name}"},
                 session=session,
             )
 
@@ -1979,16 +1987,13 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> "AsyncCollection":
-        self._ensure_session_active(session)
-        if not isinstance(new_name, str) or not new_name:
-            raise TypeError("new_name must be a non-empty string")
-        with self._runtime._engine_change_delivery_scope(session=session):
-            await self._engine.rename_collection(
-                self._db_name,
-                self._collection_name,
-                new_name,
-                context=session,
-            )
+        source, target, drop_target = _collection_namespace.prepare_rename(
+            self, new_name, session=session,
+        )
+        await self.database._admin._write_commands.execute_rename_namespaces(
+            source, target, drop_target=drop_target, session=session,
+        )
+        new_name = target[1]
         return self._new_collection(
             new_name,
             mongodb_dialect=self._mongodb_dialect,

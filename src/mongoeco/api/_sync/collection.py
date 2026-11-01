@@ -1164,18 +1164,18 @@ class Collection:
         *,
         session: ClientSession | None = None,
     ) -> "Collection":
-        return self._client._run_resource(
-            self._async_collection().rename(new_name, session=session),
-            lambda: type(self)(
-                self._client,
-                self._db_name,
-                new_name,
-                write_concern=self._write_concern,
-                read_concern=self._read_concern,
-                read_preference=self._read_preference,
-                codec_options=self._codec_options,
-                planning_mode=self._planning_mode,
-            ),
+        renamed = self._client._run(
+            self._async_collection().rename(new_name, session=session)
+        )
+        return type(self)(
+            self._client,
+            self._db_name,
+            renamed.name,
+            write_concern=self._write_concern,
+            read_concern=self._read_concern,
+            read_preference=self._read_preference,
+            codec_options=self._codec_options,
+            planning_mode=self._planning_mode,
         )
 
     def options(self, *, session: ClientSession | None = None) -> dict[str, object]:

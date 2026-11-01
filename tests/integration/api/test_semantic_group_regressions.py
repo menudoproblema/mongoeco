@@ -151,6 +151,13 @@ class _AsyncView:
     def __getitem__(self, name):
         return _AsyncView(self.collection[name], self.loop, self._session_client)
 
+    def get_collection(self, name, **kwargs):
+        return _AsyncView(
+            self._call("get_collection", name, **kwargs),
+            self.loop,
+            self._session_client,
+        )
+
     def create_collection(self, name, **kwargs):
         return _AsyncView(
             self._call("create_collection", name, **kwargs),

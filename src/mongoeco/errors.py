@@ -8,6 +8,7 @@ except Exception:  # pragma: no cover - pymongo is optional
     _PyMongoErrorBase = Exception
     _ConnectionFailureBase = Exception
     _ServerSelectionTimeoutErrorBase = Exception
+    _InvalidNameBase = Exception
     _InvalidOperationBase = Exception
     _ConfigurationErrorBase = Exception
     _InvalidURIBase = Exception
@@ -22,6 +23,7 @@ else:  # pragma: no cover - behavior exercised in environments with pymongo
     _PyMongoErrorBase = _pymongo_errors.PyMongoError
     _ConnectionFailureBase = _pymongo_errors.ConnectionFailure
     _ServerSelectionTimeoutErrorBase = _pymongo_errors.ServerSelectionTimeoutError
+    _InvalidNameBase = _pymongo_errors.InvalidName
     _InvalidOperationBase = _pymongo_errors.InvalidOperation
     _ConfigurationErrorBase = _pymongo_errors.ConfigurationError
     _InvalidURIBase = _pymongo_errors.InvalidURI
@@ -139,6 +141,10 @@ class ServerSelectionTimeoutError(ConnectionFailure, _ServerSelectionTimeoutErro
         self.code_name = SERVER_SELECTION_TIMEOUT_ERROR.code_name
         self.details = errors
         self.errors = errors
+
+
+class InvalidName(PyMongoError, _InvalidNameBase):  # noqa: N818 - PyMongo public spelling
+    """Se produce cuando un nombre cliente no cumple las reglas de PyMongo."""
 
 
 class InvalidOperation(PyMongoError, _InvalidOperationBase):

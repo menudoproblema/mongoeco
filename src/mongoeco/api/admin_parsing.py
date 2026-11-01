@@ -288,6 +288,18 @@ def normalize_validate_command_options(
     )
 
 
+def normalize_drop_collection_name(value, *, dialect):
+    """Parse drop's version-specific legacy/IDL namespace grammar."""
+    if not matches_bson_type(value, "string"):
+        message = "collection name must be a string"
+        code = {"7.0": 2, "8.0": 14, "9.0": 73}[dialect.server_version]
+        raise server_error(message, code=code, scope=ErrorScope.COMMAND)
+    if not value or "\x00" in value:
+        message = "Invalid namespace for drop"
+        raise server_error(message, code=73, scope=ErrorScope.COMMAND)
+    return value
+
+
 def normalize_validate_collection_name(value):
     """Parse an already encoded validate namespace without client coercions."""
     if not matches_bson_type(value, "string"):

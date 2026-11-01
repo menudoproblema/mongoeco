@@ -16,6 +16,7 @@ from mongoeco.api._command_bson import (
     validate_command_let,
     validate_write_fields,
 )
+from mongoeco.api.admin_parsing import normalize_drop_collection_name
 from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.core.server_errors import server_error
@@ -89,8 +90,12 @@ class DatabaseAdminWriteCommandService:
         *,
         session: ClientSession | None = None,
     ) -> object:
-        collection_name = self._admin._require_collection_name(spec.get("drop"), "drop")
-        await self._admin.drop_collection(collection_name, session=session)
+        collection_name = normalize_drop_collection_name(
+            spec.get("drop"), dialect=self._admin._mongodb_dialect,
+        )
+        await self._admin._database.get_collection(collection_name)._drop_prepared(
+            session=session,
+        )
         return NamespaceOkResult(
             namespace=f"{self._admin._db_name}.{collection_name}",
         )
@@ -104,6 +109,17 @@ class DatabaseAdminWriteCommandService:
         (source_db, source_name), (target_db, target_name), drop_target = (
             rename_collection_options(spec, self._admin._db_name)
         )
+        return await self.execute_rename_namespaces(
+            (source_db, source_name), (target_db, target_name),
+            drop_target=drop_target, session=session,
+        )
+
+    async def execute_rename_namespaces(
+        self, source, target, *, drop_target=False, session=None,
+    ):
+        """Execute parsed namespaces with the existing DDL delivery scope."""
+        source_db, source_name = source
+        target_db, target_name = target
         if source_db != target_db:
             message = "renameCollection between databases is not supported locally"
             raise server_error(message, code=20)
