@@ -149,17 +149,20 @@ async def test_cursor_execution_and_rewind_capture_deadlines_lazily():
             semantic_core, "operation_deadline", return_value=float("inf")
         ) as clock:
             cursor = collection.find({}).max_time_ms(1000).batch_size(1)
-            context = cursor._operation_context
+            assert cursor._operation_context is None
+            context = cursor._as_operation().context
             assert clock.call_count == 0
             assert await cursor.to_list() == [{"_id": 1}, {"_id": 2}]
             assert clock.call_count == 1
             cursor.rewind()
-            assert cursor._operation_context is context
+            assert cursor._operation_context is None
             assert await cursor.to_list() == [{"_id": 1}, {"_id": 2}]
             expected_executions = 2
             assert clock.call_count == expected_executions
+            assert cursor._operation_context is not context
+            assert cursor._operation_context.operation_id != context.operation_id
             clone = cursor.clone()
-            assert clone._operation_context is not context
+            assert clone._operation_context is not cursor._operation_context
             await clone.close()
             await cursor.close()
 

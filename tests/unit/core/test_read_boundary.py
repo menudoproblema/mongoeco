@@ -39,7 +39,7 @@ async def test_collection_source_accepts_plain_async_iterables_and_typed_windows
 
         configured_limit = 2
         cursor = collection.find({}).skip(1).limit(configured_limit).batch_size(1)
-        context = cursor._operation_context
+        context = cursor._as_operation().context
 
         def source_factory(_collection):
             lookups.append(True)
@@ -81,7 +81,7 @@ async def test_fallback_read_source_reuses_context_and_renews_only_execution_dea
             .batch_size(1)
             .max_time_ms(1000)
         )
-        context = cursor._operation_context
+        context = cursor._as_operation().context
         with (
             patch.object(collection, "_engine_scan_with_operation", None),
             patch.object(
@@ -98,7 +98,9 @@ async def test_fallback_read_source_reuses_context_and_renews_only_execution_dea
             assert await cursor.to_list() == [{"_id": 1}, {"_id": 2}]
             assert clock.call_count == 1 + 1
             assert cursor._base_semantics() is not first_semantics
-            assert cursor._operation_context is context
+            assert cursor._operation_context is not context
+            assert cursor._operation_context.session is context.session
+            assert cursor._operation_context.operation_id != context.operation_id
         await cursor.close()
 
 

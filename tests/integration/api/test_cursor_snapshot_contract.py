@@ -16,7 +16,7 @@ def _read_clock(clock: list[datetime]):
 
 
 class SyncCursorOperationBoundaryTests(unittest.TestCase):
-    def test_find_captures_time_and_detaches_arguments_at_creation(self):
+    def test_find_binds_current_arguments_and_time_at_execution(self):
         for engine_name, engine_factory in ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 clock = [datetime(2026, 1, 1, tzinfo=UTC)]
@@ -45,7 +45,20 @@ class SyncCursorOperationBoundaryTests(unittest.TestCase):
                     projection.clear()
                     clock[0] += timedelta(seconds=1)
 
-                    assert cursor.to_list() == [{'_id': 'early'}]
+                    assert cursor.to_list() == [
+                        {
+                            "_id": "early",
+                            "ready": datetime(2026, 1, 1, tzinfo=UTC).replace(
+                                tzinfo=None
+                            ),
+                        },
+                        {
+                            "_id": "late",
+                            "ready": datetime(2026, 1, 1, 0, 0, 1, tzinfo=UTC).replace(
+                                tzinfo=None
+                            ),
+                        },
+                    ]
 
 
 class CursorSnapshotContractTests(unittest.IsolatedAsyncioTestCase):
@@ -110,8 +123,10 @@ class CursorSnapshotContractTests(unittest.IsolatedAsyncioTestCase):
                         {'_id': 1},
                         sort=[('_id', 1)],
                     )
+                    original_context = original._as_operation().context
                     clock[0] += timedelta(seconds=1)
                     cloned = original.clone()
+                    assert cloned._as_operation().context is not original_context
 
                     self.assertEqual(
                         [
