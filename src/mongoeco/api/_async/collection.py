@@ -13,6 +13,7 @@ from datetime import datetime
 
 from mongoeco.api._async import (
     _collection_indexing,
+    _collection_search_indexes,
     _collection_modify,
     _collection_reads,
 )
@@ -154,7 +155,6 @@ from mongoeco.types import (
     ReadPreference,
     ReplaceOne,
     ReturnDocument,
-    SearchIndexModel,
     SortSpec,
     Update,
     UpdateOne,
@@ -543,23 +543,6 @@ class AsyncCollection:
         return normalize_index_models_from_command(
             [_collection_indexing.index_model_document(model)]
         )[0]
-
-    @staticmethod
-    def _normalize_search_index_model(model: object) -> SearchIndexModel:
-        if isinstance(model, SearchIndexModel):
-            return model
-        if isinstance(model, dict):
-            return SearchIndexModel(model)
-        raise TypeError("model must be a SearchIndexModel or a dict definition")
-
-    @classmethod
-    def _normalize_search_index_models(cls, indexes: object) -> list[SearchIndexModel]:
-        if not isinstance(indexes, list):
-            raise TypeError("indexes must be a list of SearchIndexModel instances")
-        normalized = [cls._normalize_search_index_model(index) for index in indexes]
-        if not normalized:
-            raise ValueError("indexes must not be empty")
-        return normalized
 
     @staticmethod
     def _normalize_search_index_name(name: object) -> str:
@@ -1880,7 +1863,7 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> str:
-        return await _collection_indexing.create_search_index(
+        return await _collection_search_indexes.create_search_index(
             self,
             model,
             comment=comment,
@@ -1896,7 +1879,7 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> list[str]:
-        return await _collection_indexing.create_search_indexes(
+        return await _collection_search_indexes.create_search_indexes(
             self,
             indexes,
             comment=comment,
@@ -1918,7 +1901,7 @@ class AsyncCollection:
             extra_kwargs=kwargs,
             profile=self._pymongo_profile,
         )
-        return _collection_indexing.list_search_indexes(
+        return _collection_search_indexes.list_search_indexes(
             self,
             name=name,
             comment=comment,
@@ -1934,7 +1917,7 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        await _collection_indexing.update_search_index(
+        await _collection_search_indexes.update_search_index(
             self,
             name,
             definition,
@@ -1951,7 +1934,7 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        await _collection_indexing.drop_search_index(
+        await _collection_search_indexes.drop_search_index(
             self,
             name,
             comment=comment,

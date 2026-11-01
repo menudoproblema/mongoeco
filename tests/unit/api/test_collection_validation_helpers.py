@@ -1,3 +1,5 @@
+import asyncio
+
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.errors import OperationFailure
 
@@ -131,10 +133,6 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
             AsyncCollection._normalize_return_document(_ForeignReturnDocument.BEFORE),
             ReturnDocument.BEFORE,
         )
-        self.assertIsInstance(
-            AsyncCollection._normalize_search_index_model({"mappings": {"dynamic": True}}),
-            SearchIndexModel,
-        )
         self.assertEqual(AsyncCollection._normalize_expire_after_seconds(0), 0)
         self.assertEqual(
             AsyncCollection._normalize_index_model(IndexModel([("email", 1)], unique=True)).keys,
@@ -155,7 +153,7 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
         with self.assertRaises(TypeError):
             AsyncCollection._normalize_array_filters("bad")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
-            AsyncCollection._normalize_search_index_model("bad")  # type: ignore[arg-type]
+            asyncio.run(self.collection.create_search_index("bad"))  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             AsyncCollection._normalize_search_index_name("")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
@@ -222,6 +220,6 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
         self.assertIsNone(AsyncCollection._normalize_collation(None))
         self.assertIsNone(AsyncCollection._normalize_array_filters(None))
         with self.assertRaises(TypeError):
-            AsyncCollection._normalize_search_index_models("bad")  # type: ignore[arg-type]
+            asyncio.run(self.collection.create_search_indexes("bad"))  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
-            AsyncCollection._normalize_search_index_models([])
+            asyncio.run(self.collection.create_search_indexes([]))

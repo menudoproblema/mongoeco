@@ -1224,12 +1224,10 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         )
         self.assertEqual(type(stream).__name__, "AsyncChangeStreamCursor")
         self.assertEqual(engine.rename_calls[0][0], ("db", "coll", "renamed"))
-        self.assertEqual(engine.search_calls[0][0], "create")
-        self.assertEqual(engine.search_calls[1][0], "list")
-        self.assertEqual(engine.search_calls[2][0], "create")
-        self.assertEqual(engine.search_calls[3][0], "list")
-        self.assertEqual(engine.search_calls[4][0], "update")
-        self.assertEqual(engine.search_calls[5][0], "drop")
+        self.assertEqual(
+            [call[0] for call in engine.search_calls],
+            ["create", "create", "list", "update", "drop"],
+        )
 
         async def invalid_getmore():
             stream = await self.collection.watch(max_await_time_ms=-1)

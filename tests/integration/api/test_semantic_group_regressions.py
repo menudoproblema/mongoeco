@@ -254,6 +254,20 @@ class _AsyncView:
     def create_search_index(self, *args, **kwargs):
         return self._call("create_search_index", *args, **kwargs)
 
+    def create_search_indexes(self, *args, **kwargs):
+        return self._call("create_search_indexes", *args, **kwargs)
+
+    def update_search_index(self, *args, **kwargs):
+        return self._call("update_search_index", *args, **kwargs)
+
+    def drop_search_index(self, *args, **kwargs):
+        return self._call("drop_search_index", *args, **kwargs)
+
+    def list_search_indexes(self, *args, **kwargs):
+        return _AsyncCursorView(
+            self._call("list_search_indexes", *args, **kwargs), self.loop
+        )
+
     def create_index(self, *args, **kwargs):
         return self._call("create_index", *args, **kwargs)
 
