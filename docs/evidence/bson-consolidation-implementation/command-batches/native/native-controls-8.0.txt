@@ -1,0 +1,3 @@
+updated tests/fixtures/semantic_command_batch_8_0.json
+updated /tmp/mongoeco-command-batch-native-controls/8.0/command_batch-check.json
+verified 6 native cases against tests/fixtures/semantic_command_batch_8_0.json

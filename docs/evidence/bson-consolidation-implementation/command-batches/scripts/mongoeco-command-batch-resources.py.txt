@@ -1,0 +1,26 @@
+import datetime,json,subprocess
+from pathlib import Path
+roots=sorted(p for p in Path('/tmp').glob('mongoeco-command-batch-*') if p.is_dir())
+records=[];seen=set();fixtures=[]
+for root in roots:
+ for path in sorted(root.glob('*/fixture.json')):
+  fixture=json.loads(path.read_text());fixtures.append({'path':str(path),'status':fixture['status']})
+  assert fixture['cleanup']['removed'] and fixture['cleanup']['volumes_removed'],path
+  for kind,name in [('container',fixture['container_id'])]+[('volume',v) for v in fixture['anonymous_volumes']]:
+   if (kind,name) in seen:continue
+   seen.add((kind,name));probe=subprocess.run(['docker',kind,'inspect',name],text=True,capture_output=True)
+   assert probe.returncode and ('no such' in probe.stderr.lower() or 'not found' in probe.stderr.lower()),(kind,name,probe.stderr)
+   records.append({'kind':kind,'name':name,'absent':True,'fixture':str(path)})
+start=datetime.datetime.fromtimestamp(Path('/tmp/mongoeco-command-batch-native.py').stat().st_birthtime-60,datetime.UTC)
+containers=subprocess.check_output(['docker','ps','-aq','--filter','label=mongoeco.differential-fixture'],text=True).splitlines()
+volumes=subprocess.check_output(['docker','volume','ls','-q'],text=True).splitlines()
+inspected=json.loads(subprocess.check_output(['docker','volume','inspect',*volumes],text=True)) if volumes else []
+new_anonymous=[]
+for volume in inspected:
+ created=datetime.datetime.fromisoformat(volume['CreatedAt'].replace('Z','+00:00'))
+ if created>=start and 'com.docker.volume.anonymous' in (volume.get('Labels') or {}):new_anonymous.append(volume)
+assert not containers,containers
+assert not new_anonymous,new_anonymous
+report={'fixtures':fixtures,'per_id_absence':records,'inventory':{'since':start.isoformat(),'fixture_containers_present':containers,'all_volumes_inspected':len(inspected),'anonymous_volumes_created_since_present':new_anonymous},'retention_note':'The earliest three diagnostic fixture manifests were overwritten when the final frozen capture reused their directory. Their original per-ID ledger cannot be reconstructed. The complete fixture-label container inventory and absence of any anonymous volume created since this cut independently prove no residual resources in that interval. Final references retain distinct current manifests and per-ID checks.'}
+Path('/tmp/mongoeco-command-batch-resources.json').write_text(json.dumps(report,indent=2)+'\n')
+print({'retained_fixture_manifests':len(fixtures),'per_id_absent':len(records),'current_fixture_containers':len(containers),'new_anonymous_volumes_present':len(new_anonymous)})

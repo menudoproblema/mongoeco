@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El corte posterior `8e261c7a` acepta [proyecciones y contexto](evidence/bson-consolidation-implementation/find-projections/README.md): el replay instalado queda sin fallos y esa aceptación conserva dos tests antiguos de batching rojos. El candidato de batching posterior sigue sin aceptación registrada; el estado de aquella ejecución no describe automáticamente el checkout actual. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. `d5bdadb8` entrega el default UUID coordinado y `b29e9bf1` omite ausencia en distinct. Continúan positivos/batching y otros contextos D06/B08. UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El corte posterior `8e261c7a` acepta [proyecciones y contexto](evidence/bson-consolidation-implementation/find-projections/README.md): el replay instalado queda sin fallos y esa aceptación conserva dos tests antiguos de batching rojos. `dbe8257f` acepta después batching y cierre de spill, con 10.660 replay y 2.457/4.709 subtests de cohorte sin fallos; el estado de aquella ejecución no describe automáticamente el checkout actual. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. `d5bdadb8` entrega el default UUID coordinado y `b29e9bf1` omite ausencia en distinct. Continúan positivos/batching y otros contextos D06/B08. UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -2109,3 +2109,43 @@ eventos comprueban sus efectos.
 combinaciones restantes de respuestas/fábricas/callbacks. La [sonda física de
 batching](evidence/bson-consolidation-implementation/command-batches-diagnostic/README.md)
 es diagnóstico del siguiente corte, sin aceptar todavía sus rutas locales. Contextos D06, H53, decisión D07 y D05 siguen abiertos.
+
+
+## B07 — Batching, respuesta del driver y cierre de spill
+
+✅ Cerrado el corte en `dbe8257f`, con [aceptación y evidencia](evidence/bson-consolidation-implementation/command-batches/README.md).
+La petición de respuesta del servidor conserva su tamaño; la entrada del driver
+aplica promoción inicial y límite restante sin alterar la entrada interna.
+EOF conocido y filas efectivamente entregadas son hechos distintos, incluida
+la fila pendiente por bytes. Las políticas observadas de sort/group e initial
+aggregate se expresan en el dialecto, con elegibilidad de orden de índice
+compartida y sin otro ejecutor. La proyección posterior mantiene su fase de error.
+
+Sort/group spill conserva cardinalidad y cleanup mediante output owned; cerrar
+antes de la primera lectura también elimina archivos. La propiedad se registra
+al crear el output; cierre de fuentes fallido conserva el error y admite retry.
+`singleBatch` wire valida bool y cierra tras la primera respuesta, también vacía.
+Las expectativas de los dos tests antiguos de batching se corrigen contra las
+tres referencias nativas; ahora pasan en la cohorte instalada.
+
+- MongoDB standalone 7.0.43/8.0.32/9.0.2: seis acciones/284 observaciones de frames
+  y tres/36 de callbacks y raw por versión. Resultados/manifests exactos en
+  capture/check y segunda comprobación; hello conserva sus campos variables.
+- Wheel de 287 módulos sin drift: 10.660 correctas en replay; 2.457 correctas,
+  4.709 subtests y cero fallos en cohorte. Baseline Git aislada: 104 fallos/58
+  correctas; candidato focal: 162 correctas. Spill forzado: 37 correctas,
+  con creación/eliminación de archivos y cierre antes de arrancar el delegado.
+- SDK-free real 3.13.15: 144 observaciones; raw BSON requiere SDK y queda omitido.
+  API 18/13 subtests, typing y ratchet pasan. Dos controles de coste/dos subtests
+  pasan sin aceptar el presupuesto integrado. 407 archivos protegidos intactos.
+- `caed66da` protege el manifest del fixture mediante claim exclusivo y rechazo
+  de directorios ya usados: 47 pruebas y segunda comprobación nativa correctas.
+  Los 93 recursos Docker de 31 manifests retenidos están ausentes. Tres manifests
+  diagnósticos tempranos fueron sobrescritos antes de esta guarda: sus IDs no
+  se pueden reconstruir. El inventario global acredita ausencia residual, no
+  recuperación del ledger perdido. La limitación consta en el receipt.
+
+→ Sigue B07 unidad 5: sobres/DTO, resultado bulk y combinaciones restantes de
+respuestas/fábricas/callbacks. El pipeline parcial que reconstruye su fuente
+desde el cursor completo sigue siendo sospecha D06 por inspección, sin testigo
+que demuestre divergencia. Resto D06, H53, decisión D07 y D05 siguen abiertos.

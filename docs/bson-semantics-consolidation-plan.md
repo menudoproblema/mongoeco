@@ -1,11 +1,12 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre; corte de proyecciones aceptado `8e261c7a`):**
+**Entrada vigente (1 de noviembre; batching aceptado en `dbe8257f`):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
-La [relectura actual de la autocrítica](evidence/bson-consolidation-review/current-autocritique/README.md)
-distingue estos cierres del candidato de batching aún sin aceptar.
+La [relectura de la autocrítica](evidence/bson-consolidation-review/current-autocritique/README.md)
+conserva el contraste previo; el [corte posterior de batching](evidence/bson-consolidation-implementation/command-batches/README.md)
+tiene aceptación propia y mantiene el resto de B07 abierto.
 Las revisiones numeradas anteriores conservan historia, no otro backlog activo.
 
 Fecha: 31 de octubre de 2026. Base de runtime inspeccionada:
@@ -1327,7 +1328,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 | --- | --- | --- |
 | Control previo cerrado — B07, admisión | `2723fb28` acepta las [cinco entradas Search](evidence/bson-consolidation-implementation/bson-input-search/README.md), opciones propias y creación preparada compartida. Completa las 17 disposiciones del censo administrativo histórico tras comandos, catálogo, índices, lectores y namespace, con sus aceptaciones en el registro. Lecturas, inserciones, mutaciones y bulk conservan sus cortes propios. No implica positivos Atlas ni una API universal ya censada. | Conservar originales, codificar una vez, errores cliente/precedencia y efectos. El wire ya decodificado no vuelve a codificarse; unidad 5 conserva positivos y batching. |
 | Control previo cerrado — B07, UUID | `d5bdadb8` acepta [default UNSPECIFIED, dueños y lectura independiente](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md), sobre la admisión ya entregada. `b29e9bf1` corrige ausencia en distinct, compartida por API/comando. | Mantener STANDARD/legacy explícitos, bytes/subtipos y lectura/reapertura de archivos previos. No cambiar otra vez el default ni reextraer el codec; no implica cierre D06 ni positivos completos. |
-| 1 / P1 — B07, positivos y respuestas | `8e261c7a` acepta [proyecciones, contexto y metadatos](evidence/bson-consolidation-implementation/find-projections/README.md): desaparecen los 24 fallos previos de admission_options. Conservar evaluador y preparación compartidos. Siguen batching/getMore, sobres/DTO, resultado bulk y combinaciones restantes de respuestas/callbacks. | Unidad 5: tipos, orden, efectos y pase único. La aceptación de proyecciones conserva 10.473 correctos y dos fallos previos de batching. El árbol actual contiene un candidato para estos últimos, todavía sin aceptación registrada; esos resultados históricos no describen automáticamente el checkout. No implica cierre de toda la unidad ni D05. |
+| 1 / P1 — B07, positivos y respuestas | `8e261c7a` acepta proyecciones, contexto y metadatos; `dbe8257f` acepta [batching, límites cliente y cierre de spill](evidence/bson-consolidation-implementation/command-batches/README.md). Reutilizar preparación/evaluación, lector de respuestas y materializador. Siguen sobres/DTO, resultado bulk y combinaciones restantes de respuestas/callbacks. | Unidad 5: tipos, orden, efectos y pase único. Replay instalado: 10.660 correctas; cohorte: 2.457 correctas/4.709 subtests/cero fallos, incluidos los dos nodos antiguos de batching. Referencias 7/8/9 y perfil SDK-free tienen alcance acotado en el receipt; no implican cierre de toda la unidad ni D05. |
 | 2 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
 | 3 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
 | 4 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
@@ -1376,7 +1377,8 @@ No son una nueva ejecución de MongoDB ni aceptación de la wheel candidata.
 es idéntico al ya contrastado; la [evidencia actual](evidence/bson-consolidation-review/current-autocritique/receipt.json)
 registra 78 regresiones, seis pares motor/dialecto, 18 trazas y los 16 hashes
 oficiales coincidentes. Son controles del checkout, no aceptación del candidato
-preexistente ni nuevas capturas MongoDB. Mantener estas tres obligaciones dentro
+preexistente ni nuevas capturas MongoDB. El corte posterior `dbe8257f` tiene
+aceptación independiente. Mantener estas tres obligaciones dentro
 de los bloques existentes:
 
 - **D06, artefacto preparado y ruta fuente.** Revisar las rutas que aceptan un
@@ -1396,7 +1398,8 @@ de los bloques existentes:
   público local por analogía con PyMongo sin caracterizar el adaptador afectado.
   El cierre debe liberar resultados spill incluso antes de su primera lectura,
   conservando el error primario y el dueño de cada recurso. Reutilizar lector,
-  ejecutores y spool existentes. El candidato actual requiere su receipt propio.
+  ejecutores y spool existentes. `dbe8257f` acredita ese corte en su receipt;
+  las demás combinaciones conservan aceptación pendiente.
 - **D05 y cada captura, evidencia conservada.** Reservar un directorio nuevo por
   ejecución y verificar su ownership; un rerun no sobrescribe el manifest de una
   captura anterior. Separar controles del checkout, aceptación instalada y

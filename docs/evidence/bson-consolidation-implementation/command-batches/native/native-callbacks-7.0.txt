@@ -1,0 +1,22 @@
+updated tests/fixtures/semantic_command_batch_7_0.json
+updated /tmp/mongoeco-command-batch-native-callbacks/7.0/command_batch-check.json
+verified 6 native cases against tests/fixtures/semantic_command_batch_7_0.json
+Traceback (most recent call last):
+  File "/Users/uve/Proyectos/mongoeco/scripts/capture_differential_replay_golden.py", line 253, in <module>
+    main()
+    ~~~~^^
+  File "/Users/uve/Proyectos/mongoeco/scripts/capture_differential_replay_golden.py", line 203, in main
+    _to_jsonable(case.action(collection)),
+                 ~~~~~~~~~~~^^^^^^^^^^^^
+  File "/Users/uve/Proyectos/mongoeco/tests/differential/semantic_query_batch_callback_cases.py", line 81, in raw_query_batch_limits
+    "ids": [row["_id"] for row in BSON.decode_all(batch)],
+                                  ^^^^^^^^^^^^^^^
+AttributeError: type object 'BSON' has no attribute 'decode_all'
+Traceback (most recent call last):
+  File "/tmp/mongoeco-command-batch-native-callbacks/capture.py", line 6, in <module>
+    subprocess.run([sys.executable,'scripts/capture_differential_replay_golden.py','--target',v,'--case-set',case_set,'--output',reference],check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/Users/uve/Proyectos/mongoeco/.venv/bin/python', 'scripts/capture_differential_replay_golden.py', '--target', '7.0', '--case-set', 'query-batch-callbacks', '--output', 'tests/fixtures/semantic_query_batch_callbacks_7_0.json']' returned non-zero exit status 1.

@@ -1,0 +1,695 @@
+{
+  "fixtures": [
+    {
+      "path": "/tmp/mongoeco-command-batch-native-callbacks/7.0/fixture.json",
+      "status": "failed"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-callbacks-fixed/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-callbacks-fixed/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-callbacks-fixed/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-controls/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-controls/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-controls/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-expanded/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-expanded/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-expanded/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-factory-controls/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-factory-controls/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-factory-controls/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-final/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-final/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-final/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-frozen/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-frozen/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-frozen/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-guard-check/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-guard-check/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-guard-check/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-spill-controls/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-spill-controls/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-spill-controls/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-types/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-types/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-native-types/9.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-plan-native/7.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-plan-native/8.0/fixture.json",
+      "status": "succeeded"
+    },
+    {
+      "path": "/tmp/mongoeco-command-batch-plan-native/9.0/fixture.json",
+      "status": "succeeded"
+    }
+  ],
+  "per_id_absence": [
+    {
+      "kind": "container",
+      "name": "358d7f9587fb161f096c2dea39d8caa6263eb5f5b918a99a768eac6fae0623fd",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "d76d9960167fe3846d1bad8b1c134ffcfa63465f25bfda94f40a420b268f3cb4",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "c66f6426ff9af64a8928a58dd6850547be853fb74e8504771599bc255b01dbc6",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "7304227b2a59f985922f130fe6d6c044024706af79525bc29a14d783de61dc5e",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "f6c9d84a09112ada02283e839fcaface5bf5a5d5bb651350c5a037db297ffd8f",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "a841bb8ffdd092d6efa76fe56068823b9f5a9e234b4d3cb99ae69ffec9d8752b",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "1a68955a52f5a3f7a2f7ab256a2952e29a0830b5671a7ad79348787c8c402c3f",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ab58d181c9465fa1346a8fb8bc6ee450bd66b3fa961fccca0e420aaed9e22ac2",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "4840410c7bfe4ba8fbfe898bd4b61a7b4f32667aaad87f4831830e6eec9008fe",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "1477f22b92e4a85598fadf19a87dbad16656e48d4bb2b7949337351134d61b38",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "5650d2e18169183e16c7595354b7aabcec2c9d50a1f0bfa27f9e92922f26f682",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "e9b7d0c64d387c8c30f705b48804ce210e3269f601ef8854fc38ae96fe4c92f7",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-callbacks-fixed/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "69549897c5aae8fe5fe96ffc95bee5ab7b77fc9d075d6964139328bc26f0b712",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "84d33b4cc8fdca671f269b7407b0654f361edcf59e2f8316e23df9ec2844053f",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "10f29016cf48bb2ce464cdf5523e0e200aad405344978b47d7f9d4a97337ab20",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "198ad81d6b494c5c20ff5e32dd28f4179a8accc06a2ccaf69f77bf0036aadb15",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "778f9e30abe0c41ebfb5e55f1e753bf6ca7b2385a68aa2107665174f33e3c45a",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "9ff71f6f80096b12ca58d0d60d81fb5fe88b2c86a45af9da1945e3790e21dc06",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "6ab4af58be527aae97b6a295972e4fe317e463576be748f45d5c203525b794b7",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "d7257532f0d60bfb87b8345ef971823502dcaf37c8df7e9787424c712e483195",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "d916e854106ae21c180eebf4965b00ef2c47689ca76fcd57119ca70709a89ac8",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "4de6620b0ddede8cc59f50d134a58e59f548b6ef61970405422014e7828c62d6",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "2aa3dcb98308f500e1eb0d104020b7101fc53e16a6370359b81a1cd7060ecf9a",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "7b56f689a9fa91ccc0414fbb37235db8275311b95384c2a97e8026ad4c9dcf00",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "b8be6f7e625d1ab721a0121e32a7fd55f3767b0566bb5f1e4cfa908fe576e037",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ec222cd402666ef7fb9333caf700bef737e94c9b3d14233019ae73ae16f7eafb",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "f4b8026cff07ee779f4d3c7d8fc76552fdc29430fdc7d44e9be5b17f421b3f28",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "b15517f7dd1c4aaf90b68a1bec9a5f6c6f03d3232d973e62bdf65bf4d451d231",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "55a72845e27cf6133264caab6a172d7f0421c542de39ef56b586dd5891cbf154",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "26c9409a9244b11b972d508164d4b305c3ad75c041d529b803d53d6d26bc10e3",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-expanded/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "27d1a86137643b123ac4df951723b18bdcf19334252f10fde86b52589126a1df",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "8a6e397f983f4ab1ef8b92f06127659966c8a9ebc0168782c3ef8ff1dc6c2577",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "357d2e9d00369a399ecf0c2c502cfd5bf209de222815a8270d416a28bd45ca9c",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "85ae8c32c61d36242747b3f76a31f03499d8ac3e0509a024280b9d70e6e01bdb",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "c9b3d9b6f190a11c8d47f81450cfb9db88e69c9d9fb943b5a5378d0c8ca23a1b",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "13c00740f400996d552c11fcfd54540280f0187217d5d9eca49d7ab56e84dd49",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "bf14bdc01f1caee6740ae524e20db366dd7e7582b72f2a8ac6f0c59e192484f1",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "3b2307c1b5e052451cb9480e21200ee3342dae6959b4b412c999269ea98cfd27",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "a7b750039361fa8cf1e22f0e3edf9a57d418c9c7a0d21d646e02675838baec07",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-factory-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "d51fd7ba055d21ffbbbf74bfdafae939098e5d68f6643528cce6d3480523242a",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "8ece5516b8b9b74946bf90a7c424682ae9753f2a1fe64bb5418d03ab763829d5",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "c99e256316d1afa6c391b82c12d57927a75c3a2c87e2829572719737a4e4d4b1",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "374f44d52ea2d421884e6cd652d85d54a2177b759ee3c41decb93cd9d9b1dfec",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "8fc18062db246d0e63641dcd97b89ec68b4c7c7975655f3b6a4f6964f945a933",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "edd0b648af88b5307a544c7f8edf62dcb69eac33bc48d206fb399af919a6c288",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "2c9b6fabb9bfbcbfcfb92045f048fdd5380e82021216caaba2891e9f8b65f2b3",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "60b9094c82c39c5f4f2bce5a6b346ae1ba625c3bb13020350a3f2ad78ed5b6f4",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "0de68c68ea3c65337352a15584e75cb91cd9e95431345abbb391c6e0f756b8ca",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-final/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "e27de9390b6cb1d7566b76d0486c0a9c0a26c1d91474add96f3b2869868fc333",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "3faf62e8618884fc14c04e72dd124e01b00512eba8d57a75bc19923df741ba00",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "b5f0141f540b40871ec7782214b0b7abfbcfb47ff3bd3e4251d1f6c10df33a9b",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "e05343ad9a85ea2f66bbb9cc43d946778ae0d06804bd4c8f32bdac528177cb4d",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "d261ea4639df78fb4e73fd26acda0e61aed8f265633ef022d9af94d1629e7275",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "3bdd20fbab53ef4f225cd1f1a8c95dabc43ca2f4b801f085c80bde495f1fddbb",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "1f9deb55fc9dca7712631ad85ad11be19473412243650acdb1a60be70385559d",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "4f3e5b8c8ee978dac8e417ea31b61b9a649ef6254f9cf09638b4f9616e216bc4",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "604aa011e4abaf559943388f13bf189836883841771e5c88b6ad63f3358fffbf",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-frozen/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "cdfa5ec05b3d6b1c789cae29dcc878dc52a4f8bf8a88a7fe14b7cde9290335f4",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "9f98b04482fe4b30fc793e8ddaf6829e7dbee86f65718511a5fe7a0b9089aff9",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "12a85636733d66f8e96595f06a61db3b536df915c3732e4f6e753a4316a10042",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "f215e539fab809b6a3d0d6b54d2be480bbc8bbdf301ff5353858cd514e91cc92",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ed498389f55f634456cedaa1e519d89eba8ee458f12185c23346322c259a18fb",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ebc5a9cec140aecfe0ef52b59c16f36f8fa938b92b892fad637cfc0b9f182703",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "9e215bbef6f081806eb66ea980458a4f0706db5e921a0f2269e2ea30599e33cc",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "cac9eb4881f06bc4d4184d646367306212260a6fcfa1c2013702e7e313636de5",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "134822f96f661a9ebcb587a5e8272ed96a8a917525f195b0baf79a9beb30825f",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-guard-check/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "8379edc599dbc05ded8f16a8bdfb42a711a0187f174e6151e87c81e215f45ff7",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "40c07b41733148032868d5b3ff3fa3129d302bcf6ce1509a8f77e9f6c3ae6ab6",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "b5f0b5aed0bb124dc27e1a001e62bd86799be949d9ca3a62d89326ce13df565c",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "4c8302470c5e31b65868f29a44bd3c8deda2f6850bb27289f8c63709b4a73a62",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "7cd2ee13f2f2edcc51d959e525764653cc5076b0cd767698e922013c3fd83c46",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "048f7ea5ada79dd848fd7a7d09da4e4bb025d1a90734490cf37af9d143d6dd4d",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "73b0d70f355d2365fbe819a30e5431c6ae4d1e3efd400dbbece17f1b352a2294",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "0b3e942e31a8e33769340d999ce2781c41b0c0f9656cfd2b3ec3fb417cdc01ad",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "e379b7583688f48702863ad37275ed28499923463aa4a8aff6c80a5467132b0d",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-spill-controls/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "094bc746aeca84f2abaae3859873ede300115164b08179de2610a21e23ee3018",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "d0b676cb7bb3f1f0e7e4839865ac02e46613764ef22e742f42509ed0bfbc18f2",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "68da0cbea8eeb08cfc2b7683dcd6ad74837884661a2650f871ff4c7b330f24db",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "c806d2186886c1f36fe8c68ef8b5328bd6dee18930906037ec41eab6c09333c5",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "4fe0efd90bc320c39f3eb71a8ae10cf4ae3d9700e10781c68e322bedc3aee8e4",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "dd2773ea03edb0cb370da4114918547b1a2a3aa33740efd21da4a09b97bbc533",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "67b94940f26cb89b5e6139d0337fe388796cb5c1cb3aaff4a2e53a8c43eab0af",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "e3c9185935370de7fa4f735587575c3eaf55ffcd74b1b3763c8fbb6ecc5c4ff8",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "33b1604725946942958ca6c9ac0cde86899097246d48e6e123a85c0e5104506b",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-native-types/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "f159456f92b152ac8738715acb6684d9de56cf0bdae1a54df67d6d1d24df0eda",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "d5f24783d3597cae70553c922625db350adff3ecc6753f25f205d40a726a4526",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "f2fbab0ed9200af9b9e6c1722c4c4c182b5e013bcce01267bcd369519cc38421",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "9c0ece4bfe06728c2db3b7d04b06732e82d56a83a8910ffe563a5cceffb4f56b",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "e3e99f044f269148d3d9328b3fb076639fd68c4a2dbe3ddb9469f7f511c0b2e5",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "da2beb3709242fb7a0f9b5cc3793dd8ed2ff28b9ce8309fa9a2a73846095350d",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "5374dfaab13d05d738f12a4deb7723f0305998f15d2f2a14e1a4fbcd7d5aaeee",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "55aaaecc22513c5c1cf29f44783ce257b3eb58db350f978a95df7495df462322",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "128dc040fe73fd3b2f3e588168d89bb9e3bb52e7612e46c1e0780461362dda5a",
+      "absent": true,
+      "fixture": "/tmp/mongoeco-command-batch-plan-native/9.0/fixture.json"
+    }
+  ],
+  "inventory": {
+    "since": "2026-11-01T10:03:38.259300+00:00",
+    "fixture_containers_present": [],
+    "all_volumes_inspected": 56,
+    "anonymous_volumes_created_since_present": []
+  },
+  "retention_note": "The earliest three diagnostic fixture manifests were overwritten when the final frozen capture reused their directory. Their original per-ID ledger cannot be reconstructed. The complete fixture-label container inventory and absence of any anonymous volume created since this cut independently prove no residual resources in that interval. Final references retain distinct current manifests and per-ID checks."
+}

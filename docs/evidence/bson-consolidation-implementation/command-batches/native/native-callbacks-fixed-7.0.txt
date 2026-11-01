@@ -1,0 +1,6 @@
+updated tests/fixtures/semantic_command_batch_7_0.json
+updated /tmp/mongoeco-command-batch-native-callbacks-fixed/7.0/command_batch-check.json
+verified 6 native cases against tests/fixtures/semantic_command_batch_7_0.json
+updated tests/fixtures/semantic_query_batch_callbacks_7_0.json
+updated /tmp/mongoeco-command-batch-native-callbacks-fixed/7.0/query_batch_callbacks-check.json
+verified 3 native cases against tests/fixtures/semantic_query_batch_callbacks_7_0.json
