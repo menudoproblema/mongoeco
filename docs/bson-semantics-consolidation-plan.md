@@ -349,9 +349,9 @@ identidad física sea un modo basado en una clave que ya perdió información.
 | --- | --- |
 | `bson_equality_key` | Productor semántico base; consolidar reconocimiento y coherencia con comparación. |
 | `aggregation_equality_key` | Adaptador contextual: missing→null donde group lo exige, collation y recursión; delegar átomos, conservar reglas. |
-| `_aggregation_key` | En el camino vigente funciona también como guarda de valores no admitidos. Retirar tras sustituir esa garantía explícitamente; no delegar al actual validate_bson_value, que aún es permisivo. |
+| `_aggregation_key` (retirada) | `332d07a` elimina el dispatch duplicado y conserva la guarda escalar efectiva en el adaptador de grupo. No reintroducirlo ni sustituir la admisión B07 por validate_bson_value permisivo. |
 | `hashable_in_lookup_key` | Fast path restringido de `$in`. Delegar claves admitidas conservando None/fallback y no admitir por accidente números/Code/collation sin prueba. |
-| `filter_value_key` | Proyección parcial para candidatos Search, con tipos soportados y no finitos excluidos. Conservar la elegibilidad y el residual; no convertirla en igualdad universal. |
+| `filter_value_key` | Proyección parcial para candidatos Search, con tipos soportados y no finitos excluidos. Conservar la elegibilidad y el residual; no convertirla en igualdad universal. `supports_mql_candidate_prefilter` acredita además el contexto, con fallback para dialectos propios/collation. |
 | `bson_engine_key` | Usos heterogéneos: identidad, orden interno, desempates e IDs de Search. Separar consumidores antes de cambiar bytes o forma de la clave. |
 | `canonical_document_id` | Identidad física usada por storage_key persistida de SQLite. Conservar su codificación y compatibilidad con archivos existentes. No absorberla en la clave semántica. |
 
@@ -1266,9 +1266,26 @@ finalización se retiran conservando la guarda escalar y la gramática existente
 Cinco acciones nativas 7/8/9, 8.221 checks instalados y 675 unitarias/propiedades/
 contratos acreditan ese alcance. Conservar los controles de hash/spill y
 representantes raw; no rehacer la extracción ni declarar D06c/D05 completos.
-Search conserva comprobaciones públicas de persistencia/reapertura y los demás
-contextos/representaciones mantienen sus propios pendientes. La matriz siguiente
+Search completa las comprobaciones públicas de persistencia/reapertura en el
+corte posterior `fbc7cde`; los demás contextos/representaciones mantienen sus
+propios pendientes. La matriz siguiente
 conserva el criterio del corte, ya satisfecho donde registra el receipt.
+
+**Entrega posterior `fbc7cde`.** El corte Search tiene
+[aceptación propia](evidence/bson-consolidation-implementation/search-bson-persistence/README.md):
+persistencia/reapertura, mutaciones de dominios BSON, filtro pre-top-k frente a
+match posterior y contexto de candidatos. La misma guarda de elegibilidad sirve
+para ejecución/explain y ambos motores; los dialectos propios conservan residual.
+El ranking examina la tanda ANN recibida completa y materializa solo ganadores,
+con un orden común; no se cambia el formato persistido ni el desempate. Explain
+transmite su verbosity explícita y el oráculo de pruebas se configura antes de
+la apertura sync, con prueba del modo real en el ejecutor. El corpus nativo posee
+solo selección MQL: ranking y overrides siguen su contrato local, sin afirmar
+paridad Atlas. Pasan 8.454 checks de replay y 1.144 pruebas instaladas con 181
+subtests. D05 conserva el coste Binary residual/limit=2 (ratio CPU diagnóstico
+1,47), el find(limit=1) anterior, matrices/cobertura y los demás pendientes.
+El nodo histórico de errores Search se acredita con la referencia bien
+configurada; no se aceptan por asociación los otros nodos del listado de 97.
 
 **D06c: corte mínimo concretado en revisión 17.** Las sondas locales nuevas
 no aceptan el corpus preexistente ni sustituyen su contraste nativo. Identifican

@@ -710,7 +710,7 @@ de fábricas documentales, topología comparable y consumo/estado público. Sus
 curso ni equivalen a nuevas capturas físicas. El orden restante conserva un
 solo owner en el plan.
 
-- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo, `d4caba5` construcción/asignación de documentos de respuesta y `72edfa3` posición, alive, propiedad y cierre del cursor sync. `332d07a` entrega claves de grupo/DBRef/collation, conjuntos y decisión preparada de representación/average, con hash/spill y BSON raw nativos. Search conserva persistencia/reapertura pública y otros contextos por acreditar. Esto no cierra los demás contextos/representaciones ni todos los efectos de métodos de mappings. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
+- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo, `d4caba5` construcción/asignación de documentos de respuesta y `72edfa3` posición, alive, propiedad y cierre del cursor sync. `332d07a` entrega claves de grupo/DBRef/collation, conjuntos y decisión preparada de representación/average, con hash/spill y BSON raw nativos. `fbc7cde` entrega persistencia/reapertura Search, contexto de candidatos, ranking de tandas y selección temprana del oráculo de pruebas; otros contextos siguen por acreditar. Esto no cierra los demás contextos/representaciones ni todos los efectos de métodos de mappings. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1566,3 +1566,65 @@ candidato; los replay intermedios conservan su carácter de feedback.
 → Sigue: demás contextos D06a/b/c, incluida persistencia/reapertura pública de
 Search, H53, sNaN, decisión opcional D07, gates D05 y admisión B07. Este corte no
 acredita CI remoto, cobertura global ni matrices completas. UUID sigue STANDARD.
+
+
+## D06c — Contexto de candidatos, ranking y reapertura Search
+
+`fbc7cde` entrega este corte sobre `47336ce`, con
+[evidencia, fuentes y límites](evidence/bson-consolidation-implementation/search-bson-persistence/README.md).
+La revisión pública descubre tres fallos y una debilidad del oráculo:
+
+- SQLite cortaba la tanda ANN al alcanzar limit coincidencias, antes de ordenar
+  todos los candidatos ya recibidos. Examina ahora toda la tanda y solo adjunta
+  metadata a los ganadores; ANN, fallback exacto y documentos decorados usan el
+  mismo orden de hits. No promete vecinos que ANN no devolvió.
+- El comando explain reflejaba verbosity sin enviarla al cursor. Se transmite la
+  opción explícita y se conserva el default local; queryPlanner inspecciona un
+  índice pendiente sin ejecutar datos, y executionStats sigue rechazándolo.
+- Los índices escalares usaban claves nativas con dialectos que redefinen
+  igualdad. La guarda común supports_mql_candidate_prefilter conserva residual
+  en contextos no acreditados, tanto en ejecución como en explain y ambos
+  motores. Se retira un cálculo duplicado de candidatos en el planner Memory.
+- Las pruebas sync activaban reference después de la apertura, por lo que podían
+  comparar dos ejecuciones optimizadas. Un helper test-only configura el hook
+  existente antes de abrir, conserva la instancia async y verifica el modo real
+  recibido por el ejecutor. El registro de imports unitario tiene nombre propio
+  para evitar que lo sobrescriba el maestro del replay paralelo.
+
+Dos acciones MQL congeladas se capturan/comprueban con MongoDB
+7.0.43/8.0.32/9.0.2 standalone, FCV correspondiente e imágenes fijadas. La acción
+posee su seed BSON rico; la entrada inicial del fixture es neutra para que EJSON
+no canonicalice DBRef en sus metadatos. Se mantiene el validador de bytes y el
+hash del corpus completo. No cambia ninguna de las 251 referencias históricas.
+
+Las mismas selecciones cruzan Search vector/vector-downstream/text/compound,
+sync/async y wire, ventanas, calentamiento, cambios de tipo y motores SQLite
+nuevos al reabrir sin recrear índices. Se acredita el backend concreto y la
+ruta Python separadamente. Sesenta controles de overrides añaden guards/spies,
+contexto y reapertura; su expectativa literal no depende de otro matcher local.
+Son contrato local, no extensiones Python ejecutadas en MongoDB ni ranking Atlas.
+
+La base Git aislada falla 32/pasa 141 en corpus público/nativo, falla cuatro/pasa
+13 en explain y falla 48/pasa doce en overrides. El wheel definitivo pasa 8.454
+checks integrados en 211,57 s sin avisos y 1.144 pruebas unitarias/Search/SPI/
+propiedades con 181 subtests. Los cuatro workers verifican 262 módulos y los 284
+archivos instalados; la prueba unitaria exclusiva conserva sus 263 imports.
+Typing, manifiesto público y lint mantienen sus garantías. Python 3.13.15
+realmente sin SDK pasa 960 comparaciones del subconjunto admitido en cuatro
+rutas y fases, con SQLite persistido/reabierto y los tres backends observados;
+Code se excluye explícitamente. El probe de overrides también pasa en ambos
+motores sin SDK. No se presenta como matriz o corpus íntegro SDK-free.
+
+Se verifica ausencia de nueve contenedores y dieciocho volúmenes propios. El
+primer diagnóstico CPU mostró ratios 1,66/1,75 en límites pequeños; materializar
+solo ganadores los reduce a 1,11/1,47 con BSON idéntico, y los controles de tanda
+completa quedan en 0,99. ABBA dos veces, doce muestras/runtime/caso y cuatro
+casos son diagnóstico; D05 conserva el residual Binary/limit=2 y su revisión de
+coste. No se afirma presupuesto global aceptado ni ausencia de regresiones de
+rendimiento. Los gates anteriores al último cambio siguen siendo feedback.
+
+El nodo D05 test_generated_search_errors_match_reference_engines_and_surfaces se
+comprueba con el oráculo corregido; el resto del listado histórico de 97 no se
+acepta por asociación. → Sigue: contextos D06 restantes y su auditoría por
+consumidor, H53/C03/B08, sNaN, decisión opcional D07, D05 y B07. No se acredita
+CI remoto, cobertura global ni todas las matrices. UUID sigue STANDARD.
