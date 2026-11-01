@@ -1,13 +1,14 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre; respuestas de escritura aceptadas en `05b3f655`):**
+**Entrada vigente (1 de noviembre; fábricas de respuesta aceptadas en `a8a81f0e`):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
 La [relectura de la autocrítica](evidence/bson-consolidation-review/current-autocritique/README.md)
 conserva el contraste previo; el [corte posterior de batching](evidence/bson-consolidation-implementation/command-batches/README.md)
 tiene aceptación propia. `05b3f655` acepta después [DTOs/sobres y diagnóstico de escritura](evidence/bson-consolidation-implementation/write-responses/README.md);
-los fallos de fábrica/setters mantienen B07 abierto.
+`a8a81f0e` acredita [constructores/setters, errores y eventos confirmados](evidence/bson-consolidation-implementation/write-factory-failures/README.md).
+B07 conserva su aceptación integrada, unidad 6, en D05.
 Las revisiones numeradas anteriores conservan historia, no otro backlog activo.
 
 Fecha: 31 de octubre de 2026. Base de runtime inspeccionada:
@@ -1329,10 +1330,10 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 | --- | --- | --- |
 | Control previo cerrado — B07, admisión | `2723fb28` acepta las [cinco entradas Search](evidence/bson-consolidation-implementation/bson-input-search/README.md), opciones propias y creación preparada compartida. Completa las 17 disposiciones del censo administrativo histórico tras comandos, catálogo, índices, lectores y namespace, con sus aceptaciones en el registro. Lecturas, inserciones, mutaciones y bulk conservan sus cortes propios. No implica positivos Atlas ni una API universal ya censada. | Conservar originales, codificar una vez, errores cliente/precedencia y efectos. El wire ya decodificado no vuelve a codificarse; unidad 5 conserva positivos y batching. |
 | Control previo cerrado — B07, UUID | `d5bdadb8` acepta [default UNSPECIFIED, dueños y lectura independiente](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md), sobre la admisión ya entregada. `b29e9bf1` corrige ausencia en distinct, compartida por API/comando. | Mantener STANDARD/legacy explícitos, bytes/subtipos y lectura/reapertura de archivos previos. No cambiar otra vez el default ni reextraer el codec; no implica cierre D06 ni positivos completos. |
-| 1 / P1 — B07, fallos al decodificar respuestas | `8e261c7a` acepta proyecciones, `dbe8257f` batching y `05b3f655` [DTOs/sobres, orden y diagnóstico de escritura](evidence/bson-consolidation-implementation/write-responses/README.md). No reimplementar bulk_api_result ni las fábricas que ya pasan. Contrastar constructor/setter que falla en write convencional, comando y findAndModify, con/sin registry. | Unidad 5: fase/familia/efectos previos y estado confirmado; un fallo cliente al decodificar no inventa rollback. Reutilizar materializadores y DTOs. Replay instalado actual: 10.759 correctas; cohorte: 2.457/4.709 subtests sin fallos. No implica cierre de toda la unidad ni D05. |
-| 2 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
-| 3 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
-| 4 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
+| Control funcional cerrado — B07, unidad 5 | `8e261c7a` acepta proyecciones, `dbe8257f` batching, `05b3f655` DTOs/sobres y `a8a81f0e` [constructores/setters y efectos confirmados](evidence/bson-consolidation-implementation/write-factory-failures/README.md). API y comando reutilizan el DTO atómico; se retiran las dos copias/capas privadas posteriores al codec. | 10.825 replay y 2.457/4.709 subtests sin fallos; 12.068 de identidad; standalone para callbacks y RS para eventos. Subset portable real y costes acotados en el receipt. La unidad 6 conserva integración D05; no reabrir fixes ni acreditar otras transformaciones de respuesta por asociación. |
+| 1 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación, incluidos artefactos de pipeline parcial y transformaciones de documento/metadata que no consisten en lanzar una excepción sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
+| 2 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
+| 3 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
 
 **Relectura de la autocrítica sobre el árbol actual.** El adjunto conserva el
 SHA-256 ya identificado desde revisión 3. El [contraste reproducible actual](evidence/bson-consolidation-review/review21/README.md)
@@ -1564,6 +1565,15 @@ al reconstruir un DBRef con el decoder SDK.
 | 4. UUID coordinado D06a/b | Entregado en `d5bdadb8`: opciones de escritura antes del almacenamiento, lectura independiente y default UNSPECIFIED coordinado. STANDARD/legacy siguen explícitos. Reusar estas políticas; CodecOptions del dueño de la solicitud no se sustituye por el de otra fachada ni por un nuevo codec. | Default/UNSPECIFIED rechazan UUID con ValueError en fase SDK, sin mutación/eventos. STANDARD y tres legacy conservan bytes/subtipos y lectura correctos, también wire y reapertura, con/sin SDK. No reescribir Binary 4 almacenado a 3 al leer; no retocar el snapshot para ocultar la diferencia. |
 | 5. Consumidores positivos D06/B08 | La proyección de find debe reutilizar la preparación/evaluación de proyección existente para valores calculados. Sobres raw y resultado bulk reutilizan materialización y contratos DTO: tipos, orden de campos y callbacks una vez. | Preservar proyecciones Decimal128/Binary/datetime/arrays/documentos y el error 9 de la constante Binary 5; no reducirlas a flags Python. Raw find conserva firstBatch/id/ns e id BSON int64; update conserva n/nModified/ok; bulk expone el resultado público nativo. No ordenar claves ni borrar metadata del oráculo. Decoders/fábricas activas detectan doble pase y diferencias de fase. |
 | 6. Aceptación conjunta | Baseline/candidato, referencias nuevas congeladas/check, wheel instalado y gates alcanzados; D05 conserva matrices/cobertura/costes integrados. | Todos los testigos anteriores por directa sync/async y wire × Memory/SQLite × 7/8/9, subset portable real, persistencia/reapertura y recursos limpios. Referencias/observadores históricos intactos y commits semánticos. El preflight rojo no acepta ninguna unidad productiva. |
+
+**Aceptación posterior de unidad 5.** `a8a81f0e` completa los controles de
+constructor/setter y errores de respuesta previstos aquí, sobre los cortes
+anteriores de proyecciones/batching/DTOs. La sonda replica set acredita entrega
+tras commit y ausencia tras rechazo mediante barrera; standalone conserva su
+traza de factories. El perfil sin SDK no promete la clase RawBSONDocument que
+no tiene disponible. D06 conserva contextos y transformaciones aún sin aceptar;
+B07 unidad 6/D05 conservan matrices y cierre integrado. No añadir otra capa
+privada de resultado para volver a copiar un documento ya decodificado.
 
 **Precisiones tras contrastar la autocrítica con el código actual.**
 

@@ -1,0 +1,288 @@
+{
+  "baseline": [
+    {
+      "wheel_sha256": "71349b8777261fc8dc744d7a6bd66762b4589886bc4dfbde3eccc28e3b228374",
+      "results": [
+        {
+          "engine": "MemoryEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.073818,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.07747500000000002,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.07499,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.15042200000000006,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.15217800000000004,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.155717,
+          "checksum": 44850
+        }
+      ]
+    },
+    {
+      "wheel_sha256": "71349b8777261fc8dc744d7a6bd66762b4589886bc4dfbde3eccc28e3b228374",
+      "results": [
+        {
+          "engine": "MemoryEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.07510299999999998,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.07860599999999995,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.07691400000000004,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.17157900000000004,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.18191800000000002,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.18384200000000006,
+          "checksum": 44850
+        }
+      ]
+    },
+    {
+      "wheel_sha256": "71349b8777261fc8dc744d7a6bd66762b4589886bc4dfbde3eccc28e3b228374",
+      "results": [
+        {
+          "engine": "MemoryEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.07566600000000001,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.086673,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.08581200000000005,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.19317499999999999,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.1951569999999999,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.19327300000000014,
+          "checksum": 44850
+        }
+      ]
+    }
+  ],
+  "candidate": [
+    {
+      "wheel_sha256": "d22c180abb5e4f0dbb9a54de9dc658b2333fc47f1ce21b836f0b8228f1cf097f",
+      "results": [
+        {
+          "engine": "MemoryEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.07686300000000001,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.07583099999999998,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.076849,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.15562200000000004,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.154486,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.16088000000000002,
+          "checksum": 44850
+        }
+      ]
+    },
+    {
+      "wheel_sha256": "d22c180abb5e4f0dbb9a54de9dc658b2333fc47f1ce21b836f0b8228f1cf097f",
+      "results": [
+        {
+          "engine": "MemoryEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.07717099999999999,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.07586000000000004,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.07797599999999999,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.163466,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.16223699999999996,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.16316799999999998,
+          "checksum": 44850
+        }
+      ]
+    },
+    {
+      "wheel_sha256": "d22c180abb5e4f0dbb9a54de9dc658b2333fc47f1ce21b836f0b8228f1cf097f",
+      "results": [
+        {
+          "engine": "MemoryEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.087395,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.08358699999999997,
+          "checksum": 44850
+        },
+        {
+          "engine": "MemoryEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.08773500000000001,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "plain",
+          "operations": 300,
+          "cpu": 0.20000600000000002,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "factory",
+          "operations": 300,
+          "cpu": 0.1976920000000001,
+          "checksum": 44850
+        },
+        {
+          "engine": "SQLiteEngine",
+          "policy": "registry",
+          "operations": 300,
+          "cpu": 0.20107999999999993,
+          "checksum": 44850
+        }
+      ]
+    }
+  ]
+}

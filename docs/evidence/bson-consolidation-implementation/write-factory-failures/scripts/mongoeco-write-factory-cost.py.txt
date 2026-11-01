@@ -1,0 +1,9 @@
+import json,subprocess,sys
+from pathlib import Path
+roots={label:Path(Path('/tmp/mongoeco-'+name+'-wheel-location.txt').read_text().strip()) for label,name in [('baseline','write-factory-baseline'),('candidate','dispatch')]}
+rows={k:[] for k in roots}
+for turn in range(3):
+ for label in (['baseline','candidate'] if turn%2==0 else ['candidate','baseline']):
+  result=subprocess.check_output([sys.executable,'/tmp/mongoeco-write-factory-cost-worker.py',str(roots[label])],text=True)
+  rows[label].append(json.loads(result));print(label,turn,flush=True)
+Path('/tmp/mongoeco-write-factory-cost.json').write_text(json.dumps(rows,indent=2)+'\n')

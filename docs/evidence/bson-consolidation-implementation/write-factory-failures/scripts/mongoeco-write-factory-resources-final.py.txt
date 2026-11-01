@@ -1,0 +1,17 @@
+import json,subprocess
+from pathlib import Path
+pointers={'standalone-initial':'mongoeco-write-factory-native-initial-location.txt','standalone-frozen':'mongoeco-write-factory-native-location.txt','replica-set-initial':'mongoeco-write-factory-event-native-initial-location.txt','replica-set-frozen':'mongoeco-write-factory-event-native-location.txt'}
+fixtures=[];records=[]
+for label,pointer in pointers.items():
+ root=Path(Path('/tmp',pointer).read_text().strip())
+ for p in sorted(root.glob('*/fixture.json')):
+  d=json.loads(p.read_text());assert d['status']=='succeeded' and d['cleanup']['removed'] and d['cleanup']['volumes_removed'],p
+  assert (p.parent/'.fixture-owner').read_text()==d['owner'],p
+  fixtures.append({'round':label,'path':str(p),'status':d['status'],'topology':d['topology'],'owner_verified':True})
+  for kind,name in [('container',d['container_id'])]+[('volume',v) for v in d['anonymous_volumes']]:
+   r=subprocess.run(['docker',kind,'inspect',name],capture_output=True,text=True)
+   assert r.returncode and ('no such' in r.stderr.lower() or 'not found' in r.stderr.lower()),(kind,name,r.stderr)
+   records.append({'kind':kind,'name':name,'absent':True,'fixture':str(p)})
+assert len(fixtures)==12 and len(records)==36
+Path('/tmp/mongoeco-write-factory-resources-final.json').write_text(json.dumps({'fixtures':fixtures,'per_id_absence':records,'retention':'Four distinct capture rounds retain their manifests and exclusive claims; no overwrites.'},indent=2)+'\n')
+print({'retained_manifests':len(fixtures),'resources_absent':len(records)})

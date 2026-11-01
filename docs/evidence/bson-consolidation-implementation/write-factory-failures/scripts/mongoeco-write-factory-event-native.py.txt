@@ -1,0 +1,19 @@
+import os,subprocess,sys,tempfile
+from pathlib import Path
+import yaml
+root=Path(tempfile.mkdtemp(prefix='mongoeco-write-factory-event-native-'))
+Path('/tmp/mongoeco-write-factory-event-native-location.txt').write_text(str(root))
+payload=root/'capture.py'
+payload.write_text('''import os,subprocess,sys
+v=os.environ['MONGOECO_REAL_MONGODB_TARGET']
+reference=f'tests/fixtures/semantic_write_factory_event_{v.replace(".","_")}.json'
+subprocess.run([sys.executable,'scripts/capture_differential_replay_golden.py','--target',v,'--case-set','write-factory-event','--output',reference],check=True)
+subprocess.run([sys.executable,'scripts/capture_differential_replay_golden.py','--target',v,'--case-set','write-factory-event','--output',os.environ['MONGOECO_WRITE_FACTORY_EVENT_CHECK'],'--check',reference],check=True)
+''')
+rows=yaml.safe_load(Path('.github/workflows/mongodb-differential.yml').read_text())['jobs']['differential']['strategy']['matrix']['include']
+for row in rows:
+ v=row['target'];folder=root/v
+ with (root/(v+'.log')).open('w') as log:
+  r=subprocess.run([sys.executable,'scripts/with_mongodb_replica_set.py','--image',row['image'],'--target',v,'--artifacts',str(folder),'--timeout','600','--',sys.executable,str(payload)],env=dict(os.environ,MONGOECO_REAL_MONGODB_TARGET=v,MONGOECO_WRITE_FACTORY_EVENT_CHECK=str(folder/'check.json')),stdout=log,stderr=subprocess.STDOUT)
+ print(v,r.returncode,flush=True)
+ if r.returncode:raise SystemExit(r.returncode)

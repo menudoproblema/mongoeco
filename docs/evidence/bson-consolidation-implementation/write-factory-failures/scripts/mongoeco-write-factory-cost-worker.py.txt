@@ -1,0 +1,21 @@
+import hashlib,json,sys,time
+from pathlib import Path
+root=Path(sys.argv[1]);info=json.loads((root/'wheel.json').read_text());site=Path(info['site_packages'])
+sys.path[:0]=[str(site),str(Path.cwd())]
+for p,h in json.loads((root/'runtime.json').read_text()).items():assert hashlib.sha256((site/Path(p).relative_to('src')).read_bytes()).hexdigest()==h,p
+from mongoeco import MongoClient
+from mongoeco.engines import MemoryEngine,SQLiteEngine
+from tests.differential.semantic_bson_dispatch_cases import _options
+class Doc(dict):pass
+out=[];n=300
+for engine in (MemoryEngine,SQLiteEngine):
+ for policy in ('plain','factory','registry'):
+  with MongoClient(engine(),mongodb_dialect='9.0') as client:
+   base=client.cost.rows;base.insert_one({'_id':1,'n':{'v':0},'items':[1.25,False,None]})
+   collection=_options(base,[(int,lambda v:v)] if policy=='registry' else (),representation='standard',document_class=Doc if policy=='factory' else dict)
+   start=time.process_time();checksum=0
+   for i in range(1,n+1):checksum+=collection.find_one_and_update({'_id':1},{'$set':{'n.v':i}})['n']['v']
+   cpu=time.process_time()-start
+   assert checksum==n*(n-1)//2 and base.find_one({'_id':1})['n']['v']==n
+   out.append({'engine':engine.__name__,'policy':policy,'operations':n,'cpu':cpu,'checksum':checksum})
+print(json.dumps({'wheel_sha256':info['sha256'],'results':out}))
