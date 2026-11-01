@@ -15,6 +15,7 @@ from mongoeco.core.collation import (
 from mongoeco.core.error_documents import error_message, render_bson_diagnostic
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.errors import DuplicateKeyError
+from mongoeco.types import UndefinedType
 
 
 def duplicate_key_error(outcome, message):
@@ -62,7 +63,7 @@ def duplicate_key_context(*, namespace, index, values, conflict, equality):
             else:
                 transformed = _collated_container(context["keyValue"][field], collation)
                 context["keyValue"][field] = transformed
-                if value != []:
+                if value != [] and not isinstance(value, UndefinedType):
                     context["diagnosticKey"][field] = transformed
     return context
 
@@ -70,7 +71,12 @@ def duplicate_key_context(*, namespace, index, values, conflict, equality):
 def duplicate_key_message(context, *, command=True, update_dialect=None):
     """Render the stable MongoDB duplicate-key diagnostic for command failures."""
     values = ", ".join(
-        f"{field}: {'undefined' if value == [] else render_bson_diagnostic(value)}"
+        f"{field}: "
+        + (
+            "undefined"
+            if value == [] or isinstance(value, UndefinedType)
+            else render_bson_diagnostic(value)
+        )
         for field, value in context["diagnosticKey"].items()
     )
     collation = (

@@ -110,6 +110,8 @@ def _project_index_document(collection, document):
     ):
         document = dict(document)
         document.setdefault("collation", {"locale": "simple"})
+    elif document.get("collation", {}).get("locale") == "simple":
+        document.pop("collation")
     return document
 
 

@@ -552,7 +552,7 @@ class DatabaseAdminWriteCommandService:
             self._admin._db_name, collection_name, context=session
         )
         return CreateIndexesCommandResult(
-            num_indexes_before=len(info_before),
+            num_indexes_before=max(1, len(info_before)),
             num_indexes_after=len(info_after),
             created_collection_automatically=collection_name
             not in collection_names_before,

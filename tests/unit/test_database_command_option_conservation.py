@@ -99,7 +99,7 @@ COMMENT_COMMANDS = {
     "count": {"count": "items"},
     "createIndexes": {
         "createIndexes": "items",
-        "indexes": [{"key": {"value": 1}, "name": "new_idx"}],
+        "indexes": [{"key": {"comment_probe": 1}, "name": "new_idx"}],
     },
     "currentOp": {"currentOp": 1},
     "dbHash": {"dbHash": 1},

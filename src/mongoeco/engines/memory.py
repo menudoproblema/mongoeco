@@ -2787,8 +2787,11 @@ class MemoryEngine(AsyncStorageEngine):
         )
         id_index = collated_id_conflict(
             candidate,
-            ((key, self._borrow_storage_document(data)) for key, data in coll.items()),
-            options, exclude=normalized_exclude,
+            lambda: (
+                (key, self._borrow_storage_document(data)) for key, data in coll.items()
+            ),
+            options,
+            exclude=normalized_exclude,
         )
         if id_index is not None:
             message = "Duplicate _id for collection collation"

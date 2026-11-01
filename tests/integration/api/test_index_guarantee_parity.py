@@ -42,15 +42,16 @@ def test_builtin_names_and_errors_match_native(dialect, backend, surface, label,
     if surface == "sync":
         with MongoClient(engine, mongodb_dialect=dialect) as client:
             coll = client.test.records
-            before = list(coll.list_indexes())
             actual = capture_outcome(lambda: coll.create_index("_id", name=name))
-            assert list(coll.list_indexes()) == before
+            assert (
+                list(coll.list_indexes())
+                == FIXTURES[dialect]["index_id_name_" + label]["after"]["result"]
+            )
     else:
 
         async def exercise():
             async with AsyncMongoClient(engine, mongodb_dialect=dialect) as client:
                 coll = client.test.records
-                before = await coll.list_indexes().to_list()
                 try:
                     actual = {
                         "ok": True,
@@ -58,7 +59,10 @@ def test_builtin_names_and_errors_match_native(dialect, backend, surface, label,
                     }
                 except OperationFailure as error:
                     actual = failure_outcome(error)
-                assert await coll.list_indexes().to_list() == before
+                assert (
+                    await coll.list_indexes().to_list()
+                    == FIXTURES[dialect]["index_id_name_" + label]["after"]["result"]
+                )
                 return actual
 
         actual = asyncio.run(exercise())

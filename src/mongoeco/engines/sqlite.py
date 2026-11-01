@@ -3059,24 +3059,20 @@ class SQLiteEngine(AsyncStorageEngine):
             self._collection_options_or_empty_sync(conn, db_name, coll_name)
             if "_id" in document else {}
         )
-        if (
-            (collation := normalize_collation(options.get("collation"))) is not None
-            and collation.locale != "simple"
-        ):
-            id_index = collated_id_conflict(
+        id_index = collated_id_conflict(
+            document,
+            lambda: self._load_documents(db_name, coll_name),
+            options,
+            exclude=exclude_storage_key,
+        )
+        if id_index is not None:
+            message = "Duplicate _id for collection collation"
+            raise self._unique_key_error(
+                message,
+                f"{db_name}.{coll_name}",
                 document,
-                self._load_documents(db_name, coll_name),
-                options,
-                exclude=exclude_storage_key,
+                index=id_index,
             )
-            if id_index is not None:
-                message = "Duplicate _id for collection collation"
-                raise self._unique_key_error(
-                    message,
-                    f"{db_name}.{coll_name}",
-                    document,
-                    index=id_index,
-                )
         if "_id" in document and not skip_id_check:
             document_id_storage_key = self._storage_key(document["_id"])
             if exclude_storage_key != document_id_storage_key:

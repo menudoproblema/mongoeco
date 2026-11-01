@@ -173,11 +173,17 @@ def test_listed_non_id_metadata_roundtrips_without_rewriting_shared_storage(
         ) == index_subset({"ok": True, "result": expected["after"]})
         raw = client._runner.run(engine.list_indexes("test", "records"))
         with MongoClient(engine, mongodb_dialect="7.0") as older:
-            assert list(older.test.records.list_indexes()) == raw
+            assert (
+                list(older.test.records.list_indexes())
+                == FIXTURES["7.0"]["index_metadata_roundtrip"]["after"]
+            )
             assert older._runner.run(engine.list_indexes("test", "records")) == raw
     if backend == "sqlite":
         with MongoClient(SQLiteEngine(path), mongodb_dialect="8.0") as reopened:
-            assert list(reopened.test.records.list_indexes()) == raw
+            assert (
+                list(reopened.test.records.list_indexes())
+                == FIXTURES["8.0"]["index_metadata_roundtrip"]["after"]
+            )
 
 
 @pytest.mark.parametrize("dialect", ["7.0", "8.0", "9.0"])

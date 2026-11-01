@@ -117,10 +117,11 @@ def _identity_collation(value):
     return None if collation is None or collation.locale == "simple" else collation
 
 
-def collated_id_conflict(document, documents, options, *, exclude=None):
+def collated_id_conflict(document, document_source, options, *, exclude=None):
     collation = _identity_collation(options.get("collation"))
     if collation is None or "_id" not in document:
         return None
+    documents = document_source()
     try:
         for storage_key, existing in documents:
             if (
