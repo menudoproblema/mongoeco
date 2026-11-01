@@ -509,6 +509,17 @@ class AsyncAggregationCursor:
     def _execution_variables(self) -> ExpressionExecutionContext:
         return self._execution_context
 
+    async def _resolve_operation_collation(self):
+        resolver = getattr(self._collection, "_resolve_operation_context", None)
+        if not callable(resolver) or self._operation_context.collation_resolved:
+            return
+        context = await resolver(self._operation_context)
+        self._operation = self._operation.with_overrides(context=None).bind(context)
+        self._operation_context = context
+        self._execution_context = context.expressions
+        self._collation = context.collation
+        self._pipeline = self._operation.pipeline
+
     def _ensure_session_can_use_engine(self) -> None:
         ensure_session_can_use_engine(self._collection._engine, self._session)
 
@@ -1547,6 +1558,7 @@ class AsyncAggregationCursor:
         *,
         deadline: float | None = None,
     ) -> list[Document] | list[RuntimeDocumentState]:
+        await self._resolve_operation_collation()
         _ensure_operation_executable(self._collection, self._operation)
         self._ensure_session_can_use_engine()
         if deadline is None:
@@ -2436,6 +2448,7 @@ class AsyncAggregationCursor:
         return _DeferredAggregationStream(self)
 
     async def _open_batch_stream(self) -> AsyncIterator[Document]:
+        await self._resolve_operation_collation()
         _ensure_operation_executable(self._collection, self._operation)
         self._ensure_session_can_use_engine()
         leading_search = self._leading_search_stage() is not None
@@ -2632,6 +2645,7 @@ class AsyncAggregationCursor:
         self,
         verbosity: str = SearchExplainVerbosity.EXECUTION_STATS.value,
     ) -> dict[str, object]:
+        await self._resolve_operation_collation()
         self._ensure_session_can_use_engine()
         deadline = operation_deadline(self._max_time_ms)
         enforce_deadline(deadline)

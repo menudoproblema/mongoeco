@@ -950,6 +950,15 @@ Hoy el contrato soportado y testeado es:
 * `numericOrdering` y `caseLevel` para `locale=en`
 * `simple` se mantiene como comparador BSON/Python base sin tailoring extra
 
+La collation efectiva sigue la opción de operación, el default de colección y,
+si ninguno existe, `simple`. En consultas y agregaciones, un documento de
+collation vacío hereda el default; `{"locale": "simple"}` lo sustituye. Los
+índices rechazan una collation vacía. Esta resolución se conserva en subpipelines,
+selección de escrituras, validadores e índices nuevos, y al reabrir SQLite.
+Las opciones desconocidas y la falta de `locale` en un documento no vacío se
+rechazan. `caseFirst` queda fuera del subconjunto local y se rechaza de forma
+explícita; su presencia no se ignora aunque haya un backend Unicode instalado.
+
 Para collation Unicode:
 
 * `PyICU` se mantiene como dependencia opcional por contrato

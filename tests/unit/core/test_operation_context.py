@@ -1,3 +1,4 @@
+import asyncio
 import time
 import unittest
 
@@ -6,11 +7,12 @@ import unittest
 # ruff: noqa: PLR2004
 from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, datetime
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from mongoeco.api import operations as operations_module
+from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api.operations import (
     compile_aggregate_operation,
     compile_find_operation,
@@ -24,13 +26,80 @@ from mongoeco.core.operation_context import (
     OperationContext,
     resolve_operation_session,
 )
+from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.semantic_core import compile_find_semantics
-from mongoeco.errors import InvalidOperation, OperationFailure
+from mongoeco.errors import CollectionInvalid, InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import CodecOptions
 
 
 class OperationContextTests(unittest.TestCase):
+    def test_collection_default_is_resolved_once_without_losing_context(self):
+        async def exercise():
+            engine = MemoryEngine()
+            collection = AsyncCollection(engine, "db", "rows")
+            context = collection._new_operation_context(bindings={"tenant": 1})
+            with patch.object(
+                engine,
+                "collection_options",
+                AsyncMock(return_value={"collation": {"locale": "en", "strength": 2}}),
+            ) as options:
+                resolved = await collection._resolve_operation_context(context)
+                assert resolved.collation == normalize_collation(
+                    {"locale": "en", "strength": 2}
+                )
+                assert resolved.collation_resolved
+                assert resolved.operation_id == context.operation_id
+                assert resolved.expressions.now == context.expressions.now
+                assert resolved.expressions.bindings == context.expressions.bindings
+                assert await collection._resolve_operation_context(resolved) is resolved
+                options.assert_awaited_once()
+            for error in [
+                CollectionInvalid("absent"),
+                OperationFailure("absent", code=26),
+                NotImplementedError(),
+            ]:
+                with patch.object(
+                    engine, "collection_options", AsyncMock(side_effect=error)
+                ):
+                    resolved = await collection._resolve_operation_context(context)
+                    assert resolved.collation is None
+                    assert resolved.collation_resolved
+            with patch.object(
+                engine,
+                "collection_options",
+                AsyncMock(side_effect=OperationFailure("failed", code=99)),
+            ), pytest.raises(OperationFailure, match="failed"):
+                await collection._resolve_operation_context(context)
+            with patch.object(engine, "collection_options", None):
+                assert (
+                    await collection._resolve_operation_context(context)
+                ).collation_resolved
+            explicit = replace(
+                context, collation=normalize_collation({"locale": "simple"})
+            )
+            assert (
+                await collection._resolve_operation_context(explicit)
+            ).collation_resolved
+
+        asyncio.run(exercise())
+
+    def test_collation_resolution_preserves_the_simple_context_in_suboperations(self):
+        pending = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        assert not pending.collation_resolved
+        simple = pending.derive(collation=None)
+        assert simple.collation is None
+        assert simple.collation_resolved
+        assert simple.operation_id == pending.operation_id
+        assert simple.expressions.now == pending.expressions.now
+        assert simple.derive(bindings={"child": 1}).collation_resolved
+        assert not pending.derive(bindings={"child": 1}).collation_resolved
+        assert OperationContext.create(
+            dialect=MONGODB_DIALECT_70, collation={"locale": "simple"}
+        ).collation_resolved
+        with pytest.raises(TypeError, match="collation_resolved"):
+            replace(pending, collation_resolved=1)
+
     def test_bound_context_is_the_single_session_authority(self):
         bound_session = ClientSession()
         other_session = ClientSession()

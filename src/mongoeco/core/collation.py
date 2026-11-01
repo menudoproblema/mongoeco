@@ -18,6 +18,7 @@ except Exception:  # pragma: no cover - optional dependency
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_ordering import compare_bson_documents
 from mongoeco.core.bson_values import document_mapping
+from mongoeco.core.server_errors import server_error
 from mongoeco.types import CollationDocument
 
 
@@ -88,6 +89,22 @@ class CollationCapabilitiesInfo:
         }
 
 
+def _require_collation_locale(collation):
+    known = {"locale", "strength", "caseLevel", "numericOrdering", "backwards",
+             "alternate", "maxVariable", "normalization", "caseFirst"}
+    unknown = next((key for key in collation if key not in known), None)
+    if unknown is not None:
+        message = f"BSON field 'collation.{unknown}' is an unknown field."
+        raise server_error(message, code=40415)
+    if "locale" not in collation:
+        message = "BSON field 'collation.locale' is missing but a required field"
+        raise server_error(message, code=40414)
+    if "caseFirst" in collation:
+        message = "collation caseFirst is outside the supported local subset"
+        raise ValueError(message)
+    return collation["locale"]
+
+
 def normalize_collation(collation: object | None) -> CollationSpec | None:
     if collation is None:
         return None
@@ -95,7 +112,9 @@ def normalize_collation(collation: object | None) -> CollationSpec | None:
         return collation
     if not isinstance(collation, dict):
         raise TypeError("collation must be a document")
-    locale = collation.get("locale", "simple")
+    if not collation:
+        return None
+    locale = _require_collation_locale(collation)
     if not isinstance(locale, str) or not locale:
         raise TypeError("collation locale must be a non-empty string")
     if locale not in {"simple", "en"}:
@@ -451,14 +470,36 @@ def _compare_with_pyuca(left: str, right: str, collation: CollationSpec) -> int:
 
 def _pyuca_collation_key(value: str, collation: CollationSpec) -> tuple[object, ...]:
     if not collation.numeric_ordering:
-        return _truncate_uca_key(_get_pyuca_collator().sort_key(value), collation)
-    parts: list[object] = []
+        return _pyuca_text_key(value, collation)
+    levels: list[list[object]] = [
+        [] for _ in range(collation.strength + int(collation.case_level))
+    ]
     for segment in _NUMERIC_SEGMENT_RE.findall(value):
-        if segment.isdigit():
-            parts.append((0, int(segment)))
+        if segment.isdecimal():
+            levels[0].append((0, int(segment)))
         else:
-            parts.append((1, _truncate_uca_key(_get_pyuca_collator().sort_key(segment), collation)))
-    return tuple(parts)
+            for index, weights in enumerate(_pyuca_text_key(segment, collation)):
+                if index == 0:
+                    levels[0].extend((1, weight) for weight in weights)
+                else:
+                    levels[index].extend(weights)
+    return tuple(tuple(level) for level in levels)
+
+
+def _pyuca_text_key(value: str, collation: CollationSpec) -> tuple[object, ...]:
+    collator = _get_pyuca_collator()
+    levels = list(_truncate_uca_key(collator.sort_key(value), collation))
+    if collation.case_level:
+        # Case is independent of accents and other tertiary distinctions. Expand
+        # case over primary elements so ligatures and their spelling align.
+        cases = tuple(
+            int(char.isupper())
+            for char in unicodedata.normalize("NFD", value)
+            for primary, _secondary, _tertiary in collator.collation_elements(char)
+            if primary
+        )
+        levels.insert(min(collation.strength, 2), cases)
+    return tuple(levels)
 
 
 def _truncate_uca_key(key: tuple[int, ...], collation: CollationSpec) -> tuple[object, ...]:
@@ -468,7 +509,7 @@ def _truncate_uca_key(key: tuple[int, ...], collation: CollationSpec) -> tuple[o
         truncated.append(levels[0])
     if collation.strength >= 2 and len(levels) >= 2:
         truncated.append(levels[1])
-    if (collation.case_level or collation.strength >= 3) and len(levels) >= 3:
+    if collation.strength >= 3 and len(levels) >= 3:
         truncated.append(levels[2])
     return tuple(truncated)
 

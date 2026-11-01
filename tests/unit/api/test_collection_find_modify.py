@@ -79,9 +79,9 @@ def test_prebound_write_retains_its_operation_context():
         OperationContext.create(dialect=MONGODB_DIALECT_70)
     )
     assert (
-        _collection_modify._bind_execution_context(
+        asyncio.run(_collection_modify._bind_execution_context(
             operation, object(), change_operation_type="update"
-        )
+        ))
         is operation
     )
 

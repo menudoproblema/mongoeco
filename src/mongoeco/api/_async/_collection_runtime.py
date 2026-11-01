@@ -531,6 +531,10 @@ class CollectionRuntimeCoordinator:
         on_commit: Callable[[InsertOutcome], None] | None,
         operation_context: OperationContext | None = None,
     ) -> InsertOutcome:
+        if operation_context is not None:
+            operation_context = await self._collection._resolve_operation_context(
+                operation_context
+            )
         with self._engine_change_delivery_scope(operation_context):
             return await self._engine_spi.insert_outcome(
                 self._collection._db_name,
@@ -551,6 +555,10 @@ class CollectionRuntimeCoordinator:
         on_commit: Callable[[InsertOutcome], None] | None,
         operation_context: OperationContext | None = None,
     ) -> tuple[InsertOutcome, ...]:
+        if operation_context is not None:
+            operation_context = await self._collection._resolve_operation_context(
+                operation_context
+            )
         with self._engine_change_delivery_scope(operation_context):
             return await self._engine_spi.insert_many_outcomes(
                 self._collection._db_name,
@@ -712,6 +720,11 @@ class CollectionRuntimeCoordinator:
                 bindings=operation.let,
             )
             operation = operation.bind(operation_context)
+        operation_context = await self._collection._resolve_operation_context(
+            cast("OperationContext", operation.context)
+        )
+        if operation_context is not operation.context:
+            operation = operation.with_overrides(context=None).bind(operation_context)
         semantics = compile_find_semantics_from_operation(
             operation,
             dialect=self._collection._mongodb_dialect,

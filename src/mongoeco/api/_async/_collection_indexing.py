@@ -12,8 +12,9 @@ from mongoeco.api.bson_input import encode_bson_request
 from mongoeco.core._public_materialization import materialize_command_response
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors
-from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.expression_context import execution_now_scope
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.server_errors import server_error
 from mongoeco.errors import OperationFailure
 from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
@@ -105,8 +106,18 @@ def _project_index_document(collection, document):
 
 
 async def _index_collation_for_create(collection, keys, collation, session):
+    if collation == {}:
+        message = "The field 'collation' cannot be an empty object"
+        raise server_error(message, code=2)
+    context = await collection._resolve_operation_context(
+        collection._new_operation_context(session=session, collation=collation)
+    )
+    if not collation:
+        collation = (
+            None if context.collation is None else context.collation.to_document()
+        )
     if keys == [("_id", 1)] and (
-        collation is None or normalize_collation(collation).locale == "simple"
+        context.collation is None or context.collation.locale == "simple"
     ):
         # The SPI's builtin definition is immutable and intrinsically unique.
         return None
@@ -114,7 +125,7 @@ async def _index_collation_for_create(collection, keys, collation, session):
         "list_indexes_includes_simple_collation", default=False
     ):
         return collation
-    if collation is not None and normalize_collation(collation).locale != "simple":
+    if context.collation is not None and context.collation.locale != "simple":
         return collation
     # Reuse the stored spelling for an equivalent existing simple index.
     # Listing metadata never rewrites catalog entries or changes identity.
@@ -123,8 +134,9 @@ async def _index_collation_for_create(collection, keys, collation, session):
     )
     for index in existing:
         stored = index.get("collation")
+        normalized = normalize_collation(stored)
         if index["key"] == dict(keys) and (
-            stored is None or normalize_collation(stored).locale == "simple"
+            normalized is None or normalized.locale == "simple"
         ):
             return stored
     return collation

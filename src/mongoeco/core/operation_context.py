@@ -45,6 +45,7 @@ class OperationContext:
     change_operation_type: ChangeOperationType | None = None
     operation_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     change_event_index: int = 0
+    collation_resolved: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.dialect, MongoDialect):
@@ -61,6 +62,9 @@ class OperationContext:
             CollationSpec,
         ):
             message = 'collation must be a CollationSpec'
+            raise TypeError(message)
+        if not isinstance(self.collation_resolved, bool):
+            message = 'collation_resolved must be a bool'
             raise TypeError(message)
         if self.session is not None and not isinstance(
             self.session,
@@ -131,6 +135,7 @@ class OperationContext:
             publication=publication,
             change_operation_type=change_operation_type,
             change_event_index=change_event_index,
+            collation_resolved=normalized_collation is not None,
         )
 
     def derive(
@@ -154,6 +159,9 @@ class OperationContext:
                 None if bindings is None else deepcopy(dict(bindings)),
             ),
             collation=next_collation,
+            collation_resolved=(
+                self.collation_resolved if collation is _UNSET else True
+            ),
             publication=(
                 self.publication if publication is None else publication
             ),

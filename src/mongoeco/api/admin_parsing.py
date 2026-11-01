@@ -155,6 +155,8 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
         if "key" not in raw_index:
             message = "index specification must contain 'key'"
             raise OperationFailure(message)
+        if "collation" in raw_index:
+            require_command_type(raw_index["collation"], "collation", "object")
 
         unsupported = set(raw_index) - CREATE_INDEXES_SPEC_FIELDS
         if unsupported:
@@ -166,6 +168,13 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
         kwargs = {name: value for name, value in raw_index.items() if name != "key"}
         normalized.append(IndexModel(raw_index["key"], **kwargs))
     return normalized
+
+
+def normalize_command_collation(spec, *, field="collation", null_allowed=True):
+    value = spec.get("collation")
+    if "collation" not in spec or (value is None and null_allowed):
+        return None
+    return require_command_type(value, field, "object")
 
 
 def normalize_command_sort_document(

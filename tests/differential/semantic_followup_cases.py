@@ -9,6 +9,7 @@ from bson import BSON, Binary, Decimal128, Int64, ObjectId, Regex, Timestamp
 from pymongo import ReplaceOne
 
 from tests.differential.semantic_bson_grammar_context_cases import _aggregate
+from tests.support_write_parity import BSONObservation, public_error
 
 
 SEED = [{"_id": 0}]
@@ -20,11 +21,19 @@ def reset(collection, rows):
         collection.insert_many(deepcopy(rows))
 
 
-def outcome(invoke):
+def outcome(invoke, *, write=False):
     """Observe public error identity; wording remains in existing strict corpora."""
     try:
         return {"ok": True, "value": invoke()}
     except Exception as error:
+        if write:
+            # Local subclasses retain the same public WriteError contract.
+            observation = public_error(error, BSONObservation([]))
+            return {
+                "ok": False,
+                "family": observation["family"],
+                "code": observation["code"],
+            }
         return {
             "ok": False,
             "family": type(error).__name__,
@@ -274,6 +283,353 @@ def default_collation(collection):
 def invalid_collation(collection, *, spec):
     reset(collection, [{"_id": 1, "a": "a"}])
     return outcome(lambda: list(collection.find({}, collation=spec)))
+
+
+def collation_consumers(collection, *, spec):
+    db = collection.database
+    collection.drop()
+    collection = db.create_collection(collection.name, collation=spec)
+    collection.insert_many(
+        [
+            {"_id": 1, "a": "E"},
+            {"_id": 2, "a": "e"},
+            {"_id": 3, "a": "é"},
+            {"_id": 4, "a": "10"},
+            {"_id": 5, "a": "2"},
+        ]
+    )
+    result = {
+        label: [
+            r["_id"] for r in collection.find({"a": "e"}, sort=[("_id", 1)], **options)
+        ]
+        for label, options in [
+            ("default", {}),
+            ("empty", {"collation": {}}),
+            ("simple", {"collation": {"locale": "simple"}}),
+        ]
+    }
+    result["range"] = [
+        r["_id"]
+        for r in collection.find({"a": {"$gte": "e"}}, sort=[("a", 1), ("_id", 1)])
+    ]
+    result["sort"] = [
+        r["_id"] for r in collection.find({}, sort=[("a", 1), ("_id", 1)])
+    ]
+    result["groups"] = list(
+        collection.aggregate(
+            [
+                {"$sort": {"_id": 1}},
+                {"$group": {"_id": "$a", "n": {"$sum": 1}}},
+                {"$sort": {"_id": 1}},
+            ]
+        )
+    )
+    foreign = db["foreign"]
+    foreign.drop()
+    foreign = db.create_collection("foreign", collation={"locale": "en", "strength": 3})
+    foreign.insert_many([{"_id": 1, "a": "E"}, {"_id": 2, "a": "e"}])
+    result["lookup"] = list(
+        collection.aggregate(
+            [
+                {
+                    "$lookup": {
+                        "from": "foreign",
+                        "localField": "a",
+                        "foreignField": "a",
+                        "as": "found",
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 1,
+                        "ids": {"$sortArray": {"input": "$found._id", "sortBy": 1}},
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ]
+        )
+    )
+    result["update"] = collection.update_many(
+        {"a": "e"}, [{"$set": {"same": {"$eq": ["$a", "e"]}}}]
+    ).matched_count
+    result["updated_rows"] = list(
+        collection.find({"same": {"$exists": True}}, sort=[("_id", 1)])
+    )
+    valid = db["validated"]
+    valid.drop()
+    valid = db.create_collection("validated", collation=spec, validator={"a": "e"})
+
+    def insert_valid():
+        valid.insert_one({"_id": 1, "a": "E"})
+        return valid.count_documents({})
+
+    result["validator"] = outcome(insert_valid, write=True)
+    result["delete"] = collection.delete_many({"a": "e"}).deleted_count
+    return result
+
+
+def setup_collation_persisted(collection):
+    db = collection.database
+    collection.drop()
+    created = db.create_collection(
+        collection.name, collation={"locale": "en", "strength": 2}
+    )
+    created.insert_many(
+        [
+            {"_id": 1, "a": "A", "title": "ada", "embedding": [1.0, 0.0]},
+            {"_id": 2, "a": "a", "title": "ada", "embedding": [1.0, 0.0]},
+            {"_id": 3, "a": "B", "title": "ada", "embedding": [1.0, 0.0]},
+        ]
+    )
+    created.create_index("a", name="a_index")
+
+
+def read_collation_persisted(collection):
+    return {
+        "ids": [r["_id"] for r in collection.find({"a": "a"}, sort=[("_id", 1)])],
+        "hinted": [
+            r["_id"]
+            for r in collection.find({"a": "a"}, hint="a_index", sort=[("_id", 1)])
+        ],
+        "count": collection.count_documents({"a": "a"}),
+        "distinct": sorted(collection.distinct("a")),
+    }
+
+
+def collation_persisted(collection):
+    setup_collation_persisted(collection)
+    return {
+        "cold": read_collation_persisted(collection),
+        "warm": read_collation_persisted(collection),
+    }
+
+
+def collation_namespaces(collection):
+    db = collection.database
+    result = []
+    cursor = collection.find({"a": "a"}, sort=[("_id", 1)])
+    for spec in [
+        {"locale": "en", "strength": 2},
+        {"locale": "simple"},
+        {"locale": "en", "strength": 1},
+    ]:
+        collection.drop()
+        created = db.create_collection(collection.name, collation=spec)
+        created.insert_many([{"_id": 1, "a": "A"}, {"_id": 2, "a": "a"}])
+        # Reuse the original handle after namespace recreation; do not cache absence.
+        result.append(
+            [r["_id"] for r in collection.find({"a": "a"}, sort=[("_id", 1)])]
+        )
+        result.append([r["_id"] for r in cursor.rewind()])
+        result.append([r["_id"] for r in cursor.clone()])
+        result.append(
+            [r["_id"] for r in db[collection.name].find({"a": "a"}, sort=[("_id", 1)])]
+        )
+    target = db["renamed_collation"]
+    target.drop()
+    collection.rename(target.name)
+    result.append([r["_id"] for r in target.find({"a": "a"}, sort=[("_id", 1)])])
+    return result
+
+
+def collation_partial_index(collection):
+    collection.drop()
+    collection.database.create_collection(
+        collection.name, collation={"locale": "en", "strength": 2}
+    )
+    collection.create_index(
+        "a", name="partial", unique=True, partialFilterExpression={"p": "a"}
+    )
+    collection.insert_one({"_id": 1, "p": "A", "a": "K"})
+
+    def duplicate():
+        collection.insert_one({"_id": 2, "p": "a", "a": "k"})
+
+    result = {"insert": outcome(duplicate)}
+    collection.insert_one({"_id": 3, "p": "B", "a": "k"})
+    result["update"] = outcome(
+        lambda: collection.update_one({"_id": 3}, {"$set": {"p": "A"}}).modified_count
+    )
+    result["rows"] = list(collection.find({}, sort=[("_id", 1)]))
+    result["hinted"] = [
+        r["_id"] for r in collection.find({"p": "a", "a": "k"}, hint="partial")
+    ]
+    return result
+
+
+def collation_case_level(collection):
+    collection.drop()
+    collection.database.create_collection(
+        collection.name, collation={"locale": "en", "strength": 1, "caseLevel": True}
+    )
+    reset(
+        collection,
+        [
+            {"_id": n, "a": value}
+            for n, value in enumerate(
+                [
+                    "e",
+                    "é",
+                    "E",
+                    "É",
+                    "ß",
+                    "ss",
+                    "ẞ",
+                    "SS",
+                    "\uff45",
+                    "\uff25",
+                    "æ",
+                    "Æ",
+                    "ae",
+                ]
+            )
+        ],
+    )
+    return {
+        "groups": list(
+            collection.aggregate(
+                [
+                    {"$sort": {"_id": 1}},
+                    {"$group": {"_id": "$a", "ids": {"$push": "$_id"}}},
+                    {"$sort": {"_id": 1}},
+                ]
+            )
+        ),
+        "ids": [r["_id"] for r in collection.find({"a": "é"}, sort=[("_id", 1)])],
+    }
+
+
+def collation_numeric_levels(collection, *, strength, case_level):
+    collection.drop()
+    collection.database.create_collection(
+        collection.name,
+        collation={
+            "locale": "en",
+            "strength": strength,
+            "caseLevel": case_level,
+            "numericOrdering": True,
+        },
+    )
+    reset(
+        collection,
+        [
+            {"_id": n, "a": value}
+            for n, value in enumerate(
+                ["a2B", "A10b", "a10b", "á2b", "a002B", "²2", "2", "10", "a٢B"]
+            )
+        ],
+    )
+    return {
+        "sort": [r["_id"] for r in collection.find({}, sort=[("a", 1), ("_id", 1)])],
+        "groups": list(
+            collection.aggregate(
+                [
+                    {"$sort": {"_id": 1}},
+                    {"$group": {"_id": "$a", "ids": {"$push": "$_id"}}},
+                    {"$sort": {"_id": 1}},
+                ]
+            )
+        ),
+    }
+
+
+def collation_raw(collection):
+    db = collection.database
+    result = {}
+    for label, value in [
+        ("null", None),
+        ("empty", {}),
+        ("array", []),
+        ("bool", False),
+        ("required", {"strength": 2}),
+        ("unknown", {"locale": "en", "foo": 1}),
+        ("simple", {"locale": "simple"}),
+    ]:
+        for role in [
+            "find",
+            "aggregate",
+            "count",
+            "distinct",
+            "update",
+            "delete",
+            "findAndModify",
+            "createIndexes",
+        ]:
+            collection.drop()
+            db.create_collection(
+                collection.name, collation={"locale": "en", "strength": 2}
+            )
+            collection.insert_many([{"_id": 1, "a": "A"}, {"_id": 2, "a": "a"}])
+            commands = {
+                "find": {
+                    "find": collection.name,
+                    "filter": {"a": "a"},
+                    "sort": {"_id": 1},
+                    "collation": value,
+                },
+                "aggregate": {
+                    "aggregate": collection.name,
+                    "pipeline": [{"$match": {"a": "a"}}, {"$sort": {"_id": 1}}],
+                    "cursor": {},
+                    "collation": value,
+                },
+                "count": {
+                    "count": collection.name,
+                    "query": {"a": "a"},
+                    "collation": value,
+                },
+                "distinct": {
+                    "distinct": collection.name,
+                    "key": "_id",
+                    "query": {"a": "a"},
+                    "collation": value,
+                },
+                "update": {
+                    "update": collection.name,
+                    "updates": [
+                        {
+                            "q": {"a": "a"},
+                            "u": {"$set": {"done": True}},
+                            "multi": True,
+                            "collation": value,
+                        }
+                    ],
+                },
+                "delete": {
+                    "delete": collection.name,
+                    "deletes": [{"q": {"a": "a"}, "limit": 0, "collation": value}],
+                },
+                "findAndModify": {
+                    "findAndModify": collection.name,
+                    "query": {"a": "a"},
+                    "update": {"$set": {"done": True}},
+                    "sort": {"_id": 1},
+                    "collation": value,
+                },
+                "createIndexes": {
+                    "createIndexes": collection.name,
+                    "indexes": [{"key": {"b": 1}, "name": "b", "collation": value}],
+                },
+            }
+
+            def run(command=commands[role], role=role):
+                reply = db.command(command)
+                if "cursor" in reply:
+                    return [r["_id"] for r in reply["cursor"]["firstBatch"]]
+                if "values" in reply:
+                    return sorted(reply["values"])
+                if role == "findAndModify":
+                    return None if reply["value"] is None else reply["value"]["_id"]
+                return {
+                    key: reply[key]
+                    for key in ["n", "nModified", "numIndexesAfter"]
+                    if key in reply
+                } | {
+                    "errors": [entry["code"] for entry in reply.get("writeErrors", [])]
+                }
+
+            result[f"{role}/{label}"] = outcome(run)
+    return result
 
 
 def ordered_write(collection, *, kind):
@@ -600,6 +956,39 @@ SEMANTIC_FOLLOWUP_CASES = (
     ("semantic_followup_f03_path_contexts", path_contexts),
     ("semantic_followup_f03_lookup_paths", lookup_paths),
     ("semantic_followup_f05_default", default_collation),
+    ("semantic_followup_f05_persisted", collation_persisted),
+    ("semantic_followup_f05_namespaces", collation_namespaces),
+    ("semantic_followup_f05_partial", collation_partial_index),
+    ("semantic_followup_f05_case_level", collation_case_level),
+    ("semantic_followup_f05_raw", collation_raw),
+    *(
+        (
+            f"semantic_followup_f05_numeric_levels_{strength}_{case_level}",
+            partial(collation_numeric_levels, strength=strength, case_level=case_level),
+        )
+        for strength, case_level in [(1, False), (2, True), (3, False)]
+    ),
+    *(
+        (
+            f"semantic_followup_f05_consumers_{strength}_{case_level}_{numeric}",
+            partial(
+                collation_consumers,
+                spec={
+                    "locale": "en",
+                    "strength": strength,
+                    "caseLevel": case_level,
+                    "numericOrdering": numeric,
+                },
+            ),
+        )
+        for strength, case_level, numeric in [
+            (1, False, False),
+            (2, False, False),
+            (3, False, False),
+            (1, True, False),
+            (2, False, True),
+        ]
+    ),
     *(
         (f"semantic_followup_f05_invalid_{i}", partial(invalid_collation, spec=spec))
         for i, spec in enumerate([{}, {"strength": 2}, {"locale": "en", "foo": 1}])

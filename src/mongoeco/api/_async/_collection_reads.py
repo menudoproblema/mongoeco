@@ -19,7 +19,6 @@ from mongoeco.core._filtering_support import query_array_members
 from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.core.aggregation.expression_values import MISSING
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.collation import normalize_collation
 from mongoeco.core.error_documents import command_errors, error_message
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.server_errors import response_operation_error
@@ -87,7 +86,9 @@ async def find_one(
         collation=operation.collation,
         expressions=expressions,
     )
-    operation = operation.bind(operation_context)
+    operation = operation.bind(
+        await collection._resolve_operation_context(operation_context)
+    )
     document = None
     started_at = time.perf_counter_ns()
     record_runtime_opcounter = getattr(
@@ -219,7 +220,9 @@ async def count_documents(
         collation=operation.collation,
         bindings=operation.let,
     )
-    operation = operation.bind(operation_context)
+    operation = operation.bind(
+        await collection._resolve_operation_context(operation_context)
+    )
     with track_active_operation(
         collection._engine,
         command_name="count",
@@ -299,7 +302,12 @@ async def distinct(
     if not isinstance(options["key"], str):
         raise TypeError("key must be a string")
     options = encode_operation_bson(options, codec_options=collection._codec_options)
-    normalized_collation = normalize_collation(options.get("collation"))
+    operation_context = await collection._resolve_operation_context(
+        collection._new_operation_context(
+            session=options.get("session"), collation=options.get("collation")
+        )
+    )
+    normalized_collation = operation_context.collation
     distinct_values: list[object] = []
     with track_active_operation(
         collection._engine,
@@ -317,7 +325,9 @@ async def distinct(
             dialect=collection._mongodb_dialect,
             planning_mode=collection._planning_mode,
         )
-        cursor = collection._build_cursor(operation, session=options.get("session"))
+        cursor = collection._build_cursor(
+            operation.bind(operation_context), session=options.get("session")
+        )
         cursor._expression_error_operation = "distinct"
         # Compare stored values before response decoding can erase field order.
         cursor._apply_codec_options = False

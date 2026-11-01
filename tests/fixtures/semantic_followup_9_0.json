@@ -2427,6 +2427,846 @@
         }
       }
     },
+    "semantic_followup_f05_case_level": {
+      "groups": [
+        {
+          "_id": "\u00e6",
+          "ids": [
+            {
+              "$numberInt": "10"
+            },
+            {
+              "$numberInt": "12"
+            }
+          ]
+        },
+        {
+          "_id": "\u00c6",
+          "ids": [
+            {
+              "$numberInt": "11"
+            }
+          ]
+        },
+        {
+          "_id": "e",
+          "ids": [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ]
+        },
+        {
+          "_id": "E",
+          "ids": [
+            {
+              "$numberInt": "2"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "9"
+            }
+          ]
+        },
+        {
+          "_id": "\u00df",
+          "ids": [
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "5"
+            }
+          ]
+        },
+        {
+          "_id": "\u1e9e",
+          "ids": [
+            {
+              "$numberInt": "6"
+            },
+            {
+              "$numberInt": "7"
+            }
+          ]
+        }
+      ],
+      "ids": [
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "8"
+        }
+      ]
+    },
+    "semantic_followup_f05_consumers_1_False_False": {
+      "default": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "empty": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "simple": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "range": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "sort": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "10",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "2",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "E",
+          "n": {
+            "$numberInt": "3"
+          }
+        }
+      ],
+      "lookup": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "ids": []
+        }
+      ],
+      "update": {
+        "$numberInt": "3"
+      },
+      "updated_rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": "E",
+          "same": true
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": "e",
+          "same": true
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": "\u00e9",
+          "same": true
+        }
+      ],
+      "validator": {
+        "ok": true,
+        "value": {
+          "$numberInt": "1"
+        }
+      },
+      "delete": {
+        "$numberInt": "3"
+      }
+    },
+    "semantic_followup_f05_consumers_1_True_False": {
+      "default": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "empty": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "simple": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "range": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "sort": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "10",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "2",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "e",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "E",
+          "n": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "lookup": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "ids": [
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "ids": [
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "ids": []
+        }
+      ],
+      "update": {
+        "$numberInt": "2"
+      },
+      "updated_rows": [
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": "e",
+          "same": true
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "a": "\u00e9",
+          "same": true
+        }
+      ],
+      "validator": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "121"
+        }
+      },
+      "delete": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f05_consumers_2_False_False": {
+      "default": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "empty": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "simple": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "range": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "sort": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "10",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "2",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "E",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "\u00e9",
+          "n": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "lookup": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "ids": []
+        }
+      ],
+      "update": {
+        "$numberInt": "2"
+      },
+      "updated_rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": "E",
+          "same": true
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": "e",
+          "same": true
+        }
+      ],
+      "validator": {
+        "ok": true,
+        "value": {
+          "$numberInt": "1"
+        }
+      },
+      "delete": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f05_consumers_2_False_True": {
+      "default": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "empty": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "simple": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "range": [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "sort": [
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "2",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "10",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "E",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "_id": "\u00e9",
+          "n": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "lookup": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "ids": []
+        }
+      ],
+      "update": {
+        "$numberInt": "2"
+      },
+      "updated_rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "a": "E",
+          "same": true
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": "e",
+          "same": true
+        }
+      ],
+      "validator": {
+        "ok": true,
+        "value": {
+          "$numberInt": "1"
+        }
+      },
+      "delete": {
+        "$numberInt": "2"
+      }
+    },
+    "semantic_followup_f05_consumers_3_False_False": {
+      "default": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "empty": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "simple": [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "range": [
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "sort": [
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "3"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "10",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "2",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "e",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "E",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "\u00e9",
+          "n": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "lookup": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "ids": [
+            {
+              "$numberInt": "1"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "ids": [
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "4"
+          },
+          "ids": []
+        },
+        {
+          "_id": {
+            "$numberInt": "5"
+          },
+          "ids": []
+        }
+      ],
+      "update": {
+        "$numberInt": "1"
+      },
+      "updated_rows": [
+        {
+          "_id": {
+            "$numberInt": "2"
+          },
+          "a": "e",
+          "same": true
+        }
+      ],
+      "validator": {
+        "ok": false,
+        "family": "WriteError",
+        "code": {
+          "$numberInt": "121"
+        }
+      },
+      "delete": {
+        "$numberInt": "1"
+      }
+    },
     "semantic_followup_f05_default": {
       "ids": [
         {
@@ -2496,6 +3336,937 @@
       "family": "OperationFailure",
       "code": {
         "$numberInt": "40415"
+      }
+    },
+    "semantic_followup_f05_namespaces": [
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      [
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ]
+    ],
+    "semantic_followup_f05_numeric_levels_1_False": {
+      "sort": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "1"
+        },
+        {
+          "$numberInt": "2"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "2",
+          "ids": [
+            {
+              "$numberInt": "6"
+            }
+          ]
+        },
+        {
+          "_id": "10",
+          "ids": [
+            {
+              "$numberInt": "7"
+            }
+          ]
+        },
+        {
+          "_id": "\u00b22",
+          "ids": [
+            {
+              "$numberInt": "5"
+            }
+          ]
+        },
+        {
+          "_id": "a2B",
+          "ids": [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "$numberInt": "3"
+            },
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ]
+        },
+        {
+          "_id": "A10b",
+          "ids": [
+            {
+              "$numberInt": "1"
+            },
+            {
+              "$numberInt": "2"
+            }
+          ]
+        }
+      ]
+    },
+    "semantic_followup_f05_numeric_levels_2_True": {
+      "sort": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "2",
+          "ids": [
+            {
+              "$numberInt": "6"
+            }
+          ]
+        },
+        {
+          "_id": "10",
+          "ids": [
+            {
+              "$numberInt": "7"
+            }
+          ]
+        },
+        {
+          "_id": "\u00b22",
+          "ids": [
+            {
+              "$numberInt": "5"
+            }
+          ]
+        },
+        {
+          "_id": "a2B",
+          "ids": [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ]
+        },
+        {
+          "_id": "\u00e12b",
+          "ids": [
+            {
+              "$numberInt": "3"
+            }
+          ]
+        },
+        {
+          "_id": "a10b",
+          "ids": [
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": "A10b",
+          "ids": [
+            {
+              "$numberInt": "1"
+            }
+          ]
+        }
+      ]
+    },
+    "semantic_followup_f05_numeric_levels_3_False": {
+      "sort": [
+        {
+          "$numberInt": "6"
+        },
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "5"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "4"
+        },
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "3"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "1"
+        }
+      ],
+      "groups": [
+        {
+          "_id": "2",
+          "ids": [
+            {
+              "$numberInt": "6"
+            }
+          ]
+        },
+        {
+          "_id": "10",
+          "ids": [
+            {
+              "$numberInt": "7"
+            }
+          ]
+        },
+        {
+          "_id": "\u00b22",
+          "ids": [
+            {
+              "$numberInt": "5"
+            }
+          ]
+        },
+        {
+          "_id": "a2B",
+          "ids": [
+            {
+              "$numberInt": "0"
+            },
+            {
+              "$numberInt": "4"
+            },
+            {
+              "$numberInt": "8"
+            }
+          ]
+        },
+        {
+          "_id": "\u00e12b",
+          "ids": [
+            {
+              "$numberInt": "3"
+            }
+          ]
+        },
+        {
+          "_id": "a10b",
+          "ids": [
+            {
+              "$numberInt": "2"
+            }
+          ]
+        },
+        {
+          "_id": "A10b",
+          "ids": [
+            {
+              "$numberInt": "1"
+            }
+          ]
+        }
+      ]
+    },
+    "semantic_followup_f05_partial": {
+      "insert": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        }
+      },
+      "update": {
+        "ok": false,
+        "family": "DuplicateKeyError",
+        "code": {
+          "$numberInt": "11000"
+        }
+      },
+      "rows": [
+        {
+          "_id": {
+            "$numberInt": "1"
+          },
+          "p": "A",
+          "a": "K"
+        },
+        {
+          "_id": {
+            "$numberInt": "3"
+          },
+          "p": "B",
+          "a": "k"
+        }
+      ],
+      "hinted": [
+        {
+          "$numberInt": "1"
+        }
+      ]
+    },
+    "semantic_followup_f05_persisted": {
+      "cold": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "hinted": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "distinct": [
+          "A",
+          "B"
+        ]
+      },
+      "warm": {
+        "ids": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "hinted": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        "count": {
+          "$numberInt": "2"
+        },
+        "distinct": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    "semantic_followup_f05_raw": {
+      "find/null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "aggregate/null": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "count/null": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "2"
+          },
+          "errors": []
+        }
+      },
+      "distinct/null": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "update/null": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "2"
+          },
+          "nModified": {
+            "$numberInt": "2"
+          },
+          "errors": []
+        }
+      },
+      "delete/null": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "2"
+          },
+          "errors": []
+        }
+      },
+      "findAndModify/null": {
+        "ok": true,
+        "value": {
+          "$numberInt": "1"
+        }
+      },
+      "createIndexes/null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "find/empty": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "aggregate/empty": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "count/empty": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "2"
+          },
+          "errors": []
+        }
+      },
+      "distinct/empty": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "update/empty": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "2"
+          },
+          "nModified": {
+            "$numberInt": "2"
+          },
+          "errors": []
+        }
+      },
+      "delete/empty": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "2"
+          },
+          "errors": []
+        }
+      },
+      "findAndModify/empty": {
+        "ok": true,
+        "value": {
+          "$numberInt": "1"
+        }
+      },
+      "createIndexes/empty": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        }
+      },
+      "find/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "aggregate/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "count/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "distinct/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "update/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "delete/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "findAndModify/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "createIndexes/array": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "find/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "aggregate/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "count/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "distinct/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "update/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "delete/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "findAndModify/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "createIndexes/bool": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        }
+      },
+      "find/required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "aggregate/required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "count/required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "distinct/required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "update/required": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "0"
+          },
+          "nModified": {
+            "$numberInt": "0"
+          },
+          "errors": [
+            {
+              "$numberInt": "40414"
+            }
+          ]
+        }
+      },
+      "delete/required": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "0"
+          },
+          "errors": [
+            {
+              "$numberInt": "40414"
+            }
+          ]
+        }
+      },
+      "findAndModify/required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "createIndexes/required": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        }
+      },
+      "find/unknown": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "aggregate/unknown": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "count/unknown": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "distinct/unknown": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "update/unknown": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "0"
+          },
+          "nModified": {
+            "$numberInt": "0"
+          },
+          "errors": [
+            {
+              "$numberInt": "40415"
+            }
+          ]
+        }
+      },
+      "delete/unknown": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "0"
+          },
+          "errors": [
+            {
+              "$numberInt": "40415"
+            }
+          ]
+        }
+      },
+      "findAndModify/unknown": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "createIndexes/unknown": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40415"
+        }
+      },
+      "find/simple": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "aggregate/simple": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "count/simple": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "1"
+          },
+          "errors": []
+        }
+      },
+      "distinct/simple": {
+        "ok": true,
+        "value": [
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      "update/simple": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "1"
+          },
+          "nModified": {
+            "$numberInt": "1"
+          },
+          "errors": []
+        }
+      },
+      "delete/simple": {
+        "ok": true,
+        "value": {
+          "n": {
+            "$numberInt": "1"
+          },
+          "errors": []
+        }
+      },
+      "findAndModify/simple": {
+        "ok": true,
+        "value": {
+          "$numberInt": "2"
+        }
+      },
+      "createIndexes/simple": {
+        "ok": true,
+        "value": {
+          "numIndexesAfter": {
+            "$numberInt": "2"
+          },
+          "errors": []
+        }
       }
     },
     "semantic_followup_f06_conflict_hashed_array": {
@@ -4369,14 +6140,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793560542099"
+          "$numberLong": "1793561631900"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "78"
+        "$numberInt": "102"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -4392,7 +6163,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "cdfc5a14dbc8eafc480d238c4c1c70d12ff03db0ead115777cd7cf0179ce989d",
+    "sha256": "f35ca24995ec483b4feb6f3c957e9201d775ee6317aaea133c46e6a4b46ffd1a",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -6808,6 +8579,253 @@
         }
       ],
       "selector": "semantic_followup_f05_default"
+    },
+    {
+      "name": "semantic_followup_f05_persisted",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_persisted"
+    },
+    {
+      "name": "semantic_followup_f05_namespaces",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_namespaces"
+    },
+    {
+      "name": "semantic_followup_f05_partial",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_partial"
+    },
+    {
+      "name": "semantic_followup_f05_case_level",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_case_level"
+    },
+    {
+      "name": "semantic_followup_f05_raw",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_raw"
+    },
+    {
+      "name": "semantic_followup_f05_numeric_levels_1_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_numeric_levels_1_False"
+    },
+    {
+      "name": "semantic_followup_f05_numeric_levels_2_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_numeric_levels_2_True"
+    },
+    {
+      "name": "semantic_followup_f05_numeric_levels_3_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_numeric_levels_3_False"
+    },
+    {
+      "name": "semantic_followup_f05_consumers_1_False_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_consumers_1_False_False"
+    },
+    {
+      "name": "semantic_followup_f05_consumers_2_False_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_consumers_2_False_False"
+    },
+    {
+      "name": "semantic_followup_f05_consumers_3_False_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_consumers_3_False_False"
+    },
+    {
+      "name": "semantic_followup_f05_consumers_1_True_False",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_consumers_1_True_False"
+    },
+    {
+      "name": "semantic_followup_f05_consumers_2_False_True",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f05_consumers_2_False_True"
     },
     {
       "name": "semantic_followup_f05_invalid_0",

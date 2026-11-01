@@ -2932,7 +2932,7 @@ Pruebas focales por bloque; suites globales reservadas a F11.
 | F02 | Cerrado | 192 diferenciales + 3 metadatos; 19 regresiones focales/3 subtests y lint. |
 | F03 | Cerrado | 315 diferenciales/metadatos; 36 planes forzados y regresiones de consumidores. |
 | F04 | Cerrado | 1.179 diferenciales/metadatos, 44 controles focales y ratchet. |
-| F05 | Pendiente | Collation efectiva y subset validado. |
+| F05 | Cerrado | 492 diferenciales/contexto/metadatos, 54 spill y fronteras focales. |
 | F06 | Pendiente | Integridad/validación de catálogo e índices. |
 | F07 | Pendiente | Escrituras, identidad, campos, contadores y efectos. |
 | F08 | Pendiente | Sort/natural y acumuladores del inventario. |
@@ -3010,3 +3010,42 @@ compartidos registra 727 pases/101 subtests y un fallo de una prueba que usaba
 la semántica incorrecta tags.0 para probar conversión; se cambia a arrayElemAt
 y sus 61 controles pasan. No se repite esa tanda completa: el resto sigue siendo
 admisible y F11 exigirá integración fresca. Ratchet focal verde; logs f03.
+
+F05: OperationContext distingue collation pendiente de simple ya resuelta. La
+resolución asíncrona consulta el namespace una vez por operación y conserva
+identidad, reloj y bindings; explícita/default/simple se propagan a find, count,
+distinct raw/API, aggregate/group/lookup, selección de writes e insert validado.
+Los subpipelines conservan el contexto padre; no heredan accidentalmente el
+default extranjero. La opción original del cursor permanece separada del valor
+efectivo para clone/rewind tras recrear el namespace. No se añade caché ni SPI.
+Los índices nuevos heredan el default sin reescribir metadata histórica, y las
+opciones explícitas conservan su spelling previo.
+
+Locale es requerido en documentos no vacíos y las opciones desconocidas se
+rechazan con 40414/40415; caseFirst queda explícitamente fuera del subset. Los
+parsers raw mantienen la distinción nativa por consumidor: null es inválido en
+find/createIndexes y admisible en los otros seis comandos caracterizados; una
+collation vacía hereda en consultas/agregaciones pero se rechaza en índices.
+Los errores de tipo de raw son OperationFailure 14, sin delegarlos a validación
+Python. No se altera la gramática de batch writes que ya era correcta.
+
+Las sondas obligatorias de caseLevel/numericOrdering reproducen dos defectos
+compartidos del backend PyUCA: usar todo el terciario como caso y comparar los
+niveles de un prefijo antes del resto de primarias. Las claves se construyen
+por niveles completos, con caso independiente de acentos/variantes y dígitos
+decimales. Comparación y agrupación comparten esas claves; el codec de
+diagnósticos ICU sigue separado de la autoridad de almacenamiento.
+
+Se añaden trece testigos: strengths 1/2/3, caseLevel, numericOrdering, override,
+validadores, parcial unique, frío/caliente, recreación/rename y 56 observaciones
+raw. Las 184 observaciones previas permanecen idénticas en 7/8/9. El observador
+de validator reutiliza public_error para reconocer la familia WriteError sin
+eliminar la subclase local aceptada por O3. Pasan 492 controles diferenciales,
+contexto y metadata; 54 con spool real (caso/numéricos/acumulación); 180 unidades
+(una omisión de backend opcional, 46 subtests), 169 fronteras/61 subtests, 62 de
+índices/8 subtests y 53 de parser/contexto/8 subtests. El último ajuste de
+normalización conserva 103 controles/16 subtests verdes (misma omisión).
+Reapertura, metadata no reescrita, planes hash y residual Search quedan dentro
+del replay focal; no se acredita ANN Atlas. Ratchet verde en 17 archivos Python.
+Se conservan los rojos intermedios corregidos y logs f05. Gates globales/coste
+quedan exclusivamente en F11; X01–X06 no se implementan.

@@ -188,7 +188,7 @@ def _document_selection(
     return identity_filter, compile_filter(identity_filter, dialect=dialect)
 
 
-def _bind_execution_context(
+async def _bind_execution_context(
     operation,
     collection: AsyncCollection,
     *,
@@ -218,7 +218,7 @@ def _bind_execution_context(
         ),
         change_operation_type=change_operation_type,
     )
-    return operation.bind(context)
+    return operation.bind(await collection._resolve_operation_context(context))
 
 
 def _selected_document_id(document: Document) -> DocumentId:
@@ -337,7 +337,7 @@ async def update_one(
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="update"
     )
     upsert_seed = None
@@ -430,7 +430,7 @@ async def update_many(
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="update"
     )
     matched_documents = await collection._build_cursor(
@@ -573,7 +573,7 @@ async def replace_one(
         update_spec={"$set": {}},
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="replace"
     )
     upsert_seed = (
@@ -692,7 +692,7 @@ async def find_one_and_update_outcome(
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="update"
     )
     upsert_seed = None
@@ -802,7 +802,7 @@ async def find_one_and_replace_outcome(
         update_spec={"$set": {}},
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="replace"
     )
 
@@ -902,7 +902,7 @@ async def find_one_and_delete(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="delete"
     )
 
@@ -968,7 +968,7 @@ async def delete_one(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="delete"
     )
     captured = await collection._engine_delete_with_operation(
@@ -1035,7 +1035,7 @@ async def delete_many(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
-    operation = _bind_execution_context(
+    operation = await _bind_execution_context(
         operation, collection, session=session, change_operation_type="delete"
     )
     matched_documents = await collection._build_cursor(

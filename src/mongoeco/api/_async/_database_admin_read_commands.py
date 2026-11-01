@@ -16,7 +16,6 @@ from mongoeco.api.admin_parsing import (
     normalize_list_databases_options,
 )
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.core.server_errors import ErrorScope, server_error
@@ -192,8 +191,13 @@ class DatabaseAdminReadCommandService:
         *,
         session: ClientSession | None = None,
     ) -> DistinctCommandResult:
-        normalized_collation = normalize_collation(operation.collation)
         collection = self._admin._database.get_collection(collection_name)
+        context = operation.context or collection._new_operation_context(
+            session=session, collation=operation.collation, bindings=operation.let
+        )
+        context = await collection._resolve_operation_context(context)
+        operation = operation.with_overrides(context=None).bind(context)
+        normalized_collation = context.collation
         cursor = collection._build_cursor(
             operation, session=session, apply_codec_options=False
         )

@@ -18,9 +18,21 @@ from mongoeco.core.collation import (
     unicode_collation_available,
     values_equal_with_collation,
 )
+from mongoeco.errors import OperationFailure
 
 
 class CollationTests(unittest.TestCase):
+    def test_collation_fields_distinguish_empty_default_required_and_unknown(self):
+        self.assertIsNone(normalize_collation({}))
+        for spec, code in [
+            ({"strength": 2}, 40414), ({"locale": "en", "unknown": True}, 40415)
+        ]:
+            with self.subTest(spec=spec), self.assertRaises(OperationFailure) as error:
+                normalize_collation(spec)
+            self.assertEqual(error.exception.code, code)
+        with self.assertRaisesRegex(ValueError, "caseFirst.*subset"):
+            normalize_collation({"locale": "en", "caseFirst": "upper"})
+
     def tearDown(self):
         collation_module._get_icu_collator.cache_clear()
         collation_module._get_pyuca_collator.cache_clear()
@@ -91,19 +103,19 @@ class CollationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_collation({"locale": "es"})
         with self.assertRaises(ValueError):
-            normalize_collation({"strength": 4})
+            normalize_collation({"locale": "en", "strength": 4})
         with self.assertRaises(TypeError):
-            normalize_collation({"caseLevel": 1})
+            normalize_collation({"locale": "en", "caseLevel": 1})
         with self.assertRaises(TypeError):
-            normalize_collation({"numericOrdering": 1})
+            normalize_collation({"locale": "en", "numericOrdering": 1})
         with self.assertRaises(TypeError):
-            normalize_collation({"backwards": 1})
+            normalize_collation({"locale": "en", "backwards": 1})
         with self.assertRaises(ValueError):
-            normalize_collation({"alternate": "ignored"})
+            normalize_collation({"locale": "en", "alternate": "ignored"})
         with self.assertRaises(ValueError):
-            normalize_collation({"maxVariable": "symbol"})
+            normalize_collation({"locale": "en", "maxVariable": "symbol"})
         with self.assertRaises(TypeError):
-            normalize_collation({"normalization": 1})
+            normalize_collation({"locale": "en", "normalization": 1})
 
     def test_normalize_collation_rejects_icu_only_options_without_icu(self):
         with patch.object(collation_module, "_icu", None):
@@ -445,6 +457,9 @@ class CollationTests(unittest.TestCase):
                 collation_module._get_pyuca_collator()
 
         class _FakePyucaCollator:
+            def collation_elements(self, value):
+                return [[ord(char), 0, 0] for char in value]
+
             def sort_key(self, value):
                 if value == "Az":
                     return (1, 2, 0, 3, 0, 4)
@@ -465,11 +480,11 @@ class CollationTests(unittest.TestCase):
             )
             self.assertEqual(
                 collation_module._pyuca_collation_key("Az", spec),
-                ((1, 2), (3,), (4,)),
+                ((1, 2), (3,), (1, 0), (4,)),
             )
             self.assertEqual(
                 collation_module._pyuca_collation_key("a10b", numeric_spec),
-                ((1, ((97,),)), (0, 10), (1, ((98,),))),
+                (((1, 97), (0, 10), (1, 98)), ()),
             )
 
         self.assertEqual(collation_module._strip_accents("Árbol"), "Arbol")

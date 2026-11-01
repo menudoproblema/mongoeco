@@ -15,7 +15,7 @@ import pytest
 
 from bson import BSON, Decimal128
 
-from mongoeco import AsyncMongoClient, MongoClient
+from mongoeco import AsyncMongoClient, MongoClient, SearchIndexModel
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.compat import resolve_mongodb_dialect
 from mongoeco.core.aggregation.expression_values import MISSING
@@ -35,7 +35,12 @@ from tests.differential._real_parity_base import _decode_capture, _normalize
 from tests.differential.semantic_average_route_cases import GROUP, SEED as AVERAGE_SEED
 from tests.differential.semantic_command_let_cases import VALID as COMMAND_LET_VALID
 from tests.differential.semantic_corpora import SEMANTIC_CORPORA
-from tests.differential.semantic_followup_cases import lookup_paths, path_contexts
+from tests.differential.semantic_followup_cases import (
+    lookup_paths,
+    path_contexts,
+    read_collation_persisted,
+    setup_collation_persisted,
+)
 from tests.differential.semantic_object_grammar_cases import numeric_group_identity
 from tests.differential.semantic_sum_cases import STREAM_PIPELINE, STREAM_SEED
 from tests.support_write_parity import BSONObservation
@@ -706,3 +711,128 @@ def test_followup_paths_preserve_forced_plans(engine_factory, dialect, budget, a
         f"semantic_followup_f03_{action.__name__}"
     ]
     assert _normalize(actual) == _normalize(expected)
+
+
+@pytest.mark.parametrize("dialect", DIALECTS)
+def test_followup_collation_survives_sqlite_reopen(tmp_path, dialect):
+    path = str(tmp_path / "collation.sqlite")
+    expected = _capture(dialect, "followup")["cases"]["semantic_followup_f05_persisted"]
+    with MongoClient(SQLiteEngine(path), mongodb_dialect=dialect) as client:
+        collection = client.followup.rows
+        setup_collation_persisted(collection)
+        assert read_collation_persisted(collection) == expected["cold"]
+        metadata = collection.index_information()
+    for phase in ["cold", "warm"]:
+        with MongoClient(SQLiteEngine(path), mongodb_dialect=dialect) as client:
+            collection = client.followup.rows
+            assert read_collation_persisted(collection) == expected[phase]
+            assert collection.index_information() == metadata
+
+
+@pytest.mark.parametrize("dialect", DIALECTS)
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("route", ["vector", "vector-downstream", "text"])
+def test_followup_search_residual_inherits_collation(engine_factory, dialect, route):
+    expected = _capture(dialect, "followup")["cases"]
+    default_ids = expected["semantic_followup_f05_persisted"]["cold"]["ids"]
+    simple_ids = expected["semantic_followup_f05_default"]["override"]
+    with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+        collection = client.followup.rows
+        setup_collation_persisted(collection)
+        collection.create_search_index(
+            SearchIndexModel(
+                {
+                    "fields": [
+                        {
+                            "type": "vector",
+                            "path": "embedding",
+                            "numDimensions": 2,
+                            "similarity": "cosine",
+                        }
+                    ]
+                },
+                name="vectors",
+                type="vectorSearch",
+            )
+        )
+        collection.create_search_index(
+            SearchIndexModel(
+                {
+                    "mappings": {
+                        "dynamic": False,
+                        "fields": {"title": {"type": "string"}},
+                    }
+                },
+                name="text",
+            )
+        )
+        if route.startswith("vector"):
+            spec = {
+                "index": "vectors",
+                "path": "embedding",
+                "queryVector": [1.0, 0.0],
+                "numCandidates": 100,
+                "limit": 100,
+            }
+            if route == "vector":
+                spec["filter"] = {"a": "a"}
+            pipeline = [{"$vectorSearch": spec}]
+            if route == "vector-downstream":
+                pipeline.append({"$match": {"a": "a"}})
+        else:
+            pipeline = [
+                {
+                    "$search": {
+                        "index": "text",
+                        "text": {"query": "ada", "path": "title"},
+                    }
+                },
+                {"$match": {"a": "a"}},
+            ]
+        pipeline.append({"$sort": {"_id": 1}})
+        for options, ids in [
+            ({}, default_ids),
+            ({"collation": {"locale": "simple"}}, simple_ids),
+        ]:
+            assert [
+                row["_id"] for row in collection.aggregate(pipeline, **options)
+            ] == ids
+            assert [
+                row["_id"]
+                for row in collection.aggregate(
+                    [*pipeline, {"$skip": 1}, {"$limit": 1}], **options
+                )
+            ] == ids[1:2]
+
+
+@pytest.mark.parametrize("dialect", DIALECTS)
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    ["name", "action"],
+    [
+        (name, action)
+        for name, action in SEMANTIC_CORPORA["followup"].cases
+        if "f05_consumers_" in name
+        or "f05_case_level" in name
+        or "f05_numeric_levels" in name
+    ],
+)
+def test_followup_collation_groups_survive_spill(
+    engine_factory, dialect, name, action, monkeypatch
+):
+    opened = []
+    original = AggregationSpillPolicy.open_group_spool
+
+    def record_spool(policy, *args, **kwargs):
+        opened.append(policy.threshold)
+        return original(policy, *args, **kwargs)
+
+    monkeypatch.setattr(AggregationSpillPolicy, "open_group_spool", record_spool)
+    with MongoClient(
+        engine_factory(aggregation_spill_threshold=1), mongodb_dialect=dialect
+    ) as client:
+        actual = action(client.followup.rows)
+    assert opened
+    assert _normalize(actual) == _normalize(
+        _capture(dialect, "followup")["cases"][name]
+    )

@@ -2,7 +2,7 @@ import sys
 import time
 
 from collections import deque
-from collections.abc import AsyncIterable, Mapping
+from collections.abc import AsyncIterable, AsyncIterator, Mapping
 from copy import deepcopy
 from dataclasses import replace
 from typing import TYPE_CHECKING, cast
@@ -629,16 +629,43 @@ class AsyncCursor:
             )
         return [self._materialize_document(document) for document in batch], len(batch)
 
+    async def _resolve_operation_collation(self):
+        resolver = getattr(self._collection, "_resolve_operation_context", None)
+        if not callable(resolver):
+            return
+        operation = self._base_operation()
+        context = cast("OperationContext", operation.context)
+        if context.collation_resolved:
+            return
+        context = await resolver(context)
+        self._operation_context = context
+        self._execution_variables = context.expressions
+        self._operation_cache = replace(operation, context=None).bind(context)
+        self._semantics_cache = None
+
     def _scan(self, *, limit: int | None = None) -> AsyncIterable[Document]:
         self._started = True
         engine = self._collection._engine
         record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
         if callable(record_runtime_opcounter):
             record_runtime_opcounter("query")
+        if callable(getattr(self._collection, "_resolve_operation_context", None)):
+            return self._scan_with_effective_collation(limit=limit)
         return self._open_read_source(
+            skip=self._skip, limit=self._limit if limit is None else limit
+        )
+
+    async def _scan_with_effective_collation(self, *, limit) -> AsyncIterator[Document]:
+        await self._resolve_operation_collation()
+        source = self._open_read_source(
             skip=self._skip,
             limit=self._limit if limit is None else limit,
         )
+        try:
+            async for document in source:
+                yield document
+        finally:
+            await self._close_source(source)
 
     async def _fetch_batch(
         self, offset: int, batch_size: int | None, *, initial=None
@@ -655,6 +682,7 @@ class AsyncCursor:
         await self._close_retired_sources()
         if self._exhausted:
             return []
+        await self._resolve_operation_collation()
         if self._limit is not None:
             remaining = self._limit - offset
             if remaining <= 0:
@@ -1139,6 +1167,7 @@ class AsyncCursor:
             await explained.close()
 
     async def _explain_operation(self) -> dict[str, object]:
+        await self._resolve_operation_collation()
         operation = self._as_operation()
         if operation.planning_issues:
             explanation = QueryPlanExplanation(

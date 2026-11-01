@@ -134,7 +134,13 @@ from mongoeco.engines.results import (
     InsertOutcome,  # noqa: TC001 - runtime outcome annotations
     MutationOutcome,  # noqa: TC001 - runtime outcome annotations
 )
-from mongoeco.errors import BulkWriteError, DuplicateKeyError, WriteError
+from mongoeco.errors import (
+    BulkWriteError,
+    CollectionInvalid,
+    DuplicateKeyError,
+    OperationFailure,
+    WriteError,
+)
 from mongoeco.session import ClientSession  # noqa: TC001
 from mongoeco.types import (
     ArrayFilters,
@@ -357,6 +363,29 @@ class AsyncCollection:
             publication=publication,
             change_operation_type=change_operation_type,
         )
+
+    async def _resolve_operation_context(
+        self, context: OperationContext
+    ) -> OperationContext:
+        """Resolve the namespace default once, before an operation reaches consumers."""
+        if context.collation_resolved:
+            return context
+        if context.collation is not None:
+            return context.derive(collation=context.collation)
+        options = {}
+        load_options = getattr(self._engine, "collection_options", None)
+        if callable(load_options):
+            try:
+                options = await load_options(
+                    self._db_name, self._collection_name, context=context.session
+                )
+            except OperationFailure as error:
+                if error.code != 26:  # noqa: PLR2004 - NamespaceNotFound
+                    raise
+            except (CollectionInvalid, NotImplementedError):
+                # Engines without namespace options only support simple collation.
+                pass
+        return context.derive(collation=options.get("collation"))
 
     def __getattr__(self, name: str) -> AsyncCollection:
         if name.startswith("_"):

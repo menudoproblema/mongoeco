@@ -11,6 +11,7 @@ from mongoeco.api._command_bson import (
 )
 from mongoeco.api.admin_parsing import (
     normalize_command_batch_size,
+    normalize_command_collation,
     normalize_command_document,
     normalize_command_hint,
     normalize_command_max_time_ms,
@@ -154,7 +155,10 @@ class DatabaseAdminCommandCompiler:
             compile_find_operation(
                 filter_spec,
                 projection=projection,
-                collation=spec.get("collation"),
+                collation=normalize_command_collation(
+                    spec, field=f"{request}.collation",
+                    null_allowed=collection_field != "find",
+                ),
                 sort=sort,
                 skip=skip,
                 limit=limit,
@@ -214,7 +218,9 @@ class DatabaseAdminCommandCompiler:
             compile_aggregate_operation(
                 pipeline,
                 collection=collection_name,
-                collation=spec.get("collation"),
+                collation=normalize_command_collation(
+                    spec, field="aggregate.collation"
+                ),
                 hint=self.normalize_hint(spec.get(hint_field)),
                 comment=spec.get(comment_field),
                 max_time_ms=self.normalize_max_time_ms(spec.get(max_time_ms_field)),
