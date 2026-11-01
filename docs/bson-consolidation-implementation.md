@@ -2,8 +2,10 @@
 
 Contrato autorizado por el usuario: implementar el
 [plan refinado](bson-semantics-consolidation-plan.md), revisando cada bloque y
-commiteando semánticamente. Base: `eef9c09`. Estado: implementación en curso.
-No cambia SPI v2 ni declara implementados los pilotos opcionales.
+commiteando semánticamente. Base: `eef9c09`. Estado: alcance O1–O8 y D05 completado.
+No cambia SPI v2 ni declara implementados los pilotos opcionales. La única
+lista vigente es [O1–O8](#obligaciones-de-cierre-vigentes); los estados por corte
+que siguen conservan historia. Véase el [cierre integrado](#cierre-integrado--o8-y-d05).
 
 ## D00 — Activo
 
@@ -2257,7 +2259,7 @@ incumplimiento obligatorio quedan como seguimiento, fuera del cierre.
 | O5 / comprobación obligatoria | D05 exige suite global, cobertura ≥99% y propiedades profundas sobre candidato instalado. | Resultado terminal de los gates; cualquier fallo obligatorio conserva bloqueo de cierre hasta su resolución y verificación causal. | Cerrada; aceptación D05 debajo |
 | O6 / comprobación obligatoria | D05 exige Python 3.13/3.14/3.15, extremos SDK/pytest admitidos y perfil realmente sin SDK. | Matriz de CI y perfiles ejecutados, imports de artefacto comprobados; reutilizar evidencia idéntica admitida y distinguir omisiones de clases SDK. | Cerrada; aceptación D05 debajo |
 | O7 / comprobación obligatoria | D05 exige distribución reproducible, API/typing/SPI, compatibilidad persistida y presupuestos de coste. | Resultados de runners existentes y evidencia previa causalmente válida; todos los gates requeridos verdes, sin sustituir presupuesto por un benchmark diagnóstico. | Cerrada; aceptación D05 debajo |
-| O8 / comprobación obligatoria | Entrega trazable, revisión del candidato, recursos liberados, commits semánticos y árbol limpio. | Receipt integrado ligado a fuentes/artefactos exactos, obligaciones O1–O7 cerradas y comprobación final del árbol. No requiere publicación ni CI remota. | Abierta |
+| O8 / comprobación obligatoria | Entrega trazable, revisión del candidato, recursos liberados, commits semánticos y árbol limpio. | Receipt integrado ligado a fuentes/artefactos exactos, obligaciones O1–O7 cerradas y comprobación final del árbol. No requiere publicación ni CI remota. | Cerrada; receipt integrado debajo |
 
 Hipótesis dispuestas: la reconstrucción de fuente desde pipeline completo queda
 sin defecto reproducido y protegida por O1. Otras sospechas que no incumplan las
@@ -2707,3 +2709,32 @@ Evidencia: prefijos `d05-final`, `d05-post-lint` y `d05-coverage` en el director
 existente. Los logs rojos y selecciones diagnósticas fallidas permanecen
 archivados, separados de los terminales verdes. O8 conserva aceptación integrada,
 artefactos con changelog final y comprobación del árbol tras los commits.
+
+### Cierre integrado — O8 y D05
+
+**8/8 obligaciones cerradas.** El [receipt final](evidence/bson-consolidation-implementation/bson-grammar-context/d05-final-acceptance.json)
+liga runtime `9e6b1886`, pruebas/packaging `ac8d6ee1`, 1.196 entradas de fuentes,
+artefactos reproducibles y evidencias por corte. `0ad43826` registra los fixes
+en el changelog; `ac8d6ee1` conserva las pruebas/aceptaciones O5–O7. El commit
+documental que contiene este receipt completa la entrega; el estado limpio se
+comprueba después del commit, sin crear un hash autorreferente en el receipt.
+
+Los wheel/sdist definitivos se construyen dos veces desde fuente limpia con
+changelog final y coinciden byte a byte. Los 308 archivos del paquete coinciden
+con la instalación probada; los documentos públicos del sdist coinciden con el
+árbol. Los smokes de esos artefactos exactos pasan para wheel, sdist y extra
+pytest. La revisión final no encuentra cambios productivos posteriores al
+runtime aceptado ni rebajas de contratos para alcanzar los gates.
+
+Se libera el mongod propio de los fixtures y el contenedor efímero propio, sin
+montajes del host. La ausencia de sus bases se acredita con los receipts por
+recurso ya aceptados, sin repetir capturas válidas. Se conservan rojos
+intermedios y límites: Search local no acredita Atlas; watch mantiene su subset
+y rechazo wire; warning nativo no concede un API local de logs; clases SDK
+omitidas siguen omitidas; los sobrecostes diagnósticos medidos no se eliminan
+por declaración. El piloto D07 se descarta. Las formas raw de comando
+preexistentes registradas como seguimiento no se incorporan al alcance.
+
+No quedan obligaciones exigidas sin comprobar en O1–O8. No se ejecutan CI
+remota, push, tag ni publicación. Las secciones anteriores conservan la historia
+de cada candidato y no constituyen una segunda lista pendiente.

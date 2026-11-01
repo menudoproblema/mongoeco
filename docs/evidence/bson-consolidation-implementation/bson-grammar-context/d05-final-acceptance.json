@@ -1,0 +1,234 @@
+{
+  "status": "verified",
+  "scope": "Frozen O1-O8 and D05; no publication or remote CI execution",
+  "runtime_revision": "9e6b1886",
+  "test_and_packaging_revision": "ac8d6ee14919a4a614280b3785b03267af6cb182",
+  "obligations": {
+    "O1": "closed",
+    "O2": "closed",
+    "O3": "closed",
+    "O4": "closed",
+    "O5": "closed",
+    "O6": "closed",
+    "O7": "closed",
+    "O8": "closed"
+  },
+  "acceptance_owner": "docs/bson-consolidation-implementation.md#obligaciones-de-cierre-vigentes",
+  "runtime_manifest": {
+    "path": "d05-final-runtime.json",
+    "sha256": "0233d0de97a3c8c1abcee5917b2163b3f4a94514be8d8bdbfa1d0c3dce28f549",
+    "modules": 287
+  },
+  "input_manifest": {
+    "path": "d05-final-inputs.json.gz",
+    "uncompressed_sha256": "b6c7bdb751b6eff75eda1fde9d28da75c4b94670d05e146e10eaed787876753c",
+    "files": 1196,
+    "compressed_sha256": "5369ae6bd9532a775df6b14adb23208dff66a4d011833a70bca32ce55f365b25"
+  },
+  "package_artifacts": {
+    "mongoeco-4.11.0-py3-none-any.whl": {
+      "sha256": "ba229bc95fcdad87ac23d7c03740d9c952dcd40fbd288f39847756f07c7a23bf",
+      "reproducible": true
+    },
+    "mongoeco-4.11.0.tar.gz": {
+      "sha256": "11f5ccea31bfa60b81e38241b2c49595439b352fae964fb09adfd34258afe210",
+      "reproducible": true
+    }
+  },
+  "package_payload_verified_equal_to_tested_installation": 308,
+  "sdist_public_documents_match_worktree": true,
+  "pytest": {
+    "3.14": {
+      "passed": 57666,
+      "subtests_passed": 14811,
+      "skipped": 485
+    },
+    "3.13": {
+      "passed": 57655,
+      "subtests_passed": 14811,
+      "skipped": 496
+    },
+    "3.15": {
+      "passed": 57655,
+      "subtests_passed": 14811,
+      "skipped": 496
+    },
+    "basis": "Global suites on frozen pre-lint installation; post-lint causal runs verify changed codec and added tests. Do not sum overlapping replays."
+  },
+  "coverage": {
+    "covered_lines": 47576,
+    "num_statements": 48056,
+    "percent_covered": 99.00116530714166,
+    "percent_covered_display": "99.00",
+    "missing_lines": 480,
+    "excluded_lines": 1027,
+    "percent_statements_covered": 99.00116530714166,
+    "percent_statements_covered_display": "99.00"
+  },
+  "coverage_reuse": {
+    "receipt": "d05-coverage-reuse.json.gz",
+    "unchanged_files": 286,
+    "changed_codec_traces_discarded_and_remeasured": true,
+    "threshold_unchanged": 99.0,
+    "synthetic_covered_lines": false
+  },
+  "causal_runs": {
+    "3.14": {
+      "passed": 469,
+      "subtests_passed": 347
+    },
+    "3.13": {
+      "passed": 459,
+      "subtests_passed": 347,
+      "skipped": 10
+    },
+    "3.15": {
+      "passed": 459,
+      "subtests_passed": 347,
+      "skipped": 10
+    },
+    "additional_existing_codec_contexts": {
+      "passed": 27,
+      "subtests_passed": 16
+    },
+    "final_codec": {
+      "passed": 39
+    }
+  },
+  "unittest": {
+    "3.13_final": {
+      "tests": 3663,
+      "skipped": 3,
+      "exit_code": 0
+    },
+    "3.14": {
+      "tests": 3654,
+      "skipped": 3,
+      "exit_code": 0
+    },
+    "3.15": {
+      "tests": 3654,
+      "skipped": 3,
+      "exit_code": 0
+    },
+    "note": "Retain prior 3.13 50ms timeout failure; full repeat passed without changing timeout. Added tests have causal Python-matrix checks."
+  },
+  "deep_properties": {
+    "passed": 66,
+    "profile": "deep",
+    "installed_artifact": true
+  },
+  "kit_matrix": {
+    "cells": [
+      "kit-3.13-8.4.2-4.9.2 0",
+      "kit-3.13-9.1.1-4.19.0 0",
+      "kit-3.13-8.4.2-4.19.0 0",
+      "kit-3.13-9.1.1-4.9.2 0",
+      "kit-3.14-8.4.2-4.9.2 0",
+      "kit-3.14-8.4.2-4.19.0 0",
+      "kit-3.14-9.1.1-4.19.0 0",
+      "kit-3.14-9.1.1-4.9.2 0",
+      "kit-3.15-8.4.2-4.19.0 0",
+      "kit-3.15-8.4.2-4.9.2 0",
+      "kit-3.15-9.1.1-4.19.0 0",
+      "kit-3.15-9.1.1-4.9.2 0"
+    ],
+    "all_exit_codes": 0
+  },
+  "sdk_free": {
+    "materialized_observations": 288,
+    "write_factory_observations": 3564,
+    "dto_observations": 570,
+    "raw_bson_document_omissions": 468,
+    "code_and_int64_limits": "See retained portable logs; no fake SDK specimens",
+    "actual_absence_verified": true
+  },
+  "source_independent_reuse": {
+    "receipt": "docs/evidence/predicate-authorities/review-20261031/validation.json",
+    "inputs_sha256": {
+      "scripts/run_pymongo_profile_matrix.py": "4b568416c086fc8b024613f4bd014230be8e90ba96e785371e959bba3cc93122",
+      "scripts/smoke_pypi_contract.py": "e10fd90608397e3178bb3f41592df41033b57b47ec8b7db7aeab429f7b64ea9f",
+      "tests/fixtures/pymongo_profile_matrix.json": "ae83143edfd7498d7408bd372ff9c8b98cd0478bf57fbab22346802a26ef8520"
+    }
+  },
+  "contracts": {
+    "public_api": "current",
+    "public_typing": "positive=1, negative-errors=20",
+    "engine_boundary_typing": "positive=1, negative-errors=25",
+    "strict_mypy_modules": 9,
+    "boundary_mypy_modules": 2,
+    "external_spi_v2_canary": "5 passed; 5 not-applicable; no failures",
+    "lint_ratchet": "404 changed Python files; baseline is last release tag",
+    "prior_sqlite_files": "Accepted reopen tests pass; legacy fixture bytes unchanged",
+    "delivery_smokes": "wheel, sdist, pytest-extra all exit 0"
+  },
+  "performance": {
+    "measurements": "d05-final-cost-summary.json.gz",
+    "exact_report_outcomes_compared": 20,
+    "bson_and_write_checksum_probes": "all identical per existing probes",
+    "deterministic_budget_gates": "pass in global suite",
+    "cpu_or_wall_ceiling": "No new numeric ceiling adopted; measurements are diagnostic, not an absence-of-overhead claim",
+    "observed_limits": {
+      "memory_unit_demand_max_cpu_ratio": 1.28,
+      "binary_residual_limit2_cpu_ratio": 1.52
+    },
+    "execution_conditions": "Own verification gates idle; reused controllers retain historical diagnostic scope wording; external machine activity not controlled"
+  },
+  "native_reuse": {
+    "versions": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "oracles": "Per-block frozen native captures, buildInfo/FCV and cleanup receipts linked by acceptance owner; no required native skips credited as executions",
+    "new_capture_receipts": [
+      "materialized-acceptance.json",
+      "response-transform-acceptance.json",
+      "d05-text-sort-acceptance.json",
+      "d05-index-information-acceptance.json"
+    ]
+  },
+  "protected_artifacts": {
+    "total": 427,
+    "unchanged": 424,
+    "previously_accepted_generated_metadata_exceptions": {
+      "tests/fixtures/clock_call_allowlist.json": "5bf4c631cee60b00e63071ff9d9915a8b54a4028fed9d2d1d3778f5556d45dad",
+      "tests/fixtures/legacy_error_emitters.json": "6b75b83ada32dc68d54e94244ff1db9e945e1603e2c784ad86f835680fe12c74",
+      "tests/fixtures/public_api_manifest_exchange_source.json": "4f5c671fd377c96ec7e538a3e80c0ae9adb9b17ffa934a324c96627126ae8b6e"
+    }
+  },
+  "review": {
+    "runtime_since_9e6b1886": "none",
+    "causal_runtime_commits": [
+      "8cede116",
+      "073dc33e",
+      "c4917a3f",
+      "571fa575",
+      "830bb60e",
+      "66d9bda7",
+      "9e6b1886"
+    ],
+    "test_diff": "Reviewed malformed-SPI, portable admission, response failures, ownership and provider capability probes; no weakened assertions, xfails, exclusions or threshold reductions",
+    "packaging": "Both distributions reproducible, 308 payload files identical to tested installation, public sdist documents current",
+    "git": "Semantic commits; final documentation commit contains this receipt; clean status checked after that commit, avoiding a self-referential commit hash"
+  },
+  "cleanup": {
+    "owned_mongod_67630_absent": true,
+    "owned_container": "mongoeco-write-effects-8 stopped and auto-removed; no host mounts",
+    "native_database_absence": "Reuse per-resource accepted receipts; no native writes after those receipts"
+  },
+  "limits": [
+    "No remote CI, push, tag or publication performed.",
+    "Local Search results are not Atlas positive-parity evidence.",
+    "Local watch subset, unsupported wire changeStream, native warning logging and portable SDK classes retain their documented limits.",
+    "D07 optional pilot discarded. Pre-existing raw command-shape differences are follow-up, not candidate regressions.",
+    "Benchmark overhead is measured and retained; no universal latency or distributed-semantics guarantee."
+  ],
+  "delivery_log_sha256": {
+    "d05-delivery-build-a.txt.gz": "8285e574ee7442f31622673ea1f8b4b9f0eac79a8065d3caca2dcdaf628ca4a8",
+    "d05-delivery-build-b.txt.gz": "e2ce44593504307cd5ad940749b53df9e11aec97c3f6fb67cd278f3a04d04451",
+    "d05-delivery-smoke-pytest.txt.gz": "660e44a6b3e72baebdf74f8b984588a450ab91d260d8a59d84ab65d821a7868f",
+    "d05-delivery-smoke-sdist.txt.gz": "5a3816d59f07dfb39efc6ec556028481b685c46e4c06afd65d7450db1968965a",
+    "d05-delivery-smoke-wheel.txt.gz": "ec8755d629950319f5fc71caf9178673f15e4a98f47f572b2e303ae1f0648f91"
+  }
+}

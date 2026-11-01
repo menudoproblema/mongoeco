@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre; fábricas de respuesta aceptadas en `a8a81f0e`):**
+**Entrada vigente (1 de noviembre; alcance O1–O8 y D05 cerrado):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -8,7 +8,7 @@ La [relectura de la autocrítica](evidence/bson-consolidation-review/current-aut
 conserva el contraste previo; el [corte posterior de batching](evidence/bson-consolidation-implementation/command-batches/README.md)
 tiene aceptación propia. `05b3f655` acepta después [DTOs/sobres y diagnóstico de escritura](evidence/bson-consolidation-implementation/write-responses/README.md);
 `a8a81f0e` acredita [constructores/setters, errores y eventos confirmados](evidence/bson-consolidation-implementation/write-factory-failures/README.md).
-B07 conserva su aceptación integrada, unidad 6, en D05.
+B07, unidad 6, queda aceptado con D05 en el [cierre integrado](bson-consolidation-implementation.md#cierre-integrado--o8-y-d05).
 Las revisiones numeradas anteriores conservan historia, no otro backlog activo.
 
 Fecha: 31 de octubre de 2026. Base de runtime inspeccionada:
@@ -1331,7 +1331,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 | Control previo cerrado — B07, admisión | `2723fb28` acepta las [cinco entradas Search](evidence/bson-consolidation-implementation/bson-input-search/README.md), opciones propias y creación preparada compartida. Completa las 17 disposiciones del censo administrativo histórico tras comandos, catálogo, índices, lectores y namespace, con sus aceptaciones en el registro. Lecturas, inserciones, mutaciones y bulk conservan sus cortes propios. No implica positivos Atlas ni una API universal ya censada. | Conservar originales, codificar una vez, errores cliente/precedencia y efectos. El wire ya decodificado no vuelve a codificarse; unidad 5 conserva positivos y batching. |
 | Control previo cerrado — B07, UUID | `d5bdadb8` acepta [default UNSPECIFIED, dueños y lectura independiente](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md), sobre la admisión ya entregada. `b29e9bf1` corrige ausencia en distinct, compartida por API/comando. | Mantener STANDARD/legacy explícitos, bytes/subtipos y lectura/reapertura de archivos previos. No cambiar otra vez el default ni reextraer el codec; no implica cierre D06 ni positivos completos. |
 | Control funcional cerrado — B07, unidad 5 | `8e261c7a` acepta proyecciones, `dbe8257f` batching, `05b3f655` DTOs/sobres y `a8a81f0e` [constructores/setters y efectos confirmados](evidence/bson-consolidation-implementation/write-factory-failures/README.md). API y comando reutilizan el DTO atómico; se retiran las dos copias/capas privadas posteriores al codec. | 10.825 replay y 2.457/4.709 subtests sin fallos; 12.068 de identidad; standalone para callbacks y RS para eventos. Subset portable real y costes acotados en el receipt. La unidad 6 conserva integración D05; no reabrir fixes ni acreditar otras transformaciones de respuesta por asociación. |
-| Cierre vigente — O1–O8 | La [lista única de obligaciones](bson-consolidation-implementation.md#obligaciones-de-cierre-vigentes) sustituye la secuencia pendiente de esta tabla. O1 acepta el pipeline materializado sin divergencia productiva. | Ejecutar D06 restante, disposición H53/D07 y gates D05 según esa lista; reutilizar evidencia aceptada. No abrir auditorías generales ni refactorizaciones opcionales. |
+| Cierre vigente — O1–O8 | La [lista única de obligaciones](bson-consolidation-implementation.md#obligaciones-de-cierre-vigentes) sustituye la secuencia pendiente de esta tabla; O1–O8 están cerradas. | D06, disposición H53, descarte D07 e integración D05 aceptados en el [receipt final](evidence/bson-consolidation-implementation/bson-grammar-context/d05-final-acceptance.json). Se mantienen los límites y seguimientos expresos; no queda otro backlog activo en las revisiones históricas. |
 
 **Relectura de la autocrítica sobre el árbol actual.** El adjunto conserva el
 SHA-256 ya identificado desde revisión 3. El [contraste reproducible actual](evidence/bson-consolidation-review/review21/README.md)
