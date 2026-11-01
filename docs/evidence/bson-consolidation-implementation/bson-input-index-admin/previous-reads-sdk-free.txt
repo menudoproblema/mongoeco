@@ -1,0 +1,1 @@
+{"python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]", "sdk_available": false, "checks": 748, "site": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-pozwuyjo/site-packages", "note": "explicit UNSPECIFIED subset; global default remains STANDARD until write admission cut"}

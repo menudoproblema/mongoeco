@@ -1,0 +1,21 @@
+import hashlib,json,re,subprocess
+from pathlib import Path
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-index-admin')
+receipt=json.loads((root/'receipt.json').read_text());code=receipt['code_commit']
+subprocess.run(['git','merge-base','--is-ancestor',code,'HEAD'],check=True)
+assert not subprocess.check_output(['git','status','--porcelain','--','src','tests'],text=True).strip()
+for filename in ('changed-sources.json','runtime-sources.json','protected.json'):
+ for path,expected in json.loads((root/filename).read_text()).items():
+  assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==expected,(filename,path)
+for item in receipt['native'].values():
+ assert hashlib.sha256(Path(item['fixture']).read_bytes()).hexdigest()==item['sha256']
+for file in (Path('docs/bson-semantics-consolidation-plan.md'),Path('docs/bson-consolidation-implementation.md'),root/'README.md'):
+ text=file.read_text();assert code[:7] in text,file
+ for match in re.finditer(r'\]\(([^)]+)\)',text):
+  target=match.group(1).split('#')[0]
+  if not target or '://' in target:continue
+  assert (file.parent/target).exists(),(file,target)
+for path,expected in json.loads((root/'artifacts.json').read_text()).items():
+ assert hashlib.sha256((root/path).read_bytes()).hexdigest()==expected,path
+subprocess.run(['git','diff','--check'],check=True)
+print('verified: code ancestor, source/runtime/native/protected/artifact hashes, owners and local links; B07/D05 remain open')

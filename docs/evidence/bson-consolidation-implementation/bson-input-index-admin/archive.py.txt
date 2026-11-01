@@ -1,0 +1,73 @@
+import gzip,hashlib,json,re,shutil,subprocess
+from pathlib import Path
+repo=Path.cwd();out=repo/'docs/evidence/bson-consolidation-implementation/bson-input-index-admin';out.mkdir(exist_ok=True)
+root=Path(Path('/tmp/mongoeco-dispatch-wheel-location.txt').read_text().strip());wheel=json.loads((root/'wheel.json').read_text())
+
+def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def nodes(raw):return set(re.findall(r'^FAILED (\S+)',raw,re.M))
+replay=Path('/tmp/mongoeco-index-admin-replay.txt').read_text()
+previous=gzip.decompress(Path('docs/evidence/bson-consolidation-implementation/bson-input-catalog/replay.txt.gz').read_bytes()).decode()
+assert nodes(replay)==nodes(previous) and len(nodes(replay))==72,(len(nodes(replay)),nodes(replay)-nodes(previous))
+assert re.search(r'72 failed, 9759 passed',replay),replay[-1000:]
+unit=Path('/tmp/mongoeco-index-admin-unit-final.txt').read_text()
+assert len(nodes(unit))==2 and nodes(unit)=={
+ 'tests/unit/test_database_command_option_conservation.py::test_batch_size_limits_wire_first_batch[find]',
+ 'tests/unit/test_database_command_option_conservation.py::test_find_batch_size_prefetches_locally_without_truncating_api_result'},nodes(unit)
+assert 'subtests passed' in unit
+baseline=Path('/tmp/mongoeco-index-admin-baseline-final.txt').read_text();assert '84 failed, 15 passed' in baseline
+protected=json.loads(Path('/tmp/mongoeco-index-admin-protected.json').read_text())
+for path,digest in protected.items():assert sha(path)==digest,path
+runtime=json.loads((root/'runtime.json').read_text());site=Path(wheel['site_packages'])
+for path,digest in runtime.items():assert sha(path)==digest and sha(site/Path(path).relative_to('src'))==digest,path
+native={}
+for target in ('7.0','8.0','9.0'):
+ path=Path(f'tests/fixtures/semantic_bson_index_admin_{target.replace(".","_")}.json')
+ data=json.loads(path.read_text());assert sum(map(len,data['cases'].values()))==127
+ check=Path('/tmp/mongoeco-index-admin-native-response',target,'bson_index_admin-check.json')
+ assert path.read_bytes()==check.read_bytes()
+ native[target]={'fixture':str(path),'sha256':sha(path),'observations':127,'runtime':data['runtime']}
+for label in ('baseline-final','baseline-before-response-fix','feedback','unit-feedback','unit-feedback2','unit-feedback3','unit','unit-sandbox-feedback','unit-before-response-fix','unit-before-stub-fix','unit-final','replay-before-response-fix','response-feedback','replay','cost','api','sdk-free'):
+ path=Path('/tmp/mongoeco-index-admin-'+label+'.txt')
+ if path.exists():(out/(label+'.txt.gz')).write_bytes(gzip.compress(path.read_bytes(),mtime=0))
+for path in sorted(Path('/tmp').glob('mongoeco-index-admin-previous-*-sdk-free.txt')):shutil.copy2(path,out/path.name.removeprefix('mongoeco-index-admin-'))
+for label in ('baseline','api','unit','replay','sdk-free','sdk-free-prepare','cost','resources','native','native-final','native-frozen','native-response','archive'):
+ path=Path('/tmp/mongoeco-index-admin-'+label+'.py')
+ if path.exists():shutil.copy2(path,out/(label+'.py.txt'))
+for label in ('resources','protected','cost','sdk-free-expected'):
+ shutil.copy2('/tmp/mongoeco-index-admin-'+label+'.json',out/(label+'.json'))
+for label in ('api-baseline','api-candidate'):
+ (out/(label+'.json.gz')).write_bytes(gzip.compress(Path('/tmp/mongoeco-index-admin-'+label+'.json').read_bytes(),mtime=0))
+for label in ('native','native-final','native-frozen','native-response'):
+ for target in ('7.0','8.0','9.0'):
+  original=Path('/tmp/mongoeco-index-admin-'+label);dest=out/label/target;dest.mkdir(parents=True,exist_ok=True)
+  for filename in ('fixture.json','bson_index_admin-check.json'):
+   p=original/target/filename
+   if p.exists():shutil.copy2(p,dest/filename)
+  (dest/'capture.txt.gz').write_bytes(gzip.compress((original/(target+'.log')).read_bytes(),mtime=0))
+  (dest/'mongod.txt.gz').write_bytes(gzip.compress((original/target/'mongod.log').read_bytes(),mtime=0))
+for path in root.glob('wheel-imports-index-admin-*.json'):shutil.copy2(path,out/path.name)
+shutil.copy2(root/'wheel.json',out/'wheel.json');shutil.copy2(root/'runtime.json',out/'runtime-sources.json')
+base=Path(Path('/tmp/mongoeco-index-admin-baseline-location.txt').read_text().strip())
+shutil.copy2(base/'runtime.json',out/'baseline-runtime-sources.json')
+for path in base.glob('wheel-imports-*.json'):shutil.copy2(path,out/('baseline-'+path.name))
+
+shutil.copy2('/tmp/mongoeco-bson-input-typing.txt',out/'typing.txt')
+shutil.copy2('/tmp/mongoeco-index-admin-lint.txt',out/'lint.txt')
+shutil.copy2('/tmp/mongoeco-index-admin-wheel-build.txt',out/'wheel-build.txt')
+shutil.copy2('/tmp/mongoeco-dispatch-build.py',out/'build.py.txt')
+shutil.copy2('/tmp/mongoeco_dispatch_artifact_guard.py',out/'artifact-guard.py.txt')
+changed={path:sha(path) for path in subprocess.check_output(['git','diff','--name-only','bab8758','--','src','tests'],text=True).splitlines()}
+for path in subprocess.check_output(['git','ls-files','--others','--exclude-standard','src','tests'],text=True).splitlines():changed[path]=sha(path)
+(out/'changed-sources.json').write_text(json.dumps(changed,indent=2)+'\n')
+receipt={'base_commit':'bab8758','scope':'B07 index administration admission and codec ownership; not complete B07/UUID/positive replies/D05',
+ 'admitted_entrypoints':['list_indexes','index_information','drop_index','drop_indexes'],
+ 'remaining_administrative_census_entries':13,
+ 'native':native,'wheel':wheel,'baseline':{'failed':84,'passed':15},'new_corpus':{'passed':99},
+ 'unit_summary':unit.splitlines()[-1],'replay_summary':replay.splitlines()[-1],
+ 'protected_artifacts':len(protected),'resources_confirmed_absent':len(json.loads((out/'resources.json').read_text())),
+ 'sdk_free':json.loads(Path('/tmp/mongoeco-index-admin-sdk-free.txt').read_text()),
+ 'pending_replay_nodes':sorted(nodes(replay)),'pending_unit_nodes':sorted(nodes(unit)),
+ 'api_manifest_unchanged':json.loads(gzip.decompress((out/'api-baseline.json.gz').read_bytes()))==json.loads(gzip.decompress((out/'api-candidate.json.gz').read_bytes())),
+ 'cost_diagnostic':json.loads((out/'cost.json').read_text())['ratios']}
+(out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print(receipt['unit_summary']);print(receipt['replay_summary']);print(out)

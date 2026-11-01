@@ -1,0 +1,62 @@
+import hashlib,json,subprocess
+from pathlib import Path
+code=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+assert subprocess.check_output(['git','show','-s','--format=%s',code],text=True).strip()=='fix(api): admit index administration frames before execution'
+short=code[:7]
+root=Path('docs/evidence/bson-consolidation-implementation/bson-input-index-admin')
+receipt=json.loads((root/'receipt.json').read_text());receipt['code_commit']=code
+(root/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+readme=Path('/tmp/mongoeco-index-admin-README.md').read_text()
+readme=readme.replace('Base `bab8758`.',f'Base `bab8758`; código `{short}`.')
+readme+=f'''\nResultado instalado final: {receipt['replay_summary']}; cohorte:
+{receipt['unit_summary']}. API: 18 pruebas/13 subtests; typing: dos positivos y
+20/25 negativos; lint sin infracciones nuevas en 13 archivos Python. Los 99
+checks del corpus nuevo pasan dentro del replay; no se sustituyen los fallos
+obligatorios por xfail ni se declara un gate global verde.\n'''
+(root/'README.md').write_text(readme)
+p=Path('docs/bson-semantics-consolidation-plan.md');s=p.read_text()
+s=s.replace('comandos `3bfe5fb` y catálogo `7524e39` aceptados en sus cortes','comandos `3bfe5fb`, catálogo `7524e39` y administración de índices `'+short+'` aceptados en sus cortes',1)
+old='''`7524e39` acepta los frames de create_collection/create_index/create_indexes y su ejecución preparada; `3bfe5fb` conserva comandos. Antes del default, disponer el [censo de 17 entrypoints](evidence/bson-consolidation-implementation/bson-input-catalog/frontier-census.json): listados/información/retirada de índices, namespace/validación y métodos Search, incluyendo delegaciones. Cada entrada necesita reuse acreditado o admisión/fase/owner verificados; no son 17 bugs ni obligación de implementar Atlas.'''
+new=f'''`{short}` acepta admisión/dueños de codecs en list_indexes/index_information/drop_index/drop_indexes y su [respuesta de retirada](evidence/bson-consolidation-implementation/bson-input-index-admin/README.md). `7524e39` conserva creación de catálogo y `3bfe5fb`, comandos. Antes del default, disponer las 13 entradas restantes del [censo histórico de 17](evidence/bson-consolidation-implementation/bson-input-catalog/frontier-census.json): namespace/validación y métodos Search, incluyendo tres delegaciones. No son 13 bugs ni obligación de implementar Atlas; las respuestas positivas completas y batching conservan unidad 5.'''
+assert old in s;s=s.replace(old,new,1)
+old='''**Siguiente corte.** Completar la admisión cliente de comandos e índices/validators
+con las opciones de su dueño, reutilizando encoder, parsing y ejecutores.'''
+new='''**Siguiente corte.** Disponer las 13 entradas administrativas restantes del
+censo: namespace/validación y Search, con sus delegaciones y opciones propias.
+Comandos, creación de catálogo y las cuatro admisiones de índices conservan
+aceptación acotada; no se reimplementan por repetir el censo. Reutilizar encoder,
+parsing y ejecutores.'''
+assert old in s;s=s.replace(old,new,1)
+s=s.replace('''e integra comandos en `3bfe5fb` y creación de catálogo en `7524e39`; conserva la disposición del censo de fronteras administrativas/índices antes del default, y 4 coordina las opciones''',f'''e integra comandos en `3bfe5fb`, creación de catálogo en `7524e39` y las cuatro
+admisiones de índices en `{short}`; conserva las 13 disposiciones administrativas
+restantes antes del default, y 4 coordina las opciones''',1)
+p.write_text(s)
+p=Path('docs/bson-consolidation-implementation.md');s=p.read_text();old='''El censo de entradas administrativas/índices requiere disposición antes del default UUID coordinado; continúan positivos y otros contextos D06/B08.''';new=f'''`{short}` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; quedan 13 entradas administrativas del censo sin disposición antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08.''';assert old in s;s=s.replace(old,new,1)
+marker='## B07 — administración de índices, admisión y codecs'
+assert marker not in s
+s+=f'''\n\n{marker}
+
+✅ Cerrado el corte acotado en `{short}`;
+[evidencia](evidence/bson-consolidation-implementation/bson-input-index-admin/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-index-admin/receipt.json).
+Listados e información usan las opciones propias del SDK (SON/UNSPECIFIED),
+no las de la colección. Las retiradas admiten con las opciones de colección;
+una fábrica fallida después del commit no revierte el borrado. La ejecución
+preparada comparte lectura/retirada y el DTO con comandos wire, sin repetir
+codificación ni codecs públicos. El testigo de asignaciones descubre y corrige
+el sobre parcial, orden y msg de la respuesta descartada de retirada.
+
+Cuatro acciones/127 observaciones por versión nativa; base 84 fallos/15 correctos,
+candidato 99 checks nuevos correctos. Replay instalado: 9759 correctos y los
+mismos 72 fallos previos. Cohorte: 2165 correctos/4688 subtests y los mismos dos
+fallos antiguos de batching; 16 controles de frontera. SDK-free: 738 observaciones
+nuevas y las seis familias BSON anteriores. API idéntica, typing y lint pasan;
+287 históricos intactos y 36 recursos temporales ausentes. Costes diagnósticos
+ABBA×2 registrados, sin aceptar presupuesto D05.
+
+→ Sigue: 13 entradas administrativas del censo (incluidas tres delegaciones),
+UUID coordinado y unidad 5 de positivos/respuestas. Esta admisión no cierra toda
+la semántica de los listados, errores servidor o tandas. STANDARD global, otros
+contextos D06, H53, decisión D07 y cierre D05 mantienen sus obligaciones.
+'''
+p.write_text(s)

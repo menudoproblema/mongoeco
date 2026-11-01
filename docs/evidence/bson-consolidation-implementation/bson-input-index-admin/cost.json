@@ -1,0 +1,527 @@
+{
+  "method": "diagnostic ABBA x 2; 100 fresh collections + 10 warmups; concurrent replay/unit gates; not D05 budget acceptance",
+  "ratios": {
+    "memory/list": 2.842421300259445,
+    "memory/information": 1.4074293269368525,
+    "memory/drop": 1.8288897725254778,
+    "memory/drop-all": 1.9195146296339671,
+    "sqlite/list": 1.276518803760407,
+    "sqlite/information": 1.259599536463721,
+    "sqlite/drop": 1.5082793248930868,
+    "sqlite/drop-all": 1.5404183817573887
+  },
+  "observations": [
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 8539172,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 12011964,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 38011626,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 8327330,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 7992499,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 11715870,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 30233127,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 7498126,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 7560495,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 11736171,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 10262541,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 7934377,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 7732958,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 10987213,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 9993624,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "information",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 7309795,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 5407706,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 10564371,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 11038376,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 6968000,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 5637210,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 10589170,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 11208036,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 5717302,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 5654622,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 11740988,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 10547465,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 6252955,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 6352626,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 10822580,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 11717709,
+      "operations": 100
+    },
+    {
+      "backend": "memory",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 5094004,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 14440959,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 18435539,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 18080117,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 15156416,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 15502672,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 19021010,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 18433667,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "list",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 12846873,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 14335841,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 18083582,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 17578746,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 15848287,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 14728253,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 17736797,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 19082913,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "information",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 12631335,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 28511754,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 40368915,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 42689797,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 27271164,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 26899082,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 42241830,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 44049498,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 29598290,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 27609208,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 40917547,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "candidate",
+      "ns": 41081168,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 0,
+      "variant": "baseline",
+      "ns": 27040959,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 26071127,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 42396831,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "candidate",
+      "ns": 42671879,
+      "operations": 100
+    },
+    {
+      "backend": "sqlite",
+      "route": "drop-all",
+      "round": 1,
+      "variant": "baseline",
+      "ns": 27734582,
+      "operations": 100
+    }
+  ]
+}

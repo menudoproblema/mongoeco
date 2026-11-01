@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. El censo de entradas administrativas/índices requiere disposición antes del default UUID coordinado; continúan positivos y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El replay conserva 72 fallos previos obligatorios y dos tests antiguos de batching siguen rojos. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; quedan 13 entradas administrativas del censo sin disposición antes del default UUID coordinado. Continúan positivos/batching y otros contextos D06/B08. STANDARD global permanece y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -1923,3 +1923,29 @@ intactos y 63 recursos propios ausentes. Coste create 1.95/1.99
 coordinar UUID global; no se declara B07 cerrado por estos tres wrappers.
 Positivos/batching, demás contextos D06, H53, decisión D07 y D05 conservan sus
 owners. El censo no obliga a implementar Atlas ni funciones fuera del subset.
+
+
+## B07 — administración de índices, admisión y codecs
+
+✅ Cerrado el corte acotado en `c715ae7`;
+[evidencia](evidence/bson-consolidation-implementation/bson-input-index-admin/README.md)
+y [receipt](evidence/bson-consolidation-implementation/bson-input-index-admin/receipt.json).
+Listados e información usan las opciones propias del SDK (SON/UNSPECIFIED),
+no las de la colección. Las retiradas admiten con las opciones de colección;
+una fábrica fallida después del commit no revierte el borrado. La ejecución
+preparada comparte lectura/retirada y el DTO con comandos wire, sin repetir
+codificación ni codecs públicos. El testigo de asignaciones descubre y corrige
+el sobre parcial, orden y msg de la respuesta descartada de retirada.
+
+Cuatro acciones/127 observaciones por versión nativa; base 84 fallos/15 correctos,
+candidato 99 checks nuevos correctos. Replay instalado: 9759 correctos y los
+mismos 72 fallos previos. Cohorte: 2165 correctos/4688 subtests y los mismos dos
+fallos antiguos de batching; 16 controles de frontera. SDK-free: 738 observaciones
+nuevas y las seis familias BSON anteriores. API idéntica, typing y lint pasan;
+287 históricos intactos y 36 recursos temporales ausentes. Costes diagnósticos
+ABBA×2 registrados, sin aceptar presupuesto D05.
+
+→ Sigue: 13 entradas administrativas del censo (incluidas tres delegaciones),
+UUID coordinado y unidad 5 de positivos/respuestas. Esta admisión no cierra toda
+la semántica de los listados, errores servidor o tandas. STANDARD global, otros
+contextos D06, H53, decisión D07 y cierre D05 mantienen sus obligaciones.
