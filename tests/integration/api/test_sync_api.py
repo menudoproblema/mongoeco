@@ -3788,9 +3788,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 for new_valid in (False, True):
                                     for bypass in (False, True):
                                         with self.subTest(
-                                            engine=engine_name, dialect=dialect,
-                                            level=level, action=action,
-                                            old_valid=old_valid, new_valid=new_valid,
+                                            engine=engine_name,
+                                            dialect=dialect,
+                                            level=level,
+                                            action=action,
+                                            old_valid=old_valid,
+                                            new_valid=new_valid,
                                             bypass=bypass,
                                         ):
                                             collection.delete_many({})
@@ -3801,25 +3804,39 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                 bypass_document_validation=True,
                                             )
                                             permitted = (
-                                                bypass or level == "off"
-                                                or action == "warn" or new_valid
-                                                or (level == "moderate" and not old_valid)
+                                                bypass
+                                                or level == "off"
+                                                or action == "warn"
+                                                or new_valid
+                                                or (
+                                                    level == "moderate"
+                                                    and not old_valid
+                                                )
                                             )
                                             if permitted:
                                                 collection.update_one(
-                                                    {"_id": 1}, {"$set": {"a": new}},
+                                                    {"_id": 1},
+                                                    {"$set": {"a": new}},
                                                     bypass_document_validation=bypass,
                                                 )
                                             else:
-                                                with self.assertRaises(OperationFailure) as caught:
+                                                with self.assertRaises(
+                                                    OperationFailure
+                                                ) as caught:
                                                     collection.update_one(
-                                                        {"_id": 1}, {"$set": {"a": new}},
+                                                        {"_id": 1},
+                                                        {"$set": {"a": new}},
                                                         bypass_document_validation=bypass,
                                                     )
-                                                self.assertEqual(caught.exception.code, 121)
+                                                self.assertEqual(
+                                                    caught.exception.code, 121
+                                                )
                                             self.assertEqual(
                                                 collection.find_one({"_id": 1}),
-                                                {"_id": 1, "a": new if permitted else old},
+                                                {
+                                                    "_id": 1,
+                                                    "a": new if permitted else old,
+                                                },
                                             )
 
     def test_bypass_document_validation_allows_invalid_writes(self):

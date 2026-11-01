@@ -12,7 +12,35 @@ from functools import wraps
 
 from mongoeco.core.server_errors import operation_error, retain_diagnostic
 from mongoeco.error_catalog import SERVER_CODE_NAMES as CODE_NAMES
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import DuplicateKeyError, ExecutionTimeout, OperationFailure
+
+
+def check_command_response(response, *, allowable_errors=None, error=None):
+    """Check the client-visible envelope after its document factory has run."""
+    if "ok" not in response:
+        raise OperationFailure(
+            response.get("$err"), code=response.get("code"), details=response
+        )
+    if not response["ok"]:
+        code = response.get("code")
+        message = response["errmsg"]
+        allowed = allowable_errors and (
+            code in allowable_errors
+            if code is not None
+            else message in allowable_errors
+        )
+        if not allowed:
+            kind = (
+                DuplicateKeyError
+                if code in (11000, 11001, 12582)
+                else ExecutionTimeout
+                if code == 50  # noqa: PLR2004 - MongoDB MaxTimeMSExpired code
+                else type(error)
+                if error is not None
+                else OperationFailure
+            )
+            raise kind(message, code=code, details=response)
+    return response
 
 
 def error_message(error):

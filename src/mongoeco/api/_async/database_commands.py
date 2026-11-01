@@ -25,8 +25,8 @@ from mongoeco.api.admin_parsing import (
     normalize_command_document,
     normalize_command_scale,
     normalize_find_and_modify_options,
-    normalize_validate_command_options,
     normalize_validate_collection_name,
+    normalize_validate_command_options,
     require_collection_name,
 )
 from mongoeco.api.bson_input import encode_bson_request
@@ -34,6 +34,7 @@ from mongoeco.core._public_materialization import materialize_command_response
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.collation import collation_backend_info
 from mongoeco.core.error_documents import (
+    check_command_response,
     command_error_document,
     command_errors,
     error_message,
@@ -47,8 +48,6 @@ from mongoeco.driver.topology import sdam_capabilities_info
 from mongoeco.engines.base import AsyncStorageEngine  # noqa: TC001
 from mongoeco.errors import (
     ConnectionFailure,
-    DuplicateKeyError,
-    ExecutionTimeout,
     OperationFailure,
 )
 from mongoeco.session import ClientSession  # noqa: TC001
@@ -1813,29 +1812,9 @@ class AsyncDatabaseCommandService:
             document = command_error_document(caught)
         response = materialize_command_response(document, codec_options=options)
         if check:
-            if "ok" not in response:
-                raise OperationFailure(
-                    response.get("$err"), code=response.get("code"), details=response
-                )
-            if not response["ok"]:
-                code = response.get("code")
-                message = response["errmsg"]
-                allowed = allowable_errors and (
-                    code in allowable_errors
-                    if code is not None
-                    else message in allowable_errors
-                )
-                if not allowed:
-                    kind = (
-                        DuplicateKeyError
-                        if code in (11000, 11001, 12582)
-                        else ExecutionTimeout
-                        if code == 50  # noqa: PLR2004 - MongoDB MaxTimeMSExpired code
-                        else type(error)
-                        if error is not None
-                        else OperationFailure
-                    )
-                    raise kind(message, code=code, details=response)
+            check_command_response(
+                response, allowable_errors=allowable_errors, error=error
+            )
         return response
 
     def _record_command_session_metadata(

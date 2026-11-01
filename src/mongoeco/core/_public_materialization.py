@@ -11,19 +11,20 @@ from mongoeco._types.concerns import CodecOptions
 from mongoeco.core import codec
 from mongoeco.core.bson_values import decoded_document_reference
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.error_documents import check_command_response
 from mongoeco.types import UndefinedType
 
 
 try:
     from bson import BSON as _BSON
     from bson.binary import UuidRepresentation as _BsonUuidRepresentation
-    from bson.errors import InvalidBSON as _InvalidBSON
-    from bson.raw_bson import RawBSONDocument as _RawBSONDocument
     from bson.codec_options import (
         CodecOptions as _BsonCodecOptions,
         TypeDecoder as _TypeDecoder,
         TypeRegistry as _TypeRegistry,
     )
+    from bson.errors import InvalidBSON as _InvalidBSON
+    from bson.raw_bson import RawBSONDocument as _RawBSONDocument
 except ImportError:  # pragma: no cover - optional SDK
     _BSON = None
     _TypeDecoder = object
@@ -189,7 +190,7 @@ def materialize_cursor_response(batch, *, codec_options, namespace, cursor_id, i
             reply = _decode_response_document(
                 {"cursor": body, "ok": 1.0}, codec_options=codec_options
             )
-        return reply["cursor"][batch_key]
+        return check_command_response(reply)["cursor"][batch_key]
     return [
         materialize_public_document(row, codec_options=codec_options) for row in batch
     ]

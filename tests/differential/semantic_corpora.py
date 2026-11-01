@@ -213,6 +213,10 @@ from tests.differential.semantic_response_frontier_cases import (
     SEED as RESPONSE_FRONTIER_SEED,
     SEMANTIC_RESPONSE_FRONTIER_CASES,
 )
+from tests.differential.semantic_response_transform_cases import (
+    SEED as RESPONSE_TRANSFORM_SEED,
+    SEMANTIC_RESPONSE_TRANSFORM_CASES,
+)
 from tests.differential.semantic_schema_cases import (
     SEED as SCHEMA_SEED,
     SEMANTIC_SCHEMA_CASES,
@@ -318,6 +322,13 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "response_transform": SemanticCorpus(
+        "response-transform",
+        "semantic_response_transform_cases",
+        RESPONSE_TRANSFORM_SEED,
+        SEMANTIC_RESPONSE_TRANSFORM_CASES,
+        requires_standalone=True,
+    ),
     "materialized_context": SemanticCorpus(
         "materialized-context",
         "semantic_materialized_context_cases",

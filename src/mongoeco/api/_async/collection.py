@@ -13,9 +13,10 @@ from datetime import datetime
 
 from mongoeco.api._async import (
     _collection_indexing,
-    _collection_search_indexes,
     _collection_modify,
+    _collection_namespace,
     _collection_reads,
+    _collection_search_indexes,
 )
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._collection_bulk import (
@@ -55,7 +56,6 @@ from mongoeco.api.argument_validation import (
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
 )
-from mongoeco.api._async import _collection_namespace
 from mongoeco.api.bson_input import encode_bson_request, encode_operation_bson
 from mongoeco.api.operations import (
     AggregateOperation,
@@ -106,6 +106,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.duplicate_keys import duplicate_key_error, duplicate_key_message
 from mongoeco.core.error_documents import (
+    check_command_response,
     error_message,
     sync_command_errors,
     write_error_details,
@@ -1454,8 +1455,10 @@ class AsyncCollection:
             extra_kwargs=kwargs,
         )
         response = _collection_modify.find_and_modify_response(result)
-        return materialize_find_modify_response(
-            response.to_document(), codec_options=self._codec_options
+        return check_command_response(
+            materialize_find_modify_response(
+                response.to_document(), codec_options=self._codec_options
+            )
         ).get("value")
 
     async def find_one_and_replace(
@@ -1496,8 +1499,10 @@ class AsyncCollection:
             extra_kwargs=kwargs,
         )
         response = _collection_modify.find_and_modify_response(result)
-        return materialize_find_modify_response(
-            response.to_document(), codec_options=self._codec_options
+        return check_command_response(
+            materialize_find_modify_response(
+                response.to_document(), codec_options=self._codec_options
+            )
         ).get("value")
 
     async def find_one_and_delete(
@@ -1535,8 +1540,10 @@ class AsyncCollection:
             ),
             value=document,
         )
-        return materialize_find_modify_response(
-            response.to_document(), codec_options=self._codec_options
+        return check_command_response(
+            materialize_find_modify_response(
+                response.to_document(), codec_options=self._codec_options
+            )
         ).get("value")
 
     async def delete_one(
