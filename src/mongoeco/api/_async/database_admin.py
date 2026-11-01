@@ -152,9 +152,7 @@ class AsyncDatabaseAdminService:
         collection_name: str,
         document: dict[str, object],
     ) -> dict[str, object]:
-        normalized = self._normalize_list_indexes_document(document)
-        normalized.setdefault("ns", f"{self._db_name}.{collection_name}")
-        return normalized
+        return self._normalize_list_indexes_document(document)
 
     def _validate_create_collection_options(self, options: dict[str, object]) -> None:
         for field in (
@@ -355,6 +353,11 @@ class AsyncDatabaseAdminService:
             if key not in {"comment", "maxTimeMS", "writeConcern", "readConcern"}
         }
         self._validate_create_collection_options(normalized_options)
+        if "viewOn" in normalized_options or normalized_options.get("capped"):
+            message = (
+                "Views and capped collections are outside Mongoeco's supported subset"
+            )
+            raise server_error(message, code=115, reason="capability_unsupported")
         compile_collection_validation_semantics(
             normalized_options,
             dialect=self._mongodb_dialect,

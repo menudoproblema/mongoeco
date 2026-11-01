@@ -18917,6 +18917,73 @@
         ]
       }
     },
+    "semantic_followup_f10_facades": {
+      "absent": {},
+      "absent_list": [],
+      "raw_absent": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        }
+      },
+      "ping_positional": true,
+      "ping_keyword": true,
+      "id": {
+        "_id_": {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": [
+            [
+              "_id",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ],
+          "collation": {
+            "locale": "simple"
+          }
+        }
+      },
+      "explicit": {
+        "_id_": {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": [
+            [
+              "_id",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ],
+          "collation": {
+            "locale": "simple"
+          }
+        },
+        "f10_1": {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": [
+            [
+              "f10",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ],
+          "unique": true,
+          "collation": {
+            "locale": "simple"
+          }
+        }
+      },
+      "no_ghost": true
+    },
     "semantic_followup_f10_metadata": {
       "absent": {},
       "present": {
@@ -18952,6 +19019,66 @@
           "$numberInt": "1"
         }
       ]
+    },
+    "semantic_followup_f10_rename_contexts": {
+      "False/False": {
+        "outcome": {
+          "ok": true,
+          "value": true
+        },
+        "source": [],
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "11"
+            }
+          }
+        ]
+      },
+      "True/False": {
+        "outcome": {
+          "ok": false,
+          "family": "OperationFailure",
+          "code": {
+            "$numberInt": "48"
+          }
+        },
+        "source": [
+          {
+            "_id": {
+              "$numberInt": "11"
+            }
+          }
+        ],
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "22"
+            }
+          }
+        ]
+      },
+      "True/True": {
+        "outcome": {
+          "ok": true,
+          "value": true
+        },
+        "source": [],
+        "target": [
+          {
+            "_id": {
+              "$numberInt": "11"
+            }
+          }
+        ]
+      },
+      "missing": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        }
+      }
     }
   },
   "runtime": {
@@ -19037,14 +19164,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793567143086"
+          "$numberLong": "1793567638074"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "30"
+        "$numberInt": "45"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -19060,7 +19187,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "071e01f2575d3d7a4a3bd46f535c05d03244a6d5849ed76870dbe236bdacdc55",
+    "sha256": "7eb861087bfd81852e344a56036b130d9999774376557d5d0bdb2ab0e7ca5e32",
     "topology": "standalone"
   },
   "case_manifests": [
@@ -23756,6 +23883,44 @@
         }
       ],
       "selector": "semantic_followup_f09_arity_contexts"
+    },
+    {
+      "name": "semantic_followup_f10_facades",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f10_facades"
+    },
+    {
+      "name": "semantic_followup_f10_rename_contexts",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_followup_f10_rename_contexts"
     }
   ]
 }

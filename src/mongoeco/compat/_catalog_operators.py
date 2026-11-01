@@ -159,6 +159,8 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = (
     | frozenset(SCALAR_EXPRESSION_ARGUMENTS)
 )
 
+UNIMPLEMENTED_AGGREGATION_STAGES = frozenset({"$out", "$graphLookup"})
+
 SUPPORTED_AGGREGATION_STAGES = frozenset(
     {
         "$match", "$project", "$unset", "$sample", "$sort", "$skip", "$limit", "$addFields", "$set",

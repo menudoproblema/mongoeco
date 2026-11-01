@@ -11,6 +11,7 @@ from mongoeco.compat._catalog_operators import (
     CONTROL_EXPRESSION_ARGUMENTS,
     SCALAR_EXPRESSION_ARGUMENTS,
     SUPPORTED_AGGREGATION_STAGES,
+    UNIMPLEMENTED_AGGREGATION_STAGES,
 )
 from mongoeco.core._search_contract import SEARCH_STAGE_OPERATORS
 from mongoeco.core.aggregation.accumulators import (
@@ -534,6 +535,9 @@ def _validate_stage_expression_roots(operator, spec, dialect):
 
 
 def _validate_stage_structure(operator, spec, dialect):
+    if operator in UNIMPLEMENTED_AGGREGATION_STAGES:
+        message = f"{operator} is recognized but outside Mongoeco's supported subset"
+        raise server_error(message, code=115, reason="capability_unsupported")
     # Recognition is distinct from a physical dialect's capabilities. Search
     # stages are parsed by their existing local planner, not Community Server.
     if (

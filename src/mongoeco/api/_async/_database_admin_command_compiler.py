@@ -108,6 +108,9 @@ class DatabaseAdminCommandCompiler:
             spec.get(collection_field),
             collection_field,
         )
+        if any(field in spec for field in ("returnKey", "showRecordId")):
+            message = "returnKey/showRecordId are outside Mongoeco's supported subset"
+            raise server_error(message, code=115, reason="capability_unsupported")
         dialect = self._admin._mongodb_dialect.key
         filter_spec = normalize_filter_document(
             spec.get(filter_field),

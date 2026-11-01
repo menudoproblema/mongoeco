@@ -1019,3 +1019,64 @@ def test_followup_f09_database_documents_preserve_clock_bindings_and_namespace(
             {"now": fixed.replace(tzinfo=None), "value": 5}
         ]
         assert client.followup.list_collection_names() == []
+
+
+@pytest.mark.parametrize('engine_factory', [MemoryEngine, SQLiteEngine])
+def test_followup_f10_client_identity_and_clones(engine_factory):
+    with MongoClient(engine_factory()) as client:
+        assert client.records.client is client
+        assert client.records.with_options().client is client
+        assert client.records.items.with_options().database.client is client
+
+    async def exercise():
+        async with AsyncMongoClient(engine_factory()) as client:
+            assert client.records.client is client
+            assert client.records.with_options().client is client
+            assert client.records.items.with_options().database.client is client
+            assert client.with_options().records.client is not client
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("engine_factory", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("dialect", DIALECTS)
+def test_followup_f10_capabilities_are_rejected_without_effects(
+    engine_factory, dialect
+):
+    with MongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+        database = client.followup
+        collection = database.records
+        collection.insert_one({"_id": 1})
+        for command in (
+            {"create": "view", "viewOn": "records"},
+            {"create": "cap", "capped": True, "size": 4096},
+            {"find": "records", "returnKey": True},
+            {"find": "records", "showRecordId": True},
+            {"aggregate": "records", "pipeline": [{"$out": "output"}], "cursor": {}},
+            {
+                "aggregate": "records",
+                "pipeline": [
+                    {
+                        "$graphLookup": {
+                            "from": "records",
+                            "startWith": "$_id",
+                            "connectFromField": "_id",
+                            "connectToField": "_id",
+                            "as": "links",
+                        }
+                    }
+                ],
+                "cursor": {},
+            },
+        ):
+            with pytest.raises(OperationFailure) as failure:
+                database.command(command)
+            assert failure.value.code == 115  # noqa: PLR2004 - declared local capability error
+            assert database.list_collection_names() == ["records"]
+            assert list(collection.find({})) == [{"_id": 1}]
+        with pytest.raises(OperationFailure) as failure:
+            list(collection.aggregate([{"$unknownF10": {}}]))
+        assert failure.value.code == 40324  # noqa: PLR2004 - native unknown-stage diagnostic
+        for option in ("return_key", "show_record_id"):
+            with pytest.raises((TypeError, OperationFailure)):
+                list(collection.find({}, **{option: True}))

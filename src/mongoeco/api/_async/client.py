@@ -146,6 +146,7 @@ class AsyncDatabase:
         change_stream_journal_max_bytes: int | None = 1_048_576,
         now_factory: NowFactory | None = None,
     ):
+        self._client = None
         self._engine = engine
         self._now_factory = now_factory
         self._db_name = db_name
@@ -190,6 +191,11 @@ class AsyncDatabase:
         """Factory de reloj heredada del cliente que creó esta base de datos."""
         return self._now_factory
 
+    @property
+    def client(self):
+        """Return the client which owns this database handle."""
+        return self._client
+
     def __getattr__(self, name: str) -> AsyncCollection:
         return self.get_collection(name)
 
@@ -230,19 +236,22 @@ class AsyncDatabase:
             "now_factory": self._now_factory,
         }
         if self._validated_engine_spi is None:
-            return AsyncCollection(
+            collection = AsyncCollection(
                 self._engine,
                 self._db_name,
                 name,
                 **collection_kwargs,
             )
-        return AsyncCollection._from_validated_engine(
-            self._validated_engine_spi,
-            self._engine,
-            self._db_name,
-            name,
-            **collection_kwargs,
-        )
+        else:
+            collection = AsyncCollection._from_validated_engine(
+                self._validated_engine_spi,
+                self._engine,
+                self._db_name,
+                name,
+                **collection_kwargs,
+            )
+        collection._client = self._client
+        return collection
 
     def with_options(
         self,
@@ -277,6 +286,7 @@ class AsyncDatabase:
             now_factory=self._now_factory,
         )
         database._validated_engine_spi = self._validated_engine_spi
+        database._client = self._client
         return database
 
     async def list_collection_names(
@@ -367,11 +377,14 @@ class AsyncDatabase:
     async def command(
         self,
         command: object,
+        value: object = 1,
         *,
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        return await self._admin.command(command, session=session, **kwargs)
+        return await self._admin.command(
+            command, value=value, session=session, **kwargs
+        )
 
     def watch(
         self,
@@ -696,6 +709,7 @@ class AsyncMongoClient:
             now_factory=self._now_factory,
         )
         database._validated_engine_spi = self._validated_engine_spi
+        database._client = self
         return database
 
     def get_default_database(

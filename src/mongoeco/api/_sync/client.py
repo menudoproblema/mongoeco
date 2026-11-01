@@ -423,6 +423,11 @@ class Database:
     def now_factory(self) -> Callable[[], datetime] | None:
         return self._client.now_factory
 
+    @property
+    def client(self):
+        """Return the client which owns this database handle."""
+        return self._client
+
     def __getattr__(self, name: str) -> Collection:
         return self.get_collection(name)
 
@@ -537,11 +542,12 @@ class Database:
     def command(
         self,
         command: object,
+        value: object = 1,
         *,
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        return self._admin.command(command, session=session, **kwargs)
+        return self._admin.command(command, value=value, session=session, **kwargs)
 
     def watch(
         self,

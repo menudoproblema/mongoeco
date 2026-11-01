@@ -10,7 +10,6 @@ from mongoeco.api._async._database_admin_command_compiler import (
     DatabaseAdminCommandCompiler,
 )
 from mongoeco.api._async.client import AsyncDatabase
-from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.results import EngineUpdateResult, FindAndModifyOutcome
 from mongoeco.engines.sqlite import SQLiteEngine
@@ -198,14 +197,20 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         async def _run():
             with self.assertRaisesRegex(OperationFailure, "positive size option"):
                 await service.create_collection("events", capped=True)
-            await service.create_collection("events_string", capped=True, size="1024")
+            with self.assertRaises(OperationFailure) as unsupported:
+                await service.create_collection(
+                    "events_string", capped=True, size="1024"
+                )
+            self.assertEqual(unsupported.exception.code, 115)
             with self.assertRaises(OperationFailure) as caught:
                 await service.create_collection("events_zero", capped=True, size=0)
             self.assertEqual(caught.exception.code, 51024)
-            await service.create_collection(
-                "events_unlimited", capped=True, size=1024, max=0
-            )
-
+            with self.assertRaises(OperationFailure) as unsupported:
+                await service.create_collection(
+                    "events_unlimited", capped=True, size=1024, max=0
+                )
+            self.assertEqual(unsupported.exception.code, 115)
+            self.assertEqual(await database.list_collection_names(), [])
 
         asyncio.run(_run())
 
@@ -554,37 +559,19 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         asyncio.run(_run())
 
-    def test_execute_distinct_command_handles_missing_values_list_fallback_and_deduplication(self):
+    def test_execute_distinct_command_retains_missing_empty_and_deduplication(self):
         database = AsyncDatabase(MemoryEngine(), "db")
-        service = database._admin
-        fake_collection = _FakeCollection([{"_id": 1}, {"_id": 2}, {"_id": 3}, {"_id": 4}, {"_id": 5}])
 
-        async def _run():
-            with patch.object(database, "get_collection", return_value=fake_collection), patch.object(
-                QueryEngine,
-                "extract_values",
-                side_effect=[[], [], [], ["Ada"], ["Ada"]],
-            ), patch.object(
-                QueryEngine,
-                "_get_field_value",
-                side_effect=[
-                    (False, None),
-                    (True, []),
-                    (True, "scalar"),
-                    (True, "Ada"),
-                    (True, "Ada"),
-                ],
-            ):
-                operation = service._compile_command_find_operation(
-                    {"find": "users"},
-                    collection_field="find",
-                )[1]
-                result = await service._execute_distinct_command("users", "name", operation)
-                return result.values
+        async def run():
+            await database.users.insert_many([
+                {"_id": 1}, {"_id": 2, "name": []},
+                {"_id": 3, "name": "scalar"}, {"_id": 4, "name": "Ada"},
+                {"_id": 5, "name": "Ada"},
+            ])
+            result = await database.command("distinct", "users", key="name")
+            self.assertEqual(result["values"], ["scalar", "Ada"])
 
-        values = asyncio.run(_run())
-
-        self.assertEqual(values, ["scalar", "Ada"])
+        asyncio.run(run())
 
     def test_command_insert_collects_unordered_errors_after_successes(self):
         database = AsyncDatabase(MemoryEngine(), "db")

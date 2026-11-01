@@ -209,6 +209,7 @@ class AsyncCollection:
         change_stream_journal_max_bytes: int | None = 1_048_576,
         now_factory: Callable[[], datetime] | None = None,
     ):
+        self._client = None
         self._engine = engine
         self._now_factory = now_factory
         self._db_name = db_name
@@ -271,19 +272,22 @@ class AsyncCollection:
     ) -> AsyncCollection:
         engine_spi = getattr(self, "_validated_engine_spi", None)
         if engine_spi is None:
-            return type(self)(
+            collection = type(self)(
                 self._engine,
                 self._db_name,
                 collection_name,
                 **kwargs,
             )
-        return type(self)._from_validated_engine(
-            engine_spi,
-            self._engine,
-            self._db_name,
-            collection_name,
-            **kwargs,
-        )
+        else:
+            collection = type(self)._from_validated_engine(
+                engine_spi,
+                self._engine,
+                self._db_name,
+                collection_name,
+                **kwargs,
+            )
+        collection._client = self._client
+        return collection
 
     def with_options(
         self,
@@ -1938,9 +1942,10 @@ class AsyncCollection:
         new_name: str,
         *,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> "AsyncCollection":
         source, target, drop_target = _collection_namespace.prepare_rename(
-            self, new_name, session=session,
+            self, new_name, session=session, **kwargs,
         )
         await self.database._admin._write_commands.execute_rename_namespaces(
             source, target, drop_target=drop_target, session=session,
@@ -2032,6 +2037,7 @@ class AsyncCollection:
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
             now_factory=self._now_factory,
         )
+        database._client = self._client
         database._validated_engine_spi = getattr(
             self,
             "_validated_engine_spi",

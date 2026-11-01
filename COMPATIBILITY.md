@@ -1507,3 +1507,25 @@ compatibles. Memory, scoring de referencia y SQLite comparten la extracción;
 USearch enumera slots compactos sobre vectores válidos. Los controles incluyen
 embeddings inválidos, reparación y recreación del índice con otras dimensiones.
 Las reglas de cuantización y score permanecen separadas de los filtros BSON.
+
+## Límites del incremento F00–F11
+
+Database.client conserva el cliente propietario, incluidas las copias con opciones;
+los handles async construidos directamente con un motor carecen de propietario
+y devuelven None. command(nombre, valor) y rename(dropTarget=...) usan los
+compiladores existentes. Los metadatos públicos conservan v y omiten unique
+intrínseco en _id_; el SPI sigue representando su unicidad obligatoria.
+
+Views/viewOn, capped, return_key/show_record_id y los campos raw returnKey/
+showRecordId quedan fuera del subset. Se rechazan sin crear namespaces ni
+modificar documentos. out y graphLookup son stages reconocidos sin implementación
+local (CommandNotSupported, 115), distintos de un stage desconocido (40324).
+Las extensiones registradas conservan su precedencia. Natural sort/hint de find
+sigue soportado, sin prometer identidad física pública recordId.
+
+La agregación raw a nivel de base admite aggregate:1 con origen documents y
+conserva reloj y let; no añade otros orígenes de base. Las fechas conservan el
+dominio datetime representable y los formatos enumerados por el runtime; los
+bins usan la referencia nativa de 2000 y las zonas IANA disponibles en el sistema.
+No se promete todo BSON Date ni todo formato del servidor. Casing conserva su
+subset de caracteres y trim su conjunto explícito, sin extender soporte PCRE.

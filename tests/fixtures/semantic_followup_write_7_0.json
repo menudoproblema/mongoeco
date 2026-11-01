@@ -675,7 +675,7 @@
       "$clusterTime": {
         "clusterTime": {
           "$timestamp": {
-            "t": 1793567149,
+            "t": 1793567629,
             "i": 1
           }
         },
@@ -693,7 +693,7 @@
       },
       "operationTime": {
         "$timestamp": {
-          "t": 1793567149,
+          "t": 1793567629,
           "i": 1
         }
       }
@@ -730,7 +730,7 @@
         "opTime": {
           "ts": {
             "$timestamp": {
-              "t": 1793567149,
+              "t": 1793567629,
               "i": 1
             }
           },
@@ -740,13 +740,13 @@
         },
         "lastWriteDate": {
           "$date": {
-            "$numberLong": "1793567149000"
+            "$numberLong": "1793567629000"
           }
         },
         "majorityOpTime": {
           "ts": {
             "$timestamp": {
-              "t": 1793567149,
+              "t": 1793567629,
               "i": 1
             }
           },
@@ -756,7 +756,7 @@
         },
         "majorityWriteDate": {
           "$date": {
-            "$numberLong": "1793567149000"
+            "$numberLong": "1793567629000"
           }
         }
       },
@@ -771,14 +771,14 @@
       },
       "localTime": {
         "$date": {
-          "$numberLong": "1793567155285"
+          "$numberLong": "1793567638082"
         }
       },
       "logicalSessionTimeoutMinutes": {
         "$numberInt": "30"
       },
       "connectionId": {
-        "$numberInt": "29"
+        "$numberInt": "41"
       },
       "minWireVersion": {
         "$numberInt": "0"
@@ -793,7 +793,7 @@
       "$clusterTime": {
         "clusterTime": {
           "$timestamp": {
-            "t": 1793567149,
+            "t": 1793567629,
             "i": 1
           }
         },
@@ -811,7 +811,7 @@
       },
       "operationTime": {
         "$timestamp": {
-          "t": 1793567149,
+          "t": 1793567629,
           "i": 1
         }
       }
@@ -819,7 +819,7 @@
   },
   "corpus": {
     "path": "tests/differential/semantic_followup_cases.py",
-    "sha256": "071e01f2575d3d7a4a3bd46f535c05d03244a6d5849ed76870dbe236bdacdc55"
+    "sha256": "7eb861087bfd81852e344a56036b130d9999774376557d5d0bdb2ab0e7ca5e32"
   },
   "case_manifests": [
     {

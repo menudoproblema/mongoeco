@@ -2422,3 +2422,55 @@ def expression_arity_contexts(collection):
 SEMANTIC_FOLLOWUP_CASES += (
     ("semantic_followup_f09_arity_contexts", expression_arity_contexts),
 )
+
+
+def facade_metadata_contexts(collection):
+    database = collection.database
+    absent = database.get_collection("f10_absent")
+    absent.drop()
+    result = {
+        "absent": absent.index_information(),
+        "absent_list": list(absent.list_indexes()),
+    }
+    result["raw_absent"] = outcome(lambda: database.command("listIndexes", absent.name))
+    result["ping_positional"] = database.command("ping", 1)["ok"] == 1
+    result["ping_keyword"] = database.command("ping", value=1)["ok"] == 1
+    result["id"] = collection.index_information()
+    collection.create_index([("f10", 1)], unique=True)
+    result["explicit"] = collection.index_information()
+    result["no_ghost"] = absent.name not in database.list_collection_names()
+    collection.drop_indexes()
+    return result
+
+
+def rename_facade_contexts(collection):
+    database = collection.database
+    result = {}
+    for exists, drop_target in ((False, False), (True, False), (True, True)):
+        source = database.get_collection("f10_source")
+        target = database.get_collection("f10_target")
+        source.drop()
+        target.drop()
+        source.insert_one({"_id": 11})
+        if exists:
+            target.insert_one({"_id": 22})
+        result[f"{exists}/{drop_target}"] = {
+            "outcome": outcome(
+                lambda source=source, target=target, drop_target=drop_target: (
+                    source.rename(target.name, dropTarget=drop_target) is not None
+                )
+            ),
+            "source": list(source.find({})),
+            "target": list(target.find({})),
+        }
+        source.drop()
+        target.drop()
+    missing = database.get_collection("f10_missing")
+    result["missing"] = outcome(lambda: missing.rename("f10_target", dropTarget=True))
+    return result
+
+
+SEMANTIC_FOLLOWUP_CASES += (
+    ("semantic_followup_f10_facades", facade_metadata_contexts),
+    ("semantic_followup_f10_rename_contexts", rename_facade_contexts),
+)

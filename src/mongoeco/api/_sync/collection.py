@@ -1163,9 +1163,10 @@ class Collection:
         new_name: str,
         *,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> "Collection":
         renamed = self._client._run(
-            self._async_collection().rename(new_name, session=session)
+            self._async_collection().rename(new_name, session=session, **kwargs)
         )
         return type(self)(
             self._client,

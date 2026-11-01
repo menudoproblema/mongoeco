@@ -23,7 +23,7 @@ def prepare_drop(collection, *, session):
     )
 
 
-def prepare_rename(collection, new_name, *, session):
+def prepare_rename(collection, new_name, *, session, **kwargs):
     if not isinstance(new_name, str):
         message = "new_name must be a string"
         raise TypeError(message)
@@ -42,6 +42,7 @@ def prepare_rename(collection, new_name, *, session):
         {
             "renameCollection": collection.full_name,
             "to": f"{collection._db_name}.{new_name}",
+            **kwargs,
         },
         codec_options=_NAMESPACE_OPTIONS,
     )
