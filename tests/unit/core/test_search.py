@@ -76,7 +76,7 @@ from mongoeco.core.search import (
     vector_field_paths,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import EngineIndexRecord, ObjectId, SearchIndexDefinition
+from mongoeco.types import Binary, EngineIndexRecord, ObjectId, SearchIndexDefinition
 
 
 class SearchCoreTests(unittest.TestCase):
@@ -2604,6 +2604,16 @@ class SearchCoreTests(unittest.TestCase):
             search_module._normalize_search_scalar_value(uuid_value),
             ("uuid", uuid_value),
         )
+        self.assertEqual(
+            search_module._normalize_search_scalar_value(Binary(uuid_value.bytes, 4)),
+            ("uuid", uuid_value),
+        )
+        for value in (
+            Binary(uuid_value.bytes, 0), Binary(uuid_value.bytes, 3),
+            Binary(uuid_value.bytes, 5), Binary(b"short", 4), uuid_value.bytes,
+        ):
+            with self.subTest(binary=value):
+                self.assertIsNone(search_module._normalize_search_scalar_value(value))
         self.assertIsNone(
             search_module._normalize_search_scalar_value(object()),
         )

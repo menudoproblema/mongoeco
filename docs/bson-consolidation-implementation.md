@@ -2572,3 +2572,30 @@ permanece falso; nameOnly string sigue rechazado. Projection flag numérico 2
 mantiene inclusión, conforme a la proyección ya contrastada. Las aserciones del
 catálogo conservan inmutabilidad, hooks exactos y reconstrucción por deltas.
 El gate conjunto ampliado está en d05-compat-final; O5/O7 continúan abiertas.
+
+
+### O5 — UUID de Search después de admisión BSON
+
+Se reproduce el siguiente consumidor roto por la admisión estricta: los datos
+UUID escritos bajo STANDARD llegan a Search como Binary subtipo 4, pero su
+clasificador de facetas solo reconocía uuid.UUID y eliminaba esos buckets.
+Se reutiliza binary_parts; únicamente subtipo 4/16 bytes representa un UUID.
+Los subtipos 0/3/5, bytes sin subtipo y longitud inválida siguen fuera del dominio.
+No se altera el score, recall ANN ni se declara un positivo Atlas en mongod.
+La garantía es conservación de representaciones en el subset local ya existente.
+
+La wheel congelada pasa 38 pruebas y 25 subtests de helpers, escalares, facetas,
+API y reapertura Search. Otros 16 controles/5 subtests observan equivalencia y
+negativos. Los fixtures afectados piden STANDARD cuando necesitan UUID, usan
+Decimal128 y datetime en operandos públicos, y mantienen find_one con ID escalar
+array válido. Nueve pruebas/16 subtests pasan sobre esos fixtures, incluyendo
+reloj único y rechazo 14 del q inválido en bulk sin capturar un reloj.
+
+La revisión causal de eventos pasa diez pruebas/20 subtests. Se observa orden
+en updateDescription, sin exigir que fullDocument/updateLookup congele un estado
+anterior a su lectura. El fallo de publicación se inyecta en publish_committed,
+el sink efectivo del adaptador, manteniendo escritura confirmada, degradación y
+error al leer. Index_information conserva su decoder builtin UTC naive aunque
+la colección tenga tz_aware; el evento conserva sus opciones de codec. No se
+modifican oráculos nativos para acomodar esos contratos ya aceptados.
+O5–O8 siguen abiertas y la suite global final/cobertura siguen exigidas.

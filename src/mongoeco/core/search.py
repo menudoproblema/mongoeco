@@ -20,6 +20,7 @@ from mongoeco.core._search_contract import (
 )
 from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.bson_scalars import unwrap_bson_numeric
+from mongoeco.core.bson_values import binary_parts
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.runtime_metadata import (
     RUNTIME_METADATA_FIELD,
@@ -68,6 +69,8 @@ _SUPPORTED_REGEX_FLAGS = {
     "x": re.VERBOSE,
 }
 _SUPPORTED_REGEX_FLAGS_LABEL = ", ".join(sorted(_SUPPORTED_REGEX_FLAGS))
+_UUID_SUBTYPE = 4
+_UUID_BYTES = 16
 _SUPPORTED_SEARCH_FACET_TYPES = frozenset(
     {"string", "token", "number", "date", "boolean", "objectId", "uuid"},
 )
@@ -4956,6 +4959,13 @@ def _normalize_search_scalar_value(value: object) -> tuple[str, object] | None:
         return "objectId", value
     if isinstance(value, uuid.UUID):
         return "uuid", value
+    binary = binary_parts(value)
+    if (
+        binary is not None
+        and binary[0] == _UUID_SUBTYPE
+        and len(binary[1]) == _UUID_BYTES
+    ):
+        return "uuid", uuid.UUID(bytes=binary[1])
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         numeric = float(value)
         if not math.isfinite(numeric):
