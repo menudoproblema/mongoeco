@@ -11764,7 +11764,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
-    async def test_drop_index_by_spec_supports_single_custom_named_index(self):
+    async def test_drop_index_by_spec_uses_generated_name_then_explicit_custom_name(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
@@ -11774,14 +11776,18 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         name="idx_email",
                     )
 
-                    await collection.drop_index([("email", 1)])
+                    with self.assertRaises(OperationFailure) as missing:
+                        await collection.drop_index([("email", 1)])
+                    self.assertEqual(missing.exception.code, 27)
+                    self.assertIn("idx_email", await collection.index_information())
+                    await collection.drop_index("idx_email")
 
                     self.assertEqual(
                         await collection.list_indexes().to_list(),
                         [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
-    async def test_drop_index_by_spec_rejects_ambiguous_index_aliases(self):
+    async def test_drop_index_by_spec_does_not_resolve_custom_aliases(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
@@ -11797,7 +11803,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     with self.assertRaisesRegex(
                         OperationFailure,
-                        "multiple indexes found with key pattern",
+                        r"index not found with name \[email_1\]",
                     ):
                         await collection.drop_index([("email", 1)])
 

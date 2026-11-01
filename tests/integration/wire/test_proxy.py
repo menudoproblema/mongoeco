@@ -660,7 +660,7 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     ):
                         database.command({"create": ""})
                     with self.assertRaisesRegex(
-                        Exception, "wire drop requires a non-empty collection name"
+                        Exception, "Invalid namespace for drop"
                     ):
                         database.command({"drop": ""})
                     self.assertIn("events", database.list_collection_names())
@@ -748,8 +748,9 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 try:
                     with self.assertRaisesRegex(Exception, "wire distinct requires a non-empty key string"):
                         client.alpha.command({"distinct": "events", "key": ""})
-                    with self.assertRaisesRegex(Exception, "wire validate comment must be a string"):
+                    with self.assertRaisesRegex(Exception, "Namespace alpha.events not found") as absent:
                         client.alpha.command({"validate": "events", "comment": 1})
+                    self.assertEqual(absent.exception.code, 26)
                     with self.assertRaisesRegex(Exception, "wire explain verbosity must be a string"):
                         client.alpha.command({"explain": {"find": "events"}, "verbosity": 1})
                     with self.assertRaisesRegex(Exception, "wire count skip must be a non-negative integer"):
@@ -760,8 +761,8 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         client.alpha.command({"find": "events", "projection": 1})
                     with self.assertRaisesRegex(Exception, "wire aggregate allowDiskUse must be a bool"):
                         client.alpha.command({"aggregate": "events", "pipeline": [], "allowDiskUse": 1})
-                    with self.assertRaisesRegex(Exception, "wire listCollections comment must be a string"):
-                        client.alpha.command({"listCollections": 1, "comment": 1})
+                    listed = client.alpha.command({"listCollections": 1, "comment": 1})
+                    self.assertEqual(listed["ok"], 1.0)
                     with self.assertRaisesRegex(Exception, "wire createIndexes each index specification must be a dict"):
                         client.alpha.command({"createIndexes": "events", "indexes": [1]})
                     with self.assertRaisesRegex(Exception, "wire dropIndexes index must be '\\*', a name, or a key specification"):

@@ -2599,3 +2599,32 @@ error al leer. Index_information conserva su decoder builtin UTC naive aunque
 la colección tenga tz_aware; el evento conserva sus opciones de codec. No se
 modifican oráculos nativos para acomodar esos contratos ya aceptados.
 O5–O8 siguen abiertas y la suite global final/cobertura siguen exigidas.
+
+
+### O5 — Regresiones administrativas, índices y merge
+
+Pasan dos padres de formas de comandos, tres controles de merge/namespace con
+seis subtests y seis pruebas de índices/wire con ocho subtests. Se conservan
+los parsers no afectados: la lista vacía de createIndexes ya produce código 2;
+comentarios BSON de listados son válidos; validate ausente produce 26. La prueba
+keepExisting usa whenNotMatched=insert, combinación válida del corpus nativo
+semantic_merge_key, conservando que no revalida ni reescribe el documento antiguo.
+
+Drop_index por lista transforma claves al nombre generado, como SDK _drop_index;
+no busca aliases personalizados. Los controles exigen código 27 y ausencia de
+cambio antes de borrar por nombre explícito; se conservan aliases restantes.
+Wire mantiene el rechazo de namespace drop vacío y el comentario BSON de
+listCollections sin transformar un comentario válido en error. El resto de
+rechazos de la prueba wire permanece intacto. No cambia producción en este corte.
+
+Seguimiento fuera del cierre: una sonda de las 32 formas retenidas detecta
+diferencias generales de parsers administrativos frente al servidor. Los mismos
+TypeError para sort/projection y showPrivileges están en 181a922, anteriores al
+candidato; no son una regresión demostrada ni una nueva migración aprobada de
+gramática. Se retienen fuentes/capturas/claims con prefijo followup-command-shape
+y followup-semantic_command_shape, sin registrarlas como gates de esta entrega.
+La captura es 7.0.43/8.0.32/9.0.2 y sus nueve recursos están ausentes por ID.
+Esto no acredita paridad general de toda forma inválida de comando: las garantías
+exigidas son las de los cortes afectados y su subset declarado. No se introduce
+un catch genérico de TypeError ni otro validador para ocultar estas diferencias.
+O5–O8 conservan suite final, cobertura, matrices, distribución/costes y entrega.

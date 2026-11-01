@@ -11091,54 +11091,56 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
                     )
 
-    def test_drop_index_by_spec_supports_single_custom_named_index(self):
+    def test_drop_index_by_spec_uses_generated_name_then_explicit_custom_name(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    collection = client.test.users
-                    collection.create_index([("email", 1)], name="idx_email")
+            with self.subTest(engine=engine_name), MongoClient(factory()) as client:
+                collection = client.test.users
+                collection.create_index([("email", 1)], name="idx_email")
 
+                with self.assertRaises(OperationFailure) as missing:
+                    collection.drop_index([("email", 1)])
+                self.assertEqual(missing.exception.code, 27)
+                self.assertIn("idx_email", collection.index_information())
+                collection.drop_index("idx_email")
+
+                self.assertEqual(
+                    collection.list_indexes().to_list(),
+                    [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
+                )
+
+    def test_drop_index_by_spec_does_not_resolve_custom_aliases(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name), MongoClient(factory()) as client:
+                collection = client.test.users
+                collection.create_index([("email", 1)], name="idx_email")
+                collection.create_index(
+                    [("email", 1)],
+                    name="idx_email_alias",
+                )
+
+                with self.assertRaisesRegex(
+                    OperationFailure,
+                    r"index not found with name \[email_1\]",
+                ):
                     collection.drop_index([("email", 1)])
 
-                    self.assertEqual(
-                        collection.list_indexes().to_list(),
-                        [{"name": "_id_", "key": {"_id": 1}, "unique": True}],
-                    )
+                collection.drop_index("idx_email")
 
-    def test_drop_index_by_spec_rejects_ambiguous_index_aliases(self):
-        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    collection = client.test.users
-                    collection.create_index([("email", 1)], name="idx_email")
-                    collection.create_index(
-                        [("email", 1)],
-                        name="idx_email_alias",
-                    )
-
-                    with self.assertRaisesRegex(
-                        OperationFailure,
-                        "multiple indexes found with key pattern",
-                    ):
-                        collection.drop_index([("email", 1)])
-
-                    collection.drop_index("idx_email")
-
-                    self.assertEqual(
-                        collection.list_indexes().to_list(),
-                        [
-                            {
-                                "name": "_id_",
-                                "key": {"_id": 1},
-                                "unique": True,
-                            },
-                            {
-                                "name": "idx_email_alias",
-                                "key": {"email": 1},
-                                "unique": False,
-                            },
-                        ],
-                    )
+                self.assertEqual(
+                    collection.list_indexes().to_list(),
+                    [
+                        {
+                            "name": "_id_",
+                            "key": {"_id": 1},
+                            "unique": True,
+                        },
+                        {
+                            "name": "idx_email_alias",
+                            "key": {"email": 1},
+                            "unique": False,
+                        },
+                    ],
+                )
 
     def test_unique_index_is_enforced(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():

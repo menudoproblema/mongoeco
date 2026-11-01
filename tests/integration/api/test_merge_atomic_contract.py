@@ -37,7 +37,7 @@ class MergeAtomicContractTests(unittest.IsolatedAsyncioTestCase):
                                 '$merge': {
                                     'into': 'target',
                                     'whenMatched': 'keepExisting',
-                                    'whenNotMatched': 'discard',
+                                    'whenNotMatched': 'insert',
                                 }
                             }
                         ]

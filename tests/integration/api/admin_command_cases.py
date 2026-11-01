@@ -4,7 +4,6 @@ from collections.abc import Callable
 from typing import Any
 
 from mongoeco.errors import (
-    CollectionInvalid,
     ConnectionFailure,
     OperationFailure,
 )
@@ -1475,10 +1474,11 @@ async def assert_database_command_rejects_invalid_command_shapes(
     case, open_client: OpenClient,
 ) -> None:
     async with open_client("memory") as client:
-        with case.assertRaises(TypeError):
+        with case.assertRaises(OperationFailure) as empty_indexes:
             await _maybe_await(
                 client.alpha.command({"createIndexes": "events", "indexes": ()}),
             )  # type: ignore[arg-type]
+        case.assertEqual(empty_indexes.exception.code, 2)
         with case.assertRaises(TypeError):
             await _maybe_await(
                 client.alpha.command({"distinct": "events", "key": 1}),
@@ -1576,22 +1576,22 @@ async def assert_database_command_rejects_invalid_command_shapes(
         case.assertEqual(error.exception.code, 73)  # type: ignore[arg-type]
         with case.assertRaises(TypeError):
             await _maybe_await(client.alpha.command({"distinct": "events", "key": ""}))
-        with case.assertRaises(TypeError):
+        listed = await _maybe_await(client.alpha.command("listCollections", comment=1))
+        case.assertEqual(listed["ok"], 1.0)
+        listed_indexes = await _maybe_await(
+            client.alpha.command({"listIndexes": "events", "comment": 1})
+        )
+        case.assertEqual(listed_indexes["ok"], 1.0)
+        with case.assertRaises(OperationFailure) as absent_namespace:
             await _maybe_await(
-                client.alpha.command("listCollections", comment=1),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
+                client.alpha.command({"validate": "events", "comment": 1})
+            )
+        case.assertEqual(absent_namespace.exception.code, 26)
+        with case.assertRaises(OperationFailure) as background_absent:
             await _maybe_await(
-                client.alpha.command({"listIndexes": "events", "comment": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"validate": "events", "comment": 1}),
-            )  # type: ignore[arg-type]
-        with case.assertRaises(TypeError):
-            await _maybe_await(
-                client.alpha.command({"validate": "events", "background": "yes"}),
-            )  # type: ignore[arg-type]
+                client.alpha.command({"validate": "events", "background": "yes"})
+            )
+        case.assertEqual(background_absent.exception.code, 26)
         with case.assertRaises(TypeError):
             await _maybe_await(
                 client.alpha.command({"count": "events", "limit": -1}),
@@ -1694,5 +1694,6 @@ async def assert_validate_collection_returns_metadata_and_rejects_missing_namesp
                 )
 
     async with open_client("memory") as client:
-        with case.assertRaises(CollectionInvalid):
+        with case.assertRaises(OperationFailure) as error:
             await _maybe_await(client.alpha.validate_collection("missing"))
+        case.assertEqual(error.exception.code, 26)
