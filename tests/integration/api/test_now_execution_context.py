@@ -153,8 +153,9 @@ class NowExecutionContextIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(calls), 1)
 
             calls.clear()
-            with self.assertRaises(TypeError):
+            with self.assertRaises(OperationFailure) as caught:
                 await collection.bulk_write([UpdateOne([], {'$set': {'bad': True}})])
+            self.assertEqual(caught.exception.code, 14)
             self.assertEqual(calls, [])
 
             calls.clear()

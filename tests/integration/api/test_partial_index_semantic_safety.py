@@ -1,5 +1,4 @@
 import unittest
-from decimal import Decimal
 
 from bson.decimal128 import Decimal128
 
@@ -59,7 +58,7 @@ class PartialIndexSemanticSafetyTests(unittest.IsolatedAsyncioTestCase):
                             {'_id': 'decimal', 'value': Decimal128('3.0')},
                         ]
                     )
-                    queries = [1.0, 2, Decimal('3'), Decimal128('1')]
+                    queries = [1.0, 2, Decimal128('3'), Decimal128('1')]
                     before = [
                         await collection.distinct('_id', {'value': value})
                         for value in queries

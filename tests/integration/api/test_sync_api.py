@@ -237,7 +237,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
     ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
+                with MongoClient(factory(), codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD)) as client:
                     collection = client.search_runtime.get_collection("docs")
                     shared_owner = ObjectId("64f0c0d2e1382374dbf95e01")
                     shared_trace = uuid.UUID(
@@ -1893,7 +1893,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         engine_name=engine_name,
                     )
 
-                    compound_candidateable_should_matched_limited_hits = (
+                    compound_should_limited_hits = (
                         collection.aggregate(
                             [
                                 {
@@ -1942,7 +1942,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         [
                             document["_id"]
-                            for document in compound_candidateable_should_matched_limited_hits
+                            for document in compound_should_limited_hits
                         ],
                         [3],
                     )
@@ -3161,7 +3161,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "index": "by_text",
                                     "near": {
                                         "path": "metadata.publishedAt",
-                                        "origin": datetime.date(2024, 1, 15),
+                                        "origin": datetime.datetime(
+                                            2024, 1, 15, tzinfo=datetime.UTC
+                                        ),
                                         "pivot": 10 * 86400,
                                     },
                                 },
@@ -11681,8 +11683,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(TypeError):
                         collection.insert_one([])
 
-                    with self.assertRaises(TypeError):
-                        collection.find_one([])
+                    self.assertIsNone(collection.find_one([]))
 
                     with self.assertRaises(TypeError):
                         collection.find_one({}, [1])

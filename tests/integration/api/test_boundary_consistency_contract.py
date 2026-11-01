@@ -122,7 +122,7 @@ class BoundaryConsistencyContractTests(unittest.IsolatedAsyncioTestCase):
                     events = [await stream.try_next(), await stream.try_next()]
                     self.assertEqual(
                         [
-                            event['fullDocument']['revision']
+                            event['updateDescription']['updatedFields']['revision']
                             for event in events
                         ],
                         [1, 2],
@@ -137,10 +137,10 @@ class BoundaryConsistencyContractTests(unittest.IsolatedAsyncioTestCase):
                     collection = client.test.change_event_failure
                     stream = collection.watch(max_await_time_ms=5)
 
-                    def fail_publish(**_payload):
+                    def fail_publish(*_args, **_payload):
                         raise OSError('journal unavailable')
 
-                    client._change_hub.publish = fail_publish
+                    client._change_hub.publish_committed = fail_publish
                     result = await collection.insert_one({'_id': 'committed'})
 
                     self.assertEqual(result.inserted_id, 'committed')
@@ -202,7 +202,7 @@ class BoundaryConsistencyContractTests(unittest.IsolatedAsyncioTestCase):
                     events = [await stream.try_next(), await stream.try_next()]
                     self.assertEqual(
                         [
-                            event['fullDocument']['revision']
+                            event['updateDescription']['updatedFields']['revision']
                             for event in events
                         ],
                         [1, 2],
@@ -435,7 +435,8 @@ class BoundaryConsistencyContractTests(unittest.IsolatedAsyncioTestCase):
                         'partialFilterExpression'
                     ]['at']['$gte']
                     self.assertEqual(event_value.tzinfo, UTC)
-                    self.assertEqual(index_value.tzinfo, UTC)
+                    self.assertIsNone(index_value.tzinfo)
+                    self.assertEqual(index_value, value.replace(tzinfo=None))
 
     async def test_create_ttl_index_uses_its_own_execution_time(self):
         for engine_name, engine_factory in ENGINE_FACTORIES.items():

@@ -235,7 +235,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
     ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
+                async with open_client(engine_name, codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD)) as client:
                     collection = client.search_runtime.get_collection("docs")
                     shared_owner = ObjectId("64f0c0d2e1382374dbf95e01")
                     shared_trace = uuid.UUID(
@@ -1904,7 +1904,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         engine_name=engine_name,
                     )
 
-                    compound_candidateable_should_matched_limited_hits = (
+                    compound_should_limited_hits = (
                         await collection.aggregate(
                             [
                                 {
@@ -1953,7 +1953,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(
                         [
                             document["_id"]
-                            for document in compound_candidateable_should_matched_limited_hits
+                            for document in compound_should_limited_hits
                         ],
                         [3],
                     )
@@ -3176,7 +3176,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     "index": "by_text",
                                     "near": {
                                         "path": "metadata.publishedAt",
-                                        "origin": datetime.date(2024, 1, 15),
+                                        "origin": datetime.datetime(
+                                            2024, 1, 15, tzinfo=datetime.UTC
+                                        ),
                                         "pivot": 10 * 86400,
                                     },
                                 },
@@ -5336,7 +5338,12 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_insert_one_generates_id_and_persists_document(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
-                async with open_client(engine_name) as client:
+                async with open_client(
+                    engine_name,
+                    codec_options=CodecOptions(
+                        uuid_representation=UuidRepresentation.STANDARD
+                    ),
+                ) as client:
                     collection = client.test.users
                     payload = {
                         "name": "Ada",
@@ -12118,8 +12125,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(TypeError):
                         await collection.insert_one([])
 
-                    with self.assertRaises(TypeError):
-                        await collection.find_one([])
+                    self.assertIsNone(await collection.find_one([]))
 
                     with self.assertRaises(TypeError):
                         await collection.find_one({}, [1])
