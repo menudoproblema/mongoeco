@@ -102,6 +102,10 @@ from tests.differential.semantic_command_let_cases import (
     SEED as COMMAND_LET_SEED,
     SEMANTIC_COMMAND_LET_CASES,
 )
+from tests.differential.semantic_command_shape_cases import (
+    SEED as COMMAND_SHAPE_SEED,
+    SEMANTIC_COMMAND_SHAPE_CASES,
+)
 from tests.differential.semantic_cursor_consumption_cases import (
     SEED as CURSOR_CONSUMPTION_SEED,
     SEMANTIC_CURSOR_CONSUMPTION_CASES,
@@ -330,6 +334,11 @@ class SemanticCorpus:
 
 
 SEMANTIC_CORPORA = {
+    "command_shape": SemanticCorpus(
+        "command-shape", "semantic_command_shape_cases",
+        COMMAND_SHAPE_SEED, SEMANTIC_COMMAND_SHAPE_CASES,
+        requires_standalone=True,
+    ),
     "index_information": SemanticCorpus(
         "index-information",
         "semantic_index_information_cases",

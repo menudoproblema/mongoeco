@@ -2738,3 +2738,31 @@ preexistentes registradas como seguimiento no se incorporan al alcance.
 No quedan obligaciones exigidas sin comprobar en O1–O8. No se ejecutan CI
 remota, push, tag ni publicación. Las secciones anteriores conservan la historia
 de cada candidato y no constituyen una segunda lista pendiente.
+
+
+## Seguimientos P2 — entrega independiente B1–B4
+
+Contrato autorizado en conversación: resolver las 32 formas retenidas de
+comandos raw y los dos workloads de coste, base `3fe96e42`. O1–O8/D05
+permanecen cerradas. No se incluyen ampliaciones P3. Se reutilizan owners,
+capturador/replay y runners; no se crea otro framework ni otro validador.
+
+| Bloque | Aceptación observable | Estado |
+| --- | --- | --- |
+| B1 | 32 formas dispuestas con fixture aislado, y dos workloads reproducibles de base congelada. | Cerrado |
+| B2 | Cero divergencias confirmadas pendientes del conjunto; código/familia/fase/diagnóstico/efectos y recuperación nativos 7/8/9, controles de API Python y todas las superficies soportadas. | Pendiente |
+| B3 | Causa medida y redundancia eliminada, resultados idénticos; tres tandas ABBA mejoran ambos workloads más que ruido A/A y no regresan controles fuera del ruido. | Pendiente |
+| B4 | Gates aplicables verdes, revisión, evidencia, commits semánticos y árbol limpio. | Pendiente |
+
+B1: se mantienen las 32 formas y se añaden 36 controles de reglas afectadas.
+Cada una se ejecuta aisladamente con namespace ausente, vacío y poblado: 204
+observaciones por servidor 7.0.43/8.0.32/9.0.2. El código 13 de listDatabases
+es una restricción de base admin, no un fallo de permisos; sus controles admin
+separan esa precedencia del tipo de nameOnly. La puntuación variable al cerrar
+la lista de tipos de dropIndexes se canonicaliza sin borrar/reordenar tipos.
+Se preservan las capturas históricas. La base inmutable falla 24 replays y pasa
+tres verificaciones de captura; los 287 módulos de su wheel son byte a byte los
+de `3fe96e42`. Ambos workloads de base conservan sus resultados BSON.
+El perfil distingue ordenación completa en demanda unitaria y recompilación
+por documento en residual Binary. Evidencia inicial con prefijo p2-b1 en el
+directorio existente; B2–B4 siguen abiertos.

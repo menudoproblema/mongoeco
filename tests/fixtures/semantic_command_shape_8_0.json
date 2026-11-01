@@ -1,0 +1,4082 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "8.0",
+  "cases": {
+    "semantic_command_shape_contract": {
+      "absent/0": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "Must specify at least one index to create",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/1": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'distinctCommandRequest.key' is the wrong type 'int', expected type 'string'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/2": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'dropIndexes.index' is the wrong type 'double', expected types '[string]'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/3": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "13"
+        },
+        "code_name": "Unauthorized",
+        "message": "listDatabases may only be run against the admin database.",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/4": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'listCollections.nameOnly' is the wrong type 'int', expected type 'bool'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/5": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'listCollections.authorizedCollections' is the wrong type 'int', expected type 'bool'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/6": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/7": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/8": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "Scale factor must be greater than zero",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/9": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'scale' value must be >= 1, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/10": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/11": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/12": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/13": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/14": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/15": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Field 'allowDiskUse' should be a boolean value, but found: int",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/16": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'aggregate.let' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/17": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'explain.explain' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/18": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'explain.verbosity' is the wrong type 'int', expected type 'string'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/19": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/20": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/21": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field sortto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/22": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.query' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/23": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40352"
+        },
+        "code_name": "Location40352",
+        "message": "FieldPath cannot be constructed with empty string",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/24": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/25": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        },
+        "code_name": "NamespaceNotFound",
+        "message": "ns does not exist: <db>.events",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/26": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        },
+        "code_name": "NamespaceNotFound",
+        "message": "Collection '<db>.events' does not exist to validate.",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/27": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "115"
+        },
+        "code_name": "CommandNotSupported",
+        "message": "Running the validate command with { background: true } is not supported in standalone mode",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/28": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'findAndModify.let' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/29": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Either an update or remove=true must be specified",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/30": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40352"
+        },
+        "code_name": "Location40352",
+        "message": "FieldPath cannot be constructed with empty string",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/31": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/distinct-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/drop-valid": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "26"
+        },
+        "code_name": "NamespaceNotFound",
+        "message": "ns not found <db>.events",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/list-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/databases-admin-bool": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/databases-admin-number": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/count-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/dbstats-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/collstats-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/insert-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "2"
+              },
+              "v": {
+                "$numberInt": "2"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/update-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/delete-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/aggregate-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/explain-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/privileges-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/find-multiple": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/aggregate-multiple": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/modify-valid": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/projection-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/sort-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field sortto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/query-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/key-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        },
+        "code_name": "IDLFailedToParse",
+        "message": "BSON field 'distinctCommandRequest.key' is missing but a required field",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/nameOnly-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/privileges-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/dbscale-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/collscale-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/batch-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/cursor-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/disk-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Field 'allowDiskUse' should be a boolean value, but found: null",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/let-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/explain-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        },
+        "code_name": "IDLFailedToParse",
+        "message": "BSON field 'explain.explain' is missing but a required field",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/verbosity-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/insert-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/update-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/delete-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "absent/modify-null": {
+        "ok": true,
+        "state": {
+          "exists": false,
+          "rows": [],
+          "indexes": []
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/0": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "Must specify at least one index to create",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/1": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'distinctCommandRequest.key' is the wrong type 'int', expected type 'string'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/2": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'dropIndexes.index' is the wrong type 'double', expected types '[string]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/3": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "13"
+        },
+        "code_name": "Unauthorized",
+        "message": "listDatabases may only be run against the admin database.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/4": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'listCollections.nameOnly' is the wrong type 'int', expected type 'bool'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/5": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'listCollections.authorizedCollections' is the wrong type 'int', expected type 'bool'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/6": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/7": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/8": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "Scale factor must be greater than zero",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/9": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'scale' value must be >= 1, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/10": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/11": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/12": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/13": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/14": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/15": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Field 'allowDiskUse' should be a boolean value, but found: int",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/16": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'aggregate.let' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/17": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'explain.explain' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/18": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'explain.verbosity' is the wrong type 'int', expected type 'string'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/19": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/20": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/21": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field sortto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/22": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.query' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/23": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40352"
+        },
+        "code_name": "Location40352",
+        "message": "FieldPath cannot be constructed with empty string",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/24": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/25": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/26": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/27": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "115"
+        },
+        "code_name": "CommandNotSupported",
+        "message": "Running the validate command with { background: true } is not supported in standalone mode",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/28": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'findAndModify.let' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/29": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Either an update or remove=true must be specified",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/30": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40352"
+        },
+        "code_name": "Location40352",
+        "message": "FieldPath cannot be constructed with empty string",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/31": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/distinct-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/drop-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/list-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/databases-admin-bool": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/databases-admin-number": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/count-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/dbstats-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/collstats-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/insert-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "2"
+              },
+              "v": {
+                "$numberInt": "2"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/update-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/delete-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/aggregate-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/explain-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/privileges-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/find-multiple": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/aggregate-multiple": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/modify-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/projection-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/sort-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field sortto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/query-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/key-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        },
+        "code_name": "IDLFailedToParse",
+        "message": "BSON field 'distinctCommandRequest.key' is missing but a required field",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/nameOnly-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/privileges-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/dbscale-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/collscale-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/batch-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/cursor-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/disk-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Field 'allowDiskUse' should be a boolean value, but found: null",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/let-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/explain-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        },
+        "code_name": "IDLFailedToParse",
+        "message": "BSON field 'explain.explain' is missing but a required field",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/verbosity-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/insert-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/update-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/delete-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "empty/modify-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/0": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "Must specify at least one index to create",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/1": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'distinctCommandRequest.key' is the wrong type 'int', expected type 'string'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/2": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'dropIndexes.index' is the wrong type 'double', expected types '[string]'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/3": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "13"
+        },
+        "code_name": "Unauthorized",
+        "message": "listDatabases may only be run against the admin database.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/4": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'listCollections.nameOnly' is the wrong type 'int', expected type 'bool'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/5": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'listCollections.authorizedCollections' is the wrong type 'int', expected type 'bool'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/6": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'skip' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/7": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/8": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "Scale factor must be greater than zero",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/9": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'scale' value must be >= 1, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/10": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/11": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/12": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/13": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "2"
+        },
+        "code_name": "BadValue",
+        "message": "BSON field 'batchSize' value must be >= 0, actual value '-1'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/14": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/15": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Field 'allowDiskUse' should be a boolean value, but found: int",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/16": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'aggregate.let' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/17": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'explain.explain' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/18": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'explain.verbosity' is the wrong type 'int', expected type 'string'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/19": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/20": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/21": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field sortto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/22": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'count.query' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/23": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40352"
+        },
+        "code_name": "Location40352",
+        "message": "FieldPath cannot be constructed with empty string",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/24": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/25": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/26": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/27": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "115"
+        },
+        "code_name": "CommandNotSupported",
+        "message": "Running the validate command with { background: true } is not supported in standalone mode",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/28": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "BSON field 'findAndModify.let' is the wrong type 'int', expected type 'object'",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/29": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "9"
+        },
+        "code_name": "FailedToParse",
+        "message": "Either an update or remove=true must be specified",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/30": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40352"
+        },
+        "code_name": "Location40352",
+        "message": "FieldPath cannot be constructed with empty string",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/31": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "16"
+        },
+        "code_name": "InvalidLength",
+        "message": "Write batch sizes must be between 1 and 100000. Got 0 operations.",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/distinct-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/drop-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/list-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/databases-admin-bool": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/databases-admin-number": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/count-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/dbstats-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/collstats-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/insert-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "_id": {
+                "$numberInt": "2"
+              },
+              "v": {
+                "$numberInt": "2"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/update-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "2"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/delete-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/aggregate-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/explain-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/privileges-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/find-multiple": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/aggregate-multiple": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/modify-valid": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "2"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/projection-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field projectionto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/sort-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Expected field sortto be of type object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/query-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/key-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        },
+        "code_name": "IDLFailedToParse",
+        "message": "BSON field 'distinctCommandRequest.key' is missing but a required field",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/nameOnly-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/privileges-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/dbscale-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/collscale-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/batch-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/cursor-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "cursor field must be missing or an object",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/disk-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "14"
+        },
+        "code_name": "TypeMismatch",
+        "message": "Field 'allowDiskUse' should be a boolean value, but found: null",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/let-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/explain-null": {
+        "ok": false,
+        "family": "OperationFailure",
+        "code": {
+          "$numberInt": "40414"
+        },
+        "code_name": "IDLFailedToParse",
+        "message": "BSON field 'explain.explain' is missing but a required field",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/verbosity-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/insert-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/update-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/delete-null": {
+        "ok": false,
+        "family": "TypeError",
+        "code": null,
+        "code_name": null,
+        "message": "'NoneType' object is not iterable",
+        "phase": "invoke",
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "1"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      },
+      "populated/modify-null": {
+        "ok": true,
+        "state": {
+          "exists": true,
+          "rows": [
+            {
+              "_id": {
+                "$numberInt": "1"
+              },
+              "v": {
+                "$numberInt": "2"
+              }
+            }
+          ],
+          "indexes": [
+            "_id_"
+          ]
+        },
+        "recovery": {
+          "$numberDouble": "1.0"
+        }
+      }
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "8.0.32",
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "modules": [],
+      "allocator": "tcmalloc-google",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "8"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "32"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "OpenSSL 3.0.13 30 Jan 2024",
+        "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+      },
+      "buildEnvironment": {
+        "distmod": "ubuntu2404",
+        "distarch": "aarch64",
+        "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/aarch64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/aarch64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=armv8.2-a -mtune=generic -Werror -ffunction-sections",
+        "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/aarch64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+        "target_arch": "aarch64",
+        "target_os": "linux",
+        "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.19.0",
+    "python": "3.14.5",
+    "hello": {
+      "isWritablePrimary": true,
+      "topologyVersion": {
+        "processId": {
+          "$oid": "6ae7441c1bc883d8da284243"
+        },
+        "counter": {
+          "$numberLong": "0"
+        }
+      },
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "maxMessageSizeBytes": {
+        "$numberInt": "48000000"
+      },
+      "maxWriteBatchSize": {
+        "$numberInt": "100000"
+      },
+      "localTime": {
+        "$date": {
+          "$numberLong": "1793541703359"
+        }
+      },
+      "logicalSessionTimeoutMinutes": {
+        "$numberInt": "30"
+      },
+      "connectionId": {
+        "$numberInt": "53"
+      },
+      "minWireVersion": {
+        "$numberInt": "0"
+      },
+      "maxWireVersion": {
+        "$numberInt": "25"
+      },
+      "readOnly": false,
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    }
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_command_shape_cases.py",
+    "sha256": "aa3d839867fc7fc2dcbee5d850db8e16384a865906ca86ec78b878d802ad39d8",
+    "topology": "standalone"
+  },
+  "case_manifests": [
+    {
+      "name": "semantic_command_shape_contract",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "selector": "semantic_command_shape_contract"
+    }
+  ]
+}
