@@ -2502,3 +2502,19 @@ vista de las APIs directas, no equivalencia completa de todo el catálogo wire.
 La matriz previa de 12 celdas termina verde y queda retenida con prefijo
 d05-prior-kit-. Acredita su wheel 29a485d7, anterior a los últimos arreglos; no
 se usa como aceptación final del runtime posterior. O6 permanece abierta.
+
+
+### O5 — Fixtures de paridad y contrato BSON público
+
+Pasan 90 pruebas de paridad entre motores con 16 subtests. Los fixtures que
+escriben UUID eligen STANDARD explícitamente y conservan sus comparaciones;
+no se altera el default UNSPECIFIED. $count sobre entrada vacía conserva la
+salida nativa vacía. Los dos casos de undefined siguen comprobando sus resultados
+7.0/8.0, pero siembran ese tipo histórico por el SPI, sin confundirlo con una
+entrada pública encodable por el SDK. No se añade una dependencia bson a ese
+módulo de pruebas ni un helper para eludir la frontera pública.
+
+El control de los 79 padres restantes, posterior a las correcciones causales,
+termina con 77 fallos contando subtests, 48 padres correctos y 40 subtests
+correctos. Se continúa atribuyendo ese conjunto; no es una aceptación global
+ni modifica el umbral de cobertura o las ocho obligaciones.

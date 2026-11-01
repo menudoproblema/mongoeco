@@ -14,6 +14,8 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.types import (
     Binary,
+    CodecOptions,
+    UuidRepresentation,
     DBRef,
     DeleteOne,
     Decimal128,
@@ -32,7 +34,10 @@ from tests.support import open_client
 
 class EngineParityTests(unittest.IsolatedAsyncioTestCase):
     async def _collect_find(self, engine_name: str, filter_spec, *, sort=None, skip=0, limit=None, projection=None):
-        async with open_client(engine_name) as client:
+        async with open_client(
+            engine_name,
+            codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+        ) as client:
             collection = client.get_database("db").get_collection("events")
             await collection.insert_one(
                 {
@@ -297,7 +302,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         created_at = datetime.datetime(2025, 1, 2, 3, 4, 5)
         results: dict[str, dict[str, list[str]]] = {}
         for engine_name in ("memory", "sqlite"):
-            async with open_client(engine_name) as client:
+            async with open_client(
+                engine_name,
+                codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+            ) as client:
                 collection = client.get_database("db").get_collection("events")
                 await collection.insert_one({"_id": "bool", "v": True})
                 await collection.insert_one({"_id": "number", "v": 1})
@@ -345,12 +353,19 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         for engine_factory in (MemoryEngine, SQLiteEngine):
             for dialect in (MONGODB_DIALECT_70, MONGODB_DIALECT_80):
                 with self.subTest(engine=engine_factory.__name__, dialect=dialect.key):
-                    async with AsyncMongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                    backend = engine_factory()
+                    async with AsyncMongoClient(backend, mongodb_dialect=dialect) as client:
                         collection = client.get_database("db").get_collection("events")
                         await collection.insert_one({"_id": "null", "v": None})
-                        await collection.insert_one({"_id": "undefined", "v": UNDEFINED})
+                        # Legacy undefined is a stored BSON value, not an SDK
+                        # encoder input. Seed it through the engine SPI.
+                        await backend.insert_document(
+                            "db", "events", {"_id": "undefined", "v": UNDEFINED}
+                        )
                         await collection.insert_one({"_id": "array-null", "v": ["x", None]})
-                        await collection.insert_one({"_id": "array-undefined", "v": ["x", UNDEFINED]})
+                        await backend.insert_document(
+                            "db", "events", {"_id": "array-undefined", "v": ["x", UNDEFINED]}
+                        )
                         await collection.insert_one({"_id": "missing"})
 
                         eq_ids = [
@@ -374,14 +389,19 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         for engine_factory in (MemoryEngine, SQLiteEngine):
             for dialect in (MONGODB_DIALECT_70, MONGODB_DIALECT_80):
                 with self.subTest(engine=engine_factory.__name__, dialect=dialect.key):
-                    async with AsyncMongoClient(engine_factory(), mongodb_dialect=dialect) as client:
+                    backend = engine_factory()
+                    async with AsyncMongoClient(backend, mongodb_dialect=dialect) as client:
                         database = client.get_database("db")
                         events = database.get_collection("events")
                         users = database.get_collection("users")
 
                         await events.insert_one({"_id": "event-null", "tenant": None})
                         await users.insert_one({"_id": "user-null", "tenant": None})
-                        await users.insert_one({"_id": "user-undefined", "tenant": UNDEFINED})
+                        # Preserve the legacy stored type without claiming the
+                        # SDK accepts an UndefinedType constructor.
+                        await backend.insert_document(
+                            "db", "users", {"_id": "user-undefined", "tenant": UNDEFINED}
+                        )
 
                         documents = await events.aggregate(
                             [
@@ -426,7 +446,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
     async def test_mixed_type_sort_with_bytes_matches_in_memory_and_sqlite(self):
         results: dict[str, list[str]] = {}
         for engine_name in ("memory", "sqlite"):
-            async with open_client(engine_name) as client:
+            async with open_client(
+                engine_name,
+                codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+            ) as client:
                 collection = client.get_database("db").get_collection("events")
                 await collection.insert_one({"_id": "null", "v": None})
                 await collection.insert_one({"_id": "number", "v": 1})
@@ -448,7 +471,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         results: dict[str, list[str]] = {}
         target = uuid.UUID("12345678-1234-5678-1234-567812345678")
         for engine_name in ("memory", "sqlite"):
-            async with open_client(engine_name) as client:
+            async with open_client(
+                engine_name,
+                codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+            ) as client:
                 collection = client.get_database("db").get_collection("events")
                 await collection.insert_one({"_id": "bytes0", "v": b"\x00"})
                 await collection.insert_one({"_id": "uuid", "v": target})
@@ -466,7 +492,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         object_id = ObjectId("507f1f77bcf86cd799439011")
         results: dict[str, dict[str, object]] = {}
         for engine_name in ("memory", "sqlite"):
-            async with open_client(engine_name) as client:
+            async with open_client(
+                engine_name,
+                codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+            ) as client:
                 collection = client.get_database("db").get_collection("events")
                 await collection.insert_one({"_id": "array-oid", "v": [object_id]})
                 await collection.insert_one({"_id": "uuid", "v": target})
@@ -823,7 +852,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
     async def test_pure_sql_mixed_scalar_sort_including_uuid_matches_in_memory_and_sqlite(self):
         results: dict[str, tuple[list[str], list[str]]] = {}
         for engine_name in ("memory", "sqlite"):
-            async with open_client(engine_name) as client:
+            async with open_client(
+                engine_name,
+                codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+            ) as client:
                 collection = client.get_database("db").get_collection("events")
                 await collection.insert_one({"_id": "null", "mixed": None})
                 await collection.insert_one({"_id": "number", "mixed": 7})
@@ -2783,7 +2815,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 results[engine_name] = await collection.aggregate(pipeline).to_list()
 
         self.assertEqual(results["memory"], results["sqlite"])
-        self.assertEqual(results["memory"], [{"total": 0}])
+        self.assertEqual(results["memory"], [])
 
     async def test_aggregate_lookup_with_let_and_pipeline_align_in_memory_and_sqlite(self):
         results: dict[str, list[dict]] = {}
