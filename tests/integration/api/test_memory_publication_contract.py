@@ -332,7 +332,7 @@ def test_changes_cannot_bypass_publication_or_target_another_session():
 
 @pytest.mark.parametrize("action", ["create", "drop", "rename", "index"])
 @pytest.mark.parametrize("finish", ["commit", "abort"])
-def test_catalog_only_transaction_tracks_writes_without_outbox(action, finish):
+def test_catalog_transaction_tracks_writes_and_namespace_effects(action, finish):
     async def exercise():
         engine = MemoryEngine()
         async with AsyncMongoClient(engine) as client:
@@ -354,7 +354,15 @@ def test_catalog_only_transaction_tracks_writes_without_outbox(action, finish):
                     )
                 state = engine._mvcc_states[session.session_id]
                 assert state.has_writes
-                assert state.pending_changes == []
+                expected_effects = {
+                    "create": [],
+                    "index": [],
+                    "drop": ["drop", "invalidate", "dropDatabase", "invalidate"],
+                    "rename": ["rename", "invalidate"],
+                }
+                assert [
+                    change["operation_type"] for change in state.pending_changes
+                ] == expected_effects[action]
                 if finish == "commit":
                     session.commit_transaction()
                 else:

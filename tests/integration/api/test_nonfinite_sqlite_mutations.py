@@ -65,13 +65,16 @@ def test_existing_nonfinite_payloads_and_new_operands_survive_classic_writes(
             (json_dumps_compact(DocumentCodec.encode({"_id": "a", **payload})),),
         )
     original_identity = physical_identity(path)
+    # Historical tagged storage remains readable. New public writes use the
+    # public BSON value, never a private runtime wrapper as a driver operand.
+    public_payload = DocumentCodec.to_public(payload)
 
     def sync():
         with MongoClient(
             SQLiteEngine(str(path)), mongodb_dialect=target, pymongo_profile=profile
         ) as client:
             collection = client.existing.items
-            result = collection.update_one({"_id": "b"}, {"$set": payload})
+            result = collection.update_one({"_id": "b"}, {"$set": public_payload})
             assert result.matched_count == result.modified_count == 1
             for identifier in ("a", "b"):
                 expected = {"_id": identifier, **payload}
@@ -93,7 +96,7 @@ def test_existing_nonfinite_payloads_and_new_operands_survive_classic_writes(
             SQLiteEngine(str(path)), mongodb_dialect=target, pymongo_profile=profile
         ) as client:
             collection = client.existing.items
-            result = await collection.update_one({"_id": "b"}, {"$set": payload})
+            result = await collection.update_one({"_id": "b"}, {"$set": public_payload})
             assert result.matched_count == result.modified_count == 1
             for identifier in ("a", "b"):
                 expected = {"_id": identifier, **payload}

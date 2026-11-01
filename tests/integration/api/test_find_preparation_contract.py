@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-import mongoeco.api._async.collection as collection_module
+import mongoeco.api._async._collection_reads as collection_reads
 
 from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.api import operations
@@ -39,7 +39,7 @@ def preparation_counts():
             "compile_find_operation",
             wraps=operations.compile_find_operation,
         ) as compile_operation,
-        patch.object(collection_module, "compile_find_operation", compile_operation),
+        patch.object(collection_reads, "compile_find_operation", compile_operation),
         patch.object(
             operations.FindOperation,
             "bind",
@@ -178,7 +178,7 @@ def test_cursor_mutation_invalidates_only_its_preparation(
     asyncio.run(exercise())
 
 
-def test_clone_has_its_own_context_and_rewind_retains_existing_clock(engine):
+def test_clone_and_rewind_start_independent_execution_contexts(engine):
     async def exercise():
         async with AsyncMongoClient(engine) as client:
             collection = client.test.records
@@ -195,9 +195,12 @@ def test_clone_has_its_own_context_and_rewind_retains_existing_clock(engine):
                 result = await cursor.to_list()
                 assert len(await clone.to_list()) == clone_limit
                 cursor.rewind()
-                assert cursor._as_operation() is original
+                rewound = cursor._as_operation()
+                assert rewound is not original
+                assert rewound.context is not original.context
+                assert rewound.context.operation_id != original.context.operation_id
                 assert await cursor.to_list() == result
-                assert tuple(counter.call_count for counter in counts) == (0, 0, 3, 3)
+                assert tuple(counter.call_count for counter in counts) == (1, 1, 3, 3)
 
     asyncio.run(exercise())
 
@@ -228,13 +231,21 @@ def test_bound_execution_freezes_input_bindings_clock_and_session(engine):
                 selector["$expr"]["$lt"][1] = initial - timedelta(days=10)
                 projection["created"] = 1
                 bindings["threshold"]["value"] = 0
-                # A clone starts a new operation context; rewind retains the
-                # original cursor's bound clock as required by its contract.
+                # The bound execution retains its inputs; clone snapshots the
+                # current caller inputs and rewind prepares another execution.
+                # Native lifecycle witnesses live in semantic_bson_request_cases.
                 clone = cursor.clone()
                 assert await cursor.to_list() == [{"_id": 1}]
-                assert await clone.to_list() == [{"_id": 1}, {"_id": 2}]
+                assert await clone.to_list() == []
+                assert clone._as_operation().context.expressions.bindings == {
+                    "threshold": {"value": 0}
+                }
                 cursor.rewind()
-                assert await cursor.to_list() == [{"_id": 1}]
+                assert await cursor.to_list() == []
+                assert cursor._as_operation().context.expressions.now == now[0].replace(
+                    tzinfo=None
+                )
+                assert cursor._as_operation().context.session is session
                 assert operation.context.session is session
                 assert operation.context.expressions.now == initial.replace(tzinfo=None)
                 assert operation.context.expressions.bindings == {

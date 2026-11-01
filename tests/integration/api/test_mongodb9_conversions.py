@@ -21,6 +21,7 @@ from tests.differential.version_delta_cases import VERSION_DELTA_CASES
 from tests.integration.api.test_mongodb9_aggregation_validation import DIALECT9
 
 
+_UNRECOGNIZED_STAGE_CODE = 40324
 DEFERRED = {
     "convert_json_array",
     "convert_json_object",
@@ -169,7 +170,7 @@ def test_conversion_matches_real_golden(backend, surface, case):
     ],
 )
 @pytest.mark.parametrize("nested", [False, True])
-def test_deferred_extensions_fail_before_empty_pipeline_or_write(
+def test_unsupported_out_precedes_conversion_in_empty_pipeline_or_write(
     backend, surface, extension, nested
 ):
     spec = {"input": "10", "to": "int", "onError": "hidden-error", **extension}
@@ -180,15 +181,21 @@ def test_deferred_extensions_fail_before_empty_pipeline_or_write(
     engine = MemoryEngine() if backend == "memory" else SQLiteEngine()
     if surface == "sync":
         with MongoClient(engine, mongodb_dialect=DIALECT9) as client:
-            with pytest.raises(OperationFailure, match="supported subset"):
+            with pytest.raises(
+                OperationFailure, match=r"Unrecognized pipeline stage name: '\$out'"
+            ) as caught:
                 client.test.records.aggregate(pipeline)
+            assert caught.value.code == _UNRECOGNIZED_STAGE_CODE
             assert "output" not in client.test.list_collection_names()
     else:
 
         async def exercise():
             async with AsyncMongoClient(engine, mongodb_dialect=DIALECT9) as client:
-                with pytest.raises(OperationFailure, match="supported subset"):
+                with pytest.raises(
+                    OperationFailure, match=r"Unrecognized pipeline stage name: '\$out'"
+                ) as caught:
                     client.test.records.aggregate(pipeline)
+                assert caught.value.code == _UNRECOGNIZED_STAGE_CODE
                 assert "output" not in await client.test.list_collection_names()
 
         asyncio.run(exercise())

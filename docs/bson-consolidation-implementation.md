@@ -2346,3 +2346,46 @@ Esta excepción explícita afecta solo a metadatos generados; no se cambian
 capturas nativas ni observadores para acomodar un fallo. Los 427 protegidos
 permanecían intactos en las aceptaciones O1/O2, anteriores a esta conciliación.
 O7 continúa abierta hasta completar el conjunto de gates exigido.
+
+
+### O5–O7 — Primer gate integrado y conciliación de regresiones
+
+O5 sigue abierta. El [primer global](evidence/bson-consolidation-implementation/bson-grammar-context/d05-global.txt.gz)
+usa la wheel a8a81f0e y termina con 366 fallos, 57.366 correctas, 482 skips,
+253 warnings, 14.388 subtests correctos y cobertura 98,56%: no supera el 99%.
+Es diagnóstico anterior al arreglo O2, no aceptación final. Se retienen los
+[275 padres fallidos, incluidos subtests](evidence/bson-consolidation-implementation/bson-grammar-context/d05-all-failed-nodes.json.gz).
+Sobre la wheel 8cede116 se repiten solamente esos padres: el primer grupo
+produce 284 fallos/2.452 subtests correctos; los 39 restantes producen 82 fallos
+con 39 padres correctos. Estos resultados tampoco se aceptan como cierre.
+
+Dos correcciones de tests conservan garantías ya contrastadas, sin tocar
+producción ni goldens: el spy de compile_find_operation sigue su owner
+_collection_reads; clone/rewind siguen el contrato nativo de bson_request
+(snapshot de entradas actuales y contexto nuevo para otra ejecución), sin
+perder la inmutabilidad de la ejecución ya ligada. La prueba de $out conserva
+rechazo antes de escribir y ahora comprueba código 40324 y el diagnóstico
+aceptado, en lugar del texto retirado. Ese bloque pasa 765 pruebas instaladas.
+
+Otras 152 pruebas instaladas conservan NaN histórico al reabrir SQLite y
+transacciones/publicación. Las nuevas escrituras usan el valor BSON público,
+conservando el wrapper privado exclusivamente en el payload histórico inyectado.
+Drop/rename comprueban sus efectos DDL e invalidate ya aceptados, en lugar de
+exigir una cola vacía; create/index conservan su ausencia de efectos. No se
+normaliza el observador para hacer pasar un resultado.
+
+Pruebas independientes ya terminadas sobre el runtime 8cede116: 66 propiedades
+profundas; 149 pruebas/2 subtests de reapertura, UUID previo, proyecciones,
+Search y coste determinista; 13 pruebas mínimas con SDK realmente ausente;
+smokes wheel/sdist/pytest-extra; typing y canario SPI v2. Ambos smokes benchmark
+size=250, warmup=0, repetitions=1 (search/vector) terminan correctamente. Son
+smokes, no una promesa de ausencia de sobrecoste. Los logs están archivados aquí
+con prefijo d05; los JSON de benchmarks conservan entorno, fuentes y métricas.
+
+El primer intento de imports mínimos falló porque sus hijos no heredaban las
+dependencias del intérprete -S. El segundo mostró que esos tests limpian
+PYTHONPATH y cargaban una instalación anterior. La instalación real del wheel en
+minimal313 cierra el gate con 13 pruebas correctas, sin modificar su lógica.
+Un unittest global con ese problema se interrumpe limpiamente (130) y no se
+acepta. La .venv principal queda instalada con el candidato para el gate final.
+La matriz del kit permanece activa; sus tres primeras celdas 3.13 pasan.
