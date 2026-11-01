@@ -1,0 +1,16 @@
+import json,subprocess
+from pathlib import Path
+roots={label:Path(Path('/tmp/mongoeco-write-response-native'+suffix+'-location.txt').read_text().strip()) for label,suffix in [('initial','-initial'),('positive','-positive'),('command','-command'),('frozen','')]}
+fixtures=[];records=[]
+for label,root in roots.items():
+ for p in sorted(root.glob('*/fixture.json')):
+  d=json.loads(p.read_text());assert d['status']=='succeeded' and d['cleanup']['removed'] and d['cleanup']['volumes_removed'],p
+  assert (p.parent/'.fixture-owner').read_text()==d['owner'],p
+  fixtures.append({'round':label,'path':str(p),'status':d['status'],'owner_verified':True})
+  for kind,name in [('container',d['container_id'])]+[('volume',v) for v in d['anonymous_volumes']]:
+   r=subprocess.run(['docker',kind,'inspect',name],capture_output=True,text=True)
+   assert r.returncode and ('no such' in r.stderr.lower() or 'not found' in r.stderr.lower()),(kind,name,r.stderr)
+   records.append({'kind':kind,'name':name,'absent':True,'fixture':str(p)})
+assert len(fixtures)==12 and len(records)==36
+Path('/tmp/mongoeco-write-response-resources.json').write_text(json.dumps({'fixtures':fixtures,'per_id_absence':records,'retention':'All four rounds retain distinct manifests and exclusive ownership claims; no overwritten fixture directory.'},indent=2)+'\n')
+print({'retained_manifests':len(fixtures),'resources_absent':len(records)})

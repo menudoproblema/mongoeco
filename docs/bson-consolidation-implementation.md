@@ -715,7 +715,7 @@ solo owner en el plan.
 - Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
-- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El corte posterior `8e261c7a` acepta [proyecciones y contexto](evidence/bson-consolidation-implementation/find-projections/README.md): el replay instalado queda sin fallos y esa aceptación conserva dos tests antiguos de batching rojos. `dbe8257f` acepta después batching y cierre de spill, con 10.660 replay y 2.457/4.709 subtests de cohorte sin fallos; el estado de aquella ejecución no describe automáticamente el checkout actual. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. `d5bdadb8` entrega el default UUID coordinado y `b29e9bf1` omite ausencia en distinct. Continúan positivos/batching y otros contextos D06/B08. UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
+- B07: lecturas, inserciones, mutaciones, bulk clásico y comandos públicos conservan sus aceptaciones. `7524e39` añade [frames cliente de creación de catálogo](#b07--frames-cliente-de-creación-de-catálogo), opciones/contexto y respuesta metadata. El corte posterior `8e261c7a` acepta [proyecciones y contexto](evidence/bson-consolidation-implementation/find-projections/README.md): el replay instalado queda sin fallos y esa aceptación conserva dos tests antiguos de batching rojos. `dbe8257f` acepta después batching y cierre de spill, con 10.660 replay y 2.457/4.709 subtests de cohorte sin fallos; el estado de aquella ejecución no describe automáticamente el checkout actual. `c715ae7` añade las cuatro admisiones de índices y los campos observables de la respuesta de retirada; `d9c9c80` añade las seis entradas de listados/validate, lectores fuente preparados y controles de flags. `b938556d` añade drop/rename y `2723fb28` acepta las cinco entradas Search del censo. `d5bdadb8` entrega el default UUID coordinado y `b29e9bf1` omite ausencia en distinct. `05b3f655` acepta DTOs/sobres y diagnóstico de escritura; continúan fallos de constructores/setters en respuestas y otros contextos D06/B08. UNSPECIFIED es el default global; STANDARD/legacy siguen disponibles explícitamente y el [plan activo](bson-semantics-consolidation-plan.md#b07--admisión-en-la-fase-y-el-lote-correctos) conserva la secuencia.
 
 La [revisión 17](evidence/bson-consolidation-review/review17/README.md), sobre
 `3c4032b`, confirma que el adjunto repite la autocrítica anterior. Actualiza el
@@ -2149,3 +2149,34 @@ tres referencias nativas; ahora pasan en la cohorte instalada.
 respuestas/fábricas/callbacks. El pipeline parcial que reconstruye su fuente
 desde el cursor completo sigue siendo sospecha D06 por inspección, sin testigo
 que demuestre divergencia. Resto D06, H53, decisión D07 y D05 siguen abiertos.
+
+
+## B07 — DTOs, sobres y diagnóstico de escritura
+
+✅ Cerrado el corte en `05b3f655`, con [aceptación y evidencia](evidence/bson-consolidation-implementation/write-responses/README.md).
+El DTO común de comandos conserva orden n/writeErrors/upserted/nModified/ok,
+omitiendo solo campos ausentes. Los DTOs públicos y bulk_api_result ya correctos
+se reutilizan. El guard clásico añade razón semántica sin perder su WriteError;
+la política de operación resuelve el prefijo nativo de update/findAndModify.
+El error findAndModify usa el materializador de comandos, conserva la fábrica
+y evita TypeDecoders ajenos al subtree del error. Diagnóstico y fallback
+conservan la secuencia de metadatos del sobre antes de su contexto.
+
+- MongoDB real standalone 7.0.43/8.0.32/9.0.2: cuatro acciones/95 observaciones
+  por versión, cinco perfiles de codecs/fábricas, captura/check exactos en los
+  campos estables; hello mantiene los datos variables. Casos con error y upsert
+  simultáneos evitan aceptar un orden correcto solo en respuestas simples.
+- Baseline instalada: 48 fallos/51 correctas. Focal checkout: 99 correctas.
+  Wheel final de 287 módulos: 10.759 replay, 2.457 de cohorte/4.709 subtests,
+  12.068 de identidad integrada y 53 de identidad del núcleo, todo correcto.
+- SDK-free real Python 3.13.13: 570 observaciones de los cinco perfiles con
+  cuerpos de observación intactos; Int64 se vincula al int portable y no hay
+  especímenes Int64/Code en ese corpus. No se acredita su hook/constructor SDK.
+  API 18/13 subtests, typing y ratchet correctos. Los 415 archivos protegidos
+  están intactos. Los 36 recursos de 12 manifests y claims retenidos están
+  ausentes por ID, sin sobrescritura de evidencia.
+
+→ Sigue B07 unidad 5: constructor/setter que falla en respuestas de escritura,
+comandos y findAndModify, con/sin registry; observar fase, efectos previos y
+estado ya confirmado, sin asumir rollback por un fallo de decoder. El resto
+D06, pipeline parcial aún no reproducido, H53, decisión D07 y D05 siguen abiertos.

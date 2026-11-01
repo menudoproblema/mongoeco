@@ -1,0 +1,3 @@
+updated tests/fixtures/semantic_write_response_9_0.json
+updated /var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-write-response-native-zqhmi_kg/9.0/check.json
+verified 3 native cases against tests/fixtures/semantic_write_response_9_0.json

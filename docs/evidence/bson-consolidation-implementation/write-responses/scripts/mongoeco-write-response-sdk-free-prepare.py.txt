@@ -1,0 +1,5 @@
+import json
+from pathlib import Path
+from tests.differential._real_parity_base import _decode_capture
+refs={v:_decode_capture(Path(f'tests/fixtures/semantic_write_response_{v.replace(".","_")}.json').read_text())['cases'] for v in ('7.0','8.0','9.0')}
+Path('/tmp/mongoeco-write-response-sdk-free-expected.json').write_text(json.dumps(refs))
