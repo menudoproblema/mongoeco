@@ -142,7 +142,7 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(_projection_flag_default(False), 0)
         self.assertEqual(_projection_flag_default(1), 1)
         self.assertEqual(_projection_flag_default(0), 0)
-        self.assertIsNone(_projection_flag_default(2))
+        self.assertEqual(_projection_flag_default(2), 1)
         self.assertEqual(
             _sort_update_path_items_default({"10": "c", "2": "b", "a": "z"}),
             [("2", "b"), ("10", "c"), ("a", "z")],
@@ -361,6 +361,9 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(AUTO_INSTALLED_PYMONGO_PROFILE, 'auto-installed')
         self.assertEqual(STRICT_AUTO_INSTALLED_PYMONGO_PROFILE, 'strict-auto-installed')
         self.assertEqual(MONGODB_DIALECT_HOOK_NAMES, (
+            'bounded_sort_reports_eof',
+            'aggregate_initial_reports_eof',
+            'aggregate_window_reports_eof',
             'supports_dynamic_get_field',
             'supports_now_in_read_command_let',
             'uses_distinct_command_request_field_name',

@@ -7,7 +7,7 @@
 - `pymongo_strict_auto_profile`: `strict-auto-installed`
 
 ## Hooks
-- `mongodb_dialect`: `supports_dynamic_get_field`, `supports_now_in_read_command_let`, `uses_distinct_command_request_field_name`, `null_query_matches_undefined`, `rejects_empty_group_fields`, `validates_densify_partition_paths`, `validates_aggregation_syntax_early`, `documents_join_omits_collection_namespace`, `supports_array_index_variables`, `uses_extended_conversions`, `uses_server_densify_bounds`, `densify_equal_bounds_are_empty`, `densify_full_nonadvancing_step_errors`, `densify_empty_partition_generates_values`, `supports_date_range_windows`, `limits_trim_chars`, `rejects_cluster_time_expression`, `list_indexes_includes_simple_collation`, `rejects_unimplemented_wildcard_projection`, `merge_insert_preserves_incoming_field_order`
+- `mongodb_dialect`: `bounded_sort_reports_eof`, `aggregate_initial_reports_eof`, `aggregate_window_reports_eof`, `supports_dynamic_get_field`, `supports_now_in_read_command_let`, `uses_distinct_command_request_field_name`, `null_query_matches_undefined`, `rejects_empty_group_fields`, `validates_densify_partition_paths`, `validates_aggregation_syntax_early`, `documents_join_omits_collection_namespace`, `supports_array_index_variables`, `uses_extended_conversions`, `uses_server_densify_bounds`, `densify_equal_bounds_are_empty`, `densify_full_nonadvancing_step_errors`, `densify_empty_partition_generates_values`, `supports_date_range_windows`, `limits_trim_chars`, `rejects_cluster_time_expression`, `list_indexes_includes_simple_collation`, `rejects_unimplemented_wildcard_projection`, `merge_insert_preserves_incoming_field_order`
 - `pymongo_profile`: `supports_update_one_sort`, `rejects_reserved_aggregation_keywords`
 
 ## Supported Majors
@@ -19,7 +19,7 @@
 - `server_version`: `7.0`
 - `label`: `MongoDB 7.0`
 - `aliases`: `7`, `7.0`
-- `behavior_flags`: `{'uses_distinct_command_request_field_name': False, 'supports_now_in_read_command_let': True, 'supports_dynamic_get_field': False, 'null_query_matches_undefined': True, 'uses_server_densify_bounds': True, 'densify_equal_bounds_are_empty': False, 'densify_full_nonadvancing_step_errors': False, 'densify_empty_partition_generates_values': True, 'documents_join_omits_collection_namespace': False}`
+- `behavior_flags`: `{'bounded_sort_reports_eof': False, 'aggregate_initial_reports_eof': False, 'aggregate_window_reports_eof': False, 'uses_distinct_command_request_field_name': False, 'supports_now_in_read_command_let': True, 'supports_dynamic_get_field': False, 'null_query_matches_undefined': True, 'uses_server_densify_bounds': True, 'densify_equal_bounds_are_empty': False, 'densify_full_nonadvancing_step_errors': False, 'densify_empty_partition_generates_values': True, 'documents_join_omits_collection_namespace': False}`
 - `policy_spec`: `{'null_query_matches_undefined': True, 'expression_truthiness': 'mongo-default', 'projection_flag_mode': 'bool-or-binary-int', 'update_path_sort_mode': 'numeric-then-lex', 'equality_mode': 'bson-structural', 'comparison_mode': 'bson-total-order'}`
 - `capabilities`: `query.null_matches_undefined`
 - `query_field_operators`: `$all`, `$bitsAllClear`, `$bitsAllSet`, `$bitsAnyClear`, `$bitsAnySet`, `$cmp`, `$elemMatch`, `$eq`, `$exists`, `$geoIntersects`, `$geoWithin`, `$gt`, `$gte`, `$in`, `$lt`, `$lte`, `$mod`, `$ne`, `$near`, `$nearSphere`, `$nin`, `$not`, `$options`, `$regex`, `$size`, `$type`
@@ -35,7 +35,7 @@
 - `server_version`: `8.0`
 - `label`: `MongoDB 8.0`
 - `aliases`: `8`, `8.0`
-- `behavior_flags`: `{'uses_distinct_command_request_field_name': True, 'supports_now_in_read_command_let': False, 'supports_dynamic_get_field': True, 'null_query_matches_undefined': False, 'uses_server_densify_bounds': True, 'densify_equal_bounds_are_empty': True, 'densify_full_nonadvancing_step_errors': True, 'densify_empty_partition_generates_values': False, 'documents_join_omits_collection_namespace': True}`
+- `behavior_flags`: `{'bounded_sort_reports_eof': False, 'aggregate_initial_reports_eof': False, 'aggregate_window_reports_eof': False, 'uses_distinct_command_request_field_name': True, 'supports_now_in_read_command_let': False, 'supports_dynamic_get_field': True, 'null_query_matches_undefined': False, 'uses_server_densify_bounds': True, 'densify_equal_bounds_are_empty': True, 'densify_full_nonadvancing_step_errors': True, 'densify_empty_partition_generates_values': False, 'documents_join_omits_collection_namespace': True}`
 - `policy_spec`: `{'null_query_matches_undefined': False, 'expression_truthiness': 'mongo-default', 'projection_flag_mode': 'bool-or-binary-int', 'update_path_sort_mode': 'numeric-then-lex', 'equality_mode': 'bson-structural', 'comparison_mode': 'bson-total-order'}`
 - `capabilities`: _empty_
 - `query_field_operators`: `$all`, `$bitsAllClear`, `$bitsAllSet`, `$bitsAnyClear`, `$bitsAnySet`, `$cmp`, `$elemMatch`, `$eq`, `$exists`, `$geoIntersects`, `$geoWithin`, `$gt`, `$gte`, `$in`, `$lt`, `$lte`, `$mod`, `$ne`, `$near`, `$nearSphere`, `$nin`, `$not`, `$options`, `$regex`, `$size`, `$type`
@@ -51,7 +51,7 @@
 - `server_version`: `9.0`
 - `label`: `MongoDB 9.0`
 - `aliases`: `9`, `9.0`
-- `behavior_flags`: `{'uses_distinct_command_request_field_name': False, 'supports_now_in_read_command_let': False, 'supports_dynamic_get_field': True, 'null_query_matches_undefined': False, 'rejects_empty_group_fields': True, 'validates_densify_partition_paths': True, 'validates_aggregation_syntax_early': True, 'documents_join_omits_collection_namespace': True, 'supports_array_index_variables': True, 'uses_extended_conversions': True, 'uses_server_densify_bounds': True, 'densify_equal_bounds_are_empty': True, 'densify_full_nonadvancing_step_errors': True, 'densify_empty_partition_generates_values': False, 'supports_date_range_windows': True, 'limits_trim_chars': True, 'rejects_cluster_time_expression': True, 'list_indexes_includes_simple_collation': True, 'rejects_unimplemented_wildcard_projection': True, 'merge_insert_preserves_incoming_field_order': True}`
+- `behavior_flags`: `{'bounded_sort_reports_eof': True, 'aggregate_initial_reports_eof': True, 'aggregate_window_reports_eof': True, 'uses_distinct_command_request_field_name': False, 'supports_now_in_read_command_let': False, 'supports_dynamic_get_field': True, 'null_query_matches_undefined': False, 'rejects_empty_group_fields': True, 'validates_densify_partition_paths': True, 'validates_aggregation_syntax_early': True, 'documents_join_omits_collection_namespace': True, 'supports_array_index_variables': True, 'uses_extended_conversions': True, 'uses_server_densify_bounds': True, 'densify_equal_bounds_are_empty': True, 'densify_full_nonadvancing_step_errors': True, 'densify_empty_partition_generates_values': False, 'supports_date_range_windows': True, 'limits_trim_chars': True, 'rejects_cluster_time_expression': True, 'list_indexes_includes_simple_collation': True, 'rejects_unimplemented_wildcard_projection': True, 'merge_insert_preserves_incoming_field_order': True}`
 - `policy_spec`: `{'null_query_matches_undefined': False, 'expression_truthiness': 'mongo-default', 'projection_flag_mode': 'bool-or-binary-int', 'update_path_sort_mode': 'numeric-then-lex', 'equality_mode': 'bson-structural', 'comparison_mode': 'bson-total-order'}`
 - `capabilities`: `aggregation.array_index_variables`, `aggregation.convert.base`, `aggregation.date_range_windows`, `aggregation.to_string.extended`, `indexes.simple_collation_metadata`
 - `query_field_operators`: `$all`, `$bitsAllClear`, `$bitsAllSet`, `$bitsAnyClear`, `$bitsAnySet`, `$cmp`, `$elemMatch`, `$eq`, `$exists`, `$geoIntersects`, `$geoWithin`, `$gt`, `$gte`, `$in`, `$lt`, `$lte`, `$mod`, `$ne`, `$near`, `$nearSphere`, `$nin`, `$not`, `$options`, `$regex`, `$size`, `$type`
@@ -412,6 +412,12 @@
 - `note`: `Static local connection metadata.`
 
 ## Operation Options
+### `list_collection_names`
+- `comment`: `status`="effective", `note`="Admitted as BSON and retained in administrative session metadata."
+
+### `list_collections`
+- `comment`: `status`="effective", `note`="Admitted as BSON and retained in administrative session metadata."
+
 ### `insert_one`
 - `comment`: `status`="effective", `note`="Preserved in insert profiling, active operations and session metadata."
 
@@ -633,9 +639,9 @@
 - `arrayFilters`: `status`="effective", `note`="Applied through per-update write execution for supported filtered positional paths."
 
 ### `validate`
-- `scandata`: `status`="accepted-noop", `note`="Accepted and type-checked; validation reports a warning and performs the same local scan."
-- `full`: `status`="accepted-noop", `note`="Accepted and type-checked; validation reports a warning and performs the same local pass."
-- `background`: `status`="accepted-noop", `note`="Accepted and type-checked; validation reports a warning and runs synchronously."
+- `scandata`: `status`="accepted-noop", `note`="Accepted with BSON truth conversion; validation reports a warning and performs the same local scan."
+- `full`: `status`="accepted-noop", `note`="Accepted with BSON truth conversion; validation reports a warning and performs the same local pass."
+- `background`: `status`="accepted-noop", `note`="Accepted with BSON truth conversion; validation reports a warning and runs synchronously."
 - `comment`: `status`="effective", `note`="Recorded in engine session metadata for the validation command."
 
 ## CXP Exchange

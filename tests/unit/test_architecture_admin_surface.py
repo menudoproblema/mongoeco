@@ -188,8 +188,8 @@ class ArchitectureAdminSurfaceTests(unittest.TestCase):
         self.assertEqual(validate_options.comment, "trace")
 
     def test_admin_parsing_rejects_invalid_validation_flags(self):
-        with self.assertRaises(TypeError):
-            normalize_validate_command_options(scandata="yes")
+        self.assertTrue(normalize_validate_command_options(scandata="yes").scandata)
+        self.assertFalse(normalize_validate_command_options(scandata=None).scandata)
         with self.assertRaises(TypeError):
             normalize_list_collections_options({"nameOnly": "yes"})
 

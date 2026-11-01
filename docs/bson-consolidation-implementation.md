@@ -2553,3 +2553,22 @@ Los dobles de la fachada command delegan en command, que aplica la frontera
 cliente, y la lectura de system.profile respeta su proyección (op, sin _id).
 Se mantienen aserciones de campos, familias y códigos; son conciliaciones de
 pruebas respecto de cortes ya aceptados, sin nuevo runtime ni oráculo nativo.
+
+
+### O5/O7 — Catálogo actual y lectura de archivos anteriores
+
+El catálogo actual se regenera con update_compat_snapshots.py; los fixtures
+históricos permanecen intactos. El contraste de JSON solo añade tres flags de
+EOF por dialecto y comentarios de listados, y corrige tres notas de validate
+respecto de su conversión BSON ya aceptada. El delta histórico conserva orden
+y entradas previas salvo esas actualizaciones explicadas, con originales
+archivados d05-compat-before-. No se normaliza un resultado MongoDB.
+
+Pasan 46 pruebas del catálogo y tres controles focales de archivos anteriores y
+flags legacy. El perfil de lectura de UUID del fixture SQLite 4.5/4.10 pide
+STANDARD explícito para comprobar el UUID original sin alterar UNSPECIFIED.
+Scandata string no se rechaza: se comprueba su truth conversion nativa, y None
+permanece falso; nameOnly string sigue rechazado. Projection flag numérico 2
+mantiene inclusión, conforme a la proyección ya contrastada. Las aserciones del
+catálogo conservan inmutabilidad, hooks exactos y reconstrucción por deltas.
+El gate conjunto ampliado está en d05-compat-final; O5/O7 continúan abiertas.

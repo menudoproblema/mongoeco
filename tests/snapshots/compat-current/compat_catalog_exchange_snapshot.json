@@ -312,7 +312,7 @@
     },
     "validate": {
       "background": {
-        "note": "Accepted and type-checked; validation reports a warning and runs synchronously.",
+        "note": "Accepted with BSON truth conversion; validation reports a warning and runs synchronously.",
         "status": "accepted-noop"
       },
       "comment": {
@@ -320,11 +320,11 @@
         "status": "effective"
       },
       "full": {
-        "note": "Accepted and type-checked; validation reports a warning and performs the same local pass.",
+        "note": "Accepted with BSON truth conversion; validation reports a warning and performs the same local pass.",
         "status": "accepted-noop"
       },
       "scandata": {
-        "note": "Accepted and type-checked; validation reports a warning and performs the same local scan.",
+        "note": "Accepted with BSON truth conversion; validation reports a warning and performs the same local scan.",
         "status": "accepted-noop"
       }
     }
@@ -6893,6 +6893,9 @@
   },
   "hooks": {
     "mongodb_dialect": [
+      "bounded_sort_reports_eof",
+      "aggregate_initial_reports_eof",
+      "aggregate_window_reports_eof",
       "supports_dynamic_get_field",
       "supports_now_in_read_command_let",
       "uses_distinct_command_request_field_name",
@@ -7574,6 +7577,9 @@
         "7.0"
       ],
       "behavior_flags": {
+        "aggregate_initial_reports_eof": false,
+        "aggregate_window_reports_eof": false,
+        "bounded_sort_reports_eof": false,
         "densify_empty_partition_generates_values": true,
         "densify_equal_bounds_are_empty": false,
         "densify_full_nonadvancing_step_errors": false,
@@ -7886,6 +7892,9 @@
         "8.0"
       ],
       "behavior_flags": {
+        "aggregate_initial_reports_eof": false,
+        "aggregate_window_reports_eof": false,
+        "bounded_sort_reports_eof": false,
         "densify_empty_partition_generates_values": false,
         "densify_equal_bounds_are_empty": true,
         "densify_full_nonadvancing_step_errors": true,
@@ -8196,6 +8205,9 @@
         "9.0"
       ],
       "behavior_flags": {
+        "aggregate_initial_reports_eof": true,
+        "aggregate_window_reports_eof": true,
+        "bounded_sort_reports_eof": true,
         "densify_empty_partition_generates_values": false,
         "densify_equal_bounds_are_empty": true,
         "densify_full_nonadvancing_step_errors": true,
@@ -8598,6 +8610,18 @@
     "insert_one": {
       "comment": {
         "note": "Preserved in insert profiling, active operations and session metadata.",
+        "status": "effective"
+      }
+    },
+    "list_collection_names": {
+      "comment": {
+        "note": "Admitted as BSON and retained in administrative session metadata.",
+        "status": "effective"
+      }
+    },
+    "list_collections": {
+      "comment": {
+        "note": "Admitted as BSON and retained in administrative session metadata.",
         "status": "effective"
       }
     },

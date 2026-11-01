@@ -12,6 +12,7 @@ from pathlib import Path
 from mongoeco import AsyncMongoClient, ObjectId
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import OperationFailure
+from mongoeco.types import CodecOptions, UuidRepresentation
 
 
 FIXTURE_ROOT = Path("tests/fixtures/sqlite")
@@ -53,7 +54,10 @@ class SQLite45FixtureCompatibilityTests(unittest.IsolatedAsyncioTestCase):
         original_hash = _sha256(FIXTURE)
         with tempfile.TemporaryDirectory() as directory:
             database = _copy_fixture(directory)
-            async with AsyncMongoClient(SQLiteEngine(str(database))) as client:
+            async with AsyncMongoClient(
+                SQLiteEngine(str(database)),
+                codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+            ) as client:
                 collection = client.bridge.items
                 documents = await collection.find().sort("_id").to_list()
                 self.assertEqual(
