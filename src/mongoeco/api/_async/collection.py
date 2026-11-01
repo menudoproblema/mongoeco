@@ -21,11 +21,11 @@ from mongoeco.api._async._collection_bulk import (
     BulkWritePreparationContext as _BulkWriteContext,  # noqa: F401
     PreparedBulkWriteRequest as _PreparedBulkWriteRequest,  # noqa: F401
     execute_bulk_write,
-    normalize_bulk_write_request,
 )
 from mongoeco.api._async._collection_insert import execute_insert_many
 from mongoeco.api._async._write_errors import (
-    materialize_write_error, materialize_write_response,
+    materialize_write_error,
+    materialize_write_response,
 )
 from mongoeco.api._async._collection_runtime import (
     CollectionRuntimeCoordinator,
@@ -107,7 +107,7 @@ from mongoeco.core.error_documents import (
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
 )
-from mongoeco.core.identity import assert_valid_root_document_id
+from mongoeco.core.identity import assert_valid_root_document_id, document_with_id_first
 from mongoeco.core.operation_context import (
     ChangeOperationType,
     ChangePublicationPolicy,
@@ -409,15 +409,6 @@ class AsyncCollection:
         return normalize_projection_spec(projection)
 
     @staticmethod
-    def _require_write_requests(requests: object) -> list[WriteModel]:
-        if not isinstance(requests, list):
-            raise TypeError("requests must be a list of write models")
-        raw_requests = list(requests)
-        if not raw_requests:
-            raise ValueError("requests must not be empty")
-        return [normalize_bulk_write_request(request) for request in raw_requests]
-
-    @staticmethod
     def _require_update(update_spec: object) -> Update:
         return DocumentCodec.to_internal(update_document(update_spec))
 
@@ -520,8 +511,11 @@ class AsyncCollection:
             ),
             modified_count=result.modified_count,
             upserted_id=(
-                None if result.upserted_id is None else materialize_write_response(
-                    {"_id": result.upserted_id}, codec_options=self._codec_options,
+                None
+                if result.upserted_id is None
+                else materialize_write_response(
+                    {"_id": result.upserted_id},
+                    codec_options=self._codec_options,
                 )["_id"]
             ),
             acknowledged=result.acknowledged,
@@ -926,7 +920,7 @@ class AsyncCollection:
         )
         original = self._prepare_insert_document(document)
         assert_valid_root_document_id(original["_id"])
-        doc = DocumentCodec.to_internal(deepcopy(original))
+        doc = document_with_id_first(DocumentCodec.to_internal(deepcopy(original)))
 
         def _insert_one_profile_command() -> dict[str, object]:
             command = {
@@ -1071,24 +1065,28 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> BulkWriteResult[DocumentId]:
-        self._ensure_session_active(session)
-        source_requests = list(requests) if isinstance(requests, list) else None
-        requests = self._require_write_requests(requests)
-        if not isinstance(ordered, bool):
-            raise TypeError("ordered must be a bool")
-        if let is not None and not isinstance(let, (dict, ExpressionExecutionContext)):
-            message = "let must be a dict"
+        if not isinstance(requests, list):
+            message = "requests must be a list of write models"
             raise TypeError(message)
-        result = await execute_bulk_write(
-            self,
-            requests,
-            ordered=ordered,
-            bypass_document_validation=bypass_document_validation,
-            comment=comment,
-            let=let,
-            session=session,
-            source_requests=source_requests,
-        )
+        if let is not None and not isinstance(
+            let, (Mapping, ExpressionExecutionContext)
+        ):
+            message = "let must be a document"
+            raise TypeError(message)
+        try:
+            result = await execute_bulk_write(
+                self,
+                requests,
+                ordered=ordered,
+                bypass_document_validation=bypass_document_validation,
+                comment=comment,
+                let=let,
+                session=session,
+            )
+        except BulkWriteError as error:
+            raise materialize_write_error(
+                error, codec_options=self._codec_options
+            ) from error
         self._record_operation_metadata(
             operation="bulk_write",
             comment=comment,
@@ -1101,8 +1099,16 @@ class AsyncCollection:
             deleted_count=result.deleted_count,
             upserted_count=result.upserted_count,
             upserted_ids={
-                index: materialize_public_value(document_id)
-                for index, document_id in result.upserted_ids.items()
+                item["index"]: item["_id"]
+                for item in materialize_write_response(
+                    {
+                        "upserted": [
+                            {"index": index, "_id": document_id}
+                            for index, document_id in result.upserted_ids.items()
+                        ]
+                    },
+                    codec_options=self._codec_options,
+                )["upserted"]
             },
             acknowledged=result.acknowledged,
         )

@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async import _collection_modify
-from mongoeco.api._async._write_command_validation import validate_update_entry_shape
-from mongoeco.api._async._write_errors import validate_classic_update_sort
+from mongoeco.api._async._write_command_validation import (
+    validate_delete_command_shapes,
+    validate_update_command_shapes,
+)
 from mongoeco.api._async._write_failures import record_write_failure
+from mongoeco.api._command_bson import command_boolean
+from mongoeco.api.admin_parsing import normalize_command_ordered
+from mongoeco.api.argument_validation import replacement_document, update_document
+from mongoeco.api.bson_input import iter_bson_write_frames
 
 
 try:
@@ -29,9 +35,12 @@ except Exception:  # pragma: no cover - optional dependency
     PyMongoUpdateOne = None
 
 from mongoeco.core._public_materialization import materialize_public_value
-from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.identity import assert_valid_root_document_id
-from mongoeco.errors import BulkWriteError, OperationFailure, WriteError
+from mongoeco.errors import (
+    BulkWriteError,
+    InvalidOperation,
+    OperationFailure,
+    WriteError,
+)
 from mongoeco.types import (
     BulkWriteErrorDetails,
     BulkWriteResult,
@@ -79,22 +88,13 @@ def _pymongo_model_field(
 def _pymongo_sort_spec(value: object | None) -> object | None:
     if isinstance(value, Mapping):
         return list(value.items())
-    return deepcopy(value)
+    return value
 
 
 def _pymongo_collation(value: object | None) -> object | None:
     if value is None:
         return None
-    document = getattr(value, "document", value)
-    return deepcopy(document)
-
-
-def _snapshot_array_filters(value: object | None) -> object | None:
-    if value is None:
-        return None
-    if not isinstance(value, list):
-        raise TypeError("array_filters must be a list of dicts")
-    return deepcopy(value)
+    return getattr(value, "document", value)
 
 
 def normalize_bulk_write_request(request: object) -> WriteModel:
@@ -110,49 +110,50 @@ def normalize_bulk_write_request(request: object) -> WriteModel:
         )
     if PyMongoUpdateOne is not None and isinstance(request, PyMongoUpdateOne):
         return UpdateOne(
-            filter=deepcopy(_pymongo_model_field(request, "_filter")),
-            update=deepcopy(_pymongo_model_field(request, "_doc")),
+            filter=_pymongo_model_field(request, "_filter"),
+            update=_pymongo_model_field(request, "_doc"),
             upsert=bool(_pymongo_model_field(request, "_upsert")),
             sort=_pymongo_sort_spec(
                 _pymongo_model_field(request, "_sort", default=None)
             ),
-            array_filters=deepcopy(_pymongo_model_field(request, "_array_filters")),
-            hint=deepcopy(_pymongo_model_field(request, "_hint")),
+            array_filters=_pymongo_model_field(request, "_array_filters"),
+            hint=_pymongo_model_field(request, "_hint"),
             collation=_pymongo_collation(_pymongo_model_field(request, "_collation")),
         )
     if PyMongoUpdateMany is not None and isinstance(request, PyMongoUpdateMany):
         return UpdateMany(
-            filter=deepcopy(_pymongo_model_field(request, "_filter")),
-            update=deepcopy(_pymongo_model_field(request, "_doc")),
-            upsert=bool(_pymongo_model_field(request, "_upsert")),
-            array_filters=deepcopy(_pymongo_model_field(request, "_array_filters")),
-            hint=deepcopy(_pymongo_model_field(request, "_hint")),
+            filter=_pymongo_model_field(request, "_filter"),
+            update=_pymongo_model_field(request, "_doc"),
+            upsert=_pymongo_model_field(request, "_upsert"),
+            array_filters=_pymongo_model_field(request, "_array_filters"),
+            hint=_pymongo_model_field(request, "_hint"),
             collation=_pymongo_collation(_pymongo_model_field(request, "_collation")),
         )
     if PyMongoReplaceOne is not None and isinstance(request, PyMongoReplaceOne):
         return ReplaceOne(
-            filter=deepcopy(_pymongo_model_field(request, "_filter")),
-            replacement=deepcopy(_pymongo_model_field(request, "_doc")),
-            upsert=bool(_pymongo_model_field(request, "_upsert")),
+            filter=_pymongo_model_field(request, "_filter"),
+            replacement=_pymongo_model_field(request, "_doc"),
+            upsert=_pymongo_model_field(request, "_upsert"),
             sort=_pymongo_sort_spec(
                 _pymongo_model_field(request, "_sort", default=None)
             ),
-            hint=deepcopy(_pymongo_model_field(request, "_hint")),
+            hint=_pymongo_model_field(request, "_hint"),
             collation=_pymongo_collation(_pymongo_model_field(request, "_collation")),
         )
     if PyMongoDeleteOne is not None and isinstance(request, PyMongoDeleteOne):
         return DeleteOne(
-            filter=deepcopy(_pymongo_model_field(request, "_filter")),
-            hint=deepcopy(_pymongo_model_field(request, "_hint")),
+            filter=_pymongo_model_field(request, "_filter"),
+            hint=_pymongo_model_field(request, "_hint"),
             collation=_pymongo_collation(_pymongo_model_field(request, "_collation")),
         )
     if PyMongoDeleteMany is not None and isinstance(request, PyMongoDeleteMany):
         return DeleteMany(
-            filter=deepcopy(_pymongo_model_field(request, "_filter")),
-            hint=deepcopy(_pymongo_model_field(request, "_hint")),
+            filter=_pymongo_model_field(request, "_filter"),
+            hint=_pymongo_model_field(request, "_hint"),
             collation=_pymongo_collation(_pymongo_model_field(request, "_collation")),
         )
-    raise TypeError("bulk_write requests must be write model instances")
+    message = "bulk_write requests must be write model instances"
+    raise TypeError(message)
 
 
 @dataclass(slots=True)
@@ -165,17 +166,17 @@ class PreparedBulkWriteRequest:
     error_operation: Document | None = None
 
 
-def _bulk_error_operation(request: WriteModel, source: object) -> Document:
+def _bulk_operation_document(request: WriteModel) -> Document:
     if isinstance(request, InsertOne):
-        return deepcopy(request.document)
-    command = {"q": deepcopy(request.filter)}
+        return request.document
+    command = {"q": request.filter}
     if isinstance(request, (UpdateOne, UpdateMany, ReplaceOne)):
-        command["u"] = deepcopy(
+        command["u"] = (
             request.replacement if isinstance(request, ReplaceOne) else request.update
         )
         if not isinstance(request, ReplaceOne):
             command["multi"] = isinstance(request, UpdateMany)
-        upsert = getattr(source, "_upsert", request.upsert)
+        upsert = request.upsert
         if isinstance(request, UpdateOne):
             upsert = bool(upsert)
         if upsert is not None:
@@ -188,16 +189,14 @@ def _bulk_error_operation(request: WriteModel, source: object) -> Document:
         isinstance(request, (UpdateOne, UpdateMany))
         and request.array_filters is not None
     ):
-        command["arrayFilters"] = deepcopy(request.array_filters)
+        command["arrayFilters"] = request.array_filters
     if request.hint is not None:
         command["hint"] = (
-            deepcopy(request.hint)
-            if isinstance(request.hint, str)
-            else dict(request.hint)
+            request.hint if isinstance(request.hint, str) else dict(request.hint)
         )
     if isinstance(request, (UpdateOne, ReplaceOne)) and request.sort is not None:
         command["sort"] = dict(request.sort)
-    return deepcopy(command)
+    return command
 
 
 class BulkWritePreparationContext:
@@ -205,28 +204,22 @@ class BulkWritePreparationContext:
         self,
         collection: AsyncCollection,
         requests: list[WriteModel],
-        source_requests: Sequence[object] | None = None,
     ) -> None:
         self._collection = collection
         self._requests = requests
-        self._source_requests = (
-            source_requests if source_requests is not None else requests
-        )
 
     async def prepare(self) -> list[PreparedBulkWriteRequest]:
-        # La preparación muta documentos InsertOne al asignar _id, como PyMongo.
-        # Debe conservar el orden y resolver alias compartidos de forma determinista.
-        prepared = [
-            self._prepare_request(index, request)
-            for index, request in enumerate(self._requests)
-        ]
-        for item in prepared:
-            if isinstance(item.preparation_error, (TypeError, ValueError)):
+        # Shape checks and ID assignment are ordered client effects. BSON and
+        # server validation belong to the later physical family boundary.
+        prepared = []
+        for index, request in enumerate(self._requests):
+            item = self._prepare_request(index, request)
+            if item.preparation_error is not None:
                 raise item.preparation_error
-        for item, source in zip(prepared, self._source_requests, strict=True):
-            item.error_operation = _bulk_error_operation(
-                self._requests[item.index], source
-            )
+            prepared.append(item)
+        if not prepared:
+            message = "No operations to execute"
+            raise InvalidOperation(message)
         return prepared
 
     def _prepare_request(
@@ -234,73 +227,143 @@ class BulkWritePreparationContext:
     ) -> PreparedBulkWriteRequest:
         collection = self._collection
         try:
+            request = normalize_bulk_write_request(request)
             collection._validate_bulk_write_request_against_profile(request)
             if isinstance(request, InsertOne):
                 original = collection._prepare_insert_document(request.document)
-                assert_valid_root_document_id(original["_id"])
+                return PreparedBulkWriteRequest(
+                    index=index, request=request, insert_document=original
+                )
+            if isinstance(request, ReplaceOne):
+                replacement_document(request.replacement)
                 return PreparedBulkWriteRequest(
                     index=index,
                     request=request,
-                    insert_document=DocumentCodec.to_internal(deepcopy(original)),
-                )
-            if isinstance(request, ReplaceOne):
-                normalized_request = ReplaceOne(
-                    filter=collection._normalize_filter(request.filter),
-                    replacement=collection._require_replacement(request.replacement),
-                    upsert=request.upsert,
-                    sort=collection._normalize_sort(request.sort),
-                    hint=collection._normalize_hint(request.hint),
-                    comment=deepcopy(request.comment),
-                    let=collection._normalize_let(request.let),
-                    collation=collection._normalize_collation(request.collation),
-                )
-                return PreparedBulkWriteRequest(
-                    index=index,
-                    request=normalized_request,
-                    replacement_document=deepcopy(normalized_request.replacement),
+                    replacement_document=request.replacement,
                 )
             if isinstance(request, (UpdateOne, UpdateMany)):
-                common = {
-                    "filter": collection._normalize_filter(request.filter),
-                    "update": collection._require_update(request.update),
-                    "upsert": request.upsert,
-                    # Compilation owns BSON normalization; preparation only freezes
-                    # caller-owned values so they cannot change before execution.
-                    "array_filters": _snapshot_array_filters(request.array_filters),
-                    "hint": collection._normalize_hint(request.hint),
-                    "comment": deepcopy(request.comment),
-                    "let": collection._normalize_let(request.let),
-                    "collation": collection._normalize_collation(request.collation),
-                }
-                normalized_request = (
-                    UpdateOne(
-                        **common,
-                        sort=collection._normalize_sort(request.sort),
-                    )
-                    if isinstance(request, UpdateOne)
-                    else UpdateMany(**common)
-                )
-                return PreparedBulkWriteRequest(index=index, request=normalized_request)
-            if isinstance(request, (DeleteOne, DeleteMany)):
-                delete_type = (
-                    DeleteOne if isinstance(request, DeleteOne) else DeleteMany
-                )
-                normalized_request = delete_type(
-                    filter=collection._normalize_filter(request.filter),
-                    hint=collection._normalize_hint(request.hint),
-                    comment=deepcopy(request.comment),
-                    let=collection._normalize_let(request.let),
-                    collation=collection._normalize_collation(request.collation),
-                )
-                return PreparedBulkWriteRequest(index=index, request=normalized_request)
-            raise TypeError("bulk_write requests must be write model instances")
-        except (TypeError, ValueError, OperationFailure, WriteError) as exc:
+                update_document(request.update)
+                if request.array_filters is not None and not isinstance(
+                    request.array_filters, list
+                ):
+                    message = "array_filters must be a list"
+                    raise TypeError(message)
+            elif not isinstance(request, (DeleteOne, DeleteMany)):
+                message = "bulk_write requests must be write model instances"
+                raise TypeError(message)
+            return PreparedBulkWriteRequest(index=index, request=request)
+        except AttributeError:
+            # PyMongo catches AttributeError from _add_to_bulk, including an
+            # integer first key's missing startswith, as an invalid model.
+            message = "bulk_write contains an invalid request"
             return PreparedBulkWriteRequest(
-                index=index, request=request, preparation_error=exc
+                index=index, request=request, preparation_error=TypeError(message)
+            )
+        except (TypeError, ValueError) as error:
+            return PreparedBulkWriteRequest(
+                index=index, request=request, preparation_error=error
             )
 
 
+def _encoded_bulk_batches(  # noqa: PLR0913 - one command header owns its frame sequence
+    collection, requests, *, ordered, comment, let, bypass_document_validation
+):
+    for batch in _classic_bulk_batches(requests, ordered=ordered):
+        family = _bulk_family(batch[0].request)
+        command = {family: collection.name, "ordered": ordered}
+        if comment:
+            command["comment"] = comment
+        if bypass_document_validation is not None:
+            command["bypassDocumentValidation"] = bypass_document_validation
+        if let is not None and family != "insert":
+            command["let"] = let
+        command["$db"] = collection.database.name
+
+        def operations(batch=batch):
+            for item in batch:
+                request = item.request
+                operation = _bulk_operation_document(request)
+                if not isinstance(request, InsertOne):
+                    if request.comment is not None:
+                        operation = {**operation, "comment": request.comment}
+                    if request.let is not None:
+                        operation = {**operation, "let": request.let}
+                yield operation
+
+        sequence = {"insert": "documents", "update": "updates", "delete": "deletes"}[
+            family
+        ]
+        offset = 0
+        for header, specs in iter_bson_write_frames(
+            command,
+            operations(),
+            codec_options=collection._codec_options,
+            sequence_name=sequence,
+            max_message_size=_CLASSIC_BULK_MESSAGE_LIMIT - _CLASSIC_BULK_SESSION_BYTES,
+        ):
+            frame = batch[offset : offset + len(specs)]
+            offset += len(specs)
+            yield frame, {**header, "operations": specs}
+
+
+def _admit_bulk_batch(collection, batch, encoded):
+    """Validate one completely encoded server frame before any of its effects."""
+    family = _bulk_family(batch[0].request)
+    frame_ordered = normalize_command_ordered(encoded.get("ordered"))
+    bypass = command_boolean(
+        encoded.get("bypassDocumentValidation"),
+        "bypassDocumentValidation",
+        numeric=True,
+    )
+    specs = encoded["operations"]
+    command_specs = (
+        [
+            {k: v for k, v in spec.items() if k not in {"comment", "let"}}
+            for spec in specs
+        ]
+        if family != "insert"
+        else specs
+    )
+    if family == "update":
+        validate_update_command_shapes(command_specs, collection._mongodb_dialect.key)
+    elif family == "delete":
+        validate_delete_command_shapes(command_specs)
+    for item, spec in zip(batch, specs, strict=True):
+        request = item.request
+        item.error_operation = deepcopy(_bulk_operation_document(request))
+        if isinstance(request, InsertOne):
+            item.insert_document = spec
+            continue
+        fields = {
+            "filter": spec["q"],
+            "collation": spec.get("collation"),
+            "hint": list(spec["hint"].items())
+            if isinstance(spec.get("hint"), dict)
+            else spec.get("hint"),
+            "comment": spec.get("comment"),
+            "let": spec.get("let"),
+        }
+        if isinstance(request, (UpdateOne, UpdateMany, ReplaceOne)):
+            fields["upsert"] = spec.get("upsert", False)
+            if isinstance(request, ReplaceOne):
+                fields["replacement"] = spec["u"]
+                item.replacement_document = spec["u"]
+            else:
+                fields.update(update=spec["u"], array_filters=spec.get("arrayFilters"))
+            if isinstance(request, (UpdateOne, ReplaceOne)):
+                fields["sort"] = (
+                    list(spec["sort"].items())
+                    if isinstance(spec.get("sort"), dict)
+                    else spec.get("sort")
+                )
+        item.request = replace(request, **fields)
+    return encoded.get("comment"), encoded.get("let"), bypass, frame_ordered
+
+
 _CLASSIC_BULK_BATCH_LIMIT = 100_000
+_CLASSIC_BULK_MESSAGE_LIMIT = 48_000_000
+# A UUID lsid subdocument in every native command: implicit or explicit session.
+_CLASSIC_BULK_SESSION_BYTES = 36
 
 
 def _bulk_family(request: WriteModel) -> str:
@@ -310,7 +373,8 @@ def _bulk_family(request: WriteModel) -> str:
         return "update"
     if isinstance(request, (DeleteOne, DeleteMany)):
         return "delete"
-    raise TypeError("bulk_write requests must be write model instances")
+    message = "bulk_write requests must be write model instances"
+    raise TypeError(message)
 
 
 def _classic_bulk_batches(
@@ -330,11 +394,7 @@ def _classic_bulk_batches(
         current: list[PreparedBulkWriteRequest] = []
         current_family: str | None = None
         for prepared in prepared_requests:
-            family = (
-                None
-                if prepared.preparation_error is not None
-                else _bulk_family(prepared.request)
-            )
+            family = _bulk_family(prepared.request)
             if current and (
                 family != current_family or len(current) >= _CLASSIC_BULK_BATCH_LIMIT
             ):
@@ -342,10 +402,6 @@ def _classic_bulk_batches(
                 current = []
             current.append(prepared)
             current_family = family
-            if prepared.preparation_error is not None:
-                batches.append(current)
-                current = []
-                current_family = None
         if current:
             batches.append(current)
         return batches
@@ -355,13 +411,9 @@ def _classic_bulk_batches(
         "update": [],
         "delete": [],
     }
-    invalid: list[PreparedBulkWriteRequest] = []
     for prepared in prepared_requests:
-        if prepared.preparation_error is not None:
-            invalid.append(prepared)
-        else:
-            grouped[_bulk_family(prepared.request)].append(prepared)
-    batches = [[prepared] for prepared in invalid]
+        grouped[_bulk_family(prepared.request)].append(prepared)
+    batches = []
     for family in ("insert", "update", "delete"):
         requests = grouped[family]
         batches.extend(
@@ -380,11 +432,11 @@ async def execute_bulk_write(
     comment: object | None,
     let: dict[str, object] | None,
     session: ClientSession | None,
-    source_requests: Sequence[object] | None = None,
 ) -> BulkWriteResult[DocumentId]:
     prepared_requests = await BulkWritePreparationContext(
-        collection, list(requests), source_requests
+        collection, list(requests)
     ).prepare()
+    collection._ensure_session_active(session)
     normalized_bulk_let = let
 
     inserted_count = 0
@@ -395,43 +447,24 @@ async def execute_bulk_write(
     write_errors: list[WriteErrorEntry] = []
 
     stop = False
-    for batch in _classic_bulk_batches(prepared_requests, ordered=ordered):
+    for batch, encoded in _encoded_bulk_batches(
+        collection,
+        prepared_requests,
+        ordered=ordered,
+        comment=comment,
+        let=let,
+        bypass_document_validation=bypass_document_validation,
+    ):
         if stop:
             break
-        validate_classic_update_sort(
-            collection._mongodb_dialect.key,
-            has_sort=any(
-                isinstance(item.request, (UpdateOne, ReplaceOne))
-                and item.request.sort is not None
-                for item in batch
-            ),
+        batch_comment, normalized_bulk_let, batch_bypass, frame_ordered = (
+            _admit_bulk_batch(collection, batch, encoded)
         )
-        for entry in batch:
-            if isinstance(entry.request, (UpdateOne, UpdateMany)):
-                validate_update_entry_shape(
-                    entry.request.update, entry.request.array_filters
-                )
         batch_context = None
         command_failure = None
         for prepared in batch:
             index = prepared.index
             request = prepared.request
-            if prepared.preparation_error is not None:
-                exc = prepared.preparation_error
-                if ordered and not isinstance(exc, WriteError):
-                    raise exc
-                command_failure = (
-                    record_write_failure(
-                        write_errors,
-                        exc,
-                        index=index,
-                        operation=prepared.error_operation,
-                        first_failure=command_failure,
-                    )
-                )
-                if ordered:
-                    stop = True
-                continue
             if batch_context is None:
                 batch_context = collection._new_execution_context()
             try:
@@ -448,7 +481,7 @@ async def execute_bulk_write(
                 )
                 if isinstance(request, InsertOne):
                     insert_kwargs = {"session": session}
-                    if bypass_document_validation:
+                    if batch_bypass:
                         insert_kwargs["bypass_document_validation"] = True
                     await collection._insert_one(
                         prepared.insert_document or request.document,
@@ -464,14 +497,16 @@ async def execute_bulk_write(
                         "hint": request.hint,
                         "comment": request.comment
                         if request.comment is not None
-                        else comment,
+                        else batch_comment,
                         "let": variables,
                         "session": session,
                     }
-                    if bypass_document_validation:
+                    if batch_bypass:
                         update_one_kwargs["bypass_document_validation"] = True
                     result = await _collection_modify.execute_server_update(
-                        collection, request.filter, request.update,
+                        collection,
+                        request.filter,
+                        request.update,
                         upsert=request.upsert,
                         **update_one_kwargs,
                     )
@@ -486,15 +521,18 @@ async def execute_bulk_write(
                         "hint": request.hint,
                         "comment": request.comment
                         if request.comment is not None
-                        else comment,
+                        else batch_comment,
                         "let": variables,
                         "session": session,
                     }
-                    if bypass_document_validation:
+                    if batch_bypass:
                         update_many_kwargs["bypass_document_validation"] = True
                     result = await _collection_modify.execute_server_update(
-                        collection, request.filter, request.update,
-                        multi=True, upsert=request.upsert,
+                        collection,
+                        request.filter,
+                        request.update,
+                        multi=True,
+                        upsert=request.upsert,
                         **update_many_kwargs,
                     )
                     matched_count += 0 if result.did_upsert else result.matched_count
@@ -508,16 +546,18 @@ async def execute_bulk_write(
                         "hint": request.hint,
                         "comment": request.comment
                         if request.comment is not None
-                        else comment,
+                        else batch_comment,
                         "let": variables,
                         "session": session,
                     }
-                    if bypass_document_validation:
+                    if batch_bypass:
                         replace_one_kwargs["bypass_document_validation"] = True
                     result = await _collection_modify.execute_server_update(
-                        collection, request.filter,
+                        collection,
+                        request.filter,
                         prepared.replacement_document or request.replacement,
-                        replacement=True, upsert=request.upsert,
+                        replacement=True,
+                        upsert=request.upsert,
                         **replace_one_kwargs,
                     )
                     matched_count += 0 if result.did_upsert else result.matched_count
@@ -526,44 +566,49 @@ async def execute_bulk_write(
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, DeleteOne):
                     result = await _collection_modify.execute_server_delete(
-                        collection, request.filter,
+                        collection,
+                        request.filter,
                         collation=request.collation,
                         hint=request.hint,
                         comment=request.comment
                         if request.comment is not None
-                        else comment,
+                        else batch_comment,
                         let=variables,
                         session=session,
                     )
                     deleted_count += result.deleted_count
                 elif isinstance(request, DeleteMany):
                     result = await _collection_modify.execute_server_delete(
-                        collection, request.filter, multi=True,
+                        collection,
+                        request.filter,
+                        multi=True,
                         collation=request.collation,
                         hint=request.hint,
                         comment=request.comment
                         if request.comment is not None
-                        else comment,
+                        else batch_comment,
                         let=variables,
                         session=session,
                     )
                     deleted_count += result.deleted_count
             except (WriteError, OperationFailure, TypeError, ValueError) as exc:
-                command_failure = (
-                    record_write_failure(
-                        write_errors,
-                        exc,
-                        index=index,
-                        operation=prepared.error_operation,
-                        first_failure=command_failure,
-                    )
+                command_failure = record_write_failure(
+                    write_errors,
+                    exc,
+                    index=index,
+                    operation=prepared.error_operation,
+                    first_failure=command_failure,
                 )
-                if ordered:
-                    stop = True
+                if frame_ordered:
+                    # Driver grouping and the server's null default are distinct:
+                    # ordered=None groups unordered, but each command is ordered.
+                    stop = bool(ordered)
                     break
 
         if command_failure is not None:
             raise command_failure
+        if stop:
+            break
 
     result = BulkWriteResult(
         inserted_count=inserted_count,

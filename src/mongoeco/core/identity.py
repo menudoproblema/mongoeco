@@ -27,6 +27,13 @@ SELECTED_DOCUMENT_STORAGE_MISMATCH_MESSAGE = (
 UPDATED_DOCUMENT_STORAGE_MISMATCH_MESSAGE = "After applying the update, the (immutable) field '_id' was found to have been altered"
 
 
+def document_with_id_first(document):
+    """MongoDB stores the root _id first without reordering embedded documents."""
+    if next(iter(document)) == "_id":
+        return document
+    return {"_id": document["_id"], **document}
+
+
 def canonical_document_id(value: Any) -> Any:
     if isinstance(value, dict):
         return (
@@ -107,8 +114,10 @@ def updated_document_storage_key(
     storage_key_for_id: Callable[[Any], Any],
 ) -> Any:
     """Keep the selected persisted key when its BSON identifier is unchanged."""
-    if "_id" in before and "_id" in after and same_bson_update_value(
-        before["_id"], after["_id"]
+    if (
+        "_id" in before
+        and "_id" in after
+        and same_bson_update_value(before["_id"], after["_id"])
     ):
         return storage_key
     return storage_key_for_id(after.get("_id"))

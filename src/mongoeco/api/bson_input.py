@@ -7,6 +7,7 @@ from uuid import UUID
 from mongoeco.core import codec
 from mongoeco.core.bson_raw import decode_bson_document
 from mongoeco.core.bson_scalars import INT64_MAX, INT64_MIN
+from mongoeco.core.bson_size import bson_document_size
 from mongoeco.core.bson_values import regex_parts
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.types import (
@@ -26,6 +27,7 @@ try:
     from bson.binary import UuidRepresentation as DriverUuidRepresentation
     from bson.codec_options import CodecOptions as DriverCodecOptions
     from bson.errors import InvalidDocument, InvalidStringData
+    from pymongo.errors import DocumentTooLarge
 except ImportError:  # pragma: no cover - optional SDK profile
     BSON = None
 
@@ -34,6 +36,12 @@ except ImportError:  # pragma: no cover - optional SDK profile
 
     class InvalidStringData(Exception):  # noqa: N818 - BSON exception spelling
         """Portable counterpart of invalid UTF-8 in a BSON cstring."""
+
+
+if BSON is None:  # pragma: no cover - optional SDK profile
+
+    class DocumentTooLarge(InvalidDocument):
+        """Portable counterpart of an operation exceeding its message frame."""
 
 
 def _invalid(value):
@@ -135,10 +143,10 @@ def _portable_value(value, options):  # noqa: PLR0911, PLR0912 - closed BSON inp
     raise _invalid(value)
 
 
-def encode_bson_request(document, *, codec_options: CodecOptions):
-    """Admit and normalize one client request at its actual encoding boundary."""
+def _encode_bson_document(document, *, codec_options: CodecOptions):
     if BSON is None:
-        return _portable_value(document, codec_options)
+        value = _portable_value(document, codec_options)
+        return value, None
     representations = {
         UuidRepresentation.UNSPECIFIED: DriverUuidRepresentation.UNSPECIFIED,
         UuidRepresentation.STANDARD: DriverUuidRepresentation.STANDARD,
@@ -152,7 +160,54 @@ def encode_bson_request(document, *, codec_options: CodecOptions):
     raw = BSON.encode(_driver_value(document), codec_options=options)
     # SDK document decoding would canonicalize DBRef-shaped literals. The raw
     # reader retains field order and defers that interpretation to its owner.
-    return decode_bson_document(raw)
+    return decode_bson_document(raw), len(raw)
+
+
+def encode_bson_request(document, *, codec_options: CodecOptions):
+    """Admit and normalize one client request at its actual encoding boundary."""
+    return _encode_bson_document(document, codec_options=codec_options)[0]
+
+
+def iter_bson_write_frames(
+    command, operations, *, codec_options, sequence_name, max_message_size
+):
+    """Encode a BSON sequence once, retaining one lookahead across frames.
+
+    As in OP_MSG, encoding an invalid lookahead fails the still-unsent frame.
+    Only a valid document proving byte overflow permits publishing its prefix.
+    """
+    header, header_size = _encode_bson_document(command, codec_options=codec_options)
+    header_size = header_size or bson_document_size(header)
+    # Message header, flags, section-0 tag, section-1 tag/size/cstring.
+    overhead = 16 + 4 + 1 + 1 + 4 + len(sequence_name.encode("utf-8")) + 1
+    size = overhead + header_size
+    current = []
+    for operation in operations:
+        encoded, length = _encode_bson_document(operation, codec_options=codec_options)
+        length = length or bson_document_size(encoded)
+        if current and size + length > max_message_size:
+            yield header, current
+            header, header_size = _encode_bson_document(
+                command, codec_options=codec_options
+            )
+            header_size = header_size or bson_document_size(header)
+            current = []
+            size = overhead + header_size
+        if size + length > max_message_size:
+            if sequence_name == "documents":
+                message = (
+                    f"BSON document too large ({length} bytes)"
+                    " - the connected server supports"
+                    f" BSON document sizes up to {16 * 1024 * 1024} bytes."
+                )
+            else:
+                operation_name = "update" if sequence_name == "updates" else "delete"
+                message = f"{operation_name} command document too large"
+            raise DocumentTooLarge(message)
+        current.append(encoded)
+        size += length
+    if current:
+        yield header, current
 
 
 _BSON_ARGUMENTS = frozenset(

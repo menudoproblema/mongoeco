@@ -156,7 +156,9 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
             await engine.connect()
             try:
                 collection = AsyncCollection(engine, "db", "coll")
-                await collection.insert_one({"a": 1, "_id": "1", "b": 2})
+                # Legacy storage can retain a non-leading ID. New client writes
+                # follow MongoDB and place it first, so seed through the real SPI.
+                await engine.insert_document("db", "coll", {"a": 1, "_id": "1", "b": 2})
                 result = await collection.replace_one({"_id": "1"}, {"a": 1, "b": 2})
                 document = await collection.find_one({"_id": "1"})
                 return result, document
@@ -177,7 +179,8 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
             await engine.connect()
             try:
                 collection = AsyncCollection(engine, "db", "coll")
-                await collection.insert_one({"a": 1, "b": 2, "_id": "1"})
+                # Exercise legacy stored order independently of client admission.
+                await engine.insert_document("db", "coll", {"a": 1, "b": 2, "_id": "1"})
                 result = await collection.replace_one({"_id": "1"}, {"a": 1, "b": 2})
                 document = await collection.find_one({"_id": "1"})
                 return result, document

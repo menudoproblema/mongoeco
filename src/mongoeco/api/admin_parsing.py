@@ -1,4 +1,3 @@
-from mongoeco.core.bson_raw import decode_bson_document
 from dataclasses import dataclass
 from types import MappingProxyType
 
@@ -8,7 +7,6 @@ from mongoeco.api._command_bson import (
     validate_command_let,
     validate_write_fields,
 )
-
 from mongoeco.api.argument_validation import (
     normalize_sort_spec as _normalize_sort_spec,
     validate_batch_size as _validate_batch_size,
@@ -16,6 +14,7 @@ from mongoeco.api.argument_validation import (
     validate_max_time_ms as _validate_max_time_ms,
     validate_sort_spec as _validate_sort_spec,
 )
+from mongoeco.core.bson_raw import decode_bson_document
 from mongoeco.core.server_errors import ErrorScope, server_error
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
@@ -205,9 +204,7 @@ def normalize_command_batch_size(batch_size: object | None) -> int | None:
 def normalize_command_ordered(value: object | None) -> bool:
     if value is None:
         return True
-    if not isinstance(value, bool):
-        raise TypeError("ordered must be a bool")
-    return value
+    return command_boolean(value, "ordered")
 
 
 def normalize_command_bool(

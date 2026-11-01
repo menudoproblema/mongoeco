@@ -244,8 +244,9 @@ class AdminParsingTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             normalize_command_projection([])
         self.assertEqual(normalize_command_batch_size(0), 0)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure) as error:
             normalize_command_ordered("yes")
+        self.assertEqual(error.exception.code, 14)
         with self.assertRaises(TypeError):
             normalize_command_bool("yes", "flag")
         with self.assertRaises(TypeError):

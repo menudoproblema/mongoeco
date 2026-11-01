@@ -6,7 +6,7 @@ import mongoeco.api.operations as operations_module
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import OperationFailure, InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import DeleteMany, DeleteOne, ReplaceOne, UpdateMany, UpdateOne
 
@@ -467,13 +467,13 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
     def test_bulk_write_requires_non_empty_write_model_list(self):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.bulk_write(InsertOne({'name': 'Ada'})))  # type: ignore[arg-type]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidOperation):
             asyncio.run(self.collection.bulk_write([]))
         with self.assertRaises(TypeError):
             asyncio.run(
                 self.collection.bulk_write([{'insert': {'name': 'Ada'}}])
             )  # type: ignore[list-item]
-        with self.assertRaises(TypeError):
+        with self.assertRaises(OperationFailure):
             asyncio.run(
                 self.collection.bulk_write(
                     [InsertOne({'name': 'Ada'})], ordered=1

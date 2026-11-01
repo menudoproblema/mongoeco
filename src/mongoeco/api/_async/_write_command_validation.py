@@ -4,6 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NoReturn
 
+from mongoeco.api._async._write_errors import validate_classic_update_sort
+from mongoeco.api._command_bson import (
+    command_boolean,
+    validate_command_array_filters,
+    validate_write_fields,
+)
 from mongoeco.core.bson_scalars import wrap_bson_numeric
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.server_errors import ErrorScope, server_error
@@ -110,3 +116,36 @@ def validate_update_entry_shape(update, array_filters=None):
         or any(not isinstance(item, dict) for item in array_filters)
     ):
         command_shape_error("arrayFilters must be a list of documents")
+
+
+def _validate_write_query(spec) -> None:
+    if spec.get("q") is None:
+        command_shape_error("missing required field q", code=40414)
+    if not isinstance(spec["q"], dict):
+        command_shape_error("q must be a document")
+
+
+def validate_update_command_shapes(updates, dialect: str) -> None:
+    # Command parsing precedes execution of every item. An invalid final spec
+    # must not publish an earlier valid update, even for unordered commands.
+    for spec in updates:
+        validate_write_fields(spec, "update", entry=True)
+        validate_command_array_filters(spec, dialect=dialect)
+        _validate_write_query(spec)
+        validate_update_entry_shape(spec.get("u"), spec.get("arrayFilters"))
+        if not isinstance(spec.get("u"), (dict, list)):
+            command_shape_error("u must be a document or pipeline", code=9)
+        for field in ("multi", "upsert"):
+            command_boolean(spec.get(field), field)
+        validate_classic_update_sort(dialect, has_sort="sort" in spec)
+        validate_selection_shapes(spec, update=True)
+
+
+def validate_delete_command_shapes(deletes) -> None:
+    for spec in deletes:
+        validate_write_fields(spec, "delete", entry=True)
+        _validate_write_query(spec)
+        limit = spec.get("limit")
+        if isinstance(limit, bool) or limit not in (0, 1):
+            command_shape_error("limit must be 0 or 1", code=9)
+        validate_selection_shapes(spec)

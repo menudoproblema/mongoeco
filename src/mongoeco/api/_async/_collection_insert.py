@@ -14,6 +14,7 @@ from mongoeco.core.duplicate_keys import duplicate_key_error, write_error_messag
 from mongoeco.core.error_documents import error_message, write_error_details
 from mongoeco.core.identity import (
     assert_valid_root_document_id,
+    document_with_id_first,
     is_valid_root_document_id,
 )
 from mongoeco.core.operation_context import ChangePublicationPolicy
@@ -58,7 +59,10 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
     request["documents"] = originals
     encoded = encode_bson_request(request, codec_options=collection._codec_options)
     public_documents = deepcopy(originals)
-    normalized = DocumentCodec.to_internal(encoded["documents"])
+    normalized = [
+        document_with_id_first(item)
+        for item in DocumentCodec.to_internal(encoded["documents"])
+    ]
     comment = encoded.get("comment")
     context = collection._new_operation_context(
         session=session,

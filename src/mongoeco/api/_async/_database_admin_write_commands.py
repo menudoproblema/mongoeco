@@ -2,27 +2,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mongoeco.api._change_delivery import change_delivery_scope
-from mongoeco.engines.adapter import EngineSpiAdapter
-from mongoeco.core.server_errors import server_error
 from mongoeco.api._async import _collection_modify
 from mongoeco.api._async._write_command_validation import (
-    command_shape_error as _command_shape_error,
-    validate_selection_shapes,
-    validate_update_entry_shape,
+    validate_delete_command_shapes as _validate_delete_command_shapes,
+    validate_update_command_shapes as _validate_update_command_shapes,
     write_command_acknowledged,
 )
-from mongoeco.api._async._write_errors import validate_classic_update_sort
 from mongoeco.api._async._write_failures import record_write_failure
+from mongoeco.api._change_delivery import change_delivery_scope
 from mongoeco.api._command_bson import (
     command_boolean,
     rename_collection_options,
-    validate_command_array_filters,
     validate_command_let,
     validate_write_fields,
 )
 from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.core._public_materialization import materialize_public_value
+from mongoeco.core.server_errors import server_error
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.results import FindAndModifyOutcome
 from mongoeco.errors import OperationFailure, WriteError
 from mongoeco.types import (
@@ -62,39 +59,6 @@ def _write_command_result(
             modified_count=0 if result.modified_count is not None else None,
         )
     return result
-
-
-def _validate_write_query(spec) -> None:
-    if spec.get("q") is None:
-        _command_shape_error("missing required field q", code=_MISSING_REQUIRED_FIELD)
-    if not isinstance(spec["q"], dict):
-        _command_shape_error("q must be a document")
-
-
-def _validate_update_command_shapes(updates, dialect: str) -> None:
-    # Command parsing precedes execution of every item. An invalid final spec
-    # must not publish an earlier valid update, even for unordered commands.
-    for spec in updates:
-        validate_write_fields(spec, "update", entry=True)
-        validate_command_array_filters(spec, dialect=dialect)
-        _validate_write_query(spec)
-        validate_update_entry_shape(spec.get("u"), spec.get("arrayFilters"))
-        if not isinstance(spec.get("u"), (dict, list)):
-            _command_shape_error("u must be a document or pipeline", code=9)
-        for field in ("multi", "upsert"):
-            command_boolean(spec.get(field), field)
-        validate_classic_update_sort(dialect, has_sort="sort" in spec)
-        validate_selection_shapes(spec, update=True)
-
-
-def _validate_delete_command_shapes(deletes) -> None:
-    for spec in deletes:
-        validate_write_fields(spec, "delete", entry=True)
-        _validate_write_query(spec)
-        limit = spec.get("limit")
-        if isinstance(limit, bool) or limit not in (0, 1):
-            _command_shape_error("limit must be 0 or 1", code=9)
-        validate_selection_shapes(spec)
 
 
 class DatabaseAdminWriteCommandService:
@@ -175,7 +139,7 @@ class DatabaseAdminWriteCommandService:
             spec.get("insert"), "insert"
         )
         documents = self._admin._normalize_insert_documents(spec.get("documents"))
-        ordered = self._admin._normalize_ordered_from_command(spec.get("ordered"))
+        ordered = self._admin._normalize_ordered_from_command(spec.get("ordered", True))
         bypass_document_validation = spec.get("bypassDocumentValidation", False)
         bypass_document_validation = command_boolean(
             bypass_document_validation, "bypassDocumentValidation", numeric=True
@@ -196,8 +160,8 @@ class DatabaseAdminWriteCommandService:
                 )
                 inserted += 1
             except (WriteError, OperationFailure, TypeError, ValueError) as exc:
-                command_failure = (
-                    record_write_failure(write_errors, exc, index=index, first_failure=command_failure)
+                command_failure = record_write_failure(
+                    write_errors, exc, index=index, first_failure=command_failure
                 )
                 if ordered:
                     break
@@ -221,7 +185,7 @@ class DatabaseAdminWriteCommandService:
         )
         updates = self._admin._normalize_update_specs(spec.get("updates"))
         _validate_update_command_shapes(updates, self._admin._mongodb_dialect.key)
-        ordered = self._admin._normalize_ordered_from_command(spec.get("ordered"))
+        ordered = self._admin._normalize_ordered_from_command(spec.get("ordered", True))
         bypass_document_validation = spec.get("bypassDocumentValidation", False)
         bypass_document_validation = command_boolean(
             bypass_document_validation, "bypassDocumentValidation", numeric=True
@@ -282,8 +246,8 @@ class DatabaseAdminWriteCommandService:
                         )
                     )
             except (WriteError, OperationFailure, TypeError, ValueError) as exc:
-                command_failure = (
-                    record_write_failure(write_errors, exc, index=index, first_failure=command_failure)
+                command_failure = record_write_failure(
+                    write_errors, exc, index=index, first_failure=command_failure
                 )
                 if ordered:
                     break
@@ -307,13 +271,17 @@ class DatabaseAdminWriteCommandService:
         execution_context: ExpressionExecutionContext | None = None,
     ) -> object:
         validate_write_fields(spec, "delete")
-        command_boolean(spec.get("bypassDocumentValidation"), "bypassDocumentValidation", numeric=True)
+        command_boolean(
+            spec.get("bypassDocumentValidation"),
+            "bypassDocumentValidation",
+            numeric=True,
+        )
         collection_name = self._admin._require_collection_name(
             spec.get("delete"), "delete"
         )
         deletes = self._admin._normalize_delete_specs(spec.get("deletes"))
         _validate_delete_command_shapes(deletes)
-        ordered = self._admin._normalize_ordered_from_command(spec.get("ordered"))
+        ordered = self._admin._normalize_ordered_from_command(spec.get("ordered", True))
         collection = self._admin._database.get_collection(collection_name)
         command_context = (
             execution_context or self._admin._database._new_execution_context()
@@ -347,8 +315,8 @@ class DatabaseAdminWriteCommandService:
                 )
                 deleted += result.deleted_count
             except (WriteError, OperationFailure, TypeError, ValueError) as exc:
-                command_failure = (
-                    record_write_failure(write_errors, exc, index=index, first_failure=command_failure)
+                command_failure = record_write_failure(
+                    write_errors, exc, index=index, first_failure=command_failure
                 )
                 if ordered:
                     break
@@ -550,7 +518,7 @@ class DatabaseAdminWriteCommandService:
     def is_operator_update(update_spec: dict[str, object] | list[object]) -> bool:
         if isinstance(update_spec, list):
             return True
-        return all(isinstance(key, str) and key.startswith("$") for key in update_spec)
+        return bool(update_spec) and next(iter(update_spec)).startswith("$")
 
     async def command_create_indexes(
         self,

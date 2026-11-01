@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from mongoeco._types.documents import BulkWriteErrorDetails, UpsertedWriteEntry
+
+
 type Document = dict[str, Any]
 type Filter = dict[str, Any]
 type UpdateDocument = dict[str, Any]
@@ -120,3 +123,17 @@ class BulkWriteResult[T]:
     upserted_count: int
     upserted_ids: dict[int, T]
     acknowledged: bool = True
+
+    @property
+    def bulk_api_result(self) -> dict[str, object]:
+        return BulkWriteErrorDetails(
+            write_errors=[],
+            inserted_count=self.inserted_count,
+            matched_count=self.matched_count,
+            modified_count=self.modified_count,
+            removed_count=self.deleted_count,
+            upserted=[
+                UpsertedWriteEntry(index=index, document_id=value)
+                for index, value in self.upserted_ids.items()
+            ],
+        ).to_document()

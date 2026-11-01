@@ -21,6 +21,7 @@ from mongoeco.api.operations import (
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.identity import (
     is_valid_root_document_id,
+    document_with_id_first,
     materialize_replacement_document,
 )
 from mongoeco.core.operation_context import OperationContext, resolve_operation_session
@@ -839,7 +840,7 @@ class CollectionRuntimeCoordinator:
             document["_id"] = deepcopy(seeded["_id"])
         if "_id" not in document:
             document["_id"] = ObjectId()
-        return document
+        return document_with_id_first(document)
 
     @staticmethod
     def materialize_replacement_document(
