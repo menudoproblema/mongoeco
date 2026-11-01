@@ -168,9 +168,11 @@ def test_mongodb7_classic_sort_rejection_has_complete_command_details(
 
 @pytest.mark.parametrize("target", TARGETS)
 @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
-@pytest.mark.parametrize("surface", ["sync", "async"])
-@pytest.mark.parametrize("consume", ["iteration", "first"])
-def test_streamed_aggregation_error_keeps_complete_command_document(
+@pytest.mark.parametrize(
+    ["surface", "consume"],
+    [("sync", "open"), ("async", "iteration"), ("async", "first")],
+)
+def test_aggregation_error_keeps_complete_command_document_at_native_phase(
     target, engine, surface, consume
 ):
     pipeline = [{"$set": {"x": {"$sqrt": "$x"}}}]
@@ -189,10 +191,8 @@ def test_streamed_aggregation_error_keeps_complete_command_document(
         with MongoClient(ENGINE_FACTORIES[engine](), mongodb_dialect=target) as client:
             collection = client.stream_errors.items
             collection.insert_one({"_id": "a", "x": -1})
-            cursor = collection.aggregate(pipeline, batch_size=1)
-            invoke = cursor.first if consume == "first" else lambda: next(iter(cursor))
             with pytest.raises(pymongo.errors.OperationFailure) as caught:
-                invoke()
+                collection.aggregate(pipeline, batch_size=1)
             check(caught.value)
             assert (
                 collection.update_one({}, {"$set": {"recovered": True}}).modified_count

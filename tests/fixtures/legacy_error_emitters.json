@@ -1,4 +1,5 @@
 {
+  "ast_identity": "ast.dump without expression contexts (stable on Python 3.13/3.14/3.15)",
   "description": "Existing uncoded internal constructors; inventory is not a compatibility waiver or proof of correctness. New emitters must carry native identity.",
   "emitters": {
     "src/mongoeco/_change_streams/cursor.py:AsyncChangeStreamCursor._ensure_open:f46b1638fb05e2fb59a6d7a9a421812d1f52abfdace9ca393b20c823539b943f": 1,
@@ -52,7 +53,7 @@
     "src/mongoeco/api/_async/database_commands.py:AsyncDatabaseCommandService.parse_raw_command:13ceb68bb179ece23243a6b40d66bb9a995adf46fd99a7598e61c8000e687473": 1,
     "src/mongoeco/api/_async/database_commands.py:AsyncDatabaseCommandService.parse_raw_command:77100bd9a15883e438744ddc99216a3a3b60afd8d7cc51ce4fe9385212ebdfbc": 1,
     "src/mongoeco/api/_async/raw_batch_cursor.py:_encode_batch:ef70fdea82c35c6febfe4cf850aa9f7ce3dbaeaeff8d1147d495ba216a588551": 1,
-    "src/mongoeco/api/admin_parsing.py:normalize_index_models_from_command:10a3481196cf94971c24ba8a8f791e5d03a5c7bb754fdc9ab0ddf62d2899409f": 1,
+    "src/mongoeco/api/admin_parsing.py:normalize_index_models_from_command:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 1,
     "src/mongoeco/api/operations.py:_normalize_let:c5cce345c6c97a5dbcb9b0aecaee4fe458029bfe577b2f9a3fb6e13624873674": 1,
     "src/mongoeco/api/operations.py:compile_find_operation:7008ebdaf93b919b0feca41f10652cb142ebf7fde33dacdd5433273ea65ab423": 1,
     "src/mongoeco/api/operations.py:compile_find_operation:94f08a8e20eeac5ba5a9a00df4ed57938a69230a550d926ecb2edb2c10968903": 1,
@@ -281,7 +282,6 @@
     "src/mongoeco/core/aggregation/preparation.py:_prepare_facet:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 3,
     "src/mongoeco/core/aggregation/preparation.py:_validate_documents_namespace:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 1,
     "src/mongoeco/core/aggregation/preparation.py:_validate_placement:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 3,
-    "src/mongoeco/core/aggregation/runtime.py:_aggregation_key:1b480472ff0df9c01d02ad3567e5cb9d1126abfa2ae1a67810484a0e3961ca32": 1,
     "src/mongoeco/core/aggregation/runtime.py:_bson_cstring_size:9be89d972c9487ba32b19dec0d3fe1d096a5f971407dc097f9f867d8bf78a564": 1,
     "src/mongoeco/core/aggregation/runtime.py:_bson_value_size:a4cd9e698723332f3a7f2b05f3a4f86e81b7e999cfe77d7c747bfe118e35a817": 1,
     "src/mongoeco/core/aggregation/runtime.py:_normalize_numeric_place:173bda7daca5f27f4b4d9e76c5388429e58bc8e38207dba9d567d102a689f55d": 1,
@@ -309,6 +309,7 @@
     "src/mongoeco/core/aggregation/runtime.py:_require_unwind_spec:a92f328430445d6d5057b3efd47b12863748b92d49b021bf8e7bf9f57a5fc7fc": 1,
     "src/mongoeco/core/aggregation/runtime.py:_require_unwind_spec:f560a367c6c6b63488b8d318e072138d34de3b4656787e5d84fdb22a2e1aae9b": 1,
     "src/mongoeco/core/aggregation/runtime.py:_subtract_values:dbcba9de8fa9ec6fcc88e7e33d761568b231c65cc47a611be0ef7f3f14c880a2": 1,
+    "src/mongoeco/core/aggregation/runtime.py:aggregation_equality_key:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 1,
     "src/mongoeco/core/aggregation/runtime.py:evaluate_expression:2a81057d7234277b74f5f95f49d0a30a67b08014ed9a6273fedb6b37861aa0aa": 1,
     "src/mongoeco/core/aggregation/runtime_state.py:_apply_lookup_states:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 1,
     "src/mongoeco/core/aggregation/runtime_state.py:_apply_union_states:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 1,
@@ -397,9 +398,9 @@
     "src/mongoeco/core/projections.py:_parse_positional_projection_path:cb91bbc2e77e7879be0e2a15d88b89acb1d1e90e2469bfc5a2a599767493db0d": 1,
     "src/mongoeco/core/projections.py:_parse_projection_operator_value:093907353425ed66a627c3bd5749b88cf0709855243badb5b862524f18645f15": 1,
     "src/mongoeco/core/projections.py:_parse_projection_spec:22f4ff4201012e61ff4b1794f390f2c121a0daf5c17b15e897b41b01234bff69": 1,
-    "src/mongoeco/core/projections.py:_parse_projection_spec:649313349238fceade54161b9a7534e307f5d0861e3c4e55cfd3121e92bd8b4a": 1,
     "src/mongoeco/core/projections.py:_parse_projection_spec:73d2b15671ae980e7028efbc0979f9db5d4c30b82e3278dae8dc22e5c29bf2cd": 1,
     "src/mongoeco/core/projections.py:_parse_projection_spec:7659f5ffac3d8d31bc81223c25995af76df879c54a3e60d8d99a7005a8be7b3d": 1,
+    "src/mongoeco/core/projections.py:_parse_projection_spec:a66c1589bf1aecb92e128a1bc119dc2b4b419e356b771e283da857030cdb688c": 1,
     "src/mongoeco/core/projections.py:_parse_projection_spec:aa5c303749baebb270ad224c366a70775d382a02489954c95b80f9fff5952429": 1,
     "src/mongoeco/core/projections.py:_parse_projection_spec:b36fd2e1b440dd13f3931e9a4a28df69fd92f660a324beb016670dd1ee65beab": 1,
     "src/mongoeco/core/projections.py:_parse_projection_spec:c58439c1169933b3452b98a8898a863fff784a8dc767ef8e223a1b01bb9fa5d8": 1,
@@ -788,6 +789,5 @@
     "src/mongoeco/wire/sessions.py:WireSessionStore._apply_transaction_metadata:7e27c301514bca6b30ac5ebc179f5b4077171b34559266b755de29087b6d0cf2": 1,
     "src/mongoeco/wire/sessions.py:WireSessionStore._require_session:eed98d9cc74fd5051d37a17fe6214ac5f6e476efd75861c3f278f5909c9354b7": 1,
     "src/mongoeco/wire/sessions.py:WireSessionStore._require_session:fffa1d1c2cee0dc01f909c3089c7d85fcdb279245292e2557e860cda4cc15f0e": 1
-  },
-  "ast_identity": "ast.dump without expression contexts (stable on Python 3.13/3.14/3.15)"
+  }
 }

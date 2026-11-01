@@ -82,7 +82,7 @@ def test_legacy_index_readers_match_native_without_changing_storage(
 
 
 @pytest.mark.parametrize("dialect", ["7.0", "8.0"])
-def test_sql_keeps_exact_numeric_values_and_delegates_tagged_numbers(dialect):
+def test_public_numeric_operands_delegate_tagged_bson_comparisons(dialect):
     with MongoClient(SQLiteEngine(), mongodb_dialect=dialect) as client:
         collection = client.semantic_numeric.records
         collection.insert_many(SEED)
@@ -91,13 +91,10 @@ def test_sql_keeps_exact_numeric_values_and_delegates_tagged_numbers(dialect):
             for value in (0.1, 1000000000000000128):
                 explain = collection.find({field: value}, hint=f"{field}_1").explain()
                 pushdown = explain["details"]["pushdown"]
-                if field in {"v", "a"}:
-                    assert explain["strategy"] == "python"
-                    assert pushdown["fallbackReason"] == (
-                        "Tagged BSON numeric comparison requires Python fallback"
-                    )
-                else:
-                    assert explain["strategy"] == "sql"
-                    assert pushdown["sqlPredicateExact"]
-                    assert "scalar_index_entries" not in pushdown["sqlFragment"]
-                    assert "multikey_entries" not in pushdown["sqlFragment"]
+                # Public BSON admission preserves numeric types in operands.
+                # Untagged legacy SQL is covered by the planner's raw-number
+                # contract; this API must take its conservative tagged fallback.
+                assert explain["strategy"] == "python"
+                assert pushdown["fallbackReason"] == (
+                    "Tagged BSON numeric comparison requires Python fallback"
+                )

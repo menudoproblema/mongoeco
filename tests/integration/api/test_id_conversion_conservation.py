@@ -198,7 +198,8 @@ def test_conversion_preserves_indexes_search_ttl_and_exactly_one_event(
                 assert result.modified_count == 1
                 event = await stream.try_next()
                 assert event["operationType"] == ("update" if pipeline else "replace")
-                assert bson_value(event["documentKey"]) == bson_value({"_id": 1.0})
+                # Native documentKey retains the pre-image ID's physical BSON type.
+                assert bson_value(event["documentKey"]) == bson_value({"_id": 1})
                 assert await stream.try_next() is None
                 assert (
                     await collection.count_documents({"value": 0}, hint="value_1") == 1
@@ -365,7 +366,8 @@ def test_conversion_transaction_publishes_only_after_commit(tmp_path, engine, co
                 ) == bson_value(expected)
                 event = await stream.try_next()
                 if commit:
-                    assert bson_value(event["documentKey"]) == bson_value({"_id": 1.0})
+                    # The event identifies the pre-image; storage keeps the new ID.
+                    assert bson_value(event["documentKey"]) == bson_value({"_id": 1})
                 else:
                     assert event is None
                 assert await stream.try_next() is None

@@ -2405,3 +2405,30 @@ el diferencial api_options a las garantías de preparación; no se debilita el
 rechazo de generadores ni se aplica el normalizador después del encoder. Este
 cambio invalida solo la evidencia alcanzada por esa frontera y exige el gate
 global final posterior; O5–O8 continúan abiertas.
+
+
+### O5 — Eventos, fases y metadatos estáticos
+
+Pasan 36 controles focales de identidad/errores/fallback. El documentKey del
+evento conserva el tipo BSON del ID anterior mientras el documento almacenado
+conserva el ID convertido; commit/abort siguen comprobados. El error del primer
+batch de aggregate sync se observa al abrir, conforme al corte de fronteras ya
+aceptado; async conserva sus consumos first/iteración. Se reduce el eje sync a
+una prueba de apertura, conservando diagnóstico completo y recuperación.
+
+La admisión pública conserva tipos numéricos etiquetados y exige su fallback
+conservador. Se retira la expectativa de SQL de esos operandos públicos; el
+contrato SQL de números originales sigue en test_sqlite_engine y la lectura
+nativa del archivo previo conserva schema/documentos/auxiliares. No se crea un
+pushdown nuevo para hacer verde el test ni se afirma que el coste sea idéntico.
+
+Los cinco checks estáticos de reloj/emisores pasan. Se añade únicamente el
+callsite de presupuesto monotónico Search extraído del owner previo. Para los
+emisores se transfieren exactamente tres entradas históricas: dos constructores
+pasaron de string literal a variable message y _aggregation_key cambió de nombre.
+Los diffs de 8e261c7a/7524e392 y el constructor antiguo fijan la equivalencia;
+el presupuesto total de emisores sin código no aumenta. Originales archivados:
+d05-clock-inventory-before.json.gz y d05-error-inventory-before.json.gz. Son
+inventarios locales, no capturas nativas, y su conciliación no admite nuevos
+emisores sin identidad. O5 sigue abierta hasta resolver los demás fallos y el
+99% de cobertura.
