@@ -172,6 +172,9 @@ class _AsyncView:
     def drop(self, *args, **kwargs):
         return self._call("drop", *args, **kwargs)
 
+    def drop_collection(self, *args, **kwargs):
+        return self._call("drop_collection", *args, **kwargs)
+
     def drop_database(self, *args, **kwargs):
         return self._call("drop_database", *args, **kwargs)
 

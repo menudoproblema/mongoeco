@@ -39,7 +39,6 @@ from mongoeco.types import (
     Document,
     DocumentId,
     InsertOne,
-    ObjectId,
     ReplaceOne,
     UpdateMany,
     UpdateOne,
@@ -236,9 +235,7 @@ class BulkWritePreparationContext:
         try:
             collection._validate_bulk_write_request_against_profile(request)
             if isinstance(request, InsertOne):
-                original = collection._require_document(request.document)
-                if "_id" not in original:
-                    original["_id"] = DocumentCodec.to_pymongo(ObjectId())
+                original = collection._prepare_insert_document(request.document)
                 assert_valid_root_document_id(original["_id"])
                 return PreparedBulkWriteRequest(
                     index=index,
@@ -452,7 +449,7 @@ async def execute_bulk_write(
                     insert_kwargs = {"session": session}
                     if bypass_document_validation:
                         insert_kwargs["bypass_document_validation"] = True
-                    await collection.insert_one(
+                    await collection._insert_one(
                         prepared.insert_document or request.document,
                         _execution_context=batch_context,
                         **insert_kwargs,

@@ -458,10 +458,10 @@ class BulkWriteErrorDetails:
             "writeErrors": [entry.to_document() for entry in self.write_errors],
             "writeConcernErrors": [],
             "nInserted": self.inserted_count,
+            "nUpserted": len(self.upserted),
             "nMatched": self.matched_count,
             "nModified": self.modified_count,
             "nRemoved": self.removed_count,
-            "nUpserted": len(self.upserted),
             "upserted": [entry.to_document() for entry in self.upserted],
         }
 

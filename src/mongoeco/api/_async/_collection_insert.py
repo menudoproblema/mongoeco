@@ -8,6 +8,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async._active_operations import track_active_operation
+from mongoeco.api.bson_input import encode_bson_request
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.duplicate_keys import duplicate_key_error, write_error_message
 from mongoeco.core.error_documents import error_message, write_error_details
@@ -25,7 +26,6 @@ from mongoeco.errors import (
 from mongoeco.types import (
     BulkWriteErrorDetails,
     InsertManyResult,
-    ObjectId,
     WriteErrorEntry,
 )
 
@@ -48,17 +48,18 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
     comment: object | None,
 ) -> InsertManyResult[DocumentId]:
     collection._ensure_session_active(session)
-    comment = deepcopy(comment)
     if not isinstance(ordered, bool):
         message = "ordered must be a bool"
         raise TypeError(message)
-    normalized = []
-    public_documents = []
-    for original in collection._require_documents(documents):
-        if "_id" not in original:
-            original["_id"] = DocumentCodec.to_pymongo(ObjectId())
-        public_documents.append(deepcopy(original))
-        normalized.append(DocumentCodec.to_internal(deepcopy(original)))
+    originals = collection._prepare_insert_documents(documents)
+    request = {}
+    if comment is not None:
+        request["comment"] = comment
+    request["documents"] = originals
+    encoded = encode_bson_request(request, codec_options=collection._codec_options)
+    public_documents = deepcopy(originals)
+    normalized = DocumentCodec.to_internal(encoded["documents"])
+    comment = encoded.get("comment")
     context = collection._new_operation_context(
         session=session,
         change_operation_type="insert",
@@ -231,5 +232,7 @@ async def execute_insert_many(  # noqa: PLR0913, PLR0915 - one public batch owns
         duration_ns=time.perf_counter_ns() - started,
     )
     return InsertManyResult(
-        inserted_ids=[DocumentCodec.to_pymongo(value) for value in inserted]
+        inserted_ids=[
+            DocumentCodec.to_pymongo(document["_id"]) for document in public_documents
+        ]
     )

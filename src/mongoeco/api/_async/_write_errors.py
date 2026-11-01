@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 from functools import wraps
 
+from mongoeco.core._public_materialization import materialize_public_document
 from mongoeco.core.duplicate_keys import duplicate_key_message, write_error_message
 from mongoeco.core.error_documents import (
     CODE_NAMES,
@@ -24,11 +25,56 @@ from mongoeco.core.server_errors import (
     server_error,
 )
 from mongoeco.errors import (
+    BulkWriteError,
     DuplicateKeyError,
     ExecutionTimeout,
     OperationFailure,
     WriteError,
 )
+from mongoeco.types import CodecOptions
+
+
+def materialize_write_error(error, *, codec_options):
+    """Decode the write reply with builtin options, preserving client bulk ops."""
+    source = error.details or {}
+    if not isinstance(error, BulkWriteError):
+        source = {
+            "index": 0,
+            "code": error.code,
+            "errmsg": error_message(error),
+            **write_error_details(error),
+        }
+    if isinstance(error, BulkWriteError):
+        source = {
+            **source,
+            "writeErrors": [
+                {key: value for key, value in entry.items() if key != "op"}
+                for entry in source.get("writeErrors", ())
+            ],
+        }
+    options = CodecOptions(
+        tz_aware=codec_options.tz_aware,
+        tzinfo=codec_options.tzinfo,
+        uuid_representation=codec_options.uuid_representation,
+    )
+    details = materialize_public_document(source, codec_options=options)
+    if isinstance(error, BulkWriteError):
+        # PyMongo adds the original client operation after decoding the reply.
+        for public, original in zip(
+            details.get("writeErrors", ()),
+            (error.details or {}).get("writeErrors", ()),
+            strict=True,
+        ):
+            if "op" in original:
+                public["op"] = original["op"]
+    converted = (
+        BulkWriteError(error_message(error), details=details)
+        if isinstance(error, BulkWriteError)
+        else type(error)._from_server_document(
+            error_message(error), code=error.code, details=details
+        )
+    )
+    return retain_diagnostic(error, converted)
 
 
 def validate_classic_update_sort(dialect_key: str, *, has_sort: bool) -> None:

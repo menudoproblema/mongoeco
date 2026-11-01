@@ -189,7 +189,7 @@ class DatabaseAdminWriteCommandService:
         command_failure = None
         for index, document in enumerate(documents):
             try:
-                await collection.insert_one(
+                await collection._insert_one(
                     document,
                     bypass_document_validation=bypass_document_validation,
                     session=session,

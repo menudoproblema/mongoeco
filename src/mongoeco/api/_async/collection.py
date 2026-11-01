@@ -24,6 +24,7 @@ from mongoeco.api._async._collection_bulk import (
     normalize_bulk_write_request,
 )
 from mongoeco.api._async._collection_insert import execute_insert_many
+from mongoeco.api._async._write_errors import materialize_write_error
 from mongoeco.api._async._collection_runtime import (
     CollectionRuntimeCoordinator,
 )
@@ -57,7 +58,7 @@ from mongoeco.api.operations import (
     _normalize_limit,
     compile_aggregate_operation,
 )
-from mongoeco.api.bson_input import encode_operation_bson
+from mongoeco.api.bson_input import encode_bson_request, encode_operation_bson
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_FIND_RAW_BATCHES_SPEC,
@@ -123,7 +124,7 @@ from mongoeco.engines.results import (
     InsertOutcome,
     MutationOutcome,
 )
-from mongoeco.errors import DuplicateKeyError
+from mongoeco.errors import BulkWriteError, DuplicateKeyError, WriteError
 from mongoeco.session import ClientSession  # noqa: TC001
 from mongoeco.types import (
     ArrayFilters,
@@ -373,15 +374,24 @@ class AsyncCollection:
         return document
 
     @classmethod
-    def _require_documents(cls, documents: object) -> list[Document]:
+    def _prepare_insert_document(cls, document: object) -> Document:
+        original = cls._require_document(document)
+        if "_id" not in original:
+            original["_id"] = DocumentCodec.to_pymongo(ObjectId())
+        return original
+
+    @classmethod
+    def _prepare_insert_documents(cls, documents: object) -> list[Document]:
         if not isinstance(documents, Iterable) or isinstance(
             documents, (str, bytes, bytearray, dict)
         ):
-            raise TypeError("documents must be a non-empty iterable of documents")
-        normalized = list(documents)
-        if not normalized:
-            raise ValueError("documents must not be empty")
-        return [cls._require_document(document) for document in normalized]
+            message = "documents must be a non-empty iterable of documents"
+            raise TypeError(message)
+        prepared = [cls._prepare_insert_document(document) for document in documents]
+        if not prepared:
+            message = "documents must not be empty"
+            raise ValueError(message)
+        return prepared
 
     @staticmethod
     def _normalize_filter(filter_spec: object | None) -> Filter:
@@ -878,6 +888,37 @@ class AsyncCollection:
         _execution_context: ExpressionExecutionContext | None = None,
     ) -> InsertOneResult[DocumentId]:
         self._ensure_session_active(session)
+        original = self._prepare_insert_document(document)
+        request = {}
+        if comment is not None:
+            request["comment"] = comment
+        request["document"] = original
+        encoded = encode_bson_request(request, codec_options=self._codec_options)
+        try:
+            await self._insert_one(
+                encoded["document"],
+                bypass_document_validation=bypass_document_validation,
+                session=session,
+                comment=encoded.get("comment"),
+                _execution_context=_execution_context,
+            )
+        except WriteError as error:
+            raise materialize_write_error(
+                error, codec_options=self._codec_options
+            ) from error
+        return InsertOneResult(inserted_id=DocumentCodec.to_pymongo(original["_id"]))
+
+    async def _insert_one(
+        self,
+        document: Document,
+        *,
+        bypass_document_validation: bool = False,
+        session: ClientSession | None = None,
+        comment: object | None = None,
+        _execution_context: ExpressionExecutionContext | None = None,
+    ) -> InsertOneResult[DocumentId]:
+        """Execute an internal insert after its owner admits the client packet."""
+        self._ensure_session_active(session)
         comment = deepcopy(comment)
         context = self._new_operation_context(
             session=session,
@@ -889,9 +930,7 @@ class AsyncCollection:
                 else ChangePublicationPolicy.RECORD_GAP
             ),
         )
-        original = self._require_document(document)
-        if "_id" not in original:
-            original["_id"] = DocumentCodec.to_pymongo(ObjectId())
+        original = self._prepare_insert_document(document)
         assert_valid_root_document_id(original["_id"])
         doc = DocumentCodec.to_internal(deepcopy(original))
 
@@ -1014,14 +1053,19 @@ class AsyncCollection:
         session: ClientSession | None = None,
         comment: object | None = None,
     ) -> InsertManyResult[DocumentId]:
-        return await execute_insert_many(
-            self,
-            documents,
-            ordered=ordered,
-            bypass_document_validation=bypass_document_validation,
-            session=session,
-            comment=comment,
-        )
+        try:
+            return await execute_insert_many(
+                self,
+                documents,
+                ordered=ordered,
+                bypass_document_validation=bypass_document_validation,
+                session=session,
+                comment=comment,
+            )
+        except BulkWriteError as error:
+            raise materialize_write_error(
+                error, codec_options=self._codec_options
+            ) from error
 
     async def bulk_write(
         self,
@@ -1137,14 +1181,19 @@ class AsyncCollection:
         self._normalize_batch_size(options.get("batch_size"))
         self._normalize_max_time_ms(options.get("max_time_ms"))
         return AsyncCursor(
-            self, query, None, projection_document(options.get("projection")),
+            self,
+            query,
+            None,
+            projection_document(options.get("projection")),
             collation=options.get("collation"),
             sort=self._normalize_sort(options.get("sort")),
             skip=_normalize_skip(options.get("skip", 0)),
             limit=_normalize_limit(options.get("limit")),
             hint=self._normalize_hint(options.get("hint")),
-            comment=options.get("comment"), max_time_ms=options.get("max_time_ms"),
-            batch_size=options.get("batch_size"), let=options.get("let"),
+            comment=options.get("comment"),
+            max_time_ms=options.get("max_time_ms"),
+            batch_size=options.get("batch_size"),
+            let=options.get("let"),
             session=options.get("session"),
         )
 
