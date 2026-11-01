@@ -1,6 +1,6 @@
 # Consolidación BSON: contraste de informes y plan integrado
 
-**Entrada vigente (1 de noviembre; último corte aceptado `d5bdadb8`):**
+**Entrada vigente (1 de noviembre; registro aceptado `a7d27fc9`):**
 [contraste y orden actual](#contraste-actual-y-orden-mínimo-de-ejecución),
 [detalle de B07](#b07--admisión-en-la-fase-y-el-lote-correctos) y
 [estado de implementación](bson-consolidation-implementation.md).
@@ -1325,10 +1325,50 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 | --- | --- | --- |
 | Control previo cerrado — B07, admisión | `2723fb28` acepta las [cinco entradas Search](evidence/bson-consolidation-implementation/bson-input-search/README.md), opciones propias y creación preparada compartida. Completa las 17 disposiciones del censo administrativo histórico tras comandos, catálogo, índices, lectores y namespace, con sus aceptaciones en el registro. Lecturas, inserciones, mutaciones y bulk conservan sus cortes propios. No implica positivos Atlas ni una API universal ya censada. | Conservar originales, codificar una vez, errores cliente/precedencia y efectos. El wire ya decodificado no vuelve a codificarse; unidad 5 conserva positivos y batching. |
 | Control previo cerrado — B07, UUID | `d5bdadb8` acepta [default UNSPECIFIED, dueños y lectura independiente](evidence/bson-consolidation-implementation/bson-uuid-policy/README.md), sobre la admisión ya entregada. `b29e9bf1` corrige ausencia en distinct, compartida por API/comando. | Mantener STANDARD/legacy explícitos, bytes/subtipos y lectura/reapertura de archivos previos. No cambiar otra vez el default ni reextraer el codec; no implica cierre D06 ni positivos completos. |
-| 1 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. Puede avanzar antes del cambio de default. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
+| 1 / P1 — B07, positivos y respuestas | Reusar preparación de proyección, DTO y materializador; no crear otra autoridad BSON. El default UUID ya está aceptado y permanece como control. | Unidad 5: valores y tipos, orden de sobres, resultado bulk, callbacks y fábricas una sola vez. |
 | 2 / P1 — Resto D06a/b/c | Completar contextos y consumidores aún sin aceptación sobre vistas, gramática, contexto y claves existentes. Conservar cortes raw/dispatch/fábricas/cursores, grupo/conjuntos y Search ya aceptados. | Diferenciales por contexto, representación, collation y persistencia. No inferir cierre completo de D06 por una familia verde. |
 | 3 / P2 — H53 y D07 | Independientes de terminar D06: disponer observabilidad C03/B08 y decidir continuar/descartar el piloto con hipótesis medible. | Sin logging nuevo implícito ni migración schema obligatoria. Conversión ya aceptada en `51ff167`; conservar sus controles. |
 | 4 — D05 integrado | Congelar el candidato y ejecutar los gates globales del contrato después de las aceptaciones acotadas. | Matrices Python/SDK/pytest, wheel, SPI/typing, cobertura, persistencia, costes y recursos. Conservar fallos pendientes visibles y receipts ligados a la fuente exacta. |
+
+**Relectura de la autocrítica sobre el árbol actual.** El adjunto conserva el
+SHA-256 ya identificado desde revisión 3. El [contraste reproducible actual](evidence/bson-consolidation-review/review21/README.md)
+no abre nuevos IDs: distingue los mecanismos históricos de H48/H50/H51 de sus
+arreglos aceptados y del candidato de proyecciones todavía sin aceptación.
+Las retractaciones sobre causa, `$in`, distinct y las 167 pruebas se mantienen;
+no se heredan sus resultados como gates actuales. La sonda de representación
+repetida observa seis pares motor/dialecto y 18 filas; pasan 78 regresiones
+focales. Las 16 fuentes oficiales descargadas coinciden con sus hashes fijados.
+No son una nueva ejecución de MongoDB ni aceptación de la wheel candidata.
+
+**Precisiones de aceptación, sin añadir bloques ni componentes:**
+
+- D00 acompaña al consumidor que cambia. Para igualdad/claves, comprobar las
+  formas SDK/local/interna y el resultado público; las trazas de clases sirven
+  al diagnóstico y no fijan nombres privados como contrato. Una clave exclusiva
+  exige equivalencia; una clave de candidatos admite colisiones con residual,
+  pero debe conservar todos los matches antes de límites y ventanas.
+- B07 unidad 5 reutiliza preparación y evaluación de expresiones existentes.
+  Separar disponibilidad declarada de metadatos, valor por documento y salida
+  pública: cambios de representación y planes optimizados deben conservarlos
+  hasta su consumidor, sin persistirlos ni exponerlos como campos del usuario.
+  Evaluar cada expresión una vez por fila. Cubrir ruta directa/comando/wire
+  soportado, vacío/poblado, subpipeline, `let`, collation, reloj y callbacks.
+  Conservar la fase nativa de los errores de proyección en findAndModify junto
+  con estado y barrera de eventos; no presuponer rollback ante todo error.
+- D06 conserva orden/extras DBRef antes del decoder SDK, gramática por contexto
+  y controles negativos. Un parser correcto o una forma wire válida no acredita
+  todos los contextos; las especializaciones SQL/hash deben demostrar su ruta
+  real y su fallback. Mantener el fallback binario de D03a, sin obligar a crear
+  un pushdown nuevo. No ampliar la gramática mediante un normalizador universal.
+- D02 conserva inclusión de candidatos TTL, residual exacto y migración de
+  auxiliares como garantías separadas; no introducir tolerancia de un milisegundo.
+  D04 conserva apertura/consumo y clase/código de error. Sus controles siguen
+  vigentes sin reabrir los cortes aceptados. H53 sigue requiriendo disposición
+  explícita C03/B08; aceptación de escritura y warning son observables distintos.
+- D05 acredita la fuente final instalada. Las pruebas locales de esta relectura
+  no aceptan los cambios preexistentes de runtime ni sustituyen baseline fallida,
+  referencias 7/8/9, matrices, typing/SPI, persistencia o recursos. No regenerar
+  referencias históricas para ajustar expectativas a la implementación.
 
 Los criterios detallados de las seis unidades B07 se mantienen en su apartado;
 esta tabla solo ordena sus dependencias con D06 y D05. No es necesario cerrar

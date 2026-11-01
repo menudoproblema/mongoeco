@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-01",
+  "base_commit": "a7d27fc9209a1e8132aab6cb72a38c3d14f4bb22",
+  "attachment_sha256": "a53e71d1c6b1b1c18ff87809edb637a003dd2449ea861c64a9506cdd503b6bca",
+  "preexisting_candidate_sha256": {
+    "src/mongoeco/api/_async/_collection_modify.py": "9b44175f54d8c4fd7c4c333342da8faf12eb73cbee2f399f9f3d5d1dd56d2140",
+    "src/mongoeco/api/operations.py": "c2578fd3b6186ba043299eb91c6915e56328aa9017fe29e9113cfb62755af1e8",
+    "src/mongoeco/compat/base.py": "5bea8fbbc13b8cc07884ed69462a9938765c325974a0623cb34ab25bee38c175",
+    "src/mongoeco/core/aggregation/grouping_stages.py": "64ea9a43605134aacbe1db959992fc0934586f164289832853146af0a46d64e6",
+    "src/mongoeco/core/aggregation/planning.py": "1e558e2ee504699446ce119727666ddea0825a3809ba3847d822641450f64c49",
+    "src/mongoeco/core/aggregation/preparation.py": "0bbf43d009004a7df9b17413886b66468ebda81db6c983dd01057e951ba1e945",
+    "src/mongoeco/core/aggregation/runtime.py": "ccd4c4466c6ef2673c8478a4948e2f52e4db0beb47e76a99d1f00220ce730942",
+    "src/mongoeco/core/aggregation/runtime_state.py": "9f8ce2cf508d409db8425a189a4ce30bc0c2cef04d5f83c956a88b1382abee15",
+    "src/mongoeco/core/aggregation/transform_stages.py": "d6405cfc4b5b3c27f18e55e7bab784ec0e2daf27ac02ebbca716ced10ba636b9",
+    "src/mongoeco/core/codec.py": "cb177421b9ed40059dc79f241768fb55dfed984d2ea4f7b2fbbc1137aeeadad5",
+    "src/mongoeco/core/projections.py": "e4d68b477972276b0c9e11db24b4ec9499e76396d8a1450c0912a85d7a051c4a",
+    "src/mongoeco/core/runtime_metadata.py": "d8597e5618e16d04ac3cd63340621800650d16e4f8b519756eff6ac604c39e5d",
+    "src/mongoeco/engines/_sqlite_read_ops.py": "4899d9f1d9b9c876484e0549656a0e16fc9ff21f6f31b5275766782f98aabd74",
+    "src/mongoeco/engines/memory.py": "e8d312895154af80c173eca84584a59dbeb81456546ad983eec2699ba3a44b88",
+    "src/mongoeco/engines/semantic_core.py": "8975fb343ec0137cdf8504115a741f882bc73a11d72ebeb19efdc1f2f531a401",
+    "src/mongoeco/engines/sqlite.py": "0a6f4c3aabe936d29a201dde3da7dca6be89178f2f4ef8ad4589a6f775767c63",
+    "tests/differential/semantic_corpora.py": "e4b302b5c6e8f14a9fc7a4b1ada1980f751d95893094cd9fae2c90eea022cd35",
+    "tests/unit/core/test_projection_preparation.py": "84a30b9b07bd837e66b76f231b9564278e8d2816c085d49193220360fd2fb77c",
+    "tests/differential/semantic_find_projection_cases.py": "215d3f966d405d48fc56683682ab93dc8a284e828f1e495409983cde821061aa",
+    "tests/fixtures/semantic_find_projection_7_0.json": "5215db36bd11225d01f66eae95545742dcc6eb248c80f026879a40c6e767af08",
+    "tests/fixtures/semantic_find_projection_8_0.json": "44c7a5402b9a2969f979dd9e2b3fefc342953943bd6c7855c9699b244e1172d0",
+    "tests/fixtures/semantic_find_projection_9_0.json": "10b86ecaa98cd7361158c093bf9842a776e307072d9630386b8a1b0142ca48a5",
+    "tests/integration/api/test_find_projection_context.py": "cf92980936dba2cd4c845e3f983cd944ccb7212fd4a211ae2b351d9ca595effc"
+  },
+  "checks": {
+    "focal_passed": 78,
+    "engine_dialect_pairs": 6,
+    "matcher_trace_rows": 18,
+    "official_sources_downloaded_matching": 16,
+    "original_manifest_entries": 14
+  },
+  "limits": [
+    "No new native MongoDB capture",
+    "No installed wheel or integrated acceptance",
+    "No runtime or test edits during this review",
+    "Preexisting projection candidate remains unaccepted"
+  ],
+  "document_checks": {
+    "relative_links_missing": [],
+    "preexisting_candidate_unchanged": true,
+    "validator": "relative-link validation and git diff --check; no dedicated Markdown validator found"
+  },
+  "artifacts_sha256": {
+    "representations.json": "c795c840798024fdd4be48eee19cdac8638121066b04617b63f0aa8054bd7419",
+    "representation-probe.py.txt": "9ec6b785d1c9b8ab9e8b8c75b35651a3b3ee8d725f1194426cabeacbe7a97df6",
+    "README.md": "b6fa32220b68e972e61f862dbdf49321d6adc6c766a0ab73e53530273d84b264",
+    "focal.txt": "ef04cef49e58feda24242dcb8c176bc42b1334e833670d6dd8c651f4b5a59a00",
+    "sources-check.json": "2214c32327655de69b2ef13dbf34d2c77a2528de19d958745b5f504591acd54e",
+    "sources-check.py.txt": "dda866a9580d450bc609d5a5f7992ac41c1c90ba1c73fc6cce82d86c32ddb44b"
+  },
+  "plan_sha256": "6d0b890a70547e906058550c663007d6637f2b92530d6f37edd29ccf6638a885"
+}
