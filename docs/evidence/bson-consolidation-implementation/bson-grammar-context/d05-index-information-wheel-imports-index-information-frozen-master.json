@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "site": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-5exd8ql9/site-packages",
+  "modules": {
+    "mongoeco._version": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-5exd8ql9/site-packages/mongoeco/_version.py",
+    "mongoeco": "/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-dispatch-wheel-5exd8ql9/site-packages/mongoeco/__init__.py"
+  }
+}

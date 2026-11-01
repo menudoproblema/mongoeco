@@ -2478,3 +2478,27 @@ El testigo usa empate de score y orden por ID; no acredita paridad numérica del
 score textual local. Las capturas históricas permanecen intactas. O5–O8 siguen
 abiertas: este corte no acepta la suite global roja, la cobertura ni matrices
 que se ejecutaron antes de estos cambios productivos.
+
+
+### O5 — Vista index_information corregida
+
+`571fa575` restaura una regresión de c715ae75: al formar index_information desde
+list_indexes se copiaba unique=False, que la vista anterior omitía conforme a
+IndexDefinition.to_information_entry. Se omite ese default en la vista de
+información; el catálogo tipado y su almacenamiento no cambian. No se retocan
+las expectativas existentes para aceptar el campo extra.
+
+[Receipt](evidence/bson-consolidation-implementation/bson-grammar-context/d05-index-information-acceptance.json):
+MongoDB 7.0.43/8.0.32/9.0.2 confirma tres variantes (default, false explícito,
+true). La wheel anterior falla 12 y pasa tres controles; la nueva pasa 114
+regresiones de API/admisión/codecs y 18 observaciones portables sin SDK. El primer
+intento portable comparaba tuples con las listas creadas por JSON; se restaura
+la forma list-of-tuples de key al cargar el esperado, sin cambiar el observador.
+Los tres manifests tienen claims propios y sus nueve recursos están ausentes.
+El censo existente IndexModel actualiza solo identidad de fuente/creación a este
+commit y conserva sus 16 campos/evidencias; su check pasa. El alcance es esta
+vista de las APIs directas, no equivalencia completa de todo el catálogo wire.
+
+La matriz previa de 12 celdas termina verde y queda retenida con prefijo
+d05-prior-kit-. Acredita su wheel 29a485d7, anterior a los últimos arreglos; no
+se usa como aceptación final del runtime posterior. O6 permanece abierta.

@@ -1,0 +1,50 @@
+{
+  "runtime_commit": "571fa575",
+  "wheel_sha256": "b158239ba087625cd2be5fd688fa8f5e3f107450e43cff61e75fd9accedf0cdb",
+  "native_versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "native_observations_per_version": 3,
+  "surfaces": [
+    "sync",
+    "async"
+  ],
+  "baseline": {
+    "failed": 12,
+    "passed": 3
+  },
+  "frozen_passed": 114,
+  "sdk_free_observations": 18,
+  "sdk_free_omissions": 0,
+  "resources_absent": 9,
+  "scope": "Optional unique flag in index_information; not complete native index-catalog shape equivalence",
+  "artifacts": {
+    "d05-index-information-baseline.txt.gz": "008eae413418b5fcf36694b8eb61c16ec84356f71891257f6edb421a0ab979f2",
+    "d05-index-information-frozen.txt.gz": "a0faa8a9591ba32094bb047058db27b0e8f7fb315b150c23567e8843bdbdbaaf",
+    "d05-index-information-sdk-free.txt.gz": "a2ab330087cec8c3fba7ca8cfa31febba767c0c943fda4c9511af75bf93d31d2",
+    "d05-index-information-sdk-free-final.txt.gz": "fc2a7ec635076c833f4904dff83449aaca627d43d079c9913412b100bb371c18",
+    "d05-index-information-resources.json": "3825ad4be61b0684f3460f904cf7cc900be66fd55583f6c896b0f850b68a3b09",
+    "d05-index-information-native.txt.gz": "566cf9443f37f81d494eac2547b565b2bb57634d577929c8de98f5a56d44b0b3",
+    "d05-index-information-build.txt.gz": "2f6c7d961963dda80eae905aa8de0c9698f311f1f810e71553d2012e3953838a",
+    "d05-index-information-census.txt.gz": "7207f73257dab6d033f526f4a96c30af386ebba3a438a109d7822517f1c69995",
+    "d05-index-information-lint.txt.gz": "43274d07d9d680bd1cf1ed12bcc3b036062dac8fc0bfe3de2338f6af40f6494a",
+    "d05-index-information-7.0-fixture.json.gz": "eec082131fe1c09590dd7aae1f221229809427a9f2d56b258541efd41d43f682",
+    "d05-index-information-7.0-fixture-owner.gz": "168ec80a5a47fc54d8bd30853ad80fd258390ab6c6e24f9b8883f0c5e2722aea",
+    "d05-index-information-7.0-check.json.gz": "bfc435544bac91595d1b385ba2520355ba9b5b67a84a9425e19134bdb78a9144",
+    "d05-index-information-8.0-fixture.json.gz": "db5b5d2204ece7a0fab64a5645d6efff40028ba871d32fd6817d92c89058465d",
+    "d05-index-information-8.0-fixture-owner.gz": "92ed29bbc50dd4febbc6cb1d4754226dc15fde1cdf1cf3f2c73b352c907d269a",
+    "d05-index-information-8.0-check.json.gz": "5fb9077a7a5e269912f1d8a2b2d0085d371382bfbd604971c1129c8c1f1357a3",
+    "d05-index-information-9.0-fixture.json.gz": "23c733c624c93dbd685687503180b2bb61ae900209e613b0efc5b97fe0a885ee",
+    "d05-index-information-9.0-fixture-owner.gz": "ebe59bd5c64c2547a0992e01a73a522d218ee1c30dc222019ddb96b30b0c9311",
+    "d05-index-information-9.0-check.json.gz": "3aa5c5cb6a0dec56caa1d737e6c83c174c96dc36d49495afcf7088fc7adddc9f",
+    "d05-index-information-runtime.json": "f01fc079c8a55ef85286c3b05f9a35cce36df5a3485ec7c9dbe1abc4c34676db",
+    "d05-index-information-wheel.json": "94e8bd3b6b9216311a65074fc3ee8a94a909303145c95dc471ac6aadfffeca76",
+    "d05-index-information-wheel-imports-index-information-frozen-gw3.json": "be4ec7b9c61f8616034d2072827f425995154dc4bebb1d20ae5edbdb16c612ff",
+    "d05-index-information-wheel-imports-index-information-frozen-master.json": "67e4288a7100bd24c9c1657e6c7b2d86ff5d5928412a695fec98beedb3d010c4",
+    "d05-index-information-wheel-imports-index-information-frozen-gw2.json": "be4ec7b9c61f8616034d2072827f425995154dc4bebb1d20ae5edbdb16c612ff",
+    "d05-index-information-wheel-imports-index-information-frozen-gw1.json": "be4ec7b9c61f8616034d2072827f425995154dc4bebb1d20ae5edbdb16c612ff",
+    "d05-index-information-wheel-imports-index-information-frozen-gw0.json": "be4ec7b9c61f8616034d2072827f425995154dc4bebb1d20ae5edbdb16c612ff"
+  }
+}

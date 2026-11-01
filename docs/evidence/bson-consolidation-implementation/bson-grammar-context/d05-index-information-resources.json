@@ -1,0 +1,82 @@
+{
+  "fixtures": [
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    }
+  ],
+  "per_id_absence": [
+    {
+      "kind": "container",
+      "name": "e5a3e5a1eafbae88798d9b272b9b8a04ceda5b32e10004105d801e9833ef7c91",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "6ceb1b494c1cd164830558508451a7081a047331b97053418c2c1cd88a13ea31",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "d0b81eb764225d58bb69758ba4034aeefa3a305530b665854d6034ea98af42d4",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "927bc4a98bcadc5a584ff1537a3ca5960ec7b38cfb3bdc0a14bde2fca6bab58c",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ac9c18ff4311687bd11c4e7841b9a9e21d922b78478c6d9bd70644bd9fb38d8e",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "9f9e3a0d826a28c3bb2bdb502ae249e71e1b8b3339a79918d2fd89683ceb1eea",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "e3df903b091eb6f59047d511f8ebec35d63b9efb1cab79c3acf4d61b35d60457",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "496caf2e9d0c8ec1f727f286d82bb683057878a21231e5819ee036677e3d1d8f",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "eeb6dd49d73d921f01c20d9d5eb7e337a92b3bbcf9543a33efc52b8fb91e4871",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-index-information-native-rwb6dogt/9.0/fixture.json"
+    }
+  ],
+  "retention": "One distinct capture round retain their manifests and exclusive claims; no overwrites."
+}
