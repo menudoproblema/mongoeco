@@ -3410,6 +3410,15 @@
             },
             {
               "annotation": {
+                "nullable": false,
+                "rendered": "'frozenset[str]'"
+              },
+              "default": null,
+              "name": "_explicit_options",
+              "required": true
+            },
+            {
+              "annotation": {
                 "nullable": true,
                 "rendered": "'str | None'"
               },
@@ -7984,9 +7993,9 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "'bool'"
+                    "rendered": "'bool | object'"
                   },
-                  "default": "False",
+                  "default": "<builtins.object>",
                   "kind": "keyword_only",
                   "name": "unique",
                   "required": false
@@ -8004,9 +8013,9 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "'bool'"
+                    "rendered": "'bool | object'"
                   },
-                  "default": "False",
+                  "default": "<builtins.object>",
                   "kind": "keyword_only",
                   "name": "sparse",
                   "required": false
@@ -8024,9 +8033,9 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "'bool'"
+                    "rendered": "'bool | object'"
                   },
-                  "default": "False",
+                  "default": "<builtins.object>",
                   "kind": "keyword_only",
                   "name": "hidden",
                   "required": false
@@ -10157,6 +10166,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "'object'"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -11088,6 +11107,9 @@
               },
               "signatureAvailable": true
             },
+            "client": {
+              "kind": "property"
+            },
             "codec_options": {
               "kind": "property"
             },
@@ -11114,6 +11136,16 @@
                   "kind": "positional_or_keyword",
                   "name": "command",
                   "required": true
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "'object'"
+                  },
+                  "default": "1",
+                  "kind": "positional_or_keyword",
+                  "name": "value",
+                  "required": false
                 },
                 {
                   "annotation": {
@@ -14397,9 +14429,9 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "bool"
+                    "rendered": "bool | object"
                   },
-                  "default": "False",
+                  "default": "<builtins.object>",
                   "kind": "keyword_only",
                   "name": "unique",
                   "required": false
@@ -14417,9 +14449,9 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "bool"
+                    "rendered": "bool | object"
                   },
-                  "default": "False",
+                  "default": "<builtins.object>",
                   "kind": "keyword_only",
                   "name": "sparse",
                   "required": false
@@ -14437,9 +14469,9 @@
                 {
                   "annotation": {
                     "nullable": false,
-                    "rendered": "bool"
+                    "rendered": "bool | object"
                   },
-                  "default": "False",
+                  "default": "<builtins.object>",
                   "kind": "keyword_only",
                   "name": "hidden",
                   "required": false
@@ -16560,6 +16592,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "object"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -17391,6 +17433,9 @@
               },
               "signatureAvailable": true
             },
+            "client": {
+              "kind": "property"
+            },
             "codec_options": {
               "kind": "property"
             },
@@ -17417,6 +17462,16 @@
                   "kind": "positional_or_keyword",
                   "name": "command",
                   "required": true
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "'object'"
+                  },
+                  "default": "1",
+                  "kind": "positional_or_keyword",
+                  "name": "value",
+                  "required": false
                 },
                 {
                   "annotation": {
@@ -31169,6 +31224,16 @@
                 "kind": "positional_or_keyword",
                 "name": "change_event_index",
                 "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "'bool'"
+                },
+                "default": "False",
+                "kind": "positional_or_keyword",
+                "name": "collation_resolved",
+                "required": false
               }
             ],
             "return": {
@@ -31260,6 +31325,15 @@
               "default": "0",
               "name": "change_event_index",
               "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "'bool'"
+              },
+              "default": "False",
+              "name": "collation_resolved",
+              "required": false
             }
           ],
           "kind": "class",
@@ -31274,6 +31348,9 @@
               "kind": "attribute"
             },
             "collation": {
+              "kind": "attribute"
+            },
+            "collation_resolved": {
               "kind": "attribute"
             },
             "create": {

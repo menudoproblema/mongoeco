@@ -10,6 +10,18 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- Align bounded cursor windows, nullable window operators, aggregation paths,
+  query grammar and inherited collation with the retained MongoDB dialects.
+- Preserve native index/write invariants, root identity and BSON numeric widths;
+  finalize empty root timestamps before validation, storage and event publication.
+- Separate document sort keys from sortArray traversal; preserve natural scans,
+  group initializers, tied bucket boundaries and stable standard deviation.
+- Match numeric argument domains, early range resource errors, calendar bins,
+  DST boundaries and exact BSON text conversions in the retained expression subset.
+- Preserve database client ownership, positional command values, rename dropTarget
+  and public index metadata. Explicitly reject views, capped collections,
+  record metadata and recognized unimplemented out/graphLookup stages.
+
 - Align retained raw command shapes with MongoDB 7/8/9 diagnostics,
   precedence and namespace behavior across direct and wire entrypoints.
   Share command field validation without changing Python method contracts.

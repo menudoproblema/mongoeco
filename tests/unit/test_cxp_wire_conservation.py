@@ -214,7 +214,7 @@ def test_wire_hello_field_matrix_covers_bounded_request_and_result_fields() -> N
         assert row["source"] == expected_source
         assert row["disposition"] == "owner_operational"
         assert row["status"] == "bounded_behavior_verified"
-        assert row["source_revision"] == "073dc33e81528a47b575f295b809633fd21b0cfe"
+        assert row["source_revision"] == "f1e28799e7ba8a7d0048b94d7b680ea25bd1a233"
         assert row["meaning"]
         assert row["conditions_scope"]
         assert row["consumer_decision"]
