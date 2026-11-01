@@ -1185,6 +1185,17 @@ con B07. Los contextos D06a/b restantes, incluidas fábricas documentales con
 efectos propios y otras combinaciones de consumo/estado y representación
 portable, conservan aceptación pendiente; D06c y los demás owners no se cierran.
 
+El corte posterior `d4caba5` entrega construcción y asignación de documentos de
+respuesta con [aceptación acotada](evidence/bson-consolidation-implementation/document-factories/README.md):
+cuatro acciones nativas standalone 7/8/9, 7.909 checks sobre wheel instalado,
+362 unitarias/contratos y 72 escenarios nuevos realmente sin SDK. Preserva la
+raíz del comando, selección intermedia y errores de constructor/setter; el
+fixture/preflight distingue la topología comparable sin alterar los manifiestos
+históricos. Conservar estos controles, sin repetir la extracción del mecanismo.
+Siguen otros contextos/representaciones y consumo/estado público D06a/b, además
+de D06c y los owners restantes; no se declara equivalencia de todos los efectos
+de un mapping ni cierre completo de D06/D05.
+
 **Contraste nuevo de revisión 16.** Pasan 85 regresiones focales. Las seis
 combinaciones locales motor/dialecto conservan selección bytes/Binary 0 frente
 a 5, contenido/subtipo de distinct y 18 trazas separadas de documento/operando.
@@ -1326,8 +1337,9 @@ bloques ni obligan a rehacer los cortes aceptados:
    sintáctica no autoriza ignorar la validación del hint ni adelantar ventana al
    residual. Observar primer resultado y fase del error con batch 1; extender a
    getMore y plan físico alcanzado, no solo explicar el helper.
-6. **Fábricas documentales y topología comparable.** Antes del siguiente arreglo,
-   capturar con/sin TypeRegistry la construcción y asignación de campos de la
+6. **Fábricas documentales y topología comparable.** El corte `d4caba5` acepta
+   construcción/asignación en las respuestas probadas. Conservar el criterio
+   para cualquier ampliación: capturar con/sin TypeRegistry la construcción y asignación de campos de la
    respuesta completa: raíz del comando, cursor, fila, anidados y Code.scope.
    Incluir respuesta vacía, initial/getMore y fábricas que fallen en cada nivel;
    observar fase, clase y efectos previos, sin envolver todo fallo como InvalidBSON.

@@ -710,7 +710,7 @@ de fábricas documentales, topología comparable y consumo/estado público. Sus
 curso ni equivalen a nuevas capturas físicas. El orden restante conserva un
 solo owner en el plan.
 
-- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` añade el corte de dispatch/consumo, sin cerrar fábricas arbitrarias `document_class`, todas las combinaciones de consumo/estado público ni toda la representación portable. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
+- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo y `d4caba5` añade construcción/asignación de documentos de respuesta con sus errores. Esto no cierra todos los efectos de métodos de mappings, las combinaciones de consumo/estado público ni toda la representación portable. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1426,3 +1426,42 @@ la sonda final de String/errores de find_one usa $expr soportado.
 → Sigue: contextos restantes D06a/b, incluidas fábricas documentales con efectos
 propios y otras combinaciones de consumo/estado y representación portable;
 consumidores y claves D06c; H53, sNaN, decisión D07, D05 y admisión B07.
+
+## D06a/b — Construcción y asignación de documentos de respuesta
+
+`d4caba5` entrega este corte sobre `220cedc`, con
+[evidencia y límites](evidence/bson-consolidation-implementation/document-factories/README.md).
+No cierra D06a/b completos, D06c ni D05. La envoltura del comando y los
+contenedores intermedios de selección forman parte de los efectos observables
+de document_class, aunque no se devuelvan al usuario. El materializador conserva
+su construcción/asignación y usa APIs públicas BSON para la decodificación;
+el portable construye antes de recorrer campos. No hay otro driver o evaluador.
+
+Cuatro acciones capturadas/comprobadas con MongoDB 7.0.43/8.0.32/9.0.2 standalone,
+FCV correspondiente, cubren find/find_one/aggregate, con/sin registro, anidados y
+Code.scope, errores de constructor/setter, vacío/poblado y batch 0/1/2/getMore.
+Se comparan efectos previos, fase y clase del error, además de las filas.
+La base aislada 220cedc falla 48 y pasa 51 controles del mismo corpus final.
+
+El fixture existente admite standalone explícito y conserva RS por defecto.
+Registros, preflight, capturador y CI declaran esa exigencia; mezclas que exigen
+ambas topologías requieren particiones separadas. El control sobre un RS real
+rechaza el corpus standalone antes de escribir una referencia. No se simulan
+metadatos de reloj ni se normalizan constructores para igualar topologías.
+Los manifiestos históricos, observadores y catálogos protegidos no cambian.
+
+El wheel final coincide por hash en sus 284 archivos y pasa 7.909 checks de
+replay, con procedencia verificada en cada worker. Pasan 362 unitarias/contratos
+con 43 subtests, 45 de infraestructura y 47 de materialización; typing y el
+manifiesto público conservan sus contratos. Python 3.13.15 realmente sin SDK
+pasa 72 escenarios nuevos y 186 controles anteriores. La guarda portable evita
+un callback int espurio sobre cursor.id y no expone su wrapper interno al setter;
+un id de los datos sigue ejecutando su decoder. Los replay anteriores a ese
+último cambio se conservan como feedback de fuentes distintas.
+
+Se verifica ausencia de 13 contenedores y 26 volúmenes propios. ABBA dos veces
+con BSON idéntico conserva su alcance diagnóstico, sin aceptar el presupuesto
+D05 ni afirmar aislamiento de tareas externas. No se acredita CI remoto,
+cobertura global ni las matrices completas Python/SDK/pytest. El registro de
+trabajo restante conserva otros contextos/representaciones y consumo/estado
+D06a/b, D06c, H53, sNaN, decisión D07, D05 y B07. El default UUID sigue STANDARD.
