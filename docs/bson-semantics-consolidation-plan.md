@@ -1256,6 +1256,20 @@ cambio, pero conservan testigos y aceptación separados. H53/conversión pueden
 avanzar de forma independiente de D06c. No hace falta esperar un fixture RS ya
 aceptado ni repetir D01/D02/D03/D04 para empezar estos pendientes.
 
+**Entrega posterior `332d07a`.** El corte de claves/consumidores tiene
+[aceptación propia](evidence/bson-consolidation-implementation/bson-consumers/README.md):
+grupo DBRef/collation, átomos del índice de conjuntos y representantes BSON
+según ejecución preparada. La decisión antes numérica se conserva en
+`group_execution.py`/`group_uses_slot_semantics`; gobierna average e ID sin otra
+regla por dialecto. `_aggregation_key` y el parámetro redundante de dialecto en
+finalización se retiran conservando la guarda escalar y la gramática existente.
+Cinco acciones nativas 7/8/9, 8.221 checks instalados y 675 unitarias/propiedades/
+contratos acreditan ese alcance. Conservar los controles de hash/spill y
+representantes raw; no rehacer la extracción ni declarar D06c/D05 completos.
+Search conserva comprobaciones públicas de persistencia/reapertura y los demás
+contextos/representaciones mantienen sus propios pendientes. La matriz siguiente
+conserva el criterio del corte, ya satisfecho donde registra el receipt.
+
 **D06c: corte mínimo concretado en revisión 17.** Las sondas locales nuevas
 no aceptan el corpus preexistente ni sustituyen su contraste nativo. Identifican
 estos mecanismos dentro del bloque existente, sin abrir otro programa:

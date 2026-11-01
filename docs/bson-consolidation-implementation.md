@@ -710,7 +710,7 @@ de fábricas documentales, topología comparable y consumo/estado público. Sus
 curso ni equivalen a nuevas capturas físicas. El orden restante conserva un
 solo owner en el plan.
 
-- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo, `d4caba5` construcción/asignación de documentos de respuesta y `72edfa3` posición, alive, propiedad y cierre del cursor sync. Esto no cierra los demás contextos/representaciones ni todos los efectos de métodos de mappings. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
+- D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo, `d4caba5` construcción/asignación de documentos de respuesta y `72edfa3` posición, alive, propiedad y cierre del cursor sync. `332d07a` entrega claves de grupo/DBRef/collation, conjuntos y decisión preparada de representación/average, con hash/spill y BSON raw nativos. Search conserva persistencia/reapertura pública y otros contextos por acreditar. Esto no cierra los demás contextos/representaciones ni todos los efectos de métodos de mappings. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
 - Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
@@ -1519,3 +1519,50 @@ remoto, cobertura global ni las matrices completas.
 → Sigue: demás contextos/representaciones D06a/b, consumidores D06c, H53,
 sNaN, decisión opcional D07, D05 y admisión B07. No se amplían métodos públicos
 no admitidos ni se cambia la conveniencia local length=0; UUID sigue STANDARD.
+
+
+## D06c — Claves de consumidores y ejecución de grupo
+
+`332d07a` entrega este corte sobre `7629ea6`, con
+[evidencia y límites](evidence/bson-consolidation-implementation/bson-consumers/README.md).
+Grupo recorre la vista documental común de DBRef; el índice de conjuntos usa
+átomos BSON en su dominio anterior y conserva Code en residual. Se retiran la
+clave duplicada y sus exports privados, manteniendo la guarda escalar efectiva.
+No cambia la admisión general B07, las claves persistidas ni los desempates.
+
+El diferencial descubre un defecto adicional: la conversión Code→String del
+representante de grupo dependía solo del dialecto y se aplicaba a subpipelines
+clásicos. La decisión preparada que ya gobernaba average pasa a llamarse
+`group_uses_slot_semantics`, con owner `group_execution.py`; se conserva en plan,
+bucket, slices y spill. Gobierna ambos comportamientos y elimina el parámetro de
+dialecto redundante de finalización. La identidad del grupo sigue siendo distinta
+de la representación de su ID; no se emula un planificador nativo general.
+
+Cinco acciones congeladas se capturan/comprueban con MongoDB
+7.0.43/8.0.32/9.0.2 standalone y FCV correspondiente. Observan miembros y tipos,
+BSON raw exacto de representantes en seis rutas con/sin collation, tamaños y
+pertenencia de conjuntos, addToSet y lookup. Los tests fuerzan spill y comprueban
+particiones abiertas; hash suficiente/agotado/ausente se acredita observando el
+plan real, separado del límite de materialización. Las propiedades extienden
+coherencia de clave/serialización y conservación de candidatos de dominios BSON
+no representados en índices materializados Memory/SQLite.
+
+La base Git aislada falla 88 y pasa 101 controles del corpus final. El wheel
+final pasa 8.221 checks de replay en 200,26 s sin avisos, con RuntimeWarning y
+avisos de GC/hilos elevados a error; cada worker verifica sus 262 módulos y los
+284 archivos instalados. Pasan 675 unitarias/propiedades/contratos con 159
+subtests; typing y manifiesto público conservan sus garantías. Python 3.13.15
+realmente sin SDK pasa doce acciones DBRef/Binary derivadas de los mismos
+miembros nativos, con exclusión explícita de Code no admitido, además de los
+controles portables anteriores. No se presenta como replay íntegro sin SDK.
+
+La auditoría independiente confirma ausencia de seis contenedores y doce
+volúmenes propios. ABBA dos veces, con los gates propios terminados, conserva
+BSON idéntico y ratios CPU 0,99–1,01 en seis casos; es diagnóstico, no aceptación
+del presupuesto global D05. Se conservan observadores, catálogos y las 248
+referencias históricas. Las capturas nuevas se ampliaron antes de congelar el
+candidato; los replay intermedios conservan su carácter de feedback.
+
+→ Sigue: demás contextos D06a/b/c, incluida persistencia/reapertura pública de
+Search, H53, sNaN, decisión opcional D07, gates D05 y admisión B07. Este corte no
+acredita CI remoto, cobertura global ni matrices completas. UUID sigue STANDARD.
