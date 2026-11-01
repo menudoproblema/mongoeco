@@ -1068,7 +1068,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(connection.last_hello_command, alias)
 
         self.assertEqual(connection.hello_count, 2)
-        with self.assertRaisesRegex(OperationFailure, "unsupported wire command"):
+        with self.assertRaisesRegex(OperationFailure, "no such command"):
             await proxy._executor.execute_command(
                 {"isMASTER": 1, "$db": "admin"},
                 connection=connection,
@@ -1290,7 +1290,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))
 
-        with self.assertRaisesRegex(Exception, "unsupported wire command"):
+        with self.assertRaisesRegex(OperationFailure, "no such command"):
             await proxy._executor.execute_command(
                 {"__unsupported__": 1, "$db": "admin"},
                 connection=connection,
@@ -2196,7 +2196,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(OperationFailure, r"\$db must be a non-empty string"):
             proxy._executor._build_request_context({}, connection=connection)
 
-        with self.assertRaisesRegex(OperationFailure, "unsupported wire command: madeUp"):
+        with self.assertRaisesRegex(OperationFailure, "no such command: 'madeUp'"):
             proxy._executor._build_request_context(
                 {"madeUp": 1, "$db": "alpha"},
                 connection=connection,

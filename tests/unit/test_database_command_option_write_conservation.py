@@ -556,8 +556,9 @@ def test_ordered_write_batch_rejects_wrong_type_before_mutation(
             },
             "delete": {"delete": "items", "deletes": [{"q": {}, "limit": 1}]},
         }
-        with pytest.raises((TypeError, ValueError)):
+        with pytest.raises(OperationFailure) as caught:
             await execute({**operations[command_name], "ordered": "yes"})
+        assert caught.value.code == 14  # noqa: PLR2004 - BSON TypeMismatch
         found = await execute({"find": "items"})
         assert found["cursor"]["firstBatch"] == []
 

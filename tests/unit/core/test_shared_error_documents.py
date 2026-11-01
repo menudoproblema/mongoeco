@@ -2,6 +2,8 @@
 
 import asyncio
 
+from types import SimpleNamespace
+
 import pytest
 
 from bson import Code
@@ -23,6 +25,7 @@ from mongoeco.errors import (
     OperationFailure,
     WriteError,
 )
+from mongoeco.types import CodecOptions
 
 
 @pytest.mark.parametrize("code", [9, 17276, 16610, 999])
@@ -33,11 +36,11 @@ def test_write_family_is_selected_by_phase_for_additional_server_codes(code):
         raise original
 
     @write_command_errors
-    async def fail():
+    async def fail(_collection):
         compile_item()
 
     with pytest.raises(WriteError) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     assert caught.value.code == code
     assert caught.value.details == {"index": 0, "code": code, "errmsg": "original"}
     assert "full error:" not in error_message(caught.value)
@@ -47,11 +50,11 @@ def test_global_command_failure_keeps_its_family():
     original = server_error("global", code=40415, scope=ErrorScope.COMMAND)
 
     @write_command_errors
-    async def fail():
+    async def fail(_collection):
         raise original
 
     with pytest.raises(OperationFailure) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     assert caught.value is original
     assert not isinstance(caught.value, WriteError)
 
@@ -61,12 +64,12 @@ def test_additional_command_codes_retain_complete_details_and_labels(adapter):
     source = {"codeName": "Location17276", "errorLabels": ["Example"]}
 
     @adapter
-    async def fail():
+    async def fail(_collection):
         message = "original"
         raise OperationFailure(message, code=17276, details=source)
 
     with pytest.raises(OperationFailure) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     error = caught.value
     assert error.details == {**source, "ok": 0.0, "code": 17276, "errmsg": "original"}
     assert error.has_error_label("Example")
@@ -113,12 +116,12 @@ TIMEOUT_CODE = 50
 
 def test_find_modify_preserves_timeout_family_while_completing_its_document():
     @find_modify_errors
-    async def fail():
+    async def fail(_collection):
         message = "operation exceeded time limit"
         raise ExecutionTimeout(message)
 
     with pytest.raises(ExecutionTimeout) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     assert caught.value.code == TIMEOUT_CODE
     assert caught.value.details == {
         "ok": 0.0,

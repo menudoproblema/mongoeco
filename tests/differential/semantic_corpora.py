@@ -34,6 +34,10 @@ from tests.differential.semantic_bson_bulk_cases import (
     SEED as BSON_BULK_SEED,
     SEMANTIC_BSON_BULK_CASES,
 )
+from tests.differential.semantic_bson_command_cases import (
+    SEED as BSON_COMMAND_SEED,
+    SEMANTIC_BSON_COMMAND_CASES,
+)
 from tests.differential.semantic_bson_consumer_cases import (
     SEED as BSON_CONSUMER_SEED,
     SEMANTIC_BSON_CONSUMER_CASES,
@@ -542,6 +546,10 @@ SEMANTIC_CORPORA = {
         "semantic_decimal_cases",
         DECIMAL_EDGE_SEED,
         SEMANTIC_DECIMAL_EDGE_CASES,
+    ),
+    "bson_command": SemanticCorpus(
+        "bson-command", "semantic_bson_command_cases", BSON_COMMAND_SEED,
+        SEMANTIC_BSON_COMMAND_CASES,
     ),
     "bson_bulk": SemanticCorpus(
         "bson-bulk", "semantic_bson_bulk_cases", BSON_BULK_SEED,

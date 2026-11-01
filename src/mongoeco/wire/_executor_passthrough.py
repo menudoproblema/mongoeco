@@ -120,8 +120,12 @@ def _wire_list_commands_result(
 
 
 async def _execute_database_command(database, context):
+    admin = getattr(database, "_admin", None)
+    execute = (
+        admin._commands.execute_document if admin is not None else database.command
+    )
     try:
-        return await database.command(
+        return await execute(
             context.command_document,
             session=context.session,
             execution_context=context.execution_context,
@@ -129,7 +133,7 @@ async def _execute_database_command(database, context):
     except TypeError as exc:
         if "execution_context" not in str(exc):
             raise
-        return await database.command(
+        return await execute(
             context.command_document,
             session=context.session,
         )

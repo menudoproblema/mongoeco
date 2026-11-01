@@ -757,7 +757,7 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             )
         with self.assertRaisesRegex(TypeError, "command name must be a string"):
             service.parse_raw_command({1: "bad"})  # type: ignore[arg-type]
-        with self.assertRaisesRegex(OperationFailure, "Unsupported command"):
+        with self.assertRaisesRegex(OperationFailure, "no such command"):
             service.parse_raw_command({"unsupported": 1})
 
     def test_internal_dispatch_guards_cover_unexpected_static_and_command_types(self):

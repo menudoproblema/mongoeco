@@ -27,6 +27,7 @@ try:
     from bson.binary import UuidRepresentation as DriverUuidRepresentation
     from bson.codec_options import CodecOptions as DriverCodecOptions
     from bson.errors import InvalidDocument, InvalidStringData
+    from bson.raw_bson import RawBSONDocument
     from pymongo.errors import DocumentTooLarge
 except ImportError:  # pragma: no cover - optional SDK profile
     BSON = None
@@ -54,6 +55,9 @@ def _driver_value(value):  # noqa: PLR0911 - public BSON adaptation
     # not public input, even though to_pymongo can materialize them as output.
     if isinstance(value, DocumentCodec._BSON_WRAPPER_TYPES):
         raise _invalid(value)
+    if isinstance(value, RawBSONDocument):
+        # The SDK copies its encoded bytes, preserving undefined and field order.
+        return value
     if isinstance(value, Mapping):
         return {key: _driver_value(item) for key, item in value.items()}
     if isinstance(value, list | tuple):

@@ -105,6 +105,7 @@ def _merge_labels(
 
 
 SERVER_CODE_NAMES = {
+    59: "CommandNotFound",
     10334: "BSONObjectTooLarge",
     168: "InvalidPipelineOperator",
     27: "IndexNotFound",

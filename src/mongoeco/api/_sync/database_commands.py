@@ -32,10 +32,15 @@ class DatabaseCommandService:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        return self._client._run(
-            self._async_command_service().execute_document(
-                command,
-                session=session,
-                **kwargs,
+        try:
+            return self._client._run(
+                self._async_command_service().command(
+                    command,
+                    session=session,
+                    **kwargs,
+                )
             )
-        )
+        except RuntimeError as error:
+            if isinstance(error.__cause__, StopIteration):
+                raise error.__cause__ from None
+            raise

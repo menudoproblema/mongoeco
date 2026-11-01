@@ -44,7 +44,7 @@ def cursor_response_document(batch, *, cursor_id, namespace, initial):
     """Retain native cursor field order, observable by client decoders."""
     return {
         "firstBatch" if initial else "nextBatch": batch,
-        "id": cursor_id,
+        "id": (codec.BsonInt64Public or int)(cursor_id),
         "ns": namespace,
     }
 
@@ -107,6 +107,17 @@ def _decode_response_document(document, *, codec_options):
     return _BSON(encoded).decode(codec_options=options)
 
 
+def materialize_command_response(document, *, codec_options):
+    """Database.command decodes its whole reply without custom TypeDecoders."""
+    options = CodecOptions(
+        document_class=codec_options.document_class,
+        tz_aware=codec_options.tz_aware,
+        tzinfo=codec_options.tzinfo,
+        uuid_representation=codec_options.uuid_representation,
+    )
+    return _decode_response_document(document, codec_options=options)
+
+
 def materialize_cursor_response(batch, *, codec_options, namespace, cursor_id, initial):
     """Decode one completed standalone response, preserving factory effects.
 
@@ -119,7 +130,7 @@ def materialize_cursor_response(batch, *, codec_options, namespace, cursor_id, i
     if codec_options.type_registry or codec_options.document_class is not dict:
         body = cursor_response_document(
             batch,
-            cursor_id=(codec.BsonInt64Public or int)(cursor_id),
+            cursor_id=cursor_id,
             namespace=namespace,
             initial=initial,
         )

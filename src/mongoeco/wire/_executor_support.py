@@ -6,10 +6,12 @@ from mongoeco.api import AsyncMongoClient
 from mongoeco.core.bson_scalars import BsonInt64
 from mongoeco.core.error_documents import error_message
 from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.core.server_errors import command_not_found
 from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire._executor_validation import validate_wire_command_document
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.requests import WireRequestContext
+from mongoeco.wire.surface import WIRE_SUPPORTED_COMMANDS
 
 
 if TYPE_CHECKING:
@@ -55,9 +57,11 @@ def build_request_context(
         raise OperationFailure("wire command document must contain an executable command")
 
     command_name = next(iter(command_document))
-    if not isinstance(command_name, str) or not command_name:
+    if not isinstance(command_name, str):
         raise OperationFailure("wire command name must be a non-empty string")
     if not surface.supports_command(command_name):
+        if command_name not in WIRE_SUPPORTED_COMMANDS:
+            raise command_not_found(command_name)
         raise OperationFailure(f"unsupported wire command: {command_name}")
 
     # Cursor ids are BSON int64 on the wire. Normalize only protocol control

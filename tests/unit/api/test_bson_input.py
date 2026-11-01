@@ -203,3 +203,23 @@ def test_explain_does_not_freeze_the_original_read_request():
         cursor.explain()
         query["v"] = 2
         assert [row["_id"] for row in cursor] == [1]
+
+
+def test_raw_bson_mapping_keeps_undefined_and_document_order():
+    from bson.raw_bson import RawBSONDocument  # noqa: PLC0415 - SDK-only input witness
+
+    from mongoeco.types import UNDEFINED  # noqa: PLC0415
+
+    raw = BSON.encode({"a": None, "ref": {"$id": 1, "$ref": "c"}}).replace(
+        b"\x0aa\x00", b"\x06a\x00"
+    )
+    document = RawBSONDocument(raw)
+    # Reading the SDK mapping would turn undefined into null before admission.
+    assert document["a"] is None
+    for request in (document, {"documents": [document]}):
+        actual = encode_bson_request(request, codec_options=CodecOptions())
+        result = actual if request is document else actual["documents"][0]
+        assert result["a"] is UNDEFINED
+        assert list(result) == ["a", "ref"]
+        assert list(result["ref"]) == ["$id", "$ref"]
+        assert result["ref"]["$id"] == 1

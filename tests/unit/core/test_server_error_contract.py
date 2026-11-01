@@ -3,6 +3,7 @@
 import asyncio
 
 from copy import deepcopy
+from types import SimpleNamespace
 
 import pytest
 
@@ -14,6 +15,7 @@ from mongoeco.core.aggregation.runtime import _resolve_variable_expression
 from mongoeco.core.error_documents import command_error_document
 from mongoeco.core.server_errors import ErrorScope, ServerDiagnostic, server_error
 from mongoeco.errors import OperationFailure, WriteError
+from mongoeco.types import CodecOptions
 
 from tests.support_error_phases import comparable
 
@@ -56,12 +58,12 @@ def test_returned_command_and_item_documents_own_their_metadata():
 @pytest.mark.parametrize("scope", [ErrorScope.ITEM, ErrorScope.COMMAND])
 def test_scope_controls_write_family_and_command_envelope(scope):
     @write_command_errors
-    async def invoke():
+    async def invoke(_collection):
         message = "unknown future coded error"
         raise server_error(message, code=987654, scope=scope)
 
     with pytest.raises(OperationFailure) as caught:
-        asyncio.run(invoke())
+        asyncio.run(invoke(SimpleNamespace(_codec_options=CodecOptions())))
     assert isinstance(caught.value, WriteError) == (scope is ErrorScope.ITEM)
     if scope is ErrorScope.ITEM:
         assert caught.value.details == {
@@ -76,14 +78,14 @@ def test_scope_controls_write_family_and_command_envelope(scope):
 @pytest.mark.parametrize("adapter", [write_command_errors, find_modify_errors])
 def test_adapters_preserve_structured_validation_context(adapter):
     @adapter
-    async def invoke():
+    async def invoke(_collection):
         message = "validation"
         raise server_error(
             message, code=121, context={"errInfo": {"failingDocumentId": "a"}}
         )
 
     with pytest.raises(OperationFailure) as caught:
-        asyncio.run(invoke())
+        asyncio.run(invoke(SimpleNamespace(_codec_options=CodecOptions())))
     assert caught.value.details["errInfo"] == {"failingDocumentId": "a"}
     assert caught.value.details["errmsg"] == "validation"
     assert caught.value.details["code"] == caught.value.code
@@ -172,11 +174,11 @@ def test_adapters_preserve_primary_exception_notes(adapter):
     original.add_note("cleanup retained the primary diagnostic")
 
     @adapter
-    async def fail():
+    async def fail(_collection):
         raise original
 
     with pytest.raises(OperationFailure) as caught:
-        asyncio.run(fail())
+        asyncio.run(fail(SimpleNamespace(_codec_options=CodecOptions())))
     assert caught.value.__notes__ == original.__notes__
     assert caught.value.details["code"] == original.code
 

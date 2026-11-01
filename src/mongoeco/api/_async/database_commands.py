@@ -28,21 +28,34 @@ from mongoeco.api.admin_parsing import (
     normalize_validate_command_options,
     require_collection_name,
 )
+from mongoeco.api.bson_input import encode_bson_request
+from mongoeco.core._public_materialization import materialize_command_response
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.collation import collation_backend_info
-from mongoeco.core.error_documents import command_errors, error_message
+from mongoeco.core.error_documents import (
+    command_error_document,
+    command_errors,
+    error_message,
+)
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import get_json_backend_name
+from mongoeco.core.server_errors import command_not_found
 from mongoeco.driver.topology import sdam_capabilities_info
 
 # Public annotation introspection resolves these names at runtime.
 from mongoeco.engines.base import AsyncStorageEngine  # noqa: TC001
-from mongoeco.errors import ConnectionFailure, OperationFailure
+from mongoeco.errors import (
+    ConnectionFailure,
+    DuplicateKeyError,
+    ExecutionTimeout,
+    OperationFailure,
+)
 from mongoeco.session import ClientSession  # noqa: TC001
 from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
     BuildInfoDocument,
     CmdLineOptsDocument,
+    CodecOptions,
     CollectionStatsSnapshot,
     CollectionValidationSnapshot,
     CommandCursorResult,
@@ -58,7 +71,9 @@ from mongoeco.types import (
     OkResult,
     ProfilingCommandResult,
     ServerStatusDocument,
+    UuidRepresentation,
     WhatsMyUriDocument,
+    normalize_codec_options,
 )
 
 
@@ -1343,7 +1358,7 @@ class AsyncDatabaseCommandService:
 
         route = self._DELEGATED_COMMAND_HANDLERS.get(command_name)
         if route is None:
-            raise OperationFailure(f"Unsupported command: {command_name}")
+            raise command_not_found(command_name)
         return self.DelegatedAdminCommand(
             db_name=self._admin._db_name,
             command_name=command_name,
@@ -1767,12 +1782,65 @@ class AsyncDatabaseCommandService:
         execution_context: ExpressionExecutionContext | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
-        return await self.execute_document(
-            command,
-            session=session,
-            execution_context=execution_context,
-            **kwargs,
+        options = kwargs.pop("codec_options", None)
+        options = (
+            CodecOptions(uuid_representation=UuidRepresentation.UNSPECIFIED)
+            if options is None
+            else normalize_codec_options(options)
         )
+        check = kwargs.pop("check", True)
+        allowable_errors = kwargs.pop("allowable_errors", None)
+        kwargs.pop("read_preference", None)
+        value = kwargs.pop("value", 1)
+        if kwargs.get("comment", object()) is None:
+            kwargs.pop("comment")
+        # The SDK merges keyword fields into a caller-owned mutable mapping.
+        spec = {command: value} if isinstance(command, str) else command
+        command_name = next(iter(spec))
+        spec.update(kwargs)
+        self._ensure_session_can_use_engine(session)
+        try:
+            encoded = encode_bson_request(spec, codec_options=options)
+        except Exception:
+            if not isinstance(command_name, str):
+                # SDK monitoring inspects a command name while propagating its
+                # BSON error. Preserve that client error for a non-string name.
+                command_name.lower()
+            raise
+        error = None
+        try:
+            document = await self.execute_document(
+                encoded, session=session, execution_context=execution_context
+            )
+        except OperationFailure as caught:
+            error = caught
+            document = command_error_document(caught)
+        response = materialize_command_response(document, codec_options=options)
+        if check:
+            if "ok" not in response:
+                raise OperationFailure(
+                    response.get("$err"), code=response.get("code"), details=response
+                )
+            if not response["ok"]:
+                code = response.get("code")
+                message = response["errmsg"]
+                allowed = allowable_errors and (
+                    code in allowable_errors
+                    if code is not None
+                    else message in allowable_errors
+                )
+                if not allowed:
+                    kind = (
+                        DuplicateKeyError
+                        if code in (11000, 11001, 12582)
+                        else ExecutionTimeout
+                        if code == 50  # noqa: PLR2004 - MongoDB MaxTimeMSExpired code
+                        else type(error)
+                        if error is not None
+                        else OperationFailure
+                    )
+                    raise kind(message, code=code, details=response)
+        return response
 
     def _record_command_session_metadata(
         self,

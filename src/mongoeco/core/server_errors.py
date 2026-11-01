@@ -223,3 +223,11 @@ def response_operation_error(error, operation, dialect, *, initial, namespace=No
     for note in getattr(error, "__notes__", ()):
         rendered.add_note(note)
     return rendered
+
+
+def command_not_found(command_name):
+    message = f"no such command: '{command_name}'"
+    return server_error(
+        message, code=59, scope=ErrorScope.COMMAND,
+        context={"ok": 0.0, "errmsg": message},
+    )

@@ -67,13 +67,16 @@ class _FakeCollection:
         self.index_information_result = {"_id_": {"key": [("_id", 1)]}}
         self.list_indexes_result = [{"name": "_id_", "key": {"_id": 1}, "fields": [("_id", 1)]}]
 
-    def _build_cursor(self, operation, *, session=None):
+    def _build_cursor(self, operation, *, session=None, apply_codec_options=True):
         del operation, session
         return _AsyncCursor(self.documents)
 
     def _build_aggregation_cursor(self, operation, *, session=None):
         del operation, session
         return _AsyncCursor(self.documents)
+
+    async def _insert_one(self, document, **kwargs):
+        return await self.insert_one(document, **kwargs)
 
     async def insert_one(self, document, **kwargs):
         self.insert_calls.append((document, kwargs))
@@ -457,7 +460,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 patch.object(service._write_commands, "command_insert", return_value={"ok": 1.0}) as insert_mock,
                 patch.object(service._write_commands, "command_update", return_value={"ok": 1.0}) as update_mock,
                 patch.object(service._write_commands, "command_delete", return_value={"ok": 1.0}) as delete_mock,
-                patch.object(service._commands, "command", return_value={"ok": 1.0}) as command_mock,
+                patch.object(service._commands, "execute_document", return_value={"ok": 1.0}) as command_mock,
             ):
                 await routing.command_count({"count": "events"})
                 await routing.command_distinct({"distinct": "events", "key": "kind"})
@@ -564,6 +567,8 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                     (False, None),
                     (True, []),
                     (True, "scalar"),
+                    (True, "Ada"),
+                    (True, "Ada"),
                 ],
             ):
                 operation = service._compile_command_find_operation(

@@ -7,7 +7,6 @@ from hashlib import md5
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async._collection_reads import collect_distinct_values
-from mongoeco.core._public_materialization import materialize_public_value
 from mongoeco.api.admin_parsing import (
     normalize_command_max_time_ms,
     normalize_find_and_modify_options,
@@ -190,9 +189,7 @@ class DatabaseAdminReadCommandService:
             cursor, key, dialect=self._admin._mongodb_dialect,
             collation=normalized_collation,
         )
-        return DistinctCommandResult(values=DocumentCodec.apply_codec_options(
-            materialize_public_value(values), codec_options=collection._codec_options
-        ))
+        return DistinctCommandResult(values=values)
 
     async def execute_count_command(
         self,
@@ -301,6 +298,7 @@ class DatabaseAdminReadCommandService:
         first_batch = await self._admin._database.get_collection(collection_name)._build_cursor(
             operation,
             session=session,
+            apply_codec_options=False,
         ).to_list()
         return CommandCursorResult(
             namespace=f"{self._admin._db_name}.{collection_name}",
@@ -339,6 +337,7 @@ class DatabaseAdminReadCommandService:
         )._build_aggregation_cursor(
             operation,
             session=session,
+            apply_codec_options=False,
         ).to_list()
         return CommandCursorResult(
             namespace=f"{self._admin._db_name}.{collection_name}",

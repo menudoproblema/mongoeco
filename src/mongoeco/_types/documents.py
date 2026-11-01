@@ -325,12 +325,18 @@ class CommandCursorResult:
     cursor_id: int = 0
 
     def to_document(self) -> dict[str, object]:
+        # Defer this import until public types finish loading the codec layer.
+        from mongoeco.core._public_materialization import (  # noqa: PLC0415
+            cursor_response_document,
+        )
+
         return {
-            "cursor": {
-                "id": self.cursor_id,
-                "ns": self.namespace,
-                "firstBatch": self.first_batch,
-            },
+            "cursor": cursor_response_document(
+                self.first_batch,
+                cursor_id=self.cursor_id,
+                namespace=self.namespace,
+                initial=True,
+            ),
             "ok": 1.0,
         }
 
@@ -475,7 +481,7 @@ class WriteCommandResult:
     write_errors: list[WriteErrorEntry] | None = None
 
     def to_document(self) -> dict[str, object]:
-        document: dict[str, object] = {"n": self.count, "ok": 1.0}
+        document: dict[str, object] = {"n": self.count}
         if self.modified_count is not None:
             document["nModified"] = self.modified_count
         if self.upserted:
@@ -484,6 +490,7 @@ class WriteCommandResult:
             document["writeErrors"] = [
                 entry.to_document() for entry in self.write_errors
             ]
+        document["ok"] = 1.0
         return document
 
 
