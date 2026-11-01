@@ -2450,3 +2450,31 @@ conservando su camino cliente de materialización y las aserciones de identidad,
 labels y diagnóstico; no se evita ese camino con server_command. La conciliación
 no modifica código productivo. Quedan 79 padres de los fallos originales por
 resolver en O5; esta cifra interna no cambia las ocho obligaciones de cierre.
+
+
+### O5 — Metadata sort y proyección acotada corregidos
+
+`c4917a3f` corrige dos regresiones reproducidas en la garantía de metadata B07.
+El frontend convertía $meta:textScore a una clave privada con NUL antes de BSON;
+el constructor find y el setter sort comparten ahora sort_document, que valida
+la forma pública y conserva el documento BSON hasta la admisión. La normalización
+de ejecución permanece después del encoder; no se añade un parser ni se aceptan
+claves NUL del usuario. El segundo defecto estaba en el sort acotado 9.0: se
+proyectaba un _RuntimeReadDocument como mapping plano y se perdía el metadata.
+Se pasa su RuntimeDocumentState al proyector existente y se conserva al envolver
+el resultado, con una única evaluación por documento.
+
+[Receipt](evidence/bson-consolidation-implementation/bson-grammar-context/d05-text-sort-acceptance.json):
+MongoDB 7.0.43/8.0.32/9.0.2 aporta siete observaciones por versión: argumento,
+setter, ventana limit=1 y find_one, dos rechazos NUL y recuperación. La wheel
+anterior falla 16 y pasa 11 controles del corpus final; la nueva pasa 273
+regresiones de metadata/proyecciones/batches y 131 pruebas de contratos con
+3.744 subtests de API, preparación, reapertura y spill. El cuerpo idéntico sin
+SDK real pasa 42 observaciones sin omisiones. Se conservan 424 protegidos;
+solo los tres inventarios/metadatos generados ya justificados difieren.
+Los seis manifests y claims son distintos y sus 18 recursos están ausentes.
+
+El testigo usa empate de score y orden por ID; no acredita paridad numérica del
+score textual local. Las capturas históricas permanecen intactas. O5–O8 siguen
+abiertas: este corte no acepta la suite global roja, la cobertura ni matrices
+que se ejecutaron antes de estos cambios productivos.

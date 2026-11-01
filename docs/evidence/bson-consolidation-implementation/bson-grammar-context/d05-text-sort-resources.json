@@ -1,0 +1,157 @@
+{
+  "fixtures": [
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "initial",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/7.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/8.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    },
+    {
+      "round": "frozen",
+      "path": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/9.0/fixture.json",
+      "status": "succeeded",
+      "topology": "standalone",
+      "owner_verified": true
+    }
+  ],
+  "per_id_absence": [
+    {
+      "kind": "container",
+      "name": "25a48cd3cb4c994352cdc6c777c2b0d34aab460f011c9fb8622026659ef50d3b",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ce108d093eafb18f036c38076d254113e1eef695118f2e20c4ac6c609e332a87",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "e895d583b19156fb638ca5cec486e61f6f0e0ce47a7c05e82dae7cebcc61b907",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "212d36cba30ad64da9d5f178b1c1be71b2ef3e3d1e438bf6f6b84513e98cf159",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "7fe6c68f7bb43075a906ec78848c57c6dcb4d0406a4fdb3bb1719cf456d8e202",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "b767d3b17baad3ca7f10aefe5f833513f480a50b0572e7d115fb02d6d362baa8",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "56b1fde24c0aabe7cd4a10ed3ec9f8943f09ca8c9681b7d86ba7231c0d9f9bc1",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "cf8c2d5b29a2c00d8e587a35c5e268663b5ac978dcd8ff2a60ffeaa89b98e712",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "1a3182adcad7b48d88f9994042bd310c46ec0aaa0a34813eb8fecf9f0f2ac547",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-4qolekrb/9.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "f1f026ec9d42cc29247fe34b05eaa34856b1c65e42a898b6296387ddcc4b2e7b",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "c14482579fa76b81e42278a3c6bdda388cb5b2629aef292e703a15dcc0eec761",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/7.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "38aed9d7f66a67156e2473834397f89cb120728f89e146d220a66c3c81edefa6",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/7.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "a3d0b8eb7434f2da8e317f6674bd9842693131603190834c10cfe38082428675",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "e433ded80189406a8ed07c6d09cf391c6ac204eae5088a3d776e4c9b4d800ff0",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/8.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "58cd4d988e248e1af342794c8af24ba6c0408a7d70772493b55e178258ae4010",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/8.0/fixture.json"
+    },
+    {
+      "kind": "container",
+      "name": "8fff77e8b54405b3e302815dcf389e2854eff9e5d14a02cb563aa625d20c7e5f",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "ac07165a3fcf755c3b0cb666c5551d0818dd2cdc71afa0358106ddb51a4a0657",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/9.0/fixture.json"
+    },
+    {
+      "kind": "volume",
+      "name": "91669c980edc09d7ea0e5a22df6b67f8fc3f593bf49312acc61665102b7277c7",
+      "absent": true,
+      "fixture": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-text-sort-admission-native-0tdhh6xj/9.0/fixture.json"
+    }
+  ],
+  "retention": "Two distinct capture rounds retain their manifests and exclusive claims; no overwrites."
+}

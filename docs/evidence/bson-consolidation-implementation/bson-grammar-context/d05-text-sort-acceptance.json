@@ -1,0 +1,76 @@
+{
+  "runtime_commit": "c4917a3f",
+  "wheel_sha256": "c07f2800ca037022de12ca0553b7f6bb3eb48edfef3b36fafb1b0d59295f63e5",
+  "runtime_modules": 287,
+  "native_versions": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "native_observations_per_version": 7,
+  "baseline": {
+    "failed": 16,
+    "passed": 11,
+    "scope": "same final corpus, pre-fix projection wheel"
+  },
+  "candidate": {
+    "replay_passed": 273,
+    "contracts_passed": 131,
+    "subtests_passed": 3744,
+    "sdk_free_observations": 42,
+    "sdk_free_omissions": 0
+  },
+  "resources_absent": 18,
+  "protected_unchanged": 424,
+  "generated_metadata_exceptions": [
+    "clock_call_allowlist.json",
+    "legacy_error_emitters.json",
+    "public_api_manifest_exchange_source.json"
+  ],
+  "limits": [
+    "Equal text-score tie witness; no claim of exact numeric score parity",
+    "D05 global, coverage, environment matrix and integrated costs remain open"
+  ],
+  "artifacts": {
+    "d05-text-sort-baseline.txt.gz": "d4056d54aa884c53a0d451a994ed0f1a12a6fb252f2d40f1568e93748d80de74",
+    "d05-text-sort-baseline-final.txt.gz": "19c6e3bf16124d04d0f1021f2db0701d0f4411bc4eebe3cca2d79c6330a54917",
+    "d05-text-sort-frozen.txt.gz": "76a0f25886b3f60d813625ad0404f3e7e95e003b0448b4da2412e78adb0c2692",
+    "d05-text-sort-contracts.txt.gz": "6057bec657980d8b13d99288c84e3981d2597e9a9a297d59b2fde353b0c10f22",
+    "d05-text-sort-sdk-free.txt.gz": "a3b145d7ae3e650e56c64762c10ce7e52cbf6fbfe7910e591fe82d3efc95c464",
+    "d05-text-sort-lint.txt.gz": "1f20900022ae30246cb58a8c80a3a8fbfd29e8d80b0e0ba81e0f700576a536ed",
+    "d05-text-sort-resources.json": "10405bb221706d5fe628e621073faa695d6783c7879c33706e81750643ba3a34",
+    "d05-text-sort-native.txt.gz": "566cf9443f37f81d494eac2547b565b2bb57634d577929c8de98f5a56d44b0b3",
+    "d05-text-sort-native-final.txt.gz": "566cf9443f37f81d494eac2547b565b2bb57634d577929c8de98f5a56d44b0b3",
+    "d05-text-sort-build.txt.gz": "59361c5e485a9e09ffea2f7cac738a6afa306e714ba89d6d727cfdc2cb22dc72",
+    "d05-text-sort-initial-7.0-fixture.json.gz": "9cb8050032f71c64462980a5c16353d64f48abab2790764d4a02265a204f58b9",
+    "d05-text-sort-initial-7.0-fixture-owner.gz": "67468696e28bcf2d7339d963c7ecc5a8317a342515391052d2bf48b1faf3e164",
+    "d05-text-sort-initial-7.0-check.json.gz": "4d4628c5d9fae2d4120dc7adc99ce5fff7607dc60d0c661546bc4a0b90862401",
+    "d05-text-sort-initial-8.0-fixture.json.gz": "0ace809a548496f022652128c2fb7a8bf603f468fc477eb27fccf47879d0ffb5",
+    "d05-text-sort-initial-8.0-fixture-owner.gz": "33f8b4b2481f5024bbc627705081f715a98f390ebcc983a4bd4bd03c6e295250",
+    "d05-text-sort-initial-8.0-check.json.gz": "4737ca3212fb7677ebbf1c0f42b326127738ce3a5ed4d066fb3dfeb28103089c",
+    "d05-text-sort-initial-9.0-fixture.json.gz": "2a840ea240baed69725896af90dab78cbe0d0b520c2ae8592dd8d3a0f1edbc16",
+    "d05-text-sort-initial-9.0-fixture-owner.gz": "bbc4523f3c52a615f10b55fc6c062fe4e2936ba9789208650256d35cf326863d",
+    "d05-text-sort-initial-9.0-check.json.gz": "571b748ce2985dfc5acf682118fa931aaf44579bdc0fc4adf2c87bf539b7f1ef",
+    "d05-text-sort-frozen-7.0-fixture.json.gz": "a9ac9c9a8a3b44282358b4578b343928dd2fe169025155d45f8a916522a7090f",
+    "d05-text-sort-frozen-7.0-fixture-owner.gz": "e4d20ba5b525fda68178d16ecdf69f71515d36f67ab6954fd742cf5ee493d0f1",
+    "d05-text-sort-frozen-7.0-check.json.gz": "02dd8fe27ebb0ce2519c0588e9d06e16fc2f6bac139dc655cafdb01b08215275",
+    "d05-text-sort-frozen-8.0-fixture.json.gz": "05405c70d72d5506b34424342b5e4b8f4f7722b9f9b2001257fa665b0ccda3e0",
+    "d05-text-sort-frozen-8.0-fixture-owner.gz": "11780150ab2d454c556c5e39cb486239673953a0f1f6e479f9747280a177544b",
+    "d05-text-sort-frozen-8.0-check.json.gz": "64566f36961da7a6b139a3a2cb091b5353d013512810b7ec70802edbc3764939",
+    "d05-text-sort-frozen-9.0-fixture.json.gz": "fac266fb7e07512224e18729091f461dd2097adafab887b4e0dd7f988c73d7e9",
+    "d05-text-sort-frozen-9.0-fixture-owner.gz": "d00507746614241d667bddbd59525a131f4a42c641f3a6b960899cb2b6e1317e",
+    "d05-text-sort-frozen-9.0-check.json.gz": "f1591754907afc9529cefd7142078aad3960e299041424388d87180b46881b2d",
+    "d05-text-sort-runtime.json": "d2bcf7b994b67eca3ab9c8f06189191c7e931dcaa945215da7550c3857040673",
+    "d05-text-sort-wheel.json": "6ea9f0c32cc73cf9eea1c9b30b7bbfb163a9913ca38deee15ad6ec774bd1baac",
+    "d05-text-sort-wheel-imports-text-sort-admission-frozen-gw2.json": "05b95718224e4d0c97aa4ccd01514b8160c416bfc516305d637a85884666dae1",
+    "d05-text-sort-wheel-imports-text-sort-admission-frozen-gw3.json": "05b95718224e4d0c97aa4ccd01514b8160c416bfc516305d637a85884666dae1",
+    "d05-text-sort-wheel-imports-text-sort-admission-frozen-gw0.json": "05b95718224e4d0c97aa4ccd01514b8160c416bfc516305d637a85884666dae1",
+    "d05-text-sort-wheel-imports-text-sort-admission-frozen-gw1.json": "05b95718224e4d0c97aa4ccd01514b8160c416bfc516305d637a85884666dae1",
+    "d05-text-sort-wheel-imports-text-sort-admission-frozen-master.json": "e6ca577344e89755e9675fca3a87f9fb02b0405ff7eac2fb1115a08c72253a02",
+    "d05-text-sort-wheel-imports-text-sort-admission-contracts-gw1.json": "fc932082712e40d7d23da8a6ab4f7388a300d758b538b32f3e47d84e024eb757",
+    "d05-text-sort-wheel-imports-text-sort-admission-contracts-master.json": "e6ca577344e89755e9675fca3a87f9fb02b0405ff7eac2fb1115a08c72253a02",
+    "d05-text-sort-wheel-imports-text-sort-admission-contracts-gw0.json": "fc932082712e40d7d23da8a6ab4f7388a300d758b538b32f3e47d84e024eb757",
+    "d05-text-sort-wheel-imports-text-sort-admission-contracts-gw3.json": "fc932082712e40d7d23da8a6ab4f7388a300d758b538b32f3e47d84e024eb757",
+    "d05-text-sort-wheel-imports-text-sort-admission-contracts-gw2.json": "fc932082712e40d7d23da8a6ab4f7388a300d758b538b32f3e47d84e024eb757"
+  }
+}
