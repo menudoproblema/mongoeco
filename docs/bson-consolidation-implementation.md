@@ -712,7 +712,7 @@ solo owner en el plan.
 
 - D06a/D06b/D06c: completar los contextos restantes de gramática/String/Code/DBRef/raw, planes no cubiertos y consumidores. `a53824d` entrega dispatch/consumo, `d4caba5` construcción/asignación de documentos de respuesta y `72edfa3` posición, alive, propiedad y cierre del cursor sync. `332d07a` entrega claves de grupo/DBRef/collation, conjuntos y decisión preparada de representación/average, con hash/spill y BSON raw nativos. `fbc7cde` entrega persistencia/reapertura Search, contexto de candidatos, ranking de tandas y selección temprana del oráculo de pruebas; otros contextos siguen por acreditar. Esto no cierra los demás contextos/representaciones ni todos los efectos de métodos de mappings. El corte de bytes/callbacks y String calculada de `381aa10` y los previos de sufijos/raw conservan su aceptación. Reutilizar lector y materializador actuales; no declarar D06 completo por estos cierres.
 - H53: disposición de observabilidad conforme a C03/B08; la caracterización previa no constituye aceptación.
-- Conversión escalar: diagnóstico string sNaN frente a 241 nativo, contraste 7/8 y regresión permanente pendientes.
+- Conversión escalar: `51ff167` entrega y verifica el corte String sNaN/241, tipos públicos, codec y controles numéricos. Su [aceptación](#conversión-escalar--gramática-tipos-y-preservación-bson) no cierra todos los contextos D06 ni admisión B07.
 - D07: piloto opcional con criterio de continuidad, sin migración obligatoria.
 - D05: revisión y gates integrados, matrices y commits de cierre. La suite amplia de feedback del corte codec identifica 97 nodos que también fallan en `181a922`; conservar su diagnóstico y resolverlos contra sus oráculos, sin presentarlos como un gate global verde.
 - B07: admisión BSON general (tipos arbitrarios y Decimal crudo), fuera de las normalizaciones parciales aceptadas. Coordinar su corte UUID con D06a/b antes de aceptar el nuevo default UNSPECIFIED; el resto de B07 conserva independencia.
@@ -1635,3 +1635,53 @@ comprueba con el oráculo corregido; el resto del listado histórico de 97 no se
 acepta por asociación. → Sigue: contextos D06 restantes y su auditoría por
 consumidor, H53/C03/B08, sNaN, decisión opcional D07, D05 y B07. No se acredita
 CI remoto, cobertura global ni todas las matrices. UUID sigue STANDARD.
+
+
+## Conversión escalar — gramática, tipos y preservación BSON
+
+`51ff167` completa el corte de conversión del plan con
+[evidencia propia](evidence/bson-consolidation-implementation/decimal-conversion/README.md).
+El [receipt](evidence/bson-consolidation-implementation/decimal-conversion/receipt.json)
+identifica fuente/wheel, baseline `a2c3cbb`, capturas finales y comprobaciones.
+
+La causa no era solo aceptar String sNaN: coexistían el parser permisivo de
+Python, el gating accidental de decimal en 7/8, la falta de preparación de
+`$toDecimal`, la salida directa sin tipo BSON y la presentación String del SDK
+que perdía signo/señal al almacenar NaN. El corte reutiliza el parser local de
+conversión, la conversión double de 15 cifras, milisegundos enteros, entorno de
+pipeline y DocumentCodec. No crea otro comparador, contexto, formato persistido
+ni prohibición general de NaN. Los helpers independientes conservan su
+conveniencia Python; los pipelines conservan tipos de conversión BSON.
+
+Seis acciones con 548 observaciones por versión contrastan String/Code,
+valores no finitos almacenados, precisión/exponentes, signos/cero negativo,
+fechas ±1001 ms, vacío/poblado, literal/campo, onError/onNull y ramas. Los
+subpipelines let/facet/lookup conservan el contexto; los updates pipeline
+repetidos comprueban tipo, postimagen y modified_count. La observación de BID
+no transforma Decimal Python en Decimal128 para hacer pasar la API directa.
+No se promete preservar cualquier payload BID arbitrario ni recuperar datos
+que ya habían perdido información bajo el codec anterior.
+
+- MongoDB standalone 7.0.43/8.0.32/9.0.2: capturas/checks finales idénticos con
+  imágenes y FCV registrados. Las siete rondas verifican ausentes 21 contenedores
+  y 42 volúmenes propios; 263 archivos históricos protegidos siguen idénticos.
+- Baseline: 144 replays públicos fallan y las tres comprobaciones de metadata
+  pasan. Candidato final instalado: 8.601 checks pasan en 211,96 s, con warnings
+  de runtime/unraisable/thread tratados como errores.
+- 1.144 pruebas instaladas de unitarias/SPI/propiedades, con 181 subtests, pasan
+  en 75,58 s. Los proofs verifican hashes/sitio en cuatro workers y sesiones
+  master; no se mezcla el checkout con el wheel. Typing mantiene 2 controles
+  positivos y los 20/25 errores negativos; API manifest y lint ratchet pasan.
+- Python 3.13.15 sin SDK: 228 controles del subset, con resultados nativos y
+  reapertura SQLite. No sustituye la matriz completa D05. CPU escalar String→
+  Decimal ABBA×2: ratio diagnóstico 1,06; no acredita el presupuesto global.
+
+La ejecución amplia anterior, con inputs que cambiaron durante el feedback,
+se conserva separadamente y no sirve como aceptación. El gate final usa
+runtime/corpus congelados; las referencias históricas no se recapturan.
+
+✅ Cerrado: este corte funcional de conversión escalar. No reabre los cierres
+D01/D02/D03/D04 ni declara D06/D05 terminados.
+→ Sigue: contextos/representaciones y consumidores restantes D06, disposición
+H53/C03/B08, decisión opcional D07, matrices/cobertura/costes y cierre integrado
+D05, y admisión B07 con el corte UUID coordinado. El default sigue STANDARD.

@@ -1252,7 +1252,7 @@ PreparedPipeline se corrige conservando slices; no exige otra caché.
 | 1 / P1 — D06a/b, raw y representación | Conservar el corte raw de contenido/cantidades aceptado y completar contextos String/Code/DBRef/raw que falten sobre cursor/materializador/bridge actuales. No llamar a la apertura normal de aggregate y asumir que raw tiene la misma primera tanda. | Diferenciales 7/8/9 de find/aggregate raw y decodificado, sync/async y wire soportado. BSON exacto independiente del decoder productivo; orden/extras/`$db:null`, Binary 0/5 y Code scope anidados. Codec mutante con control decodificado activo y cero callbacks en raw. Batch ausente/0/1/2, fase de error y ejecución de `$merge` al abrir observadas por superficie. Fuente final congelada y `--check` de las referencias nuevas; no regenerar goldens para ocultar fallos. |
 | 2 / P1 — D06a/b, demanda, bytes y callbacks | Conservar el corte `381aa10` aceptado y usar sus primitivas en los contextos/planes restantes. Mantener la prelectura demostrada y salida pendiente sin reevaluar. Reusar `bson_size`; distinguir String calculada, documento devuelto, tanda y mensaje, además de admisión B07. Retirar guardas reemplazadas; no repetir otro lector, evaluador o caché. | Mantener las fronteras y controles del apartado siguiente, con cantidad simultánea y expansión/materialización. Nuevos contextos/planes requieren testigo nativo propio, no aceptación por asociación. Documentos/tandas, fase/clase/código/codeName/errmsg, orden y callbacks deben coincidir. Un fallo del servidor invalida su respuesta antes de decoders; un fallo del decoder cliente conserva los efectos anteriores observados en el SDK. |
 | 3 / P1 — D06c, consumidores y claves | Después de las vistas disponibles y preservación necesarias, revisar group/sets/lookup/spill/Search según equivalencia propia. Compartir átomos, retirar duplicación junto con sus guardas; no cambiar storage keys ni desempates persistidos. | Mismo resultado BSON con/sin hash/spill y bajo collation. Clave exclusiva: equivalencia en ambos sentidos; hash: colisiones permitidas solo con comparación posterior. Prefiltros Search conservan candidatos antes de residual y ventana. Contextos de subpipeline y persistencia tienen testigos propios. |
-| 4 / P2 — H53, conversión y D07 | Son trabajos independientes: H53 conserva C03/B08; conversión reutiliza evaluación/preparación y tipos BSON existentes; D07 requiere decisión continuar/descartar con hipótesis medible. Ninguno exige esperar el cierre completo D06c. | H53 separa evaluación, permiso y warning en strict/moderate/off × error/warn/bypass, antiguo/candidato, sin logging implícito. Conversión conserva las garantías del apartado siguiente y referencias 7/8/9; el trabajo sin commit no es aceptación. D07 puede descartarse. |
+| 4 / P2 — H53 y D07; conversión entregada | H53 conserva C03/B08; D07 requiere decisión continuar/descartar con hipótesis medible y puede descartarse. Son independientes del cierre completo D06c. `51ff167` entrega el corte de conversión reutilizando evaluación/preparación y tipos BSON existentes. | H53 separa evaluación, permiso y warning en strict/moderate/off × error/warn/bypass, antiguo/candidato, sin logging implícito. Conservar la aceptación de conversión y sus garantías siguientes; no usarla para cerrar B07 ni otros contextos D06. |
 | 5 — D05 integrado y B07 por su owner | Congelar el candidato después de revisión/focales, ejecutar gates alcanzados y cerrar commits semánticos por bloque. La admisión BSON general conserva su obligación independiente: no depende de adoptar otro normalizador ni queda resuelta por raw. | Matrices Python/SDK/pytest del contrato, wheel instalado, SPI/typing, cobertura, persistencia y coste; recursos sin fugas. B07 prueba tipos arbitrarios/Decimal crudo y clases/fases de rechazo en filtros y escrituras. Evidencia de fuente exacta, baseline que falla y candidato que pasa; no presentar un gate previo al último cambio como aceptación final. |
 
 Los pasos 1 y 2 comparten mecanismo y pueden entregarse juntos si simplifica el
@@ -1260,8 +1260,9 @@ cambio, pero conservan testigos y aceptación separados. H53/conversión pueden
 avanzar de forma independiente de D06c. No hace falta esperar un fixture RS ya
 aceptado ni repetir D01/D02/D03/D04 para empezar estos pendientes.
 
-**Conversión: unidad mínima pendiente, sin otro componente semántico.** El
-candidato de conversión presente durante revisión 18 no está aceptado. El corte
+**Conversión: criterios del corte, sin otro componente semántico.** `51ff167`
+tiene [aceptación propia](bson-consolidation-implementation.md#conversión-escalar--gramática-tipos-y-preservación-bson).
+El candidato presente durante revisión 18 todavía no estaba aceptado. El corte
 no se limita a una expresión regular para sNaN: preparación, evaluación y salida
 pública pueden coincidir en valor y divergir en tipo o fase. Reusar sus owners,
 sin cambiar la política numérica de consulta para corregir conversiones.
@@ -1284,6 +1285,15 @@ sin cambiar la política numérica de consulta para corregir conversiones.
   históricas. Baseline que falla, candidato instalado que pasa y revisión del
   alcance real preceden a la aceptación. El replay intermedio fallido solo
   identifica trabajo restante; no sustituye al gate final ni reabre B07.
+
+**Entrega posterior `51ff167`.** El corte de conversión supera 8.601 checks
+instalados y 1.144 pruebas con 181 subtests, con seis acciones/548 observaciones
+nativas por versión 7/8/9, baseline que falla y 228 controles SDK-free. El
+[receipt](evidence/bson-consolidation-implementation/decimal-conversion/receipt.json)
+fija fuente final, checks nativos y alcance. Se conservan las garantías de
+representación/tipos, fase, contexto y almacenamiento; no se añade otro
+comparador ni se amplía admisión BSON. H53, decisión D07, resto D06, D05 y B07
+siguen abiertos; el coste escalar diagnóstico 1,06 no cierra D05.
 
 **Entrega posterior `332d07a`.** El corte de claves/consumidores tiene
 [aceptación propia](evidence/bson-consolidation-implementation/bson-consumers/README.md):
