@@ -2537,3 +2537,19 @@ observa referencias vivas antes de consumir, conforme al corpus nativo
 bson_request. Se conservan proveedor único, cierre y recuentos de compilación.
 Los logs se archivan con prefijos d05-extension y d05-read-context; O5 sigue
 abierta y mantiene el umbral de cobertura y todos sus fallos restantes.
+
+
+### O5 — Salidas BSON y dobles administrativos
+
+Pasan 22 pruebas/8 subtests de salidas y errores públicos. $toDecimal devuelve
+Decimal128 y $toUUID devuelve Binary subtipo 4 con UNSPECIFIED, conforme a sus
+aceptaciones nativas existentes; no se devuelve Decimal/UUID por comparación
+Python. List_collections inválido conserva error de servidor 14, mientras
+list_collection_names conserva TypeError cliente. Namespace de validación
+inexistente conserva 26. Watch wire sigue explícitamente fuera del subset y
+su rechazo usa 40324 con el diagnóstico vigente, sin aceptar watch positivo.
+
+Los dobles de la fachada command delegan en command, que aplica la frontera
+cliente, y la lectura de system.profile respeta su proyección (op, sin _id).
+Se mantienen aserciones de campos, familias y códigos; son conciliaciones de
+pruebas respecto de cortes ya aceptados, sin nuevo runtime ni oráculo nativo.

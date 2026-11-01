@@ -1,12 +1,11 @@
 import asyncio
 import datetime
-import decimal
 import re
 import threading
 import unittest
 import uuid
 
-from bson import Binary as PublicBinary, decode_all
+from bson import Binary as PublicBinary, Decimal128, decode_all
 
 from mongoeco import (
     AsyncMongoClient,
@@ -4985,8 +4984,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_list_collections_rejects_invalid_filter(self):
         async with open_client("memory") as client:
-            with self.assertRaises(TypeError):
+            with self.assertRaises(OperationFailure) as caught:
                 client.alpha.list_collections(["bad"])  # type: ignore[arg-type]
+            self.assertEqual(caught.exception.code, 14)
             with self.assertRaises(TypeError):
                 await client.alpha.list_collection_names(["bad"])  # type: ignore[arg-type]
 
@@ -7454,7 +7454,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "decimal": decimal.Decimal("10.25")}],
+                        [{"_id": "1", "decimal": Decimal128("10.25")}],
                     )
 
     async def test_aggregate_supports_to_uuid(self):
@@ -7485,8 +7485,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [
                             {
                                 "_id": "1",
-                                "uuid": uuid.UUID(
-                                    "12345678-1234-5678-1234-567812345678",
+                                "uuid": PublicBinary(
+                                    uuid.UUID("12345678-1234-5678-1234-567812345678").bytes,
+                                    4,
                                 ),
                             },
                         ],

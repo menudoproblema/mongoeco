@@ -3,7 +3,7 @@ import unittest
 
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import CollectionInvalid
+from mongoeco.errors import OperationFailure
 
 
 class DatabaseNamespaceAdminServiceTests(unittest.TestCase):
@@ -61,5 +61,12 @@ class DatabaseNamespaceAdminServiceTests(unittest.TestCase):
         )
         self.assertFalse(documents[0]["empty"])
 
-        with self.assertRaisesRegex(CollectionInvalid, "does not exist"):
-            asyncio.run(primary._admin._namespace_admin.build_collection_validation_snapshot("missing"))
+        with self.assertRaisesRegex(
+            OperationFailure, "Namespace db1.missing not found"
+        ) as caught:
+            asyncio.run(
+                primary._admin._namespace_admin.build_collection_validation_snapshot(
+                    "missing"
+                )
+            )
+        self.assertEqual(caught.exception.code, 26)

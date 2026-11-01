@@ -1960,7 +1960,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "p1",
                 projection={"op": 1, "_id": 0},
             )
-        self.assertEqual(document, {"_id": "p1", "op": "query"})
+        self.assertEqual(document, {"op": "query"})
         doc_mock.assert_called_once()
 
         with patch.object(

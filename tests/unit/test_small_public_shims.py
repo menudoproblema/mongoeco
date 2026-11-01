@@ -55,7 +55,7 @@ class SmallPublicShimTests(unittest.TestCase):
 
         async_commands = SimpleNamespace(
             parse_raw_command=lambda command, **kwargs: ("parsed", command, kwargs),
-            execute_document=_execute_document,
+            command=_execute_document,
         )
         async_database = lambda: SimpleNamespace(_admin=SimpleNamespace(_commands=async_commands))
         client = SimpleNamespace(_run=lambda awaitable: asyncio.run(awaitable))
